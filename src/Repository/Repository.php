@@ -31,7 +31,6 @@ final class Repository
      */
     private array $instances = [];
 
-    
     public function __construct(
         Store $store,
         EventStream $eventStream,
@@ -80,7 +79,7 @@ final class Repository
             return;
         }
 
-        $this->store->save($this->aggregateClass, $aggregate->aggregateRootId(), $eventStream);
+        $this->store->saveBatch($this->aggregateClass, $aggregate->aggregateRootId(), $eventStream);
 
         foreach ($eventStream as $event) {
             $this->eventStream->dispatch($event);

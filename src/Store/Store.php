@@ -32,7 +32,7 @@ interface Store
      * @param class-string $aggregate
      * @param AggregateChanged[] $events
      */
-    public function save(string $aggregate, string $id, array $events): void;
+    public function saveBatch(string $aggregate, string $id, array $events): void;
 
     public function prepare(): void;
 

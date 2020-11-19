@@ -90,7 +90,7 @@ final class MysqlSingleTableStore implements Store
      * @param class-string $aggregate
      * @param AggregateChanged[] $events
      */
-    public function save(string $aggregate, string $id, array $events): void
+    public function saveBatch(string $aggregate, string $id, array $events): void
     {
         $this->connection->transactional(
             static function (Connection $connection) use ($aggregate, $id, $events): void {
