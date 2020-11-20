@@ -19,7 +19,7 @@ abstract class AggregateRoot
 
     abstract public function aggregateRootId(): string;
 
-    public function apply(AggregateChanged $event): void
+    protected function apply(AggregateChanged $event): void
     {
         $this->playhead++;
         $event = $event->recordNow($this->playhead);

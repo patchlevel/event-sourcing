@@ -3,7 +3,6 @@
 namespace Patchlevel\EventSourcing\Aggregate;
 
 use DateTimeImmutable;
-use InvalidArgumentException;
 use function get_class;
 use function json_decode;
 use function json_encode;
@@ -55,8 +54,9 @@ abstract class AggregateChanged
 
     /**
      * @param array<string, mixed> $payload
+     * @return static
      */
-    public static function occur(string $aggregateId, array $payload = []): self
+    protected static function occur(string $aggregateId, array $payload = []): self
     {
         return new static($aggregateId, $payload);
     }
@@ -79,7 +79,7 @@ abstract class AggregateChanged
         $class = $data['event'];
 
         if (!is_subclass_of($class, self::class)) {
-            throw new InvalidArgumentException();
+            throw new AggregateException();
         }
 
         /** @var array<string, mixed> $payload */
