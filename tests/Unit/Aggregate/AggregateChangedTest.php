@@ -92,7 +92,7 @@ class AggregateChangedTest extends TestCase
         $reflection = new ReflectionClass($recordedEvent);
         $property = $reflection->getParentClass()->getProperty('recordedOn');
         $property->setAccessible(true);
-        $property->setValue($recordedEvent, new DateTimeImmutable('2020-11-20 13:57:49'));
+        $property->setValue($recordedEvent, new DateTimeImmutable('2020-11-20T13:57:49.000000+01:00'));
 
         self::assertEquals(
             [
