@@ -102,7 +102,7 @@ abstract class AggregateChanged
             'playhead' => $this->playhead,
             'event' => get_class($this),
             'payload' => json_encode($this->payload, JSON_THROW_ON_ERROR),
-            'recordedOn' => $this->recordedOn instanceof DateTimeImmutable ? $this->recordedOn->format('Y-m-d H:i:s') : null,
+            'recordedOn' => $this->recordedOn instanceof DateTimeImmutable ? $this->recordedOn->format('Y-m-d\TH:i:s.uP') : null,
         ];
     }
 }
