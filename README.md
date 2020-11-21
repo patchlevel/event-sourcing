@@ -17,7 +17,7 @@ namespace App\Domain\Profile;
 
 use App\Domain\Profile\Event\MessagePublished;
 use App\Domain\Profile\Event\ProfileCreated;
-use App\EventSourcing\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 final class Profile extends AggregateRoot
 {
@@ -87,7 +87,7 @@ namespace App\Domain\Profile\Event;
 
 use App\Domain\Profile\Email;
 use App\Domain\Profile\ProfileId;
-use App\EventSourcing\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class ProfileCreated extends AggregateChanged
 {
@@ -125,10 +125,10 @@ namespace App\ReadModel\Projection;
 
 use const DATE_ATOM;
 use App\Domain\Profile\Event\MessagePublished;
-use App\EventSourcing\Projection;
 use App\Infrastructure\MongoDb\MongoDbManager;
+use Patchlevel\EventSourcing\Projection\Projection;
 
-final class MessageProjection extends Projection
+final class MessageProjection implements Projection
 {
     private MongoDbManager $db;
 
