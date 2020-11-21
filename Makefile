@@ -3,11 +3,11 @@ help:                                                                           
 
 .PHONY: php-cs-check
 php-cs-check:                                                                   ## run cs fixer (dry-run)
-	PHP_CS_FIXER_FUTURE_MODE=1 vendor/bin/php-cs-fixer fix --allow-risky=yes --diff --dry-run
+	vendor/bin/php-cs-fixer fix --diff --dry-run
 
 .PHONY: php-cs-fix
 php-cs-fix:                                                                     ## run cs fixer
-	PHP_CS_FIXER_FUTURE_MODE=1 vendor/bin/php-cs-fixer fix --allow-risky=yes
+	vendor/bin/php-cs-fixer fix
 
 .PHONY: phpstan
 phpstan:                                                                        ## run phpstan static code analyser
