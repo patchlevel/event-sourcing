@@ -27,6 +27,7 @@
     "friendsofphp/php-cs-fixer": "^2.16.7",
     "phpstan/phpstan": "^0.12.54",
     "phpunit/phpunit": "^9.4.3",
+    "symfony/var-dumper": "^5.1",
     "vimeo/psalm": "^4.1.1"
   },
   "config": {

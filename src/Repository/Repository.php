@@ -22,7 +22,7 @@ final class Repository
     private EventStream $eventStream;
 
     /**
-     * @var class-string
+     * @psalm-var class-string
      */
     private string $aggregateClass;
 
@@ -31,6 +31,9 @@ final class Repository
      */
     private array $instances = [];
 
+    /**
+     * @psalm-param class-string $aggregateClass
+     */
     public function __construct(
         Store $store,
         EventStream $eventStream,
@@ -55,7 +58,7 @@ final class Repository
             throw new AggregateNotFoundException($this->aggregateClass, $id);
         }
 
-        return $this->instances[$id] = $this->createAggregate($this->aggregateClass, $events);
+        return $this->instances[$id] = $this->createAggregate($events);
     }
 
     public function has(string $id): bool
@@ -87,26 +90,25 @@ final class Repository
     }
 
     /**
-     * @psalm-assert class-string $class
+     * @psalm-assert class-string<AggregateRoot> $class
      */
     private function assertExtendsEventSourcedAggregateRoot(string $class): void
     {
+        if (!class_exists($class)) {
+            throw new InvalidArgumentException(sprintf('class "%s" not found', $class));
+        }
+
         if (is_subclass_of($class, AggregateRoot::class) === false) {
             throw new InvalidArgumentException(sprintf("Class '%s' is not an EventSourcedAggregateRoot.", $class));
         }
     }
 
     /**
-     * @param class-string $class
      * @param array<AggregateChanged> $eventStream
      */
-    private function createAggregate(string $class, array $eventStream): AggregateRoot
+    private function createAggregate(array $eventStream): AggregateRoot
     {
-        if (!class_exists($class)) {
-            throw new InvalidArgumentException(sprintf('class "%s" not found', $class));
-        }
-
-        $reflectionClass = new ReflectionClass($class);
+        $reflectionClass = new ReflectionClass($this->aggregateClass);
 
         /** @var AggregateRoot $aggregate */
         $aggregate = $reflectionClass->newInstanceWithoutConstructor();
