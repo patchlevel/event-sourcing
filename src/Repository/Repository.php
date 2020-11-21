@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Repository;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\EventStream;
+use Patchlevel\EventSourcing\EventStream\EventStream;
 use Patchlevel\EventSourcing\Store\Store;
 use ReflectionClass;
 use function array_key_exists;

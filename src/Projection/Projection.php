@@ -2,14 +2,12 @@
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use Symfony\Component\Messenger\Handler\MessageSubscriberInterface;
-
-interface Projection extends MessageSubscriberInterface
+interface Projection
 {
     /**
-     * @return iterable<class-string, string|array<string, mixed>>
+     * @return iterable<class-string, string>
      */
-    public static function getHandledMessages(): iterable;
+    abstract public function getHandledMessages(): iterable;
 
-    public function drop(): void;
+    abstract public function drop(): void;
 }

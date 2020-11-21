@@ -1,14 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing;
+namespace Patchlevel\EventSourcing\EventStream;
 
 use Symfony\Component\Messenger\MessageBusInterface;
 use function array_shift;
 
-/**
- * Stellt sicher, dass die Events in der Richtigen Reihenfolge abgearbeitet werden.
- */
-final class EventStream
+final class SymfonyMessengerEventStream implements EventStream
 {
     /**
      * @var array<int, object>
