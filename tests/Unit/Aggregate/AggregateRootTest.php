@@ -2,12 +2,16 @@
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
+use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\BrokenProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\MessageId;
+use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\MessagePublished;
 use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\Profile;
+use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 class AggregateRootTest extends TestCase
 {
@@ -57,5 +61,57 @@ class AggregateRootTest extends TestCase
         $events = $profile->releaseEvents();
 
         self::assertCount(1, $events);
+    }
+
+    public function testEventWithoutApplyMethod(): void
+    {
+        $visitorProfile = Profile::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('visitor@test.com')
+        );
+
+        self::assertCount(1, $visitorProfile->releaseEvents());
+        self::assertEquals(0, $visitorProfile->playhead());
+
+        $visitedProfile = Profile::createProfile(
+            ProfileId::fromString('2'),
+            Email::fromString('visited@test.com')
+        );
+
+        self::assertCount(1, $visitedProfile->releaseEvents());
+        self::assertEquals(0, $visitedProfile->playhead());
+
+        $visitorProfile->visitProfile($visitedProfile->id());
+
+        self::assertCount(0, $visitedProfile->releaseEvents());
+        self::assertEquals(0, $visitedProfile->playhead());
+    }
+
+    public function testInitliazingState(): void
+    {
+        $reflectionClass = new ReflectionClass(Profile::class);
+        /** @var Profile $profile */
+        $profile = $reflectionClass->newInstanceWithoutConstructor();
+
+        self::assertInstanceOf(Profile::class, $profile);
+
+        $eventStream = [
+            ProfileCreated::raise(
+                ProfileId::fromString('1'),
+                Email::fromString('profile@test.com')
+            ),
+            MessagePublished::raise(
+                ProfileId::fromString('1'),
+                Message::create(
+                    MessageId::fromString('2'),
+                    'message value'
+                )
+            ),
+        ];
+
+        $profile->initializeState($eventStream);
+
+        self::assertEquals('1', $profile->id()->toString());
+        self::assertCount(1, $profile->messages());
     }
 }

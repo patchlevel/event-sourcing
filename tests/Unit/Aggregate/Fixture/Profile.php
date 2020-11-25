@@ -49,6 +49,11 @@ final class Profile extends AggregateRoot
         ));
     }
 
+    public function visitProfile(ProfileId $profileId): void
+    {
+        $this->apply(ProfileVisited::raise($this->id, $profileId));
+    }
+
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId();
