@@ -20,6 +20,7 @@ class AggregateChangedTest extends TestCase
 
         self::assertEquals($id, $event->profileId());
         self::assertEquals($email, $event->email());
+        self::assertEquals($id->toString(), $event->aggregateId());
         self::assertEquals(null, $event->playhead());
         self::assertEquals(null, $event->recordedOn());
         self::assertEquals(
