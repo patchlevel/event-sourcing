@@ -2,14 +2,13 @@
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\BrokenProfile;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\Message;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\MessageId;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\MessagePublished;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\Profile;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\ProfileId;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessagePublished;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
