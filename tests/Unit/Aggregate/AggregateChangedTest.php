@@ -4,9 +4,9 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateException;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\ProfileId;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
 class AggregateChangedTest extends TestCase
@@ -77,7 +77,7 @@ class AggregateChangedTest extends TestCase
 
         self::assertArrayHasKey('event', $serializedEvent);
         self::assertEquals(
-            'Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\ProfileCreated',
+            'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
             $serializedEvent['event']
         );
 
@@ -100,7 +100,7 @@ class AggregateChangedTest extends TestCase
         $event = ProfileCreated::deserialize([
             'aggregateId' => '1',
             'playhead' => 0,
-            'event' => 'Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\ProfileCreated',
+            'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
             'payload' => '{"profileId":"1","email":"d.a.badura@gmail.com"}',
             'recordedOn' => '2020-11-20 13:57:49',
         ]);
@@ -125,7 +125,7 @@ class AggregateChangedTest extends TestCase
         ProfileCreated::deserialize([
             'aggregateId' => '1',
             'playhead' => 0,
-            'event' => 'Patchlevel\EventSourcing\Tests\Unit\Aggregate\Fixture\NotFound',
+            'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\NotFound',
             'payload' => '{"profileId":"1","email":"d.a.badura@gmail.com"}',
             'recordedOn' => '2020-11-20 13:57:49',
         ]);
