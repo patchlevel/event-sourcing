@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 class AggregateRootTest extends TestCase
 {
@@ -88,12 +87,6 @@ class AggregateRootTest extends TestCase
 
     public function testInitliazingState(): void
     {
-        $reflectionClass = new ReflectionClass(Profile::class);
-        /** @var Profile $profile */
-        $profile = $reflectionClass->newInstanceWithoutConstructor();
-
-        self::assertInstanceOf(Profile::class, $profile);
-
         $eventStream = [
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
@@ -108,7 +101,7 @@ class AggregateRootTest extends TestCase
             ),
         ];
 
-        $profile->initializeState($eventStream);
+        $profile = Profile::createFromEventStream($eventStream);
 
         self::assertEquals('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());

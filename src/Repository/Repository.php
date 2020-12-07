@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventStream;
 use Patchlevel\EventSourcing\Store\Store;
-use ReflectionClass;
 use function array_key_exists;
 use function class_exists;
 use function count;
@@ -108,12 +107,12 @@ final class Repository
      */
     private function createAggregate(array $eventStream): AggregateRoot
     {
-        $reflectionClass = new ReflectionClass($this->aggregateClass);
+        $class = $this->aggregateClass;
 
-        /** @var AggregateRoot $aggregate */
-        $aggregate = $reflectionClass->newInstanceWithoutConstructor();
-        $aggregate->initializeState($eventStream);
+        if (is_subclass_of($class, AggregateRoot::class) === false) {
+            throw new InvalidArgumentException(sprintf("Class '%s' is not an EventSourcedAggregateRoot.", $class));
+        }
 
-        return $aggregate;
+        return $class::createFromEventStream($eventStream);
     }
 }

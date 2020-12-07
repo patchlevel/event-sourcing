@@ -26,10 +26,6 @@ final class Profile extends AggregateRoot
     /** @var array<Message> */
     private array $messages;
 
-    private function __construct()
-    {
-    }
-
     public function email(): Email
     {
         return $this->email;
