@@ -17,7 +17,9 @@ abstract class AggregateRoot
     private array $uncommittedEvents = [];
     private int $playhead = -1;
 
-    final private function __construct() {}
+    final protected function __construct()
+    {
+    }
 
     abstract public function aggregateRootId(): string;
 
