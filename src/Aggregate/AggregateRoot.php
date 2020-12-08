@@ -17,6 +17,10 @@ abstract class AggregateRoot
     private array $uncommittedEvents = [];
     private int $playhead = -1;
 
+    final protected function __construct()
+    {
+    }
+
     abstract public function aggregateRootId(): string;
 
     protected function apply(AggregateChanged $event): void
@@ -41,13 +45,18 @@ abstract class AggregateRoot
 
     /**
      * @param AggregateChanged[] $stream
+     * @return static
      */
-    public function initializeState(array $stream): void
+    public static function createFromEventStream(array $stream): self
     {
+        $self = new static();
+
         foreach ($stream as $message) {
-            $this->playhead++;
-            $this->handle($message);
+            $self->playhead++;
+            $self->handle($message);
         }
+
+        return $self;
     }
 
     protected function handle(AggregateChanged $event): void
