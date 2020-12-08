@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventStream;
 use Patchlevel\EventSourcing\Store\Store;
 use function array_key_exists;
-use function class_exists;
 use function count;
 use function is_subclass_of;
 use function sprintf;
@@ -21,24 +20,26 @@ final class Repository
     private EventStream $eventStream;
 
     /**
-     * @psalm-var class-string
+     * @var class-string<AggregateRoot>
      */
     private string $aggregateClass;
 
     /**
-     * @var AggregateRoot[]
+     * @var array<string, AggregateRoot>
      */
     private array $instances = [];
 
     /**
-     * @psalm-param class-string $aggregateClass
+     * @param class-string $aggregateClass
      */
-    public function __construct(
-        Store $store,
-        EventStream $eventStream,
-        string $aggregateClass
-    ) {
-        $this->assertExtendsEventSourcedAggregateRoot($aggregateClass);
+    public function __construct(Store $store, EventStream $eventStream, string $aggregateClass)
+    {
+        if (is_subclass_of($aggregateClass, AggregateRoot::class) === false) {
+            throw new InvalidArgumentException(sprintf(
+                "Class '%s' is not an EventSourcedAggregateRoot.",
+                $aggregateClass
+            ));
+        }
 
         $this->store = $store;
         $this->eventStream = $eventStream;
@@ -71,8 +72,10 @@ final class Repository
 
     public function save(AggregateRoot $aggregate): void
     {
+        $class = get_class($aggregate);
+
         if (!$aggregate instanceof $this->aggregateClass) {
-            throw new WrongAggregateException(get_class($aggregate), $this->aggregateClass);
+            throw new WrongAggregateException($class, $this->aggregateClass);
         }
 
         $eventStream = $aggregate->releaseEvents();
@@ -89,29 +92,11 @@ final class Repository
     }
 
     /**
-     * @psalm-assert class-string<AggregateRoot> $class
-     */
-    private function assertExtendsEventSourcedAggregateRoot(string $class): void
-    {
-        if (!class_exists($class)) {
-            throw new InvalidArgumentException(sprintf('class "%s" not found', $class));
-        }
-
-        if (is_subclass_of($class, AggregateRoot::class) === false) {
-            throw new InvalidArgumentException(sprintf("Class '%s' is not an EventSourcedAggregateRoot.", $class));
-        }
-    }
-
-    /**
      * @param array<AggregateChanged> $eventStream
      */
     private function createAggregate(array $eventStream): AggregateRoot
     {
         $class = $this->aggregateClass;
-
-        if (is_subclass_of($class, AggregateRoot::class) === false) {
-            throw new InvalidArgumentException(sprintf("Class '%s' is not an EventSourcedAggregateRoot.", $class));
-        }
 
         return $class::createFromEventStream($eventStream);
     }
