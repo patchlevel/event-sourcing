@@ -22,6 +22,11 @@ final class ProfileProjection implements Projection
         yield ProfileCreated::class => 'applyProfileCreated';
     }
 
+    public function create(): void
+    {
+        $this->connection->executeStatement('CREATE TABLE profile (id VARCHAR PRIMARY KEY);');
+    }
+
     public function drop(): void
     {
         $this->connection->executeStatement('DROP TABLE profile;');

@@ -9,7 +9,7 @@ use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Patchlevel\EventSourcing\EventBus\EventStream;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
-use Patchlevel\EventSourcing\Store\MysqlSingleTableStore;
+use Patchlevel\EventSourcing\Store\SQLiteSingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
@@ -21,8 +21,9 @@ final class BasicIntegrationTest extends TestCase
     public function testSuccessful(): void
     {
         $projectionConnection = new Connection(['url' => 'sqlite:///somedb.sqlite'], new Driver());
+        $profileProjection = new ProfileProjection($projectionConnection);
         $projectionRepository = new ProjectionRepository(
-            [new ProfileProjection($projectionConnection)]
+            [$profileProjection]
         );
 
         $eventStream = new EventStream();
@@ -30,14 +31,20 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListener(ProfileCreated::class, $projectionRepository);
 
         $eventConnection = new Connection(['url' => 'sqlite:///somedb.sqlite'], new Driver());
-        $store = new MysqlSingleTableStore($eventConnection);
+        $store = new SQLiteSingleTableStore($eventConnection);
         $repository = new Repository($store, $eventStream, Profile::class);
 
+        // create tables
+        $profileProjection->create();
         $store->prepare();
 
         $profile = Profile::create('1');
         $repository->save($profile);
 
-        $result = $projectionConnection->fetchAssociative('SELECT * FROM profile WHERE id = 1');
+        $result = $projectionConnection->fetchAssociative('SELECT * FROM profile WHERE id = "1"');
+        var_dump($result);
+
+        $profileProjection->drop();
+        $store->drop();
     }
 }
