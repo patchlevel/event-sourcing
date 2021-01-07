@@ -15,5 +15,5 @@ interface EventBus
      */
     public function addListener(string $eventName, Listener $listener): void;
 
-    public function addSubscriber(Subscriber $subscriber): void;
+    public function addListenerForAll(Listener $listener): void;
 }

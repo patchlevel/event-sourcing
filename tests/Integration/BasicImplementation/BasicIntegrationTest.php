@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
-use Patchlevel\EventSourcing\EventBus\EventStream;
+use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Store\SQLiteSingleTableStore;
@@ -30,9 +29,9 @@ final class BasicIntegrationTest extends TestCase
             [$profileProjection]
         );
 
-        $eventStream = new EventStream();
+        $eventStream = new DefaultEventBus();
+        $eventStream->addListenerForAll($projectionRepository);
         $eventStream->addListener(ProfileCreated::class, new SendEmailProcessor());
-        $eventStream->addListener(ProfileCreated::class, $projectionRepository);
 
         $eventConnection = DriverManager::getConnection([
             'driverClass' => Driver::class,
