@@ -14,7 +14,7 @@ final class SendEmailProcessor implements Listener
     public function __invoke(AggregateChanged $event): void
     {
         if (!$event instanceof ProfileCreated) {
-            throw new RuntimeException();
+            return;
         }
 
         var_dump('send email yo');

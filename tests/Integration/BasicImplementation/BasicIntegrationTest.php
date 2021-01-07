@@ -31,8 +31,8 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $eventStream = new DefaultEventBus();
-        $eventStream->addListenerForAll($projectionRepository);
-        $eventStream->addListener(ProfileCreated::class, new SendEmailProcessor());
+        $eventStream->addListener($projectionRepository);
+        $eventStream->addListener(new SendEmailProcessor());
 
         $store = new SQLiteSingleTableStore($connection);
         $repository = new Repository($store, $eventStream, Profile::class);
