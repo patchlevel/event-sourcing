@@ -2,14 +2,12 @@
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use Symfony\Component\Messenger\Handler\MessageSubscriberInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
-interface Projection extends MessageSubscriberInterface
+interface Projection
 {
-    /**
-     * @return iterable<class-string, string|array<string, mixed>>
-     */
-    public static function getHandledMessages(): iterable;
+    /** @return iterable<class-string<AggregateChanged>, string> */
+    public function getHandledMessages(): iterable;
 
     public function drop(): void;
 }

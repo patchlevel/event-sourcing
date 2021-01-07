@@ -185,3 +185,11 @@ final class CreateProfileHandler
     }
 }
 ```
+
+
+## todo
+
+1) Prozessor -> Invoke nice to have
+2) EventStream
+2) Snapshots
+3) AggregateChildren 

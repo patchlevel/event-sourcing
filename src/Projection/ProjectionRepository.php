@@ -3,12 +3,12 @@
 namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\Projection\Exception\MethodDoesNotExist;
 use function get_class;
-use function is_string;
 use function method_exists;
-use function sprintf;
 
-final class ProjectionRepository
+final class ProjectionRepository implements Listener
 {
     /**
      * @var iterable<Projection>
@@ -23,22 +23,18 @@ final class ProjectionRepository
         $this->projections = $projections;
     }
 
-    public function handle(AggregateChanged $event): void
+    public function __invoke(AggregateChanged $event): void
     {
         foreach ($this->projections as $projection) {
-            $handlers = $projection::getHandledMessages();
+            $handlers = $projection->getHandledMessages();
 
             foreach ($handlers as $class => $method) {
                 if (!$event instanceof $class) {
                     continue;
                 }
 
-                if (!is_string($method)) {
-                    throw new ProjectionException(sprintf('complex "getHandledMessages" settings are not supported in %s', get_class($projection)));
-                }
-
                 if (!method_exists($projection, $method)) {
-                    throw new ProjectionException(sprintf('method "%s" does not exists in %s', $method, get_class($projection)));
+                    throw new MethodDoesNotExist(get_class($projection), $method);
                 }
 
                 $projection->$method($event);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventStream;
 use Patchlevel\EventSourcing\Store\Store;
@@ -58,7 +57,7 @@ final class Repository
             throw new AggregateNotFoundException($this->aggregateClass, $id);
         }
 
-        return $this->instances[$id] = $this->createAggregate($events);
+        return $this->instances[$id] = $this->aggregateClass::createFromEventStream($events);
     }
 
     public function has(string $id): bool
@@ -89,15 +88,5 @@ final class Repository
         foreach ($eventStream as $event) {
             $this->eventStream->dispatch($event);
         }
-    }
-
-    /**
-     * @param array<AggregateChanged> $eventStream
-     */
-    private function createAggregate(array $eventStream): AggregateRoot
-    {
-        $class = $this->aggregateClass;
-
-        return $class::createFromEventStream($eventStream);
     }
 }

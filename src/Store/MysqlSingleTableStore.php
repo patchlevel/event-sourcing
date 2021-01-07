@@ -8,15 +8,17 @@ use Doctrine\DBAL\Connection;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use RuntimeException;
+use function array_pop;
+use function explode;
 use function sprintf;
 
 final class MysqlSingleTableStore implements Store
 {
     private Connection $connection;
 
-    public function __construct(Connection $eventConnection)
+    public function __construct(Connection $connection)
     {
-        $this->connection = $eventConnection;
+        $this->connection = $connection;
     }
 
     /**
