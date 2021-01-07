@@ -20,11 +20,12 @@ final class BasicIntegrationTest extends TestCase
 {
     public function testSuccessful(): void
     {
-        $projectionConnection = DriverManager::getConnection([
+        $connection = DriverManager::getConnection([
             'driverClass' => Driver::class,
-            'path'        => __DIR__ . '/data/db.sqlite3',
+            'path' => __DIR__ . '/data/db.sqlite3',
         ]);
-        $profileProjection = new ProfileProjection($projectionConnection);
+
+        $profileProjection = new ProfileProjection($connection);
         $projectionRepository = new ProjectionRepository(
             [$profileProjection]
         );
@@ -33,29 +34,21 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListenerForAll($projectionRepository);
         $eventStream->addListener(ProfileCreated::class, new SendEmailProcessor());
 
-        $eventConnection = DriverManager::getConnection([
-            'driverClass' => Driver::class,
-            'path'        => __DIR__ . '/data/db.sqlite3',
-        ]);
-        $store = new SQLiteSingleTableStore($eventConnection);
+        $store = new SQLiteSingleTableStore($connection);
         $repository = new Repository($store, $eventStream, Profile::class);
 
         // create tables
-        $schema = $eventConnection->getSchemaManager()->createSchema();
-        $schema->createTable('profile');
         $profileProjection->create();
-
-        $schema = $eventConnection->getSchemaManager()->createSchema();
-        $schema->createTable('eventstore');
         $store->prepare();
 
         $profile = Profile::create('1');
         $repository->save($profile);
 
-        $result = $projectionConnection->fetchAssociative('SELECT * FROM profile WHERE id = "1"');
-        var_dump($result);
+        $result = $connection->fetchAssociative('SELECT * FROM profile WHERE id = "1"');
+        self::assertArrayHasKey('id', $result);
+        self::assertEquals('1', $result['id']);
 
-       # $profileProjection->drop();
-       # $store->drop();
+        $profileProjection->drop();
+        $store->drop();
     }
 }
