@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
+use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\EventStream;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
@@ -20,7 +21,10 @@ final class BasicIntegrationTest extends TestCase
 {
     public function testSuccessful(): void
     {
-        $projectionConnection = new Connection(['url' => 'sqlite:///somedb.sqlite'], new Driver());
+        $projectionConnection = DriverManager::getConnection([
+            'driverClass' => Driver::class,
+            'path'        => __DIR__ . '/data/db.sqlite3',
+        ]);
         $profileProjection = new ProfileProjection($projectionConnection);
         $projectionRepository = new ProjectionRepository(
             [$profileProjection]
@@ -30,7 +34,10 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListener(ProfileCreated::class, new SendEmailProcessor());
         $eventStream->addListener(ProfileCreated::class, $projectionRepository);
 
-        $eventConnection = new Connection(['url' => 'sqlite:///somedb.sqlite'], new Driver());
+        $eventConnection = DriverManager::getConnection([
+            'driverClass' => Driver::class,
+            'path'        => __DIR__ . '/data/db.sqlite3',
+        ]);
         $store = new SQLiteSingleTableStore($eventConnection);
         $repository = new Repository($store, $eventStream, Profile::class);
 
@@ -44,7 +51,7 @@ final class BasicIntegrationTest extends TestCase
         $result = $projectionConnection->fetchAssociative('SELECT * FROM profile WHERE id = "1"');
         var_dump($result);
 
-        $profileProjection->drop();
-        $store->drop();
+       # $profileProjection->drop();
+       # $store->drop();
     }
 }
