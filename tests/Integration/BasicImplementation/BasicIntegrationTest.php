@@ -7,11 +7,11 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Store\SQLiteSingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjection;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +33,41 @@ final class BasicIntegrationTest extends TestCase
         $eventStream = new DefaultEventBus();
         $eventStream->addListener($projectionRepository);
         $eventStream->addListener(new SendEmailProcessor());
+
+        $store = new SQLiteSingleTableStore($connection);
+        $repository = new Repository($store, $eventStream, Profile::class);
+
+        // create tables
+        $profileProjection->create();
+        $store->prepare();
+
+        $profile = Profile::create('1');
+        $repository->save($profile);
+
+        $result = $connection->fetchAssociative('SELECT * FROM profile WHERE id = "1"');
+        self::assertArrayHasKey('id', $result);
+        self::assertEquals('1', $result['id']);
+
+        $profileProjection->drop();
+        $store->drop();
+    }
+
+    public function testWithSymfonySuccessful(): void
+    {
+        $connection = DriverManager::getConnection([
+            'driverClass' => Driver::class,
+            'path' => __DIR__ . '/data/db.sqlite3',
+        ]);
+
+        $profileProjection = new ProfileProjection($connection);
+        $projectionRepository = new ProjectionRepository(
+            [$profileProjection]
+        );
+
+        $eventStream = SymfonyEventBus::create([
+            $projectionRepository,
+            new SendEmailProcessor(),
+        ]);
 
         $store = new SQLiteSingleTableStore($connection);
         $repository = new Repository($store, $eventStream, Profile::class);

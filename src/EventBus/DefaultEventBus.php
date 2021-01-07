@@ -16,10 +16,13 @@ final class DefaultEventBus implements EventBus
 
     private bool $processing;
 
-    public function __construct()
+    /**
+     * @param list<Listener> $listeners
+     */
+    public function __construct(array $listeners = [])
     {
         $this->queue = [];
-        $this->listeners = [];
+        $this->listeners = $listeners;
         $this->processing = false;
     }
 

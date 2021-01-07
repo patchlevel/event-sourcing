@@ -9,6 +9,4 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 interface EventBus
 {
     public function dispatch(AggregateChanged $event): void;
-
-    public function addListener(Listener $listener): void;
 }

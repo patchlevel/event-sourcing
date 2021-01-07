@@ -9,7 +9,6 @@ final class MethodDoesNotExist extends ProjectionException
 {
     /**
      * @param class-string<Projection> $class
-     * @param string $method
      */
     public function __construct(string $class, string $method)
     {
