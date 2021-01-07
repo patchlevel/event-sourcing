@@ -41,7 +41,12 @@ final class BasicIntegrationTest extends TestCase
         $repository = new Repository($store, $eventStream, Profile::class);
 
         // create tables
+        $schema = $eventConnection->getSchemaManager()->createSchema();
+        $schema->createTable('profile');
         $profileProjection->create();
+
+        $schema = $eventConnection->getSchemaManager()->createSchema();
+        $schema->createTable('eventstore');
         $store->prepare();
 
         $profile = Profile::create('1');

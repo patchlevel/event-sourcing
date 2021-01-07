@@ -114,12 +114,12 @@ final class SQLiteSingleTableStore implements Store
     {
         $this->connection->executeQuery('
             CREATE TABLE IF NOT EXISTS eventstore (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id INT PRIMARY KEY,
                 aggregate VARCHAR(255) NOT NULL,
                 aggregateId VARCHAR(255) NOT NULL,
                 playhead INT NOT NULL,
                 event VARCHAR(255) NOT NULL,
-                payload JSON NOT NULL,
+                payload TEXT NOT NULL,
                 recordedOn DATETIME NOT NULL,
                 UNIQUE (aggregate, aggregateId, playhead)
             )  
