@@ -14,4 +14,6 @@ interface EventBus
      * @param class-string<AggregateChanged> $eventName
      */
     public function addListener(string $eventName, Listener $listener): void;
+
+    public function addSubscriber(Subscriber $subscriber): void;
 }

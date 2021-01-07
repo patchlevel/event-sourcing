@@ -51,4 +51,9 @@ final class EventStream implements EventBus
     {
         $this->listeners[$eventName][] = $listener;
     }
+
+    public function addSubscriber(Subscriber $subscriber): void
+    {
+
+    }
 }

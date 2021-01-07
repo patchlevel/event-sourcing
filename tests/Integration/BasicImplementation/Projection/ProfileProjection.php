@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection;
 
-use Doctrine\DBAL\Driver\Connection;
+use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
@@ -24,6 +24,14 @@ final class ProfileProjection implements Projection
 
     public function drop(): void
     {
-        $this->connection->exec('DROP TABLE profile;');
+        $this->connection->executeStatement('DROP TABLE profile;');
+    }
+
+    public function applyProfileCreated(ProfileCreated $profileCreated): void
+    {
+        $this->connection->executeStatement(
+            'INSERT INTO profile (`id`) VALUES(":id");',
+            ['id' => $profileCreated->profileId()]
+        );
     }
 }
