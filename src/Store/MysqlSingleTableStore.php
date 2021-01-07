@@ -57,7 +57,7 @@ final class MysqlSingleTableStore implements Store
         $result = $this->connection->executeQuery('SELECT * FROM eventstore');
 
         /** @var array<string, mixed> $data */
-        foreach ($result as $data) {
+        foreach ($result->iterateAssociative() as $data) {
             yield AggregateChanged::deserialize($data);
         }
     }

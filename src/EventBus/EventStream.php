@@ -39,7 +39,9 @@ final class EventStream implements EventBus
         $this->processing = true;
 
         while ($event = array_shift($this->queue)) {
-            $this->projectionRepository->handle($event);
+            foreach ($listeners as $listener) {
+                $listener($event);
+            }
         }
 
         $this->processing = false;
