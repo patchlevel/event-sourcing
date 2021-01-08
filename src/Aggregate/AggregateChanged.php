@@ -95,7 +95,14 @@ abstract class AggregateChanged
 
         $event = new $class((string)$data['aggregateId'], $payload);
         $event->playhead = (int)$data['playhead'];
-        $event->recordedOn = $data['recordedOn'];
+
+        $recordedOn = $data['recordedOn'];
+
+        if (!$recordedOn instanceof DateTimeImmutable) {
+            throw new AggregateException();
+        }
+
+        $event->recordedOn = $recordedOn;
 
         return $event;
     }
