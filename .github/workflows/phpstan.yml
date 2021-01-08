@@ -33,6 +33,7 @@ jobs:
                   coverage: "pcov"
                   php-version: "${{ matrix.php-version }}"
                   ini-values: memory_limit=-1
+                  extensions: pdo_sqlite
 
             - name: "Cache dependencies"
               uses: "actions/cache@v2"
