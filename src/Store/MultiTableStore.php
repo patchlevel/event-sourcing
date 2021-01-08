@@ -92,10 +92,9 @@ final class MultiTableStore implements Store
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
         $tableName = self::tableName($aggregate);
-        $platform = $this->connection->getDatabasePlatform();
 
         $this->connection->transactional(
-            static function (Connection $connection) use ($tableName, $id, $events, $platform): void {
+            static function (Connection $connection) use ($tableName, $id, $events): void {
                 foreach ($events as $event) {
                     if ($event->aggregateId() !== $id) {
                         throw new StoreException('id missmatch');
@@ -103,11 +102,9 @@ final class MultiTableStore implements Store
 
                     $data = $event->serialize();
 
-                    if ($data['recordedOn'] instanceof \DateTimeImmutable) {
-                        $data['recordedOn'] = $data['recordedOn']->format($platform->getDateTimeTzFormatString());
-                    }
-
-                    $connection->insert($tableName, $data);
+                    $connection->insert($tableName, $data, [
+                        'recordedOn' => Types::DATETIMETZ_IMMUTABLE
+                    ]);
                 }
             }
         );
@@ -172,7 +169,7 @@ final class MultiTableStore implements Store
             ->setNotnull(true);
         $table->addColumn('payload', Types::JSON)
             ->setNotnull(true);
-        $table->addColumn('recordedOn', Types::DATE_IMMUTABLE)
+        $table->addColumn('recordedOn', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
