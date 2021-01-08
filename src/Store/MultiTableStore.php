@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
@@ -104,7 +102,10 @@ final class MultiTableStore implements Store
                     }
 
                     $data = $event->serialize();
-                    $data['recordedOn'] = self::fixRecordedOn($platform, $data['recordedOn']);
+
+                    if ($data['recordedOn'] instanceof \DateTimeImmutable) {
+                        $data['recordedOn'] = $data['recordedOn']->format($platform->getDateTimeTzFormatString());
+                    }
 
                     $connection->insert($tableName, $data);
                 }
@@ -198,16 +199,5 @@ final class MultiTableStore implements Store
         }
 
         return strtolower($string);
-    }
-
-    private static function fixRecordedOn(AbstractPlatform $platform, ?string $date): ?string
-    {
-        if (!$date) {
-            return null;
-        }
-
-        $format = $platform->getDateTimeTzFormatString();
-
-        return (new DateTimeImmutable($date))->format($format);
     }
 }

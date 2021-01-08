@@ -129,7 +129,10 @@ final class SingleTableStore implements Store
 
                     $data = $event->serialize();
                     $data['aggregate'] = self::shortName($aggregate);
-                    $data['recordedOn'] = self::fixRecordedOn($platform, $data['recordedOn']);
+
+                    if ($data['recordedOn'] instanceof \DateTimeImmutable) {
+                        $data['recordedOn'] = $data['recordedOn']->format($platform->getDateTimeTzFormatString());
+                    }
 
                     $connection->insert(self::TABLE_NAME, $data);
                 }
@@ -200,16 +203,5 @@ final class SingleTableStore implements Store
         }
 
         return $shortName;
-    }
-
-    private static function fixRecordedOn(AbstractPlatform $platform, ?string $date): ?string
-    {
-        if (!$date) {
-            return null;
-        }
-
-        $format = $platform->getDateTimeTzFormatString();
-
-        return (new DateTimeImmutable($date))->format($format);
     }
 }
