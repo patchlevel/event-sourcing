@@ -11,8 +11,6 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
-use function date;
-
 class AggregateChangedTest extends TestCase
 {
     public function testCreateEvent(): void
@@ -64,9 +62,9 @@ class AggregateChangedTest extends TestCase
 
         $event = ProfileCreated::raise($id, $email);
 
-        $beforeRecording = new DateTimeImmutable(date(DateTimeImmutable::ATOM));
+        $beforeRecording = new DateTimeImmutable();
         $recordedEvent = $event->recordNow(0);
-        $afterRecording = new DateTimeImmutable(date(DateTimeImmutable::ATOM));
+        $afterRecording = new DateTimeImmutable();
 
         $serializedEvent = $recordedEvent->serialize();
 
@@ -91,7 +89,7 @@ class AggregateChangedTest extends TestCase
         self::assertDateTimeImmutableBetween(
             $beforeRecording,
             $afterRecording,
-            new DateTimeImmutable($serializedEvent['recordedOn']),
+            $serializedEvent['recordedOn'],
         );
     }
 
@@ -105,7 +103,7 @@ class AggregateChangedTest extends TestCase
             'playhead' => 0,
             'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
             'payload' => '{"profileId":"1","email":"d.a.badura@gmail.com"}',
-            'recordedOn' => '2020-11-20 13:57:49',
+            'recordedOn' => new DateTimeImmutable('2020-11-20 13:57:49'),
         ]);
 
         self::assertEquals($id, $event->profileId());

@@ -51,7 +51,10 @@ final class MultiTableStore implements Store
 
         $result = $this->connection->fetchAllAssociative(
             $sql,
-            ['id' => $id]
+            ['id' => $id],
+            [
+                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+            ]
         );
 
         return array_map(
@@ -101,7 +104,14 @@ final class MultiTableStore implements Store
                     }
 
                     $data = $event->serialize();
-                    $connection->insert($tableName, $data);
+
+                    $connection->insert(
+                        $tableName,
+                        $data,
+                        [
+                            'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+                        ]
+                    );
                 }
             }
         );
@@ -166,7 +176,7 @@ final class MultiTableStore implements Store
             ->setNotnull(true);
         $table->addColumn('payload', Types::JSON)
             ->setNotnull(true);
-        $table->addColumn('recordedOn', Types::DATE_IMMUTABLE)
+        $table->addColumn('recordedOn', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);

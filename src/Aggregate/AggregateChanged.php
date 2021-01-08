@@ -95,7 +95,14 @@ abstract class AggregateChanged
 
         $event = new $class((string)$data['aggregateId'], $payload);
         $event->playhead = (int)$data['playhead'];
-        $event->recordedOn = $data['recordedOn'] ? new DateTimeImmutable((string)$data['recordedOn']) : null;
+
+        $recordedOn = $data['recordedOn'];
+
+        if (!$recordedOn instanceof DateTimeImmutable) {
+            throw new AggregateException();
+        }
+
+        $event->recordedOn = $recordedOn;
 
         return $event;
     }
@@ -105,16 +112,12 @@ abstract class AggregateChanged
      */
     public function serialize(): array
     {
-        $recordedOn = $this->recordedOn instanceof DateTimeImmutable
-            ? $this->recordedOn->format(DateTimeImmutable::ATOM)
-            : null;
-
         return [
             'aggregateId' => $this->aggregateId,
             'playhead' => $this->playhead,
             'event' => static::class,
             'payload' => json_encode($this->payload, JSON_THROW_ON_ERROR),
-            'recordedOn' => $recordedOn,
+            'recordedOn' => $this->recordedOn,
         ];
     }
 }

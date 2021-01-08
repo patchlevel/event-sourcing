@@ -47,6 +47,9 @@ final class SingleTableStore implements Store
             [
                 'aggregate' => self::shortName($aggregate),
                 'id' => $id,
+            ],
+            [
+                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
             ]
         );
 
@@ -69,7 +72,13 @@ final class SingleTableStore implements Store
             ->from(self::TABLE_NAME)
             ->getSQL();
 
-        $result = $this->connection->executeQuery($sql);
+        $result = $this->connection->executeQuery(
+            $sql,
+            [],
+            [
+                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+            ]
+        );
 
         /** @var array<string, mixed> $data */
         foreach ($result->iterateAssociative() as $data) {
@@ -126,7 +135,13 @@ final class SingleTableStore implements Store
                     $data = $event->serialize();
                     $data['aggregate'] = self::shortName($aggregate);
 
-                    $connection->insert(self::TABLE_NAME, $data);
+                    $connection->insert(
+                        self::TABLE_NAME,
+                        $data,
+                        [
+                            'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+                        ]
+                    );
                 }
             }
         );
@@ -174,7 +189,7 @@ final class SingleTableStore implements Store
             ->setNotnull(true);
         $table->addColumn('payload', Types::JSON)
             ->setNotnull(true);
-        $table->addColumn('recordedOn', Types::DATE_IMMUTABLE)
+        $table->addColumn('recordedOn', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
