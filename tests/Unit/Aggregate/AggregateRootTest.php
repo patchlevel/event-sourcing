@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
@@ -13,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 
 class AggregateRootTest extends TestCase
 {
-    public function testCreateAggregate()
+    public function testCreateAggregate(): void
     {
         $id = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');
@@ -30,7 +32,7 @@ class AggregateRootTest extends TestCase
         self::assertCount(1, $events);
     }
 
-    public function testExecuteMethod()
+    public function testExecuteMethod(): void
     {
         $profileId = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');

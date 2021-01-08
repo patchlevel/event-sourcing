@@ -7,15 +7,19 @@ namespace Patchlevel\EventSourcing\Store;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use RuntimeException;
+
+use function array_map;
+use function array_pop;
+use function explode;
+use function preg_replace;
 use function sprintf;
+use function strtolower;
 
 final class MysqlMultiTableStore implements Store
 {
     private Connection $connection;
 
-    /**
-     * @var array<class-string>
-     */
+    /** @var array<class-string> */
     private array $aggregates;
 
     /**
@@ -37,14 +41,15 @@ final class MysqlMultiTableStore implements Store
         $tableName = self::tableName($aggregate);
 
         $result = $this->connection->fetchAllAssociative(
-            "
-                SELECT * 
-                FROM $tableName 
-                WHERE aggregateId = :id
-            ",
-            [
-                'id' => $id,
-            ]
+            sprintf(
+                '
+                    SELECT * 
+                    FROM %s 
+                    WHERE aggregateId = :id
+                ',
+                $tableName
+            ),
+            ['id' => $id]
         );
 
         return array_map(
@@ -64,22 +69,23 @@ final class MysqlMultiTableStore implements Store
         $tableName = self::tableName($aggregate);
 
         $result = (int)$this->connection->fetchOne(
-            "
-                SELECT COUNT(*) 
-                FROM $tableName 
-                WHERE aggregateId = :id
-                LIMIT 1
-            ",
-            [
-                'id' => $id,
-            ]
+            sprintf(
+                '
+                    SELECT COUNT(*) 
+                    FROM %s 
+                    WHERE aggregateId = :id
+                    LIMIT 1
+                ',
+                $tableName
+            ),
+            ['id' => $id]
         );
 
         return $result > 0;
     }
 
     /**
-     * @param class-string $aggregate
+     * @param class-string       $aggregate
      * @param AggregateChanged[] $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
@@ -121,17 +127,22 @@ final class MysqlMultiTableStore implements Store
     {
         $tableName = self::tableName($aggregate);
 
-        $this->connection->executeQuery("
-            CREATE TABLE IF NOT EXISTS $tableName (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                aggregateId VARCHAR(255) NOT NULL,
-                playhead INT NOT NULL,
-                event VARCHAR(255) NOT NULL,
-                payload JSON NOT NULL,
-                recordedOn DATETIME NOT NULL,
-                UNIQUE KEY aggregate_key (aggregateId, playhead)
-            )  
-        ");
+        $this->connection->executeQuery(
+            sprintf(
+                '
+                    CREATE TABLE IF NOT EXISTS %s (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        aggregateId VARCHAR(255) NOT NULL,
+                        playhead INT NOT NULL,
+                        event VARCHAR(255) NOT NULL,
+                        payload JSON NOT NULL,
+                        recordedOn DATETIME NOT NULL,
+                        UNIQUE KEY aggregate_key (aggregateId, playhead)
+                    )  
+                ',
+                $tableName
+            )
+        );
     }
 
     /**
@@ -141,7 +152,7 @@ final class MysqlMultiTableStore implements Store
     {
         $tableName = self::tableName($aggregate);
 
-        $this->connection->executeQuery("DROP TABLE IF EXISTS $tableName;");
+        $this->connection->executeQuery(sprintf('DROP TABLE IF EXISTS %s;', $tableName));
     }
 
     /**

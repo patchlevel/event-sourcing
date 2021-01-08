@@ -7,7 +7,8 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Process
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
-use RuntimeException;
+
+use function var_dump;
 
 final class SendEmailProcessor implements Listener
 {

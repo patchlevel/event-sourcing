@@ -8,6 +8,8 @@ use Doctrine\DBAL\Connection;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use RuntimeException;
+
+use function array_map;
 use function array_pop;
 use function explode;
 use function sprintf;
@@ -89,7 +91,7 @@ final class MysqlSingleTableStore implements Store
     }
 
     /**
-     * @param class-string $aggregate
+     * @param class-string       $aggregate
      * @param AggregateChanged[] $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void

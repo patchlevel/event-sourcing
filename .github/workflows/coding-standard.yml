@@ -1,6 +1,6 @@
 # https://help.github.com/en/categories/automating-your-workflow-with-github-actions
 
-name: "Static Analysis by PHP-CS-Fixer"
+name: "Check Coding Standard"
 
 on:
     pull_request:
@@ -11,8 +11,8 @@ on:
             - "master"
 
 jobs:
-    static-analysis-php-cs-fixer:
-        name: "Static Analysis by PHP-CS-Fixer"
+    static-analysis-coding-standard:
+        name: "Static Analysis by patchlevel/coding-standard"
 
         runs-on: ${{ matrix.operating-system }}
 
@@ -58,5 +58,5 @@ jobs:
               if: ${{ matrix.dependencies == 'locked' }}
               run: "composer install --no-interaction --no-progress --no-suggest"
 
-            - name: "php-cs-fixer"
-              run: "vendor/bin/php-cs-fixer fix --dry-run --diff"
+            - name: "Coding Standard"
+              run: "vendor/bin/phpcs"

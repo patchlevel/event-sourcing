@@ -24,7 +24,7 @@
   },
   "require-dev": {
     "ext-pdo_sqlite": "^7.4",
-    "friendsofphp/php-cs-fixer": "^2.17.3",
+    "patchlevel/coding-standard": "^1.0.0",
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^0.12.65",
     "phpunit/phpunit": "^9.5.0",

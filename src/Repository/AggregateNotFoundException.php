@@ -1,8 +1,12 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository;
 
 use RuntimeException;
+
+use function sprintf;
 
 final class AggregateNotFoundException extends RuntimeException
 {

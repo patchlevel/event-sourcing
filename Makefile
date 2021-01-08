@@ -4,13 +4,13 @@ help:                                                                           
 vendor: composer.lock
 	composer install
 
-.PHONY: php-cs-check
-php-cs-check: vendor                                                            ## run cs fixer (dry-run)
-	vendor/bin/php-cs-fixer fix --diff --dry-run
+.PHONY: phpcs-check
+phpcs-check: vendor                                                             ## run phpcs
+	vendor/bin/phpcs
 
-.PHONY: php-cs-fix
-php-cs-fix: vendor                                                              ## run cs fixer
-	vendor/bin/php-cs-fixer fix
+.PHONY: phpcs-fix
+phpcs-fix: vendor                                                               ## run phpcs fixer
+	vendor/bin/phpcbf
 
 .PHONY: phpstan
 phpstan: vendor                                                                 ## run phpstan static code analyser
@@ -25,11 +25,10 @@ phpunit: vendor                                                                 
 	vendor/bin/phpunit --testdox --colors=always -v $(OPTIONS)
 
 .PHONY: static
-static: php-cs-fix phpstan psalm                                                ## run static analyser
+static: phpstan psalm phpcs-check                                               ## run static analyser
 
-.PHONY: test
-test: vendor
-	vendor/bin/phpunit                                                          ## run tests
+test:                                                                           ## run tests
+	phpunit
 
 .PHONY: dev
 dev: static test                                                                ## run dev tools

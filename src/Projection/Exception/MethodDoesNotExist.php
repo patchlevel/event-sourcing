@@ -1,8 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Exception;
 
 use Patchlevel\EventSourcing\Projection\Projection;
+
 use function sprintf;
 
 final class MethodDoesNotExist extends ProjectionException

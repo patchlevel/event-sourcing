@@ -1,9 +1,12 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use const DATE_ATOM;
 use DateTimeImmutable;
+
+use const DATE_ATOM;
 
 final class Message
 {
@@ -52,6 +55,9 @@ final class Message
         return $self;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function fromArray(array $data): self
     {
         $self = new self();

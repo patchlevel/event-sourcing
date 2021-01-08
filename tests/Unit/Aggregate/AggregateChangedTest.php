@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
@@ -9,9 +11,11 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
+use function date;
+
 class AggregateChangedTest extends TestCase
 {
-    public function testCreateEvent()
+    public function testCreateEvent(): void
     {
         $id = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');
@@ -32,7 +36,7 @@ class AggregateChangedTest extends TestCase
         );
     }
 
-    public function testRecordNow()
+    public function testRecordNow(): void
     {
         $id = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');
@@ -53,9 +57,8 @@ class AggregateChangedTest extends TestCase
         );
     }
 
-    public function testSerialize()
+    public function testSerialize(): void
     {
-
         $id = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');
 
@@ -92,7 +95,7 @@ class AggregateChangedTest extends TestCase
         );
     }
 
-    public function testDeserialize()
+    public function testDeserialize(): void
     {
         $id = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');
@@ -118,7 +121,7 @@ class AggregateChangedTest extends TestCase
         );
     }
 
-    public function testDeserializeClassNotFound()
+    public function testDeserializeClassNotFound(): void
     {
         $this->expectException(AggregateException::class);
 
@@ -131,7 +134,7 @@ class AggregateChangedTest extends TestCase
         ]);
     }
 
-    public function testDeserializeAndSerialize()
+    public function testDeserializeAndSerialize(): void
     {
         $id = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');
