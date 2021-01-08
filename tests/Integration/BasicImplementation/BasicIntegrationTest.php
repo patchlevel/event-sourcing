@@ -105,9 +105,7 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListener(new ProjectionListener($projectionRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
-        $store = new MultiTableStore($connection, [
-            Profile::class
-        ]);
+        $store = new MultiTableStore($connection, [Profile::class]);
 
         $repository = new Repository($store, $eventStream, Profile::class);
 

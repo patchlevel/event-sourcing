@@ -112,7 +112,7 @@ final class SingleTableStore implements Store
 
     /**
      * @param class-string<AggregateRoot> $aggregate
-     * @param AggregateChanged[] $events
+     * @param AggregateChanged[]          $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {

@@ -86,8 +86,8 @@ final class MultiTableStore implements Store
     }
 
     /**
-     * @param class-string       $aggregate
-     * @param AggregateChanged[] $events
+     * @param class-string<AggregateRoot> $aggregate
+     * @param AggregateChanged[]          $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
@@ -127,7 +127,7 @@ final class MultiTableStore implements Store
     }
 
     /**
-     * @param class-string $aggregate
+     * @param class-string<AggregateRoot> $aggregate
      */
     public function dropTableForAggregate(string $aggregate): void
     {
