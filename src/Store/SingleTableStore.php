@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
@@ -49,6 +47,9 @@ final class SingleTableStore implements Store
             [
                 'aggregate' => self::shortName($aggregate),
                 'id' => $id,
+            ],
+            [
+                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
             ]
         );
 
@@ -71,7 +72,13 @@ final class SingleTableStore implements Store
             ->from(self::TABLE_NAME)
             ->getSQL();
 
-        $result = $this->connection->executeQuery($sql);
+        $result = $this->connection->executeQuery(
+            $sql,
+            [],
+            [
+                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+            ]
+        );
 
         /** @var array<string, mixed> $data */
         foreach ($result->iterateAssociative() as $data) {
@@ -128,9 +135,13 @@ final class SingleTableStore implements Store
                     $data = $event->serialize();
                     $data['aggregate'] = self::shortName($aggregate);
 
-                    $connection->insert(self::TABLE_NAME, $data, [
-                        'recordedOn' => Types::DATETIMETZ_IMMUTABLE
-                    ]);
+                    $connection->insert(
+                        self::TABLE_NAME,
+                        $data,
+                        [
+                            'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+                        ]
+                    );
                 }
             }
         );

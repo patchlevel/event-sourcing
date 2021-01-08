@@ -51,7 +51,10 @@ final class MultiTableStore implements Store
 
         $result = $this->connection->fetchAllAssociative(
             $sql,
-            ['id' => $id]
+            ['id' => $id],
+            [
+                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+            ]
         );
 
         return array_map(
@@ -102,9 +105,13 @@ final class MultiTableStore implements Store
 
                     $data = $event->serialize();
 
-                    $connection->insert($tableName, $data, [
-                        'recordedOn' => Types::DATETIMETZ_IMMUTABLE
-                    ]);
+                    $connection->insert(
+                        $tableName,
+                        $data,
+                        [
+                            'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+                        ]
+                    );
                 }
             }
         );

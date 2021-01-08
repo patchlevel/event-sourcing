@@ -105,7 +105,7 @@ class AggregateChangedTest extends TestCase
             'playhead' => 0,
             'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
             'payload' => '{"profileId":"1","email":"d.a.badura@gmail.com"}',
-            'recordedOn' => new \DateTimeImmutable('2020-11-20 13:57:49'),
+            'recordedOn' => new DateTimeImmutable('2020-11-20 13:57:49'),
         ]);
 
         self::assertEquals($id, $event->profileId());
