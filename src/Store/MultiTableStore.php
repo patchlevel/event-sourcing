@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
@@ -92,15 +94,18 @@ final class MultiTableStore implements Store
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
         $tableName = self::tableName($aggregate);
+        $platform = $this->connection->getDatabasePlatform();
 
         $this->connection->transactional(
-            static function (Connection $connection) use ($tableName, $id, $events): void {
+            static function (Connection $connection) use ($tableName, $id, $events, $platform): void {
                 foreach ($events as $event) {
                     if ($event->aggregateId() !== $id) {
                         throw new StoreException('id missmatch');
                     }
 
                     $data = $event->serialize();
+                    $data['recordedOn'] = self::fixRecordedOn($platform, $data['recordedOn']);
+
                     $connection->insert($tableName, $data);
                 }
             }
@@ -193,5 +198,16 @@ final class MultiTableStore implements Store
         }
 
         return strtolower($string);
+    }
+
+    private static function fixRecordedOn(AbstractPlatform $platform, ?string $date): ?string
+    {
+        if (!$date) {
+            return null;
+        }
+
+        $format = $platform->getDateTimeTzFormatString();
+
+        return (new DateTimeImmutable($date))->format($format);
     }
 }
