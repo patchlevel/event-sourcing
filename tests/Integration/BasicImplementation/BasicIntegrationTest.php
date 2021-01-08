@@ -49,11 +49,6 @@ final class BasicIntegrationTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $this->connection = DriverManager::getConnection([
-            'driverClass' => Driver::class,
-            'path' => self::DB_PATH,
-        ]);
-
         $profileProjection = new ProfileProjection($this->connection);
         $projectionRepository = new ProjectionRepository(
             [$profileProjection]
@@ -83,11 +78,6 @@ final class BasicIntegrationTest extends TestCase
 
     public function testWithSymfonySuccessful(): void
     {
-        $this->connection = DriverManager::getConnection([
-            'driverClass' => Driver::class,
-            'path' => self::DB_PATH,
-        ]);
-
         $profileProjection = new ProfileProjection($this->connection);
         $projectionRepository = new ProjectionRepository(
             [$profileProjection]
@@ -118,11 +108,6 @@ final class BasicIntegrationTest extends TestCase
 
     public function testMultiTableSuccessful(): void
     {
-        $this->connection = DriverManager::getConnection([
-            'driverClass' => Driver::class,
-            'path' => self::DB_PATH,
-        ]);
-
         $profileProjection = new ProfileProjection($this->connection);
         $projectionRepository = new ProjectionRepository(
             [$profileProjection]
