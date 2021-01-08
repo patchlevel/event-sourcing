@@ -175,9 +175,9 @@ final class SingleTableStore implements Store
             ->setNotnull(true);
         $table->addColumn('event', Types::STRING)
             ->setNotnull(true);
-        $table->addColumn('payload', Types::TEXT)
+        $table->addColumn('payload', Types::JSON)
             ->setNotnull(true);
-        $table->addColumn('recordedOn', Types::DATETIME_MUTABLE)
+        $table->addColumn('recordedOn', Types::DATE_IMMUTABLE)
             ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
