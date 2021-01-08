@@ -24,6 +24,7 @@
   },
   "require-dev": {
     "ext-pdo_sqlite": "^7.4",
+    "infection/infection": "^0.20.2",
     "patchlevel/coding-standard": "^1.0.0",
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^0.12.65",
