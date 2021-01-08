@@ -64,9 +64,9 @@ class AggregateChangedTest extends TestCase
 
         $event = ProfileCreated::raise($id, $email);
 
-        $beforeRecording = new DateTimeImmutable(date(DateTimeImmutable::ATOM));
+        $beforeRecording = new DateTimeImmutable();
         $recordedEvent = $event->recordNow(0);
-        $afterRecording = new DateTimeImmutable(date(DateTimeImmutable::ATOM));
+        $afterRecording = new DateTimeImmutable();
 
         $serializedEvent = $recordedEvent->serialize();
 
