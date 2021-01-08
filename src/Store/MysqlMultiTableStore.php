@@ -41,11 +41,14 @@ final class MysqlMultiTableStore implements Store
         $tableName = self::tableName($aggregate);
 
         $result = $this->connection->fetchAllAssociative(
-            "
-                SELECT * 
-                FROM $tableName 
-                WHERE aggregateId = :id
-            ",
+            sprintf(
+                '
+                    SELECT * 
+                    FROM %s 
+                    WHERE aggregateId = :id
+                ',
+                $tableName
+            ),
             ['id' => $id]
         );
 
@@ -66,12 +69,15 @@ final class MysqlMultiTableStore implements Store
         $tableName = self::tableName($aggregate);
 
         $result = (int)$this->connection->fetchOne(
-            "
-                SELECT COUNT(*) 
-                FROM $tableName 
-                WHERE aggregateId = :id
-                LIMIT 1
-            ",
+            sprintf(
+                '
+                    SELECT COUNT(*) 
+                    FROM %s 
+                    WHERE aggregateId = :id
+                    LIMIT 1
+                ',
+                $tableName
+            ),
             ['id' => $id]
         );
 
@@ -121,17 +127,22 @@ final class MysqlMultiTableStore implements Store
     {
         $tableName = self::tableName($aggregate);
 
-        $this->connection->executeQuery("
-            CREATE TABLE IF NOT EXISTS $tableName (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                aggregateId VARCHAR(255) NOT NULL,
-                playhead INT NOT NULL,
-                event VARCHAR(255) NOT NULL,
-                payload JSON NOT NULL,
-                recordedOn DATETIME NOT NULL,
-                UNIQUE KEY aggregate_key (aggregateId, playhead)
-            )  
-        ");
+        $this->connection->executeQuery(
+            sprintf(
+                '
+                    CREATE TABLE IF NOT EXISTS %s (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        aggregateId VARCHAR(255) NOT NULL,
+                        playhead INT NOT NULL,
+                        event VARCHAR(255) NOT NULL,
+                        payload JSON NOT NULL,
+                        recordedOn DATETIME NOT NULL,
+                        UNIQUE KEY aggregate_key (aggregateId, playhead)
+                    )  
+                ',
+                $tableName
+            )
+        );
     }
 
     /**
@@ -141,7 +152,7 @@ final class MysqlMultiTableStore implements Store
     {
         $tableName = self::tableName($aggregate);
 
-        $this->connection->executeQuery("DROP TABLE IF EXISTS $tableName;");
+        $this->connection->executeQuery(sprintf('DROP TABLE IF EXISTS %s;', $tableName));
     }
 
     /**

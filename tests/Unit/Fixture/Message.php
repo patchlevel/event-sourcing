@@ -55,6 +55,9 @@ final class Message
         return $self;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function fromArray(array $data): self
     {
         $self = new self();
