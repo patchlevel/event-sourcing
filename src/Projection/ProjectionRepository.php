@@ -3,12 +3,11 @@
 namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\Projection\Exception\MethodDoesNotExist;
 use function get_class;
 use function method_exists;
 
-final class ProjectionRepository implements Listener
+final class ProjectionRepository
 {
     /**
      * @var iterable<Projection>
@@ -23,7 +22,7 @@ final class ProjectionRepository implements Listener
         $this->projections = $projections;
     }
 
-    public function __invoke(AggregateChanged $event): void
+    public function handle(AggregateChanged $event): void
     {
         foreach ($this->projections as $projection) {
             $handlers = $projection->getHandledMessages();

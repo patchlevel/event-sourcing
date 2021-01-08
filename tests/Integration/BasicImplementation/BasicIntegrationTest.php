@@ -8,6 +8,7 @@ use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
+use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Store\SQLiteSingleTableStore;
@@ -31,7 +32,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $eventStream = new DefaultEventBus();
-        $eventStream->addListener($projectionRepository);
+        $eventStream->addListener(new ProjectionListener($projectionRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
         $store = new SQLiteSingleTableStore($connection);
@@ -65,7 +66,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $eventStream = SymfonyEventBus::create([
-            $projectionRepository,
+            new ProjectionListener($projectionRepository),
             new SendEmailProcessor(),
         ]);
 

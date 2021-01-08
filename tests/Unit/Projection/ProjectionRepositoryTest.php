@@ -17,7 +17,7 @@ final class ProjectionRepositoryTest extends TestCase
     public function testHandleWithNoProjections(): void
     {
         $projectionRepository = new ProjectionRepository([]);
-        $projectionRepository(ProfileCreated::raise(
+        $projectionRepository->handle(ProfileCreated::raise(
             ProfileId::fromString('1'),
             Email::fromString('profile@test.com')
         ));
