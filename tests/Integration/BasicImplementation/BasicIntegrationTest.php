@@ -18,15 +18,20 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\Sen
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjection;
 use PHPUnit\Framework\TestCase;
 
+use function file_exists;
+use function unlink;
+
 final class BasicIntegrationTest extends TestCase
 {
     private const DB_PATH = __DIR__ . '/data/db.sqlite3';
 
     public function setUp(): void
     {
-        if (file_exists(self::DB_PATH)) {
-            unlink(self::DB_PATH);
+        if (!file_exists(self::DB_PATH)) {
+            return;
         }
+
+        unlink(self::DB_PATH);
     }
 
     public function testSuccessful(): void
