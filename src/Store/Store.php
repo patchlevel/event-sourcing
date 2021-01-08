@@ -21,7 +21,7 @@ interface Store
     public function has(string $aggregate, string $id): bool;
 
     /**
-     * @param class-string $aggregate
+     * @param class-string       $aggregate
      * @param AggregateChanged[] $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void;

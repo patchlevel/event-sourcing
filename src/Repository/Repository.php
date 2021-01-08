@@ -8,8 +8,10 @@ use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Store\Store;
+
 use function array_key_exists;
 use function count;
+use function get_class;
 use function is_subclass_of;
 use function sprintf;
 
@@ -18,14 +20,10 @@ final class Repository
     private Store $store;
     private EventBus $eventStream;
 
-    /**
-     * @var class-string<AggregateRoot>
-     */
+    /** @var class-string<AggregateRoot> */
     private string $aggregateClass;
 
-    /**
-     * @var array<string, AggregateRoot>
-     */
+    /** @var array<string, AggregateRoot> */
     private array $instances = [];
 
     /**

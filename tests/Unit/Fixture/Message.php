@@ -1,9 +1,12 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use const DATE_ATOM;
 use DateTimeImmutable;
+
+use const DATE_ATOM;
 
 final class Message
 {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\EventBus;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+
 use function array_shift;
 
 final class DefaultEventBus implements EventBus

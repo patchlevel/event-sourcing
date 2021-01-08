@@ -31,15 +31,14 @@ final class SymfonyEventBus implements EventBus
 
     /**
      * @param list<Listener> $listeners
+     *
      * @return static
      */
     public static function create(array $listeners = []): self
     {
         $bus = new MessageBus([
             new HandleMessageMiddleware(
-                new HandlersLocator([
-                    AggregateChanged::class => $listeners,
-                ]),
+                new HandlersLocator([AggregateChanged::class => $listeners]),
                 true
             ),
         ]);

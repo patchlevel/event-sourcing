@@ -11,9 +11,7 @@ use function method_exists;
 
 abstract class AggregateRoot
 {
-    /**
-     * @var AggregateChanged[]
-     */
+    /** @var AggregateChanged[] */
     private array $uncommittedEvents = [];
     private int $playhead = -1;
 
@@ -45,6 +43,7 @@ abstract class AggregateRoot
 
     /**
      * @param AggregateChanged[] $stream
+     *
      * @return static
      */
     public static function createFromEventStream(array $stream): self

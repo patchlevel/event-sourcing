@@ -1,19 +1,24 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
 use DateTimeImmutable;
-use function get_class;
+
+use function assert;
+use function is_string;
+use function is_subclass_of;
 use function json_decode;
 use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
 
 abstract class AggregateChanged
 {
     protected string $aggregateId;
 
-    /**
-     * @var array<string, mixed>
-     */
+    /** @var array<string, mixed> */
     protected array $payload;
     private ?int $playhead;
     private ?DateTimeImmutable $recordedOn;
@@ -54,6 +59,7 @@ abstract class AggregateChanged
 
     /**
      * @param array<string, mixed> $payload
+     *
      * @return static
      */
     protected static function occur(string $aggregateId, array $payload = []): self
@@ -75,8 +81,8 @@ abstract class AggregateChanged
      */
     public static function deserialize(array $data): self
     {
-        /** @var string $class */
         $class = $data['event'];
+        assert(is_string($class));
 
         if (!is_subclass_of($class, self::class)) {
             throw new AggregateException();
@@ -100,7 +106,7 @@ abstract class AggregateChanged
         return [
             'aggregateId' => $this->aggregateId,
             'playhead' => $this->playhead,
-            'event' => get_class($this),
+            'event' => static::class,
             'payload' => json_encode($this->payload, JSON_THROW_ON_ERROR),
             'recordedOn' => $this->recordedOn instanceof DateTimeImmutable ? $this->recordedOn->format(DateTimeImmutable::ATOM) : null,
         ];

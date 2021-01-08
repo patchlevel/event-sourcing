@@ -2,5 +2,5 @@ vendor/
 coverage/
 phpunit.xml
 .phpunit.result.cache
-.php_cs.cache
+.phpcs-cache
 phpstan.neon

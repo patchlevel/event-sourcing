@@ -7,15 +7,19 @@ namespace Patchlevel\EventSourcing\Store;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use RuntimeException;
+
+use function array_map;
+use function array_pop;
+use function explode;
+use function preg_replace;
 use function sprintf;
+use function strtolower;
 
 final class MysqlMultiTableStore implements Store
 {
     private Connection $connection;
 
-    /**
-     * @var array<class-string>
-     */
+    /** @var array<class-string> */
     private array $aggregates;
 
     /**
@@ -42,9 +46,7 @@ final class MysqlMultiTableStore implements Store
                 FROM $tableName 
                 WHERE aggregateId = :id
             ",
-            [
-                'id' => $id,
-            ]
+            ['id' => $id]
         );
 
         return array_map(
@@ -70,16 +72,14 @@ final class MysqlMultiTableStore implements Store
                 WHERE aggregateId = :id
                 LIMIT 1
             ",
-            [
-                'id' => $id,
-            ]
+            ['id' => $id]
         );
 
         return $result > 0;
     }
 
     /**
-     * @param class-string $aggregate
+     * @param class-string       $aggregate
      * @param AggregateChanged[] $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
