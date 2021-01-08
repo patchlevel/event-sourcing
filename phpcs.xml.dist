@@ -8,5 +8,7 @@
     <file>src</file>
     <file>tests</file>
 
-    <rule ref="PatchlevelCodingStandard"/>
+    <rule ref="PatchlevelCodingStandard">
+        <exclude name="SlevomatCodingStandard.Classes.SuperfluousExceptionNaming.SuperfluousSuffix" />
+    </rule>
 </ruleset>
