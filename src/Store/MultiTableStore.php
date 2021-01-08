@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Schema\Comparator;
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use RuntimeException;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_map;
 use function array_pop;
@@ -19,11 +22,11 @@ final class MultiTableStore implements Store
 {
     private Connection $connection;
 
-    /** @var array<class-string> */
+    /** @var list<class-string<AggregateRoot>> */
     private array $aggregates;
 
     /**
-     * @param array<class-string> $aggregates
+     * @param list<class-string<AggregateRoot>> $aggregates
      */
     public function __construct(Connection $eventConnection, array $aggregates)
     {
@@ -32,7 +35,7 @@ final class MultiTableStore implements Store
     }
 
     /**
-     * @param class-string $aggregate
+     * @param class-string<AggregateRoot> $aggregate
      *
      * @return AggregateChanged[]
      */
@@ -40,15 +43,14 @@ final class MultiTableStore implements Store
     {
         $tableName = self::tableName($aggregate);
 
+        $sql = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($tableName)
+            ->where('aggregateId = :id')
+            ->getSQL();
+
         $result = $this->connection->fetchAllAssociative(
-            sprintf(
-                '
-                    SELECT * 
-                    FROM %s 
-                    WHERE aggregateId = :id
-                ',
-                $tableName
-            ),
+            $sql,
             ['id' => $id]
         );
 
@@ -62,22 +64,21 @@ final class MultiTableStore implements Store
     }
 
     /**
-     * @param class-string $aggregate
+     * @param class-string<AggregateRoot> $aggregate
      */
     public function has(string $aggregate, string $id): bool
     {
         $tableName = self::tableName($aggregate);
 
+        $sql = $this->connection->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from($tableName)
+            ->where('aggregateId = :id')
+            ->setMaxResults(1)
+            ->getSQL();
+
         $result = (int)$this->connection->fetchOne(
-            sprintf(
-                '
-                    SELECT COUNT(*) 
-                    FROM %s 
-                    WHERE aggregateId = :id
-                    LIMIT 1
-                ',
-                $tableName
-            ),
+            $sql,
             ['id' => $id]
         );
 
@@ -108,8 +109,13 @@ final class MultiTableStore implements Store
 
     public function prepare(): void
     {
-        foreach ($this->aggregates as $aggregate) {
-            $this->createTableForAggregate($aggregate);
+        $schemaManager = $this->connection->getSchemaManager();
+
+        $comparator = new Comparator();
+        $schemaDiff = $comparator->compare($schemaManager->createSchema(), $this->schema());
+
+        foreach ($schemaDiff->toSaveSql($this->connection->getDatabasePlatform()) as $sql) {
+            $this->connection->executeStatement($sql);
         }
     }
 
@@ -123,31 +129,6 @@ final class MultiTableStore implements Store
     /**
      * @param class-string $aggregate
      */
-    public function createTableForAggregate(string $aggregate): void
-    {
-        $tableName = self::tableName($aggregate);
-
-        $this->connection->executeQuery(
-            sprintf(
-                '
-                    CREATE TABLE IF NOT EXISTS %s (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        aggregateId VARCHAR(255) NOT NULL,
-                        playhead INT NOT NULL,
-                        event VARCHAR(255) NOT NULL,
-                        payload JSON NOT NULL,
-                        recordedOn DATETIME NOT NULL,
-                        UNIQUE KEY aggregate_key (aggregateId, playhead)
-                    )  
-                ',
-                $tableName
-            )
-        );
-    }
-
-    /**
-     * @param class-string $aggregate
-     */
     public function dropTableForAggregate(string $aggregate): void
     {
         $tableName = self::tableName($aggregate);
@@ -155,8 +136,46 @@ final class MultiTableStore implements Store
         $this->connection->executeQuery(sprintf('DROP TABLE IF EXISTS %s;', $tableName));
     }
 
+    private function schema(): Schema
+    {
+        $schema = new Schema([], [], $this->connection->getSchemaManager()->createSchemaConfig());
+
+        foreach ($this->aggregates as $aggregateClass) {
+            $this->addTableToSchema($schema, $aggregateClass);
+        }
+
+        return $schema;
+    }
+
     /**
-     * @param class-string $name
+     * @param class-string<AggregateRoot> $aggregateClass
+     */
+    private function addTableToSchema(Schema $schema, $aggregateClass): void
+    {
+        $tableName = self::tableName($aggregateClass);
+        $table = $schema->createTable($tableName);
+
+        $table->addColumn('id', Types::BIGINT)
+            ->setAutoincrement(true)
+            ->setNotnull(true);
+        $table->addColumn('aggregateId', Types::STRING)
+            ->setNotnull(true);
+        $table->addColumn('playhead', Types::INTEGER)
+            ->setNotnull(true);
+        $table->addColumn('event', Types::STRING)
+            ->setNotnull(true);
+        $table->addColumn('payload', Types::JSON)
+            ->setNotnull(true);
+        $table->addColumn('recordedOn', Types::DATE_IMMUTABLE)
+            ->setNotnull(false);
+
+        $table->setPrimaryKey(['id']);
+
+        $table->addUniqueIndex(['aggregateId', 'playhead']);
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $name
      */
     private static function tableName(string $name): string
     {
@@ -164,13 +183,13 @@ final class MultiTableStore implements Store
         $shortName = array_pop($parts);
 
         if (!$shortName) {
-            throw new RuntimeException(sprintf('%s is not a valid classname', $name));
+            throw new StoreException(sprintf('%s is not a valid classname', $name));
         }
 
         $string = (string)preg_replace('/(?<=[a-z])([A-Z])/', '_$1', $shortName);
 
         if (!$string) {
-            throw new RuntimeException(sprintf('%s is not a valid table name', $string));
+            throw new StoreException(sprintf('%s is not a valid table name', $string));
         }
 
         return strtolower($string);

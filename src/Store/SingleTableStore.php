@@ -10,6 +10,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use RuntimeException;
 
 use function array_map;
@@ -29,7 +30,7 @@ final class SingleTableStore implements Store
     }
 
     /**
-     * @param class-string $aggregate
+     * @param class-string<AggregateRoot> $aggregate
      *
      * @return AggregateChanged[]
      */
@@ -77,7 +78,7 @@ final class SingleTableStore implements Store
     }
 
     /**
-     * @param class-string $aggregate
+     * @param class-string<AggregateRoot> $aggregate
      */
     public function has(string $aggregate, string $id): bool
     {
@@ -110,7 +111,7 @@ final class SingleTableStore implements Store
     }
 
     /**
-     * @param class-string       $aggregate
+     * @param class-string<AggregateRoot> $aggregate
      * @param AggregateChanged[] $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
@@ -160,10 +161,6 @@ final class SingleTableStore implements Store
     {
         $table = $schema->createTable(self::TABLE_NAME);
 
-        // do we need this?
-        // add an internal option to mark that we created this & the non-namespaced table name
-        // $table->addOption(self::TABLE_OPTION_NAME, $this->configuration['table_name']);
-
         $table->addColumn('id', Types::BIGINT)
             ->setAutoincrement(true)
             ->setNotnull(true);
@@ -186,7 +183,7 @@ final class SingleTableStore implements Store
     }
 
     /**
-     * @param class-string $name
+     * @param class-string<AggregateRoot> $name
      */
     private static function shortName(string $name): string
     {
