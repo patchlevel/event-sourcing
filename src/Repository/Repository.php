@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\EventStream;
+use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Store\Store;
 use function array_key_exists;
 use function count;
@@ -17,7 +16,7 @@ use function sprintf;
 final class Repository
 {
     private Store $store;
-    private EventStream $eventStream;
+    private EventBus $eventStream;
 
     /**
      * @var class-string<AggregateRoot>
@@ -32,7 +31,7 @@ final class Repository
     /**
      * @param class-string $aggregateClass
      */
-    public function __construct(Store $store, EventStream $eventStream, string $aggregateClass)
+    public function __construct(Store $store, EventBus $eventStream, string $aggregateClass)
     {
         if (is_subclass_of($aggregateClass, AggregateRoot::class) === false) {
             throw new InvalidArgumentException(sprintf(
@@ -58,7 +57,7 @@ final class Repository
             throw new AggregateNotFoundException($this->aggregateClass, $id);
         }
 
-        return $this->instances[$id] = $this->createAggregate($events);
+        return $this->instances[$id] = $this->aggregateClass::createFromEventStream($events);
     }
 
     public function has(string $id): bool
@@ -89,15 +88,5 @@ final class Repository
         foreach ($eventStream as $event) {
             $this->eventStream->dispatch($event);
         }
-    }
-
-    /**
-     * @param array<AggregateChanged> $eventStream
-     */
-    private function createAggregate(array $eventStream): AggregateRoot
-    {
-        $class = $this->aggregateClass;
-
-        return $class::createFromEventStream($eventStream);
     }
 }

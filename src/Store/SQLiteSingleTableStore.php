@@ -12,7 +12,7 @@ use function array_pop;
 use function explode;
 use function sprintf;
 
-final class MysqlSingleTableStore implements Store
+final class SQLiteSingleTableStore implements Store
 {
     private Connection $connection;
 
@@ -114,14 +114,14 @@ final class MysqlSingleTableStore implements Store
     {
         $this->connection->executeQuery('
             CREATE TABLE IF NOT EXISTS eventstore (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id INT PRIMARY KEY,
                 aggregate VARCHAR(255) NOT NULL,
                 aggregateId VARCHAR(255) NOT NULL,
                 playhead INT NOT NULL,
                 event VARCHAR(255) NOT NULL,
-                payload JSON NOT NULL,
+                payload TEXT NOT NULL,
                 recordedOn DATETIME NOT NULL,
-                UNIQUE KEY aggregate_key (aggregate, aggregateId, playhead)
+                UNIQUE (aggregate, aggregateId, playhead)
             )  
         ');
     }
