@@ -20,11 +20,20 @@ use PHPUnit\Framework\TestCase;
 
 final class BasicIntegrationTest extends TestCase
 {
+    private const DB_PATH = __DIR__ . '/data/db.sqlite3';
+
+    public function setUp(): void
+    {
+        if (file_exists(self::DB_PATH)) {
+            unlink(self::DB_PATH);
+        }
+    }
+
     public function testSuccessful(): void
     {
         $connection = DriverManager::getConnection([
             'driverClass' => Driver::class,
-            'path' => __DIR__ . '/data/db.sqlite3',
+            'path' => self::DB_PATH,
         ]);
 
         $profileProjection = new ProfileProjection($connection);
@@ -46,7 +55,7 @@ final class BasicIntegrationTest extends TestCase
         $profile = Profile::create('1');
         $repository->save($profile);
 
-        $result = $connection->fetchAssociative('SELECT * FROM profile WHERE id = "1"');
+        $result = $connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
@@ -58,7 +67,7 @@ final class BasicIntegrationTest extends TestCase
     {
         $connection = DriverManager::getConnection([
             'driverClass' => Driver::class,
-            'path' => __DIR__ . '/data/db.sqlite3',
+            'path' => self::DB_PATH,
         ]);
 
         $profileProjection = new ProfileProjection($connection);
@@ -81,7 +90,7 @@ final class BasicIntegrationTest extends TestCase
         $profile = Profile::create('1');
         $repository->save($profile);
 
-        $result = $connection->fetchAssociative('SELECT * FROM profile WHERE id = "1"');
+        $result = $connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
@@ -93,7 +102,7 @@ final class BasicIntegrationTest extends TestCase
     {
         $connection = DriverManager::getConnection([
             'driverClass' => Driver::class,
-            'path' => __DIR__ . '/data/db.sqlite3',
+            'path' => self::DB_PATH,
         ]);
 
         $profileProjection = new ProfileProjection($connection);
@@ -116,7 +125,7 @@ final class BasicIntegrationTest extends TestCase
         $profile = Profile::create('1');
         $repository->save($profile);
 
-        $result = $connection->fetchAssociative('SELECT * FROM profile WHERE id = "1"');
+        $result = $connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
