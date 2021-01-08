@@ -102,8 +102,8 @@ final class BasicIntegrationTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
-        $profileProjection->drop();
-        $store->drop();
+        $repository = new Repository($store, $eventStream, Profile::class);
+        $profile = $repository->load('1');
     }
 
     public function testMultiTableSuccessful(): void
