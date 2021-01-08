@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
-use Patchlevel\EventSourcing\Store\SQLiteSingleTableStore;
+use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjection;
@@ -35,7 +35,7 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListener(new ProjectionListener($projectionRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
-        $store = new SQLiteSingleTableStore($connection);
+        $store = new SingleTableStore($connection);
         $repository = new Repository($store, $eventStream, Profile::class);
 
         // create tables
@@ -70,7 +70,7 @@ final class BasicIntegrationTest extends TestCase
             new SendEmailProcessor(),
         ]);
 
-        $store = new SQLiteSingleTableStore($connection);
+        $store = new SingleTableStore($connection);
         $repository = new Repository($store, $eventStream, Profile::class);
 
         // create tables

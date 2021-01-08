@@ -15,7 +15,7 @@ use function preg_replace;
 use function sprintf;
 use function strtolower;
 
-final class MysqlMultiTableStore implements Store
+final class MultiTableStore implements Store
 {
     private Connection $connection;
 
