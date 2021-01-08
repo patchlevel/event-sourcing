@@ -5,20 +5,26 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 use Doctrine\DBAL\Connection;
-use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use RuntimeException;
-use function array_pop;
-use function explode;
 use function sprintf;
 
-final class MysqlSingleTableStore implements Store
+final class MysqlMultiTableStore implements Store
 {
     private Connection $connection;
 
-    public function __construct(Connection $connection)
+    /**
+     * @var array<class-string>
+     */
+    private array $aggregates;
+
+    /**
+     * @param array<class-string> $aggregates
+     */
+    public function __construct(Connection $eventConnection, array $aggregates)
     {
-        $this->connection = $connection;
+        $this->connection = $eventConnection;
+        $this->aggregates = $aggregates;
     }
 
     /**
@@ -28,20 +34,21 @@ final class MysqlSingleTableStore implements Store
      */
     public function load(string $aggregate, string $id): array
     {
+        $tableName = self::tableName($aggregate);
+
         $result = $this->connection->fetchAllAssociative(
-            '
+            "
                 SELECT * 
-                FROM eventstore 
-                WHERE aggregate = :aggregate AND aggregateId = :id
-            ',
+                FROM $tableName 
+                WHERE aggregateId = :id
+            ",
             [
-                'aggregate' => self::shortName($aggregate),
                 'id' => $id,
             ]
         );
 
         return array_map(
-            /** @param array<string, mixed> $data */
+        /** @param array<string, mixed> $data */
             static function (array $data) {
                 return AggregateChanged::deserialize($data);
             },
@@ -50,42 +57,25 @@ final class MysqlSingleTableStore implements Store
     }
 
     /**
-     * @return Generator<AggregateChanged>
-     */
-    public function loadAll(): Generator
-    {
-        $result = $this->connection->executeQuery('SELECT * FROM eventstore');
-
-        /** @var array<string, mixed> $data */
-        foreach ($result->iterateAssociative() as $data) {
-            yield AggregateChanged::deserialize($data);
-        }
-    }
-
-    /**
      * @param class-string $aggregate
      */
     public function has(string $aggregate, string $id): bool
     {
+        $tableName = self::tableName($aggregate);
+
         $result = (int)$this->connection->fetchOne(
-            '
+            "
                 SELECT COUNT(*) 
-                FROM eventstore 
-                WHERE aggregate = :aggregate AND aggregateId = :id
+                FROM $tableName 
+                WHERE aggregateId = :id
                 LIMIT 1
-            ',
+            ",
             [
-                'aggregate' => self::shortName($aggregate),
                 'id' => $id,
             ]
         );
 
         return $result > 0;
-    }
-
-    public function count(): int
-    {
-        return (int)$this->connection->fetchOne('SELECT COUNT(*) FROM eventstore');
     }
 
     /**
@@ -94,19 +84,17 @@ final class MysqlSingleTableStore implements Store
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
-        $shortName = self::shortName($aggregate);
+        $tableName = self::tableName($aggregate);
 
         $this->connection->transactional(
-            static function (Connection $connection) use ($shortName, $id, $events): void {
+            static function (Connection $connection) use ($tableName, $id, $events): void {
                 foreach ($events as $event) {
                     if ($event->aggregateId() !== $id) {
                         throw new StoreException('id missmatch');
                     }
 
                     $data = $event->serialize();
-                    $data['aggregate'] = $shortName;
-
-                    $connection->insert('eventstore', $data);
+                    $connection->insert($tableName, $data);
                 }
             }
         );
@@ -114,29 +102,52 @@ final class MysqlSingleTableStore implements Store
 
     public function prepare(): void
     {
-        $this->connection->executeQuery('
-            CREATE TABLE IF NOT EXISTS eventstore (
+        foreach ($this->aggregates as $aggregate) {
+            $this->createTableForAggregate($aggregate);
+        }
+    }
+
+    public function drop(): void
+    {
+        foreach ($this->aggregates as $aggregate) {
+            $this->dropTableForAggregate($aggregate);
+        }
+    }
+
+    /**
+     * @param class-string $aggregate
+     */
+    public function createTableForAggregate(string $aggregate): void
+    {
+        $tableName = self::tableName($aggregate);
+
+        $this->connection->executeQuery("
+            CREATE TABLE IF NOT EXISTS $tableName (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                aggregate VARCHAR(255) NOT NULL,
                 aggregateId VARCHAR(255) NOT NULL,
                 playhead INT NOT NULL,
                 event VARCHAR(255) NOT NULL,
                 payload JSON NOT NULL,
                 recordedOn DATETIME NOT NULL,
-                UNIQUE KEY aggregate_key (aggregate, aggregateId, playhead)
+                UNIQUE KEY aggregate_key (aggregateId, playhead)
             )  
-        ');
+        ");
     }
 
-    public function drop(): void
+    /**
+     * @param class-string $aggregate
+     */
+    public function dropTableForAggregate(string $aggregate): void
     {
-        $this->connection->executeQuery('DROP TABLE IF EXISTS eventstore;');
+        $tableName = self::tableName($aggregate);
+
+        $this->connection->executeQuery("DROP TABLE IF EXISTS $tableName;");
     }
 
     /**
      * @param class-string $name
      */
-    private static function shortName(string $name): string
+    private static function tableName(string $name): string
     {
         $parts = explode('\\', $name);
         $shortName = array_pop($parts);
@@ -145,6 +156,12 @@ final class MysqlSingleTableStore implements Store
             throw new RuntimeException(sprintf('%s is not a valid classname', $name));
         }
 
-        return $shortName;
+        $string = (string)preg_replace('/(?<=[a-z])([A-Z])/', '_$1', $shortName);
+
+        if (!$string) {
+            throw new RuntimeException(sprintf('%s is not a valid table name', $string));
+        }
+
+        return strtolower($string);
     }
 }

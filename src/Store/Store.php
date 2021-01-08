@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 interface Store
@@ -17,16 +16,9 @@ interface Store
     public function load(string $aggregate, string $id): array;
 
     /**
-     * @return Generator<AggregateChanged>
-     */
-    public function loadAll(): Generator;
-
-    /**
      * @param class-string $aggregate
      */
     public function has(string $aggregate, string $id): bool;
-
-    public function count(): int;
 
     /**
      * @param class-string $aggregate

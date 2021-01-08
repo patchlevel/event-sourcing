@@ -1,9 +1,9 @@
 help:                                                                           ## shows this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_\-\.]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-vendor: composer.json composer.lock
+vendor: composer.lock
 	composer install
-	
+
 .PHONY: php-cs-check
 php-cs-check: vendor                                                            ## run cs fixer (dry-run)
 	vendor/bin/php-cs-fixer fix --diff --dry-run
@@ -29,7 +29,7 @@ static: php-cs-fix phpstan psalm                                                
 
 .PHONY: test
 test: vendor
-	phpunit                                                                   ## run tests
+	vendor/bin/phpunit                                                          ## run tests
 
 .PHONY: dev
 dev: static test                                                                ## run dev tools
