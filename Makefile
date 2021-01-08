@@ -27,8 +27,7 @@ phpunit: vendor                                                                 
 .PHONY: static
 static: phpstan psalm phpcs-check                                               ## run static analyser
 
-test:                                                                           ## run tests
-	phpunit
+test: phpunit                                                                   ## run tests
 
 .PHONY: dev
 dev: static test                                                                ## run dev tools
