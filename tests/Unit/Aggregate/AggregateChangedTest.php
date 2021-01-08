@@ -11,8 +11,6 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
-use function date;
-
 class AggregateChangedTest extends TestCase
 {
     public function testCreateEvent(): void
