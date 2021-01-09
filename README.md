@@ -1,4 +1,7 @@
 [![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fpatchlevel%2Fevent-sourcing%2Fmaster)](https://dashboard.stryker-mutator.io/reports/github.com/patchlevel/event-sourcing/master)
+[![Type Coverage](https://shepherd.dev/github/patchlevel/event-sourcing/coverage.svg)](https://shepherd.dev/github/patchlevel/event-sourcing)
+[![Latest Stable Version](https://poser.pugx.org/patchlevel/event-sourcing/v)](//packagist.org/packages/patchlevel/event-sourcing)
+[![License](https://poser.pugx.org/patchlevel/event-sourcing/license)](//packagist.org/packages/patchlevel/event-sourcing)
 
 # event-sourcing
 
@@ -187,11 +190,3 @@ final class CreateProfileHandler
     }
 }
 ```
-
-
-## todo
-
-1) Prozessor -> Invoke nice to have
-2) EventStream
-2) Snapshots
-3) AggregateChildren 
