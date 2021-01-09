@@ -18,20 +18,20 @@
     }
   ],
   "require": {
-    "php": "^7.4",
-    "ext-json": "^7.4",
+    "php": "^7.4|^8.0",
+    "ext-json": "^7.4|^8.0",
     "doctrine/dbal": "^2.12.1|^3.0.0"
   },
   "require-dev": {
-    "ext-pdo_sqlite": "^7.4",
+    "ext-pdo_sqlite": "^7.4|^8.0",
     "infection/infection": "^0.20.2",
     "patchlevel/coding-standard": "^1.0.0",
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^0.12.65",
     "phpunit/phpunit": "^9.5.0",
-    "symfony/messenger": "^5.2.1",
+    "symfony/messenger": "^4.4.18|^5.1.10",
     "symfony/var-dumper": "^5.2.1",
-    "vimeo/psalm": "^4.3.2"
+   "vimeo/psalm": "^4.3.2"
   },
   "suggest": {
     "symfony/messenger": "for an advanced message bus"
