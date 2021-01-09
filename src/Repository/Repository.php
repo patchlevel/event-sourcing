@@ -78,7 +78,7 @@ final class Repository
             $snapshot = $this->snapshotStore->load($aggregateClass, $id);
 
             if ($snapshot) {
-                $instance = ($this->aggregateClass)::unserialize($snapshot->playhead(), $snapshot->payload());
+                $instance = ($this->aggregateClass)::deserialize($snapshot->playhead(), $snapshot->payload());
 
                 // load pending events
 

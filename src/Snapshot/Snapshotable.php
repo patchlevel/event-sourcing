@@ -15,5 +15,5 @@ interface Snapshotable
      * @param array<string, mixed> $payload
      * @return static
      */
-    public static function unserialize(int $playhead, array $payload): self;
+    public static function deserialize(int $playhead, array $payload): self;
 }
