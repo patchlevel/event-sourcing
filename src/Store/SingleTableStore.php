@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
@@ -15,6 +18,7 @@ use RuntimeException;
 
 use function array_map;
 use function array_pop;
+use function assert;
 use function explode;
 use function sprintf;
 
@@ -47,16 +51,17 @@ final class SingleTableStore implements Store
             [
                 'aggregate' => self::shortName($aggregate),
                 'id' => $id,
-            ],
-            [
-                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
             ]
         );
 
+        $platform = $this->connection->getDatabasePlatform();
+
         return array_map(
         /** @param array<string, mixed> $data */
-            static function (array $data) {
-                return AggregateChanged::deserialize($data);
+            static function (array $data) use ($platform) {
+                return AggregateChanged::deserialize(
+                    self::normalizeResult($platform, $data)
+                );
             },
             $result
         );
@@ -72,17 +77,14 @@ final class SingleTableStore implements Store
             ->from(self::TABLE_NAME)
             ->getSQL();
 
-        $result = $this->connection->executeQuery(
-            $sql,
-            [],
-            [
-                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
-            ]
-        );
+        $result = $this->connection->executeQuery($sql, []);
+        $platform = $this->connection->getDatabasePlatform();
 
         /** @var array<string, mixed> $data */
         foreach ($result->iterateAssociative() as $data) {
-            yield AggregateChanged::deserialize($data);
+            yield AggregateChanged::deserialize(
+                self::normalizeResult($platform, $data)
+            );
         }
     }
 
@@ -210,5 +212,27 @@ final class SingleTableStore implements Store
         }
 
         return $shortName;
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     *
+     * @return array<string, mixed>
+     */
+    public static function normalizeResult(AbstractPlatform $platform, array $result): array
+    {
+        if (!$result['recordedOn']) {
+            return $result;
+        }
+
+        $recordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue(
+            $result['recordedOn'],
+            $platform
+        );
+
+        assert($recordedOn instanceof DateTimeImmutable);
+        $result['recordedOn'] = $recordedOn;
+
+        return $result;
     }
 }

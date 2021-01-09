@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_map;
 use function array_pop;
+use function assert;
 use function explode;
 use function preg_replace;
 use function sprintf;
@@ -51,16 +55,17 @@ final class MultiTableStore implements Store
 
         $result = $this->connection->fetchAllAssociative(
             $sql,
-            ['id' => $id],
-            [
-                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
-            ]
+            ['id' => $id]
         );
+
+        $platform = $this->connection->getDatabasePlatform();
 
         return array_map(
         /** @param array<string, mixed> $data */
-            static function (array $data) {
-                return AggregateChanged::deserialize($data);
+            static function (array $data) use ($platform) {
+                return AggregateChanged::deserialize(
+                    self::normalizeResult($platform, $data)
+                );
             },
             $result
         );
@@ -203,5 +208,27 @@ final class MultiTableStore implements Store
         }
 
         return strtolower($string);
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     *
+     * @return array<string, mixed>
+     */
+    public static function normalizeResult(AbstractPlatform $platform, array $result): array
+    {
+        if (!$result['recordedOn']) {
+            return $result;
+        }
+
+        $recordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue(
+            $result['recordedOn'],
+            $platform
+        );
+
+        assert($recordedOn instanceof DateTimeImmutable);
+        $result['recordedOn'] = $recordedOn;
+
+        return $result;
     }
 }
