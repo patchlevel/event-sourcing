@@ -18,7 +18,6 @@ use RuntimeException;
 
 use function array_map;
 use function array_pop;
-use function assert;
 use function explode;
 use function sprintf;
 
@@ -230,7 +229,10 @@ final class SingleTableStore implements Store
             $platform
         );
 
-        assert($recordedOn instanceof DateTimeImmutable);
+        if (!$recordedOn instanceof DateTimeImmutable) {
+            throw new StoreException('recordedOn should be a DateTimeImmutable object');
+        }
+
         $result['recordedOn'] = $recordedOn;
 
         return $result;

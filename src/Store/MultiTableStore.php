@@ -16,7 +16,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_map;
 use function array_pop;
-use function assert;
 use function explode;
 use function preg_replace;
 use function sprintf;
@@ -226,7 +225,10 @@ final class MultiTableStore implements Store
             $platform
         );
 
-        assert($recordedOn instanceof DateTimeImmutable);
+        if (!$recordedOn instanceof DateTimeImmutable) {
+            throw new StoreException('recordedOn should be a DateTimeImmutable object');
+        }
+
         $result['recordedOn'] = $recordedOn;
 
         return $result;
