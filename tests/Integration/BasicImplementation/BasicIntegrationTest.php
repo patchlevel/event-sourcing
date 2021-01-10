@@ -72,8 +72,11 @@ final class BasicIntegrationTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
-        $profileProjection->drop();
-        $store->drop();
+        $repository = new Repository($store, $eventStream, Profile::class);
+        $profile = $repository->load('1');
+
+        self::assertEquals('1', $profile->aggregateRootId());
+        self::assertEquals(0, $profile->playhead());
     }
 
     public function testWithSymfonySuccessful(): void
@@ -102,8 +105,11 @@ final class BasicIntegrationTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
-        $profileProjection->drop();
-        $store->drop();
+        $repository = new Repository($store, $eventStream, Profile::class);
+        $profile = $repository->load('1');
+
+        self::assertEquals('1', $profile->aggregateRootId());
+        self::assertEquals(0, $profile->playhead());
     }
 
     public function testMultiTableSuccessful(): void
@@ -132,7 +138,10 @@ final class BasicIntegrationTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
-        $profileProjection->drop();
-        $store->drop();
+        $repository = new Repository($store, $eventStream, Profile::class);
+        $profile = $repository->load('1');
+
+        self::assertEquals('1', $profile->aggregateRootId());
+        self::assertEquals(0, $profile->playhead());
     }
 }

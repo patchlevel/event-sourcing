@@ -19,9 +19,13 @@ final class Profile extends AggregateRoot
     public static function create(string $id): self
     {
         $self = new self();
-        $self->id = $id;
         $self->apply(ProfileCreated::raise($id));
 
         return $self;
+    }
+
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId();
     }
 }
