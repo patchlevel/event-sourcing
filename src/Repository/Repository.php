@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Repository;
 
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 use Patchlevel\EventSourcing\EventBus\EventBus;
-use Patchlevel\EventSourcing\Snapshot\Snapshotable;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
 
@@ -41,14 +41,14 @@ final class Repository
     ) {
         if (!is_subclass_of($aggregateClass, AggregateRoot::class)) {
             throw new InvalidArgumentException(sprintf(
-                "Class '%s' is not an EventSourcedAggregateRoot.",
+                "Class '%s' is not an AggregateRoot.",
                 $aggregateClass
             ));
         }
 
-        if ($snapshotStore && !is_subclass_of($aggregateClass, Snapshotable::class)) {
+        if ($snapshotStore && !is_subclass_of($aggregateClass, SnapshotableAggregateRoot::class)) {
             throw new InvalidArgumentException(sprintf(
-                "Class '%s' do not implement Snapshotable.",
+                "Class '%s' do not extends SnapshotableAggregateRoot.",
                 $aggregateClass
             ));
         }
@@ -68,9 +68,9 @@ final class Repository
         $aggregateClass = $this->aggregateClass;
 
         if ($this->snapshotStore) {
-            if (!is_subclass_of($aggregateClass, Snapshotable::class)) {
+            if (!is_subclass_of($aggregateClass, SnapshotableAggregateRoot::class)) {
                 throw new InvalidArgumentException(sprintf(
-                    "Class '%s' do not implement Snapshotable.",
+                    "Class '%s' do not implement SnapshotableAggregateRoot.",
                     $aggregateClass
                 ));
             }
@@ -78,9 +78,12 @@ final class Repository
             $snapshot = $this->snapshotStore->load($aggregateClass, $id);
 
             if ($snapshot) {
-                $instance = ($this->aggregateClass)::deserialize($snapshot->playhead(), $snapshot->payload());
+                $events = $this->store->load($this->aggregateClass, $id);
 
-                // load pending events
+                $instance = $aggregateClass::createFromSnapshot(
+                    $snapshot,
+                    $events
+                );
 
                 return $this->instances[$id] = $instance;
             }
@@ -92,7 +95,7 @@ final class Repository
             throw new AggregateNotFoundException($this->aggregateClass, $id);
         }
 
-        return $this->instances[$id] = ($this->aggregateClass)::createFromEventStream($events);
+        return $this->instances[$id] = $this->aggregateClass::createFromEventStream($events);
     }
 
     public function has(string $id): bool
@@ -119,6 +122,18 @@ final class Repository
         }
 
         $this->store->saveBatch($this->aggregateClass, $aggregate->aggregateRootId(), $eventStream);
+
+        if ($this->snapshotStore) {
+            if (!$aggregate instanceof SnapshotableAggregateRoot) {
+                throw new InvalidArgumentException(sprintf(
+                    "Class '%s' do not implement SnapshotableAggregateRoot.",
+                    $class
+                ));
+            }
+
+            $snapshot = $aggregate->toSnapshot();
+            $this->snapshotStore->save($snapshot);
+        }
 
         foreach ($eventStream as $event) {
             $this->eventStream->dispatch($event);
