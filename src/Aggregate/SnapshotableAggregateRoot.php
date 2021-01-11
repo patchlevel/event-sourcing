@@ -11,14 +11,14 @@ abstract class SnapshotableAggregateRoot extends AggregateRoot
     /**
      * @return array<string, mixed>
      */
-    abstract public function serialize(): array;
+    abstract protected function serialize(): array;
 
     /**
      * @param array<string, mixed> $payload
      *
      * @return static
      */
-    abstract public static function deserialize(array $payload): self;
+    abstract protected static function deserialize(array $payload): self;
 
     /**
      * @param AggregateChanged[] $stream
