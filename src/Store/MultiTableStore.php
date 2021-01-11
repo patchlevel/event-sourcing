@@ -42,19 +42,22 @@ final class MultiTableStore implements Store
      *
      * @return AggregateChanged[]
      */
-    public function load(string $aggregate, string $id): array
+    public function load(string $aggregate, string $id, int $fromPlayhead = -1): array
     {
         $tableName = self::tableName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($tableName)
-            ->where('aggregateId = :id')
+            ->where('aggregateId = :id AND playhead > :playhead')
             ->getSQL();
 
         $result = $this->connection->fetchAllAssociative(
             $sql,
-            ['id' => $id]
+            [
+                'id' => $id,
+                'playhead' => $fromPlayhead,
+            ]
         );
 
         $platform = $this->connection->getDatabasePlatform();

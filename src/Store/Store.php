@@ -14,7 +14,7 @@ interface Store
      *
      * @return AggregateChanged[]
      */
-    public function load(string $aggregate, string $id): array;
+    public function load(string $aggregate, string $id, int $fromPlayhead = -1): array;
 
     /**
      * @param class-string<AggregateRoot> $aggregate

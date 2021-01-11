@@ -78,7 +78,7 @@ final class Repository
             $snapshot = $this->snapshotStore->load($aggregateClass, $id);
 
             if ($snapshot) {
-                $events = $this->store->load($this->aggregateClass, $id);
+                $events = $this->store->load($this->aggregateClass, $id, $snapshot->playhead());
 
                 $instance = $aggregateClass::createFromSnapshot(
                     $snapshot,
