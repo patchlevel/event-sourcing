@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
@@ -139,6 +140,40 @@ final class BasicIntegrationTest extends TestCase
         self::assertEquals('1', $result['id']);
 
         $repository = new Repository($store, $eventStream, Profile::class);
+        $profile = $repository->load('1');
+
+        self::assertEquals('1', $profile->aggregateRootId());
+        self::assertEquals(0, $profile->playhead());
+    }
+
+    public function testSnapshot(): void
+    {
+        $profileProjection = new ProfileProjection($this->connection);
+        $projectionRepository = new ProjectionRepository(
+            [$profileProjection]
+        );
+
+        $eventStream = new DefaultEventBus();
+        $eventStream->addListener(new ProjectionListener($projectionRepository));
+        $eventStream->addListener(new SendEmailProcessor());
+
+        $store = new SingleTableStore($this->connection);
+        $snapshotStore = new InMemorySnapshotStore();
+
+        $repository = new Repository($store, $eventStream, Profile::class, $snapshotStore);
+
+        // create tables
+        $profileProjection->create();
+        $store->prepare();
+
+        $profile = Profile::create('1');
+        $repository->save($profile);
+
+        $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
+        self::assertArrayHasKey('id', $result);
+        self::assertEquals('1', $result['id']);
+
+        $repository = new Repository($store, $eventStream, Profile::class, $snapshotStore);
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());

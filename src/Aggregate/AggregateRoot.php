@@ -13,7 +13,9 @@ abstract class AggregateRoot
 {
     /** @var AggregateChanged[] */
     private array $uncommittedEvents = [];
-    private int $playhead = -1;
+
+    /** @internal */
+    protected int $playhead = -1;
 
     final protected function __construct()
     {
@@ -24,6 +26,7 @@ abstract class AggregateRoot
     protected function apply(AggregateChanged $event): void
     {
         $this->playhead++;
+
         $event = $event->recordNow($this->playhead);
         $this->uncommittedEvents[] = $event;
 

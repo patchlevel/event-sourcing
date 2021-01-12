@@ -37,12 +37,12 @@ final class SingleTableStore implements Store
      *
      * @return AggregateChanged[]
      */
-    public function load(string $aggregate, string $id): array
+    public function load(string $aggregate, string $id, int $fromPlayhead = -1): array
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from(self::TABLE_NAME)
-            ->where('aggregate = :aggregate AND aggregateId = :id')
+            ->where('aggregate = :aggregate AND aggregateId = :id AND playhead > :playhead')
             ->getSQL();
 
         $result = $this->connection->fetchAllAssociative(
@@ -50,6 +50,7 @@ final class SingleTableStore implements Store
             [
                 'aggregate' => self::shortName($aggregate),
                 'id' => $id,
+                'playhead' => $fromPlayhead,
             ]
         );
 
