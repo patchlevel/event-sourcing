@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Snapshot;
 
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 
-class Snapshot
+final class Snapshot
 {
     /** @var class-string<SnapshotableAggregateRoot> */
     private string $aggregate;

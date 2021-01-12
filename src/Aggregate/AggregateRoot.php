@@ -13,6 +13,8 @@ abstract class AggregateRoot
 {
     /** @var AggregateChanged[] */
     private array $uncommittedEvents = [];
+
+    /** @internal */
     protected int $playhead = -1;
 
     final protected function __construct()

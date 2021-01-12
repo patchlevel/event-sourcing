@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
 
@@ -75,9 +76,9 @@ final class Repository
                 ));
             }
 
-            $snapshot = $this->snapshotStore->load($aggregateClass, $id);
+            try {
+                $snapshot = $this->snapshotStore->load($aggregateClass, $id);
 
-            if ($snapshot) {
                 $events = $this->store->load($this->aggregateClass, $id, $snapshot->playhead());
 
                 $instance = $aggregateClass::createFromSnapshot(
@@ -86,6 +87,8 @@ final class Repository
                 );
 
                 return $this->instances[$id] = $instance;
+            } catch (SnapshotNotFound $exception) {
+                // do normal workflow
             }
         }
 
