@@ -20,8 +20,6 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-use function assert;
-
 class RepositoryTest extends TestCase
 {
     use ProphecyTrait;
@@ -104,7 +102,6 @@ class RepositoryTest extends TestCase
         );
 
         $aggregate = $repository->load('1');
-        assert($aggregate instanceof Profile);
 
         self::assertEquals(0, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
