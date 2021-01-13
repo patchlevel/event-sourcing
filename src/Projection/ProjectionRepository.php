@@ -26,7 +26,7 @@ final class ProjectionRepository
     public function handle(AggregateChanged $event): void
     {
         foreach ($this->projections as $projection) {
-            $handlers = $projection->getHandledMessages();
+            $handlers = $projection->handledEvents();
 
             foreach ($handlers as $class => $method) {
                 if (!$event instanceof $class) {

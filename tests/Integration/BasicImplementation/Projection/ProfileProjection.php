@@ -19,7 +19,7 @@ final class ProfileProjection implements Projection
     }
 
     /** @return iterable<class-string<AggregateChanged>, string> */
-    public function getHandledMessages(): iterable
+    public function handledEvents(): iterable
     {
         yield ProfileCreated::class => 'applyProfileCreated';
     }
