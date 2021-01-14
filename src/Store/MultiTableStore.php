@@ -14,22 +14,20 @@ use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
+use function array_key_exists;
+use function array_keys;
 use function array_map;
-use function array_pop;
-use function explode;
-use function preg_replace;
 use function sprintf;
-use function strtolower;
 
 final class MultiTableStore implements Store
 {
     private Connection $connection;
 
-    /** @var list<class-string<AggregateRoot>> */
+    /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
 
     /**
-     * @param list<class-string<AggregateRoot>> $aggregates
+     * @param array<class-string<AggregateRoot>, string> $aggregates
      */
     public function __construct(Connection $eventConnection, array $aggregates)
     {
@@ -44,7 +42,11 @@ final class MultiTableStore implements Store
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = -1): array
     {
-        $tableName = self::tableName($aggregate);
+        if (!array_key_exists($aggregate, $this->aggregates)) {
+            throw new AggregateNotDefined($aggregate);
+        }
+
+        $tableName = $this->aggregates[$aggregate];
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
@@ -78,7 +80,11 @@ final class MultiTableStore implements Store
      */
     public function has(string $aggregate, string $id): bool
     {
-        $tableName = self::tableName($aggregate);
+        if (!array_key_exists($aggregate, $this->aggregates)) {
+            throw new AggregateNotDefined($aggregate);
+        }
+
+        $tableName = $this->aggregates[$aggregate];
 
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
@@ -101,7 +107,11 @@ final class MultiTableStore implements Store
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
-        $tableName = self::tableName($aggregate);
+        if (!array_key_exists($aggregate, $this->aggregates)) {
+            throw new AggregateNotDefined($aggregate);
+        }
+
+        $tableName = $this->aggregates[$aggregate];
 
         $this->connection->transactional(
             static function (Connection $connection) use ($tableName, $id, $events): void {
@@ -138,7 +148,7 @@ final class MultiTableStore implements Store
 
     public function drop(): void
     {
-        foreach ($this->aggregates as $aggregate) {
+        foreach (array_keys($this->aggregates) as $aggregate) {
             $this->dropTableForAggregate($aggregate);
         }
     }
@@ -148,7 +158,11 @@ final class MultiTableStore implements Store
      */
     public function dropTableForAggregate(string $aggregate): void
     {
-        $tableName = self::tableName($aggregate);
+        if (!array_key_exists($aggregate, $this->aggregates)) {
+            throw new AggregateNotDefined($aggregate);
+        }
+
+        $tableName = $this->aggregates[$aggregate];
 
         $this->connection->executeQuery(sprintf('DROP TABLE IF EXISTS %s;', $tableName));
     }
@@ -157,19 +171,15 @@ final class MultiTableStore implements Store
     {
         $schema = new Schema([], [], $this->connection->getSchemaManager()->createSchemaConfig());
 
-        foreach ($this->aggregates as $aggregateClass) {
-            $this->addTableToSchema($schema, $aggregateClass);
+        foreach ($this->aggregates as $tableName) {
+            $this->addTableToSchema($schema, $tableName);
         }
 
         return $schema;
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregateClass
-     */
-    private function addTableToSchema(Schema $schema, $aggregateClass): void
+    private function addTableToSchema(Schema $schema, string $tableName): void
     {
-        $tableName = self::tableName($aggregateClass);
         $table = $schema->createTable($tableName);
 
         $table->addColumn('id', Types::BIGINT)
@@ -192,32 +202,11 @@ final class MultiTableStore implements Store
     }
 
     /**
-     * @param class-string<AggregateRoot> $name
-     */
-    private static function tableName(string $name): string
-    {
-        $parts = explode('\\', $name);
-        $shortName = array_pop($parts);
-
-        if (!$shortName) {
-            throw new StoreException(sprintf('%s is not a valid classname', $name));
-        }
-
-        $string = (string)preg_replace('/(?<=[a-z])([A-Z])/', '_$1', $shortName);
-
-        if (!$string) {
-            throw new StoreException(sprintf('%s is not a valid table name', $string));
-        }
-
-        return strtolower($string);
-    }
-
-    /**
      * @param array<string, mixed> $result
      *
      * @return array<string, mixed>
      */
-    public static function normalizeResult(AbstractPlatform $platform, array $result): array
+    private static function normalizeResult(AbstractPlatform $platform, array $result): array
     {
         if (!$result['recordedOn']) {
             return $result;
