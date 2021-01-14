@@ -42,11 +42,7 @@ final class MultiTableStore implements Store
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = -1): array
     {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
-
-        $tableName = $this->aggregates[$aggregate];
+        $tableName = $this->tableName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
@@ -80,11 +76,7 @@ final class MultiTableStore implements Store
      */
     public function has(string $aggregate, string $id): bool
     {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
-
-        $tableName = $this->aggregates[$aggregate];
+        $tableName = $this->tableName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
@@ -107,11 +99,7 @@ final class MultiTableStore implements Store
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
-
-        $tableName = $this->aggregates[$aggregate];
+        $tableName = $this->tableName($aggregate);
 
         $this->connection->transactional(
             static function (Connection $connection) use ($tableName, $id, $events): void {
@@ -158,11 +146,7 @@ final class MultiTableStore implements Store
      */
     public function dropTableForAggregate(string $aggregate): void
     {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
-
-        $tableName = $this->aggregates[$aggregate];
+        $tableName = $this->tableName($aggregate);
 
         $this->connection->executeQuery(sprintf('DROP TABLE IF EXISTS %s;', $tableName));
     }
@@ -224,5 +208,17 @@ final class MultiTableStore implements Store
         $result['recordedOn'] = $recordedOn;
 
         return $result;
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $aggregate
+     */
+    private function tableName(string $aggregate): string
+    {
+        if (!array_key_exists($aggregate, $this->aggregates)) {
+            throw new AggregateNotDefined($aggregate);
+        }
+
+        return $this->aggregates[$aggregate];
     }
 }

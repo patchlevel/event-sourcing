@@ -44,9 +44,7 @@ final class SingleTableStore implements Store
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = -1): array
     {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
+        $shortName = $this->shortName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
@@ -57,7 +55,7 @@ final class SingleTableStore implements Store
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
-                'aggregate' => $this->aggregates[$aggregate],
+                'aggregate' => $shortName,
                 'id' => $id,
                 'playhead' => $fromPlayhead,
             ]
@@ -102,9 +100,7 @@ final class SingleTableStore implements Store
      */
     public function has(string $aggregate, string $id): bool
     {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
+        $shortName = $this->shortName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
@@ -116,7 +112,7 @@ final class SingleTableStore implements Store
         $result = (int)$this->connection->fetchOne(
             $sql,
             [
-                'aggregate' => $this->aggregates[$aggregate],
+                'aggregate' => $shortName,
                 'id' => $id,
             ]
         );
@@ -140,21 +136,17 @@ final class SingleTableStore implements Store
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
-
-        $aggregates = $this->aggregates;
+        $shortName = $this->shortName($aggregate);
 
         $this->connection->transactional(
-            static function (Connection $connection) use ($aggregates, $aggregate, $id, $events): void {
+            static function (Connection $connection) use ($shortName, $id, $events): void {
                 foreach ($events as $event) {
                     if ($event->aggregateId() !== $id) {
                         throw new StoreException('id missmatch');
                     }
 
                     $data = $event->serialize();
-                    $data['aggregate'] = $aggregates[$aggregate];
+                    $data['aggregate'] = $shortName;
 
                     $connection->insert(
                         self::TABLE_NAME,
@@ -241,5 +233,17 @@ final class SingleTableStore implements Store
         $result['recordedOn'] = $recordedOn;
 
         return $result;
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $aggregate
+     */
+    private function shortName(string $aggregate): string
+    {
+        if (!array_key_exists($aggregate, $this->aggregates)) {
+            throw new AggregateNotDefined($aggregate);
+        }
+
+        return $this->aggregates[$aggregate];
     }
 }
