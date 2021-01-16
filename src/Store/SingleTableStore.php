@@ -14,11 +14,9 @@ use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use RuntimeException;
 
+use function array_key_exists;
 use function array_map;
-use function array_pop;
-use function explode;
 use function sprintf;
 
 final class SingleTableStore implements Store
@@ -27,9 +25,16 @@ final class SingleTableStore implements Store
 
     private Connection $connection;
 
-    public function __construct(Connection $connection)
+    /** @var array<class-string<AggregateRoot>, string> */
+    private array $aggregates;
+
+    /**
+     * @param array<class-string<AggregateRoot>, string> $aggregates
+     */
+    public function __construct(Connection $connection, array $aggregates)
     {
         $this->connection = $connection;
+        $this->aggregates = $aggregates;
     }
 
     /**
@@ -39,6 +44,8 @@ final class SingleTableStore implements Store
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = -1): array
     {
+        $shortName = $this->shortName($aggregate);
+
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from(self::TABLE_NAME)
@@ -48,7 +55,7 @@ final class SingleTableStore implements Store
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
-                'aggregate' => self::shortName($aggregate),
+                'aggregate' => $shortName,
                 'id' => $id,
                 'playhead' => $fromPlayhead,
             ]
@@ -93,6 +100,8 @@ final class SingleTableStore implements Store
      */
     public function has(string $aggregate, string $id): bool
     {
+        $shortName = $this->shortName($aggregate);
+
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
             ->from(self::TABLE_NAME)
@@ -103,7 +112,7 @@ final class SingleTableStore implements Store
         $result = (int)$this->connection->fetchOne(
             $sql,
             [
-                'aggregate' => self::shortName($aggregate),
+                'aggregate' => $shortName,
                 'id' => $id,
             ]
         );
@@ -127,15 +136,17 @@ final class SingleTableStore implements Store
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
+        $shortName = $this->shortName($aggregate);
+
         $this->connection->transactional(
-            static function (Connection $connection) use ($aggregate, $id, $events): void {
+            static function (Connection $connection) use ($shortName, $id, $events): void {
                 foreach ($events as $event) {
                     if ($event->aggregateId() !== $id) {
                         throw new StoreException('id missmatch');
                     }
 
                     $data = $event->serialize();
-                    $data['aggregate'] = self::shortName($aggregate);
+                    $data['aggregate'] = $shortName;
 
                     $connection->insert(
                         self::TABLE_NAME,
@@ -200,26 +211,11 @@ final class SingleTableStore implements Store
     }
 
     /**
-     * @param class-string<AggregateRoot> $name
-     */
-    private static function shortName(string $name): string
-    {
-        $parts = explode('\\', $name);
-        $shortName = array_pop($parts);
-
-        if (!$shortName) {
-            throw new RuntimeException(sprintf('%s is not a valid classname', $name));
-        }
-
-        return $shortName;
-    }
-
-    /**
      * @param array<string, mixed> $result
      *
      * @return array<string, mixed>
      */
-    public static function normalizeResult(AbstractPlatform $platform, array $result): array
+    private static function normalizeResult(AbstractPlatform $platform, array $result): array
     {
         if (!$result['recordedOn']) {
             return $result;
@@ -237,5 +233,17 @@ final class SingleTableStore implements Store
         $result['recordedOn'] = $recordedOn;
 
         return $result;
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $aggregate
+     */
+    private function shortName(string $aggregate): string
+    {
+        if (!array_key_exists($aggregate, $this->aggregates)) {
+            throw new AggregateNotDefined($aggregate);
+        }
+
+        return $this->aggregates[$aggregate];
     }
 }

@@ -59,7 +59,11 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListener(new ProjectionListener($projectionRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
-        $store = new SingleTableStore($this->connection);
+        $store = new SingleTableStore(
+            $this->connection,
+            [Profile::class => 'profile']
+        );
+
         $repository = new Repository($store, $eventStream, Profile::class);
 
         // create tables
@@ -92,7 +96,11 @@ final class BasicIntegrationTest extends TestCase
             new SendEmailProcessor(),
         ]);
 
-        $store = new SingleTableStore($this->connection);
+        $store = new SingleTableStore(
+            $this->connection,
+            [Profile::class => 'profile']
+        );
+
         $repository = new Repository($store, $eventStream, Profile::class);
 
         // create tables
@@ -124,7 +132,10 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListener(new ProjectionListener($projectionRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
-        $store = new MultiTableStore($this->connection, [Profile::class]);
+        $store = new MultiTableStore(
+            $this->connection,
+            [Profile::class => 'profile']
+        );
 
         $repository = new Repository($store, $eventStream, Profile::class);
 
@@ -157,7 +168,11 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListener(new ProjectionListener($projectionRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
-        $store = new SingleTableStore($this->connection);
+        $store = new SingleTableStore(
+            $this->connection,
+            [Profile::class => 'profile']
+        );
+
         $snapshotStore = new InMemorySnapshotStore();
 
         $repository = new Repository($store, $eventStream, Profile::class, $snapshotStore);
