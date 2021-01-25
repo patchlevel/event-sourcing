@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -68,7 +69,8 @@ final class BasicIntegrationTest extends TestCase
 
         // create tables
         $profileProjection->create();
-        $store->prepare();
+
+        (new DoctrineSchemaManager())->create($store);
 
         $profile = Profile::create('1');
         $repository->save($profile);
@@ -105,7 +107,7 @@ final class BasicIntegrationTest extends TestCase
 
         // create tables
         $profileProjection->create();
-        $store->prepare();
+        (new DoctrineSchemaManager())->create($store);
 
         $profile = Profile::create('1');
         $repository->save($profile);
@@ -141,7 +143,7 @@ final class BasicIntegrationTest extends TestCase
 
         // create tables
         $profileProjection->create();
-        $store->prepare();
+        (new DoctrineSchemaManager())->create($store);
 
         $profile = Profile::create('1');
         $repository->save($profile);
@@ -179,7 +181,7 @@ final class BasicIntegrationTest extends TestCase
 
         // create tables
         $profileProjection->create();
-        $store->prepare();
+        (new DoctrineSchemaManager())->create($store);
 
         $profile = Profile::create('1');
         $repository->save($profile);

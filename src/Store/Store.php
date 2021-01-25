@@ -26,8 +26,4 @@ interface Store
      * @param AggregateChanged[]          $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void;
-
-    public function prepare(): void;
-
-    public function drop(): void;
 }
