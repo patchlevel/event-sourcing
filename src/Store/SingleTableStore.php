@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
@@ -17,13 +13,10 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_key_exists;
 use function array_map;
-use function sprintf;
 
-final class SingleTableStore implements Store
+final class SingleTableStore extends DoctrineStore
 {
     private const TABLE_NAME = 'eventstore';
-
-    private Connection $connection;
 
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
@@ -33,7 +26,8 @@ final class SingleTableStore implements Store
      */
     public function __construct(Connection $connection, array $aggregates)
     {
-        $this->connection = $connection;
+        parent::__construct($connection);
+
         $this->aggregates = $aggregates;
     }
 
@@ -160,24 +154,7 @@ final class SingleTableStore implements Store
         );
     }
 
-    public function prepare(): void
-    {
-        $schemaManager = $this->connection->getSchemaManager();
-
-        $comparator = new Comparator();
-        $schemaDiff = $comparator->compare($schemaManager->createSchema(), $this->schema());
-
-        foreach ($schemaDiff->toSaveSql($this->connection->getDatabasePlatform()) as $sql) {
-            $this->connection->executeStatement($sql);
-        }
-    }
-
-    public function drop(): void
-    {
-        $this->connection->executeStatement(sprintf('DROP TABLE IF EXISTS %s;', self::TABLE_NAME));
-    }
-
-    private function schema(): Schema
+    public function schema(): Schema
     {
         $schema = new Schema([], [], $this->connection->getSchemaManager()->createSchemaConfig());
         $this->addTableToSchema($schema);
@@ -208,31 +185,6 @@ final class SingleTableStore implements Store
         $table->setPrimaryKey(['id']);
 
         $table->addUniqueIndex(['aggregate', 'aggregateId', 'playhead']);
-    }
-
-    /**
-     * @param array<string, mixed> $result
-     *
-     * @return array<string, mixed>
-     */
-    private static function normalizeResult(AbstractPlatform $platform, array $result): array
-    {
-        if (!$result['recordedOn']) {
-            return $result;
-        }
-
-        $recordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue(
-            $result['recordedOn'],
-            $platform
-        );
-
-        if (!$recordedOn instanceof DateTimeImmutable) {
-            throw new StoreException('recordedOn should be a DateTimeImmutable object');
-        }
-
-        $result['recordedOn'] = $recordedOn;
-
-        return $result;
     }
 
     /**

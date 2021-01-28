@@ -4,25 +4,17 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_key_exists;
-use function array_keys;
 use function array_map;
-use function sprintf;
 
-final class MultiTableStore implements Store
+final class MultiTableStore extends DoctrineStore
 {
-    private Connection $connection;
-
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
 
@@ -31,7 +23,8 @@ final class MultiTableStore implements Store
      */
     public function __construct(Connection $eventConnection, array $aggregates)
     {
-        $this->connection = $eventConnection;
+        parent::__construct($eventConnection);
+
         $this->aggregates = $aggregates;
     }
 
@@ -122,36 +115,7 @@ final class MultiTableStore implements Store
         );
     }
 
-    public function prepare(): void
-    {
-        $schemaManager = $this->connection->getSchemaManager();
-
-        $comparator = new Comparator();
-        $schemaDiff = $comparator->compare($schemaManager->createSchema(), $this->schema());
-
-        foreach ($schemaDiff->toSaveSql($this->connection->getDatabasePlatform()) as $sql) {
-            $this->connection->executeStatement($sql);
-        }
-    }
-
-    public function drop(): void
-    {
-        foreach (array_keys($this->aggregates) as $aggregate) {
-            $this->dropTableForAggregate($aggregate);
-        }
-    }
-
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
-    public function dropTableForAggregate(string $aggregate): void
-    {
-        $tableName = $this->tableName($aggregate);
-
-        $this->connection->executeQuery(sprintf('DROP TABLE IF EXISTS %s;', $tableName));
-    }
-
-    private function schema(): Schema
+    public function schema(): Schema
     {
         $schema = new Schema([], [], $this->connection->getSchemaManager()->createSchemaConfig());
 
@@ -183,31 +147,6 @@ final class MultiTableStore implements Store
         $table->setPrimaryKey(['id']);
 
         $table->addUniqueIndex(['aggregateId', 'playhead']);
-    }
-
-    /**
-     * @param array<string, mixed> $result
-     *
-     * @return array<string, mixed>
-     */
-    private static function normalizeResult(AbstractPlatform $platform, array $result): array
-    {
-        if (!$result['recordedOn']) {
-            return $result;
-        }
-
-        $recordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue(
-            $result['recordedOn'],
-            $platform
-        );
-
-        if (!$recordedOn instanceof DateTimeImmutable) {
-            throw new StoreException('recordedOn should be a DateTimeImmutable object');
-        }
-
-        $result['recordedOn'] = $recordedOn;
-
-        return $result;
     }
 
     /**
