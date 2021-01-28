@@ -11,7 +11,6 @@ use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
-use Webmozart\Assert\Assert;
 use function array_key_exists;
 use function array_map;
 
