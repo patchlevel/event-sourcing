@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
+use Patchlevel\EventSourcing\Aggregate\ContainerBuilder;
+use Patchlevel\EventSourcing\Container\ContainerBuilder;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
@@ -50,6 +52,15 @@ final class BasicIntegrationTest extends TestCase
 
     public function testSuccessful(): void
     {
+        $projection = new ProfileProjection($this->connection);
+
+        $container = (new ContainerBuilder())
+            ->addAggregate(Profile::class, 'profile')
+            ->setSingleTableStore($this->connection)
+            ->addProjection($projection)
+            ->addListener(new SendEmailProcessor())
+            ->build();
+
         $profileProjection = new ProfileProjection($this->connection);
         $projectionRepository = new ProjectionRepository(
             [$profileProjection]
