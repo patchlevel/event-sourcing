@@ -30,6 +30,8 @@ class AggregateRootTest extends TestCase
         $events = $profile->releaseEvents();
 
         self::assertCount(1, $events);
+        $event = $events[0];
+        self::assertEquals(0, $event->playhead());
     }
 
     public function testExecuteMethod(): void
@@ -45,6 +47,8 @@ class AggregateRootTest extends TestCase
 
         self::assertCount(1, $events);
         self::assertEquals(0, $profile->playhead());
+        $event = $events[0];
+        self::assertEquals(0, $event->playhead());
 
         $profile->publishMessage(
             Message::create(
@@ -61,6 +65,8 @@ class AggregateRootTest extends TestCase
         $events = $profile->releaseEvents();
 
         self::assertCount(1, $events);
+        $event = $events[0];
+        self::assertEquals(1, $event->playhead());
     }
 
     public function testEventWithoutApplyMethod(): void
@@ -70,20 +76,27 @@ class AggregateRootTest extends TestCase
             Email::fromString('visitor@test.com')
         );
 
-        self::assertCount(1, $visitorProfile->releaseEvents());
+        $events = $visitorProfile->releaseEvents();
+        self::assertCount(1, $events);
         self::assertEquals(0, $visitorProfile->playhead());
+        $event = $events[0];
+        self::assertEquals(0, $event->playhead());
 
         $visitedProfile = Profile::createProfile(
             ProfileId::fromString('2'),
             Email::fromString('visited@test.com')
         );
 
-        self::assertCount(1, $visitedProfile->releaseEvents());
+        $events = $visitedProfile->releaseEvents();
+        self::assertCount(1, $events);
         self::assertEquals(0, $visitedProfile->playhead());
+        $event = $events[0];
+        self::assertEquals(0, $event->playhead());
 
         $visitorProfile->visitProfile($visitedProfile->id());
 
-        self::assertCount(0, $visitedProfile->releaseEvents());
+        $events = $visitedProfile->releaseEvents();
+        self::assertCount(0, $events);
         self::assertEquals(0, $visitedProfile->playhead());
     }
 

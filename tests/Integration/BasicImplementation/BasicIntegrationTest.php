@@ -45,6 +45,7 @@ final class BasicIntegrationTest extends TestCase
     public function tearDown(): void
     {
         $this->connection->close();
+        SendEmailMock::reset();
 
         unlink(self::DB_PATH);
     }
@@ -85,6 +86,7 @@ final class BasicIntegrationTest extends TestCase
 
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, SendEmailMock::count());
     }
 
     public function testWithSymfonySuccessful(): void
@@ -123,6 +125,7 @@ final class BasicIntegrationTest extends TestCase
 
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, SendEmailMock::count());
     }
 
     public function testMultiTableSuccessful(): void
@@ -159,6 +162,7 @@ final class BasicIntegrationTest extends TestCase
 
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, SendEmailMock::count());
     }
 
     public function testSnapshot(): void
@@ -198,5 +202,6 @@ final class BasicIntegrationTest extends TestCase
 
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, SendEmailMock::count());
     }
 }
