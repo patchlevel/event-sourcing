@@ -23,12 +23,12 @@ final class SingleTableStore extends DoctrineStore
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
-    public function __construct(Connection $connection, array $aggregates)
+    public function __construct(Connection $connection, array $aggregates, string $tableName)
     {
         parent::__construct($connection);
 
         $this->aggregates = $aggregates;
-        $this->tableName = 'eventstore';
+        $this->tableName = $tableName;
     }
 
     /**
@@ -161,11 +161,6 @@ final class SingleTableStore extends DoctrineStore
         $this->addTableToSchema($schema);
 
         return $schema;
-    }
-
-    public function changeTableName(string $tableName): void
-    {
-        $this->tableName = $tableName;
     }
 
     private function addTableToSchema(Schema $schema): void

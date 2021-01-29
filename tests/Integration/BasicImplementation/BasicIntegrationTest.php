@@ -62,7 +62,8 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            [Profile::class => 'profile']
+            [Profile::class => 'profile'],
+            'eventstore'
         );
 
         $repository = new Repository($store, $eventStream, Profile::class);
@@ -100,7 +101,8 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            [Profile::class => 'profile']
+            [Profile::class => 'profile'],
+            'eventstore'
         );
 
         $repository = new Repository($store, $eventStream, Profile::class);
@@ -172,7 +174,8 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            [Profile::class => 'profile']
+            [Profile::class => 'profile'],
+            'eventstore'
         );
 
         $snapshotStore = new InMemorySnapshotStore();
