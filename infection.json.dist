@@ -5,7 +5,7 @@
     ]
   },
   "logs": {
-    "text": "php:\/\/stderr",
+    "text": "infection.log",
     "badge": {
       "branch": "master"
     }
@@ -13,6 +13,6 @@
   "mutators": {
     "@default": true
   },
-  "minMsi": 40,
-  "minCoveredMsi": 40
+  "minMsi": 52,
+  "minCoveredMsi": 76
 }
