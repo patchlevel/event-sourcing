@@ -4,3 +4,4 @@ phpunit.xml
 .phpunit.result.cache
 .phpcs-cache
 phpstan.neon
+infection.log

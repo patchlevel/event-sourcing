@@ -7,8 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Process
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
-
-use function var_dump;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\SendEmailMock;
 
 final class SendEmailProcessor implements Listener
 {
@@ -18,6 +17,6 @@ final class SendEmailProcessor implements Listener
             return;
         }
 
-        var_dump('send email yo');
+        SendEmailMock::send();
     }
 }
