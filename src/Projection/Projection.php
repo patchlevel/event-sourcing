@@ -11,5 +11,7 @@ interface Projection
     /** @return iterable<class-string<AggregateChanged>, string> */
     public function handledEvents(): iterable;
 
+    public function create(): void;
+
     public function drop(): void;
 }
