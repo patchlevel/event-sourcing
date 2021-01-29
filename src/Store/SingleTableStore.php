@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use function array_key_exists;
 use function array_map;
 
-final class SingleTableStore extends DoctrineStore
+final class SingleTableStore extends DoctrineStore implements StreamableStore
 {
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
@@ -69,27 +69,6 @@ final class SingleTableStore extends DoctrineStore
     }
 
     /**
-     * @return Generator<AggregateChanged>
-     */
-    public function loadAll(): Generator
-    {
-        $sql = $this->connection->createQueryBuilder()
-            ->select('*')
-            ->from($this->tableName)
-            ->getSQL();
-
-        $result = $this->connection->executeQuery($sql, []);
-        $platform = $this->connection->getDatabasePlatform();
-
-        /** @var array<string, mixed> $data */
-        foreach ($result->iterateAssociative() as $data) {
-            yield AggregateChanged::deserialize(
-                self::normalizeResult($platform, $data)
-            );
-        }
-    }
-
-    /**
      * @param class-string<AggregateRoot> $aggregate
      */
     public function has(string $aggregate, string $id): bool
@@ -112,16 +91,6 @@ final class SingleTableStore extends DoctrineStore
         );
 
         return $result > 0;
-    }
-
-    public function count(): int
-    {
-        $sql = $this->connection->createQueryBuilder()
-            ->select('COUNT(*)')
-            ->from($this->tableName)
-            ->getSQL();
-
-        return (int)$this->connection->fetchOne($sql);
     }
 
     /**
@@ -153,6 +122,38 @@ final class SingleTableStore extends DoctrineStore
                 }
             }
         );
+    }
+
+    /**
+     * @return Generator<AggregateChanged>
+     */
+    public function all(): Generator
+    {
+        $sql = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($this->tableName)
+            ->orderBy('id')
+            ->getSQL();
+
+        $result = $this->connection->executeQuery($sql, []);
+        $platform = $this->connection->getDatabasePlatform();
+
+        /** @var array<string, mixed> $data */
+        foreach ($result->iterateAssociative() as $data) {
+            yield AggregateChanged::deserialize(
+                self::normalizeResult($platform, $data)
+            );
+        }
+    }
+
+    public function count(): int
+    {
+        $sql = $this->connection->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from($this->tableName)
+            ->getSQL();
+
+        return (int)$this->connection->fetchOne($sql);
     }
 
     public function schema(): Schema
