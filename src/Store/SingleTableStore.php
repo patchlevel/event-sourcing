@@ -16,19 +16,19 @@ use function array_map;
 
 final class SingleTableStore extends DoctrineStore
 {
-    private const TABLE_NAME = 'eventstore';
-
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
+    private string $tableName;
 
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
-    public function __construct(Connection $connection, array $aggregates)
+    public function __construct(Connection $connection, array $aggregates, string $tableName)
     {
         parent::__construct($connection);
 
         $this->aggregates = $aggregates;
+        $this->tableName = $tableName;
     }
 
     /**
@@ -42,7 +42,7 @@ final class SingleTableStore extends DoctrineStore
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from(self::TABLE_NAME)
+            ->from($this->tableName)
             ->where('aggregate = :aggregate AND aggregateId = :id AND playhead > :playhead')
             ->getSQL();
 
@@ -75,7 +75,7 @@ final class SingleTableStore extends DoctrineStore
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from(self::TABLE_NAME)
+            ->from($this->tableName)
             ->getSQL();
 
         $result = $this->connection->executeQuery($sql, []);
@@ -98,7 +98,7 @@ final class SingleTableStore extends DoctrineStore
 
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
-            ->from(self::TABLE_NAME)
+            ->from($this->tableName)
             ->where('aggregate = :aggregate AND aggregateId = :id')
             ->setMaxResults(1)
             ->getSQL();
@@ -118,7 +118,7 @@ final class SingleTableStore extends DoctrineStore
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
-            ->from(self::TABLE_NAME)
+            ->from($this->tableName)
             ->getSQL();
 
         return (int)$this->connection->fetchOne($sql);
@@ -131,9 +131,10 @@ final class SingleTableStore extends DoctrineStore
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
         $shortName = $this->shortName($aggregate);
+        $tableName = $this->tableName;
 
         $this->connection->transactional(
-            static function (Connection $connection) use ($shortName, $id, $events): void {
+            static function (Connection $connection) use ($shortName, $id, $events, $tableName): void {
                 foreach ($events as $event) {
                     if ($event->aggregateId() !== $id) {
                         throw new StoreException('id missmatch');
@@ -143,7 +144,7 @@ final class SingleTableStore extends DoctrineStore
                     $data['aggregate'] = $shortName;
 
                     $connection->insert(
-                        self::TABLE_NAME,
+                        $tableName,
                         $data,
                         [
                             'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
@@ -164,7 +165,7 @@ final class SingleTableStore extends DoctrineStore
 
     private function addTableToSchema(Schema $schema): void
     {
-        $table = $schema->createTable(self::TABLE_NAME);
+        $table = $schema->createTable($this->tableName);
 
         $table->addColumn('id', Types::BIGINT)
             ->setAutoincrement(true)
