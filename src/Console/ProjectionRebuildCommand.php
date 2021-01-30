@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console;
 
-use Patchlevel\EventSourcing\Projection\ProjectionPipeline;
+use Patchlevel\EventSourcing\Pipeline\Pipeline;
+use Patchlevel\EventSourcing\Pipeline\Source\StreamableStoreSource;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StreamableStore;
@@ -43,10 +45,14 @@ class ProjectionRebuildCommand extends Command
             return 1;
         }
 
-        $console->progressStart($store->count());
+        $pipeline = new Pipeline(
+            new StreamableStoreSource($store),
+            new ProjectionRepositoryTarget($this->projectionRepository)
+        );
 
-        $projectionPipeline = new ProjectionPipeline($store, $this->projectionRepository);
-        $projectionPipeline->rebuild(static function () use ($console): void {
+        $console->progressStart($pipeline->count());
+
+        $pipeline->run(static function () use ($console): void {
             $console->progressAdvance();
         });
 
