@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Store;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
-interface StreamableStore
+interface StreamableStore extends Store
 {
     /**
      * @return Generator<AggregateChanged>
