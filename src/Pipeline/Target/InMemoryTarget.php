@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
 class InMemoryTarget implements Target
 {
-    /** @var list<AggregateChanged> */
-    private array $events = [];
+    /** @var list<EventBucket> */
+    private array $buckets = [];
 
-    public function save(AggregateChanged $event): void
+    public function save(EventBucket $bucket): void
     {
-        $this->events[] = $event;
+        $this->buckets[] = $bucket;
     }
 
     /**
-     * @return list<AggregateChanged>
+     * @return list<EventBucket>
      */
-    public function events(): array
+    public function buckets(): array
     {
-        return $this->events;
+        return $this->buckets;
     }
 }

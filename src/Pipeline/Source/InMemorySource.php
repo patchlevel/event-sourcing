@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Source;
 
 use Generator;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
 use function count;
 
 class InMemorySource implements Source
 {
-    /** @var list<AggregateChanged> */
+    /** @var list<EventBucket> */
     private array $events;
 
     /**
-     * @param list<AggregateChanged> $events
+     * @param list<EventBucket> $events
      */
     public function __construct(array $events)
     {
@@ -23,7 +23,7 @@ class InMemorySource implements Source
     }
 
     /**
-     * @return Generator<AggregateChanged>
+     * @return Generator<EventBucket>
      */
     public function load(): Generator
     {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
 interface Target
 {
-    public function save(AggregateChanged $event): void;
+    public function save(EventBucket $bucket): void;
 }

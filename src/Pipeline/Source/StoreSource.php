@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Source;
 
 use Generator;
-use Patchlevel\EventSourcing\Store\StreamableStore;
+use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\Store\PipelineStore;
 
-class StreamableStoreSource implements Source
+class StoreSource implements Source
 {
-    private StreamableStore $store;
+    private PipelineStore $store;
 
-    public function __construct(StreamableStore $store)
+    public function __construct(PipelineStore $store)
     {
         $this->store = $store;
     }
 
+    /**
+     * @return Generator<EventBucket>
+     */
     public function load(): Generator
     {
         return $this->store->all();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
 class DeleteEventMiddleware implements Middleware
 {
@@ -20,16 +21,16 @@ class DeleteEventMiddleware implements Middleware
     }
 
     /**
-     * @return list<AggregateChanged>
+     * @return list<EventBucket>
      */
-    public function __invoke(AggregateChanged $aggregateChanged): array
+    public function __invoke(EventBucket $bucket): array
     {
         foreach ($this->classes as $class) {
-            if ($aggregateChanged instanceof $class) {
+            if ($bucket->event() instanceof $class) {
                 return [];
             }
         }
 
-        return [$aggregateChanged];
+        return [$bucket];
     }
 }

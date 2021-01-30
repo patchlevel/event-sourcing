@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
-use Patchlevel\EventSourcing\Pipeline\Source\StreamableStoreSource;
+use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
+use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\StreamableStore;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -42,7 +42,7 @@ class ProjectionRebuildCommand extends Command
 
         $store = $this->store;
 
-        if (!$store instanceof StreamableStore) {
+        if (!$store instanceof PipelineStore) {
             $console->error('store is not supported');
 
             return 1;
@@ -54,7 +54,7 @@ class ProjectionRebuildCommand extends Command
         }
 
         $pipeline = new Pipeline(
-            new StreamableStoreSource($store),
+            new StoreSource($store),
             new ProjectionRepositoryTarget($this->projectionRepository)
         );
 

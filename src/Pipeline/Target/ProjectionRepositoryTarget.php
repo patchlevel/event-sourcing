@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 
 class ProjectionRepositoryTarget implements Target
@@ -16,8 +16,8 @@ class ProjectionRepositoryTarget implements Target
         $this->projectionRepository = $projectionRepository;
     }
 
-    public function save(AggregateChanged $event): void
+    public function save(EventBucket $bucket): void
     {
-        $this->projectionRepository->handle($event);
+        $this->projectionRepository->handle($bucket->event());
     }
 }

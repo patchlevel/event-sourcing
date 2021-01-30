@@ -10,11 +10,13 @@ use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
+use function array_flip;
 use function array_key_exists;
 use function array_map;
 
-final class SingleTableStore extends DoctrineStore implements StreamableStore
+final class SingleTableStore extends DoctrineStore implements PipelineStore
 {
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
@@ -125,7 +127,7 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore
     }
 
     /**
-     * @return Generator<AggregateChanged>
+     * @return Generator<EventBucket>
      */
     public function all(): Generator
     {
@@ -138,10 +140,22 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore
         $result = $this->connection->executeQuery($sql, []);
         $platform = $this->connection->getDatabasePlatform();
 
+        /** @var array<string, class-string<AggregateRoot>> $classMap */
+        $classMap = array_flip($this->aggregates);
+
         /** @var array<string, mixed> $data */
         foreach ($result->iterateAssociative() as $data) {
-            yield AggregateChanged::deserialize(
-                self::normalizeResult($platform, $data)
+            $name = (string)$data['aggregate'];
+
+            if (!array_key_exists($name, $classMap)) {
+                throw new StoreException();
+            }
+
+            yield new EventBucket(
+                $classMap[$name],
+                AggregateChanged::deserialize(
+                    self::normalizeResult($platform, $data)
+                )
             );
         }
     }
@@ -154,6 +168,20 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore
             ->getSQL();
 
         return (int)$this->connection->fetchOne($sql);
+    }
+
+    public function save(EventBucket $bucket): void
+    {
+        $data = $bucket->event()->serialize();
+        $data['aggregate'] = $this->shortName($bucket->aggregateClass());
+
+        $this->connection->insert(
+            $this->tableName,
+            $data,
+            [
+                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+            ]
+        );
     }
 
     public function schema(): Schema

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
 use Patchlevel\EventSourcing\Pipeline\Source\Source;
 use Patchlevel\EventSourcing\Pipeline\Target\Target;
@@ -27,21 +26,21 @@ class Pipeline
     }
 
     /**
-     * @param callable(AggregateChanged $event):void|null $observer
+     * @param callable(EventBucket $event):void|null $observer
      */
     public function run(?callable $observer = null): void
     {
         if ($observer === null) {
-            $observer = static function (AggregateChanged $event): void {
+            $observer = static function (EventBucket $event): void {
             };
         }
 
-        foreach ($this->source->load() as $event) {
-            foreach ($this->processMiddlewares($event) as $resultEvent) {
-                $this->target->save($resultEvent);
+        foreach ($this->source->load() as $bucket) {
+            foreach ($this->processMiddlewares($bucket) as $resultBucket) {
+                $this->target->save($resultBucket);
             }
 
-            $observer($event);
+            $observer($bucket);
         }
     }
 
@@ -51,30 +50,30 @@ class Pipeline
     }
 
     /**
-     * @return list<AggregateChanged>
+     * @return list<EventBucket>
      */
-    private function processMiddlewares(AggregateChanged $event): array
+    private function processMiddlewares(EventBucket $bucket): array
     {
-        $events = [$event];
+        $buckets = [$bucket];
 
         foreach ($this->middlewares as $middleware) {
-            $events = $this->processMiddleware($middleware, $events);
+            $buckets = $this->processMiddleware($middleware, $buckets);
         }
 
-        return $events;
+        return $buckets;
     }
 
     /**
-     * @param list<AggregateChanged> $events
+     * @param list<EventBucket> $buckets
      *
-     * @return list<AggregateChanged>
+     * @return list<EventBucket>
      */
-    private function processMiddleware(Middleware $middleware, array $events): array
+    private function processMiddleware(Middleware $middleware, array $buckets): array
     {
         $result = [];
 
-        foreach ($events as $event) {
-            $result += $middleware($event);
+        foreach ($buckets as $bucket) {
+            $result += $middleware($bucket);
         }
 
         return $result;

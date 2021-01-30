@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use ReflectionClass;
 use ReflectionProperty;
 
@@ -26,19 +27,20 @@ class RecalculatePlayheadMiddleware implements Middleware
     }
 
     /**
-     * @return list<AggregateChanged>
+     * @return list<EventBucket>
      */
-    public function __invoke(AggregateChanged $aggregateChanged): array
+    public function __invoke(EventBucket $bucket): array
     {
-        $playhead = $this->nextPlayhead($aggregateChanged->aggregateId());
+        $event = $bucket->event();
+        $playhead = $this->nextPlayhead($event->aggregateId());
 
-        if ($aggregateChanged->playhead() === $playhead) {
-            return [$aggregateChanged];
+        if ($event->playhead() === $playhead) {
+            return [$bucket];
         }
 
-        $this->reflectionProperty->setValue($aggregateChanged, $playhead);
+        $this->reflectionProperty->setValue($event, $playhead);
 
-        return [$aggregateChanged];
+        return [$bucket];
     }
 
     private function nextPlayhead(string $aggregateId): int
