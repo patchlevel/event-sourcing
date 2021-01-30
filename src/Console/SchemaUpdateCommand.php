@@ -10,7 +10,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class CreateSchemaCommand extends Command
+class SchemaUpdateCommand extends Command
 {
     private Store $store;
     private SchemaManager $schemaManager;
@@ -25,12 +25,12 @@ class CreateSchemaCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('event-sourcing:schema:create');
+        $this->setName('event-sourcing:schema:update');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->schemaManager->create($this->store);
+        $this->schemaManager->update($this->store);
 
         return 0;
     }

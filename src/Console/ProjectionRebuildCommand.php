@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StreamableStore;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -30,7 +31,9 @@ class ProjectionRebuildCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('event-sourcing:projection:rebuild');
+        $this
+            ->setName('event-sourcing:projection:rebuild')
+            ->addOption('recreate', 'r', InputOption::VALUE_OPTIONAL, 'drop and create projections', false);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -43,6 +46,11 @@ class ProjectionRebuildCommand extends Command
             $console->error('store is not supported');
 
             return 1;
+        }
+
+        if ($input->getOption('recreate')) {
+            $this->projectionRepository->drop();
+            $this->projectionRepository->create();
         }
 
         $pipeline = new Pipeline(

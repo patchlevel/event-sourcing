@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class ProfileVisited extends AggregateChanged
 {
-    public static function raise(ProfileId $visitorId, ProfileId $visitedId): self
+    public static function raise(ProfileId $visitedId, ProfileId $visitorId): self
     {
         return self::occur(
             $visitedId->toString(),

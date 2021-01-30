@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
-class DeleteMiddleware implements Middleware
+class DeleteEventMiddleware implements Middleware
 {
     /** @var list<class-string<AggregateChanged>> */
     private array $classes;
