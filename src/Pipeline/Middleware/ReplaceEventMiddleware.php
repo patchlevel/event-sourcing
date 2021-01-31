@@ -11,6 +11,9 @@ use ReflectionProperty;
 
 class ReplaceEventMiddleware implements Middleware
 {
+    /** @var class-string<AggregateChanged> */
+    private string $class;
+
     /** @var callable(AggregateChanged $event):AggregateChanged */
     private $callable;
 
@@ -18,10 +21,12 @@ class ReplaceEventMiddleware implements Middleware
     private ReflectionProperty $playheadProperty;
 
     /**
-     * @param callable(AggregateChanged $event):AggregateChanged $callable
+     * @param class-string<AggregateChanged> $class
+     * @param callable(AggregateChanged      $event):AggregateChanged $callable
      */
-    public function __construct(callable $callable)
+    public function __construct(string $class, callable $callable)
     {
+        $this->class = $class;
         $this->callable = $callable;
 
         $reflectionClass = new ReflectionClass(AggregateChanged::class);
@@ -39,6 +44,11 @@ class ReplaceEventMiddleware implements Middleware
     public function __invoke(EventBucket $bucket): array
     {
         $event = $bucket->event();
+
+        if (!$event instanceof $this->class) {
+            return [$bucket];
+        }
+
         $callable = $this->callable;
 
         $newEvent = $callable($event);
