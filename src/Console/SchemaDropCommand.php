@@ -10,7 +10,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class UpdateSchemaCommand extends Command
+class SchemaDropCommand extends Command
 {
     private Store $store;
     private SchemaManager $schemaManager;
@@ -25,12 +25,12 @@ class UpdateSchemaCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('event-sourcing:schema:update');
+        $this->setName('event-sourcing:schema:drop');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->schemaManager->update($this->store);
+        $this->schemaManager->drop($this->store);
 
         return 0;
     }

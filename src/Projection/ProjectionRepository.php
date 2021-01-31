@@ -42,6 +42,13 @@ final class ProjectionRepository
         }
     }
 
+    public function create(): void
+    {
+        foreach ($this->projections as $projection) {
+            $projection->create();
+        }
+    }
+
     public function drop(): void
     {
         foreach ($this->projections as $projection) {

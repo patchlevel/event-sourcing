@@ -10,7 +10,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DropSchemaCommand extends Command
+class SchemaCreateCommand extends Command
 {
     private Store $store;
     private SchemaManager $schemaManager;
@@ -25,12 +25,12 @@ class DropSchemaCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('event-sourcing:schema:drop');
+        $this->setName('event-sourcing:schema:create');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->schemaManager->drop($this->store);
+        $this->schemaManager->create($this->store);
 
         return 0;
     }
