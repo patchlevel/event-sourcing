@@ -170,7 +170,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         return (int)$this->connection->fetchOne($sql);
     }
 
-    public function save(EventBucket $bucket): void
+    public function saveEventBucket(EventBucket $bucket): void
     {
         $data = $bucket->event()->serialize();
         $data['aggregate'] = $this->shortName($bucket->aggregateClass());

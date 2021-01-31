@@ -18,6 +18,6 @@ class StoreTarget implements Target
 
     public function save(EventBucket $bucket): void
     {
-        $this->store->save($bucket);
+        $this->store->saveEventBucket($bucket);
     }
 }

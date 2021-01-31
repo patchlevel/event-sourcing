@@ -16,5 +16,5 @@ interface PipelineStore extends Store
 
     public function count(): int;
 
-    public function save(EventBucket $bucket): void;
+    public function saveEventBucket(EventBucket $bucket): void;
 }
