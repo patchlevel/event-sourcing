@@ -137,14 +137,14 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->orderBy('id')
             ->getSQL();
 
-        $result = $this->connection->executeQuery($sql, []);
+        $result = $this->connection->iterateAssociative($sql);
         $platform = $this->connection->getDatabasePlatform();
 
         /** @var array<string, class-string<AggregateRoot>> $classMap */
         $classMap = array_flip($this->aggregates);
 
         /** @var array<string, mixed> $data */
-        foreach ($result->iterateAssociative() as $data) {
+        foreach ($result as $data) {
             $name = (string)$data['aggregate'];
 
             if (!array_key_exists($name, $classMap)) {
