@@ -9,15 +9,15 @@ use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
 class FilterEventMiddleware implements Middleware
 {
-    /** @var list<class-string<AggregateChanged>> */
-    private array $classes;
+    /** @var callable(AggregateChanged $event):bool */
+    private $callable;
 
     /**
-     * @param list<class-string<AggregateChanged>> $classes
+     * @param callable(AggregateChanged $event):bool $callable
      */
-    public function __construct(array $classes)
+    public function __construct(callable $callable)
     {
-        $this->classes = $classes;
+        $this->callable = $callable;
     }
 
     /**
@@ -25,10 +25,10 @@ class FilterEventMiddleware implements Middleware
      */
     public function __invoke(EventBucket $bucket): array
     {
-        foreach ($this->classes as $class) {
-            if ($bucket->event() instanceof $class) {
-                return [$bucket];
-            }
+        $result = ($this->callable)($bucket->event());
+
+        if ($result) {
+            return [$bucket];
         }
 
         return [];

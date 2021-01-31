@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline;
 
+use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
 use Patchlevel\EventSourcing\Pipeline\Source\Source;
 use Patchlevel\EventSourcing\Pipeline\Target\Target;
@@ -12,8 +13,7 @@ class Pipeline
 {
     private Source $source;
     private Target $target;
-    /** @var list<Middleware> */
-    private array $middlewares;
+    private ChainMiddleware $middlewares;
 
     /**
      * @param list<Middleware> $middlewares
@@ -22,7 +22,7 @@ class Pipeline
     {
         $this->source = $source;
         $this->target = $target;
-        $this->middlewares = $middlewares;
+        $this->middlewares = new ChainMiddleware($middlewares);
     }
 
     /**
@@ -36,7 +36,9 @@ class Pipeline
         }
 
         foreach ($this->source->load() as $bucket) {
-            foreach ($this->processMiddlewares($bucket) as $resultBucket) {
+            $result = ($this->middlewares)($bucket);
+
+            foreach ($result as $resultBucket) {
                 $this->target->save($resultBucket);
             }
 
@@ -47,35 +49,5 @@ class Pipeline
     public function count(): int
     {
         return $this->source->count();
-    }
-
-    /**
-     * @return list<EventBucket>
-     */
-    private function processMiddlewares(EventBucket $bucket): array
-    {
-        $buckets = [$bucket];
-
-        foreach ($this->middlewares as $middleware) {
-            $buckets = $this->processMiddleware($middleware, $buckets);
-        }
-
-        return $buckets;
-    }
-
-    /**
-     * @param list<EventBucket> $buckets
-     *
-     * @return list<EventBucket>
-     */
-    private function processMiddleware(Middleware $middleware, array $buckets): array
-    {
-        $result = [];
-
-        foreach ($buckets as $bucket) {
-            $result += $middleware($bucket);
-        }
-
-        return $result;
     }
 }

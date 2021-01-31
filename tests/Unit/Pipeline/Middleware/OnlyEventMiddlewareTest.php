@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use Patchlevel\EventSourcing\Pipeline\Middleware\FilterEventMiddleware;
+use Patchlevel\EventSourcing\Pipeline\Middleware\OnlyEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -14,13 +13,11 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
-class FilterEventMiddlewareTest extends TestCase
+class OnlyEventMiddlewareTest extends TestCase
 {
-    public function testPositive(): void
+    public function testFilterEvent(): void
     {
-        $middleware = new FilterEventMiddleware(static function (AggregateChanged $aggregateChanged) {
-            return $aggregateChanged instanceof ProfileCreated;
-        });
+        $middleware = new OnlyEventMiddleware([ProfileCreated::class]);
 
         $bucket = new EventBucket(
             Profile::class,
@@ -35,11 +32,9 @@ class FilterEventMiddlewareTest extends TestCase
         self::assertEquals([$bucket], $result);
     }
 
-    public function testNegative(): void
+    public function testSkipEvent(): void
     {
-        $middleware = new FilterEventMiddleware(static function (AggregateChanged $aggregateChanged) {
-            return $aggregateChanged instanceof ProfileCreated;
-        });
+        $middleware = new OnlyEventMiddleware([ProfileCreated::class]);
 
         $bucket = new EventBucket(
             Profile::class,
