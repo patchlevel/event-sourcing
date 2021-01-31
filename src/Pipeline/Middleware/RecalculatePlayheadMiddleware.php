@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use ReflectionClass;
 use ReflectionProperty;
@@ -13,7 +14,7 @@ use function array_key_exists;
 
 class RecalculatePlayheadMiddleware implements Middleware
 {
-    /** @var array<string, int> */
+    /** @var array<class-string<AggregateRoot>, array<string, int>> */
     private array $index = [];
 
     private ReflectionProperty $reflectionProperty;
@@ -32,7 +33,7 @@ class RecalculatePlayheadMiddleware implements Middleware
     public function __invoke(EventBucket $bucket): array
     {
         $event = $bucket->event();
-        $playhead = $this->nextPlayhead($event->aggregateId());
+        $playhead = $this->nextPlayhead($bucket->aggregateClass(), $event->aggregateId());
 
         if ($event->playhead() === $playhead) {
             return [$bucket];
@@ -43,14 +44,21 @@ class RecalculatePlayheadMiddleware implements Middleware
         return [$bucket];
     }
 
-    private function nextPlayhead(string $aggregateId): int
+    /**
+     * @param class-string<AggregateRoot> $aggregateClass
+     */
+    private function nextPlayhead(string $aggregateClass, string $aggregateId): int
     {
-        if (!array_key_exists($aggregateId, $this->index)) {
-            $this->index[$aggregateId] = -1;
+        if (!array_key_exists($aggregateClass, $this->index)) {
+            $this->index[$aggregateClass] = [];
         }
 
-        $this->index[$aggregateId]++;
+        if (!array_key_exists($aggregateId, $this->index[$aggregateClass])) {
+            $this->index[$aggregateClass][$aggregateId] = -1;
+        }
 
-        return $this->index[$aggregateId];
+        $this->index[$aggregateClass][$aggregateId]++;
+
+        return $this->index[$aggregateClass][$aggregateId];
     }
 }
