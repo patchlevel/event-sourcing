@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
-final class ProfileCreated extends AggregateChanged
+class ProfileCreated extends AggregateChanged
 {
     public static function raise(
         ProfileId $id,
