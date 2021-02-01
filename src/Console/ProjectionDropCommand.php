@@ -27,7 +27,7 @@ class ProjectionDropCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->projectionRepository->create();
+        $this->projectionRepository->drop();
 
         return 0;
     }
