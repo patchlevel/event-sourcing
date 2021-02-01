@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use Patchlevel\EventSourcing\Pipeline\Middleware\DeleteEventMiddleware;
+use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\InMemorySource;
@@ -116,7 +116,7 @@ class PipelineTest extends TestCase
             $source,
             $target,
             [
-                new DeleteEventMiddleware([ProfileCreated::class]),
+                new ExcludeEventMiddleware([ProfileCreated::class]),
                 new RecalculatePlayheadMiddleware(),
             ]
         );

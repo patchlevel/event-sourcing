@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use Patchlevel\EventSourcing\Pipeline\Middleware\DeleteEventMiddleware;
+use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -13,11 +13,11 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
-class DeleteEventMiddlewareTest extends TestCase
+class IncludeEventMiddlewareTest extends TestCase
 {
-    public function testDeleteEvent(): void
+    public function testFilterEvent(): void
     {
-        $middleware = new DeleteEventMiddleware([ProfileCreated::class]);
+        $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
 
         $bucket = new EventBucket(
             Profile::class,
@@ -29,12 +29,12 @@ class DeleteEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([], $result);
+        self::assertEquals([$bucket], $result);
     }
 
     public function testSkipEvent(): void
     {
-        $middleware = new DeleteEventMiddleware([ProfileCreated::class]);
+        $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
 
         $bucket = new EventBucket(
             Profile::class,
@@ -46,6 +46,6 @@ class DeleteEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([$bucket], $result);
+        self::assertEquals([], $result);
     }
 }

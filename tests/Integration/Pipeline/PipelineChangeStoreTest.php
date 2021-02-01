@@ -8,7 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Pipeline\Middleware\DeleteEventMiddleware;
+use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
@@ -101,7 +101,7 @@ final class PipelineChangeStoreTest extends TestCase
             new StoreSource($oldStore),
             new StoreTarget($newStore),
             [
-                new DeleteEventMiddleware([PrivacyAdded::class]),
+                new ExcludeEventMiddleware([PrivacyAdded::class]),
                 new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
                     return NewVisited::raise($oldVisited->profileId());
                 }),
