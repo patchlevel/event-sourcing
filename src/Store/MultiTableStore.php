@@ -162,10 +162,10 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 || $eventData['playhead'] !== $metaData['playhead']
             ) {
                 throw new CorruptedMetadata(
-                    $metaData['aggregateId'],
-                    $metaData['playhead'],
-                    $eventData['aggregateId'],
-                    $eventData['playhead']
+                    (string)$metaData['aggregateId'],
+                    (string)$metaData['playhead'],
+                    (string)$eventData['aggregateId'],
+                    (string)$eventData['playhead']
                 );
             }
 
