@@ -25,8 +25,11 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
-    public function __construct(Connection $eventConnection, array $aggregates, string $metadataTableName = 'eventstore_matadata')
-    {
+    public function __construct(
+        Connection $eventConnection,
+        array $aggregates,
+        string $metadataTableName = 'eventstore_matadata'
+    ) {
         parent::__construct($eventConnection);
 
         $this->aggregates = $aggregates;
