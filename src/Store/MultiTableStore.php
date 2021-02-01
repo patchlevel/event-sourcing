@@ -157,6 +157,13 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             $eventData = $queries[$name]->current();
             $queries[$name]->next();
 
+            if (
+                $eventData['aggregateId'] !== $metaData['aggregateId']
+                || $eventData['playhead'] !== $metaData['playhead']
+            ) {
+                throw new StoreException('corrupted meta data');
+            }
+
             yield new EventBucket(
                 $classMap[$name],
                 AggregateChanged::deserialize(
