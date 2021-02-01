@@ -16,6 +16,7 @@ use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
@@ -66,7 +67,7 @@ final class PipelineChangeStoreTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $oldStore = new SingleTableStore(
+        $oldStore = new MultiTableStore(
             $this->connectionOld,
             [Profile::class => 'profile'],
             'eventstore'

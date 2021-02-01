@@ -25,7 +25,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
-    public function __construct(Connection $connection, array $aggregates, string $tableName)
+    public function __construct(Connection $connection, array $aggregates, string $tableName = 'eventstore')
     {
         parent::__construct($connection);
 
@@ -187,13 +187,6 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     public function schema(): Schema
     {
         $schema = new Schema([], [], $this->connection->getSchemaManager()->createSchemaConfig());
-        $this->addTableToSchema($schema);
-
-        return $schema;
-    }
-
-    private function addTableToSchema(Schema $schema): void
-    {
         $table = $schema->createTable($this->tableName);
 
         $table->addColumn('id', Types::BIGINT)
@@ -213,8 +206,9 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
-
         $table->addUniqueIndex(['aggregate', 'aggregateId', 'playhead']);
+
+        return $schema;
     }
 
     /**
