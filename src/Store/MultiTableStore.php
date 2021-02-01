@@ -20,17 +20,17 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 {
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
-    private string $tableName;
+    private string $metadataTableName;
 
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
-    public function __construct(Connection $eventConnection, array $aggregates, string $tableName = 'eventstore')
+    public function __construct(Connection $eventConnection, array $aggregates, string $metadataTableName = 'eventstore_matadata')
     {
         parent::__construct($eventConnection);
 
         $this->aggregates = $aggregates;
-        $this->tableName = $tableName;
+        $this->metadataTableName = $metadataTableName;
     }
 
     /**
@@ -138,7 +138,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->tableName)
+            ->from($this->metadataTableName)
             ->orderBy('id')
             ->getSQL();
 
@@ -161,7 +161,12 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 $eventData['aggregateId'] !== $metaData['aggregateId']
                 || $eventData['playhead'] !== $metaData['playhead']
             ) {
-                throw new StoreException('corrupted meta data');
+                throw new CorruptedMetadata(
+                    $metaData['aggregateId'],
+                    $metaData['playhead'],
+                    $eventData['aggregateId'],
+                    $eventData['playhead']
+                );
             }
 
             yield new EventBucket(
@@ -177,7 +182,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
-            ->from($this->tableName)
+            ->from($this->metadataTableName)
             ->getSQL();
 
         return (int)$this->connection->fetchOne($sql);
@@ -205,7 +210,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         );
 
         $connection->insert(
-            $this->tableName,
+            $this->metadataTableName,
             [
                 'aggregate' => $aggregate,
                 'aggregateId' => $data['aggregateId'],
@@ -229,7 +234,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
     private function addMetaTableToSchema(Schema $schema): void
     {
-        $table = $schema->createTable($this->tableName);
+        $table = $schema->createTable($this->metadataTableName);
 
         $table->addColumn('id', Types::BIGINT)
             ->setAutoincrement(true)

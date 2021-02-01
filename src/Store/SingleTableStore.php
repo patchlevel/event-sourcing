@@ -20,17 +20,17 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
 {
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
-    private string $tableName;
+    private string $storeTableName;
 
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
-    public function __construct(Connection $connection, array $aggregates, string $tableName = 'eventstore')
+    public function __construct(Connection $connection, array $aggregates, string $storeTableName)
     {
         parent::__construct($connection);
 
         $this->aggregates = $aggregates;
-        $this->tableName = $tableName;
+        $this->storeTableName = $storeTableName;
     }
 
     /**
@@ -44,7 +44,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->tableName)
+            ->from($this->storeTableName)
             ->where('aggregate = :aggregate AND aggregateId = :id AND playhead > :playhead')
             ->getSQL();
 
@@ -79,7 +79,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
 
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
-            ->from($this->tableName)
+            ->from($this->storeTableName)
             ->where('aggregate = :aggregate AND aggregateId = :id')
             ->setMaxResults(1)
             ->getSQL();
@@ -102,10 +102,10 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
         $shortName = $this->shortName($aggregate);
-        $tableName = $this->tableName;
+        $storeTableName = $this->storeTableName;
 
         $this->connection->transactional(
-            static function (Connection $connection) use ($shortName, $id, $events, $tableName): void {
+            static function (Connection $connection) use ($shortName, $id, $events, $storeTableName): void {
                 foreach ($events as $event) {
                     if ($event->aggregateId() !== $id) {
                         throw new StoreException('id missmatch');
@@ -115,7 +115,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                     $data['aggregate'] = $shortName;
 
                     $connection->insert(
-                        $tableName,
+                        $storeTableName,
                         $data,
                         [
                             'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
@@ -133,7 +133,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->tableName)
+            ->from($this->storeTableName)
             ->orderBy('id')
             ->getSQL();
 
@@ -164,7 +164,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
-            ->from($this->tableName)
+            ->from($this->storeTableName)
             ->getSQL();
 
         return (int)$this->connection->fetchOne($sql);
@@ -176,7 +176,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $data['aggregate'] = $this->shortName($bucket->aggregateClass());
 
         $this->connection->insert(
-            $this->tableName,
+            $this->storeTableName,
             $data,
             [
                 'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
@@ -187,7 +187,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     public function schema(): Schema
     {
         $schema = new Schema([], [], $this->connection->getSchemaManager()->createSchemaConfig());
-        $table = $schema->createTable($this->tableName);
+        $table = $schema->createTable($this->storeTableName);
 
         $table->addColumn('id', Types::BIGINT)
             ->setAutoincrement(true)
