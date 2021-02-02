@@ -1,3 +1,0 @@
-drop table 1;
-drop table 2;
-drop table 3;

@@ -1,3 +1,0 @@
-
- [ERROR] Please run the operation with --force to execute. All data will be lost!                                       
-

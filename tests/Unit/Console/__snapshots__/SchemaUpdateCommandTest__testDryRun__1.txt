@@ -1,3 +1,0 @@
-update table 1;
-update table 2;
-update table 3;
