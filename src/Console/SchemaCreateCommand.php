@@ -31,8 +31,7 @@ class SchemaCreateCommand extends Command
         $this
             ->setName('event-sourcing:schema:create')
             ->setDescription('create eventstore schema')
-            ->addOption('dry-run', 'd', InputOption::VALUE_OPTIONAL, 'dump schema create queries', false)
-        ;
+            ->addOption('dry-run', 'd', InputOption::VALUE_OPTIONAL, 'dump schema create queries', false);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

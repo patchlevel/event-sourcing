@@ -31,9 +31,7 @@ final class SchemaDropCommandTest extends TestCase
             $schemaManager->reveal()
         );
 
-        $input = new ArrayInput([
-            '--force' => true
-        ]);
+        $input = new ArrayInput(['--force' => true]);
 
         $output = new BufferedOutput();
 
@@ -80,9 +78,7 @@ final class SchemaDropCommandTest extends TestCase
             $schemaManager->reveal()
         );
 
-        $input = new ArrayInput([
-            '--dry-run' => true
-        ]);
+        $input = new ArrayInput(['--dry-run' => true]);
 
         $output = new BufferedOutput();
 

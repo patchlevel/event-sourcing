@@ -56,9 +56,7 @@ final class SchemaCreateCommandTest extends TestCase
             $schemaManager->reveal()
         );
 
-        $input = new ArrayInput([
-            '--dry-run' => true
-        ]);
+        $input = new ArrayInput(['--dry-run' => true]);
 
         $output = new BufferedOutput();
 

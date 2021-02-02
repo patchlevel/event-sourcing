@@ -26,23 +26,27 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $events = function() {
+        $events = static function () {
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
+
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
+
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
+
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
+
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
@@ -72,23 +76,27 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function testRecreate(): void
     {
-        $events = function() {
+        $events = static function () {
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
+
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
+
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
+
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
+
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
@@ -109,9 +117,7 @@ final class ProjectionRebuildCommandTest extends TestCase
             $repository->reveal()
         );
 
-        $input = new ArrayInput([
-            '--recreate' => true
-        ]);
+        $input = new ArrayInput(['--recreate' => true]);
         $output = new BufferedOutput();
 
         $exitCode = $command->run($input, $output);
