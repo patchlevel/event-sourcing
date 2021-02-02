@@ -24,7 +24,7 @@ psalm: vendor                                                                   
 phpunit: vendor                                                                 ## run phpunit tests
 	vendor/bin/phpunit --testdox --colors=always -v $(OPTIONS)
 
-.PHONY: psalm
+.PHONY: infection
 infection: vendor                                                               ## run infection
 	vendor/bin/infection
 
