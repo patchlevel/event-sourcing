@@ -9,8 +9,8 @@ use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
-use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
@@ -53,7 +53,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new ProjectionRepository(
+        $projectionRepository = new DefaultProjectionRepository(
             [$profileProjection]
         );
 
@@ -92,7 +92,7 @@ final class BasicIntegrationTest extends TestCase
     public function testWithSymfonySuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new ProjectionRepository(
+        $projectionRepository = new DefaultProjectionRepository(
             [$profileProjection]
         );
 
@@ -131,7 +131,7 @@ final class BasicIntegrationTest extends TestCase
     public function testMultiTableSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new ProjectionRepository(
+        $projectionRepository = new DefaultProjectionRepository(
             [$profileProjection]
         );
 
@@ -168,7 +168,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSnapshot(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new ProjectionRepository(
+        $projectionRepository = new DefaultProjectionRepository(
             [$profileProjection]
         );
 

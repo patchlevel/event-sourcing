@@ -33,6 +33,7 @@ class ProjectionRebuildCommand extends Command
     {
         $this
             ->setName('event-sourcing:projection:rebuild')
+            ->setDescription('rebuild projection')
             ->addOption('recreate', 'r', InputOption::VALUE_OPTIONAL, 'drop and create projections', false);
     }
 
@@ -50,7 +51,10 @@ class ProjectionRebuildCommand extends Command
 
         if ($input->getOption('recreate')) {
             $this->projectionRepository->drop();
+            $console->success('projection deleted schema');
+
             $this->projectionRepository->create();
+            $console->success('projection created schema');
         }
 
         $pipeline = new Pipeline(
@@ -58,6 +62,7 @@ class ProjectionRebuildCommand extends Command
             new ProjectionRepositoryTarget($this->projectionRepository)
         );
 
+        $console->caution('rebuild projections');
         $console->progressStart($pipeline->count());
 
         $pipeline->run(static function () use ($console): void {
@@ -65,6 +70,7 @@ class ProjectionRebuildCommand extends Command
         });
 
         $console->progressFinish();
+        $console->success('finish');
 
         return 0;
     }
