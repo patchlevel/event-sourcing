@@ -15,14 +15,12 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
-use Spatie\Snapshots\MatchesSnapshots;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 final class ProjectionRebuildCommandTest extends TestCase
 {
     use ProphecyTrait;
-    use MatchesSnapshots;
 
     public function testSuccessful(): void
     {
@@ -71,7 +69,11 @@ final class ProjectionRebuildCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertEquals(0, $exitCode);
-        self::assertMatchesSnapshot($output->fetch());
+
+        $content = $output->fetch();
+
+        self::assertStringContainsString('! [CAUTION] rebuild projections', $content);
+        self::assertStringContainsString('[OK] finish', $content);
     }
 
     public function testRecreate(): void
@@ -123,7 +125,13 @@ final class ProjectionRebuildCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertEquals(0, $exitCode);
-        self::assertMatchesSnapshot($output->fetch());
+
+        $content = $output->fetch();
+
+        self::assertStringContainsString('[OK] projection schema deleted', $content);
+        self::assertStringContainsString('[OK] projection schema created', $content);
+        self::assertStringContainsString('! [CAUTION] rebuild projections', $content);
+        self::assertStringContainsString('[OK] finish', $content);
     }
 
     public function testStoreNotSupported(): void
@@ -142,6 +150,9 @@ final class ProjectionRebuildCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertEquals(1, $exitCode);
-        self::assertMatchesSnapshot($output->fetch());
+
+        $content = $output->fetch();
+
+        self::assertStringContainsString('[ERROR] store is not supported', $content);
     }
 }

@@ -51,10 +51,10 @@ class ProjectionRebuildCommand extends Command
 
         if ($input->getOption('recreate')) {
             $this->projectionRepository->drop();
-            $console->success('projection deleted schema');
+            $console->success('projection schema deleted');
 
             $this->projectionRepository->create();
-            $console->success('projection created schema');
+            $console->success('projection schema created');
         }
 
         $pipeline = new Pipeline(

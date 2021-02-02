@@ -8,14 +8,12 @@ use Patchlevel\EventSourcing\Console\ProjectionDropCommand;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
-use Spatie\Snapshots\MatchesSnapshots;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 final class ProjectionDropCommandTest extends TestCase
 {
     use ProphecyTrait;
-    use MatchesSnapshots;
 
     public function testSuccessful(): void
     {
@@ -32,6 +30,9 @@ final class ProjectionDropCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertEquals(0, $exitCode);
-        self::assertMatchesSnapshot($output->fetch());
+
+        $content = $output->fetch();
+
+        self::assertStringContainsString('[OK] projection deleted', $content);
     }
 }

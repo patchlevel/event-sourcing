@@ -10,14 +10,12 @@ use Patchlevel\EventSourcing\Schema\SchemaManager;
 use Patchlevel\EventSourcing\Store\Store;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
-use Spatie\Snapshots\MatchesSnapshots;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 final class SchemaUpdateCommandTest extends TestCase
 {
     use ProphecyTrait;
-    use MatchesSnapshots;
 
     public function testSuccessful(): void
     {
@@ -38,7 +36,9 @@ final class SchemaUpdateCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertEquals(0, $exitCode);
-        self::assertMatchesSnapshot($output->fetch());
+        $content = $output->fetch();
+
+        self::assertStringContainsString('[OK] schema updated', $content);
     }
 
     public function testMissingForce(): void
@@ -59,7 +59,13 @@ final class SchemaUpdateCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertEquals(1, $exitCode);
-        self::assertMatchesSnapshot($output->fetch());
+
+        $content = $output->fetch();
+
+        self::assertStringContainsString(
+            '[ERROR] Please run the operation with --force to execute. Database could break!',
+            $content
+        );
     }
 
     public function testDryRun(): void
@@ -85,6 +91,34 @@ final class SchemaUpdateCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertEquals(0, $exitCode);
-        self::assertMatchesSnapshot($output->fetch());
+        $content = $output->fetch();
+
+        self::assertStringContainsString('update table 1;', $content);
+        self::assertStringContainsString('update table 2;', $content);
+        self::assertStringContainsString('update table 3;', $content);
+    }
+
+    public function testDryRunNotSupported(): void
+    {
+        $store = $this->prophesize(Store::class)->reveal();
+
+        $schemaManager = $this->prophesize(SchemaManager::class);
+
+        $command = new SchemaUpdateCommand(
+            $store,
+            $schemaManager->reveal()
+        );
+
+        $input = new ArrayInput(['--dry-run' => true]);
+
+        $output = new BufferedOutput();
+
+        $exitCode = $command->run($input, $output);
+
+        self::assertEquals(1, $exitCode);
+
+        $content = $output->fetch();
+
+        self::assertStringContainsString('[ERROR] SchemaManager dont support dry-run', $content);
     }
 }
