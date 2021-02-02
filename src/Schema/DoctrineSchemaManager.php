@@ -8,6 +8,7 @@ use Doctrine\DBAL\Schema\Comparator;
 use Patchlevel\EventSourcing\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Store\Store;
 
+use function array_values;
 use function sprintf;
 
 class DoctrineSchemaManager implements DryRunSchemaManager
@@ -26,6 +27,9 @@ class DoctrineSchemaManager implements DryRunSchemaManager
         }
     }
 
+    /**
+     * @return list<string>
+     */
     public function dryRunCreate(Store $store): array
     {
         if (!$store instanceof DoctrineStore) {
@@ -35,7 +39,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
         $connection = $store->connection();
         $schema = $store->schema();
 
-        return $schema->toSql($connection->getDatabasePlatform());
+        return array_values($schema->toSql($connection->getDatabasePlatform()));
     }
 
     public function update(Store $store): void
@@ -52,6 +56,9 @@ class DoctrineSchemaManager implements DryRunSchemaManager
         }
     }
 
+    /**
+     * @return list<string>
+     */
     public function dryRunUpdate(Store $store): array
     {
         if (!$store instanceof DoctrineStore) {
@@ -66,7 +73,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
         $comparator = new Comparator();
         $diff = $comparator->compare($fromSchema, $toSchema);
 
-        return $diff->toSql($connection->getDatabasePlatform());
+        return array_values($diff->toSql($connection->getDatabasePlatform()));
     }
 
     public function drop(Store $store): void
@@ -83,6 +90,9 @@ class DoctrineSchemaManager implements DryRunSchemaManager
         }
     }
 
+    /**
+     * @return list<string>
+     */
     public function dryRunDrop(Store $store): array
     {
         if (!$store instanceof DoctrineStore) {
