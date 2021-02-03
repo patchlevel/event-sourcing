@@ -52,7 +52,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregateId = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregateId: string, playhead: ?int, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $result */
+        /** @var array<array{aggregateId: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -64,7 +64,6 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $platform = $this->connection->getDatabasePlatform();
 
         return array_map(
-            /** @param array{aggregateId: string, playhead: ?int, event: class-string<AggregateChanged>, payload: string, recordedOn: string} $data */
             static function (array $data) use ($platform): AggregateChanged {
                 return AggregateChanged::deserialize(
                     self::normalizeResult($platform, $data)
@@ -132,7 +131,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 ->orderBy('id')
                 ->getSQL();
 
-            /** @var Traversable<array{aggregateId: string, playhead: ?int, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $query */
+            /** @var Traversable<array{aggregateId: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $query */
             $query = $this->connection->iterateAssociative($sql);
 
             if (!$query instanceof Generator) {
@@ -148,7 +147,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->orderBy('id')
             ->getSQL();
 
-        /** @var Traversable<array{aggregateId: string, playhead: ?int, aggregate: class-string<AggregateChanged>}> $metaQuery */
+        /** @var Traversable<array{aggregateId: string, playhead: string, aggregate: class-string<AggregateChanged>}> $metaQuery */
         $metaQuery = $this->connection->iterateAssociative($sql);
 
         $platform = $this->connection->getDatabasePlatform();

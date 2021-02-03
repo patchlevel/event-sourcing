@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Aggregate;
 
 use DateTimeImmutable;
-
 use function json_decode;
 use function json_encode;
-
 use const JSON_THROW_ON_ERROR;
 
 abstract class AggregateChanged
@@ -74,7 +72,7 @@ abstract class AggregateChanged
     }
 
     /**
-     * @param array{aggregateId: string, playhead: ?int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable} $data
+     * @param array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable} $data
      */
     public static function deserialize(array $data): self
     {
@@ -91,19 +89,20 @@ abstract class AggregateChanged
     }
 
     /**
-     * @return array{aggregateId: string, playhead: ?int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable}
+     * @return array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable}
      */
     public function serialize(): array
     {
         $recordedOn = $this->recordedOn;
+        $playhead = $this->playhead;
 
-        if ($recordedOn === null) {
+        if ($recordedOn === null || $playhead === null) {
             throw new AggregateException('The change was not recorded.');
         }
 
         return [
             'aggregateId' => $this->aggregateId,
-            'playhead' => $this->playhead,
+            'playhead' => $playhead,
             'event' => static::class,
             'payload' => json_encode($this->payload, JSON_THROW_ON_ERROR),
             'recordedOn' => $recordedOn,
