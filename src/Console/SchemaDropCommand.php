@@ -31,8 +31,8 @@ class SchemaDropCommand extends Command
         $this
             ->setName('event-sourcing:schema:drop')
             ->setDescription('drop eventstore schema')
-            ->addOption('dry-run', 'd', InputOption::VALUE_OPTIONAL, 'dump schema drop queries', false)
-            ->addOption('force', 'f', InputOption::VALUE_OPTIONAL, 'force schema drop', false);
+            ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'dump schema drop queries')
+            ->addOption('force', 'f', InputOption::VALUE_NONE, 'force schema drop');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
