@@ -10,11 +10,8 @@ final class Snapshot
 {
     /** @var class-string<SnapshotableAggregateRoot> */
     private string $aggregate;
-
     private string $id;
-
     private int $playhead;
-
     /** @var array<string, mixed> */
     private array $payload;
 

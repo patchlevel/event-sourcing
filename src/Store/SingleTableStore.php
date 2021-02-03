@@ -48,6 +48,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate = :aggregate AND aggregateId = :id AND playhead > :playhead')
             ->getSQL();
 
+        /** @var array<array{aggregateId: string, playhead: ?int, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -60,7 +61,6 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $platform = $this->connection->getDatabasePlatform();
 
         return array_map(
-        /** @param array<string, mixed> $data */
             static function (array $data) use ($platform) {
                 return AggregateChanged::deserialize(
                     self::normalizeResult($platform, $data)
@@ -137,15 +137,15 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->orderBy('id')
             ->getSQL();
 
+        /** @var array<array{aggregateId: string, aggregate: string, playhead: ?int, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $result */
         $result = $this->connection->iterateAssociative($sql);
         $platform = $this->connection->getDatabasePlatform();
 
         /** @var array<string, class-string<AggregateRoot>> $classMap */
         $classMap = array_flip($this->aggregates);
 
-        /** @var array<string, mixed> $data */
         foreach ($result as $data) {
-            $name = (string)$data['aggregate'];
+            $name = $data['aggregate'];
 
             if (!array_key_exists($name, $classMap)) {
                 throw new StoreException();

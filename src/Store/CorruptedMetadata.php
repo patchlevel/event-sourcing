@@ -10,16 +10,16 @@ class CorruptedMetadata extends StoreException
 {
     public function __construct(
         string $expectedAggregateId,
-        string $expectedPlayhead,
+        ?int $expectedPlayhead,
         string $actualAggregateId,
-        string $actualPlayhead
+        ?int $actualPlayhead
     ) {
         parent::__construct(sprintf(
             'Corrupted metadata: %s:%s get %s:%s',
             $actualAggregateId,
-            $actualPlayhead,
+            (string)$actualPlayhead,
             $expectedAggregateId,
-            $expectedPlayhead
+            (string)$expectedPlayhead
         ));
     }
 }

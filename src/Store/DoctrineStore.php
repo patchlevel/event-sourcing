@@ -10,6 +10,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 abstract class DoctrineStore implements Store
 {
@@ -28,16 +29,12 @@ abstract class DoctrineStore implements Store
     abstract public function schema(): Schema;
 
     /**
-     * @param array<string, mixed> $result
+     * @param array{aggregateId: string, playhead: ?int, event: class-string<AggregateChanged>, payload: string, recordedOn: string} $result
      *
-     * @return array<string, mixed>
+     * @return array{aggregateId: string, playhead: ?int, event: class-string<AggregateChanged>, payload: string, recordedOn: DateTimeImmutable}
      */
     protected static function normalizeResult(AbstractPlatform $platform, array $result): array
     {
-        if (!$result['recordedOn']) {
-            return $result;
-        }
-
         $recordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue(
             $result['recordedOn'],
             $platform

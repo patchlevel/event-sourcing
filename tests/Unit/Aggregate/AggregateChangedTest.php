@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
+use Error;
 use Patchlevel\EventSourcing\Aggregate\AggregateException;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -121,7 +122,8 @@ class AggregateChangedTest extends TestCase
 
     public function testDeserializeClassNotFound(): void
     {
-        $this->expectException(AggregateException::class);
+        $this->expectException(Error::class);
+        $this->expectExceptionMessage('Class \'Patchlevel\EventSourcing\Tests\Unit\Fixture\NotFound\' not found');
 
         ProfileCreated::deserialize([
             'aggregateId' => '1',
