@@ -71,6 +71,9 @@ class WatchServer
         return $this->host;
     }
 
+    /**
+     * @return iterable<int, string>
+     */
     private function getMessages(): iterable
     {
         $sockets = [(int)$this->socket => $this->socket];

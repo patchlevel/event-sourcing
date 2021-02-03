@@ -42,7 +42,9 @@ class WatchServerClient
     public function send(AggregateChanged $event): bool
     {
         $socketIsFresh = !$this->socket;
-        if (!$this->socket = $this->socket ?: $this->createSocket()) {
+        $this->socket = $this->socket ?: $this->createSocket();
+
+        if (!$this->socket) {
             return false;
         }
 
@@ -70,17 +72,13 @@ class WatchServerClient
         return false;
     }
 
-    private static function nullErrorHandler($t, $m): void
-    {
-        // no-op
-    }
-
     /**
      * @return resource
      */
     private function createSocket()
     {
         set_error_handler([self::class, 'nullErrorHandler']);
+
         try {
             return stream_socket_client(
                 $this->host,
@@ -92,5 +90,10 @@ class WatchServerClient
         } finally {
             restore_error_handler();
         }
+    }
+
+    private static function nullErrorHandler(int $errno, string $errstr): void
+    {
+        // no-op
     }
 }
