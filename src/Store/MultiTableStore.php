@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
@@ -12,8 +11,8 @@ use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
-
 use Traversable;
+
 use function array_flip;
 use function array_key_exists;
 use function array_map;
@@ -99,7 +98,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
     /**
      * @param class-string<AggregateRoot> $aggregate
-     * @param array<AggregateChanged>          $events
+     * @param array<AggregateChanged>     $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {

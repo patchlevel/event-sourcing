@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
 use Error;
-use Patchlevel\EventSourcing\Aggregate\AggregateException;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;

@@ -10,5 +10,6 @@
 
     <rule ref="PatchlevelCodingStandard">
         <exclude name="SlevomatCodingStandard.Classes.SuperfluousExceptionNaming.SuperfluousSuffix" />
+        <exclude name="Generic.Files.LineLength.TooLong"/>
     </rule>
 </ruleset>

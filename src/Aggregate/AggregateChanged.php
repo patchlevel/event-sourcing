@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Aggregate;
 
 use DateTimeImmutable;
+
 use function json_decode;
 use function json_encode;
+
 use const JSON_THROW_ON_ERROR;
 
 abstract class AggregateChanged
