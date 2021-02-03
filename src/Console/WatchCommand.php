@@ -12,6 +12,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+use function sprintf;
+
 class WatchCommand extends Command
 {
     private WatchServer $server;
@@ -41,7 +43,7 @@ class WatchCommand extends Command
 
         $dumper = new EventPrinter();
 
-        $this->server->listen(static function (AggregateChanged $event) use ($dumper, $console) {
+        $this->server->listen(static function (AggregateChanged $event) use ($dumper, $console): void {
             $dumper->write($console, $event);
         });
 

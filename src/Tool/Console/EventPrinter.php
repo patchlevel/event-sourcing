@@ -1,9 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Tool\Console;
 
+use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Symfony\Component\Console\Style\SymfonyStyle;
+
+use function get_class;
+use function json_encode;
+
+use const JSON_PRETTY_PRINT;
 
 class EventPrinter
 {
@@ -21,10 +29,16 @@ class EventPrinter
             [
                 $event->aggregateId(),
                 $event->playhead(),
-                $date ? $date->format(\DateTimeImmutable::ATOM) : 'null',
-            ]
+                $date ? $date->format(DateTimeImmutable::ATOM) : 'null',
+            ],
         ]);
 
-        $console->block(json_encode($event->payload(), JSON_PRETTY_PRINT));
+        $payload = json_encode($event->payload(), JSON_PRETTY_PRINT);
+
+        if (!$payload) {
+            return;
+        }
+
+        $console->block($payload);
     }
 }

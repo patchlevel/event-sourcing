@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\EventSourcing;
 
+use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tool\Console\EventPrinter;
@@ -12,6 +13,9 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+
+use function array_flip;
+use function is_string;
 
 class ShowCommand extends Command
 {
@@ -49,6 +53,10 @@ class ShowCommand extends Command
 
         $aggregate = $input->getArgument('aggregate');
         $id = $input->getArgument('id');
+
+        if (!is_string($aggregate) || !is_string($id)) {
+            throw new InvalidArgumentException();
+        }
 
         $events = $this->store->load($map[$aggregate], $id);
 

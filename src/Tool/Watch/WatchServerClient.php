@@ -1,16 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Tool\Watch;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+
+use function base64_encode;
+use function fclose;
+use function restore_error_handler;
+use function serialize;
+use function set_error_handler;
+use function stream_socket_client;
+use function stream_socket_sendto;
+use function stream_socket_shutdown;
+use function strpos;
+
+use const STREAM_CLIENT_ASYNC_CONNECT;
+use const STREAM_CLIENT_CONNECT;
+use const STREAM_SHUT_RDWR;
 
 class WatchServerClient
 {
     private string $host;
 
-    /**
-     * @var resource
-     */
+    /** @var resource */
     private $socket;
 
     /**
@@ -18,7 +32,7 @@ class WatchServerClient
      */
     public function __construct(string $host)
     {
-        if (false === strpos($host, '://')) {
+        if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
         }
 
@@ -36,17 +50,17 @@ class WatchServerClient
 
         set_error_handler([self::class, 'nullErrorHandler']);
         try {
-            if (-1 !== stream_socket_sendto($this->socket, $encodedPayload)) {
+            if (stream_socket_sendto($this->socket, $encodedPayload) !== -1) {
                 return true;
             }
 
             if (!$socketIsFresh) {
-                stream_socket_shutdown($this->socket, \STREAM_SHUT_RDWR);
+                stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
                 fclose($this->socket);
                 $this->socket = $this->createSocket();
             }
 
-            if (-1 !== stream_socket_sendto($this->socket, $encodedPayload)) {
+            if (stream_socket_sendto($this->socket, $encodedPayload) !== -1) {
                 return true;
             }
         } finally {
@@ -68,8 +82,13 @@ class WatchServerClient
     {
         set_error_handler([self::class, 'nullErrorHandler']);
         try {
-            return stream_socket_client($this->host, $errno, $errstr, 3,
-                \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT);
+            return stream_socket_client(
+                $this->host,
+                $errno,
+                $errstr,
+                3,
+                STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT
+            );
         } finally {
             restore_error_handler();
         }

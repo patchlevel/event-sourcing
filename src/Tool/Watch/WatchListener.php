@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Tool\Watch;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
