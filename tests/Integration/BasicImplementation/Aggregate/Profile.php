@@ -30,7 +30,7 @@ final class Profile extends SnapshotableAggregateRoot
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{id: string}
      */
     protected function serialize(): array
     {
@@ -40,7 +40,7 @@ final class Profile extends SnapshotableAggregateRoot
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param array{id: string} $payload
      */
     protected static function deserialize(array $payload): self
     {

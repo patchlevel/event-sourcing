@@ -13,7 +13,7 @@ Small lightweight event-sourcing library.
 composer require patchlevel/event-sourcing
 ```
 
-## define aggregate
+## define aggregates
 
 ```php
 <?php declare(strict_types=1);
@@ -117,7 +117,7 @@ final class ProfileCreated extends AggregateChanged
 }
 ```
 
-# define projection
+# define projections
 
 ```php
 <?php declare(strict_types=1);

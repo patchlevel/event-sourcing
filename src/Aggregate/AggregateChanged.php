@@ -6,8 +6,6 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 use DateTimeImmutable;
 
-use function is_string;
-use function is_subclass_of;
 use function json_decode;
 use function json_encode;
 
@@ -76,48 +74,40 @@ abstract class AggregateChanged
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable} $data
      */
     public static function deserialize(array $data): self
     {
         $class = $data['event'];
 
-        if (!is_string($class)) {
-            throw new AggregateException();
-        }
-
-        if (!is_subclass_of($class, self::class)) {
-            throw new AggregateException();
-        }
-
         /** @var array<string, mixed> $payload */
-        $payload = json_decode((string)$data['payload'], true, 512, JSON_THROW_ON_ERROR);
+        $payload = json_decode($data['payload'], true, 512, JSON_THROW_ON_ERROR);
 
-        $event = new $class((string)$data['aggregateId'], $payload);
-        $event->playhead = (int)$data['playhead'];
-
-        $recordedOn = $data['recordedOn'];
-
-        if (!$recordedOn instanceof DateTimeImmutable) {
-            throw new AggregateException();
-        }
-
-        $event->recordedOn = $recordedOn;
+        $event = new $class($data['aggregateId'], $payload);
+        $event->playhead = $data['playhead'];
+        $event->recordedOn = $data['recordedOn'];
 
         return $event;
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable}
      */
     public function serialize(): array
     {
+        $recordedOn = $this->recordedOn;
+        $playhead = $this->playhead;
+
+        if ($recordedOn === null || $playhead === null) {
+            throw new AggregateException('The change was not recorded.');
+        }
+
         return [
             'aggregateId' => $this->aggregateId,
-            'playhead' => $this->playhead,
+            'playhead' => $playhead,
             'event' => static::class,
             'payload' => json_encode($this->payload, JSON_THROW_ON_ERROR),
-            'recordedOn' => $this->recordedOn,
+            'recordedOn' => $recordedOn,
         ];
     }
 }

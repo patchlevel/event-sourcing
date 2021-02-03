@@ -1,0 +1,12 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Parameter \\#2 \\$result of static method Patchlevel\\\\EventSourcing\\\\Store\\\\DoctrineStore\\:\\:normalizeResult\\(\\) expects array\\('aggregateId' \\=\\> string, 'playhead' \\=\\> string, 'event' \\=\\> class\\-string\\<Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged\\>, 'payload' \\=\\> string, 'recordedOn' \\=\\> string\\), array given\\.$#"
+			count: 1
+			path: src/Store/MultiTableStore.php
+
+		-
+			message: "#^Parameter \\#2 \\$result of static method Patchlevel\\\\EventSourcing\\\\Store\\\\DoctrineStore\\:\\:normalizeResult\\(\\) expects array\\('aggregateId' \\=\\> string, 'playhead' \\=\\> string, 'event' \\=\\> class\\-string\\<Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged\\>, 'payload' \\=\\> string, 'recordedOn' \\=\\> string\\), array given\\.$#"
+			count: 1
+			path: src/Store/SingleTableStore.php
+

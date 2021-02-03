@@ -70,7 +70,7 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{id: string, email: string}
      */
     protected function serialize(): array
     {
@@ -81,7 +81,7 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param array{id: string, email: string} $payload
      */
     protected static function deserialize(array $payload): SnapshotableAggregateRoot
     {

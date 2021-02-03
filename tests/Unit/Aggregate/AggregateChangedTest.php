@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateException;
+use Error;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
+
+use const PHP_VERSION_ID;
 
 class AggregateChangedTest extends TestCase
 {
@@ -121,7 +123,13 @@ class AggregateChangedTest extends TestCase
 
     public function testDeserializeClassNotFound(): void
     {
-        $this->expectException(AggregateException::class);
+        $this->expectException(Error::class);
+
+        if (PHP_VERSION_ID >= 80000) {
+            $this->expectExceptionMessage('Class "Patchlevel\EventSourcing\Tests\Unit\Fixture\NotFound" not found');
+        } else {
+            $this->expectExceptionMessage('Class \'Patchlevel\EventSourcing\Tests\Unit\Fixture\NotFound\' not found');
+        }
 
         ProfileCreated::deserialize([
             'aggregateId' => '1',
