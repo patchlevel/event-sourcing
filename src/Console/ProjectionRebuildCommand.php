@@ -34,7 +34,7 @@ class ProjectionRebuildCommand extends Command
         $this
             ->setName('event-sourcing:projection:rebuild')
             ->setDescription('rebuild projection')
-            ->addOption('recreate', 'r', InputOption::VALUE_OPTIONAL, 'drop and create projections', false);
+            ->addOption('recreate', 'r', InputOption::VALUE_NONE, 'drop and create projections');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

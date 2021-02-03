@@ -31,8 +31,8 @@ class SchemaUpdateCommand extends Command
         $this
             ->setName('event-sourcing:schema:update')
             ->setDescription('update eventstore schema')
-            ->addOption('dry-run', 'd', InputOption::VALUE_OPTIONAL, 'dump schema update queries', false)
-            ->addOption('force', 'f', InputOption::VALUE_OPTIONAL, 'force schema update', false);
+            ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'dump schema update queries')
+            ->addOption('force', 'f', InputOption::VALUE_NONE, 'force schema update');
 
         $this->setName('event-sourcing:schema:update');
     }
