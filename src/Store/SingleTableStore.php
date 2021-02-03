@@ -36,7 +36,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     /**
      * @param class-string<AggregateRoot> $aggregate
      *
-     * @return AggregateChanged[]
+     * @return array<AggregateChanged>
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = -1): array
     {
@@ -97,7 +97,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
 
     /**
      * @param class-string<AggregateRoot> $aggregate
-     * @param AggregateChanged[]          $events
+     * @param array<AggregateChanged>     $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
@@ -141,7 +141,6 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $result = $this->connection->iterateAssociative($sql);
         $platform = $this->connection->getDatabasePlatform();
 
-        /** @var array<string, class-string<AggregateRoot>> $classMap */
         $classMap = array_flip($this->aggregates);
 
         foreach ($result as $data) {

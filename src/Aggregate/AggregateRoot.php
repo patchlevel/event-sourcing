@@ -11,7 +11,7 @@ use function method_exists;
 
 abstract class AggregateRoot
 {
-    /** @var AggregateChanged[] */
+    /** @var array<AggregateChanged> */
     private array $uncommittedEvents = [];
 
     /** @internal */
@@ -34,7 +34,7 @@ abstract class AggregateRoot
     }
 
     /**
-     * @return AggregateChanged[]
+     * @return array<AggregateChanged>
      */
     public function releaseEvents(): array
     {
@@ -45,7 +45,7 @@ abstract class AggregateRoot
     }
 
     /**
-     * @param AggregateChanged[] $stream
+     * @param array<AggregateChanged> $stream
      *
      * @return static
      */

@@ -37,7 +37,7 @@ class Psr16SnapshotStore implements SnapshotStore
             $this->key($aggregate, $id)
         );
 
-        if (!$data) {
+        if ($data === null) {
             throw new SnapshotNotFound($aggregate, $id);
         }
 
