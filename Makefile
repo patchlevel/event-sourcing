@@ -24,6 +24,10 @@ psalm: vendor                                                                   
 phpunit: vendor                                                                 ## run phpunit tests
 	vendor/bin/phpunit --testdox --colors=always -v $(OPTIONS)
 
+.PHONY: infection
+infection: vendor                                                               ## run infection
+	vendor/bin/infection
+
 .PHONY: static
 static: phpstan psalm phpcs-check                                               ## run static analyser
 

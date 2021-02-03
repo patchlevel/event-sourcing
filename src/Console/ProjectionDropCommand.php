@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 class ProjectionDropCommand extends Command
 {
@@ -22,12 +23,18 @@ class ProjectionDropCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('event-sourcing:projection:drop');
+        $this
+            ->setName('event-sourcing:projection:drop')
+            ->setDescription('drop projection schema');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $console = new SymfonyStyle($input, $output);
+
         $this->projectionRepository->drop();
+
+        $console->success('projection deleted');
 
         return 0;
     }

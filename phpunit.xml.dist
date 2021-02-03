@@ -20,6 +20,7 @@
     </coverage>
 
     <php>
+        <env name="COLUMNS" value="120"/>
         <ini name="error_reporting" value="E_ALL"/>
     </php>
 </phpunit>
