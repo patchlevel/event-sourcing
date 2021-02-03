@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\EventSourcing;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Tool\Console\EventPrinter;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+class ShowCommand extends Command
+{
+    private Store $store;
+
+    /** @var array<class-string<AggregateRoot>, string> */
+    private array $aggregates;
+
+    /**
+     * @param array<class-string<AggregateRoot>, string> $aggregates
+     */
+    public function __construct(Store $store, array $aggregates)
+    {
+        parent::__construct();
+
+        $this->store = $store;
+        $this->aggregates = $aggregates;
+    }
+
+    protected function configure(): void
+    {
+        $this
+            ->setName('event-sourcing:show')
+            ->setDescription('create projection schema')
+            ->addArgument('aggregate', InputArgument::REQUIRED)
+            ->addArgument('id', InputArgument::REQUIRED);
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $console = new SymfonyStyle($input, $output);
+        $dumper = new EventPrinter();
+
+        $map = array_flip($this->aggregates);
+
+        $aggregate = $input->getArgument('aggregate');
+        $id = $input->getArgument('id');
+
+        $events = $this->store->load($map[$aggregate], $id);
+
+        foreach ($events as $event) {
+            $dumper->write($console, $event);
+        }
+
+        return 0;
+    }
+}
