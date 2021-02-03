@@ -122,7 +122,12 @@ class AggregateChangedTest extends TestCase
     public function testDeserializeClassNotFound(): void
     {
         $this->expectException(Error::class);
-        $this->expectExceptionMessage('Class \'Patchlevel\EventSourcing\Tests\Unit\Fixture\NotFound\' not found');
+
+        if (PHP_VERSION_ID >= 80000) {
+            $this->expectExceptionMessage('Class "Patchlevel\EventSourcing\Tests\Unit\Fixture\NotFound" not found');
+        } else {
+            $this->expectExceptionMessage('Class \'Patchlevel\EventSourcing\Tests\Unit\Fixture\NotFound\' not found');
+        }
 
         ProfileCreated::deserialize([
             'aggregateId' => '1',
