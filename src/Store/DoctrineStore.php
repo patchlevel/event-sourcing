@@ -12,6 +12,8 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
+use function is_int;
+
 abstract class DoctrineStore implements Store
 {
     protected Connection $connection;
