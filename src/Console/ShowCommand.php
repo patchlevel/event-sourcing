@@ -58,7 +58,19 @@ class ShowCommand extends Command
             throw new InvalidArgumentException();
         }
 
+        if (!array_key_exists($aggregate, $map)) {
+            $console->error(sprintf('aggregate type "%s" not exists', $aggregate));
+
+            return 1;
+        }
+
         $events = $this->store->load($map[$aggregate], $id);
+
+        if (count($events) === 0) {
+            $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
+
+            return 1;
+        }
 
         foreach ($events as $event) {
             $dumper->write($console, $event);
