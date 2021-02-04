@@ -42,7 +42,6 @@ class WatchServerClient
 
     public function send(AggregateChanged $event): bool
     {
-        $socketIsFresh = !$this->socketOpen();
         $socket = $this->createSocket();
 
         if (!$socket) {
@@ -56,10 +55,6 @@ class WatchServerClient
         try {
             if (stream_socket_sendto($socket, $encodedPayload) !== -1) {
                 return true;
-            }
-
-            if ($socketIsFresh) {
-                return false;
             }
 
             $this->closeSocket();
@@ -123,11 +118,6 @@ class WatchServerClient
         fclose($socket);
 
         $this->socket = null;
-    }
-
-    private function socketOpen(): bool
-    {
-        return $this->socket !== null;
     }
 
     /** @internal */
