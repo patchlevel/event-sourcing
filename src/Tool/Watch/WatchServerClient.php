@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tool\Watch;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use RuntimeException;
 
 use function base64_encode;
 use function fclose;
@@ -52,7 +51,7 @@ class WatchServerClient
 
         $encodedPayload = base64_encode(serialize($event->serialize())) . "\n";
 
-        set_error_handler([$this, 'nullErrorHandler']);
+        set_error_handler([self::class, 'nullErrorHandler']);
 
         try {
             if (stream_socket_sendto($socket, $encodedPayload) !== -1) {
@@ -89,7 +88,7 @@ class WatchServerClient
             return $this->socket;
         }
 
-        set_error_handler([$this, 'nullErrorHandler']);
+        set_error_handler([self::class, 'nullErrorHandler']);
 
         try {
             $socket = stream_socket_client(
@@ -131,9 +130,8 @@ class WatchServerClient
         return $this->socket !== null;
     }
 
-    /** @internal */
-    public function nullErrorHandler(int $errno, string $errstr): bool
+    private function nullErrorHandler(int $errno, string $errstr): bool
     {
-        throw new RuntimeException();
+        return false;
     }
 }
