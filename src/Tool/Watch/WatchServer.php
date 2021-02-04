@@ -28,6 +28,8 @@ class WatchServer
     /** @var resource|null */
     private $socket;
 
+    private bool $started;
+
     private LoggerInterface $logger;
 
     public function __construct(string $host, ?LoggerInterface $logger = null)
@@ -38,13 +40,24 @@ class WatchServer
 
         $this->host = $host;
         $this->logger = $logger ?: new NullLogger();
+        $this->socket = null;
+        $this->started = false;
     }
 
     public function start(): void
     {
-        if (!$this->socket = stream_socket_server($this->host, $errno, $errstr)) {
+        if ($this->started) {
+            return;
+        }
+
+        $socket = stream_socket_server($this->host, $errno, $errstr);
+
+        if ($socket === false) {
             throw new RuntimeException(sprintf('Server start failed on "%s": ', $this->host) . $errstr . ' ' . $errno);
         }
+
+        $this->socket = $socket;
+        $this->started = true;
     }
 
     /**
@@ -52,13 +65,12 @@ class WatchServer
      */
     public function listen(callable $callback): void
     {
-        if ($this->socket === null) {
-            $this->start();
-        }
+        $socket = $this->socket();
 
-        foreach ($this->getMessages() as $clientId => $message) {
+        foreach ($this->messages($socket) as $clientId => $message) {
             $this->logger->info('Received a payload from client {clientId}', ['clientId' => $clientId]);
 
+            /** @var array{aggregateId: string, event: class-string<AggregateChanged>, payload: string, playhead: int, recordedOn: DateTimeImmutable} $payload */
             $payload = @unserialize(base64_decode($message), ['allowed_classes' => [DateTimeImmutable::class]]);
             $event = AggregateChanged::deserialize($payload);
 
@@ -66,17 +78,35 @@ class WatchServer
         }
     }
 
-    public function getHost(): string
+    public function host(): string
     {
         return $this->host;
     }
 
     /**
+     * @return resource
+     */
+    private function socket()
+    {
+        $this->start();
+
+        $socket = $this->socket;
+
+        if (!$socket) {
+            throw new RuntimeException();
+        }
+
+        return $socket;
+    }
+
+    /**
+     * @param resource $socket
+     *
      * @return iterable<int, string>
      */
-    private function getMessages(): iterable
+    private function messages($socket): iterable
     {
-        $sockets = [(int)$this->socket => $this->socket];
+        $sockets = [(int)$socket => $socket];
         $write = [];
 
         while (true) {
@@ -84,14 +114,25 @@ class WatchServer
             stream_select($read, $write, $write, null);
 
             foreach ($read as $stream) {
-                if ($this->socket === $stream) {
-                    $stream = stream_socket_accept($this->socket);
+                if ($socket === $stream) {
+                    $stream = stream_socket_accept($socket);
+
+                    if ($stream === false) {
+                        continue;
+                    }
+
                     $sockets[(int)$stream] = $stream;
                 } elseif (feof($stream)) {
                     unset($sockets[(int)$stream]);
                     fclose($stream);
                 } else {
-                    yield (int)$stream => fgets($stream);
+                    $content = fgets($stream);
+
+                    if ($content === false) {
+                        continue;
+                    }
+
+                    yield (int)$stream => $content;
                 }
             }
         }

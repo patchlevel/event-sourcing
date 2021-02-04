@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tool\Watch;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use RuntimeException;
 
 use function base64_encode;
 use function fclose;
@@ -24,7 +25,7 @@ class WatchServerClient
 {
     private string $host;
 
-    /** @var resource */
+    /** @var resource|null */
     private $socket;
 
     /**
@@ -37,32 +38,39 @@ class WatchServerClient
         }
 
         $this->host = $host;
+        $this->socket = null;
     }
 
     public function send(AggregateChanged $event): bool
     {
-        $socketIsFresh = !$this->socket;
-        $this->socket = $this->socket ?: $this->createSocket();
+        $socketIsFresh = !$this->socketOpen();
+        $socket = $this->createSocket();
 
-        if (!$this->socket) {
+        if (!$socket) {
             return false;
         }
 
         $encodedPayload = base64_encode(serialize($event->serialize())) . "\n";
 
-        set_error_handler([self::class, 'nullErrorHandler']);
+        set_error_handler([$this, 'nullErrorHandler']);
+
         try {
-            if (stream_socket_sendto($this->socket, $encodedPayload) !== -1) {
+            if (stream_socket_sendto($socket, $encodedPayload) !== -1) {
                 return true;
             }
 
-            if (!$socketIsFresh) {
-                stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
-                fclose($this->socket);
-                $this->socket = $this->createSocket();
+            if ($socketIsFresh) {
+                return false;
             }
 
-            if (stream_socket_sendto($this->socket, $encodedPayload) !== -1) {
+            $this->closeSocket();
+            $socket = $this->createSocket();
+
+            if (!$socket) {
+                return false;
+            }
+
+            if (stream_socket_sendto($socket, $encodedPayload) !== -1) {
                 return true;
             }
         } finally {
@@ -73,27 +81,59 @@ class WatchServerClient
     }
 
     /**
-     * @return resource
+     * @return resource|null
      */
     private function createSocket()
     {
-        set_error_handler([self::class, 'nullErrorHandler']);
+        if ($this->socket) {
+            return $this->socket;
+        }
+
+        set_error_handler([$this, 'nullErrorHandler']);
 
         try {
-            return stream_socket_client(
+            $socket = stream_socket_client(
                 $this->host,
                 $errno,
                 $errstr,
                 3,
                 STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT
             );
+
+            if (!$socket) {
+                return null;
+            }
+
+            $this->socket = $socket;
+
+            return $socket;
         } finally {
             restore_error_handler();
         }
     }
 
-    private static function nullErrorHandler(int $errno, string $errstr): void
+    private function closeSocket(): void
     {
-        // no-op
+        $socket = $this->socket;
+
+        if (!$socket) {
+            return;
+        }
+
+        stream_socket_shutdown($socket, STREAM_SHUT_RDWR);
+        fclose($socket);
+
+        $this->socket = null;
+    }
+
+    private function socketOpen(): bool
+    {
+        return $this->socket !== null;
+    }
+
+    /** @internal */
+    public function nullErrorHandler(int $errno, string $errstr): bool
+    {
+        throw new RuntimeException();
     }
 }

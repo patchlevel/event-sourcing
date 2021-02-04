@@ -38,7 +38,7 @@ class WatchCommand extends Command
 
         $this->server->start();
 
-        $console->success(sprintf('Server listening on %s', $this->server->getHost()));
+        $console->success(sprintf('Server listening on %s', $this->server->host()));
         $console->comment('Quit the server with CONTROL-C.');
 
         $dumper = new EventPrinter();
