@@ -28,8 +28,6 @@ class WatchServer
     /** @var resource|null */
     private $socket;
 
-    private bool $started;
-
     private LoggerInterface $logger;
 
     public function __construct(string $host, ?LoggerInterface $logger = null)
@@ -41,12 +39,11 @@ class WatchServer
         $this->host = $host;
         $this->logger = $logger ?: new NullLogger();
         $this->socket = null;
-        $this->started = false;
     }
 
     public function start(): void
     {
-        if ($this->started) {
+        if ($this->socket) {
             return;
         }
 
@@ -57,7 +54,6 @@ class WatchServer
         }
 
         $this->socket = $socket;
-        $this->started = true;
     }
 
     /**
@@ -71,7 +67,7 @@ class WatchServer
             $this->logger->info('Received a payload from client {clientId}', ['clientId' => $clientId]);
 
             /** @var array{aggregateId: string, event: class-string<AggregateChanged>, payload: string, playhead: int, recordedOn: DateTimeImmutable} $payload */
-            $payload = @unserialize(base64_decode($message), ['allowed_classes' => [DateTimeImmutable::class]]);
+            $payload = unserialize(base64_decode($message), ['allowed_classes' => [DateTimeImmutable::class]]);
             $event = AggregateChanged::deserialize($payload);
 
             $callback($event, $clientId);
