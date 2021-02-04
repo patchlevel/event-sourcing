@@ -130,7 +130,8 @@ class WatchServerClient
         return $this->socket !== null;
     }
 
-    private function nullErrorHandler(int $errno, string $errstr): bool
+    /** @internal */
+    public function nullErrorHandler(int $errno, string $errstr): bool
     {
         return false;
     }
