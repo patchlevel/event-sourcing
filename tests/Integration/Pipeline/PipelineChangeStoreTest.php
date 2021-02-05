@@ -27,6 +27,9 @@ use PHPUnit\Framework\TestCase;
 use function file_exists;
 use function unlink;
 
+/**
+ * @coversNothing
+ */
 final class PipelineChangeStoreTest extends TestCase
 {
     private Connection $connectionOld;
