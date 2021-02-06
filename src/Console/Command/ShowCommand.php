@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Console;
+namespace Patchlevel\EventSourcing\Console\Command;
 
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Console\EventPrinter;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Tool\Console\EventPrinter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,9 +42,9 @@ class ShowCommand extends Command
     {
         $this
             ->setName('event-sourcing:show')
-            ->setDescription('create projection schema')
-            ->addArgument('aggregate', InputArgument::REQUIRED)
-            ->addArgument('id', InputArgument::REQUIRED);
+            ->setDescription('show events from one aggregate')
+            ->addArgument('aggregate', InputArgument::REQUIRED, 'aggregate name')
+            ->addArgument('id', InputArgument::REQUIRED, 'aggregate id');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Console;
+namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
 use Patchlevel\EventSourcing\Schema\SchemaManager;
@@ -13,7 +13,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class SchemaCreateCommand extends Command
+class SchemaDropCommand extends Command
 {
     private Store $store;
     private SchemaManager $schemaManager;
@@ -29,9 +29,10 @@ class SchemaCreateCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:schema:create')
-            ->setDescription('create eventstore schema')
-            ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'dump schema create queries');
+            ->setName('event-sourcing:schema:drop')
+            ->setDescription('drop eventstore schema')
+            ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'dump schema drop queries')
+            ->addOption('force', 'f', InputOption::VALUE_NONE, 'force schema drop');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -46,7 +47,7 @@ class SchemaCreateCommand extends Command
                 return 1;
             }
 
-            $actions = $this->schemaManager->dryRunCreate($this->store);
+            $actions = $this->schemaManager->dryRunDrop($this->store);
 
             foreach ($actions as $action) {
                 $output->writeln($action);
@@ -55,9 +56,17 @@ class SchemaCreateCommand extends Command
             return 0;
         }
 
-        $this->schemaManager->create($this->store);
+        $force = $input->getOption('force');
 
-        $console->success('schema created');
+        if (!$force) {
+            $console->error('Please run the operation with --force to execute. All data will be lost!');
+
+            return 1;
+        }
+
+        $this->schemaManager->drop($this->store);
+
+        $console->success('schema deleted');
 
         return 0;
     }

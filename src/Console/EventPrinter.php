@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tool\Console;
+namespace Patchlevel\EventSourcing\Console;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;

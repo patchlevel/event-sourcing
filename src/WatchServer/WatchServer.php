@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tool\Watch;
+namespace Patchlevel\EventSourcing\WatchServer;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;

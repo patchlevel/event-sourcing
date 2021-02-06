@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Console;
+namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Tool\Console\EventPrinter;
-use Patchlevel\EventSourcing\Tool\Watch\WatchServer;
+use Patchlevel\EventSourcing\Console\EventPrinter;
+use Patchlevel\EventSourcing\WatchServer\WatchServer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -29,7 +29,7 @@ class WatchCommand extends Command
     {
         $this
             ->setName('event-sourcing:watch')
-            ->setDescription('create projection schema');
+            ->setDescription('live stream of all aggregate events');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
