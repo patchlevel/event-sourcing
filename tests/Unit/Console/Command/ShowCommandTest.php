@@ -14,7 +14,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
-final class ShowCommandTests extends TestCase
+final class ShowCommandTest extends TestCase
 {
     use ProphecyTrait;
 
