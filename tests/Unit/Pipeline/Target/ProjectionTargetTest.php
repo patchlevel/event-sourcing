@@ -28,7 +28,7 @@ class ProjectionTargetTest extends TestCase
         );
 
         $projectionRepository = $this->prophesize(Projection::class);
-        $projectionRepository->handledEvents()->will(fn() => yield ProfileCreated::class => 'applyProfileCreated');
+        $projectionRepository->handledEvents()->will(static fn () => yield ProfileCreated::class => 'applyProfileCreated');
 
         $projectionTarget = new ProjectionTarget($projectionRepository->reveal());
 

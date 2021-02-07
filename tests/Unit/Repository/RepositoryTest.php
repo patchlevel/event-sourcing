@@ -39,6 +39,7 @@ class RepositoryTest extends TestCase
             stdClass::class,
         );
     }
+
     public function testInstantiateWithNonSnapshotAggregateButWithSnapshotStore(): void
     {
         $store = $this->prophesize(Store::class);
