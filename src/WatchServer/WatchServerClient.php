@@ -40,12 +40,12 @@ class WatchServerClient
         $this->socket = null;
     }
 
-    public function send(AggregateChanged $event): bool
+    public function send(AggregateChanged $event): void
     {
         $socket = $this->createSocket();
 
         if (!$socket) {
-            return false;
+            throw new SendingFailed('socket connection could not be established');
         }
 
         $encodedPayload = base64_encode(serialize($event->serialize())) . "\n";
@@ -54,24 +54,24 @@ class WatchServerClient
 
         try {
             if (stream_socket_sendto($socket, $encodedPayload) !== -1) {
-                return true;
+                return;
             }
 
             $this->closeSocket();
             $socket = $this->createSocket();
 
             if (!$socket) {
-                return false;
+                throw new SendingFailed('socket connection could not be established');
             }
 
             if (stream_socket_sendto($socket, $encodedPayload) !== -1) {
-                return true;
+                return;
             }
         } finally {
             restore_error_handler();
         }
 
-        return false;
+        throw new SendingFailed('unknown error');
     }
 
     /**

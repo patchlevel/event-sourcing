@@ -18,6 +18,10 @@ class WatchListener implements Listener
 
     public function __invoke(AggregateChanged $event): void
     {
-        $this->client->send($event);
+        try {
+            $this->client->send($event);
+        } catch (SendingFailed $exception) {
+            // to nothing
+        }
     }
 }
