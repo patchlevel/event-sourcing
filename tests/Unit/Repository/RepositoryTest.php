@@ -10,8 +10,10 @@ use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Repository\AggregateNotFoundException;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
+use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\AnotherAggregateSnapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -140,6 +142,36 @@ class RepositoryTest extends TestCase
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
     }
 
+    public function testLoadAggregateCached(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->load(
+            Profile::class,
+            '1'
+        )->willReturn([
+            ProfileCreated::raise(
+                ProfileId::fromString('1'),
+                Email::fromString('d.a.badura@gmail.com')
+            )->recordNow(0),
+        ]);
+
+        $eventBus = $this->prophesize(EventBus::class);
+
+        $repository = new Repository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::class,
+        );
+
+        $aggregate = $repository->load('1');
+
+        self::assertEquals(0, $aggregate->playhead());
+        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
+        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+
+        self::assertSame($aggregate, $repository->load('1'));
+    }
+
     public function testLoadAggregateWithSnapshot(): void
     {
         $store = $this->prophesize(Store::class);
@@ -166,6 +198,36 @@ class RepositoryTest extends TestCase
                 ]
             )
         );
+
+        $repository = new Repository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
+        );
+
+        $aggregate = $repository->load('1');
+
+        self::assertEquals(0, $aggregate->playhead());
+        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
+        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+    }
+
+    public function testLoadAggregateWithoutSnapshot(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->load(ProfileWithSnapshot::class, '1')->willReturn([
+            ProfileCreated::raise(
+                ProfileId::fromString('1'),
+                Email::fromString('d.a.badura@gmail.com')
+            )->recordNow(0),
+        ]);
+
+        $eventBus = $this->prophesize(EventBus::class);
+
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+        $snapshotStore->load(ProfileWithSnapshot::class, '1')
+            ->willThrow(SnapshotNotFound::class);
 
         $repository = new Repository(
             $store->reveal(),
@@ -217,6 +279,37 @@ class RepositoryTest extends TestCase
             $eventBus->reveal(),
             Profile::class,
         );
+
+        self::assertTrue($repository->has('1'));
+    }
+
+    public function testHasAggregateCached(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->load(Profile::class, '1')
+            ->willReturn(
+                [
+                    ProfileCreated::raise(
+                        ProfileId::fromString('1'),
+                        Email::fromString('d.a.badura@gmail.com')
+                    )->recordNow(0),
+                ]
+            );
+        $store->has(Profile::class, '1')->shouldNotBeCalled();
+
+        $eventBus = $this->prophesize(EventBus::class);
+
+        $repository = new Repository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::class,
+        );
+
+        $aggregate = $repository->load('1');
+
+        self::assertEquals(0, $aggregate->playhead());
+        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
+        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
 
         self::assertTrue($repository->has('1'));
     }
