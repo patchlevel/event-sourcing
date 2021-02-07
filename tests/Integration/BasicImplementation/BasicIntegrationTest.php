@@ -24,6 +24,9 @@ use PHPUnit\Framework\TestCase;
 use function file_exists;
 use function unlink;
 
+/**
+ * @coversNothing
+ */
 final class BasicIntegrationTest extends TestCase
 {
     private Connection $connection;

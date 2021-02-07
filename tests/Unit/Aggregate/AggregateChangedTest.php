@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
 use Error;
+use Patchlevel\EventSourcing\Aggregate\AggregateException;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -93,6 +94,18 @@ class AggregateChangedTest extends TestCase
             $afterRecording,
             $serializedEvent['recordedOn'],
         );
+    }
+
+    public function testSerializeNotRecorded(): void
+    {
+        $id = ProfileId::fromString('1');
+        $email = Email::fromString('d.a.badura@gmail.com');
+
+        $event = ProfileCreated::raise($id, $email);
+
+        $this->expectException(AggregateException::class);
+        $this->expectExceptionMessage('The change was not recorded.');
+        $event->serialize();
     }
 
     public function testDeserialize(): void

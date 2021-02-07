@@ -35,4 +35,26 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
 
         self::assertEquals(0, $event->playhead());
     }
+
+    public function testReculatePlayheadWithSamePlayhead(): void
+    {
+        $middleware = new RecalculatePlayheadMiddleware();
+
+        $bucket = new EventBucket(
+            Profile::class,
+            ProfileCreated::raise(
+                ProfileId::fromString('1'),
+                Email::fromString('d.a.badura@gmail.com')
+            )->recordNow(0)
+        );
+
+        $result = $middleware($bucket);
+
+        self::assertCount(1, $result);
+        self::assertEquals(Profile::class, $result[0]->aggregateClass());
+
+        $event = $result[0]->event();
+
+        self::assertEquals(0, $event->playhead());
+    }
 }
