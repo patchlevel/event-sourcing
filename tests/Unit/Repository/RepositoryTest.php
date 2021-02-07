@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
+use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Repository\AggregateNotFoundException;
@@ -19,10 +20,40 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
+use stdClass;
 
 class RepositoryTest extends TestCase
 {
     use ProphecyTrait;
+
+    public function testInstantiateWithWrongClass(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $eventBus = $this->prophesize(EventBus::class);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Class \'stdClass\' is not an AggregateRoot.');
+        new Repository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            stdClass::class,
+        );
+    }
+    public function testInstantiateWithNonSnapshotAggregateButWithSnapshotStore(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $eventBus = $this->prophesize(EventBus::class);
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Class \'Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile\' do not extends SnapshotableAggregateRoot.');
+        new Repository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::class,
+            $snapshotStore->reveal()
+        );
+    }
 
     public function testSaveAggregate(): void
     {
