@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Console;
+namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Symfony\Component\Console\Command\Command;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Console;
+namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
-use Patchlevel\EventSourcing\Console\SchemaUpdateCommand;
+use Patchlevel\EventSourcing\Console\Command\SchemaUpdateCommand;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
 use Patchlevel\EventSourcing\Schema\SchemaManager;
 use Patchlevel\EventSourcing\Store\Store;

@@ -2,25 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Console;
+namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
-use Patchlevel\EventSourcing\Console\ProjectionDropCommand;
+use Patchlevel\EventSourcing\Console\Command\ProjectionCreateCommand;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
-final class ProjectionDropCommandTest extends TestCase
+final class ProjectionCreateCommandTest extends TestCase
 {
     use ProphecyTrait;
 
     public function testSuccessful(): void
     {
         $repository = $this->prophesize(ProjectionRepository::class);
-        $repository->drop()->shouldBeCalled();
+        $repository->create()->shouldBeCalled();
 
-        $command = new ProjectionDropCommand(
+        $command = new ProjectionCreateCommand(
             $repository->reveal()
         );
 
@@ -33,6 +33,6 @@ final class ProjectionDropCommandTest extends TestCase
 
         $content = $output->fetch();
 
-        self::assertStringContainsString('[OK] projection deleted', $content);
+        self::assertStringContainsString('[OK] projection created', $content);
     }
 }

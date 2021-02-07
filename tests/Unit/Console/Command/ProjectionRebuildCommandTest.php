@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Console;
+namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
-use Patchlevel\EventSourcing\Console\ProjectionRebuildCommand;
+use Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Store\PipelineStore;
