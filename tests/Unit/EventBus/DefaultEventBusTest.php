@@ -13,6 +13,8 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
+use function microtime;
+
 class DefaultEventBusTest extends TestCase
 {
     public function testDispatchEvent(): void
@@ -69,7 +71,7 @@ class DefaultEventBusTest extends TestCase
 
         $eventBus = new DefaultEventBus();
 
-        $listenerA = new class($eventBus) implements Listener {
+        $listenerA = new class ($eventBus) implements Listener {
             public ?float $time = null;
             private DefaultEventBus $bus;
 
