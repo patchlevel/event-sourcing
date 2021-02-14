@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
-use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
-use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;

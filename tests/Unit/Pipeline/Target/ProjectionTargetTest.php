@@ -39,8 +39,13 @@ class ProjectionTargetTest extends TestCase
                 self::$handledEvent = $event;
             }
 
-            public function create(): void {}
-            public function drop(): void {}
+            public function create(): void
+            {
+            }
+
+            public function drop(): void
+            {
+            }
         };
 
         $projectionTarget = new ProjectionTarget($projectionRepository);
