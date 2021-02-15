@@ -43,9 +43,11 @@ class WatchCommand extends Command
 
         $dumper = new EventPrinter();
 
-        $this->server->listen(static function (AggregateChanged $event) use ($dumper, $console): void {
-            $dumper->write($console, $event);
-        });
+        $this->server->listen(
+            static function (AggregateChanged $event) use ($dumper, $console): void {
+                $dumper->write($console, $event);
+            }
+        );
 
         return 0;
     }

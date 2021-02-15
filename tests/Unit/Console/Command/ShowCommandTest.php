@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
+use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\Command\ShowCommand;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -42,6 +43,46 @@ final class ShowCommandTest extends TestCase
         $content = $output->fetch();
 
         self::assertStringContainsString('"visitorId": "1"', $content);
+    }
+
+    public function testAggregateNotAString(): void
+    {
+        $store = $this->prophesize(Store::class);
+
+        $command = new ShowCommand(
+            $store->reveal(),
+            [Profile::class => 'profile']
+        );
+
+        $input = new ArrayInput([
+            'aggregate' => [],
+            'id' => '1',
+        ]);
+
+        $output = new BufferedOutput();
+
+        $this->expectException(InvalidArgumentException::class);
+        $command->run($input, $output);
+    }
+
+    public function testIdNotAString(): void
+    {
+        $store = $this->prophesize(Store::class);
+
+        $command = new ShowCommand(
+            $store->reveal(),
+            [Profile::class => 'profile']
+        );
+
+        $input = new ArrayInput([
+            'aggregate' => 'profile',
+            'id' => [],
+        ]);
+
+        $output = new BufferedOutput();
+
+        $this->expectException(InvalidArgumentException::class);
+        $command->run($input, $output);
     }
 
     public function testWrongAggregate(): void
