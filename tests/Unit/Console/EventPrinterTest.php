@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
+use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -28,12 +29,14 @@ final class EventPrinterTest extends TestCase
             ],
             [['1', null, 'null']]
         )->shouldBeCalledOnce();
-        $console->block(<<<'json'
-{
-    "profileId": "1",
-    "email": "foo@bar.com"
-}
-json
+
+        $console->block(
+            Argument::allOf(
+                Argument::containingString('{'),
+                Argument::containingString('"profileId": "1"'),
+                Argument::containingString('"email": "foo@bar.com"'),
+                Argument::containingString('}'),
+            )
         )->shouldBeCalledOnce();
 
         $profileCreated = ProfileCreated::raise(
