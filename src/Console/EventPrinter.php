@@ -12,6 +12,7 @@ use function get_class;
 use function json_encode;
 
 use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
 
 class EventPrinter
 {
@@ -33,12 +34,6 @@ class EventPrinter
             ],
         ]);
 
-        $payload = json_encode($event->payload(), JSON_PRETTY_PRINT);
-
-        if (!$payload) {
-            return;
-        }
-
-        $console->block($payload);
+        $console->block(json_encode($event->payload(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 use Patchlevel\EventSourcing\Projection\Projection;
@@ -20,18 +21,37 @@ class ProjectionTargetTest extends TestCase
 
     public function testSave(): void
     {
-        $this->markTestIncomplete('Testing not finished, needs discussion');
-
         $bucket = new EventBucket(
             Profile::class,
             ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
 
-        $projectionRepository = $this->prophesize(Projection::class);
-        $projectionRepository->handledEvents()->will(static fn () => yield ProfileCreated::class => 'applyProfileCreated');
+        $projectionRepository = new class implements Projection {
+            public static ?AggregateChanged $handledEvent = null;
 
-        $projectionTarget = new ProjectionTarget($projectionRepository->reveal());
+            /** @return iterable<class-string<AggregateChanged>, string> */
+            public function handledEvents(): iterable
+            {
+                yield ProfileCreated::class => 'applyProfileCreated';
+            }
 
+            public function applyProfileCreated(ProfileCreated $event): void
+            {
+                self::$handledEvent = $event;
+            }
+
+            public function create(): void
+            {
+            }
+
+            public function drop(): void
+            {
+            }
+        };
+
+        $projectionTarget = new ProjectionTarget($projectionRepository);
         $projectionTarget->save($bucket);
+
+        self::assertSame($bucket->event(), $projectionRepository::$handledEvent);
     }
 }
