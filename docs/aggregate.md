@@ -29,7 +29,7 @@ final class Profile extends AggregateRoot
 }
 ```
 
-Wir verwenden hier ein sogenanten named constructor, um ein Objekt zu erzeugen.
+Wir verwenden hier ein sogenannten named constructor, um ein Objekt zu erzeugen.
 Der Konstruktor selbst ist protected und kann nicht von Außen aufgerufen.
 Aber es besteht die Möglichkeit mehrere verschiedene named constructor zu definieren.
 
@@ -78,7 +78,7 @@ Diese Events werden auch wieder dazu verwendet, um den aktuellen State des Aggre
 
 ### create aggregate
 
-Damit auch wirklich ein Aggregate gespeichert wird, muss mindestens ein Event in der DB existieren.
+Damit auch wirklich ein Aggregat gespeichert wird, muss mindestens ein Event in der DB existieren.
 Ein "Create" Event bietet sich hier an.
 
 ```php
@@ -115,14 +115,14 @@ final class ProfileCreated extends AggregateChanged
 }
 ```
 
-Wir empfehlen hier eine named constructor und methoden mit typehints zu definieren,
-damit das handling einfach wird und weniger fehleranfällig.
+Wir empfehlen hier named constructoren und methoden mit typehints zu verwenden,
+damit das handling einfacher wird und weniger fehleranfällig.
 
 Ein Event muss den AggregateRoot id übergeben bekommen und den payload. 
 Der payload muss als json serialisierbar und unserialisierbar sein.
 Sprich, es darf nur aus einfachen Datentypen bestehen (keine Objekte).
 
-Nachdem wir das Event defiert haben, müssen wir das erstellen des Profils anpassen.
+Nachdem wir das Event definiert haben, müssen wir das Erstellen des Profils anpassen.
 
 ```php
 <?php
@@ -177,12 +177,12 @@ Manche Events verändern nicht den State (wenn nicht nötig),
 sondern werden ggfs. nur in Projections verwendet.
 
 Nachdem ein event mit `->apply()` registriert wurde, wird sofort die dazugehörige apply Methode ausgeführt-
-Sprich, nach diesem Call ist der State dem entsprechend schon aktuallisiert.
+Sprich, nach diesem Call ist der State dem entsprechend schon aktualisiert.
 
 ### modify aggregate
 
 Um Aggregate nachträglich zu verändern, müssen nur weitere Events definiert werden.
-Zb. als können wir den Namen ändern.
+Zb. können wir auch den Namen ändern.
 
 ```php
 <?php
@@ -271,8 +271,8 @@ final class Profile extends AggregateRoot
 }
 ```
 
-Auch hierfür fügen wir eine Methode hinzu, um das Event zu registrieren, 
-und eine apply Methode, um das ganze auszuführen.
+Auch hierfür fügen wir eine Methode hinzu, um das Event zu registrieren.
+Und eine apply Methode, um das ganze auszuführen.
 
 Das ganze können wir dann wie folgt verwenden.
 
@@ -313,7 +313,7 @@ Das alles passiert in der load Methode automatisch.
 Daraufhin wird `$profile->changeName()` mit dem neuen Namen aufgerufen. 
 Intern wird das Event `NameChanged` geworfen und als nicht "gespeichertes" Event gemerkt.
 
-Zum Schluss wird die `save()` Methode aufgerüfen, 
+Zum Schluss wird die `save()` Methode aufgerufen, 
 die wiederrum alle nicht gespeicherte Events aus dem Aggregate zieht
 und diese dann in die Datenbank speichert.
 
@@ -324,7 +324,12 @@ Sprich, in unserem Fall in `create` oder in `changeName` Methoden.
 
 In den Apply Methoden darf nicht mehr überprüft werden, ob die Aktion Valide ist,
 da das Event schon passiert ist. Außerdem können diese Events schon in der Datenbank sein,
-und somit würde der State aufbau nicht mehr möglich sein.
+und somit würde der State aufbau nicht mehr möglich sein. 
+
+Außerdem dürfen in den Apply Methoden keine weiteren Events geworfen werden,
+da diese Methoden immer verwendet werden, um den aktuellen State aufzubauen.
+Das hätte sonst die Folge, dass beim Laden immer neue Evens erzeugt werden.
+Wie Abhängigkeiten von Events implementiert werden können, steht weiter unten.
 
 ```php
 <?php
@@ -370,9 +375,9 @@ final class Profile extends AggregateRoot
 }
 ```
 
-Diese Regel mit der länge des Namens ist derzeit nur in changeName definiert. 
-Damit diese Regel auch beim erstellen greift, muss diese entweder dort auch implementiert werden
-oder besser, man erstellt ein Value Object.
+Diese Regel, mit der länge des Namens, ist derzeit nur in changeName definiert. 
+Damit diese Regel auch beim erstellen greift, muss diese entweder auch in `create` implementiert werden
+oder besser, man erstellt ein Value Object dafür, um dafür zu sorgen, dass diese Regel eingehalten wird.
 
 ```php
 <?php
@@ -487,9 +492,9 @@ final class NameChanged extends AggregateChanged
 }
 ```
 
-Es gibt auch die Fälle, dass ein abhängig von States Regeln definiert werden. 
-Manchmal auch von States, die erst in der Methode zu stande kommen.
-Das ist kein Problem, da die apply Methoden immer sofort ausgeführt werden.
+Es gibt auch die Fälle, dass Regeln abhängig vom State definiert werden müssen. 
+Manchmal auch von States, die erst in der Methode zustande kommen.
+Das ist kein Problem, da die apply Methoden immer sofort ausgeführt wird.
 
 ```php
 <?php
@@ -529,7 +534,7 @@ final class Hotel extends AggregateRoot
 ```
 
 In diesem Fall schmeißen wir ein zusätzliches Event, wenn unser Hotel ausgebucht ist,
-um weitere Systeme zu informieren, wie zB. unsere Webseite mithilfe von einer Projection
+um weitere Systeme zu informieren. ZB. unsere Webseite mithilfe von einer Projection
 oder ein fremdes System, um keine Buchungen mehr zu erlauben.
 
 Denkbar wäre auch, dass hier nachträglich eine Exception geschmissen wird.
