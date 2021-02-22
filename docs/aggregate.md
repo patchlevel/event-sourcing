@@ -317,7 +317,7 @@ Zum Schluss wird die `save()` Methode aufgerufen,
 die wiederrum alle nicht gespeicherte Events aus dem Aggregate zieht
 und diese dann in die Datenbank speichert.
 
-### business rules
+## business rules
 
 Business Rules müssen immer in den Methoden passieren, die die Events werfen. 
 Sprich, in unserem Fall in `create` oder in `changeName` Methoden.
@@ -541,7 +541,7 @@ Denkbar wäre auch, dass hier nachträglich eine Exception geschmissen wird.
 Da erst bei der save Methode die Events wirklich gespeichert werden, 
 kann hier ohne weiteres darauf reagiert werden, ohne dass ungewollt Daten verändert werden.
 
-### override handle methode
+## override handle methode
 
 Wenn die standard Implementierung aus gründen nicht reicht oder zum Umständlich ist,
 dann kann man diese auch überschreiben. Hier findest du ein kleines Beispiel.
