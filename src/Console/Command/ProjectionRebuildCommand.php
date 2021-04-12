@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use DateTimeImmutable;
+use Exception;
+use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget;
@@ -34,7 +37,8 @@ class ProjectionRebuildCommand extends Command
         $this
             ->setName('event-sourcing:projection:rebuild')
             ->setDescription('rebuild projection')
-            ->addOption('recreate', 'r', InputOption::VALUE_NONE, 'drop and create projections');
+            ->addOption('recreate', 'r', InputOption::VALUE_NONE, 'drop and create projections')
+            ->addOption('until', 'u', InputOption::VALUE_OPTIONAL, 'create the projection up to a point in time [2017-02-02 12:00]');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -57,9 +61,26 @@ class ProjectionRebuildCommand extends Command
             $console->success('projection schema created');
         }
 
+        $until = $input->getOption('until');
+
+        $middlewares = [];
+
+        if (is_string($until)) {
+            try {
+                $date = new DateTimeImmutable($until);
+            } catch (Exception $exception) {
+                $console->error(sprintf('date "%s" not supported. the format should be "2017-02-02 12:00"', $until));
+
+                return 1;
+            }
+
+            $middlewares[] = new UntilEventMiddleware($date);
+        }
+
         $pipeline = new Pipeline(
             new StoreSource($store),
-            new ProjectionRepositoryTarget($this->projectionRepository)
+            new ProjectionRepositoryTarget($this->projectionRepository),
+            $middlewares
         );
 
         $console->caution('rebuild projections');
