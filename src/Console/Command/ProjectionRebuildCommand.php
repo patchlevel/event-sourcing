@@ -41,7 +41,7 @@ class ProjectionRebuildCommand extends Command
             ->setName('event-sourcing:projection:rebuild')
             ->setDescription('rebuild projection')
             ->addOption('recreate', 'r', InputOption::VALUE_NONE, 'drop and create projections')
-            ->addOption('until', 'u', InputOption::VALUE_OPTIONAL, 'create the projection up to a point in time [2017-02-02 12:00]');
+            ->addOption('until', 'u', InputOption::VALUE_REQUIRED, 'create the projection up to a point in time [2017-02-02 12:00]');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
