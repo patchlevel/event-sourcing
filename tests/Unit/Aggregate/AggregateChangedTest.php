@@ -58,6 +58,20 @@ class AggregateChangedTest extends TestCase
         );
     }
 
+    public function testEventAlreadyBeenRecorded(): void
+    {
+        $this->expectException(AggregateException::class);
+        $this->expectExceptionMessage('Event has already been recorded.');
+
+        $id = ProfileId::fromString('1');
+        $email = Email::fromString('d.a.badura@gmail.com');
+
+        $event = ProfileCreated::raise($id, $email);
+        $recordedEvent = $event->recordNow(0);
+
+        $recordedEvent->recordNow(0);
+    }
+
     public function testSerialize(): void
     {
         $id = ProfileId::fromString('1');

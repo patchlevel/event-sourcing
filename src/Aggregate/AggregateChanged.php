@@ -66,9 +66,13 @@ abstract class AggregateChanged
 
     public function recordNow(int $playhead): self
     {
+        if ($this->playhead !== null) {
+            throw new AggregateException('Event has already been recorded.');
+        }
+
         $event = new static($this->aggregateId, $this->payload);
         $event->playhead = $playhead;
-        $event->recordedOn = new DateTimeImmutable();
+        $event->recordedOn = $this->createRecordDate();
 
         return $event;
     }
@@ -109,5 +113,10 @@ abstract class AggregateChanged
             'payload' => json_encode($this->payload, JSON_THROW_ON_ERROR),
             'recordedOn' => $recordedOn,
         ];
+    }
+
+    protected function createRecordDate(): DateTimeImmutable
+    {
+        return new DateTimeImmutable();
     }
 }
