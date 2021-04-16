@@ -28,6 +28,7 @@
     "ext-pdo_sqlite": "^7.4|^8.0",
     "infection/infection": "^0.20.2",
     "patchlevel/coding-standard": "^1.0.0",
+    "phpbench/phpbench": "^0.17.1",
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^0.12.65",
     "phpunit/phpunit": "^9.5.0",
