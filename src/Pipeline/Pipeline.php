@@ -26,12 +26,13 @@ class Pipeline
     }
 
     /**
-     * @param callable(EventBucket $event):void|null $observer
+     * @param (callable(EventBucket $event):void)|null $observer
      */
     public function run(?callable $observer = null): void
     {
         if ($observer === null) {
-            $observer = static function (EventBucket $event): void {
+            /** @var callable(EventBucket $event):void $observer */
+            $observer = static function (): void {
             };
         }
 

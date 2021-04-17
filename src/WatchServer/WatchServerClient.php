@@ -114,7 +114,10 @@ class WatchServerClient
             return;
         }
 
-        stream_socket_shutdown($socket, STREAM_SHUT_RDWR);
+        if (!stream_socket_shutdown($socket, STREAM_SHUT_RDWR)) {
+            throw new SendingFailed('socket shutdown failed');
+        }
+
         fclose($socket);
 
         $this->socket = null;
