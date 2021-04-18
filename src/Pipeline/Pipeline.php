@@ -37,13 +37,13 @@ class Pipeline
         }
 
         foreach ($this->source->load() as $bucket) {
-            $observer($bucket);
-
             $result = ($this->middlewares)($bucket);
 
             foreach ($result as $resultBucket) {
                 $this->target->save($resultBucket);
             }
+
+            $observer($bucket);
         }
     }
 

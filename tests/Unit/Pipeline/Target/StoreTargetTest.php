@@ -22,6 +22,7 @@ class StoreTargetTest extends TestCase
     {
         $bucket = new EventBucket(
             Profile::class,
+            1,
             ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
 

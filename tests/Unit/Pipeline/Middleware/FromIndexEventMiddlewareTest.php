@@ -5,19 +5,18 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware;
+use Patchlevel\EventSourcing\Pipeline\Middleware\FromIndexEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
-class IncludeEventMiddlewareTest extends TestCase
+class FromIndexEventMiddlewareTest extends TestCase
 {
-    public function testFilterEvent(): void
+    public function testPositive(): void
     {
-        $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
+        $middleware = new FromIndexEventMiddleware(0);
 
         $bucket = new EventBucket(
             Profile::class,
@@ -33,16 +32,16 @@ class IncludeEventMiddlewareTest extends TestCase
         self::assertEquals([$bucket], $result);
     }
 
-    public function testSkipEvent(): void
+    public function testNegative(): void
     {
-        $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
+        $middleware = new FromIndexEventMiddleware(1);
 
         $bucket = new EventBucket(
             Profile::class,
             1,
-            ProfileVisited::raise(
+            ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                ProfileId::fromString('2')
+                Email::fromString('d.a.badura@gmail.com')
             )->recordNow(0)
         );
 
