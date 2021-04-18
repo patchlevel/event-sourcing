@@ -16,6 +16,10 @@ phpcs-fix: vendor                                                               
 phpstan: vendor                                                                 ## run phpstan static code analyser
 	vendor/bin/phpstan analyse
 
+.PHONY: phpstan-baseline
+phpstan-baseline: vendor                                                        ## run phpstan static code analyser
+	vendor/bin/phpstan analyse --generate-baseline
+
 .PHONY: psalm
 psalm: vendor                                                                   ## run psalm static code analyser
 	vendor/bin/psalm
