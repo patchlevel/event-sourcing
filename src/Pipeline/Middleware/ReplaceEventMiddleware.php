@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
+use Closure;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use ReflectionClass;
@@ -14,20 +15,20 @@ class ReplaceEventMiddleware implements Middleware
     /** @var class-string<AggregateChanged> */
     private string $class;
 
-    /** @var callable(AggregateChanged $event):AggregateChanged */
-    private $callable;
+    /** @var Closure(AggregateChanged $event):AggregateChanged */
+    private Closure $closure;
 
     private ReflectionProperty $recoredOnProperty;
     private ReflectionProperty $playheadProperty;
 
     /**
      * @param class-string<AggregateChanged> $class
-     * @param callable(AggregateChanged      $event):AggregateChanged $callable
+     * @param Closure(AggregateChanged      $event):AggregateChanged $closure
      */
-    public function __construct(string $class, callable $callable)
+    public function __construct(string $class, Closure $closure)
     {
         $this->class = $class;
-        $this->callable = $callable;
+        $this->closure = $closure;
 
         $reflectionClass = new ReflectionClass(AggregateChanged::class);
 
@@ -49,9 +50,9 @@ class ReplaceEventMiddleware implements Middleware
             return [$bucket];
         }
 
-        $callable = $this->callable;
+        $closure = $this->closure;
 
-        $newEvent = $callable($event);
+        $newEvent = $closure($event);
 
         $this->recoredOnProperty->setValue(
             $newEvent,

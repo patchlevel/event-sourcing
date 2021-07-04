@@ -7,6 +7,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggrega
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
+/**
+ * @extends SnapshotableAggregateRoot<array{id: string}>
+ */
 final class Profile extends SnapshotableAggregateRoot
 {
     private string $id;
@@ -29,9 +32,6 @@ final class Profile extends SnapshotableAggregateRoot
         $this->id = $event->profileId();
     }
 
-    /**
-     * @return array{id: string}
-     */
     protected function serialize(): array
     {
         return [
@@ -39,9 +39,6 @@ final class Profile extends SnapshotableAggregateRoot
         ];
     }
 
-    /**
-     * @param array{id: string} $payload
-     */
     protected static function deserialize(array $payload): self
     {
         $self = new self();

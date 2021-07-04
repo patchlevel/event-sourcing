@@ -56,7 +56,7 @@ final class Message
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{id: string, text: string, createdAt: string} $data
      */
     public static function fromArray(array $data): self
     {

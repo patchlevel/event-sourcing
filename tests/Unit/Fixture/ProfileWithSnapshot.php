@@ -6,6 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 
+/**
+ * @extends SnapshotableAggregateRoot<array{id: string, email: string}>
+ */
 final class ProfileWithSnapshot extends SnapshotableAggregateRoot
 {
     private ProfileId $id;
@@ -69,9 +72,6 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
         return $this->id->toString();
     }
 
-    /**
-     * @return array{id: string, email: string}
-     */
     protected function serialize(): array
     {
         return [
@@ -80,9 +80,6 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
         ];
     }
 
-    /**
-     * @param array{id: string, email: string} $payload
-     */
     protected static function deserialize(array $payload): SnapshotableAggregateRoot
     {
         $self = new self();

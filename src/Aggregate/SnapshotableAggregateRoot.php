@@ -6,15 +6,18 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 
+/**
+ * @template T of array<string, mixed>
+ */
 abstract class SnapshotableAggregateRoot extends AggregateRoot
 {
     /**
-     * @return array<string, mixed>
+     * @return T
      */
     abstract protected function serialize(): array;
 
     /**
-     * @param array<string, mixed> $payload
+     * @param T $payload
      *
      * @return static
      */

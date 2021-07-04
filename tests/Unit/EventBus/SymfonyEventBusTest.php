@@ -29,8 +29,8 @@ class SymfonyEventBusTest extends TestCase
 
         $envelope = new Envelope($event);
 
-        $symfony = $this->prophesize(MessageBusInterface::class);
-        $symfony->dispatch(Argument::that(static function ($envelope) use ($event) {
+        $messageBus = $this->prophesize(MessageBusInterface::class);
+        $messageBus->dispatch(Argument::that(static function ($envelope) use ($event) {
             if (!$envelope instanceof Envelope) {
                 return false;
             }
@@ -38,7 +38,7 @@ class SymfonyEventBusTest extends TestCase
             return $envelope->getMessage() === $event;
         }))->willReturn($envelope)->shouldBeCalled();
 
-        $eventBus = new SymfonyEventBus($symfony->reveal());
+        $eventBus = new SymfonyEventBus($messageBus->reveal());
         $eventBus->dispatch($event);
     }
 
