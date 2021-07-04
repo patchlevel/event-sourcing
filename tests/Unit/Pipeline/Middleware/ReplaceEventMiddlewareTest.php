@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
+namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
@@ -51,7 +51,7 @@ class ReplaceEventMiddlewareTest extends TestCase
     {
         $middleware = new ReplaceEventMiddleware(
             MessagePublished::class,
-            static function (ProfileCreated $event) {
+            static function (ProfileCreated $event): ProfileVisited {
                 return ProfileVisited::raise(
                     $event->profileId(),
                     $event->profileId()

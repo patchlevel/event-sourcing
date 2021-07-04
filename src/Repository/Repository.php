@@ -18,6 +18,9 @@ use function get_class;
 use function is_subclass_of;
 use function sprintf;
 
+/**
+ * @template T of object
+ */
 final class Repository
 {
     private Store $store;
@@ -32,7 +35,7 @@ final class Repository
     private ?SnapshotStore $snapshotStore;
 
     /**
-     * @param class-string $aggregateClass
+     * @param class-string<T> $aggregateClass
      */
     public function __construct(
         Store $store,
@@ -60,6 +63,9 @@ final class Repository
         $this->snapshotStore = $snapshotStore;
     }
 
+    /**
+     * @return T
+     */
     public function load(string $id): AggregateRoot
     {
         if (array_key_exists($id, $this->instances)) {
