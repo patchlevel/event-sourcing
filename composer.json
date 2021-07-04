@@ -31,9 +31,10 @@
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^0.12.83",
     "phpunit/phpunit": "^9.5.4",
+    "psalm/plugin-phpunit": "^0.16.1",
     "symfony/messenger": "^4.4.18|^5.1.10",
     "symfony/var-dumper": "^5.2.6",
-    "vimeo/psalm": "^4.7.0"
+    "vimeo/psalm": "^4.7.2"
   },
   "suggest": {
     "symfony/messenger": "for an advanced message bus"
