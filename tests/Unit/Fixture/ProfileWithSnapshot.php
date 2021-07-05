@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 
 /**
- * @extends SnapshotableAggregateRoot<array{id: string, email: string}>
+ * @template-extends SnapshotableAggregateRoot<array{id: string, email: string}>
  */
 final class ProfileWithSnapshot extends SnapshotableAggregateRoot
 {

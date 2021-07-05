@@ -79,6 +79,8 @@ abstract class AggregateChanged
 
     /**
      * @param array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable|null} $data
+     *
+     * @return static
      */
     public static function deserialize(array $data): self
     {

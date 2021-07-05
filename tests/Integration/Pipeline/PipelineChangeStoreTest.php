@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
@@ -106,9 +107,12 @@ final class PipelineChangeStoreTest extends TestCase
             new StoreTarget($newStore),
             [
                 new ExcludeEventMiddleware([PrivacyAdded::class]),
-                new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
-                    return NewVisited::raise($oldVisited->profileId());
-                }),
+                new ReplaceEventMiddleware(
+                    OldVisited::class,
+                    static function (OldVisited $oldVisited): AggregateChanged {
+                        return NewVisited::raise($oldVisited->profileId());
+                    }
+                ),
                 new RecalculatePlayheadMiddleware(),
             ]
         );

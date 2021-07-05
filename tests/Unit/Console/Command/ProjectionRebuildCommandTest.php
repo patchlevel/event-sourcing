@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
+use Generator;
 use Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
@@ -24,7 +25,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $events = static function () {
+        $events = static function (): Generator {
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
@@ -78,7 +79,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function testRecreate(): void
     {
-        $events = static function () {
+        $events = static function (): Generator {
             yield new EventBucket(
                 Profile::class,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))

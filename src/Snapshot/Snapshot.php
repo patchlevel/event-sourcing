@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Snapshot;
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 
 /**
- * @template-covariant T
+ * @template T of array<string, mixed>
  */
 final class Snapshot
 {
@@ -19,7 +19,7 @@ final class Snapshot
     private array $payload;
 
     /**
-     * @param class-string<SnapshotableAggregateRoot<T>> $aggregate
+     * @param class-string<SnapshotableAggregateRoot> $aggregate
      * @param T                    $payload
      */
     public function __construct(string $aggregate, string $id, int $playhead, array $payload)
