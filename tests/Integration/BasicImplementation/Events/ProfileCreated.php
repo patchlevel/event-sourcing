@@ -6,6 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
+/**
+ * @template T of array{id: string}
+ * @template-extends AggregateChanged<T>
+ */
 final class ProfileCreated extends AggregateChanged
 {
     public static function raise(string $id): AggregateChanged

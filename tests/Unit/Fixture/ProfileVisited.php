@@ -6,6 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
+/**
+ * @template T of array{visitorId: string}
+ * @template-extends AggregateChanged<T>
+ */
 final class ProfileVisited extends AggregateChanged
 {
     public static function raise(ProfileId $visitedId, ProfileId $visitorId): self

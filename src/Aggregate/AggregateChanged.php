@@ -11,17 +11,20 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
+/**
+ * @template T of array<string, mixed>
+ */
 abstract class AggregateChanged
 {
     protected string $aggregateId;
 
-    /** @var array<string, mixed> */
+    /** @var T */
     protected array $payload;
     private ?int $playhead;
     private ?DateTimeImmutable $recordedOn;
 
     /**
-     * @param array<string, mixed> $payload
+     * @param T $payload
      */
     final private function __construct(string $aggregateId, array $payload = [])
     {
@@ -47,7 +50,7 @@ abstract class AggregateChanged
     }
 
     /**
-     * @return array<string, mixed>
+     * @return T
      */
     public function payload(): array
     {
@@ -55,7 +58,7 @@ abstract class AggregateChanged
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param T $payload
      *
      * @return static
      */
@@ -80,13 +83,13 @@ abstract class AggregateChanged
     /**
      * @param array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable|null} $data
      *
-     * @return static
+     * @return self
      */
     public static function deserialize(array $data): self
     {
         $class = $data['event'];
 
-        /** @var array<string, mixed> $payload */
+        /** @var T $payload */
         $payload = json_decode($data['payload'], true, 512, JSON_THROW_ON_ERROR);
 
         $event = new $class($data['aggregateId'], $payload);

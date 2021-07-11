@@ -34,7 +34,7 @@ final class Message
     }
 
     /**
-     * @return array<string, string>
+     * @return array{id: string, text: string, createdAt: string}
      */
     public function toArray(): array
     {

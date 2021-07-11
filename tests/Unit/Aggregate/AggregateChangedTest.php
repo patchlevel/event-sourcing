@@ -130,7 +130,7 @@ class AggregateChangedTest extends TestCase
         $event = ProfileCreated::deserialize([
             'aggregateId' => '1',
             'playhead' => 0,
-            'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
+            'event' => ProfileCreated::class,
             'payload' => '{"profileId":"1","email":"d.a.badura@gmail.com"}',
             'recordedOn' => new DateTimeImmutable('2020-11-20 13:57:49'),
         ]);

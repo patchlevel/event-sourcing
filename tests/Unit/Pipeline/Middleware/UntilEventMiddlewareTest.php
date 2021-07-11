@@ -22,7 +22,7 @@ class UntilEventMiddlewareTest extends TestCase
 
         $bucket = new EventBucket(
             Profile::class,
-            AggregateChanged::deserialize([
+            ProfileCreated::deserialize([
                 'aggregateId' => '1',
                 'playhead' => 0,
                 'event' => ProfileCreated::class,
@@ -44,7 +44,7 @@ class UntilEventMiddlewareTest extends TestCase
 
         $bucket = new EventBucket(
             Profile::class,
-            AggregateChanged::deserialize([
+            ProfileCreated::deserialize([
                 'aggregateId' => '1',
                 'playhead' => 0,
                 'event' => ProfileCreated::class,
@@ -66,7 +66,7 @@ class UntilEventMiddlewareTest extends TestCase
 
         $bucket = new EventBucket(
             Profile::class,
-            AggregateChanged::deserialize([
+            ProfileCreated::deserialize([
                 'aggregateId' => '1',
                 'playhead' => 0,
                 'event' => ProfileCreated::class,

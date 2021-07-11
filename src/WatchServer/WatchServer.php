@@ -68,7 +68,7 @@ class WatchServer
 
             /** @var array{aggregateId: string, event: class-string<AggregateChanged>, payload: string, playhead: int, recordedOn: DateTimeImmutable} $payload */
             $payload = unserialize(base64_decode($message), ['allowed_classes' => [DateTimeImmutable::class]]);
-            $event = AggregateChanged::deserialize($payload);
+            $event = $payload['event']::deserialize($payload);
 
             $callback($event, $clientId);
         }

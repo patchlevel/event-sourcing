@@ -7,7 +7,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 
 /**
- * @template-extends SnapshotableAggregateRoot<array{id: string, email: string}>
+ * @template T of array{id: string, email: string}
+ * @template-extends SnapshotableAggregateRoot<T>
  */
 final class ProfileWithSnapshot extends SnapshotableAggregateRoot
 {
@@ -80,7 +81,7 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
         ];
     }
 
-    protected static function deserialize(array $payload): SnapshotableAggregateRoot
+    protected static function deserialize(array $payload): self
     {
         $self = new self();
         $self->id = ProfileId::fromString($payload['id']);
