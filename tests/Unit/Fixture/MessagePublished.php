@@ -7,8 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 /**
- * @template T of array{message: array{id: string, text: string, createdAt: string}}
- * @template-extends AggregateChanged<T>
+ * @template-extends AggregateChanged<array{message: array{id: string, text: string, createdAt: string}}>
  */
 final class MessagePublished extends AggregateChanged
 {

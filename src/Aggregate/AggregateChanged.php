@@ -12,7 +12,7 @@ use function json_encode;
 use const JSON_THROW_ON_ERROR;
 
 /**
- * @template T of array<string, mixed>
+ * @template-covariant T of array<string, mixed>
  */
 abstract class AggregateChanged
 {
@@ -67,6 +67,9 @@ abstract class AggregateChanged
         return new static($aggregateId, $payload);
     }
 
+    /**
+     * @return static
+     */
     public function recordNow(int $playhead): self
     {
         if ($this->playhead !== null) {
@@ -83,7 +86,7 @@ abstract class AggregateChanged
     /**
      * @param array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable|null} $data
      *
-     * @return self
+     * @return self<T>
      */
     public static function deserialize(array $data): self
     {

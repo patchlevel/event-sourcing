@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Aggregate;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 
 /**
- * @template T of array<string, mixed>
+ * @template-covariant T of array<string, mixed>
  */
 abstract class SnapshotableAggregateRoot extends AggregateRoot
 {
@@ -19,14 +19,14 @@ abstract class SnapshotableAggregateRoot extends AggregateRoot
     /**
      * @param T $payload
      *
-     * @return static
+     * @return static<T>
      */
     abstract protected static function deserialize(array $payload): self;
 
     /**
      * @param array<AggregateChanged> $stream
      *
-     * @return static
+     * @return static<T>
      */
     public static function createFromSnapshot(Snapshot $snapshot, array $stream): self
     {

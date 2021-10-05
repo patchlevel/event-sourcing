@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Snapshot;
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 
 /**
- * @template T of array<string, mixed>
+ * @template-covariant T of array<string, mixed>
  */
 final class Snapshot
 {

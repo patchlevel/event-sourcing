@@ -8,8 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
 /**
- * @template T of array{id: string}
- * @template-extends SnapshotableAggregateRoot<T>
+ * @template-extends SnapshotableAggregateRoot<array{id: string}>
  */
 final class Profile extends SnapshotableAggregateRoot
 {

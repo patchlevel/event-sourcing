@@ -7,8 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 /**
- * @template T of array{visitorId: string}
- * @template-extends AggregateChanged<T>
+ * @template-extends AggregateChanged<array{visitorId: string}>
  */
 final class ProfileVisited extends AggregateChanged
 {

@@ -7,8 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 /**
- * @template T of array{id: string}
- * @template-extends AggregateChanged<T>
+ * @template-extends AggregateChanged<array{id: string}>
  */
 final class OldVisited extends AggregateChanged
 {
