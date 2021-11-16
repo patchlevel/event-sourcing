@@ -108,7 +108,7 @@ final class DoctrineSchemaManagerTest extends TestCase
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
 
-        $connection->getSchemaManager()->willReturn($schemaManager->reveal());
+        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
         $connection->getDatabasePlatform()->willReturn($platform->reveal());
         $store->schema()->willReturn($toSchema->reveal());
 
@@ -147,7 +147,7 @@ final class DoctrineSchemaManagerTest extends TestCase
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
 
-        $connection->getSchemaManager()->willReturn($schemaManager->reveal());
+        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
         $connection->getDatabasePlatform()->willReturn($platform->reveal());
         $store->schema()->willReturn($toSchema->reveal());
         $store->connection()->willReturn($connection->reveal());
@@ -182,7 +182,7 @@ final class DoctrineSchemaManagerTest extends TestCase
         $currentSchema->hasTable('bar')->willReturn(false);
 
         $schemaManager->createSchema()->willReturn($currentSchema->reveal());
-        $connection->getSchemaManager()->willReturn($schemaManager->reveal());
+        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
         $store->schema()->willReturn($toSchema->reveal());
 
         $connection->executeStatement('DROP TABLE foo;')->shouldBeCalled();
@@ -217,7 +217,7 @@ final class DoctrineSchemaManagerTest extends TestCase
         $currentSchema->hasTable('bar')->willReturn(false);
 
         $schemaManager->createSchema()->willReturn($currentSchema->reveal());
-        $connection->getSchemaManager()->willReturn($schemaManager->reveal());
+        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
         $store->schema()->willReturn($toSchema->reveal());
 
         $store->connection()->willReturn($connection->reveal());
