@@ -227,7 +227,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
     public function schema(): Schema
     {
-        $schema = new Schema([], [], $this->connection->getSchemaManager()->createSchemaConfig());
+        $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
 
         $this->addMetaTableToSchema($schema);
 

@@ -67,7 +67,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
 
         $connection = $store->connection();
 
-        $fromSchema = $connection->getSchemaManager()->createSchema();
+        $fromSchema = $connection->createSchemaManager()->createSchema();
         $toSchema = $store->schema();
 
         $comparator = new Comparator();
@@ -100,7 +100,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
         }
 
         $connection = $store->connection();
-        $currentSchema = $connection->getSchemaManager()->createSchema();
+        $currentSchema = $connection->createSchemaManager()->createSchema();
         $schema = $store->schema();
 
         $queries = [];
