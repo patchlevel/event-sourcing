@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Console\EventPrinter;
 use Patchlevel\EventSourcing\Console\InputHelper;
@@ -18,7 +17,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use function array_flip;
 use function array_key_exists;
 use function count;
-use function is_string;
 use function sprintf;
 
 class ShowCommand extends Command

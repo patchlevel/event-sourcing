@@ -16,6 +16,7 @@ use Traversable;
 use function array_flip;
 use function array_key_exists;
 use function array_map;
+use function is_int;
 
 final class MultiTableStore extends DoctrineStore implements PipelineStore
 {

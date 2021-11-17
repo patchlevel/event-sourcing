@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use InvalidArgumentException as BaseInvalidArgumentException;
+
 use function gettype;
 use function sprintf;
 
 final class InvalidArgumentException extends BaseInvalidArgumentException
 {
-    /**
-     * @var mixed
-     */
+    /** @var mixed */
     private $value;
 
     /**

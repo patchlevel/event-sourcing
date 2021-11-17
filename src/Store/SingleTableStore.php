@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use function array_flip;
 use function array_key_exists;
 use function array_map;
+use function is_int;
 
 final class SingleTableStore extends DoctrineStore implements PipelineStore
 {

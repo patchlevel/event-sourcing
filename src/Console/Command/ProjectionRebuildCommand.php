@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use DateTimeImmutable;
-use Exception;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
@@ -19,6 +18,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Throwable;
+
+use function is_string;
+use function sprintf;
 
 class ProjectionRebuildCommand extends Command
 {
@@ -69,7 +72,7 @@ class ProjectionRebuildCommand extends Command
         if (is_string($until)) {
             try {
                 $date = new DateTimeImmutable($until);
-            } catch (Exception $exception) {
+            } catch (Throwable $exception) {
                 $console->error(sprintf('date "%s" not supported. the format should be "2017-02-02 12:00"', $until));
 
                 return 1;

@@ -10,11 +10,11 @@
   "authors": [
     {
       "name": "Daniel Badura",
-      "email": "d.m.badura@gmail.com"
+      "email": "daniel.badura@patchlevel.de"
     },
     {
       "name": "David Badura",
-      "email": "d.a.badura@gmail.com"
+      "email": "david.badura@patchlevel.de"
     }
   ],
   "require": {
@@ -27,7 +27,7 @@
   "require-dev": {
     "ext-pdo_sqlite": "^7.4|^8.0",
     "infection/infection": "^0.20.2",
-    "patchlevel/coding-standard": "^1.0.0",
+    "patchlevel/coding-standard": "^1.1.1",
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^1.1.2",
     "phpunit/phpunit": "^9.5.4",
