@@ -24,7 +24,7 @@ class SnapshotableAggregateRootTest extends TestCase
         $profile = ProfileWithSnapshot::createProfile($id, $email);
 
         self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, $profile->playhead());
         self::assertEquals($id, $profile->id());
         self::assertEquals($email, $profile->email());
 
@@ -32,7 +32,7 @@ class SnapshotableAggregateRootTest extends TestCase
 
         self::assertCount(1, $events);
         $event = $events[0];
-        self::assertEquals(0, $event->playhead());
+        self::assertEquals(1, $event->playhead());
     }
 
     public function testExecuteMethod(): void
@@ -47,9 +47,9 @@ class SnapshotableAggregateRootTest extends TestCase
         $events = $profile->releaseEvents();
 
         self::assertCount(1, $events);
-        self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, $profile->playhead());
         $event = $events[0];
-        self::assertEquals(0, $event->playhead());
+        self::assertEquals(1, $event->playhead());
 
         $profile->publishMessage(
             Message::create(
@@ -59,7 +59,7 @@ class SnapshotableAggregateRootTest extends TestCase
         );
 
         self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(1, $profile->playhead());
+        self::assertEquals(2, $profile->playhead());
         self::assertEquals($profileId, $profile->id());
         self::assertEquals($email, $profile->email());
 
@@ -67,7 +67,7 @@ class SnapshotableAggregateRootTest extends TestCase
 
         self::assertCount(1, $events);
         $event = $events[0];
-        self::assertEquals(1, $event->playhead());
+        self::assertEquals(2, $event->playhead());
     }
 
     public function testEventWithoutApplyMethod(): void
@@ -79,9 +79,9 @@ class SnapshotableAggregateRootTest extends TestCase
 
         $events = $visitorProfile->releaseEvents();
         self::assertCount(1, $events);
-        self::assertEquals(0, $visitorProfile->playhead());
+        self::assertEquals(1, $visitorProfile->playhead());
         $event = $events[0];
-        self::assertEquals(0, $event->playhead());
+        self::assertEquals(1, $event->playhead());
 
         $visitedProfile = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('2'),
@@ -90,15 +90,15 @@ class SnapshotableAggregateRootTest extends TestCase
 
         $events = $visitedProfile->releaseEvents();
         self::assertCount(1, $events);
-        self::assertEquals(0, $visitedProfile->playhead());
+        self::assertEquals(1, $visitedProfile->playhead());
         $event = $events[0];
-        self::assertEquals(0, $event->playhead());
+        self::assertEquals(1, $event->playhead());
 
         $visitorProfile->visitProfile($visitedProfile->id());
 
         $events = $visitedProfile->releaseEvents();
         self::assertCount(0, $events);
-        self::assertEquals(0, $visitedProfile->playhead());
+        self::assertEquals(1, $visitedProfile->playhead());
     }
 
     public function testInitliazingState(): void

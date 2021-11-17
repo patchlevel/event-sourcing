@@ -88,7 +88,7 @@ final class BasicIntegrationTest extends TestCase
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, $profile->playhead());
         self::assertEquals(1, SendEmailMock::count());
     }
 
@@ -127,7 +127,7 @@ final class BasicIntegrationTest extends TestCase
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, $profile->playhead());
         self::assertEquals(1, SendEmailMock::count());
     }
 
@@ -164,7 +164,7 @@ final class BasicIntegrationTest extends TestCase
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, $profile->playhead());
         self::assertEquals(1, SendEmailMock::count());
     }
 
@@ -204,7 +204,7 @@ final class BasicIntegrationTest extends TestCase
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(0, $profile->playhead());
+        self::assertEquals(1, $profile->playhead());
         self::assertEquals(1, SendEmailMock::count());
     }
 }

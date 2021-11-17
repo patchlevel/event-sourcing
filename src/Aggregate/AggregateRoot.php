@@ -15,7 +15,7 @@ abstract class AggregateRoot
     private array $uncommittedEvents = [];
 
     /** @internal */
-    protected int $playhead = -1;
+    protected int $playhead = 0;
 
     final protected function __construct()
     {

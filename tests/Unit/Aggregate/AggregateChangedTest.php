@@ -43,11 +43,11 @@ class AggregateChangedTest extends TestCase
         $email = Email::fromString('d.a.badura@gmail.com');
 
         $event = ProfileCreated::raise($id, $email);
-        $recordedEvent = $event->recordNow(0);
+        $recordedEvent = $event->recordNow(1);
 
         self::assertEquals($id, $recordedEvent->profileId());
         self::assertEquals($email, $recordedEvent->email());
-        self::assertEquals(0, $recordedEvent->playhead());
+        self::assertEquals(1, $recordedEvent->playhead());
         self::assertInstanceOf(DateTimeImmutable::class, $recordedEvent->recordedOn());
         self::assertEquals(
             [
@@ -67,9 +67,9 @@ class AggregateChangedTest extends TestCase
         $email = Email::fromString('d.a.badura@gmail.com');
 
         $event = ProfileCreated::raise($id, $email);
-        $recordedEvent = $event->recordNow(0);
+        $recordedEvent = $event->recordNow(1);
 
-        $recordedEvent->recordNow(0);
+        $recordedEvent->recordNow(1);
     }
 
     public function testSerialize(): void
@@ -80,7 +80,7 @@ class AggregateChangedTest extends TestCase
         $event = ProfileCreated::raise($id, $email);
 
         $beforeRecording = new DateTimeImmutable();
-        $recordedEvent = $event->recordNow(0);
+        $recordedEvent = $event->recordNow(1);
         $afterRecording = new DateTimeImmutable();
 
         $serializedEvent = $recordedEvent->serialize();
@@ -91,7 +91,7 @@ class AggregateChangedTest extends TestCase
         self::assertEquals('1', $serializedEvent['aggregateId']);
 
         self::assertArrayHasKey('playhead', $serializedEvent);
-        self::assertEquals(0, $serializedEvent['playhead']);
+        self::assertEquals(1, $serializedEvent['playhead']);
 
         self::assertArrayHasKey('event', $serializedEvent);
         self::assertEquals(
@@ -173,14 +173,14 @@ class AggregateChangedTest extends TestCase
         $email = Email::fromString('d.a.badura@gmail.com');
 
         $event = ProfileCreated::raise($id, $email);
-        $recordedEvent = $event->recordNow(0);
+        $recordedEvent = $event->recordNow(1);
 
         $serializedEvent = $recordedEvent->serialize();
         $event = ProfileCreated::deserialize($serializedEvent);
 
         self::assertEquals($id, $event->profileId());
         self::assertEquals($email, $event->email());
-        self::assertEquals(0, $event->playhead());
+        self::assertEquals(1, $event->playhead());
         self::assertInstanceOf(DateTimeImmutable::class, $event->recordedOn());
         self::assertEquals(
             [

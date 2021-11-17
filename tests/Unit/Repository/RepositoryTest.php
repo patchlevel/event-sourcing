@@ -171,7 +171,7 @@ class RepositoryTest extends TestCase
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('d.a.badura@gmail.com')
-            )->recordNow(0),
+            )->recordNow(1),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -184,7 +184,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
-        self::assertEquals(0, $aggregate->playhead());
+        self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
     }
@@ -199,7 +199,7 @@ class RepositoryTest extends TestCase
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('d.a.badura@gmail.com')
-            )->recordNow(0),
+            )->recordNow(1),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -212,7 +212,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
-        self::assertEquals(0, $aggregate->playhead());
+        self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
 
@@ -225,7 +225,7 @@ class RepositoryTest extends TestCase
         $store->load(
             ProfileWithSnapshot::class,
             '1',
-            0
+            1
         )->willReturn([]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -238,7 +238,7 @@ class RepositoryTest extends TestCase
             new Snapshot(
                 ProfileWithSnapshot::class,
                 '1',
-                0,
+                1,
                 [
                     'id' => '1',
                     'email' => 'd.a.badura@gmail.com',
@@ -255,7 +255,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
-        self::assertEquals(0, $aggregate->playhead());
+        self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
     }
@@ -267,7 +267,7 @@ class RepositoryTest extends TestCase
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('d.a.badura@gmail.com')
-            )->recordNow(0),
+            )->recordNow(1),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -285,7 +285,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
-        self::assertEquals(0, $aggregate->playhead());
+        self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
     }
@@ -339,7 +339,7 @@ class RepositoryTest extends TestCase
                     ProfileCreated::raise(
                         ProfileId::fromString('1'),
                         Email::fromString('d.a.badura@gmail.com')
-                    )->recordNow(0),
+                    )->recordNow(1),
                 ]
             );
         $store->has(Profile::class, '1')->shouldNotBeCalled();
@@ -354,7 +354,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
-        self::assertEquals(0, $aggregate->playhead());
+        self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
 
