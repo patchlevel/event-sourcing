@@ -97,7 +97,7 @@ final class PipelineChangeStoreTest extends TestCase
         $oldRepository->save($profile);
 
         self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(3, $profile->playhead());
+        self::assertEquals(4, $profile->playhead());
         self::assertEquals(true, $profile->isPrivate());
         self::assertEquals(2, $profile->count());
 
@@ -119,7 +119,7 @@ final class PipelineChangeStoreTest extends TestCase
         $newProfile = $newRepository->load('1');
 
         self::assertEquals('1', $newProfile->aggregateRootId());
-        self::assertEquals(2, $newProfile->playhead());
+        self::assertEquals(3, $newProfile->playhead());
         self::assertEquals(false, $newProfile->isPrivate());
         self::assertEquals(-2, $newProfile->count());
     }
