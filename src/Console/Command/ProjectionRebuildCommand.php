@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use DateTimeImmutable;
+use Exception;
+use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
@@ -17,10 +19,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Throwable;
-
-use function is_string;
-use function sprintf;
 
 class ProjectionRebuildCommand extends Command
 {
@@ -56,7 +54,7 @@ class ProjectionRebuildCommand extends Command
             return 1;
         }
 
-        if ($input->getOption('recreate')) {
+        if (InputHelper::bool($input->getOption('recreate'))) {
             $this->projectionRepository->drop();
             $console->success('projection schema deleted');
 
@@ -64,14 +62,14 @@ class ProjectionRebuildCommand extends Command
             $console->success('projection schema created');
         }
 
-        $until = $input->getOption('until');
+        $until = InputHelper::nullableString($input->getOption('until'));
 
         $middlewares = [];
 
         if (is_string($until)) {
             try {
                 $date = new DateTimeImmutable($until);
-            } catch (Throwable $exception) {
+            } catch (Exception $exception) {
                 $console->error(sprintf('date "%s" not supported. the format should be "2017-02-02 12:00"', $until));
 
                 return 1;

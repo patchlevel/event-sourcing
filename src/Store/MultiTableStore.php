@@ -87,10 +87,14 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->setMaxResults(1)
             ->getSQL();
 
-        $result = (int)$this->connection->fetchOne(
+        $result = $this->connection->fetchOne(
             $sql,
             ['id' => $id]
         );
+
+        if (!is_int($result)) {
+            throw new StoreException('invalid query return type');
+        }
 
         return $result > 0;
     }
@@ -191,7 +195,13 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->from($this->metadataTableName)
             ->getSQL();
 
-        return (int)$this->connection->fetchOne($sql);
+        $result = $this->connection->fetchOne($sql);
+
+        if (!is_int($result)) {
+            throw new StoreException('invalid query return type');
+        }
+
+        return $result;
     }
 
     public function saveEventBucket(EventBucket $bucket): void

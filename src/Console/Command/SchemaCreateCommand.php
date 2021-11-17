@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
 use Patchlevel\EventSourcing\Schema\SchemaManager;
 use Patchlevel\EventSourcing\Store\Store;
@@ -37,7 +38,8 @@ class SchemaCreateCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $console = new SymfonyStyle($input, $output);
-        $dryRun = $input->getOption('dry-run');
+
+        $dryRun = InputHelper::bool($input->getOption('dry-run'));
 
         if ($dryRun) {
             if (!$this->schemaManager instanceof DryRunSchemaManager) {
