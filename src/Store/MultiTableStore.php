@@ -17,6 +17,7 @@ use function array_flip;
 use function array_key_exists;
 use function array_map;
 use function is_int;
+use function is_string;
 
 final class MultiTableStore extends DoctrineStore implements PipelineStore
 {
@@ -93,11 +94,11 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ['id' => $id]
         );
 
-        if (!is_int($result)) {
+        if (!is_int($result) && !is_string($result)) {
             throw new StoreException('invalid query return type');
         }
 
-        return $result > 0;
+        return ((int)$result) > 0;
     }
 
     /**
@@ -198,11 +199,11 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
         $result = $this->connection->fetchOne($sql);
 
-        if (!is_int($result)) {
+        if (!is_int($result) && !is_string($result)) {
             throw new StoreException('invalid query return type');
         }
 
-        return $result;
+        return (int)$result;
     }
 
     public function saveEventBucket(EventBucket $bucket): void
