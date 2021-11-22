@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
@@ -56,7 +57,7 @@ class ProjectionRebuildCommand extends Command
             return 1;
         }
 
-        if ($input->getOption('recreate')) {
+        if (InputHelper::bool($input->getOption('recreate'))) {
             $this->projectionRepository->drop();
             $console->success('projection schema deleted');
 
@@ -64,7 +65,7 @@ class ProjectionRebuildCommand extends Command
             $console->success('projection schema created');
         }
 
-        $until = $input->getOption('until');
+        $until = InputHelper::nullableString($input->getOption('until'));
 
         $middlewares = [];
 

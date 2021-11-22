@@ -15,6 +15,8 @@ use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use function array_flip;
 use function array_key_exists;
 use function array_map;
+use function is_int;
+use function is_string;
 
 final class SingleTableStore extends DoctrineStore implements PipelineStore
 {
@@ -84,7 +86,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->setMaxResults(1)
             ->getSQL();
 
-        $result = (int)$this->connection->fetchOne(
+        $result = $this->connection->fetchOne(
             $sql,
             [
                 'aggregate' => $shortName,
@@ -92,7 +94,11 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ]
         );
 
-        return $result > 0;
+        if (!is_int($result) && !is_string($result)) {
+            throw new StoreException('invalid query return type');
+        }
+
+        return ((int)$result) > 0;
     }
 
     /**
@@ -166,7 +172,13 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->from($this->storeTableName)
             ->getSQL();
 
-        return (int)$this->connection->fetchOne($sql);
+        $result = $this->connection->fetchOne($sql);
+
+        if (!is_int($result) && !is_string($result)) {
+            throw new StoreException('invalid query return type');
+        }
+
+        return (int)$result;
     }
 
     public function saveEventBucket(EventBucket $bucket): void

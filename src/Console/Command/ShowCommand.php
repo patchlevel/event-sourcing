@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Console\EventPrinter;
+use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -17,7 +17,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use function array_flip;
 use function array_key_exists;
 use function count;
-use function is_string;
 use function sprintf;
 
 class ShowCommand extends Command
@@ -54,12 +53,8 @@ class ShowCommand extends Command
 
         $map = array_flip($this->aggregates);
 
-        $aggregate = $input->getArgument('aggregate');
-        $id = $input->getArgument('id');
-
-        if (!is_string($aggregate) || !is_string($id)) {
-            throw new InvalidArgumentException();
-        }
+        $aggregate = InputHelper::string($input->getArgument('aggregate'));
+        $id = InputHelper::string($input->getArgument('id'));
 
         if (!array_key_exists($aggregate, $map)) {
             $console->error(sprintf('aggregate type "%s" not exists', $aggregate));
