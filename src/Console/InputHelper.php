@@ -18,7 +18,11 @@ final class InputHelper
             return null;
         }
 
-        return self::string($value);
+        if (!is_string($value)) {
+            throw new InvalidArgumentException($value, 'string|null');
+        }
+
+        return $value;
     }
 
     /**
