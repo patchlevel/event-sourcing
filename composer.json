@@ -31,7 +31,7 @@
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^1.1.2",
     "phpunit/phpunit": "^9.5.4",
-    "symfony/messenger": "^4.4.18|^5.1.10",
+    "symfony/messenger": "^5.3.11",
     "symfony/var-dumper": "^5.2.6",
     "vimeo/psalm": "^4.12.0"
   },
