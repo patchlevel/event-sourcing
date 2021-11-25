@@ -14,5 +14,5 @@
     "@default": true
   },
   "minMsi": 56,
-  "minCoveredMsi": 91
+  "minCoveredMsi": 90
 }
