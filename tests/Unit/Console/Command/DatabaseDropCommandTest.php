@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Patchlevel\EventSourcing\Console\Command\DatabaseDropCommand;
+use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Store\Store;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
+use RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -21,9 +22,11 @@ final class DatabaseDropCommandTest extends TestCase
     public function testStoreNotSupported(): void
     {
         $store = $this->prophesize(Store::class);
+        $helper = $this->prophesize(DoctrineHelper::class);
 
         $command = new DatabaseDropCommand(
-            $store->reveal()
+            $store->reveal(),
+            $helper->reveal()
         );
 
         $input = new ArrayInput([]);
@@ -41,13 +44,16 @@ final class DatabaseDropCommandTest extends TestCase
     public function testMissingForce(): void
     {
         $connection = $this->prophesize(Connection::class);
-        $connection->getParams()->willReturn(['dbname' => 'test']);
+
+        $helper = $this->prophesize(DoctrineHelper::class);
+        $helper->databaseName($connection)->willReturn('test');
 
         $store = $this->prophesize(DoctrineStore::class);
         $store->connection()->willReturn($connection);
 
         $command = new DatabaseDropCommand(
-            $store->reveal()
+            $store->reveal(),
+            $helper->reveal()
         );
 
         $input = new ArrayInput([]);
@@ -64,19 +70,19 @@ final class DatabaseDropCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->listDatabases()->willReturn(['test']);
-        $schemaManager->dropDatabase('test')->shouldBeCalled();
-
         $connection = $this->prophesize(Connection::class);
-        $connection->getParams()->willReturn(['dbname' => 'test']);
-        $connection->createSchemaManager()->willReturn($schemaManager);
+
+        $helper = $this->prophesize(DoctrineHelper::class);
+        $helper->hasDatabase($connection, 'test')->willReturn(true);
+        $helper->databaseName($connection)->willReturn('test');
+        $helper->dropDatabase($connection, 'test')->shouldBeCalled();
 
         $store = $this->prophesize(DoctrineStore::class);
         $store->connection()->willReturn($connection);
 
         $command = new DatabaseDropCommand(
-            $store->reveal()
+            $store->reveal(),
+            $helper->reveal()
         );
 
         $input = new ArrayInput(['--force' => true]);
@@ -93,18 +99,18 @@ final class DatabaseDropCommandTest extends TestCase
 
     public function testSkip(): void
     {
-        $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->listDatabases()->willReturn([]);
-
         $connection = $this->prophesize(Connection::class);
-        $connection->getParams()->willReturn(['dbname' => 'test']);
-        $connection->createSchemaManager()->willReturn($schemaManager);
+
+        $helper = $this->prophesize(DoctrineHelper::class);
+        $helper->databaseName($connection)->willReturn('test');
+        $helper->hasDatabase($connection, 'test')->willReturn(false);
 
         $store = $this->prophesize(DoctrineStore::class);
         $store->connection()->willReturn($connection);
 
         $command = new DatabaseDropCommand(
-            $store->reveal()
+            $store->reveal(),
+            $helper->reveal()
         );
 
         $input = new ArrayInput(['--force' => true, '--if-exists' => true]);
@@ -117,5 +123,34 @@ final class DatabaseDropCommandTest extends TestCase
         $content = $output->fetch();
 
         self::assertStringContainsString('[WARNING] Database "test" doesn\'t exist. Skipped.', $content);
+    }
+
+    public function testError(): void
+    {
+        $connection = $this->prophesize(Connection::class);
+
+        $helper = $this->prophesize(DoctrineHelper::class);
+        $helper->hasDatabase($connection, 'test')->willReturn(true);
+        $helper->databaseName($connection)->willReturn('test');
+        $helper->dropDatabase($connection, 'test')->willThrow(new RuntimeException('error'));
+
+        $store = $this->prophesize(DoctrineStore::class);
+        $store->connection()->willReturn($connection);
+
+        $command = new DatabaseDropCommand(
+            $store->reveal(),
+            $helper->reveal()
+        );
+
+        $input = new ArrayInput(['--force' => true]);
+        $output = new BufferedOutput();
+
+        $exitCode = $command->run($input, $output);
+
+        self::assertEquals(3, $exitCode);
+
+        $content = $output->fetch();
+
+        self::assertStringContainsString('[ERROR] Could not drop database "test"', $content);
     }
 }

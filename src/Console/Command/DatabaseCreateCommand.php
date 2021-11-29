@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DriverManager;
-use InvalidArgumentException;
+use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -17,18 +15,19 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
-use function in_array;
 use function sprintf;
 
 class DatabaseCreateCommand extends Command
 {
     private Store $store;
+    private DoctrineHelper $helper;
 
-    public function __construct(Store $store)
+    public function __construct(Store $store, DoctrineHelper $helper)
     {
         parent::__construct();
 
         $this->store = $store;
+        $this->helper = $helper;
     }
 
     protected function configure(): void
@@ -52,11 +51,11 @@ class DatabaseCreateCommand extends Command
 
         $connection = $store->connection();
 
-        $databaseName = $this->databaseName($connection);
-        $tempConnection = $this->copyConnectionWithoutDatabase($connection);
+        $databaseName = $this->helper->databaseName($connection);
+        $tempConnection = $this->helper->copyConnectionWithoutDatabase($connection);
 
         $ifNotExists = InputHelper::bool($input->getOption('if-not-exists'));
-        $hasDatabase = in_array($databaseName, $tempConnection->createSchemaManager()->listDatabases());
+        $hasDatabase = $this->helper->hasDatabase($tempConnection, $databaseName);
 
         if ($ifNotExists && $hasDatabase) {
             $console->warning(sprintf('Database "%s" already exists. Skipped.', $databaseName));
@@ -66,7 +65,7 @@ class DatabaseCreateCommand extends Command
         }
 
         try {
-            $tempConnection->createSchemaManager()->createDatabase($databaseName);
+            $this->helper->createDatabase($tempConnection, $databaseName);
             $console->success(sprintf('Created database "%s"', $databaseName));
         } catch (Throwable $e) {
             $console->error(sprintf('Could not create database "%s"', $databaseName));
@@ -80,40 +79,5 @@ class DatabaseCreateCommand extends Command
         $tempConnection->close();
 
         return 0;
-    }
-
-    private function databaseName(Connection $connection): string
-    {
-        /**
-         * @psalm-suppress InternalMethod
-         */
-        $params = $connection->getParams();
-
-        if (isset($params['path'])) {
-            return $params['path'];
-        }
-
-        if (isset($params['dbname'])) {
-            return $params['dbname'];
-        }
-
-        throw new InvalidArgumentException(
-            "Connection does not contain a 'path' or 'dbname' parameter and cannot be created."
-        );
-    }
-
-    private function copyConnectionWithoutDatabase(Connection $connection): Connection
-    {
-        /**
-         * @psalm-suppress InternalMethod
-         */
-        $params = $connection->getParams();
-
-        unset($params['dbname'], $params['path']);
-
-        $tmpConnection = DriverManager::getConnection($params);
-        $tmpConnection->connect();
-
-        return $tmpConnection;
     }
 }

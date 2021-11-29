@@ -1,0 +1,63 @@
+<?php
+
+namespace Patchlevel\EventSourcing\Console;
+
+use InvalidArgumentException;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
+
+class DoctrineHelper
+{
+    public function databaseName(Connection $connection): string
+    {
+        /**
+         * @psalm-suppress InternalMethod
+         */
+        $params = $connection->getParams();
+
+        if (isset($params['path'])) {
+            return $params['path'];
+        }
+
+        if (isset($params['dbname'])) {
+            return $params['dbname'];
+        }
+
+        throw new InvalidArgumentException(
+            "Connection does not contain a 'path' or 'dbname' parameter and cannot be created."
+        );
+    }
+
+    /**
+     * @codeCoverageIgnore
+     */
+    public function copyConnectionWithoutDatabase(Connection $connection): Connection
+    {
+        /**
+         * @psalm-suppress InternalMethod
+         */
+        $params = $connection->getParams();
+
+        unset($params['dbname'], $params['path']);
+
+        $tmpConnection = DriverManager::getConnection($params);
+        $tmpConnection->connect();
+
+        return $tmpConnection;
+    }
+
+    public function hasDatabase(Connection $connection, string $databaseName): bool
+    {
+        return in_array($databaseName, $connection->createSchemaManager()->listDatabases());
+    }
+
+    public function createDatabase(Connection $connection, string $databaseName): void
+    {
+        $connection->createSchemaManager()->createDatabase($databaseName);
+    }
+
+    public function dropDatabase(Connection $connection, string $databaseName): void
+    {
+        $connection->createSchemaManager()->dropDatabase($databaseName);
+    }
+}
