@@ -1,6 +1,16 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\DatabaseCreateCommand\\:\\:databaseName\\(\\) should return string but returns mixed\\.$#"
+			count: 2
+			path: src/Console/Command/DatabaseCreateCommand.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\DatabaseDropCommand\\:\\:databaseName\\(\\) should return string but returns mixed\\.$#"
+			count: 2
+			path: src/Console/Command/DatabaseDropCommand.php
+
+		-
 			message: "#^While loop condition is always true\\.$#"
 			count: 1
 			path: src/WatchServer/WatchServer.php

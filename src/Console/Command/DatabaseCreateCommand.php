@@ -18,7 +18,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 use function in_array;
-use function is_string;
 use function sprintf;
 
 class DatabaseCreateCommand extends Command
@@ -85,13 +84,16 @@ class DatabaseCreateCommand extends Command
 
     private function databaseName(Connection $connection): string
     {
+        /**
+         * @psalm-suppress InternalMethod
+         */
         $params = $connection->getParams();
 
-        if (isset($params['path']) && is_string($params['path'])) {
+        if (isset($params['path'])) {
             return $params['path'];
         }
 
-        if (isset($params['dbname']) && is_string($params['dbname'])) {
+        if (isset($params['dbname'])) {
             return $params['dbname'];
         }
 
@@ -102,9 +104,12 @@ class DatabaseCreateCommand extends Command
 
     private function copyConnectionWithoutDatabase(Connection $connection): Connection
     {
+        /**
+         * @psalm-suppress InternalMethod
+         */
         $params = $connection->getParams();
 
-        unset($params['dbname'], $params['path'], $params['url']);
+        unset($params['dbname'], $params['path']);
 
         $tmpConnection = DriverManager::getConnection($params);
         $tmpConnection->connect();

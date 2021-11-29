@@ -33,7 +33,7 @@ infection: vendor                                                               
 	vendor/bin/infection
 
 .PHONY: static
-static: phpstan psalm phpcs-check                                               ## run static analyser
+static: psalm phpstan phpcs-check                                               ## run static analyser
 
 test: phpunit                                                                   ## run tests
 

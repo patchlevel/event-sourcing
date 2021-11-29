@@ -17,7 +17,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 use function in_array;
-use function is_string;
 use function sprintf;
 
 class DatabaseDropCommand extends Command
@@ -88,13 +87,16 @@ class DatabaseDropCommand extends Command
 
     private function databaseName(Connection $connection): string
     {
+        /**
+         * @psalm-suppress InternalMethod
+         */
         $params = $connection->getParams();
 
-        if (isset($params['path']) && is_string($params['path'])) {
+        if (isset($params['path'])) {
             return $params['path'];
         }
 
-        if (isset($params['dbname']) && is_string($params['dbname'])) {
+        if (isset($params['dbname'])) {
             return $params['dbname'];
         }
 
