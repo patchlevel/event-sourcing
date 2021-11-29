@@ -56,9 +56,9 @@ class DatabaseDropCommand extends Command
         $force = InputHelper::bool($input->getOption('force'));
 
         if (!$force) {
-            $console->error('This operation should not be executed in a production environment.');
+            $console->caution('This operation should not be executed in a production environment.');
             $console->warning(sprintf('Would drop the database "%s". Please run the operation with --force to execute.', $databaseName));
-            $console->error('All data will be lost!');
+            $console->caution('All data will be lost!');
 
             return 2;
         }

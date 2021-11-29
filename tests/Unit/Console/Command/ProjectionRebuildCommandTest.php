@@ -72,7 +72,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $content = $output->fetch();
 
-        self::assertStringContainsString('! [CAUTION] rebuild projections', $content);
+        self::assertStringContainsString('[WARNING] rebuild projections', $content);
         self::assertStringContainsString('[OK] finish', $content);
     }
 
@@ -130,7 +130,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         self::assertStringContainsString('[OK] projection schema deleted', $content);
         self::assertStringContainsString('[OK] projection schema created', $content);
-        self::assertStringContainsString('! [CAUTION] rebuild projections', $content);
+        self::assertStringContainsString('[WARNING] rebuild projections', $content);
         self::assertStringContainsString('[OK] finish', $content);
     }
 

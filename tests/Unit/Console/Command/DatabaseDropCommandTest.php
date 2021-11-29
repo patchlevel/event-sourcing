@@ -65,7 +65,7 @@ final class DatabaseDropCommandTest extends TestCase
 
         $content = $output->fetch();
 
-        self::assertStringContainsString('[ERROR] This operation should not be executed in a production environment', $content);
+        self::assertStringContainsString('! [CAUTION] This operation should not be executed in a production environment', $content);
     }
 
     public function testSuccessful(): void
