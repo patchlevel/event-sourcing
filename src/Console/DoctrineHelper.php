@@ -1,10 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Console;
 
-use InvalidArgumentException;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use InvalidArgumentException;
+
+use function in_array;
 
 class DoctrineHelper
 {
