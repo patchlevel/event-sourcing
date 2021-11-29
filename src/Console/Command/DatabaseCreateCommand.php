@@ -18,6 +18,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 use function in_array;
+use function is_string;
 use function sprintf;
 
 class DatabaseCreateCommand extends Command
@@ -45,7 +46,7 @@ class DatabaseCreateCommand extends Command
         $store = $this->store;
 
         if (!$store instanceof DoctrineStore) {
-            $console->error('store is not supported');
+            $console->error('Store is not supported!');
 
             return 1;
         }
@@ -59,13 +60,7 @@ class DatabaseCreateCommand extends Command
         $hasDatabase = in_array($databaseName, $tempConnection->createSchemaManager()->listDatabases());
 
         if ($ifNotExists && $hasDatabase) {
-            $console->writeln(
-                sprintf(
-                    '<info>Database <comment>%s</comment> already exists. Skipped.</info>',
-                    $databaseName
-                )
-            );
-
+            $console->info(sprintf('Database "%s" already exists. Skipped.', $databaseName));
             $tempConnection->close();
 
             return 0;
@@ -73,10 +68,10 @@ class DatabaseCreateCommand extends Command
 
         try {
             $tempConnection->createSchemaManager()->createDatabase($databaseName);
-            $console->writeln(sprintf('<info>Created database <comment>%s</comment></info>', $databaseName));
+            $console->info(sprintf('Created database "%s"', $databaseName));
         } catch (Throwable $e) {
-            $console->writeln(sprintf('<error>Could not create database <comment>%s</comment></error>', $databaseName));
-            $console->writeln(sprintf('<error>%s</error>', $e->getMessage()));
+            $console->error(sprintf('Could not create database "%s"', $databaseName));
+            $console->error($e->getMessage());
 
             $tempConnection->close();
 
@@ -92,11 +87,11 @@ class DatabaseCreateCommand extends Command
     {
         $params = $connection->getParams();
 
-        if (isset($params['path'])) {
+        if (isset($params['path']) && is_string($params['path'])) {
             return $params['path'];
         }
 
-        if (isset($params['dbname'])) {
+        if (isset($params['dbname']) && is_string($params['dbname'])) {
             return $params['dbname'];
         }
 

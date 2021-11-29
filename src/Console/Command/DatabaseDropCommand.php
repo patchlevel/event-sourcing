@@ -17,6 +17,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 use function in_array;
+use function is_string;
 use function sprintf;
 
 class DatabaseDropCommand extends Command
@@ -45,7 +46,7 @@ class DatabaseDropCommand extends Command
         $store = $this->store;
 
         if (!$store instanceof DoctrineStore) {
-            $console->error('store is not supported');
+            $console->error('Store is not supported!');
 
             return 1;
         }
@@ -56,34 +57,34 @@ class DatabaseDropCommand extends Command
         $force = InputHelper::bool($input->getOption('force'));
 
         if (!$force) {
-            $console->writeln('<error>ATTENTION:</error> This operation should not be executed in a production environment.');
-            $console->writeln('');
-            $console->writeln(sprintf('<info>Would drop the database <comment>%s</comment>.</info>', $databaseName));
+            $console->error('ATTENTION: This operation should not be executed in a production environment.');
+            $console->newLine();
+            $console->info(sprintf('Would drop the database "%s".', $databaseName));
             $console->writeln('Please run the operation with --force to execute');
-            $console->writeln('<error>All data will be lost!</error>');
+            $console->error('All data will be lost!');
 
-            return 1;
+            return 2;
         }
 
         $ifExists = InputHelper::bool($input->getOption('if-exists'));
         $hasDatabase = in_array($databaseName, $connection->createSchemaManager()->listDatabases());
 
         if ($ifExists && !$hasDatabase) {
-            $console->writeln(sprintf('<info>Database <comment>%s</comment> doesn\'t exist. Skipped.</info>', $databaseName));
+            $console->info(sprintf('Database "%s" doesn\'t exist. Skipped.', $databaseName));
 
             return 0;
         }
 
         try {
             $connection->createSchemaManager()->dropDatabase($databaseName);
-            $console->writeln(sprintf('<info>Dropped database <comment>%s</comment></info>', $databaseName));
+            $console->info(sprintf('Dropped database "%s"', $databaseName));
 
             return 0;
         } catch (Throwable $e) {
-            $console->writeln(sprintf('<error>Could not drop database <comment>%s</comment></error>', $databaseName));
-            $console->writeln(sprintf('<error>%s</error>', $e->getMessage()));
+            $console->error(sprintf('Could not drop database "%s"', $databaseName));
+            $console->error($e->getMessage());
 
-            return 2;
+            return 3;
         }
     }
 
@@ -91,11 +92,11 @@ class DatabaseDropCommand extends Command
     {
         $params = $connection->getParams();
 
-        if (isset($params['path'])) {
+        if (isset($params['path']) && is_string($params['path'])) {
             return $params['path'];
         }
 
-        if (isset($params['dbname'])) {
+        if (isset($params['dbname']) && is_string($params['dbname'])) {
             return $params['dbname'];
         }
 
