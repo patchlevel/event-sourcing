@@ -42,7 +42,10 @@ class DoctrineHelper
          */
         $params = $connection->getParams();
 
-        unset($params['dbname'], $params['path']);
+        /**
+         * @psalm-suppress InvalidArrayOffset
+         */
+        unset($params['dbname'], $params['path'], $params['url']);
 
         $tmpConnection = DriverManager::getConnection($params);
         $tmpConnection->connect();
