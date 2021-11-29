@@ -1,6 +1,11 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Console\\\\DoctrineHelper\\:\\:databaseName\\(\\) should return string but returns mixed\\.$#"
+			count: 2
+			path: src/Console/DoctrineHelper.php
+
+		-
 			message: "#^While loop condition is always true\\.$#"
 			count: 1
 			path: src/WatchServer/WatchServer.php

@@ -87,7 +87,7 @@ class ProjectionRebuildCommand extends Command
             $middlewares
         );
 
-        $console->caution('rebuild projections');
+        $console->warning('rebuild projections');
         $console->progressStart($pipeline->count());
 
         $pipeline->run(static function () use ($console): void {
