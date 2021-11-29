@@ -60,7 +60,7 @@ class DatabaseCreateCommand extends Command
         $hasDatabase = in_array($databaseName, $tempConnection->createSchemaManager()->listDatabases());
 
         if ($ifNotExists && $hasDatabase) {
-            $console->info(sprintf('Database "%s" already exists. Skipped.', $databaseName));
+            $console->warning(sprintf('Database "%s" already exists. Skipped.', $databaseName));
             $tempConnection->close();
 
             return 0;
@@ -68,7 +68,7 @@ class DatabaseCreateCommand extends Command
 
         try {
             $tempConnection->createSchemaManager()->createDatabase($databaseName);
-            $console->info(sprintf('Created database "%s"', $databaseName));
+            $console->success(sprintf('Created database "%s"', $databaseName));
         } catch (Throwable $e) {
             $console->error(sprintf('Could not create database "%s"', $databaseName));
             $console->error($e->getMessage());

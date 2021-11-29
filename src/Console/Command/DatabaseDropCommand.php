@@ -57,10 +57,8 @@ class DatabaseDropCommand extends Command
         $force = InputHelper::bool($input->getOption('force'));
 
         if (!$force) {
-            $console->error('ATTENTION: This operation should not be executed in a production environment.');
-            $console->newLine();
-            $console->info(sprintf('Would drop the database "%s".', $databaseName));
-            $console->writeln('Please run the operation with --force to execute');
+            $console->error('This operation should not be executed in a production environment.');
+            $console->warning(sprintf('Would drop the database "%s". Please run the operation with --force to execute.', $databaseName));
             $console->error('All data will be lost!');
 
             return 2;
@@ -70,14 +68,14 @@ class DatabaseDropCommand extends Command
         $hasDatabase = in_array($databaseName, $connection->createSchemaManager()->listDatabases());
 
         if ($ifExists && !$hasDatabase) {
-            $console->info(sprintf('Database "%s" doesn\'t exist. Skipped.', $databaseName));
+            $console->warning(sprintf('Database "%s" doesn\'t exist. Skipped.', $databaseName));
 
             return 0;
         }
 
         try {
             $connection->createSchemaManager()->dropDatabase($databaseName);
-            $console->info(sprintf('Dropped database "%s"', $databaseName));
+            $console->success(sprintf('Dropped database "%s"', $databaseName));
 
             return 0;
         } catch (Throwable $e) {
