@@ -46,6 +46,7 @@ final class DatabaseDropCommandTest extends TestCase
         $connection = $this->prophesize(Connection::class);
 
         $helper = $this->prophesize(DoctrineHelper::class);
+        $helper->copyConnectionWithoutDatabase($connection)->willReturn($connection);
         $helper->databaseName($connection)->willReturn('test');
 
         $store = $this->prophesize(DoctrineStore::class);
@@ -73,6 +74,7 @@ final class DatabaseDropCommandTest extends TestCase
         $connection = $this->prophesize(Connection::class);
 
         $helper = $this->prophesize(DoctrineHelper::class);
+        $helper->copyConnectionWithoutDatabase($connection)->willReturn($connection);
         $helper->hasDatabase($connection, 'test')->willReturn(true);
         $helper->databaseName($connection)->willReturn('test');
         $helper->dropDatabase($connection, 'test')->shouldBeCalled();
@@ -102,6 +104,7 @@ final class DatabaseDropCommandTest extends TestCase
         $connection = $this->prophesize(Connection::class);
 
         $helper = $this->prophesize(DoctrineHelper::class);
+        $helper->copyConnectionWithoutDatabase($connection)->willReturn($connection);
         $helper->databaseName($connection)->willReturn('test');
         $helper->hasDatabase($connection, 'test')->willReturn(false);
 
@@ -130,6 +133,7 @@ final class DatabaseDropCommandTest extends TestCase
         $connection = $this->prophesize(Connection::class);
 
         $helper = $this->prophesize(DoctrineHelper::class);
+        $helper->copyConnectionWithoutDatabase($connection)->willReturn($connection);
         $helper->hasDatabase($connection, 'test')->willReturn(true);
         $helper->databaseName($connection)->willReturn('test');
         $helper->dropDatabase($connection, 'test')->willThrow(new RuntimeException('error'));
