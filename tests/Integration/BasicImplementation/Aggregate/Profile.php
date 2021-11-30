@@ -19,7 +19,7 @@ final class Profile extends SnapshotableAggregateRoot
     public static function create(string $id): self
     {
         $self = new self();
-        $self->apply(ProfileCreated::raise($id));
+        $self->record(ProfileCreated::raise($id));
 
         return $self;
     }

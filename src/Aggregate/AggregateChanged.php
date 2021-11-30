@@ -64,6 +64,11 @@ abstract class AggregateChanged
         return new static($aggregateId, $payload);
     }
 
+    /**
+     * @internal
+     *
+     * @return static
+     */
     public function recordNow(int $playhead): self
     {
         if ($this->playhead !== null) {

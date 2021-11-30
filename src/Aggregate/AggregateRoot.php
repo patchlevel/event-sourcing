@@ -23,14 +23,14 @@ abstract class AggregateRoot
 
     abstract public function aggregateRootId(): string;
 
-    protected function apply(AggregateChanged $event): void
+    protected function record(AggregateChanged $event): void
     {
         $this->playhead++;
 
         $event = $event->recordNow($this->playhead);
         $this->uncommittedEvents[] = $event;
 
-        $this->handle($event);
+        $this->apply($event);
     }
 
     /**
@@ -55,13 +55,13 @@ abstract class AggregateRoot
 
         foreach ($stream as $message) {
             $self->playhead++;
-            $self->handle($message);
+            $self->apply($message);
         }
 
         return $self;
     }
 
-    protected function handle(AggregateChanged $event): void
+    protected function apply(AggregateChanged $event): void
     {
         $method = $this->findApplyMethod($event);
 
