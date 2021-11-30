@@ -21,8 +21,8 @@
     "php": "^7.4|^8.0",
     "ext-json": "^7.4|^8.0",
     "doctrine/dbal": "^3.2.0",
-    "psr/cache": "^1.0.1|^2.0.0|^3.0.0",
-    "psr/simple-cache": "^1.0.1|^2.0.0|^3.0.0",
+    "psr/cache": "^1.0.1|^2.0.0",
+    "psr/simple-cache": "^1.0.1|^2.0.0",
     "symfony/console": "^4.4.18|^5.1.10"
   },
   "require-dev": {
