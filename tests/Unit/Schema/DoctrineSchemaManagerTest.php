@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Schema;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
+use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
@@ -107,6 +108,7 @@ final class DoctrineSchemaManagerTest extends TestCase
         $platform->getCreateTableSQL($table, AbstractPlatform::CREATE_INDEXES)->willReturn(['CREATE TABLE foo;']);
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
+        $schemaManager->createComparator()->willReturn(new Comparator());
 
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
         $connection->getDatabasePlatform()->willReturn($platform->reveal());
@@ -146,6 +148,7 @@ final class DoctrineSchemaManagerTest extends TestCase
         $toSchema->getSequences()->willReturn([]);
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
+        $schemaManager->createComparator()->willReturn(new Comparator());
 
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
         $connection->getDatabasePlatform()->willReturn($platform->reveal());
@@ -176,7 +179,10 @@ final class DoctrineSchemaManagerTest extends TestCase
         $toSchema = $this->prophesize(Schema::class);
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
 
-        $toSchema->getTableNames()->willReturn(['foo', 'bar']);
+        $toSchema->getTables()->willReturn([
+            new Table('foo'),
+            new Table('bar'),
+        ]);
 
         $currentSchema->hasTable('foo')->willReturn(true);
         $currentSchema->hasTable('bar')->willReturn(false);
@@ -211,7 +217,10 @@ final class DoctrineSchemaManagerTest extends TestCase
         $toSchema = $this->prophesize(Schema::class);
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
 
-        $toSchema->getTableNames()->willReturn(['foo', 'bar']);
+        $toSchema->getTables()->willReturn([
+            new Table('foo'),
+            new Table('bar'),
+        ]);
 
         $currentSchema->hasTable('foo')->willReturn(true);
         $currentSchema->hasTable('bar')->willReturn(false);
