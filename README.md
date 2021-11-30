@@ -47,14 +47,14 @@ final class Profile extends AggregateRoot
     public static function createProfile(ProfileId $id, Email $email): self
     {
         $self = new self();
-        $self->apply(ProfileCreated::raise($id, $email));
+        $self->record(ProfileCreated::raise($id, $email));
 
         return $self;
     }
 
     public function publishMessage(Message $message): void
     {
-        $this->apply(MessagePublished::raise(
+        $this->record(MessagePublished::raise(
             $this->id,
             $message,
         ));
