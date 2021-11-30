@@ -52,6 +52,7 @@ class DatabaseDropCommand extends Command
 
         $connection = $store->connection();
         $databaseName = $this->helper->databaseName($connection);
+        $tempConnection = $this->helper->copyConnectionWithoutDatabase($connection);
 
         $force = InputHelper::bool($input->getOption('force'));
 
@@ -64,7 +65,7 @@ class DatabaseDropCommand extends Command
         }
 
         $ifExists = InputHelper::bool($input->getOption('if-exists'));
-        $hasDatabase = $this->helper->hasDatabase($connection, $databaseName);
+        $hasDatabase = $this->helper->hasDatabase($tempConnection, $databaseName);
 
         if ($ifExists && !$hasDatabase) {
             $console->warning(sprintf('Database "%s" doesn\'t exist. Skipped.', $databaseName));
@@ -73,7 +74,7 @@ class DatabaseDropCommand extends Command
         }
 
         try {
-            $this->helper->dropDatabase($connection, $databaseName);
+            $this->helper->dropDatabase($tempConnection, $databaseName);
             $console->success(sprintf('Dropped database "%s"', $databaseName));
 
             return 0;
