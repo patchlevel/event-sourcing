@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Schema;
 
-use Doctrine\DBAL\Schema\Comparator;
 use Patchlevel\EventSourcing\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Store\Store;
 
@@ -66,12 +65,13 @@ class DoctrineSchemaManager implements DryRunSchemaManager
         }
 
         $connection = $store->connection();
+        $schemaManager = $connection->createSchemaManager();
 
-        $fromSchema = $connection->createSchemaManager()->createSchema();
+        $fromSchema = $schemaManager->createSchema();
         $toSchema = $store->schema();
 
-        $comparator = new Comparator();
-        $diff = $comparator->compare($fromSchema, $toSchema);
+        $comparator = $schemaManager->createComparator();
+        $diff = $comparator->compareSchemas($fromSchema, $toSchema);
 
         return array_values($diff->toSql($connection->getDatabasePlatform()));
     }
@@ -105,12 +105,12 @@ class DoctrineSchemaManager implements DryRunSchemaManager
 
         $queries = [];
 
-        foreach ($schema->getTableNames() as $tableName) {
-            if (!$currentSchema->hasTable($tableName)) {
+        foreach ($schema->getTables() as $table) {
+            if (!$currentSchema->hasTable($table->getName())) {
                 continue;
             }
 
-            $queries[] = sprintf('DROP TABLE %s;', $tableName);
+            $queries[] = sprintf('DROP TABLE %s;', $table->getName());
         }
 
         return $queries;
