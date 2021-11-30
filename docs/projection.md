@@ -23,7 +23,7 @@ final class ProfileProjection implements Projection
     /** @return iterable<class-string<AggregateChanged>, string> */
     public function handledEvents(): iterable
     {
-        yield ProfileCreated::class => 'applyProfileCreated';
+        yield ProfileCreated::class => 'handleProfileCreated';
     }
 
     public function create(): void
@@ -36,7 +36,7 @@ final class ProfileProjection implements Projection
         $this->connection->executeStatement('DROP TABLE IF EXISTS projection_profile;');
     }
 
-    public function applyProfileCreated(ProfileCreated $profileCreated): void
+    public function handleProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->executeStatement(
             'INSERT INTO projection_profile (`id`) VALUES(:id);',

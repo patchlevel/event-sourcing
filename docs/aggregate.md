@@ -152,7 +152,7 @@ final class Profile extends AggregateRoot
     public static function create(string $id, string $name): self
     {
         $self = new self();
-        $self->apply(ProfileCreated::raise($id, $name));
+        $self->record(ProfileCreated::raise($id, $name));
 
         return $self;
     }
@@ -166,17 +166,17 @@ final class Profile extends AggregateRoot
 ```
 
 Wir haben hier das Event in `create` erzeugt 
-und dieses Event mit der Methode `apply` gemerkt.
+und dieses Event mit der Methode `record` gemerkt.
 
 Des Weiteren haben wir eine `applyProfileCreated` Methode, die dazu dient den State anzupassen.
 Das AggregateRoot sucht sich mithilfe des Event Short Names `ProfileCreated` die richtige Methode,
-indem es einfach ein `apply` vorne hinzufügt.
+indem ein `apply` vorne hinzufügt.
 
 Vorsicht: Wenn so eine Methode nicht existiert wird das verarbeiten übersprungen.
 Manche Events verändern nicht den State (wenn nicht nötig), 
 sondern werden ggfs. nur in Projections verwendet.
 
-Nachdem ein event mit `->apply()` registriert wurde, wird sofort die dazugehörige apply Methode ausgeführt-
+Nachdem ein event mit `->record()` registriert wurde, wird sofort die dazugehörige apply Methode ausgeführt-
 Sprich, nach diesem Call ist der State dem entsprechend schon aktualisiert.
 
 ### modify aggregate
@@ -248,14 +248,14 @@ final class Profile extends AggregateRoot
     public static function create(string $id, string $name): self
     {
         $self = new self();
-        $self->apply(ProfileCreated::raise($id, $name));
+        $self->record(ProfileCreated::raise($id, $name));
 
         return $self;
     }
     
     public function changeName(string $name): void 
     {
-        $this->apply(NameChanged::raise($this->id, $name));
+        $this->record(NameChanged::raise($this->id, $name));
     }
 
     protected function applyProfileCreated(ProfileCreated $event): void
@@ -365,7 +365,7 @@ final class Profile extends AggregateRoot
             throw new NameIsToShortException($name);
         }
     
-        $this->apply(NameChanged::raise($this->id, $name));
+        $this->record(NameChanged::raise($this->id, $name));
     }
     
     protected function applyNameChanged(NameChanged $event): void 
@@ -432,7 +432,7 @@ final class Profile extends AggregateRoot
     public static function create(string $id, Name $name): self
     {
         $self = new self();
-        $self->apply(ProfileCreated::raise($id, $name));
+        $self->record(ProfileCreated::raise($id, $name));
 
         return $self;
     }
@@ -446,7 +446,7 @@ final class Profile extends AggregateRoot
     
     public function changeName(Name $name): void 
     {
-        $this->apply(NameChanged::raise($this->id, $name));
+        $this->record(NameChanged::raise($this->id, $name));
     }
     
     protected function applyNameChanged(NameChanged $event): void 
@@ -519,10 +519,10 @@ final class Hotel extends AggregateRoot
             throw new NoPlaceException($name);
         }
         
-        $this->apply(BookRoom::raise($this->id, $name));
+        $this->record(BookRoom::raise($this->id, $name));
         
         if ($this->people === self::SIZE) {
-            $this->apply(FullyBooked::raise($this->id));
+            $this->record(FullyBooked::raise($this->id));
         }
     }
     
@@ -541,7 +541,7 @@ Denkbar wäre auch, dass hier nachträglich eine Exception geschmissen wird.
 Da erst bei der save Methode die Events wirklich gespeichert werden, 
 kann hier ohne weiteres darauf reagiert werden, ohne dass ungewollt Daten verändert werden.
 
-## override handle methode
+## override apply methode
 
 Wenn die standard Implementierung aus gründen nicht reicht oder zum Umständlich ist,
 dann kann man diese auch überschreiben. Hier findest du ein kleines Beispiel.
@@ -560,7 +560,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 final class Profile extends AggregateRoot
 {
     //...
-    protected function handle(AggregateChanged $event): void
+    protected function apply(AggregateChanged $event): void
     {
         switch ($event::class) {
             case ProfileCreated::class:
