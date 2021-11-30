@@ -34,14 +34,14 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
     public static function createProfile(ProfileId $id, Email $email): self
     {
         $self = new self();
-        $self->apply(ProfileCreated::raise($id, $email));
+        $self->record(ProfileCreated::raise($id, $email));
 
         return $self;
     }
 
     public function publishMessage(Message $message): void
     {
-        $this->apply(MessagePublished::raise(
+        $this->record(MessagePublished::raise(
             $this->id,
             $message,
         ));
@@ -49,7 +49,7 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
 
     public function visitProfile(ProfileId $profileId): void
     {
-        $this->apply(ProfileVisited::raise($this->id, $profileId));
+        $this->record(ProfileVisited::raise($this->id, $profileId));
     }
 
     protected function applyProfileCreated(ProfileCreated $event): void

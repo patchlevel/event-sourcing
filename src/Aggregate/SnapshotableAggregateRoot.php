@@ -32,7 +32,7 @@ abstract class SnapshotableAggregateRoot extends AggregateRoot
 
         foreach ($stream as $message) {
             $self->playhead++;
-            $self->handle($message);
+            $self->apply($message);
         }
 
         return $self;
