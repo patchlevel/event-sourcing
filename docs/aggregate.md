@@ -2,9 +2,8 @@
 
 TODO: Aggregate Root definition
 
-Ein AggregateRoot muss von `AggregateRoot` erben und die Methode `aggregateRootId` implementieren.
-Später werden noch events hinzugefügt, aber das folgende reicht schon aus, dass es ausführbar ist.
-
+An AggregateRoot has to inherit from `AggregateRoot` and implement the method` aggregateRootId`.
+Events will be added later, but the following is enough to make it executable:
 
 ```php
 <?php
@@ -29,11 +28,11 @@ final class Profile extends AggregateRoot
 }
 ```
 
-Wir verwenden hier ein sogenannten named constructor, um ein Objekt zu erzeugen.
-Der Konstruktor selbst ist protected und kann nicht von Außen aufgerufen.
-Aber es besteht die Möglichkeit mehrere verschiedene named constructor zu definieren.
+We use a so-called named constructor here to create an object of the AggregateRoot.
+The constructor itself is protected and cannot be called from outside.
+But it is possible to define different named constructors for different usecases like `createFromRegistration`.
 
-Nachdem das Grundgerüst für ein Aggregat steht, könnte man ihn Theoretisch abspeichern:
+After the basic structure for an aggregate is in place, it could theoretically be saved:
 
 ```php
 <?php
@@ -64,22 +63,24 @@ final class CreateProfileHandler extends AggregateRoot
 }
 ```
 
-Wenn man jetzt in der DB schauen würde, würde man sehen, dass nichts gespeichert wurde.
-Das liegt daran, dass nur Events in der Datenbank gespeichert werden und solange keine Events existiert,
-passiert nichts.
+If you look in the DB now, you would see that nothing has been saved.
+This is because only events are stored in the database and as long as no events exist,
+nothing happens.
 
-Info: Ein CommandBus System ist nicht notwendig, nur empfehlenswert. 
-Die Interaktion kann auch ohne weiteres in einem Controller oder Service passieren.
+Info: A CommandBus system is not necessary, only recommended.
+The interaction can also easily take place in a controller or service.
+
+Info: You can find more about repositories in the chapter `Repository`.
 
 ## Event
 
-Informationen werden nur in form von Events gespeichert. 
-Diese Events werden auch wieder dazu verwendet, um den aktuellen State des Aggregates wieder aufzubauen.
+Information is only stored in the form of events.
+These events are also used again to rebuild the current state of the aggregate.
 
 ### create aggregate
 
-Damit auch wirklich ein Aggregat gespeichert wird, muss mindestens ein Event in der DB existieren.
-Ein "Create" Event bietet sich hier an.
+In order that an aggregate is actually saved, at least one event must exist in the DB.
+A "Create" event is ideal here:
 
 ```php
 <?php
@@ -115,14 +116,14 @@ final class ProfileCreated extends AggregateChanged
 }
 ```
 
-Wir empfehlen hier named constructoren und methoden mit typehints zu verwenden,
-damit das handling einfacher wird und weniger fehleranfällig.
+We recommend using named constructors and methods with typehints,
+so that handling becomes easier and less error-prone.
 
-Ein Event muss den AggregateRoot id übergeben bekommen und den payload. 
-Der payload muss als json serialisierbar und unserialisierbar sein.
-Sprich, es darf nur aus einfachen Datentypen bestehen (keine Objekte).
+An event must receive the AggregateRoot id and the payload.
+The payload must be serializable and non-serializable as json.
+In other words, it can only consist of simple data types (no objects).
 
-Nachdem wir das Event definiert haben, müssen wir das Erstellen des Profils anpassen.
+After we have defined the event, we have to adapt the creation of the profile:
 
 ```php
 <?php
