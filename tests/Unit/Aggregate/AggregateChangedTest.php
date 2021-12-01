@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 use DateTimeImmutable;
 use Error;
 use Patchlevel\EventSourcing\Aggregate\AggregateException;
+use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -16,6 +17,16 @@ use const PHP_VERSION_ID;
 
 class AggregateChangedTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        Clock::reset();
+    }
+
+    protected function tearDown(): void
+    {
+        Clock::reset();
+    }
+
     public function testCreateEvent(): void
     {
         $id = ProfileId::fromString('1');
@@ -39,6 +50,9 @@ class AggregateChangedTest extends TestCase
 
     public function testRecordNow(): void
     {
+        $currentDate = new DateTimeImmutable('2020-01-01 12:00:00');
+        Clock::freeze($currentDate);
+
         $id = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');
 
@@ -48,7 +62,7 @@ class AggregateChangedTest extends TestCase
         self::assertEquals($id, $recordedEvent->profileId());
         self::assertEquals($email, $recordedEvent->email());
         self::assertEquals(1, $recordedEvent->playhead());
-        self::assertInstanceOf(DateTimeImmutable::class, $recordedEvent->recordedOn());
+        self::assertEquals($currentDate, $recordedEvent->recordedOn());
         self::assertEquals(
             [
                 'profileId' => '1',
@@ -74,14 +88,14 @@ class AggregateChangedTest extends TestCase
 
     public function testSerialize(): void
     {
+        $currentDate = new DateTimeImmutable('2020-01-01 12:00:00');
+        Clock::freeze($currentDate);
+
         $id = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');
 
         $event = ProfileCreated::raise($id, $email);
-
-        $beforeRecording = new DateTimeImmutable();
         $recordedEvent = $event->recordNow(1);
-        $afterRecording = new DateTimeImmutable();
 
         $serializedEvent = $recordedEvent->serialize();
 
@@ -103,11 +117,7 @@ class AggregateChangedTest extends TestCase
         self::assertEquals('{"profileId":"1","email":"d.a.badura@gmail.com"}', $serializedEvent['payload']);
 
         self::assertArrayHasKey('recordedOn', $serializedEvent);
-        self::assertDateTimeImmutableBetween(
-            $beforeRecording,
-            $afterRecording,
-            $serializedEvent['recordedOn'],
-        );
+        self::assertEquals($currentDate, $serializedEvent['recordedOn']);
     }
 
     public function testSerializeNotRecorded(): void
@@ -189,14 +199,5 @@ class AggregateChangedTest extends TestCase
             ],
             $event->payload()
         );
-    }
-
-    private static function assertDateTimeImmutableBetween(
-        DateTimeImmutable $fromExpected,
-        DateTimeImmutable $toExpected,
-        DateTimeImmutable $actual
-    ): void {
-        self::assertGreaterThanOrEqual($fromExpected, $actual);
-        self::assertLessThanOrEqual($toExpected, $actual);
     }
 }

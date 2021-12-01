@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Aggregate;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Clock;
 
 use function json_decode;
 use function json_encode;
@@ -122,6 +123,6 @@ abstract class AggregateChanged
 
     protected function createRecordDate(): DateTimeImmutable
     {
-        return new DateTimeImmutable();
+        return Clock::createDateTimeImmutable();
     }
 }
