@@ -141,14 +141,14 @@ class PipelineTest extends TestCase
 
         self::assertInstanceOf(ProfileVisited::class, $resultBuckets[0]->event());
         self::assertEquals('1', $resultBuckets[0]->event()->aggregateId());
-        self::assertEquals(0, $resultBuckets[0]->event()->playhead());
+        self::assertEquals(1, $resultBuckets[0]->event()->playhead());
 
         self::assertInstanceOf(ProfileVisited::class, $resultBuckets[1]->event());
         self::assertEquals('1', $resultBuckets[1]->event()->aggregateId());
-        self::assertEquals(1, $resultBuckets[1]->event()->playhead());
+        self::assertEquals(2, $resultBuckets[1]->event()->playhead());
 
         self::assertInstanceOf(ProfileVisited::class, $resultBuckets[2]->event());
         self::assertEquals('2', $resultBuckets[2]->event()->aggregateId());
-        self::assertEquals(0, $resultBuckets[2]->event()->playhead());
+        self::assertEquals(1, $resultBuckets[2]->event()->playhead());
     }
 }

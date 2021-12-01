@@ -34,7 +34,7 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
 
         $event = $result[0]->event();
 
-        self::assertEquals(0, $event->playhead());
+        self::assertEquals(1, $event->playhead());
     }
 
     public function testReculatePlayheadWithSamePlayhead(): void
@@ -57,6 +57,6 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
 
         $event = $result[0]->event();
 
-        self::assertEquals(0, $event->playhead());
+        self::assertEquals(1, $event->playhead());
     }
 }
