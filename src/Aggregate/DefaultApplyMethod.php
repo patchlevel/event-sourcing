@@ -9,6 +9,9 @@ use function explode;
 use function get_class;
 use function method_exists;
 
+/**
+ * @psalm-require-extends AggregateRoot
+ */
 trait DefaultApplyMethod
 {
     protected function apply(AggregateChanged $event): void
