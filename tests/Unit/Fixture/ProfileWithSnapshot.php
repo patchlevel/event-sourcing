@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\DefaultApplyMethod;
+use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 
 final class ProfileWithSnapshot extends SnapshotableAggregateRoot
 {
-    use DefaultApplyMethod;
+    use NonStrictApplyMethod;
 
     private ProfileId $id;
     private Email $email;

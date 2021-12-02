@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
 
-final class Profile extends AggregateRoot
+final class ProfileWithNonStrictApply extends AggregateRoot
 {
+    use NonStrictApplyMethod;
+
     private ProfileId $id;
     private Email $email;
-    /** @var array<Message> */
-    private array $messages;
 
     public function id(): ProfileId
     {
@@ -22,14 +22,6 @@ final class Profile extends AggregateRoot
     public function email(): Email
     {
         return $this->email;
-    }
-
-    /**
-     * @return array<Message>
-     */
-    public function messages(): array
-    {
-        return $this->messages;
     }
 
     public static function createProfile(ProfileId $id, Email $email): self
@@ -53,25 +45,14 @@ final class Profile extends AggregateRoot
         $this->record(ProfileVisited::raise($this->id, $profileId));
     }
 
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId();
+        $this->email = $event->email();
+    }
+
     public function aggregateRootId(): string
     {
         return $this->id->toString();
-    }
-
-    protected function apply(AggregateChanged $event): void
-    {
-        if ($event instanceof ProfileCreated) {
-            $this->id = $event->profileId();
-            $this->email = $event->email();
-            $this->messages = [];
-
-            return;
-        }
-
-        if ($event instanceof MessagePublished) {
-            $this->messages[] = $event->message();
-
-            return;
-        }
     }
 }

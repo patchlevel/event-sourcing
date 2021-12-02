@@ -12,7 +12,7 @@ use function method_exists;
 /**
  * @psalm-require-extends AggregateRoot
  */
-trait DefaultApplyMethod
+trait NonStrictApplyMethod
 {
     protected function apply(AggregateChanged $event): void
     {
