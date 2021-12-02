@@ -30,6 +30,7 @@ class ClassRenameMiddlewareTest extends TestCase
 
         $bucket = new EventBucket(
             Profile::class,
+            1,
             $event
         );
 
@@ -55,6 +56,7 @@ class ClassRenameMiddlewareTest extends TestCase
 
         $bucket = new EventBucket(
             Profile::class,
+            1,
             AliasProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('d.a.badura@gmail.com')

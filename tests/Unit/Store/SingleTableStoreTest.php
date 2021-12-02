@@ -28,7 +28,7 @@ final class SingleTableStoreTest extends TestCase
             [
                 'aggregate' => 'profile',
                 'id' => '1',
-                'playhead' => -1,
+                'playhead' => 0,
             ]
         )->willReturn([]);
         $connection->createQueryBuilder()->willReturn($queryBuilder);
@@ -54,7 +54,7 @@ final class SingleTableStoreTest extends TestCase
             [
                 'aggregate' => 'profile',
                 'id' => '1',
-                'playhead' => -1,
+                'playhead' => 0,
             ]
         )->willReturn(
             [

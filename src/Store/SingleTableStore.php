@@ -40,7 +40,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
      *
      * @return array<AggregateChanged>
      */
-    public function load(string $aggregate, string $id, int $fromPlayhead = -1): array
+    public function load(string $aggregate, string $id, int $fromPlayhead = 0): array
     {
         $shortName = $this->shortName($aggregate);
 
@@ -135,16 +135,17 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     /**
      * @return Generator<EventBucket>
      */
-    public function all(): Generator
+    public function stream(int $fromIndex = 0): Generator
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->storeTableName)
+            ->where('id > :index')
             ->orderBy('id')
             ->getSQL();
 
-        /** @var array<array{aggregateId: string, aggregate: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $result */
-        $result = $this->connection->iterateAssociative($sql);
+        /** @var array<array{id: string, aggregateId: string, aggregate: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $result */
+        $result = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
         $platform = $this->connection->getDatabasePlatform();
 
         $classMap = array_flip($this->aggregates);
@@ -158,6 +159,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
 
             yield new EventBucket(
                 $classMap[$name],
+                (int)$data['id'],
                 AggregateChanged::deserialize(
                     self::normalizeResult($platform, $data)
                 )
@@ -165,14 +167,15 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         }
     }
 
-    public function count(): int
+    public function count(int $fromIndex = 0): int
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
             ->from($this->storeTableName)
+            ->where('id > :index')
             ->getSQL();
 
-        $result = $this->connection->fetchOne($sql);
+        $result = $this->connection->fetchOne($sql, ['index' => $fromIndex]);
 
         if (!is_int($result) && !is_string($result)) {
             throw new StoreException('invalid query return type');

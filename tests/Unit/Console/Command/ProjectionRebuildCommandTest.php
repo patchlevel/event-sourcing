@@ -27,33 +27,38 @@ final class ProjectionRebuildCommandTest extends TestCase
         $events = static function () {
             yield new EventBucket(
                 Profile::class,
+                1,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
 
             yield new EventBucket(
                 Profile::class,
+                2,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
 
             yield new EventBucket(
                 Profile::class,
+                3,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
 
             yield new EventBucket(
                 Profile::class,
+                4,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
 
             yield new EventBucket(
                 Profile::class,
+                5,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
         };
 
         $store = $this->prophesize(PipelineStore::class);
-        $store->count()->willReturn(5);
-        $store->all()->willReturn($events());
+        $store->count(Argument::is(0))->willReturn(5);
+        $store->stream(Argument::is(0))->willReturn($events());
 
         $repository = $this->prophesize(ProjectionRepository::class);
         $repository->handle(Argument::type(ProfileVisited::class))->shouldBeCalledTimes(5);
@@ -81,33 +86,38 @@ final class ProjectionRebuildCommandTest extends TestCase
         $events = static function () {
             yield new EventBucket(
                 Profile::class,
+                1,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
 
             yield new EventBucket(
                 Profile::class,
+                2,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
 
             yield new EventBucket(
                 Profile::class,
+                3,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
 
             yield new EventBucket(
                 Profile::class,
+                4,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
 
             yield new EventBucket(
                 Profile::class,
+                5,
                 ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
             );
         };
 
         $store = $this->prophesize(PipelineStore::class);
-        $store->count()->willReturn(5);
-        $store->all()->willReturn($events());
+        $store->count(Argument::is(0))->willReturn(5);
+        $store->stream(Argument::is(0))->willReturn($events());
 
         $repository = $this->prophesize(ProjectionRepository::class);
         $repository->drop()->shouldBeCalled();

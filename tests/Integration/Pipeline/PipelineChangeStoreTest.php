@@ -95,6 +95,7 @@ final class PipelineChangeStoreTest extends TestCase
         $profile->visit();
 
         $oldRepository->save($profile);
+        self::assertEquals(4, $oldStore->count());
 
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(4, $profile->playhead());

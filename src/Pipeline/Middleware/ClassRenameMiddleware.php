@@ -43,6 +43,7 @@ class ClassRenameMiddleware implements Middleware
         return [
             new EventBucket(
                 $bucket->aggregateClass(),
+                $bucket->index(),
                 $newEvent
             ),
         ];

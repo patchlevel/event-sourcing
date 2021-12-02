@@ -24,6 +24,7 @@ class PipelineTest extends TestCase
         $buckets = [
             new EventBucket(
                 Profile::class,
+                1,
                 ProfileCreated::raise(
                     ProfileId::fromString('1'),
                     Email::fromString('d.a.badura@gmail.com')
@@ -31,6 +32,7 @@ class PipelineTest extends TestCase
             ),
             new EventBucket(
                 Profile::class,
+                2,
                 ProfileVisited::raise(
                     ProfileId::fromString('1'),
                     ProfileId::fromString('2')
@@ -38,6 +40,7 @@ class PipelineTest extends TestCase
             ),
             new EventBucket(
                 Profile::class,
+                3,
                 ProfileVisited::raise(
                     ProfileId::fromString('1'),
                     ProfileId::fromString('3')
@@ -45,6 +48,7 @@ class PipelineTest extends TestCase
             ),
             new EventBucket(
                 Profile::class,
+                4,
                 ProfileCreated::raise(
                     ProfileId::fromString('2'),
                     Email::fromString('d.a.badura@gmail.com')
@@ -52,6 +56,7 @@ class PipelineTest extends TestCase
             ),
             new EventBucket(
                 Profile::class,
+                5,
                 ProfileVisited::raise(
                     ProfileId::fromString('2'),
                     ProfileId::fromString('2')
@@ -75,6 +80,7 @@ class PipelineTest extends TestCase
         $buckets = [
             new EventBucket(
                 Profile::class,
+                1,
                 ProfileCreated::raise(
                     ProfileId::fromString('1'),
                     Email::fromString('d.a.badura@gmail.com')
@@ -82,6 +88,7 @@ class PipelineTest extends TestCase
             ),
             new EventBucket(
                 Profile::class,
+                2,
                 ProfileVisited::raise(
                     ProfileId::fromString('1'),
                     ProfileId::fromString('2')
@@ -89,6 +96,7 @@ class PipelineTest extends TestCase
             ),
             new EventBucket(
                 Profile::class,
+                3,
                 ProfileVisited::raise(
                     ProfileId::fromString('1'),
                     ProfileId::fromString('3')
@@ -96,6 +104,7 @@ class PipelineTest extends TestCase
             ),
             new EventBucket(
                 Profile::class,
+                4,
                 ProfileCreated::raise(
                     ProfileId::fromString('2'),
                     Email::fromString('d.a.badura@gmail.com')
@@ -103,6 +112,7 @@ class PipelineTest extends TestCase
             ),
             new EventBucket(
                 Profile::class,
+                5,
                 ProfileVisited::raise(
                     ProfileId::fromString('2'),
                     ProfileId::fromString('2')
@@ -131,14 +141,14 @@ class PipelineTest extends TestCase
 
         self::assertInstanceOf(ProfileVisited::class, $resultBuckets[0]->event());
         self::assertEquals('1', $resultBuckets[0]->event()->aggregateId());
-        self::assertEquals(0, $resultBuckets[0]->event()->playhead());
+        self::assertEquals(1, $resultBuckets[0]->event()->playhead());
 
         self::assertInstanceOf(ProfileVisited::class, $resultBuckets[1]->event());
         self::assertEquals('1', $resultBuckets[1]->event()->aggregateId());
-        self::assertEquals(1, $resultBuckets[1]->event()->playhead());
+        self::assertEquals(2, $resultBuckets[1]->event()->playhead());
 
         self::assertInstanceOf(ProfileVisited::class, $resultBuckets[2]->event());
         self::assertEquals('2', $resultBuckets[2]->event()->aggregateId());
-        self::assertEquals(0, $resultBuckets[2]->event()->playhead());
+        self::assertEquals(1, $resultBuckets[2]->event()->playhead());
     }
 }

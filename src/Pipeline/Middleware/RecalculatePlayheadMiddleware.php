@@ -54,7 +54,7 @@ class RecalculatePlayheadMiddleware implements Middleware
         }
 
         if (!array_key_exists($aggregateId, $this->index[$aggregateClass])) {
-            $this->index[$aggregateClass][$aggregateId] = -1;
+            $this->index[$aggregateClass][$aggregateId] = 0;
         }
 
         $this->index[$aggregateClass][$aggregateId]++;

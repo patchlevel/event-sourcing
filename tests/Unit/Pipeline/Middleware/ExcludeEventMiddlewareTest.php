@@ -21,6 +21,7 @@ class ExcludeEventMiddlewareTest extends TestCase
 
         $bucket = new EventBucket(
             Profile::class,
+            1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('d.a.badura@gmail.com')
@@ -38,6 +39,7 @@ class ExcludeEventMiddlewareTest extends TestCase
 
         $bucket = new EventBucket(
             Profile::class,
+            1,
             ProfileVisited::raise(
                 ProfileId::fromString('1'),
                 ProfileId::fromString('2')

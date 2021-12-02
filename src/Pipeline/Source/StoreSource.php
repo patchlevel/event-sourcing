@@ -11,10 +11,12 @@ use Patchlevel\EventSourcing\Store\PipelineStore;
 class StoreSource implements Source
 {
     private PipelineStore $store;
+    private int $fromIndex;
 
-    public function __construct(PipelineStore $store)
+    public function __construct(PipelineStore $store, int $fromIndex = 0)
     {
         $this->store = $store;
+        $this->fromIndex = $fromIndex;
     }
 
     /**
@@ -22,11 +24,11 @@ class StoreSource implements Source
      */
     public function load(): Generator
     {
-        return $this->store->all();
+        return $this->store->stream($this->fromIndex);
     }
 
     public function count(): int
     {
-        return $this->store->count();
+        return $this->store->count($this->fromIndex);
     }
 }

@@ -11,14 +11,16 @@ class EventBucket
 {
     /** @var class-string<AggregateRoot> */
     private string $aggregateClass;
+    private int $index;
     private AggregateChanged $event;
 
     /**
      * @param class-string<AggregateRoot> $aggregateClass
      */
-    public function __construct(string $aggregateClass, AggregateChanged $event)
+    public function __construct(string $aggregateClass, int $index, AggregateChanged $event)
     {
         $this->aggregateClass = $aggregateClass;
+        $this->index = $index;
         $this->event = $event;
     }
 
@@ -28,6 +30,11 @@ class EventBucket
     public function aggregateClass(): string
     {
         return $this->aggregateClass;
+    }
+
+    public function index(): int
+    {
+        return $this->index;
     }
 
     public function event(): AggregateChanged

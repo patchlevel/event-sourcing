@@ -30,6 +30,7 @@ class ReplaceEventMiddlewareTest extends TestCase
 
         $bucket = new EventBucket(
             Profile::class,
+            1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('d.a.badura@gmail.com')
@@ -61,6 +62,7 @@ class ReplaceEventMiddlewareTest extends TestCase
 
         $bucket = new EventBucket(
             Profile::class,
+            1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('d.a.badura@gmail.com')
