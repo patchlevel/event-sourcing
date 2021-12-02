@@ -22,6 +22,7 @@ namespace App\Domain\Profile;
 
 use App\Domain\Profile\Event\MessagePublished;
 use App\Domain\Profile\Event\ProfileCreated;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 final class Profile extends AggregateRoot
@@ -59,17 +60,22 @@ final class Profile extends AggregateRoot
             $message,
         ));
     }
-
-    protected function applyProfileCreated(ProfileCreated $event): void
+    
+    protected function apply(AggregateChanged $event): void
     {
-        $this->id = $event->profileId();
-        $this->email = $event->email();
-        $this->messages = [];
-    }
-
-    protected function applyMessagePublished(MessagePublished $event): void
-    {
-        $this->messages[] = $event->message();
+        if ($event instanceof ProfileCreated) {
+            $this->id = $event->profileId();
+            $this->email = $event->email();
+            $this->messages = [];
+            
+            return;
+        } 
+        
+        if ($event instanceof MessagePublished) {
+            $this->messages[] = $event->message();
+            
+            return;
+        }
     }
 
     public function aggregateRootId(): string
