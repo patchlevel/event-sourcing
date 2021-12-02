@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate;
 
+use Patchlevel\EventSourcing\Aggregate\DefaultApplyMethod;
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
 final class Profile extends SnapshotableAggregateRoot
 {
+    use DefaultApplyMethod;
+
     private string $id;
 
     public function aggregateRootId(): string

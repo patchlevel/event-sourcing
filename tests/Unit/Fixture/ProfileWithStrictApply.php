@@ -5,16 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\DefaultApplyMethod;
+use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
 
-final class Profile extends AggregateRoot
+final class ProfileWithStrictApply extends AggregateRoot
 {
-    use DefaultApplyMethod;
+    use StrictApplyMethod;
 
     private ProfileId $id;
     private Email $email;
-    /** @var array<Message> */
-    private array $messages;
 
     public function id(): ProfileId
     {
@@ -24,14 +22,6 @@ final class Profile extends AggregateRoot
     public function email(): Email
     {
         return $this->email;
-    }
-
-    /**
-     * @return array<Message>
-     */
-    public function messages(): array
-    {
-        return $this->messages;
     }
 
     public static function createProfile(ProfileId $id, Email $email): self
@@ -59,12 +49,6 @@ final class Profile extends AggregateRoot
     {
         $this->id = $event->profileId();
         $this->email = $event->email();
-        $this->messages = [];
-    }
-
-    protected function applyMessagePublished(MessagePublished $event): void
-    {
-        $this->messages[] = $event->message();
     }
 
     public function aggregateRootId(): string

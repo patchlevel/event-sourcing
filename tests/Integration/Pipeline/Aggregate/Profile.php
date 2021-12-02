@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\DefaultApplyMethod;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\OldVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\PrivacyAdded;
@@ -12,6 +13,8 @@ use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\ProfileCreated;
 
 final class Profile extends AggregateRoot
 {
+    use DefaultApplyMethod;
+
     private string $id;
     private bool $privacy;
     private int $visited;
