@@ -26,6 +26,7 @@ final class InvalidArgumentException extends BaseInvalidArgumentException
                 gettype($value)
             )
         );
+
         $this->value = $value;
     }
 
