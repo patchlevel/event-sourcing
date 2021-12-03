@@ -8,20 +8,6 @@
       <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="tests/Integration/BasicImplementation/BasicIntegrationTest.php">
-    <PossiblyFalseArgument occurrences="4">
-      <code>$result</code>
-      <code>$result</code>
-      <code>$result</code>
-      <code>$result</code>
-    </PossiblyFalseArgument>
-    <PossiblyInvalidArrayAccess occurrences="4">
-      <code>$result['id']</code>
-      <code>$result['id']</code>
-      <code>$result['id']</code>
-      <code>$result['id']</code>
-    </PossiblyInvalidArrayAccess>
-  </file>
   <file src="tests/Integration/Pipeline/Aggregate/Profile.php">
     <PropertyNotSetInConstructor occurrences="3">
       <code>$id</code>
@@ -31,25 +17,9 @@
   </file>
   <file src="tests/Integration/Pipeline/PipelineChangeStoreTest.php">
     <ArgumentTypeCoercion occurrences="1"/>
-    <UndefinedMethod occurrences="2">
-      <code>count</code>
-      <code>isPrivate</code>
-    </UndefinedMethod>
   </file>
   <file src="tests/Unit/Aggregate/AggregateChangedTest.php">
     <InvalidArgument occurrences="2"/>
-    <UndefinedMethod occurrences="4">
-      <code>email</code>
-      <code>email</code>
-      <code>profileId</code>
-      <code>profileId</code>
-    </UndefinedMethod>
-  </file>
-  <file src="tests/Unit/Console/Command/ProjectionRebuildCommandTest.php">
-    <MissingClosureReturnType occurrences="2">
-      <code>static function () {</code>
-      <code>static function () {</code>
-    </MissingClosureReturnType>
   </file>
   <file src="tests/Unit/EventBus/SymfonyEventBusTest.php">
     <MissingClosureParamType occurrences="1">
@@ -122,61 +92,5 @@
   </file>
   <file src="tests/Unit/Pipeline/Middleware/UntilEventMiddlewareTest.php">
     <InvalidArgument occurrences="1"/>
-  </file>
-  <file src="tests/Unit/Repository/RepositoryTest.php">
-    <UndefinedMethod occurrences="10">
-      <code>email</code>
-      <code>email</code>
-      <code>email</code>
-      <code>email</code>
-      <code>email</code>
-      <code>id</code>
-      <code>id</code>
-      <code>id</code>
-      <code>id</code>
-      <code>id</code>
-    </UndefinedMethod>
-  </file>
-  <file src="tests/Unit/Schema/DoctrineSchemaManagerTest.php">
-    <InternalMethod occurrences="2">
-      <code>new Comparator()</code>
-      <code>new Comparator()</code>
-    </InternalMethod>
-  </file>
-  <file src="tests/Unit/Snapshot/InMemorySnapshotStoreTest.php">
-    <InvalidArgument occurrences="3">
-      <code>Profile::class</code>
-      <code>Profile::class</code>
-      <code>Profile::class</code>
-    </InvalidArgument>
-  </file>
-  <file src="tests/Unit/Snapshot/Psr16SnapshotStoreTest.php">
-    <InvalidArgument occurrences="4">
-      <code>Profile::class</code>
-      <code>Profile::class</code>
-      <code>Profile::class</code>
-      <code>Profile::class</code>
-    </InvalidArgument>
-  </file>
-  <file src="tests/Unit/Snapshot/Psr6SnapshotStoreTest.php">
-    <InvalidArgument occurrences="4">
-      <code>Profile::class</code>
-      <code>Profile::class</code>
-      <code>Profile::class</code>
-      <code>Profile::class</code>
-    </InvalidArgument>
-  </file>
-  <file src="tests/Unit/Snapshot/SnapshotTest.php">
-    <InvalidArgument occurrences="1">
-      <code>Profile::class</code>
-    </InvalidArgument>
-  </file>
-  <file src="tests/bootstrap.php">
-    <MixedAssignment occurrences="1">
-      <code>$loader</code>
-    </MixedAssignment>
-    <UnusedVariable occurrences="1">
-      <code>$loader</code>
-    </UnusedVariable>
   </file>
 </files>

@@ -108,6 +108,10 @@ final class DoctrineSchemaManagerTest extends TestCase
         $platform->getCreateTableSQL($table, AbstractPlatform::CREATE_INDEXES)->willReturn(['CREATE TABLE foo;']);
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
+
+        /**
+         * @psalm-suppress InternalMethod
+         */
         $schemaManager->createComparator()->willReturn(new Comparator());
 
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
@@ -148,6 +152,10 @@ final class DoctrineSchemaManagerTest extends TestCase
         $toSchema->getSequences()->willReturn([]);
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
+
+        /**
+         * @psalm-suppress InternalMethod
+         */
         $schemaManager->createComparator()->willReturn(new Comparator());
 
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());

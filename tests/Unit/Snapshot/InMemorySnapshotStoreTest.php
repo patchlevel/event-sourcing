@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 
 class InMemorySnapshotStoreTest extends TestCase
@@ -17,7 +17,7 @@ class InMemorySnapshotStoreTest extends TestCase
         $store = new InMemorySnapshotStore();
 
         $snapshot = new Snapshot(
-            Profile::class,
+            ProfileWithSnapshot::class,
             '1',
             0,
             ['foo' => 'bar']
@@ -25,7 +25,7 @@ class InMemorySnapshotStoreTest extends TestCase
 
         $store->save($snapshot);
 
-        self::assertEquals($snapshot, $store->load(Profile::class, '1'));
+        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
     }
 
     public function testSnapshotNotFound(): void
@@ -33,6 +33,6 @@ class InMemorySnapshotStoreTest extends TestCase
         $this->expectException(SnapshotNotFound::class);
 
         $store = new InMemorySnapshotStore();
-        $store->load(Profile::class, '1');
+        $store->load(ProfileWithSnapshot::class, '1');
     }
 }

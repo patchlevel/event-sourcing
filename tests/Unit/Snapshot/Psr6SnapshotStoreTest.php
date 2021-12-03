@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\Psr6SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\Cache\CacheItemInterface;
@@ -28,13 +28,13 @@ class Psr6SnapshotStoreTest extends TestCase
         ])->shouldBeCalled();
 
         $cache = $this->prophesize(CacheItemPoolInterface::class);
-        $cache->getItem(sprintf('%s-1', Profile::class))->willReturn($item);
+        $cache->getItem(sprintf('%s-1', ProfileWithSnapshot::class))->willReturn($item);
         $cache->save($item)->shouldBeCalled();
 
         $store = new Psr6SnapshotStore($cache->reveal());
 
         $snapshot = new Snapshot(
-            Profile::class,
+            ProfileWithSnapshot::class,
             '1',
             0,
             ['foo' => 'bar']
@@ -46,7 +46,7 @@ class Psr6SnapshotStoreTest extends TestCase
     public function testLoadSnapshot(): void
     {
         $snapshot = new Snapshot(
-            Profile::class,
+            ProfileWithSnapshot::class,
             '1',
             0,
             ['foo' => 'bar']
@@ -60,11 +60,11 @@ class Psr6SnapshotStoreTest extends TestCase
         ]);
 
         $cache = $this->prophesize(CacheItemPoolInterface::class);
-        $cache->getItem(sprintf('%s-1', Profile::class))->willReturn($item);
+        $cache->getItem(sprintf('%s-1', ProfileWithSnapshot::class))->willReturn($item);
 
         $store = new Psr6SnapshotStore($cache->reveal());
 
-        self::assertEquals($snapshot, $store->load(Profile::class, '1'));
+        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
     }
 
     public function testSnapshotNotFound(): void
@@ -75,9 +75,9 @@ class Psr6SnapshotStoreTest extends TestCase
         $item->isHit()->willReturn(false);
 
         $cache = $this->prophesize(CacheItemPoolInterface::class);
-        $cache->getItem(sprintf('%s-1', Profile::class))->willReturn($item);
+        $cache->getItem(sprintf('%s-1', ProfileWithSnapshot::class))->willReturn($item);
 
         $store = new Psr6SnapshotStore($cache->reveal());
-        $store->load(Profile::class, '1');
+        $store->load(ProfileWithSnapshot::class, '1');
     }
 }

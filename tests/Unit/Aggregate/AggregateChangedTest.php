@@ -135,6 +135,7 @@ class AggregateChangedTest extends TestCase
             'recordedOn' => new DateTimeImmutable('2020-11-20 13:57:49'),
         ]);
 
+        self::assertInstanceOf(ProfileCreated::class, $event);
         self::assertEquals($id, $event->profileId());
         self::assertEquals($email, $event->email());
         self::assertEquals(0, $event->playhead());
@@ -178,6 +179,7 @@ class AggregateChangedTest extends TestCase
         $serializedEvent = $recordedEvent->serialize();
         $event = ProfileCreated::deserialize($serializedEvent);
 
+        self::assertInstanceOf(ProfileCreated::class, $event);
         self::assertEquals($id, $event->profileId());
         self::assertEquals($email, $event->email());
         self::assertEquals(1, $event->playhead());

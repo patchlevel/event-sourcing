@@ -119,6 +119,7 @@ final class PipelineChangeStoreTest extends TestCase
 
         $newProfile = $newRepository->load('1');
 
+        self::assertInstanceOf(Profile::class, $newProfile);
         self::assertEquals('1', $newProfile->aggregateRootId());
         self::assertEquals(3, $newProfile->playhead());
         self::assertEquals(false, $newProfile->isPrivate());

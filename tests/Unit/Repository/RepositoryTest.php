@@ -184,6 +184,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
+        self::assertInstanceOf(Profile::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
@@ -212,6 +213,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
+        self::assertInstanceOf(Profile::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
@@ -255,6 +257,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
+        self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
@@ -285,6 +288,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
+        self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
@@ -354,6 +358,7 @@ class RepositoryTest extends TestCase
 
         $aggregate = $repository->load('1');
 
+        self::assertInstanceOf(Profile::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
