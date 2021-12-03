@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1e742129a7ec18f187e59a29c341e74b",
+    "content-hash": "fccca910818d4993c2657042ae627b51",
     "packages": [
         {
             "name": "doctrine/cache",
@@ -2975,6 +2975,62 @@
                 "source": "https://github.com/patchlevel/coding-standard/tree/1.1.1"
             },
             "time": "2021-07-13T16:10:15+00:00"
+        },
+        {
+            "name": "patchlevel/event-sourcing-psalm-plugin",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/patchlevel/event-sourcing-psalm-plugin.git",
+                "reference": "b52707a5f11f6099674b6491e431e2e3e9acc5c2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/patchlevel/event-sourcing-psalm-plugin/zipball/b52707a5f11f6099674b6491e431e2e3e9acc5c2",
+                "reference": "b52707a5f11f6099674b6491e431e2e3e9acc5c2",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4|^8.0",
+                "vimeo/psalm": "^4.0.0"
+            },
+            "require-dev": {
+                "patchlevel/coding-standard": "^1.1.1",
+                "patchlevel/event-sourcing": "1.0.0-alpha2",
+                "roave/security-advisories": "dev-master",
+                "symfony/var-dumper": "^5.3.11"
+            },
+            "type": "psalm-plugin",
+            "autoload": {
+                "psr-4": {
+                    "Patchlevel\\EventSourcingPsalmPlugin\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Daniel Badura",
+                    "email": "daniel.badura@patchlevel.de"
+                },
+                {
+                    "name": "David Badura",
+                    "email": "david.badura@patchlevel.de"
+                }
+            ],
+            "description": "psalm plugin for patchlevel/event-sourcing",
+            "homepage": "https://github.com/patchlevel/event-sourcing-psalm-plugin",
+            "keywords": [
+                "event-sourcing",
+                "psalm"
+            ],
+            "support": {
+                "issues": "https://github.com/patchlevel/event-sourcing-psalm-plugin/issues",
+                "source": "https://github.com/patchlevel/event-sourcing-psalm-plugin/tree/1.0.0"
+            },
+            "time": "2021-12-03T22:41:52+00:00"
         },
         {
             "name": "phar-io/manifest",
@@ -6281,7 +6337,8 @@
         "ext-json": "^7.4|^8.0"
     },
     "platform-dev": {
-        "ext-pdo_sqlite": "^7.4|^8.0"
+        "ext-pdo_sqlite": "^7.4|^8.0",
+        "ext-simplexml": "^7.4|^8.0"
     },
     "plugin-api-version": "2.0.0"
 }
