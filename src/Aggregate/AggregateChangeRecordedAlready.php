@@ -8,6 +8,6 @@ final class AggregateChangeRecordedAlready extends AggregateException
 {
     public function __construct()
     {
-        parent::__construct('The change was not recorded.');
+        parent::__construct('The playhead was already set: event is already recorded.');
     }
 }

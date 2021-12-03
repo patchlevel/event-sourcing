@@ -11,7 +11,7 @@ final class InvalidAggregateClass extends RepositoryException
     public static function notAggregateRoot(string $aggregateClass): self
     {
         return new self(sprintf(
-            "Class '%s' is not an AggregateRoot.",
+            'Class "%s" is not an AggregateRoot.',
             $aggregateClass
         ));
     }
@@ -19,7 +19,7 @@ final class InvalidAggregateClass extends RepositoryException
     public static function notSnapshotableAggregateRoot(string $aggregateClass): self
     {
         return new self(sprintf(
-            "Class '%s' do not extends SnapshotableAggregateRoot.",
+            'Class "%s" is not a SnapshotableAggregateRoot.',
             $aggregateClass
         ));
     }
