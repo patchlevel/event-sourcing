@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Error;
 use Patchlevel\EventSourcing\Aggregate\AggregateChangeNotRecorded;
 use Patchlevel\EventSourcing\Aggregate\AggregateChangeRecordedAlready;
-use Patchlevel\EventSourcing\Aggregate\AggregateException;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
