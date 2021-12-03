@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
-use Patchlevel\EventSourcing\Console\InvalidArgumentException;
+use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
 use PHPUnit\Framework\TestCase;
 
 final class InputHelperTest extends TestCase
@@ -17,7 +17,7 @@ final class InputHelperTest extends TestCase
 
     public function testInvalidString(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentGiven::class);
         $this->expectExceptionMessage('Invalid argument given: need type "string" got "integer"');
 
         InputHelper::string(1);
@@ -35,7 +35,7 @@ final class InputHelperTest extends TestCase
 
     public function testInvalidNullableString(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentGiven::class);
         $this->expectExceptionMessage('Invalid argument given: need type "string|null" got "integer"');
 
         InputHelper::nullableString(1);
@@ -48,7 +48,7 @@ final class InputHelperTest extends TestCase
 
     public function testInvalidBoolean(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentGiven::class);
         $this->expectExceptionMessage('Invalid argument given: need type "boolean" got "integer"');
 
         InputHelper::bool(1);

@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Aggregate;
 use function get_class;
 use function sprintf;
 
-class ApplyMethodNotFound extends AggregateException
+final class ApplyMethodNotFound extends AggregateException
 {
     public function __construct(AggregateRoot $aggregate, AggregateChanged $event, string $method)
     {

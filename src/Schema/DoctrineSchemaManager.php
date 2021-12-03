@@ -15,7 +15,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
     public function create(Store $store): void
     {
         if (!$store instanceof DoctrineStore) {
-            throw new StoreNotSupported();
+            throw new StoreNotSupported($store, DoctrineStore::class);
         }
 
         $connection = $store->connection();
@@ -32,7 +32,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
     public function dryRunCreate(Store $store): array
     {
         if (!$store instanceof DoctrineStore) {
-            throw new StoreNotSupported();
+            throw new StoreNotSupported($store, DoctrineStore::class);
         }
 
         $connection = $store->connection();
@@ -44,7 +44,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
     public function update(Store $store): void
     {
         if (!$store instanceof DoctrineStore) {
-            throw new StoreNotSupported();
+            throw new StoreNotSupported($store, DoctrineStore::class);
         }
 
         $connection = $store->connection();
@@ -61,7 +61,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
     public function dryRunUpdate(Store $store): array
     {
         if (!$store instanceof DoctrineStore) {
-            throw new StoreNotSupported();
+            throw new StoreNotSupported($store, DoctrineStore::class);
         }
 
         $connection = $store->connection();
@@ -79,7 +79,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
     public function drop(Store $store): void
     {
         if (!$store instanceof DoctrineStore) {
-            throw new StoreNotSupported();
+            throw new StoreNotSupported($store, DoctrineStore::class);
         }
 
         $connection = $store->connection();
@@ -96,7 +96,7 @@ class DoctrineSchemaManager implements DryRunSchemaManager
     public function dryRunDrop(Store $store): array
     {
         if (!$store instanceof DoctrineStore) {
-            throw new StoreNotSupported();
+            throw new StoreNotSupported($store, DoctrineStore::class);
         }
 
         $connection = $store->connection();

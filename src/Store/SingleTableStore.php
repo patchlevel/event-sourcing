@@ -95,7 +95,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         );
 
         if (!is_int($result) && !is_string($result)) {
-            throw new StoreException('invalid query return type');
+            throw new InvalidType('invalid query return type');
         }
 
         return ((int)$result) > 0;
@@ -114,7 +114,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             static function (Connection $connection) use ($shortName, $id, $events, $storeTableName): void {
                 foreach ($events as $event) {
                     if ($event->aggregateId() !== $id) {
-                        throw new StoreException('id missmatch');
+                        throw new AggregateIdMismatch($id, $event->aggregateId());
                     }
 
                     $data = $event->serialize();
@@ -154,7 +154,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             $name = $data['aggregate'];
 
             if (!array_key_exists($name, $classMap)) {
-                throw new StoreException();
+                throw new AggregateNotDefined($name);
             }
 
             yield new EventBucket(
@@ -178,7 +178,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $result = $this->connection->fetchOne($sql, ['index' => $fromIndex]);
 
         if (!is_int($result) && !is_string($result)) {
-            throw new StoreException('invalid query return type');
+            throw new InvalidType('invalid query return type');
         }
 
         return (int)$result;

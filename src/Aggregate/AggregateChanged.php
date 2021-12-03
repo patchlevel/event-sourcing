@@ -72,7 +72,7 @@ abstract class AggregateChanged
     public function recordNow(int $playhead): self
     {
         if ($this->playhead !== null) {
-            throw new AggregateException('Event has already been recorded.');
+            throw new AggregateChangeRecordedAlready();
         }
 
         $event = new static($this->aggregateId, $this->payload);
@@ -108,7 +108,7 @@ abstract class AggregateChanged
         $playhead = $this->playhead;
 
         if ($recordedOn === null || $playhead === null) {
-            throw new AggregateException('The change was not recorded.');
+            throw new AggregateChangeNotRecorded();
         }
 
         return [

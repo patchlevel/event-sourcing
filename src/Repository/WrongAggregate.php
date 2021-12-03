@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository;
 
-use RuntimeException;
-
 use function sprintf;
 
-final class WrongAggregateException extends RuntimeException
+final class WrongAggregate extends RepositoryException
 {
     public function __construct(string $aggregateClass, string $expected)
     {

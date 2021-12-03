@@ -6,6 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
 use Error;
+use Patchlevel\EventSourcing\Aggregate\AggregateChangeNotRecorded;
+use Patchlevel\EventSourcing\Aggregate\AggregateChangeRecordedAlready;
 use Patchlevel\EventSourcing\Aggregate\AggregateException;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -60,8 +62,7 @@ class AggregateChangedTest extends TestCase
 
     public function testEventAlreadyBeenRecorded(): void
     {
-        $this->expectException(AggregateException::class);
-        $this->expectExceptionMessage('Event has already been recorded.');
+        $this->expectException(AggregateChangeRecordedAlready::class);
 
         $id = ProfileId::fromString('1');
         $email = Email::fromString('d.a.badura@gmail.com');
@@ -117,8 +118,7 @@ class AggregateChangedTest extends TestCase
 
         $event = ProfileCreated::raise($id, $email);
 
-        $this->expectException(AggregateException::class);
-        $this->expectExceptionMessage('The change was not recorded.');
+        $this->expectException(AggregateChangeNotRecorded::class);
         $event->serialize();
     }
 
