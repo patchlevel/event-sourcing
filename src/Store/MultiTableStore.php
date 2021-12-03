@@ -95,7 +95,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         );
 
         if (!is_int($result) && !is_string($result)) {
-            throw new InvalidType('invalid query return type');
+            throw new WrongQueryResult();
         }
 
         return ((int)$result) > 0;
@@ -142,7 +142,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
             if (!$query instanceof Generator) {
-                throw new InvalidType('query result should be a generator');
+                throw new WrongQueryResult();
             }
 
             $queries[$aggregate] = $query;
@@ -196,7 +196,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $result = $this->connection->fetchOne($sql, ['index' => $fromIndex]);
 
         if (!is_int($result) && !is_string($result)) {
-            throw new InvalidType('invalid query return type');
+            throw new WrongQueryResult();
         }
 
         return (int)$result;

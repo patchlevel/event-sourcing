@@ -34,7 +34,7 @@ class RepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
 
         $this->expectException(InvalidAggregateClass::class);
-        $this->expectExceptionMessage('Class \'stdClass\' is not an AggregateRoot.');
+        $this->expectExceptionMessage('Class "stdClass" is not an AggregateRoot.');
         new Repository(
             $store->reveal(),
             $eventBus->reveal(),
@@ -49,7 +49,7 @@ class RepositoryTest extends TestCase
         $snapshotStore = $this->prophesize(SnapshotStore::class);
 
         $this->expectException(InvalidAggregateClass::class);
-        $this->expectExceptionMessage('Class \'Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile\' do not extends SnapshotableAggregateRoot.');
+        $this->expectExceptionMessage('Class "Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile" is not a SnapshotableAggregateRoot.');
         new Repository(
             $store->reveal(),
             $eventBus->reveal(),

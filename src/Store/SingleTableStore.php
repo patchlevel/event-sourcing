@@ -95,7 +95,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         );
 
         if (!is_int($result) && !is_string($result)) {
-            throw new InvalidType('invalid query return type');
+            throw new WrongQueryResult();
         }
 
         return ((int)$result) > 0;
@@ -178,7 +178,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $result = $this->connection->fetchOne($sql, ['index' => $fromIndex]);
 
         if (!is_int($result) && !is_string($result)) {
-            throw new InvalidType('invalid query return type');
+            throw new WrongQueryResult();
         }
 
         return (int)$result;
