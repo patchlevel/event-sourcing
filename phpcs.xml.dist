@@ -4,6 +4,9 @@
     <arg value="s"/>
     <arg name="colors"/>
     <arg name="cache" value=".phpcs-cache"/>
+    <arg name="basepath" value="."/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="80"/>
 
     <file>src</file>
     <file>tests</file>
