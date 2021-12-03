@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\Psr16SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\SimpleCache\CacheInterface;
@@ -22,7 +22,7 @@ class Psr16SnapshotStoreTest extends TestCase
     {
         $cache = $this->prophesize(CacheInterface::class);
         $cache->set(
-            sprintf('%s-1', Profile::class),
+            sprintf('%s-1', ProfileWithSnapshot::class),
             [
                 'playhead' => 0,
                 'payload' => ['foo' => 'bar'],
@@ -32,7 +32,7 @@ class Psr16SnapshotStoreTest extends TestCase
         $store = new Psr16SnapshotStore($cache->reveal());
 
         $snapshot = new Snapshot(
-            Profile::class,
+            ProfileWithSnapshot::class,
             '1',
             0,
             ['foo' => 'bar']
@@ -44,21 +44,21 @@ class Psr16SnapshotStoreTest extends TestCase
     public function testLoadSnapshot(): void
     {
         $snapshot = new Snapshot(
-            Profile::class,
+            ProfileWithSnapshot::class,
             '1',
             0,
             ['foo' => 'bar']
         );
 
         $cache = $this->prophesize(CacheInterface::class);
-        $cache->get(sprintf('%s-1', Profile::class))->willReturn([
+        $cache->get(sprintf('%s-1', ProfileWithSnapshot::class))->willReturn([
             'playhead' => 0,
             'payload' => ['foo' => 'bar'],
         ]);
 
         $store = new Psr16SnapshotStore($cache->reveal());
 
-        self::assertEquals($snapshot, $store->load(Profile::class, '1'));
+        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
     }
 
     public function testSnapshotNotFound(): void
@@ -66,9 +66,9 @@ class Psr16SnapshotStoreTest extends TestCase
         $this->expectException(SnapshotNotFound::class);
 
         $cache = $this->prophesize(CacheInterface::class);
-        $cache->get(sprintf('%s-1', Profile::class))->willReturn(null);
+        $cache->get(sprintf('%s-1', ProfileWithSnapshot::class))->willReturn(null);
 
         $store = new Psr16SnapshotStore($cache->reveal());
-        $store->load(Profile::class, '1');
+        $store->load(ProfileWithSnapshot::class, '1');
     }
 }

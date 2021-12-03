@@ -81,6 +81,8 @@ final class BasicIntegrationTest extends TestCase
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
+
+        self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
@@ -120,6 +122,8 @@ final class BasicIntegrationTest extends TestCase
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
+
+        self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
@@ -157,6 +161,8 @@ final class BasicIntegrationTest extends TestCase
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
+
+        self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
@@ -197,6 +203,8 @@ final class BasicIntegrationTest extends TestCase
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
+
+        self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
