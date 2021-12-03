@@ -21,11 +21,6 @@
       <code>$result['id']</code>
       <code>$result['id']</code>
     </PossiblyInvalidArrayAccess>
-    <PropertyNotSetInConstructor occurrences="3">
-      <code>$connection</code>
-      <code>BasicIntegrationTest</code>
-      <code>BasicIntegrationTest</code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/Pipeline/Aggregate/Profile.php">
     <PropertyNotSetInConstructor occurrences="3">
@@ -36,12 +31,6 @@
   </file>
   <file src="tests/Integration/Pipeline/PipelineChangeStoreTest.php">
     <ArgumentTypeCoercion occurrences="1"/>
-    <PropertyNotSetInConstructor occurrences="4">
-      <code>$connectionNew</code>
-      <code>$connectionOld</code>
-      <code>PipelineChangeStoreTest</code>
-      <code>PipelineChangeStoreTest</code>
-    </PropertyNotSetInConstructor>
     <UndefinedMethod occurrences="2">
       <code>count</code>
       <code>isPrivate</code>
@@ -49,10 +38,6 @@
   </file>
   <file src="tests/Unit/Aggregate/AggregateChangedTest.php">
     <InvalidArgument occurrences="2"/>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>AggregateChangedTest</code>
-      <code>AggregateChangedTest</code>
-    </PropertyNotSetInConstructor>
     <UndefinedMethod occurrences="4">
       <code>email</code>
       <code>email</code>
@@ -60,286 +45,16 @@
       <code>profileId</code>
     </UndefinedMethod>
   </file>
-  <file src="tests/Unit/Aggregate/AggregateRootTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>AggregateRootTest</code>
-      <code>AggregateRootTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Aggregate/AggregateRootWithNonStrictApplyTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>AggregateRootWithNonStrictApplyTest</code>
-      <code>AggregateRootWithNonStrictApplyTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Aggregate/AggregateRootWithStrictApplyTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>AggregateRootWithStrictApplyTest</code>
-      <code>AggregateRootWithStrictApplyTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Aggregate/SnapshotableAggregateRootTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>SnapshotableAggregateRootTest</code>
-      <code>SnapshotableAggregateRootTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Console/Command/DatabaseCreateCommandTest.php">
-    <ArgumentTypeCoercion occurrences="8">
-      <code>$helper-&gt;reveal()</code>
-      <code>$helper-&gt;reveal()</code>
-      <code>$helper-&gt;reveal()</code>
-      <code>$helper-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>DatabaseCreateCommandTest</code>
-      <code>DatabaseCreateCommandTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="12">
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Console/Command/DatabaseDropCommandTest.php">
-    <ArgumentTypeCoercion occurrences="10">
-      <code>$helper-&gt;reveal()</code>
-      <code>$helper-&gt;reveal()</code>
-      <code>$helper-&gt;reveal()</code>
-      <code>$helper-&gt;reveal()</code>
-      <code>$helper-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>DatabaseDropCommandTest</code>
-      <code>DatabaseDropCommandTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="15">
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Console/Command/ProjectionCreateCommandTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$repository-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ProjectionCreateCommandTest</code>
-      <code>ProjectionCreateCommandTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Console/Command/ProjectionDropCommandTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$repository-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ProjectionDropCommandTest</code>
-      <code>ProjectionDropCommandTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
   <file src="tests/Unit/Console/Command/ProjectionRebuildCommandTest.php">
-    <ArgumentTypeCoercion occurrences="6">
-      <code>$repository-&gt;reveal()</code>
-      <code>$repository-&gt;reveal()</code>
-      <code>$repository-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
     <MissingClosureReturnType occurrences="2">
       <code>static function () {</code>
       <code>static function () {</code>
     </MissingClosureReturnType>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ProjectionRebuildCommandTest</code>
-      <code>ProjectionRebuildCommandTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="4">
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Console/Command/SchemaCreateCommandTest.php">
-    <ArgumentTypeCoercion occurrences="6">
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$store</code>
-      <code>$store</code>
-      <code>$store</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>SchemaCreateCommandTest</code>
-      <code>SchemaCreateCommandTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="1">
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Console/Command/SchemaDropCommandTest.php">
-    <ArgumentTypeCoercion occurrences="8">
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$store</code>
-      <code>$store</code>
-      <code>$store</code>
-      <code>$store</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>SchemaDropCommandTest</code>
-      <code>SchemaDropCommandTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="1">
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Console/Command/SchemaUpdateCommandTest.php">
-    <ArgumentTypeCoercion occurrences="8">
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$schemaManager-&gt;reveal()</code>
-      <code>$store</code>
-      <code>$store</code>
-      <code>$store</code>
-      <code>$store</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>SchemaUpdateCommandTest</code>
-      <code>SchemaUpdateCommandTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="1">
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Console/Command/ShowCommandTest.php">
-    <ArgumentTypeCoercion occurrences="5">
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ShowCommandTest</code>
-      <code>ShowCommandTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="2">
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Console/Command/WatchCommandTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$watchServer-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>WatchCommandTest</code>
-      <code>WatchCommandTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="1">
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Console/DoctrineHelperTest.php">
-    <ArgumentTypeCoercion occurrences="6">
-      <code>$connection-&gt;reveal()</code>
-      <code>$connection-&gt;reveal()</code>
-      <code>$connection-&gt;reveal()</code>
-      <code>$connection-&gt;reveal()</code>
-      <code>$connection-&gt;reveal()</code>
-      <code>$connection-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>DoctrineHelperTest</code>
-      <code>DoctrineHelperTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="7">
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Console/EventPrinterTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$console-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>EventPrinterTest</code>
-      <code>EventPrinterTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="1"/>
-  </file>
-  <file src="tests/Unit/Console/InputHelperTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>InputHelperTest</code>
-      <code>InputHelperTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Console/InvalidArgumentExceptionTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>InvalidArgumentExceptionTest</code>
-      <code>InvalidArgumentExceptionTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/EventBus/DefaultEventBusTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>DefaultEventBusTest</code>
-      <code>DefaultEventBusTest</code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/EventBus/SymfonyEventBusTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$symfony-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
     <MissingClosureParamType occurrences="1">
       <code>$envelope</code>
     </MissingClosureParamType>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>SymfonyEventBusTest</code>
-      <code>SymfonyEventBusTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="1">
-      <code>willReturn</code>
-    </TooManyArguments>
   </file>
   <file src="tests/Unit/Fixture/Message.php">
     <MixedArgument occurrences="2">
@@ -402,161 +117,13 @@
       <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="tests/Unit/Pipeline/Middleware/ClassRenameMiddlewareTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ClassRenameMiddlewareTest</code>
-      <code>ClassRenameMiddlewareTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/Middleware/ExcludeEventMiddlewareTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ExcludeEventMiddlewareTest</code>
-      <code>ExcludeEventMiddlewareTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/Middleware/FilterEventMiddlewareTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>FilterEventMiddlewareTest</code>
-      <code>FilterEventMiddlewareTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/Middleware/FromIndexEventMiddlewareTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>FromIndexEventMiddlewareTest</code>
-      <code>FromIndexEventMiddlewareTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/Middleware/IncludeEventMiddlewareTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>IncludeEventMiddlewareTest</code>
-      <code>IncludeEventMiddlewareTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/Middleware/RecalculatePlayheadMiddlewareTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>RecalculatePlayheadMiddlewareTest</code>
-      <code>RecalculatePlayheadMiddlewareTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
   <file src="tests/Unit/Pipeline/Middleware/ReplaceEventMiddlewareTest.php">
     <ArgumentTypeCoercion occurrences="2"/>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ReplaceEventMiddlewareTest</code>
-      <code>ReplaceEventMiddlewareTest</code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Pipeline/Middleware/UntilEventMiddlewareTest.php">
     <InvalidArgument occurrences="1"/>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>UntilEventMiddlewareTest</code>
-      <code>UntilEventMiddlewareTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/PipelineTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>PipelineTest</code>
-      <code>PipelineTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/Target/InMemoryTargetTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>InMemoryTargetTest</code>
-      <code>InMemoryTargetTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/Target/ProjectionRepositoryTargetTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$projectionRepository-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ProjectionRepositoryTargetTest</code>
-      <code>ProjectionRepositoryTargetTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/Target/ProjectionTargetTest.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ProjectionTargetTest</code>
-      <code>ProjectionTargetTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Pipeline/Target/StoreTargetTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$pipelineStore-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>StoreTargetTest</code>
-      <code>StoreTargetTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Projection/DefaultProjectionRepositoryTest.php">
-    <InvalidArgument occurrences="2">
-      <code>[$projection-&gt;reveal()]</code>
-      <code>[$projection-&gt;reveal()]</code>
-    </InvalidArgument>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>DefaultProjectionRepositoryTest</code>
-      <code>DefaultProjectionRepositoryTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Projection/ProjectionListenerTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$projectionRepository-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>ProjectionListenerTest</code>
-      <code>ProjectionListenerTest</code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Repository/RepositoryTest.php">
-    <ArgumentTypeCoercion occurrences="32">
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$eventBus-&gt;reveal()</code>
-      <code>$snapshotStore-&gt;reveal()</code>
-      <code>$snapshotStore-&gt;reveal()</code>
-      <code>$snapshotStore-&gt;reveal()</code>
-      <code>$snapshotStore-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>RepositoryTest</code>
-      <code>RepositoryTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="9">
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
     <UndefinedMethod occurrences="10">
       <code>email</code>
       <code>email</code>
@@ -571,96 +138,10 @@
     </UndefinedMethod>
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaManagerTest.php">
-    <ArgumentTypeCoercion occurrences="12">
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
     <InternalMethod occurrences="2">
       <code>new Comparator()</code>
       <code>new Comparator()</code>
     </InternalMethod>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>DoctrineSchemaManagerTest</code>
-      <code>DoctrineSchemaManagerTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="54">
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/Schema/MigrationSchemaProviderTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$store-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>MigrationSchemaProviderTest</code>
-      <code>MigrationSchemaProviderTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="1">
-      <code>willReturn</code>
-    </TooManyArguments>
   </file>
   <file src="tests/Unit/Snapshot/InMemorySnapshotStoreTest.php">
     <InvalidArgument occurrences="3">
@@ -668,95 +149,27 @@
       <code>Profile::class</code>
       <code>Profile::class</code>
     </InvalidArgument>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>InMemorySnapshotStoreTest</code>
-      <code>InMemorySnapshotStoreTest</code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Snapshot/Psr16SnapshotStoreTest.php">
-    <ArgumentTypeCoercion occurrences="3">
-      <code>$cache-&gt;reveal()</code>
-      <code>$cache-&gt;reveal()</code>
-      <code>$cache-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
     <InvalidArgument occurrences="4">
       <code>Profile::class</code>
       <code>Profile::class</code>
       <code>Profile::class</code>
       <code>Profile::class</code>
     </InvalidArgument>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>Psr16SnapshotStoreTest</code>
-      <code>Psr16SnapshotStoreTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="2">
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
   </file>
   <file src="tests/Unit/Snapshot/Psr6SnapshotStoreTest.php">
-    <ArgumentTypeCoercion occurrences="3">
-      <code>$cache-&gt;reveal()</code>
-      <code>$cache-&gt;reveal()</code>
-      <code>$cache-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
     <InvalidArgument occurrences="4">
       <code>Profile::class</code>
       <code>Profile::class</code>
       <code>Profile::class</code>
       <code>Profile::class</code>
     </InvalidArgument>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>Psr6SnapshotStoreTest</code>
-      <code>Psr6SnapshotStoreTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="6">
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
   </file>
   <file src="tests/Unit/Snapshot/SnapshotTest.php">
     <InvalidArgument occurrences="1">
       <code>Profile::class</code>
     </InvalidArgument>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>SnapshotTest</code>
-      <code>SnapshotTest</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Store/SingleTableStoreTest.php">
-    <ArgumentTypeCoercion occurrences="4">
-      <code>$connection-&gt;reveal()</code>
-      <code>$connection-&gt;reveal()</code>
-      <code>$this-&gt;prophesize(Connection::class)-&gt;reveal()</code>
-      <code>$this-&gt;prophesize(Connection::class)-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>SingleTableStoreTest</code>
-      <code>SingleTableStoreTest</code>
-    </PropertyNotSetInConstructor>
-    <TooManyArguments occurrences="7">
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-      <code>willReturn</code>
-    </TooManyArguments>
-  </file>
-  <file src="tests/Unit/WatchServer/WatchListenerTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$client-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>WatchListenerTest</code>
-      <code>WatchListenerTest</code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/bootstrap.php">
     <MixedAssignment occurrences="1">
