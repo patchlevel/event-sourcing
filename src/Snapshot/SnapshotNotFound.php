@@ -9,7 +9,7 @@ use RuntimeException;
 
 use function sprintf;
 
-class SnapshotNotFound extends RuntimeException
+final class SnapshotNotFound extends RuntimeException
 {
     /**
      * @param class-string<AggregateRoot> $aggregate

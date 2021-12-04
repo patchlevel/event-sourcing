@@ -19,7 +19,7 @@ final class InputHelper
         }
 
         if (!is_string($value)) {
-            throw new InvalidArgumentException($value, 'string|null');
+            throw new InvalidArgumentGiven($value, 'string|null');
         }
 
         return $value;
@@ -31,7 +31,7 @@ final class InputHelper
     public static function string($value): string
     {
         if (!is_string($value)) {
-            throw new InvalidArgumentException($value, 'string');
+            throw new InvalidArgumentGiven($value, 'string');
         }
 
         return $value;
@@ -43,7 +43,7 @@ final class InputHelper
     public static function bool($value): bool
     {
         if (!is_bool($value)) {
-            throw new InvalidArgumentException($value, 'boolean');
+            throw new InvalidArgumentGiven($value, 'boolean');
         }
 
         return $value;

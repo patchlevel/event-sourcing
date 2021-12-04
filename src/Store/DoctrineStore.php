@@ -48,7 +48,7 @@ abstract class DoctrineStore implements Store
         $recordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue($recordedOnAsString, $platform);
 
         if (!$recordedOn instanceof DateTimeImmutable) {
-            throw new StoreException('recordedOn should be a DateTimeImmutable object');
+            throw new InvalidType('recordedOn', 'DateTimeImmutable');
         }
 
         return $recordedOn;
@@ -59,7 +59,7 @@ abstract class DoctrineStore implements Store
         $playhead = Type::getType(Types::INTEGER)->convertToPHPValue($playheadAsString, $platform);
 
         if (!is_int($playhead)) {
-            throw new StoreException('playhead should be a integer');
+            throw new InvalidType('playhead', 'int');
         }
 
         return $playhead;

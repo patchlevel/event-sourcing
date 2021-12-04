@@ -6,6 +6,6 @@ namespace Patchlevel\EventSourcing\WatchServer;
 
 use RuntimeException;
 
-class SendingFailed extends RuntimeException
+final class SendingFailed extends RuntimeException
 {
 }

@@ -6,6 +6,6 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 use RuntimeException;
 
-class AggregateException extends RuntimeException
+abstract class AggregateException extends RuntimeException
 {
 }

@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository;
 
-use RuntimeException;
-
 use function sprintf;
 
-final class AggregateNotFoundException extends RuntimeException
+final class AggregateNotFound extends RepositoryException
 {
     public function __construct(string $aggregateClass, string $id)
     {

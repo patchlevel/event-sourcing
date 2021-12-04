@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Store;
 
 use function sprintf;
 
-class CorruptedMetadata extends StoreException
+final class CorruptedMetadata extends StoreException
 {
     public function __construct(string $expectedId, string $actualId)
     {

@@ -6,6 +6,6 @@ namespace Patchlevel\EventSourcing\Store;
 
 use RuntimeException;
 
-class StoreException extends RuntimeException
+abstract class StoreException extends RuntimeException
 {
 }

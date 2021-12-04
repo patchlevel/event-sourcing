@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Projection\Exception;
-
-use Patchlevel\EventSourcing\Projection\Projection;
+namespace Patchlevel\EventSourcing\Projection;
 
 use function sprintf;
 

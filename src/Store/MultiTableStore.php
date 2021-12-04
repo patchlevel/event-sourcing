@@ -95,7 +95,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         );
 
         if (!is_int($result) && !is_string($result)) {
-            throw new StoreException('invalid query return type');
+            throw new WrongQueryResult();
         }
 
         return ((int)$result) > 0;
@@ -113,7 +113,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             function (Connection $connection) use ($tableName, $id, $events): void {
                 foreach ($events as $event) {
                     if ($event->aggregateId() !== $id) {
-                        throw new StoreException('id missmatch');
+                        throw new AggregateIdMismatch($id, $event->aggregateId());
                     }
 
                     $this->saveEvent(
@@ -142,7 +142,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
             if (!$query instanceof Generator) {
-                throw new StoreException();
+                throw new WrongQueryResult();
             }
 
             $queries[$aggregate] = $query;
@@ -165,7 +165,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             $name = $metaData['aggregate'];
 
             if (!array_key_exists($name, $classMap)) {
-                throw new StoreException();
+                throw new AggregateNotDefined($name);
             }
 
             $eventData = $queries[$name]->current();
@@ -196,7 +196,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $result = $this->connection->fetchOne($sql, ['index' => $fromIndex]);
 
         if (!is_int($result) && !is_string($result)) {
-            throw new StoreException('invalid query return type');
+            throw new WrongQueryResult();
         }
 
         return (int)$result;

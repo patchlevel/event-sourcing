@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
-use Patchlevel\EventSourcing\Projection\Exception\MethodDoesNotExist;
+use Patchlevel\EventSourcing\Projection\MethodDoesNotExist;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;

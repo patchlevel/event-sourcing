@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
-use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\EventBus;
-use Patchlevel\EventSourcing\Repository\AggregateNotFoundException;
+use Patchlevel\EventSourcing\Repository\AggregateNotFound;
+use Patchlevel\EventSourcing\Repository\InvalidAggregateClass;
 use Patchlevel\EventSourcing\Repository\Repository;
-use Patchlevel\EventSourcing\Repository\WrongAggregateException;
+use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
@@ -33,8 +33,8 @@ class RepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $eventBus = $this->prophesize(EventBus::class);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Class \'stdClass\' is not an AggregateRoot.');
+        $this->expectException(InvalidAggregateClass::class);
+        $this->expectExceptionMessage('Class "stdClass" is not an AggregateRoot.');
         new Repository(
             $store->reveal(),
             $eventBus->reveal(),
@@ -48,8 +48,8 @@ class RepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $snapshotStore = $this->prophesize(SnapshotStore::class);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Class \'Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile\' do not extends SnapshotableAggregateRoot.');
+        $this->expectException(InvalidAggregateClass::class);
+        $this->expectExceptionMessage('Class "Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile" is not a SnapshotableAggregateRoot.');
         new Repository(
             $store->reveal(),
             $eventBus->reveal(),
@@ -100,7 +100,7 @@ class RepositoryTest extends TestCase
             Email::fromString('d.a.badura@gmail.com')
         );
 
-        $this->expectException(WrongAggregateException::class);
+        $this->expectException(WrongAggregate::class);
         $repository->save($aggregate);
     }
 
@@ -296,7 +296,7 @@ class RepositoryTest extends TestCase
 
     public function testAggregateNotFound(): void
     {
-        $this->expectException(AggregateNotFoundException::class);
+        $this->expectException(AggregateNotFound::class);
 
         $store = $this->prophesize(Store::class);
         $store->load(
