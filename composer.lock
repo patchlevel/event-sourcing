@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1e742129a7ec18f187e59a29c341e74b",
+    "content-hash": "63764c351d724aba71fc5a025ba1d214",
     "packages": [
         {
             "name": "doctrine/cache",
@@ -2977,6 +2977,62 @@
             "time": "2021-07-13T16:10:15+00:00"
         },
         {
+            "name": "patchlevel/event-sourcing-psalm-plugin",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/patchlevel/event-sourcing-psalm-plugin.git",
+                "reference": "b52707a5f11f6099674b6491e431e2e3e9acc5c2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/patchlevel/event-sourcing-psalm-plugin/zipball/b52707a5f11f6099674b6491e431e2e3e9acc5c2",
+                "reference": "b52707a5f11f6099674b6491e431e2e3e9acc5c2",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4|^8.0",
+                "vimeo/psalm": "^4.0.0"
+            },
+            "require-dev": {
+                "patchlevel/coding-standard": "^1.1.1",
+                "patchlevel/event-sourcing": "1.0.0-alpha2",
+                "roave/security-advisories": "dev-master",
+                "symfony/var-dumper": "^5.3.11"
+            },
+            "type": "psalm-plugin",
+            "autoload": {
+                "psr-4": {
+                    "Patchlevel\\EventSourcingPsalmPlugin\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Daniel Badura",
+                    "email": "daniel.badura@patchlevel.de"
+                },
+                {
+                    "name": "David Badura",
+                    "email": "david.badura@patchlevel.de"
+                }
+            ],
+            "description": "psalm plugin for patchlevel/event-sourcing",
+            "homepage": "https://github.com/patchlevel/event-sourcing-psalm-plugin",
+            "keywords": [
+                "event-sourcing",
+                "psalm"
+            ],
+            "support": {
+                "issues": "https://github.com/patchlevel/event-sourcing-psalm-plugin/issues",
+                "source": "https://github.com/patchlevel/event-sourcing-psalm-plugin/tree/1.0.0"
+            },
+            "time": "2021-12-03T22:41:52+00:00"
+        },
+        {
             "name": "phar-io/manifest",
             "version": "2.0.3",
             "source": {
@@ -3558,16 +3614,16 @@
         },
         {
             "name": "phpunit/php-file-iterator",
-            "version": "3.0.5",
+            "version": "3.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-file-iterator.git",
-                "reference": "aa4be8575f26070b100fccb67faabb28f21f66f8"
+                "reference": "cf1c2e7c203ac650e352f4cc675a7021e7d1b3cf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-file-iterator/zipball/aa4be8575f26070b100fccb67faabb28f21f66f8",
-                "reference": "aa4be8575f26070b100fccb67faabb28f21f66f8",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-file-iterator/zipball/cf1c2e7c203ac650e352f4cc675a7021e7d1b3cf",
+                "reference": "cf1c2e7c203ac650e352f4cc675a7021e7d1b3cf",
                 "shasum": ""
             },
             "require": {
@@ -3606,7 +3662,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-file-iterator/issues",
-                "source": "https://github.com/sebastianbergmann/php-file-iterator/tree/3.0.5"
+                "source": "https://github.com/sebastianbergmann/php-file-iterator/tree/3.0.6"
             },
             "funding": [
                 {
@@ -3614,7 +3670,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-09-28T05:57:25+00:00"
+            "time": "2021-12-02T12:48:52+00:00"
         },
         {
             "name": "phpunit/php-invoker",

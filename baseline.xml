@@ -4,16 +4,6 @@
     <MoreSpecificImplementedParamType occurrences="1">
       <code>$payload</code>
     </MoreSpecificImplementedParamType>
-    <PropertyNotSetInConstructor occurrences="1">
-      <code>$id</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Integration/Pipeline/Aggregate/Profile.php">
-    <PropertyNotSetInConstructor occurrences="3">
-      <code>$id</code>
-      <code>$privacy</code>
-      <code>$visited</code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/Pipeline/PipelineChangeStoreTest.php">
     <ArgumentTypeCoercion occurrences="1"/>
@@ -45,13 +35,6 @@
       <code>$this-&gt;payload['message']</code>
     </MixedArgument>
   </file>
-  <file src="tests/Unit/Fixture/Profile.php">
-    <PropertyNotSetInConstructor occurrences="3">
-      <code>$email</code>
-      <code>$id</code>
-      <code>$messages</code>
-    </PropertyNotSetInConstructor>
-  </file>
   <file src="tests/Unit/Fixture/ProfileCreated.php">
     <MixedArgument occurrences="1">
       <code>$this-&gt;payload['email']</code>
@@ -62,12 +45,6 @@
       <code>$this-&gt;payload['visitorId']</code>
     </MixedArgument>
   </file>
-  <file src="tests/Unit/Fixture/ProfileWithNonStrictApply.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>$email</code>
-      <code>$id</code>
-    </PropertyNotSetInConstructor>
-  </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <LessSpecificImplementedReturnType occurrences="1">
       <code>SnapshotableAggregateRoot</code>
@@ -75,17 +52,6 @@
     <MoreSpecificImplementedParamType occurrences="1">
       <code>$payload</code>
     </MoreSpecificImplementedParamType>
-    <PropertyNotSetInConstructor occurrences="3">
-      <code>$email</code>
-      <code>$id</code>
-      <code>$messages</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithStrictApply.php">
-    <PropertyNotSetInConstructor occurrences="2">
-      <code>$email</code>
-      <code>$id</code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Pipeline/Middleware/ReplaceEventMiddlewareTest.php">
     <ArgumentTypeCoercion occurrences="2"/>
