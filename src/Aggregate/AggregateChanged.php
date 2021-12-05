@@ -11,19 +11,28 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
+/**
+ * @template-covariant T of array<string, mixed>
+ */
 abstract class AggregateChanged
 {
+    /**
+     * @readonly
+     */
     protected string $aggregateId;
 
-    /** @var array<string, mixed> */
+    /**
+     * @readonly
+     * @var T
+     */
     protected array $payload;
     private ?int $playhead;
     private ?DateTimeImmutable $recordedOn;
 
     /**
-     * @param array<string, mixed> $payload
+     * @param T $payload
      */
-    final private function __construct(string $aggregateId, array $payload = [])
+    final public function __construct(string $aggregateId, array $payload = [])
     {
         $this->aggregateId = $aggregateId;
         $this->payload = $payload;
@@ -47,21 +56,11 @@ abstract class AggregateChanged
     }
 
     /**
-     * @return array<string, mixed>
+     * @return T
      */
     public function payload(): array
     {
         return $this->payload;
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     *
-     * @return static
-     */
-    protected static function occur(string $aggregateId, array $payload = []): self
-    {
-        return new static($aggregateId, $payload);
     }
 
     /**

@@ -102,7 +102,7 @@ final class ProfileCreated extends AggregateChanged
         ProfileId $id,
         Email $email
     ): AggregateChanged {
-        return self::occur(
+        return new self(
             $id->toString(),
             [
                 'profileId' => $id->toString(),

@@ -6,13 +6,16 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
+/**
+ * @template-extends AggregateChanged<array{profileId: string, email: string}>
+ */
 class ProfileCreated extends AggregateChanged
 {
     public static function raise(
         ProfileId $id,
         Email $email
     ): self {
-        return self::occur(
+        return new self(
             $id->toString(),
             [
                 'profileId' => $id->toString(),

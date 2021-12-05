@@ -10,7 +10,7 @@ final class ProfileCreated extends AggregateChanged
 {
     public static function raise(string $id): AggregateChanged
     {
-        return self::occur($id, ['id' => $id]);
+        return new self($id, ['id' => $id]);
     }
 
     public function profileId(): string

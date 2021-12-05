@@ -8,5 +8,8 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 interface EventBus
 {
+    /**
+     * @param AggregateChanged<array<string, mixed>> $event
+     */
     public function dispatch(AggregateChanged $event): void;
 }

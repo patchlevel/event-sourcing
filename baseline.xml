@@ -30,21 +30,6 @@
       <code>$text</code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="tests/Unit/Fixture/MessagePublished.php">
-    <MixedArgument occurrences="1">
-      <code>$this-&gt;payload['message']</code>
-    </MixedArgument>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileCreated.php">
-    <MixedArgument occurrences="1">
-      <code>$this-&gt;payload['email']</code>
-    </MixedArgument>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileVisited.php">
-    <MixedArgument occurrences="1">
-      <code>$this-&gt;payload['visitorId']</code>
-    </MixedArgument>
-  </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <LessSpecificImplementedReturnType occurrences="1">
       <code>SnapshotableAggregateRoot</code>
