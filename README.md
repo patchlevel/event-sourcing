@@ -96,6 +96,9 @@ use App\Domain\Profile\Email;
 use App\Domain\Profile\ProfileId;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
+/**
+ * @template-extends AggregateChanged<array{profileId: string, email: string}>
+ */
 final class ProfileCreated extends AggregateChanged
 {
     public static function raise(
