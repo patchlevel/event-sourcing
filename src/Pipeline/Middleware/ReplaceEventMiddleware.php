@@ -32,7 +32,7 @@ class ReplaceEventMiddleware implements Middleware
         $this->class = $class;
         $this->callable = $callable;
 
-        $reflectionClass = new ReflectionClass($class);
+        $reflectionClass = new ReflectionClass(AggregateChanged::class);
 
         $this->recoredOnProperty = $reflectionClass->getProperty('recordedOn');
         $this->recoredOnProperty->setAccessible(true);
