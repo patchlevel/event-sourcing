@@ -50,6 +50,7 @@ class ReplaceEventMiddlewareTest extends TestCase
 
     public function testReplaceInvalidClass(): void
     {
+        /** @psalm-suppress InvalidArgument */
         $middleware = new ReplaceEventMiddleware(
             MessagePublished::class,
             static function (ProfileCreated $event) {

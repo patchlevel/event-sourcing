@@ -18,7 +18,6 @@ final class ProfileProjection implements Projection
         $this->connection = $connection;
     }
 
-    /** @return iterable<class-string<AggregateChanged>, string> */
     public function handledEvents(): iterable
     {
         yield ProfileCreated::class => 'applyProfileCreated';

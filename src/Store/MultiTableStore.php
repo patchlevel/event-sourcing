@@ -42,7 +42,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
     /**
      * @param class-string<AggregateRoot> $aggregate
      *
-     * @return array<AggregateChanged>
+     * @return array<AggregateChanged<array<string, mixed>>>
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array
     {
@@ -54,7 +54,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregateId = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregateId: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $result */
+        /** @var array<array{aggregateId: string, playhead: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recordedOn: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -103,7 +103,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
     /**
      * @param class-string<AggregateRoot> $aggregate
-     * @param array<AggregateChanged>     $events
+     * @param array<AggregateChanged<array<string, mixed>>>     $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
@@ -138,7 +138,15 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 ->orderBy('id')
                 ->getSQL();
 
-            /** @var Traversable<array{id: string, aggregateId: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $query */
+            /** @var Traversable<array{
+             *     id: string,
+             *     aggregateId: string,
+             *     playhead: string,
+             *     event: class-string<AggregateChanged<array<string, mixed>>>,
+             *     payload: string,
+             *     recordedOn: string
+             *  }> $query
+             */
             $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
             if (!$query instanceof Generator) {
@@ -155,7 +163,13 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->orderBy('id')
             ->getSQL();
 
-        /** @var Traversable<array{id: string, aggregateId: string, playhead: string, aggregate: class-string<AggregateChanged>}> $metaQuery */
+        /** @var Traversable<array{
+         *     id: string,
+         *     aggregateId: string,
+         *     playhead: string,
+         *     aggregate: string
+         *  }> $metaQuery
+         */
         $metaQuery = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
         $platform = $this->connection->getDatabasePlatform();
@@ -169,10 +183,15 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             }
 
             $eventData = $queries[$name]->current();
+
+            if ($eventData === null) {
+                throw CorruptedMetadata::fromMissingEntry($metaData['id']);
+            }
+
             $queries[$name]->next();
 
             if ($eventData['id'] !== $metaData['id']) {
-                throw new CorruptedMetadata($metaData['id'], $eventData['id']);
+                throw CorruptedMetadata::fromEntryMismatch($metaData['id'], $eventData['id']);
             }
 
             yield new EventBucket(
@@ -211,14 +230,17 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         );
     }
 
-    private function saveEvent(Connection $connection, string $aggregate, AggregateChanged $event): void
+    /**
+     * @param AggregateChanged<array<string, mixed>> $event
+     */
+    private function saveEvent(Connection $connection, string $aggregateName, AggregateChanged $event): void
     {
         $data = $event->serialize();
 
         $connection->insert(
             $this->metadataTableName,
             [
-                'aggregate' => $aggregate,
+                'aggregate' => $aggregateName,
                 'aggregateId' => $data['aggregateId'],
                 'playhead' => $data['playhead'],
             ],
@@ -227,7 +249,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $data['id'] = (int)$connection->lastInsertId();
 
         $connection->insert(
-            $aggregate,
+            $aggregateName,
             $data,
             [
                 'recordedOn' => Types::DATETIMETZ_IMMUTABLE,

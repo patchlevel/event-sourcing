@@ -20,6 +20,9 @@ abstract class AggregateRoot
 
     abstract protected function apply(AggregateChanged $event): void;
 
+    /**
+     * @param AggregateChanged<array<string, mixed>> $event
+     */
     protected function record(AggregateChanged $event): void
     {
         $this->playhead++;

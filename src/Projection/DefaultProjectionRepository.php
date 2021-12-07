@@ -28,6 +28,7 @@ final class DefaultProjectionRepository implements ProjectionRepository
             $handlers = $projection->handledEvents();
 
             foreach ($handlers as $class => $method) {
+                /** @psalm-suppress DocblockTypeContradiction */
                 if (!$event instanceof $class) {
                     continue;
                 }

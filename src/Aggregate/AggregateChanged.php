@@ -74,6 +74,7 @@ abstract class AggregateChanged
             throw new AggregateChangeRecordedAlready();
         }
 
+        /** @psalm-suppress UnsafeGenericInstantiation */
         $event = new static($this->aggregateId, $this->payload);
         $event->playhead = $playhead;
         $event->recordedOn = $this->createRecordDate();
@@ -82,7 +83,11 @@ abstract class AggregateChanged
     }
 
     /**
-     * @param array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable} $data
+     * @template E of self
+     *
+     * @param array{aggregateId: string, playhead: int, event: class-string<E>, payload: string, recordedOn: DateTimeImmutable} $data
+     *
+     * @return E
      */
     public static function deserialize(array $data): self
     {

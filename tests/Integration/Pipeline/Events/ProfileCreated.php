@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
  */
 final class ProfileCreated extends AggregateChanged
 {
-    public static function raise(string $id): AggregateChanged
+    public static function raise(string $id): self
     {
         return new self($id, ['id' => $id]);
     }

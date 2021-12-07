@@ -12,11 +12,11 @@ use function get_class;
 
 class ClassRenameMiddleware implements Middleware
 {
-    /** @var array<class-string<AggregateChanged>, class-string<AggregateChanged>> */
+    /** @var array<class-string<AggregateChanged<array<string, mixed>>>, class-string<AggregateChanged<array<string, mixed>>>> */
     private array $classes;
 
     /**
-     * @param array<class-string<AggregateChanged>, class-string<AggregateChanged>> $classes
+     * @param array<class-string<AggregateChanged<array<string, mixed>>>, class-string<AggregateChanged<array<string, mixed>>>> $classes
      */
     public function __construct(array $classes)
     {

@@ -31,9 +31,11 @@ abstract class DoctrineStore implements Store
     abstract public function schema(): Schema;
 
     /**
-     * @param array{aggregateId: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string} $result
+     * @template T
      *
-     * @return array{aggregateId: string, playhead: int, event: class-string<AggregateChanged>, payload: string, recordedOn: DateTimeImmutable}
+     * @param array{aggregateId: string, playhead: string, event: class-string<T>, payload: string, recordedOn: string} $result
+     *
+     * @return array{aggregateId: string, playhead: int, event: class-string<T>, payload: string, recordedOn: DateTimeImmutable}
      */
     protected static function normalizeResult(AbstractPlatform $platform, array $result): array
     {

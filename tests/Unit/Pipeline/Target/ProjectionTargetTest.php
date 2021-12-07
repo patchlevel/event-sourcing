@@ -30,7 +30,6 @@ class ProjectionTargetTest extends TestCase
         $projectionRepository = new class implements Projection {
             public static ?AggregateChanged $handledEvent = null;
 
-            /** @return iterable<class-string<AggregateChanged>, string> */
             public function handledEvents(): iterable
             {
                 yield ProfileCreated::class => 'applyProfileCreated';
