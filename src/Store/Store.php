@@ -22,8 +22,8 @@ interface Store
     public function has(string $aggregate, string $id): bool;
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
-     * @param array<AggregateChanged<array<string, mixed>>>     $events
+     * @param class-string<AggregateRoot>                   $aggregate
+     * @param array<AggregateChanged<array<string, mixed>>> $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void;
 }

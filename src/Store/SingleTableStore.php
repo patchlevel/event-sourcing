@@ -102,8 +102,8 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
-     * @param array<AggregateChanged<array<string, mixed>>>     $events
+     * @param class-string<AggregateRoot>                   $aggregate
+     * @param array<AggregateChanged<array<string, mixed>>> $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {

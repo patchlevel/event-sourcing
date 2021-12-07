@@ -16,9 +16,7 @@ use const JSON_THROW_ON_ERROR;
  */
 abstract class AggregateChanged
 {
-    /**
-     * @readonly
-     */
+    /** @readonly */
     protected string $aggregateId;
 
     /**
@@ -83,11 +81,11 @@ abstract class AggregateChanged
     }
 
     /**
-     * @template E of self
-     *
      * @param array{aggregateId: string, playhead: int, event: class-string<E>, payload: string, recordedOn: DateTimeImmutable} $data
      *
      * @return E
+     *
+     * @template E of self
      */
     public static function deserialize(array $data): self
     {

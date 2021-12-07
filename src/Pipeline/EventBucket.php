@@ -17,7 +17,7 @@ class EventBucket
     private AggregateChanged $event;
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<AggregateRoot>            $aggregateClass
      * @param AggregateChanged<array<string, mixed>> $event
      */
     public function __construct(string $aggregateClass, int $index, AggregateChanged $event)

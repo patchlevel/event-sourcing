@@ -25,7 +25,7 @@ class ReplaceEventMiddleware implements Middleware
 
     /**
      * @param class-string<T> $class
-     * @param callable(T $event):AggregateChanged<array<string, mixed>> $callable
+     * @param callable(T      $event):AggregateChanged<array<string, mixed>> $callable
      */
     public function __construct(string $class, callable $callable)
     {
