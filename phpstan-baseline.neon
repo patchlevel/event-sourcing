@@ -1,12 +1,97 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged\\:\\:serialize\\(\\) return type with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged does not specify its types\\: T$#"
+			count: 1
+			path: src/Aggregate/AggregateChanged.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\:\\:apply\\(\\) has parameter \\$event with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
+			count: 1
+			path: src/Aggregate/AggregateRoot.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\:\\:createFromEventStream\\(\\) has parameter \\$stream with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
+			count: 1
+			path: src/Aggregate/AggregateRoot.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\:\\:releaseEvents\\(\\) return type with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged does not specify its types\\: T$#"
+			count: 1
+			path: src/Aggregate/AggregateRoot.php
+
+		-
+			message: "#^Property Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\:\\:\\$uncommittedEvents with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged does not specify its types\\: T$#"
+			count: 1
+			path: src/Aggregate/AggregateRoot.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Aggregate\\\\ApplyMethodNotFound\\:\\:__construct\\(\\) has parameter \\$event with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
+			count: 1
+			path: src/Aggregate/ApplyMethodNotFound.php
+
+		-
 			message: "#^Method Patchlevel\\\\EventSourcing\\\\Console\\\\DoctrineHelper\\:\\:databaseName\\(\\) should return string but returns mixed\\.$#"
 			count: 2
 			path: src/Console/DoctrineHelper.php
 
 		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Console\\\\EventPrinter\\:\\:write\\(\\) has parameter \\$event with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
+			count: 1
+			path: src/Console/EventPrinter.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Pipeline\\\\Middleware\\\\ExcludeEventMiddleware\\:\\:__construct\\(\\) has parameter \\$classes with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
+			count: 1
+			path: src/Pipeline/Middleware/ExcludeEventMiddleware.php
+
+		-
+			message: "#^Property Patchlevel\\\\EventSourcing\\\\Pipeline\\\\Middleware\\\\ExcludeEventMiddleware\\:\\:\\$classes with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged does not specify its types\\: T$#"
+			count: 1
+			path: src/Pipeline/Middleware/ExcludeEventMiddleware.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Pipeline\\\\Middleware\\\\FilterEventMiddleware\\:\\:__construct\\(\\) has parameter \\$callable with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
+			count: 1
+			path: src/Pipeline/Middleware/FilterEventMiddleware.php
+
+		-
+			message: "#^Property Patchlevel\\\\EventSourcing\\\\Pipeline\\\\Middleware\\\\FilterEventMiddleware\\:\\:\\$callable with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged does not specify its types\\: T$#"
+			count: 1
+			path: src/Pipeline/Middleware/FilterEventMiddleware.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Pipeline\\\\Middleware\\\\IncludeEventMiddleware\\:\\:__construct\\(\\) has parameter \\$classes with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
+			count: 1
+			path: src/Pipeline/Middleware/IncludeEventMiddleware.php
+
+		-
+			message: "#^Property Patchlevel\\\\EventSourcing\\\\Pipeline\\\\Middleware\\\\IncludeEventMiddleware\\:\\:\\$classes with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged does not specify its types\\: T$#"
+			count: 1
+			path: src/Pipeline/Middleware/IncludeEventMiddleware.php
+
+		-
+			message: "#^Unable to resolve the template type E in call to method static method Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged\\<array\\<string, mixed\\>\\>\\:\\:deserialize\\(\\)$#"
+			count: 1
+			path: src/Store/MultiTableStore.php
+
+		-
+			message: "#^Unable to resolve the template type T in call to method static method Patchlevel\\\\EventSourcing\\\\Store\\\\DoctrineStore\\:\\:normalizeResult\\(\\)$#"
+			count: 1
+			path: src/Store/MultiTableStore.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\WatchServer\\\\WatchServer\\:\\:listen\\(\\) has parameter \\$callback with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
+			count: 1
+			path: src/WatchServer/WatchServer.php
+
+		-
 			message: "#^While loop condition is always true\\.$#"
 			count: 1
 			path: src/WatchServer/WatchServer.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\WatchServer\\\\WatchServerClient\\:\\:send\\(\\) has parameter \\$event with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
+			count: 1
+			path: src/WatchServer/WatchServerClient.php
 
