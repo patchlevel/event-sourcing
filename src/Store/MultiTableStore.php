@@ -138,14 +138,8 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 ->orderBy('id')
                 ->getSQL();
 
-            /** @var Traversable<array{
-             *     id: string,
-             *     aggregateId: string,
-             *     playhead: string,
-             *     event: class-string<AggregateChanged<array<string, mixed>>>,
-             *     payload: string,
-             *     recordedOn: string
-             *  }> $query
+            /**
+             * @var Traversable<array{id: string, aggregateId: string, playhead: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recordedOn: string}> $query
              */
             $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
@@ -163,12 +157,8 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->orderBy('id')
             ->getSQL();
 
-        /** @var Traversable<array{
-         *     id: string,
-         *     aggregateId: string,
-         *     playhead: string,
-         *     aggregate: string
-         *  }> $metaQuery
+        /**
+         * @var Traversable<array{id: string, aggregateId: string, playhead: string, aggregate: string}> $metaQuery
          */
         $metaQuery = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
