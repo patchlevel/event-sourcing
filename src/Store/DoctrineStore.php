@@ -10,7 +10,6 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 use function is_int;
 
@@ -31,9 +30,11 @@ abstract class DoctrineStore implements Store
     abstract public function schema(): Schema;
 
     /**
-     * @param array{aggregateId: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string} $result
+     * @param array{aggregateId: string, playhead: string, event: class-string<T>, payload: string, recordedOn: string} $result
      *
-     * @return array{aggregateId: string, playhead: int, event: class-string<AggregateChanged>, payload: string, recordedOn: DateTimeImmutable}
+     * @return array{aggregateId: string, playhead: int, event: class-string<T>, payload: string, recordedOn: DateTimeImmutable}
+     *
+     * @template T
      */
     protected static function normalizeResult(AbstractPlatform $platform, array $result): array
     {

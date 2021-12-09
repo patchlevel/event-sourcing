@@ -21,7 +21,7 @@ abstract class SnapshotableAggregateRoot extends AggregateRoot
     abstract protected static function deserialize(array $payload): self;
 
     /**
-     * @param array<AggregateChanged> $stream
+     * @param array<AggregateChanged<array<string, mixed>>> $stream
      *
      * @return static
      */

@@ -12,7 +12,7 @@ interface Store
     /**
      * @param class-string<AggregateRoot> $aggregate
      *
-     * @return array<AggregateChanged>
+     * @return array<AggregateChanged<array<string, mixed>>>
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array;
 
@@ -22,8 +22,8 @@ interface Store
     public function has(string $aggregate, string $id): bool;
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
-     * @param array<AggregateChanged>     $events
+     * @param class-string<AggregateRoot>                   $aggregate
+     * @param array<AggregateChanged<array<string, mixed>>> $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void;
 }

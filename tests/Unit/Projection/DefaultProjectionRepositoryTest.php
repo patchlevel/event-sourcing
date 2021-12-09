@@ -35,7 +35,6 @@ final class DefaultProjectionRepositoryTest extends TestCase
         $projection = new class implements Projection {
             public static ?AggregateChanged $handledEvent = null;
 
-            /** @return iterable<class-string<AggregateChanged>, string> */
             public function handledEvents(): iterable
             {
                 yield ProfileCreated::class => 'applyProfileCreated';
@@ -71,7 +70,6 @@ final class DefaultProjectionRepositoryTest extends TestCase
         $projection = new class implements Projection {
             public static ?AggregateChanged $handledEvent = null;
 
-            /** @return iterable<class-string<AggregateChanged>, string> */
             public function handledEvents(): iterable
             {
                 yield ProfileCreated::class => 'applyProfileCreated';
@@ -105,7 +103,6 @@ final class DefaultProjectionRepositoryTest extends TestCase
     public function testHandleButProjectionsMethodIsMissing(): void
     {
         $projection = new class implements Projection {
-            /** @return iterable<class-string<AggregateChanged>, string> */
             public function handledEvents(): iterable
             {
                 yield ProfileCreated::class => 'applyProfileCreated';

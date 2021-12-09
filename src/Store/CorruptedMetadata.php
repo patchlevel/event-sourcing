@@ -8,12 +8,20 @@ use function sprintf;
 
 final class CorruptedMetadata extends StoreException
 {
-    public function __construct(string $expectedId, string $actualId)
+    public static function fromEntryMismatch(string $expectedId, string $actualId): self
     {
-        parent::__construct(sprintf(
+        return new self(sprintf(
             'Corrupted metadata: expected id is %s get %s',
             $expectedId,
             $actualId
+        ));
+    }
+
+    public static function fromMissingEntry(string $expectedId): self
+    {
+        return new self(sprintf(
+            'Corrupted metadata: expected id is %s there but it is missing',
+            $expectedId
         ));
     }
 }

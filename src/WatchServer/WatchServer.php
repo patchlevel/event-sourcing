@@ -66,7 +66,7 @@ class WatchServer
         foreach ($this->messages($socket) as $clientId => $message) {
             $this->logger->info('Received a payload from client {clientId}', ['clientId' => $clientId]);
 
-            /** @var array{aggregateId: string, event: class-string<AggregateChanged>, payload: string, playhead: int, recordedOn: DateTimeImmutable} $payload */
+            /** @var array{aggregateId: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, playhead: int, recordedOn: DateTimeImmutable} $payload */
             $payload = unserialize(base64_decode($message), ['allowed_classes' => [DateTimeImmutable::class]]);
             $event = AggregateChanged::deserialize($payload);
 

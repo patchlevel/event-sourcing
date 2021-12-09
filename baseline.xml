@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.13.1@5cf660f63b548ccd4a56f62d916ee4d6028e01a3">
+  <file src="src/Pipeline/Middleware/FilterEventMiddleware.php">
+    <MixedPropertyTypeCoercion occurrences="1">
+      <code>$callable</code>
+    </MixedPropertyTypeCoercion>
+  </file>
   <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
     <MoreSpecificImplementedParamType occurrences="1">
       <code>$payload</code>
     </MoreSpecificImplementedParamType>
-  </file>
-  <file src="tests/Integration/Pipeline/PipelineChangeStoreTest.php">
-    <ArgumentTypeCoercion occurrences="1"/>
   </file>
   <file src="tests/Unit/Aggregate/AggregateChangedTest.php">
     <InvalidArgument occurrences="2"/>
@@ -30,21 +32,6 @@
       <code>$text</code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="tests/Unit/Fixture/MessagePublished.php">
-    <MixedArgument occurrences="1">
-      <code>$this-&gt;payload['message']</code>
-    </MixedArgument>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileCreated.php">
-    <MixedArgument occurrences="1">
-      <code>$this-&gt;payload['email']</code>
-    </MixedArgument>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileVisited.php">
-    <MixedArgument occurrences="1">
-      <code>$this-&gt;payload['visitorId']</code>
-    </MixedArgument>
-  </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <LessSpecificImplementedReturnType occurrences="1">
       <code>SnapshotableAggregateRoot</code>
@@ -52,9 +39,6 @@
     <MoreSpecificImplementedParamType occurrences="1">
       <code>$payload</code>
     </MoreSpecificImplementedParamType>
-  </file>
-  <file src="tests/Unit/Pipeline/Middleware/ReplaceEventMiddlewareTest.php">
-    <ArgumentTypeCoercion occurrences="2"/>
   </file>
   <file src="tests/Unit/Pipeline/Middleware/UntilEventMiddlewareTest.php">
     <InvalidArgument occurrences="1"/>

@@ -9,20 +9,23 @@ use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use ReflectionClass;
 use ReflectionProperty;
 
+/**
+ * @template T of AggregateChanged
+ */
 class ReplaceEventMiddleware implements Middleware
 {
-    /** @var class-string<AggregateChanged> */
+    /** @var class-string<T> */
     private string $class;
 
-    /** @var callable(AggregateChanged $event):AggregateChanged */
+    /** @var callable(T $event):AggregateChanged<array<string, mixed>> */
     private $callable;
 
     private ReflectionProperty $recoredOnProperty;
     private ReflectionProperty $playheadProperty;
 
     /**
-     * @param class-string<AggregateChanged> $class
-     * @param callable(AggregateChanged      $event):AggregateChanged $callable
+     * @param class-string<T> $class
+     * @param callable(T      $event):AggregateChanged<array<string, mixed>> $callable
      */
     public function __construct(string $class, callable $callable)
     {

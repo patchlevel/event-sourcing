@@ -38,7 +38,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     /**
      * @param class-string<AggregateRoot> $aggregate
      *
-     * @return array<AggregateChanged>
+     * @return array<AggregateChanged<array<string, mixed>>>
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array
     {
@@ -50,7 +50,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate = :aggregate AND aggregateId = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregateId: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $result */
+        /** @var array<array{aggregateId: string, playhead: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recordedOn: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -102,8 +102,8 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
-     * @param array<AggregateChanged>     $events
+     * @param class-string<AggregateRoot>                   $aggregate
+     * @param array<AggregateChanged<array<string, mixed>>> $events
      */
     public function saveBatch(string $aggregate, string $id, array $events): void
     {
@@ -144,7 +144,17 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->orderBy('id')
             ->getSQL();
 
-        /** @var array<array{id: string, aggregateId: string, aggregate: string, playhead: string, event: class-string<AggregateChanged>, payload: string, recordedOn: string}> $result */
+        /**
+         * @var array<array{
+         *     id: string,
+         *     aggregateId: string,
+         *     aggregate: string,
+         *     playhead: string,
+         *     event: class-string<AggregateChanged<array<string, mixed>>>,
+         *     payload: string,
+         *     recordedOn: string
+         * }> $result
+         */
         $result = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
         $platform = $this->connection->getDatabasePlatform();
 

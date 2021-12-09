@@ -8,6 +8,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 interface ProjectionRepository
 {
+    /**
+     * @param AggregateChanged<array<string, mixed>> $event
+     */
     public function handle(AggregateChanged $event): void;
 
     public function create(): void;

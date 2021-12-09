@@ -21,6 +21,9 @@ final class SymfonyEventBus implements EventBus
         $this->bus = $bus;
     }
 
+    /**
+     * @param AggregateChanged<array<string, mixed>> $event
+     */
     public function dispatch(AggregateChanged $event): void
     {
         $envelope = (new Envelope($event))

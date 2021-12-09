@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
@@ -18,7 +17,6 @@ final class ProfileProjection implements Projection
         $this->connection = $connection;
     }
 
-    /** @return iterable<class-string<AggregateChanged>, string> */
     public function handledEvents(): iterable
     {
         yield ProfileCreated::class => 'applyProfileCreated';
