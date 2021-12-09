@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use function array_key_exists;
 use function get_class;
 
-class ClassRenameMiddleware implements Middleware
+final class ClassRenameMiddleware implements Middleware
 {
     /** @var array<class-string<AggregateChanged<array<string, mixed>>>, class-string<AggregateChanged<array<string, mixed>>>> */
     private array $classes;

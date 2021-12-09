@@ -23,7 +23,7 @@ use Throwable;
 use function is_string;
 use function sprintf;
 
-class ProjectionRebuildCommand extends Command
+final class ProjectionRebuildCommand extends Command
 {
     private Store $store;
     private ProjectionRepository $projectionRepository;

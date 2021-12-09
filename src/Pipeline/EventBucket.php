@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Pipeline;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
-class EventBucket
+final class EventBucket
 {
     /** @var class-string<AggregateRoot> */
     private string $aggregateClass;

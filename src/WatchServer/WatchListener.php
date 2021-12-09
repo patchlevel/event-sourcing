@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\WatchServer;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Listener;
 
-class WatchListener implements Listener
+final class WatchListener implements Listener
 {
     private WatchServerClient $client;
 

@@ -8,7 +8,7 @@ use Psr\SimpleCache\CacheInterface;
 
 use function sprintf;
 
-class Psr16SnapshotStore implements SnapshotStore
+final class Psr16SnapshotStore implements SnapshotStore
 {
     private CacheInterface $cache;
 

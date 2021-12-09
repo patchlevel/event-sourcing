@@ -8,7 +8,7 @@ use Generator;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 
-class StoreSource implements Source
+final class StoreSource implements Source
 {
     private PipelineStore $store;
     private int $fromIndex;

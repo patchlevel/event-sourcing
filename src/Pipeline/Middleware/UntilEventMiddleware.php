@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
-class UntilEventMiddleware implements Middleware
+final class UntilEventMiddleware implements Middleware
 {
     private DateTimeImmutable $until;
 

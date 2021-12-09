@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
 use Patchlevel\EventSourcing\Pipeline\Source\Source;
 use Patchlevel\EventSourcing\Pipeline\Target\Target;
 
-class Pipeline
+final class Pipeline
 {
     private Source $source;
     private Target $target;

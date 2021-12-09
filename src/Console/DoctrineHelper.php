@@ -10,6 +10,9 @@ use InvalidArgumentException;
 
 use function in_array;
 
+/**
+ * @final
+ */
 class DoctrineHelper
 {
     public function databaseName(Connection $connection): string

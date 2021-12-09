@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
-class FilterEventMiddleware implements Middleware
+final class FilterEventMiddleware implements Middleware
 {
     /** @var callable(AggregateChanged $event):bool */
     private $callable;

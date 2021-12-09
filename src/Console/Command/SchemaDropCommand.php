@@ -14,7 +14,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class SchemaDropCommand extends Command
+final class SchemaDropCommand extends Command
 {
     private Store $store;
     private SchemaManager $schemaManager;

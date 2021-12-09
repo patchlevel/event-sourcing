@@ -8,7 +8,7 @@ use Psr\Cache\CacheItemPoolInterface;
 
 use function sprintf;
 
-class Psr6SnapshotStore implements SnapshotStore
+final class Psr6SnapshotStore implements SnapshotStore
 {
     private CacheItemPoolInterface $cache;
 

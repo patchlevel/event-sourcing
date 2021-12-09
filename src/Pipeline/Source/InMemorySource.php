@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
 use function count;
 
-class InMemorySource implements Source
+final class InMemorySource implements Source
 {
     /** @var list<EventBucket> */
     private array $events;

@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Store\Store;
 use function array_values;
 use function sprintf;
 
-class DoctrineSchemaManager implements DryRunSchemaManager
+final class DoctrineSchemaManager implements DryRunSchemaManager
 {
     public function create(Store $store): void
     {
