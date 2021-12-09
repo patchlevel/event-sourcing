@@ -12,7 +12,7 @@ use ReflectionProperty;
 
 use function array_key_exists;
 
-class RecalculatePlayheadMiddleware implements Middleware
+final class RecalculatePlayheadMiddleware implements Middleware
 {
     /** @var array<class-string<AggregateRoot>, array<string, int>> */
     private array $index = [];

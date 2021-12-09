@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
-class ExcludeEventMiddleware implements Middleware
+final class ExcludeEventMiddleware implements Middleware
 {
     /** @var list<class-string<AggregateChanged>> */
     private array $classes;

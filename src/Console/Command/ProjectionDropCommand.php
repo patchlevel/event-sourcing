@@ -10,7 +10,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class ProjectionDropCommand extends Command
+final class ProjectionDropCommand extends Command
 {
     private ProjectionRepository $projectionRepository;
 

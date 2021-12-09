@@ -10,7 +10,7 @@ use InvalidArgumentException;
 
 use function in_array;
 
-class DoctrineHelper
+final class DoctrineHelper
 {
     public function databaseName(Connection $connection): string
     {

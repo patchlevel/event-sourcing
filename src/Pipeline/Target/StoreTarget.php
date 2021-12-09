@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Target;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 
-class StoreTarget implements Target
+final class StoreTarget implements Target
 {
     private PipelineStore $store;
 

@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Snapshot;
 use function array_key_exists;
 use function sprintf;
 
-class InMemorySnapshotStore implements SnapshotStore
+final class InMemorySnapshotStore implements SnapshotStore
 {
     /** @var array<string, Snapshot> */
     private array $snapshots = [];

@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Target;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Projection\ProjectionRepository;
 
-class ProjectionRepositoryTarget implements Target
+final class ProjectionRepositoryTarget implements Target
 {
     private ProjectionRepository $projectionRepository;
 

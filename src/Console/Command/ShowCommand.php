@@ -19,7 +19,7 @@ use function array_key_exists;
 use function count;
 use function sprintf;
 
-class ShowCommand extends Command
+final class ShowCommand extends Command
 {
     private Store $store;
 

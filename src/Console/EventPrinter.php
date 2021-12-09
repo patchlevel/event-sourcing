@@ -14,7 +14,7 @@ use function json_encode;
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 
-class EventPrinter
+final class EventPrinter
 {
     public function write(SymfonyStyle $console, AggregateChanged $event): void
     {

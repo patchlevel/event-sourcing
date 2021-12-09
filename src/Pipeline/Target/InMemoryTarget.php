@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Target;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
-class InMemoryTarget implements Target
+final class InMemoryTarget implements Target
 {
     /** @var list<EventBucket> */
     private array $buckets = [];

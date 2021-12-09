@@ -17,7 +17,7 @@ use Throwable;
 
 use function sprintf;
 
-class DatabaseCreateCommand extends Command
+final class DatabaseCreateCommand extends Command
 {
     private Store $store;
     private DoctrineHelper $helper;

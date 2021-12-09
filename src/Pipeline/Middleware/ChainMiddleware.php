@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
-class ChainMiddleware implements Middleware
+final class ChainMiddleware implements Middleware
 {
     /** @var list<Middleware> */
     private array $middlewares;

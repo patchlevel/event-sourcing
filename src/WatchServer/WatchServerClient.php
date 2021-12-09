@@ -20,7 +20,7 @@ use const STREAM_CLIENT_ASYNC_CONNECT;
 use const STREAM_CLIENT_CONNECT;
 use const STREAM_SHUT_RDWR;
 
-class WatchServerClient
+final class WatchServerClient
 {
     private string $host;
 

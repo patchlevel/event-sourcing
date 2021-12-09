@@ -12,7 +12,7 @@ use ReflectionProperty;
 /**
  * @template T of AggregateChanged
  */
-class ReplaceEventMiddleware implements Middleware
+final class ReplaceEventMiddleware implements Middleware
 {
     /** @var class-string<T> */
     private string $class;

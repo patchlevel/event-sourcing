@@ -14,7 +14,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function sprintf;
 
-class WatchCommand extends Command
+final class WatchCommand extends Command
 {
     private WatchServer $server;
 

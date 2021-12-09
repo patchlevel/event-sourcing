@@ -21,7 +21,7 @@ use function stream_socket_server;
 use function strpos;
 use function unserialize;
 
-class WatchServer
+final class WatchServer
 {
     private string $host;
 

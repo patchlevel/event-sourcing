@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
-class FromIndexEventMiddleware implements Middleware
+final class FromIndexEventMiddleware implements Middleware
 {
     private int $fromIndex;
 

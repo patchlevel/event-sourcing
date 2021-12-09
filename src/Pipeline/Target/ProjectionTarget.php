@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
 use Patchlevel\EventSourcing\Projection\Projection;
 
-class ProjectionTarget implements Target
+final class ProjectionTarget implements Target
 {
     private DefaultProjectionRepository $projectionRepository;
 
