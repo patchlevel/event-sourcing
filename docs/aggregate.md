@@ -75,9 +75,9 @@ final class CreateProfileHandler
 }
 ```
 
-Caution: If you look in the DB now, you would see that nothing has been saved.
-This is because only events are stored in the database and as long as no events exist,
-nothing happens.
+> :warning: If you look in the DB now, you would see that nothing has been saved.
+> This is because only events are stored in the database and as long as no events exist,
+> nothing happens.
 
 Info: A CommandBus system is not necessary, only recommended.
 The interaction can also easily take place in a controller or service.
