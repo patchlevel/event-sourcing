@@ -2,7 +2,8 @@
 
 > Aggregate is a pattern in Domain-Driven Design. A DDD aggregate is a cluster of domain objects 
 > that can be treated as a single unit. [...]
-[DDD Aggregate - Martin Flower](https://martinflower.com/bliki/DDD_Aggregate.html)
+> 
+> :book: [DDD Aggregate - Martin Flower](https://martinflower.com/bliki/DDD_Aggregate.html) 
 
 An AggregateRoot has to inherit from `AggregateRoot` and implement the methods `aggregateRootId` and `apply`.
 `aggregateRootId` is the identifier from `AggregateRoot` like a primary key for an entity.
@@ -79,11 +80,11 @@ final class CreateProfileHandler
 }
 ```
 
-> :warning: If you look in the DB now, you would see that nothing has been saved.
+> :warning: If you look in the database now, you would see that nothing has been saved.
 > This is because only events are stored in the database and as long as no events exist,
 > nothing happens.
 
-> :book: A CommandBus system is not necessary, only recommended.
+> :book: A **command bus** system is not necessary, only recommended.
 > The interaction can also easily take place in a controller or service.
 
 ## Event
@@ -91,7 +92,7 @@ final class CreateProfileHandler
 Aggregate state is only stored as events.
 These events are also used again to rebuild the current state of the aggregate.
 
-### create aggregate
+### Create a new aggregate
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
 An event must receive the `aggregateId` and the `payload` and has to inherit from `AggregateChanged`.
@@ -182,13 +183,14 @@ final class Profile extends AggregateRoot
 }
 ```
 
-Wir haben hier das Event in `create` erzeugt 
-und dieses Event mit der Methode `record` gemerkt.
+In our named constructor `create` we have now created the event and recorded it with the method` record`.
+The aggregate remembers all recorded events in order to save them later.
+At the same time, the `apply` method is executed directly so that we can change our state.
 
-Nachdem ein event mit `->record()` registriert wurde, wird sofort die dazugehörige apply Methode ausgeführt-
-Sprich, nach diesem Call ist der State dem entsprechend schon aktualisiert.
+In the `apply` method we check what kind of event we have 
+and then change the `profile` properties `id` and `name` with the transferred values.
 
-### modify aggregate
+### Modify an aggregate
 
 In order to change the state of the aggregates afterwards, only further events have to be defined.
 As example we can add a `NameChanged` event:
@@ -226,7 +228,10 @@ final class NameChanged extends AggregateChanged
 }
 ```
 
-After we have defined the event, we can expand our aggregate:
+> :book: Events should best be written in the past, as they describe a state that has happened.
+
+After we have defined the event, we can define a new public method called `changeName` to change the profile name. 
+This method then creates the event `NameChanged` and records it:
 
 ```php
 <?php
@@ -282,10 +287,10 @@ final class Profile extends AggregateRoot
 }
 ```
 
-Auch hierfür fügen wir eine Methode hinzu, um das Event zu registrieren.
-Und eine apply Methode, um das ganze auszuführen.
+We also had to expand the apply method so that the change actually took place.
+We checked again that we had the right event and then overwritten the name.
 
-Das ganze können wir dann wie folgt verwenden.
+When using it, it can look like this:
 
 ```php
 <?php
@@ -317,20 +322,39 @@ final class ChangeNameHandler
 }
 ```
 
-Hier wird das Aggregat geladen, indem alle Events aus der Datenbank geladen wird.
-Diese Events werden dann wieder mit der apply Methoden ausgeführt, um den Aktuellen State aufzubauen.
-Das alles passiert in der load Methode automatisch.
+Here the aggregate is loaded from the `repository` by fetching all events from the database.
+These events are then executed again with the `apply` methods in order to rebuild the current state.
+All of this happens automatically in the `load` method.
 
-Daraufhin wird `$profile->changeName()` mit dem neuen Namen aufgerufen. 
-Intern wird das Event `NameChanged` geworfen und als nicht "gespeichertes" Event gemerkt.
+The method `changeName` is then executed on the aggregate to change the name.
+In this method the event `NameChanged` is generated and recorded.
+The `apply` method was also called again internally to adjust the state.
 
-Zum Schluss wird die `save()` Methode aufgerufen, 
-die wiederrum alle nicht gespeicherte Events aus dem Aggregate zieht
-und diese dann in die Datenbank speichert.
+When the `save` method is called on the repository, 
+all newly recorded events are then fetched and written to the database.
 
-## apply methods
+## Apply methods
 
-### strict apply method
+The `apply` method must be implemented so that the events are processed on the aggregate. 
+This method can get quite big with some events.
+
+To make things structured, you can use two different traits 
+that allow you to define different apply methods for each event.
+
+### Strict apply method
+
+The trait implements the apply method for you.
+It is looking for a suitable method for the event by using the short name of the event class 
+and prefixing it with an `apply`.
+
+Let's assume that the `App\Profile\Event\NameChanged` event is recorded. 
+The short class name in this case would be `NameChanged`. 
+If we prefix the whole thing with `apply`, we get the method` applyNameChanged`.
+
+This method is then called automatically and the event is passed. 
+If the method does not exist then an error is thrown.
+
+Here are two examples with the events `ProfileCreated` and `NameChanged`:
 
 ```php
 <?php
@@ -352,29 +376,8 @@ final class Profile extends AggregateRoot
     private string $id;
     private string $name;
 
-    public function aggregateRootId(): string
-    {
-        return $this->id;
-    }
-    
-    public function name(): string 
-    {
-        return $this->name;
-    }
+    // ...
 
-    public static function create(string $id, string $name): self
-    {
-        $self = new self();
-        $self->record(ProfileCreated::raise($id, $name));
-
-        return $self;
-    }
-    
-    public function changeName(string $name): void 
-    {
-        $this->record(NameChanged::raise($this->id, $name));
-    }
-    
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId();
@@ -388,15 +391,10 @@ final class Profile extends AggregateRoot
 }
 ```
 
-### non strict apply method
+### Non strict apply method
 
-Des Weiteren haben wir eine `applyProfileCreated` Methode, die dazu dient den State anzupassen.
-Das AggregateRoot sucht sich mithilfe des Event Short Names `ProfileCreated` die richtige Methode,
-indem ein `apply` vorne hinzufügt.
-
-> :warning: Wenn so eine Methode nicht existiert wird das verarbeiten übersprungen.
-> Manche Events verändern nicht den State (wenn nicht nötig),
-> sondern werden ggfs. nur in Projections verwendet.
+The non-strict variant works in the same way as the strict one. 
+The only difference is that events without a suitable method do not lead to errors.
 
 ```php
 <?php
@@ -418,28 +416,7 @@ final class Profile extends AggregateRoot
     private string $id;
     private string $name;
 
-    public function aggregateRootId(): string
-    {
-        return $this->id;
-    }
-    
-    public function name(): string 
-    {
-        return $this->name;
-    }
-
-    public static function create(string $id, string $name): self
-    {
-        $self = new self();
-        $self->record(ProfileCreated::raise($id, $name));
-
-        return $self;
-    }
-    
-    public function changeName(string $name): void 
-    {
-        $this->record(NameChanged::raise($this->id, $name));
-    }
+    // ...
     
     protected function applyProfileCreated(ProfileCreated $event): void
     {
@@ -454,19 +431,22 @@ final class Profile extends AggregateRoot
 }
 ```
 
-## business rules
+> :warning: This can quickly lead to errors, since events are not executed on the aggregate 
+> and are very difficult to find. We recommend the strict variant.
 
-Business Rules müssen immer in den Methoden passieren, die die Events werfen. 
-Sprich, in unserem Fall in `create` oder in `changeName` Methoden.
+## Business rules
 
-In den Apply Methoden darf nicht mehr überprüft werden, ob die Aktion Valide ist,
-da das Event schon passiert ist. Außerdem können diese Events schon in der Datenbank sein,
-und somit würde der State aufbau nicht mehr möglich sein. 
+Usually, aggregates have business rules that must be observed. Like there may not be more than 10 people in a group.
 
-Außerdem dürfen in den Apply Methoden keine weiteren Events geworfen werden,
-da diese Methoden immer verwendet werden, um den aktuellen State aufzubauen.
-Das hätte sonst die Folge, dass beim Laden immer neue Evens erzeugt werden.
-Wie Abhängigkeiten von Events implementiert werden können, steht weiter unten.
+These rules must be checked before an event is recorded. 
+As soon as an event was recorded, the described thing happened and cannot be undone.
+
+A further check in the apply method is also not possible because these events have already happened 
+and were then also saved in the database. 
+
+> :warning: Disregarding this can break the rebuilding of the state.
+
+In the next example we want to make sure that **the name is at least 3 characters long**:
 
 ```php
 <?php
@@ -486,11 +466,6 @@ final class Profile extends AggregateRoot
 
     private string $id;
     private string $name;
-
-    public function aggregateRootId(): string
-    {
-        return $this->id;
-    }
     
     // ...
     
@@ -515,9 +490,11 @@ final class Profile extends AggregateRoot
 }
 ```
 
-Diese Regel, mit der länge des Namens, ist derzeit nur in changeName definiert. 
-Damit diese Regel auch beim erstellen greift, muss diese entweder auch in `create` implementiert werden
-oder besser, man erstellt ein Value Object dafür, um dafür zu sorgen, dass diese Regel eingehalten wird.
+We have now ensured that this rule takes effect when a name is changed with the method `changeName`. 
+But when we create a new profile this rule does not currently apply.
+
+In order for this to work, we either have to duplicate the rule or outsource it. 
+Here we show how we can do it all with a value object:
 
 ```php
 <?php
@@ -546,7 +523,7 @@ final class Name
 }
 ```
 
-Den Name Value Object kann man dann wie folgt verwenden.
+We can now use the value object `Name` in our aggregate:
 
 ```php
 <?php
@@ -566,11 +543,6 @@ final class Profile extends AggregateRoot
 
     private string $id;
     private Name $name;
-
-    public function aggregateRootId(): string
-    {
-        return $this->id;
-    }
     
     public static function create(string $id, Name $name): self
     {
@@ -599,8 +571,8 @@ final class Profile extends AggregateRoot
 }
 ```
 
-Damit das ganze auch funktioniert, müssen wir unser Event noch anpassen, 
-damit es als json serialisierbar ist.
+In order for the whole thing to work, we still have to adapt our `NameChanged` event, 
+since we only expected a string before but now passed a `Name` value object.
 
 ```php
 <?php
@@ -635,9 +607,15 @@ final class NameChanged extends AggregateChanged
 }
 ```
 
-Es gibt auch die Fälle, dass Regeln abhängig vom State definiert werden müssen. 
-Manchmal auch von States, die erst in der Methode zustande kommen.
-Das ist kein Problem, da die apply Methoden immer sofort ausgeführt wird.
+> :warning: The payload must be serializable and unserializable as json.
+
+There are also cases where business rules have to be defined depending on the aggregate state.
+Sometimes also from states, which were changed in the same method.
+This is not a problem, as the `apply` methods are always executed immediately.
+
+In the next case we throw an exception if the hotel is already overbooked.
+Besides that, we record another event `FullyBooked`, if the hotel is fully booked with the last booking. 
+With this event we could notify external systems or fill a projection with fully booked hotels.
 
 ```php
 <?php
@@ -647,11 +625,11 @@ declare(strict_types=1);
 namespace App\Hotel;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
+use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
 
 final class Hotel extends AggregateRoot
 {
-    use StrictApplyMethod;
+    use NonStrictApplyMethod;
 
     private const SIZE = 5;
 
@@ -679,10 +657,7 @@ final class Hotel extends AggregateRoot
 }
 ```
 
-In diesem Fall schmeißen wir ein zusätzliches Event, wenn unser Hotel ausgebucht ist,
-um weitere Systeme zu informieren. ZB. unsere Webseite mithilfe von einer Projection
-oder ein fremdes System, um keine Buchungen mehr zu erlauben.
-
-Denkbar wäre auch, dass hier nachträglich eine Exception geschmissen wird.
-Da erst bei der save Methode die Events wirklich gespeichert werden, 
-kann hier ohne weiteres darauf reagiert werden, ohne dass ungewollt Daten verändert werden.
+> :warning: In this example we are using the non-strict apply method 
+> and we are not responding to the event in our aggregate.
+> There are cases where events are recorded for external listeners, 
+> but they are not used in the aggregate themselves.
