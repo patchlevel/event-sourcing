@@ -79,10 +79,8 @@ final class CreateProfileHandler
 > This is because only events are stored in the database and as long as no events exist,
 > nothing happens.
 
-Info: A CommandBus system is not necessary, only recommended.
-The interaction can also easily take place in a controller or service.
-
-Info: You can find more about repositories in the chapter `Repository`.
+> :book: A CommandBus system is not necessary, only recommended.
+> The interaction can also easily take place in a controller or service.
 
 ## Event
 
@@ -180,8 +178,6 @@ final class Profile extends AggregateRoot
     }
 }
 ```
-
-
 
 Wir haben hier das Event in `create` erzeugt 
 und dieses Event mit der Methode `record` gemerkt.
@@ -395,9 +391,9 @@ Des Weiteren haben wir eine `applyProfileCreated` Methode, die dazu dient den St
 Das AggregateRoot sucht sich mithilfe des Event Short Names `ProfileCreated` die richtige Methode,
 indem ein `apply` vorne hinzufügt.
 
-Vorsicht: Wenn so eine Methode nicht existiert wird das verarbeiten übersprungen.
-Manche Events verändern nicht den State (wenn nicht nötig),
-sondern werden ggfs. nur in Projections verwendet.
+> :warning: Wenn so eine Methode nicht existiert wird das verarbeiten übersprungen.
+> Manche Events verändern nicht den State (wenn nicht nötig),
+> sondern werden ggfs. nur in Projections verwendet.
 
 ```php
 <?php

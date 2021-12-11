@@ -148,7 +148,7 @@ Ein dem entsprechenden Hinweis wird bei jedem Middleware mitgeliefert.
 
 Mit dieser Middleware kann man bestimmte Events ausschließen.
 
-Wichtig: ein recalculation vom Playhead ist notwendig!
+> :warning: ein recalculation vom Playhead ist notwendig!
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
@@ -161,7 +161,7 @@ $middleware = new ExcludeEventMiddleware([EmailChanged::class]);
 
 Mit dieser Middleware kann man nur bestimmte Events erlauben.
 
-Wichtig: ein recalculation vom Playhead ist notwendig!
+> :warning: ein recalculation vom Playhead ist notwendig!
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware;
@@ -174,7 +174,7 @@ $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
 Wenn die standard Filter Möglichkeiten nicht ausreichen, kann man auch einen eigenen Filter schreiben.
 Dieser verlangt ein boolean als Rückgabewert. `true` um Events zu erlauben, `false` um diese nicht zu erlauben.
 
-Wichtig: ein recalculation vom Playhead ist notwendig!
+> :warning: ein recalculation vom Playhead ist notwendig!
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
