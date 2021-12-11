@@ -90,6 +90,7 @@ These events are also used again to rebuild the current state of the aggregate.
 ### create aggregate
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
+An event must receive the `aggregateId` and the `payload` and has to inherit from `AggregateChanged`.
 A `ProfileCreated` event is ideal here:
 
 ```php
@@ -125,13 +126,11 @@ final class ProfileCreated extends AggregateChanged
     }
 }
 ```
+> :warning: The payload must be serializable and non-serializable as json.
+> In other words, it can only consist of simple data types (no objects).
 
-We recommend using named constructors and methods with typehints,
-so that handling becomes easier and less error-prone.
-
-An event must receive the `aggregateId` and the `payload`.
-The payload must be serializable and non-serializable as json.
-In other words, it can only consist of simple data types (no objects).
+> :book: We recommend using named constructors and methods with typehints,
+> so that handling becomes easier and less error-prone.
 
 After we have defined the event, we have to adapt the creation of the profile:
 
