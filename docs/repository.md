@@ -12,7 +12,7 @@ $repository = new Repository($store, $eventStream, Profile::class);
 ## Usage
 
 ```php
-$profile = Profile::create('d.a.badura@gmail.com');
+$profile = Profile::create('david.badura@patchlevel.de');
 
 $repository->save($profile);
 ```

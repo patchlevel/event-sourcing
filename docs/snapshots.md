@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate;
+namespace App\Profile;
 
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 
@@ -30,6 +30,7 @@ final class Profile extends SnapshotableAggregateRoot
 }
 ```
 
+
 ```php
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Snapshot\Psr16SnapshotStore;
@@ -37,4 +38,31 @@ use Patchlevel\EventSourcing\Snapshot\Psr16SnapshotStore;
 $snapshotStore = new Psr16SnapshotStore($cache);
 
 $repository = new Repository($store, $eventStream, Profile::class, $snapshotStore);
+```
+
+
+## stores
+
+### psr16
+
+```php
+use Patchlevel\EventSourcing\Snapshot\Psr16SnapshotStore;
+
+$snapshotStore = new Psr16SnapshotStore($cache);
+```
+
+### psr6
+
+```php
+use Patchlevel\EventSourcing\Snapshot\Psr6SnapshotStore;
+
+$snapshotStore = new Psr6SnapshotStore($cache);
+```
+
+### in memory
+
+```php
+use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
+
+$snapshotStore = new InMemorySnapshotStore();
 ```

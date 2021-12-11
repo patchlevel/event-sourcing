@@ -1,11 +1,13 @@
 # Pipeline
 
-Ein Store ist immutable, sprich es darf nicht mehr nachträglich verändert werde.
+Ein Store ist immutable, sprich es darf nicht mehr nachträglich verändert werden.
 Dazu gehört sowohl das Manipulieren von Events als auch das Löschen.
 
 Stattdessen kann man den Store duplizieren und dabei die Events manipulieren.
 Somit bleibt der alte Store unberührt und man kann vorher den neuen Store durchtesten,
 ob die Migration funktioniert hat.
+
+In diesem Beispiel wird das Event `PrivacyAdded` entfernt und das Event `OldVisited` durch `NewVisited` ersetzt.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
@@ -28,8 +30,7 @@ $pipeline = new Pipeline(
 );
 ```
 
-Oder man kann eine oder mehrere Projection neu erstellen, 
-wenn entweder neue Projection existieren oder bestehende verändert wurden.
+Mit der Pipeline kann man auch Projektion erstellen oder neu aufbauen:
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
@@ -74,7 +75,7 @@ use Patchlevel\EventSourcing\Pipeline\Source\InMemorySource;
 $source = new InMemorySource([
     new EventBucket(
         Profile::class,
-        ProfileCreated::raise(Email::fromString('d.a.badura@gmail.com'))->recordNow(0),
+        ProfileCreated::raise(Email::fromString('david.badura@patchlevel.de'))->recordNow(0),
     ),
     // ...
 ]);
@@ -82,7 +83,7 @@ $source = new InMemorySource([
 
 ## Target
 
-Ziele dienen dazu, um die Daten am Ende des Process abzuarbeiten. 
+"Ziele" dienen dazu, um die Daten am Ende des Process abzuarbeiten. 
 Das kann von einem anderen Store bis hin zu Projektionen alles sein.
 
 ### Store
@@ -216,6 +217,17 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
 $middleware = new ClassRenameMiddleware([
     OldVisited::class => NewVisited::class
 ]);
+```
+
+### until
+
+Ein usecase könnte auch sein, dass man sich die Projektion aus einem vergangenen Zeitpunkt anschauen möchte.
+Dabei kann man den UntilEventMiddleware verwenden um nur Events zu erlauben, die vor diesem Zeitpunkt recorded wurden.
+
+```php
+use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
+
+$middleware = new UntilEventMiddleware(new DateTimeImmutable('2020-01-01 12:00:00'));
 ```
 
 ### recalculate playhead

@@ -13,7 +13,24 @@ Small lightweight event-sourcing library.
 composer require patchlevel/event-sourcing
 ```
 
-## define aggregates
+## integration
+
+* [Symfony](https://github.com/patchlevel/event-sourcing-bundle)
+* [Psalm](https://github.com/patchlevel/event-sourcing-psalm-plugin)
+
+## documentation
+
+* [Aggregate](docs/aggregate.md)
+* [Repository](docs/repository.md)
+* [Processor](docs/processor.md)
+* [Projection](docs/projection.md)
+* [Snapshots](docs/snapshots.md)
+* [Pipeline](docs/pipeline.md)
+* [Tests](docs/tests.md)
+
+## Getting Started
+
+### define aggregates
 
 ```php
 <?php declare(strict_types=1);
@@ -85,7 +102,7 @@ final class Profile extends AggregateRoot
 }
 ```
 
-## define events
+### define events
 
 ```php
 <?php declare(strict_types=1);
@@ -126,7 +143,7 @@ final class ProfileCreated extends AggregateChanged
 }
 ```
 
-# define projections
+### define projections
 
 ```php
 <?php declare(strict_types=1);
@@ -163,6 +180,11 @@ final class MessageProjection implements Projection
             'created_at' => $message->createdAt()->format(DATE_ATOM),
         ]);
     }
+    
+    public function create(): void
+    {
+        // do nothing (collection will be created lazy automatically)
+    }
 
     public function drop(): void
     {
@@ -171,7 +193,39 @@ final class MessageProjection implements Projection
 }
 ```
 
-## usage
+### configuration
+
+```php
+use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
+use Patchlevel\EventSourcing\Projection\ProjectionListener;
+use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Store\SingleTableStore;
+
+$messageProjection = new MessageProjection($this->connection);
+$projectionRepository = new DefaultProjectionRepository(
+    [$messageProjection]
+);
+
+$eventStream = new DefaultEventBus();
+$eventStream->addListener(new ProjectionListener($projectionRepository));
+$eventStream->addListener(new SendEmailProcessor());
+
+$store = new SingleTableStore(
+    $this->connection,
+    [Profile::class => 'profile'],
+    'eventstore'
+);
+
+$repository = new Repository($store, $eventStream, Profile::class);
+
+// create tables
+$profileProjection->create();
+(new DoctrineSchemaManager())->create($store);
+```
+
+### usage
 
 ```php
 <?php declare(strict_types=1);

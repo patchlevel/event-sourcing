@@ -19,19 +19,24 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 final class Profile extends AggregateRoot
 {
+    private string $id;
+
     public function aggregateRootId(): string
     {
-        return '1';
+        return $this->id;
     }
     
     public static function create(string $id): self 
     {
-        // todo
+        $self = new self();
+        // todo: record create event
+        
+        return $self;
     }
     
     public function apply(AggregateChanged $event): void
     {
-        // todo
+        // todo: apply create event and set id
     }
 }
 ```
@@ -70,7 +75,7 @@ final class CreateProfileHandler
 }
 ```
 
-If you look in the DB now, you would see that nothing has been saved.
+Caution: If you look in the DB now, you would see that nothing has been saved.
 This is because only events are stored in the database and as long as no events exist,
 nothing happens.
 
@@ -81,13 +86,13 @@ Info: You can find more about repositories in the chapter `Repository`.
 
 ## Event
 
-Information is only stored as events.
+Aggregate state is only stored as events.
 These events are also used again to rebuild the current state of the aggregate.
 
 ### create aggregate
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
-A "Create" event is ideal here:
+A `ProfileCreated` event is ideal here:
 
 ```php
 <?php
@@ -108,7 +113,7 @@ final class ProfileCreated extends AggregateChanged
                 'id' => $id,
                 'name' => $name
             ]
-            );
+        );
     }
 
     public function profileId(): string
@@ -126,7 +131,7 @@ final class ProfileCreated extends AggregateChanged
 We recommend using named constructors and methods with typehints,
 so that handling becomes easier and less error-prone.
 
-An event must receive the AggregateRoot id and the payload.
+An event must receive the `aggregateId` and the `payload`.
 The payload must be serializable and non-serializable as json.
 In other words, it can only consist of simple data types (no objects).
 
@@ -176,16 +181,10 @@ final class Profile extends AggregateRoot
 }
 ```
 
+
+
 Wir haben hier das Event in `create` erzeugt 
 und dieses Event mit der Methode `record` gemerkt.
-
-Des Weiteren haben wir eine `applyProfileCreated` Methode, die dazu dient den State anzupassen.
-Das AggregateRoot sucht sich mithilfe des Event Short Names `ProfileCreated` die richtige Methode,
-indem ein `apply` vorne hinzufügt.
-
-Vorsicht: Wenn so eine Methode nicht existiert wird das verarbeiten übersprungen.
-Manche Events verändern nicht den State (wenn nicht nötig), 
-sondern werden ggfs. nur in Projections verwendet.
 
 Nachdem ein event mit `->record()` registriert wurde, wird sofort die dazugehörige apply Methode ausgeführt-
 Sprich, nach diesem Call ist der State dem entsprechend schon aktualisiert.
@@ -391,6 +390,14 @@ final class Profile extends AggregateRoot
 ```
 
 ### non strict apply method
+
+Des Weiteren haben wir eine `applyProfileCreated` Methode, die dazu dient den State anzupassen.
+Das AggregateRoot sucht sich mithilfe des Event Short Names `ProfileCreated` die richtige Methode,
+indem ein `apply` vorne hinzufügt.
+
+Vorsicht: Wenn so eine Methode nicht existiert wird das verarbeiten übersprungen.
+Manche Events verändern nicht den State (wenn nicht nötig),
+sondern werden ggfs. nur in Projections verwendet.
 
 ```php
 <?php
