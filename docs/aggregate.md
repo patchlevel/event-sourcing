@@ -3,7 +3,7 @@
 > Aggregate is a pattern in Domain-Driven Design. A DDD aggregate is a cluster of domain objects 
 > that can be treated as a single unit. [...]
 > 
-> :book: [DDD Aggregate - Martin Flower](https://martinflower.com/bliki/DDD_Aggregate.html) 
+> :book: [DDD Aggregate - Martin Flower](https://martinfowler.com/bliki/DDD_Aggregate.html) 
 
 An AggregateRoot has to inherit from `AggregateRoot` and implement the methods `aggregateRootId` and `apply`.
 `aggregateRootId` is the identifier from `AggregateRoot` like a primary key for an entity.
