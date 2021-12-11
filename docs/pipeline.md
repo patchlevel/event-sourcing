@@ -1,13 +1,13 @@
 # Pipeline
 
-Ein Store ist immutable, sprich es darf nicht mehr nachträglich verändert werden.
-Dazu gehört sowohl das Manipulieren von Events als auch das Löschen.
+A store is immutable, i.e. it cannot be changed afterwards.
+This includes both manipulating events and deleting them.
 
-Stattdessen kann man den Store duplizieren und dabei die Events manipulieren.
-Somit bleibt der alte Store unberührt und man kann vorher den neuen Store durchtesten,
-ob die Migration funktioniert hat.
+Instead, you can duplicate the store and manipulate the events in the process.
+Thus the old store remains untouched and you can test the new store beforehand,
+whether the migration worked.
 
-In diesem Beispiel wird das Event `PrivacyAdded` entfernt und das Event `OldVisited` durch `NewVisited` ersetzt.
+In this example the event `PrivacyAdded` is removed and the event `OldVisited` is replaced by `NewVisited`:
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
@@ -30,7 +30,10 @@ $pipeline = new Pipeline(
 );
 ```
 
-Mit der Pipeline kann man auch Projektion erstellen oder neu aufbauen:
+> :warning: Under no circumstances may the same store be used that is used for the source.
+> Otherwise the store will be broken afterwards!
+
+The pipeline can also be used to create or rebuild a projection:
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
@@ -43,20 +46,24 @@ $pipeline = new Pipeline(
 );
 ```
 
-Das Prinzip bleibt dabei gleich. Es gibt eine Source, woher die Daten kommen.
-Ein Target wohin die Daten fließen sollen. 
-Und beliebig viele Middlewares um mit den Daten vorher irgendetwas anzustellen.
+The principle remains the same. 
+There is a source where the data comes from.
+A target where the data should flow.
+And any number of middlewares to do something with the data beforehand.
+
+## EventBucket
+
+The pipeline works with so-called `EventBucket`. 
+This `EventBucket` wraps the event or `AggregateChanged` and adds further meta information
+like the `aggregateClass` and the event `index`.
 
 ## Source
 
-Als Erstes braucht man eine Quelle. Derzeit gibt es nur den `StoreSource` und `InMemorySource` als Quelle.
-Ihr könnt aber jederzeit eigene Sources hinzufügen, 
-indem ihr das Interface `Patchlevel\EventSourcing\Pipeline\Source\Source` implementiert.
-Hier könnt ihr zB. auch von anderen Event-Sourcing Systeme migrieren.
+The first thing you need is a source of where the data should come from.
 
 ### Store
 
-Der StoreSource ist die standard Quelle um alle Events aus der Datenbank zu laden.
+The `StoreSource` is the standard source to load all events from the database.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
@@ -66,7 +73,7 @@ $source = new StoreSource($store);
 
 ### In Memory
 
-Den InMemorySource kann dazu verwendet werden, um tests zu schreiben.
+There is an `InMemorySource` that receives the events in an array. This source can be used to write pipeline tests.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
@@ -81,30 +88,54 @@ $source = new InMemorySource([
 ]);
 ```
 
+### Custom Source
+
+You can also create your own source class. It has to inherit from `Source`. 
+Here you can, for example, create a migration from another event sourcing system or similar system.
+
+```php
+use Patchlevel\EventSourcing\Pipeline\Source\Source;
+use Patchlevel\EventSourcing\Pipeline\EventBucket;
+
+$source = new class implements Source {
+    /**
+     * @return Generator<EventBucket>
+     */
+    public function load(): Generator
+    {
+        yield new EventBucket(Profile::class, 0, new ProfileCreated('1', ['name' => 'David']));
+    }
+
+    public function count(): int
+    {
+        reutrn 1;
+    }
+}
+```
+
 ## Target
 
-"Ziele" dienen dazu, um die Daten am Ende des Process abzuarbeiten. 
-Das kann von einem anderen Store bis hin zu Projektionen alles sein.
+After you have a source, you still need the destination of the pipeline.
 
 ### Store
 
-Als Target kann man einen neuen Store verwendet werden. 
-Hierbei ist es egal, ob der vorherige Store ein SingleTable oder MultiTable war.
-Sprich, man kann auch nachträglich zwischen den beiden Systemen migrieren.
-
-Wichtig ist aber, dass nicht derselbe Store verwendet wird!
-Ein Store ist immutable und darf nur dupliziert werden!
+You can use a store to save the final result.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 
 $target = new StoreTarget($store);
 ```
+> :warning: Under no circumstances may the same store be used that is used for the source. 
+> Otherwise the store will be broken afterwards!
+
+> :book: It does not matter whether the previous store was a SingleTable or a MultiTable.
+> You can switch back and forth between both store types using the pipeline.
 
 ### Projection
 
-Eine Projection kann man auch als Target verwenden, 
-um zum beispiel eine neue Projection aufzubauen oder eine Projection neu zu bauen.
+A projection can also be used as a target.
+For example, to set up a new projection or to build a new projection.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
@@ -114,8 +145,9 @@ $target = new ProjectionTarget($projection);
 
 ### Projection Repository
 
-Wenn man gleich alle Projections neu bauen oder erzeugen möchte,
-dann kann man auch das ProjectionRepositoryTarget verwenden.
+If you want to build or create all projections from scratch,
+then you can also use the ProjectionRepositoryTarget. 
+In this, the individual projections are iterated and the events are then passed on.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget;
@@ -125,7 +157,8 @@ $target = new ProjectionRepositoryTarget($projectionRepository);
 
 ### In Memory
 
-Für test zwecke kann man hier auch den InMemoryTarget verwenden.
+There is also an in-memory variant for the target. This target can also be used for tests.
+With the `buckets` method you get all `EventBuckets` that have reached the target.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Target\InMemoryTarget;
@@ -139,16 +172,15 @@ $buckets = $target->buckets();
 
 ## Middlewares
 
-Um Events bei dem Prozess zu manipulieren, löschen oder zu erweitern, kann man Middelwares verwenden.
-Dabei ist wichtig zu wissen, dass einige Middlewares eine recalculation vom playhead erfordert.
-Das ist eine Nummerierung der Events, die aufsteigend sein muss. 
-Ein dem entsprechenden Hinweis wird bei jedem Middleware mitgeliefert.
+Middelwares can be used to manipulate, delete or expand events during the process.
+
+> :warning: It is important to know that some middlewares require recalculation from the playhead. 
+> This is a numbering of the events that must be in ascending order.
+> A corresponding note is supplied with every middleware.
 
 ### exclude
 
-Mit dieser Middleware kann man bestimmte Events ausschließen.
-
-> :warning: ein recalculation vom Playhead ist notwendig!
+With this middleware you can exclude certain events.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
@@ -156,12 +188,12 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 $middleware = new ExcludeEventMiddleware([EmailChanged::class]);
 ```
 
+> :warning: After this middleware, the playhead must be recalculated!
+
 ### include
 
 
-Mit dieser Middleware kann man nur bestimmte Events erlauben.
-
-> :warning: ein recalculation vom Playhead ist notwendig!
+With this middleware you can only allow certain events.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware;
@@ -169,12 +201,13 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware;
 $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
 ```
 
+> :warning: After this middleware, the playhead must be recalculated!
+
 ### filter
 
-Wenn die standard Filter Möglichkeiten nicht ausreichen, kann man auch einen eigenen Filter schreiben.
-Dieser verlangt ein boolean als Rückgabewert. `true` um Events zu erlauben, `false` um diese nicht zu erlauben.
-
-> :warning: ein recalculation vom Playhead ist notwendig!
+If the middlewares `ExcludeEventMiddleware` and `IncludeEventMiddleware` are not sufficient, 
+you can also write your own filter. 
+This middleware expects a callback that returns either true to allow events or false to not allow them.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
@@ -189,14 +222,13 @@ $middleware = new FilterEventMiddleware(function (AggregateChanged $event) {
 });
 ```
 
+> :warning: After this middleware, the playhead must be recalculated!
 
 ### replace
 
-Wenn man ein Event ersetzen möchte, kann man den ReplaceEventMiddleware verwenden.
-Als ersten Parameter muss man die Klasse definieren, die man ersetzen möchte.
-Und als zweiten Parameter ein Callback, 
-dass den alten Event erwartet und ein neues Event zurückliefert.
-Die Middleware übernimmt dabei den playhead und recordedAt informationen.
+If you want to replace an event, you can use the `ReplaceEventMiddleware`.
+The first parameter you have to define is the event class that you want to replace.
+And as a second parameter a callback, that the old event awaits and a new event returns.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
@@ -206,10 +238,13 @@ $middleware = new ReplaceEventMiddleware(OldVisited::class, static function (Old
 });
 ```
 
+> :book: The middleware takes over the playhead and recordedAt information.
+
 ### class rename
 
-Wenn ein Mapping nicht notwendig ist und man nur die Klasse umbenennen möchte 
-(zB. wenn Namespaces sich geändert haben), dann kann man den ClassRenameMiddleware verwenden.
+When mapping is not necessary and you just want to rename the class
+(e.g. if namespaces have changed), then you can use the `ClassRenameMiddleware`.
+You have to pass a hash map. The key is the old class name and the value is the new class name.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
@@ -221,8 +256,8 @@ $middleware = new ClassRenameMiddleware([
 
 ### until
 
-Ein usecase könnte auch sein, dass man sich die Projektion aus einem vergangenen Zeitpunkt anschauen möchte.
-Dabei kann man den UntilEventMiddleware verwenden um nur Events zu erlauben, die vor diesem Zeitpunkt recorded wurden.
+A use case could also be that you want to look at the projection from a previous point in time.
+You can use the `UntilEventMiddleware` to only allow events that were `recorded` before this point in time.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
@@ -232,9 +267,9 @@ $middleware = new UntilEventMiddleware(new DateTimeImmutable('2020-01-01 12:00:0
 
 ### recalculate playhead
 
-Mit dieser Middleware kann man den Playhead neu berechnen lassen. 
-Dieser muss zwingend immer aufsteigend sein, damit das System weiter funktioniert.
-Man kann diese Middleware als letztes hinzufügen.
+This middleware can be used to recalculate the playhead.
+The playhead must always be in ascending order so that the data is valid. 
+Some middleware can break this order and the middleware `RecalculatePlayheadMiddleware` can fix this problem.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
@@ -242,9 +277,11 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 $middleware = new RecalculatePlayheadMiddleware();
 ```
 
+> :book: You only need to add this middleware once at the end of the pipeline.
+
 ### chain
 
-Wenn man seine Middlewares Gruppieren möchte, kann man dazu eine oder mehrere ChainMiddlewares verwenden.
+If you want to group your middleware, you can use one or more `ChainMiddleware`.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware;

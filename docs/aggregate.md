@@ -134,7 +134,7 @@ final class ProfileCreated extends AggregateChanged
 > :warning: The payload must be serializable and unserializable as json.
 > In other words, it can only consist of simple data types (no objects).
 
-> :book: We recommend using named constructors and methods with typehints,
+> :book: We recommend using **named constructors** and methods with **typehints**,
 > so that handling becomes easier and less error-prone.
 
 After we have defined the event, we have to adapt the creation of the profile:
@@ -183,7 +183,7 @@ final class Profile extends AggregateRoot
 }
 ```
 
-In our named constructor `create` we have now created the event and recorded it with the method` record`.
+In our named constructor `create` we have now created the event and recorded it with the method `record`.
 The aggregate remembers all recorded events in order to save them later.
 At the same time, the `apply` method is executed directly so that we can change our state.
 
@@ -349,7 +349,7 @@ and prefixing it with an `apply`.
 
 Let's assume that the `App\Profile\Event\NameChanged` event is recorded. 
 The short class name in this case would be `NameChanged`. 
-If we prefix the whole thing with `apply`, we get the method` applyNameChanged`.
+If we prefix the whole thing with `apply`, we get the method `applyNameChanged`.
 
 This method is then called automatically and the event is passed. 
 If the method does not exist then an error is thrown.
@@ -444,8 +444,6 @@ As soon as an event was recorded, the described thing happened and cannot be und
 A further check in the apply method is also not possible because these events have already happened 
 and were then also saved in the database. 
 
-> :warning: Disregarding this can break the rebuilding of the state.
-
 In the next example we want to make sure that **the name is at least 3 characters long**:
 
 ```php
@@ -489,6 +487,8 @@ final class Profile extends AggregateRoot
     }
 }
 ```
+
+> :warning: Disregarding this can break the rebuilding of the state!
 
 We have now ensured that this rule takes effect when a name is changed with the method `changeName`. 
 But when we create a new profile this rule does not currently apply.
