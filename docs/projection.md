@@ -1,0 +1,47 @@
+# Projections
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Projection;
+
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Projection\Projection;
+
+final class ProfileProjection implements Projection
+{
+    private Connection $connection;
+
+    public function __construct(Connection $connection)
+    {
+        $this->connection = $connection;
+    }
+
+    /** @return iterable<class-string<AggregateChanged>, string> */
+    public function handledEvents(): iterable
+    {
+        yield ProfileCreated::class => 'handleProfileCreated';
+    }
+
+    public function create(): void
+    {
+        $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY);');
+    }
+
+    public function drop(): void
+    {
+        $this->connection->executeStatement('DROP TABLE IF EXISTS projection_profile;');
+    }
+
+    public function handleProfileCreated(ProfileCreated $profileCreated): void
+    {
+        $this->connection->executeStatement(
+            'INSERT INTO projection_profile (`id`) VALUES(:id);',
+            ['id' => $profileCreated->profileId()]
+        );
+    }
+}
+```
