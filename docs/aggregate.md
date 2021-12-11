@@ -1,6 +1,8 @@
 # Aggregate
 
-TODO: Aggregate Root definition
+> Aggregate is a pattern in Domain-Driven Design. A DDD aggregate is a cluster of domain objects 
+> that can be treated as a single unit. [...]
+[DDD Aggregate - Martin Flower](https://martinflower.com/bliki/DDD_Aggregate.html)
 
 An AggregateRoot has to inherit from `AggregateRoot` and implement the methods `aggregateRootId` and `apply`.
 `aggregateRootId` is the identifier from `AggregateRoot` like a primary key for an entity.
@@ -40,6 +42,8 @@ final class Profile extends AggregateRoot
     }
 }
 ```
+
+> :warning: The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
 
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
@@ -126,7 +130,7 @@ final class ProfileCreated extends AggregateChanged
     }
 }
 ```
-> :warning: The payload must be serializable and non-serializable as json.
+> :warning: The payload must be serializable and unserializable as json.
 > In other words, it can only consist of simple data types (no objects).
 
 > :book: We recommend using named constructors and methods with typehints,
