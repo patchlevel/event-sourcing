@@ -2,8 +2,10 @@
 
 TODO: Aggregate Root definition
 
-An AggregateRoot has to inherit from `AggregateRoot` and implement the method` aggregateRootId`.
-Events will be added later, but the following is enough to make it executable:
+An AggregateRoot has to inherit from `AggregateRoot` and implement the methods `aggregateRootId` and `apply`.
+`aggregateRootId` is the identifier from `AggregateRoot` like a primary key for an entity.
+And the `apply` method is needed to make the changes described as events.
+The events will be added later, but the following is enough to make it executable:
 
 ```php
 <?php
@@ -12,16 +14,22 @@ declare(strict_types=1);
 
 namespace App\Profile;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 final class Profile extends AggregateRoot
 {
     public function aggregateRootId(): string
     {
-        // todo
+        return '1';
     }
     
     public static function create(string $id): self 
+    {
+        // todo
+    }
+    
+    public function apply(AggregateChanged $event): void
     {
         // todo
     }
@@ -30,7 +38,7 @@ final class Profile extends AggregateRoot
 
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
-But it is possible to define different named constructors for different usecases like `createFromRegistration`.
+But it is possible to define different named constructors for different use-cases like `createFromRegistration`.
 
 After the basic structure for an aggregate is in place, it could theoretically be saved:
 
@@ -42,10 +50,9 @@ declare(strict_types=1);
 namespace App\Profile\Handler;
 
 use App\Profile\Command\CreateProfile;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Repository\Repository;
 
-final class CreateProfileHandler extends AggregateRoot
+final class CreateProfileHandler
 {
     private Repository $profileRepository;
 
@@ -74,7 +81,7 @@ Info: You can find more about repositories in the chapter `Repository`.
 
 ## Event
 
-Information is only stored in the form of events.
+Information is only stored as events.
 These events are also used again to rebuild the current state of the aggregate.
 
 ### create aggregate
@@ -95,7 +102,7 @@ final class ProfileCreated extends AggregateChanged
 {
     public static function raise(string $id, string $name): AggregateChanged
     {
-        return self::occur(
+        return new self(
             $id, 
             [
                 'id' => $id,
@@ -133,6 +140,7 @@ declare(strict_types=1);
 namespace App\Profile;
 
 use App\Profile\Event\ProfileCreated;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 final class Profile extends AggregateRoot
@@ -157,11 +165,13 @@ final class Profile extends AggregateRoot
 
         return $self;
     }
-
-    protected function applyProfileCreated(ProfileCreated $event): void
+    
+    protected function apply(AggregateChanged $event): void 
     {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
+        if ($event instanceof ProfileCreated) {
+            $this->id = $event->profileId();
+            $this->name = $event->name();
+        }
     }
 }
 ```
@@ -182,8 +192,8 @@ Sprich, nach diesem Call ist der State dem entsprechend schon aktualisiert.
 
 ### modify aggregate
 
-Um Aggregate nachträglich zu verändern, müssen nur weitere Events definiert werden.
-Zb. können wir auch den Namen ändern.
+In order to change the state of the aggregates afterwards, only further events have to be defined.
+As example we can add a `NameChanged` event:
 
 ```php
 <?php
@@ -198,7 +208,7 @@ final class NameChanged extends AggregateChanged
 {
     public static function raise(string $id, string $name): AggregateChanged
     {
-        return self::occur(
+        return new self(
             $id,
             [
                 'name' => $name
@@ -218,7 +228,7 @@ final class NameChanged extends AggregateChanged
 }
 ```
 
-Nachdem wir das Event definiert haben, können wir unser Aggregat erweitern.
+After we have defined the event, we can expand our aggregate:
 
 ```php
 <?php
@@ -229,6 +239,7 @@ namespace App\Profile;
 
 use App\Profile\Event\ProfileCreated;
 use App\Profile\Event\NameChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 final class Profile extends AggregateRoot
@@ -258,16 +269,17 @@ final class Profile extends AggregateRoot
     {
         $this->record(NameChanged::raise($this->id, $name));
     }
-
-    protected function applyProfileCreated(ProfileCreated $event): void
-    {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
-    }
     
-    protected function applyNameChanged(NameChanged $event): void 
+    protected function apply(AggregateChanged $event): void
     {
-        $this->name = $event->name();
+        if ($event instanceof ProfileCreated) {
+            $this->id = $event->profileId();
+            $this->name = $event->name();
+        }
+        
+        if ($event instanceof NameChanged) {
+            $this->name = $event->name();
+        }
     }
 }
 ```
@@ -288,7 +300,7 @@ use App\Profile\Command\ChangeName;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Repository\Repository;
 
-final class ChangeNameHandler extends AggregateRoot
+final class ChangeNameHandler
 {
     private Repository $profileRepository;
 
@@ -318,6 +330,124 @@ Zum Schluss wird die `save()` Methode aufgerufen,
 die wiederrum alle nicht gespeicherte Events aus dem Aggregate zieht
 und diese dann in die Datenbank speichert.
 
+## apply methods
+
+### strict apply method
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Profile;
+
+use App\Profile\Event\ProfileCreated;
+use App\Profile\Event\NameChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
+
+final class Profile extends AggregateRoot
+{
+    use StrictApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    public function aggregateRootId(): string
+    {
+        return $this->id;
+    }
+    
+    public function name(): string 
+    {
+        return $this->name;
+    }
+
+    public static function create(string $id, string $name): self
+    {
+        $self = new self();
+        $self->record(ProfileCreated::raise($id, $name));
+
+        return $self;
+    }
+    
+    public function changeName(string $name): void 
+    {
+        $this->record(NameChanged::raise($this->id, $name));
+    }
+    
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId();
+        $this->name = $event->name();
+    }
+    
+    protected function applyNameChanged(NameChanged $event): void
+    {
+        $this->name = $event->name();
+    }
+}
+```
+
+### non strict apply method
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Profile;
+
+use App\Profile\Event\ProfileCreated;
+use App\Profile\Event\NameChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
+
+final class Profile extends AggregateRoot
+{
+    use NonStrictApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    public function aggregateRootId(): string
+    {
+        return $this->id;
+    }
+    
+    public function name(): string 
+    {
+        return $this->name;
+    }
+
+    public static function create(string $id, string $name): self
+    {
+        $self = new self();
+        $self->record(ProfileCreated::raise($id, $name));
+
+        return $self;
+    }
+    
+    public function changeName(string $name): void 
+    {
+        $this->record(NameChanged::raise($this->id, $name));
+    }
+    
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId();
+        $this->name = $event->name();
+    }
+    
+    protected function applyNameChanged(NameChanged $event): void
+    {
+        $this->name = $event->name();
+    }
+}
+```
+
 ## business rules
 
 Business Rules müssen immer in den Methoden passieren, die die Events werfen. 
@@ -342,9 +472,12 @@ namespace App\Profile;
 use App\Profile\Event\ProfileCreated;
 use App\Profile\Event\NameChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
 
 final class Profile extends AggregateRoot
 {
+    use StrictApplyMethod;
+
     private string $id;
     private string $name;
 
@@ -419,9 +552,12 @@ namespace App\Profile;
 use App\Profile\Event\ProfileCreated;
 use App\Profile\Event\NameChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
 
 final class Profile extends AggregateRoot
 {
+    use StrictApplyMethod;
+
     private string $id;
     private Name $name;
 
@@ -473,7 +609,7 @@ final class NameChanged extends AggregateChanged
 {
     public static function raise(string $id, Name $name): AggregateChanged
     {
-        return self::occur(
+        return new self(
             $id,
             [
                 'name' => $name->toString()
@@ -505,9 +641,12 @@ declare(strict_types=1);
 namespace App\Hotel;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
 
 final class Hotel extends AggregateRoot
 {
+    use StrictApplyMethod;
+
     private const SIZE = 5;
 
     private int $people;
@@ -541,38 +680,3 @@ oder ein fremdes System, um keine Buchungen mehr zu erlauben.
 Denkbar wäre auch, dass hier nachträglich eine Exception geschmissen wird.
 Da erst bei der save Methode die Events wirklich gespeichert werden, 
 kann hier ohne weiteres darauf reagiert werden, ohne dass ungewollt Daten verändert werden.
-
-## override apply methode
-
-Wenn die standard Implementierung aus gründen nicht reicht oder zum Umständlich ist,
-dann kann man diese auch überschreiben. Hier findest du ein kleines Beispiel.
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
-use App\Profile\Event\ProfileCreated;
-use App\Profile\Event\NameChanged;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-
-final class Profile extends AggregateRoot
-{
-    //...
-    protected function apply(AggregateChanged $event): void
-    {
-        switch ($event::class) {
-            case ProfileCreated::class:
-                $this->id = $event->profileId();
-                $this->name = $event->name();
-                break;
-            class NameChanged::class: 
-                $this->name = $event->name();
-                break;
-        }
-    }
-}
-```
-
