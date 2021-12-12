@@ -1,7 +1,7 @@
 # Projections
 
 With `projections` you can create your data optimized for reading.
-This projection can be adjusted, deleted or rebuilt at any time.
+projections can be adjusted, deleted or rebuilt at any time.
 This is possible because the source of truth remains untouched 
 and everything can always be reproduced from the events.
 
@@ -58,6 +58,18 @@ final class ProfileProjection implements Projection
     }
 }
 ```
+
+> :warning: You should not execute any actions with projections, 
+> otherwise these will be executed again if you rebuild the projection!
+
+Projections have a `create` and a `drop` method that is executed when the projection is created or deleted.
+In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
+
+Furthermore you have to implement the method `handledEvents`, which returns a hash map. 
+The event class is mapped in the hash map with the appropriate method.
+
+As soon as the event has been dispatched, the appropriate methods are then executed. 
+Several projections can also listen to the same event.
 
 ## Register projections
 
