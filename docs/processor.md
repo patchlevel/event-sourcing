@@ -1,11 +1,6 @@
 # Processor
 
-A `processor` is an event listener who listens to recorded events.
-
-In this library there is a core module called `EventBus`. 
-For all events that are persisted (when the `save` method has been executed on the repository), 
-the event will be dispatched to the EventBus. All listeners are then called for each event.
-
+The `processor` is a kind of [event bus](./event_bus.md) listener that can execute actions on certain events.
 A process can be for example used to send an email when a profile has been created:
 
 ```php
@@ -43,12 +38,3 @@ final class SendEmailListener implements Listener
 ```
 
 > :warning: If you only want to listen to certain events, then you have to check it in the `__invoke` method.
-
-## Register Processor
-
-If you are using the `DefaultEventBus`, you can register the listener as follows.
-
-```php
-$eventStream = new DefaultEventBus();
-$eventStream->addListener(new SendEmailListener($mailer));
-```
