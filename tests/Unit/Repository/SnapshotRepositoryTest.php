@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
 use Patchlevel\EventSourcing\Repository\InvalidAggregateClass;
-use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\SnapshotRepository;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
@@ -24,7 +24,7 @@ use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use stdClass;
 
-class RepositoryTest extends TestCase
+class SnapshotRepositoryTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -32,70 +32,33 @@ class RepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $eventBus = $this->prophesize(EventBus::class);
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+
 
         $this->expectException(InvalidAggregateClass::class);
-        $this->expectExceptionMessage('Class "stdClass" is not an AggregateRoot.');
-        new Repository(
+        $this->expectExceptionMessage('Class "stdClass" is not a SnapshotableAggregateRoot.');
+        new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
             stdClass::class,
-        );
-    }
-
-    public function testInstantiateWithNonSnapshotAggregateButWithSnapshotStore(): void
-    {
-        $store = $this->prophesize(Store::class);
-        $eventBus = $this->prophesize(EventBus::class);
-        $snapshotStore = $this->prophesize(SnapshotStore::class);
-
-        $this->expectException(InvalidAggregateClass::class);
-        $this->expectExceptionMessage('Class "Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile" is not a SnapshotableAggregateRoot.');
-        new Repository(
-            $store->reveal(),
-            $eventBus->reveal(),
-            Profile::class,
             $snapshotStore->reveal()
         );
-    }
-
-    public function testSaveAggregate(): void
-    {
-        $store = $this->prophesize(Store::class);
-        $store->saveBatch(
-            Profile::class,
-            '1',
-            Argument::size(1)
-        )->shouldBeCalled();
-
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type(AggregateChanged::class))->shouldBeCalled();
-
-        $repository = new Repository(
-            $store->reveal(),
-            $eventBus->reveal(),
-            Profile::class,
-        );
-
-        $aggregate = Profile::createProfile(
-            ProfileId::fromString('1'),
-            Email::fromString('d.a.badura@gmail.com')
-        );
-
-        $repository->save($aggregate);
     }
 
     public function testSaveWrongAggregate(): void
     {
         $store = $this->prophesize(Store::class);
         $eventBus = $this->prophesize(EventBus::class);
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
 
-        $repository = new Repository(
+        $repository = new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
         );
 
-        $aggregate = ProfileWithSnapshot::createProfile(
+        $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
             Email::fromString('d.a.badura@gmail.com')
         );
@@ -108,7 +71,7 @@ class RepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->saveBatch(
-            Profile::class,
+            ProfileWithSnapshot::class,
             '1',
             Argument::size(1)
         )->shouldNotBeCalled();
@@ -116,13 +79,16 @@ class RepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(Argument::type(AggregateChanged::class))->shouldNotBeCalled();
 
-        $repository = new Repository(
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+
+        $repository = new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
         );
 
-        $aggregate = Profile::createProfile(
+        $aggregate = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
             Email::fromString('d.a.badura@gmail.com')
         );
@@ -131,7 +97,7 @@ class RepositoryTest extends TestCase
         $repository->save($aggregate);
     }
 
-    public function testSaveAggregateWithSnapshot(): void
+    public function testSaveAggregate(): void
     {
         $store = $this->prophesize(Store::class);
         $store->saveBatch(
@@ -146,7 +112,7 @@ class RepositoryTest extends TestCase
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->save(Argument::type(Snapshot::class))->shouldBeCalled();
 
-        $repository = new Repository(
+        $repository = new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
             ProfileWithSnapshot::class,
@@ -159,66 +125,6 @@ class RepositoryTest extends TestCase
         );
 
         $repository->save($aggregate);
-    }
-
-    public function testLoadAggregate(): void
-    {
-        $store = $this->prophesize(Store::class);
-        $store->load(
-            Profile::class,
-            '1'
-        )->willReturn([
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
-            )->recordNow(1),
-        ]);
-
-        $eventBus = $this->prophesize(EventBus::class);
-
-        $repository = new Repository(
-            $store->reveal(),
-            $eventBus->reveal(),
-            Profile::class,
-        );
-
-        $aggregate = $repository->load('1');
-
-        self::assertInstanceOf(Profile::class, $aggregate);
-        self::assertEquals(1, $aggregate->playhead());
-        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
-        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
-    }
-
-    public function testLoadAggregateCached(): void
-    {
-        $store = $this->prophesize(Store::class);
-        $store->load(
-            Profile::class,
-            '1'
-        )->willReturn([
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
-            )->recordNow(1),
-        ]);
-
-        $eventBus = $this->prophesize(EventBus::class);
-
-        $repository = new Repository(
-            $store->reveal(),
-            $eventBus->reveal(),
-            Profile::class,
-        );
-
-        $aggregate = $repository->load('1');
-
-        self::assertInstanceOf(Profile::class, $aggregate);
-        self::assertEquals(1, $aggregate->playhead());
-        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
-        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
-
-        self::assertSame($aggregate, $repository->load('1'));
     }
 
     public function testLoadAggregateWithSnapshot(): void
@@ -248,7 +154,7 @@ class RepositoryTest extends TestCase
             )
         );
 
-        $repository = new Repository(
+        $repository = new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
             ProfileWithSnapshot::class,
@@ -279,7 +185,7 @@ class RepositoryTest extends TestCase
         $snapshotStore->load(ProfileWithSnapshot::class, '1')
             ->willThrow(SnapshotNotFound::class);
 
-        $repository = new Repository(
+        $repository = new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
             ProfileWithSnapshot::class,
@@ -294,22 +200,61 @@ class RepositoryTest extends TestCase
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
     }
 
+    public function testLoadAggregateCached(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->load(
+            ProfileWithSnapshot::class,
+            '1'
+        )->willReturn([
+            ProfileCreated::raise(
+                ProfileId::fromString('1'),
+                Email::fromString('d.a.badura@gmail.com')
+            )->recordNow(1),
+        ]);
+
+        $eventBus = $this->prophesize(EventBus::class);
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+        $snapshotStore->load(ProfileWithSnapshot::class, '1')
+            ->willThrow(SnapshotNotFound::class);
+
+        $repository = new SnapshotRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
+        );
+
+        $aggregate = $repository->load('1');
+
+        self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
+        self::assertEquals(1, $aggregate->playhead());
+        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
+        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+
+        self::assertSame($aggregate, $repository->load('1'));
+    }
+
     public function testAggregateNotFound(): void
     {
         $this->expectException(AggregateNotFound::class);
 
         $store = $this->prophesize(Store::class);
         $store->load(
-            Profile::class,
+            ProfileWithSnapshot::class,
             '1'
         )->willReturn([]);
 
         $eventBus = $this->prophesize(EventBus::class);
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+        $snapshotStore->load(ProfileWithSnapshot::class, '1')
+            ->willThrow(SnapshotNotFound::class);
 
-        $repository = new Repository(
+        $repository = new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
         );
 
         $repository->load('1');
@@ -319,16 +264,18 @@ class RepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->has(
-            Profile::class,
+            ProfileWithSnapshot::class,
             '1'
         )->willReturn(true);
 
         $eventBus = $this->prophesize(EventBus::class);
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
 
-        $repository = new Repository(
+        $repository = new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
         );
 
         self::assertTrue($repository->has('1'));
@@ -337,7 +284,7 @@ class RepositoryTest extends TestCase
     public function testHasAggregateCached(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->load(Profile::class, '1')
+        $store->load(ProfileWithSnapshot::class, '1')
             ->willReturn(
                 [
                     ProfileCreated::raise(
@@ -346,19 +293,23 @@ class RepositoryTest extends TestCase
                     )->recordNow(1),
                 ]
             );
-        $store->has(Profile::class, '1')->shouldNotBeCalled();
+        $store->has(ProfileWithSnapshot::class, '1')->shouldNotBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+        $snapshotStore->load(ProfileWithSnapshot::class, '1')
+            ->willThrow(SnapshotNotFound::class);
 
-        $repository = new Repository(
+        $repository = new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
         );
 
         $aggregate = $repository->load('1');
 
-        self::assertInstanceOf(Profile::class, $aggregate);
+        self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
@@ -370,16 +321,18 @@ class RepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->has(
-            Profile::class,
+            ProfileWithSnapshot::class,
             '1'
         )->willReturn(false);
 
         $eventBus = $this->prophesize(EventBus::class);
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
 
-        $repository = new Repository(
+        $repository = new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
         );
 
         self::assertFalse($repository->has('1'));
