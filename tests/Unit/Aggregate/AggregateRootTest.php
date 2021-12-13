@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
+use Patchlevel\EventSourcing\Aggregate\PlayheadSequenceMismatch;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
@@ -106,19 +107,40 @@ class AggregateRootTest extends TestCase
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('profile@test.com')
-            ),
+            )->recordNow(1),
             MessagePublished::raise(
                 ProfileId::fromString('1'),
                 Message::create(
                     MessageId::fromString('2'),
                     'message value'
                 )
-            ),
+            )->recordNow(2),
         ];
 
         $profile = Profile::createFromEventStream($eventStream);
 
         self::assertEquals('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
+    }
+
+    public function testPlayheadSequenceMismatch(): void
+    {
+        $this->expectException(PlayheadSequenceMismatch::class);
+
+        $eventStream = [
+            ProfileCreated::raise(
+                ProfileId::fromString('1'),
+                Email::fromString('profile@test.com')
+            )->recordNow(1),
+            MessagePublished::raise(
+                ProfileId::fromString('1'),
+                Message::create(
+                    MessageId::fromString('2'),
+                    'message value'
+                )
+            )->recordNow(1),
+        ];
+
+        Profile::createFromEventStream($eventStream);
     }
 }

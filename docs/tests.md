@@ -25,7 +25,7 @@ final class ProfileTest extends TestCase
         $id = ProfileId::generate();
 
         $events = [
-            ProfileCreated::raise($id, Email::fromString('foo@email.com')),
+            ProfileCreated::raise($id, Email::fromString('foo@email.com'))->recordNow(1),
         ];
 
         $profile = Profile::createFromEventStream($events);
