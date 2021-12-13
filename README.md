@@ -22,6 +22,7 @@ composer require patchlevel/event-sourcing
 
 * [Aggregate](docs/aggregate.md)
 * [Repository](docs/repository.md)
+* [Event Bus](docs/event_bus.md)
 * [Processor](docs/processor.md)
 * [Projection](docs/projection.md)
 * [Snapshots](docs/snapshots.md)
