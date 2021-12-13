@@ -28,6 +28,7 @@ composer require patchlevel/event-sourcing
 * [Snapshots](docs/snapshots.md)
 * [Pipeline](docs/pipeline.md)
 * [Tests](docs/tests.md)
+* [FAQ](docs/faq.md)
 
 ## Getting Started
 

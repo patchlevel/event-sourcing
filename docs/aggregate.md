@@ -46,6 +46,8 @@ final class Profile extends AggregateRoot
 
 > :warning: The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
 
+> :book: An aggregateId can be an **uuid**, you can find more about this [here](./faq.md).
+
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
 But it is possible to define different named constructors for different use-cases like `createFromRegistration`.
