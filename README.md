@@ -32,12 +32,83 @@ composer require patchlevel/event-sourcing
 
 ## Getting Started
 
+
+### define some events
+
+```php
+<?php declare(strict_types=1);
+
+namespace App\Domain\Hotel\Event;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+
+final class HotelCreated extends AggregateChanged
+{
+    public static function raise(string $id, string $hotelName): self 
+    {
+        return new self($id, ['hotelId' => $id, 'hotelName' => $hotelName]);
+    }
+
+    public function hotelId(): string
+    {
+        return $this->aggregateId;
+    }
+
+    public function hotelName(): string
+    {
+        return $this->payload['hotelName'];
+    }
+}
+```
+
+```php
+<?php declare(strict_types=1);
+
+namespace App\Domain\Hotel\Event;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+
+final class GuestIsCheckedIn extends AggregateChanged
+{
+    public static function raise(string $id, string $guestName): self 
+    {
+        return new self($id, ['guestName' => $guestName]);
+    }
+
+    public function guestName(): string
+    {
+        return $this->payload['guestName'];
+    }
+}
+```
+
+```php
+<?php declare(strict_types=1);
+
+namespace App\Domain\Hotel\Event;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+
+final class GuestIsCheckedOut extends AggregateChanged
+{
+    public static function raise(string $id, string $guestName): self 
+    {
+        return new self($id, ['guestName' => $guestName]);
+    }
+
+    public function guestName(): string
+    {
+        return $this->payload['guestName'];
+    }
+}
+```
+
 ### define aggregates
 
 ```php
 <?php declare(strict_types=1);
 
-namespace App\Domain\Profile;
+namespace App\Domain\Hotel;
 
 use App\Domain\Profile\Event\MessagePublished;
 use App\Domain\Profile\Event\ProfileCreated;
@@ -72,7 +143,7 @@ final class Hotel extends AggregateRoot
         return $self;
     }
 
-    public function checkin(string $guestName): void
+    public function checkIn(string $guestName): void
     {
         if (in_array($guestName, $this->guests, true)) {
             throw new GuestHasAlreadyCheckedIn($guestName);
@@ -81,7 +152,7 @@ final class Hotel extends AggregateRoot
         $this->record(GuestIsCheckedIn::raise($this->id, $guestName));
     }
     
-    public function checkout(string $guestName): void
+    public function checkOut(string $guestName): void
     {
         if (!in_array($guestName, $this->guests, true)) {
             throw new IsNotAGuest($guestName);
@@ -127,60 +198,6 @@ final class Hotel extends AggregateRoot
 ```
 
 > :book: 
-
-### define some events
-
-```php
-<?php declare(strict_types=1);
-
-namespace App\Domain\Profile\Event;
-
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
-final class HotelCreated extends AggregateChanged
-{
-    public static function raise(string $id, string $hotelName): self 
-    {
-        return new self($id, ['hotelId' => $id, 'hotelName' => $hotelName]);
-    }
-
-    public function hotelId(): string
-    {
-        return $this->aggregateId;
-    }
-
-    public function hotelName(): string
-    {
-        return $this->payload['hotelName'];
-    }
-}
-
-final class GuestIsCheckedIn extends AggregateChanged
-{
-    public static function raise(string $id, string $guestName): self 
-    {
-        return new self($id, ['guestName' => $guestName]);
-    }
-
-    public function guestName(): string
-    {
-        return $this->payload['guestName'];
-    }
-}
-
-final class GuestIsCheckedOut extends AggregateChanged
-{
-    public static function raise(string $id, string $guestName): self 
-    {
-        return new self($id, ['guestName' => $guestName]);
-    }
-
-    public function guestName(): string
-    {
-        return $this->payload['guestName'];
-    }
-}
-```
 
 ### define projections
 
@@ -288,9 +305,9 @@ $hotelProjection->create();
 
 ```php
 $hotel = Hotel::create('1', 'HOTEL');
-$hotel->checkin('David');
-$hotel->checkin('Daniel');
-$hotel->checkout('David');
+$hotel->checkIn('David');
+$hotel->checkIn('Daniel');
+$hotel->checkOut('David');
 
 $hotelRepository->save($hotel);
 ```
