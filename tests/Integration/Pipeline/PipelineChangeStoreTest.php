@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
-use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -86,8 +86,8 @@ final class PipelineChangeStoreTest extends TestCase
 
         (new DoctrineSchemaManager())->create($newStore);
 
-        $oldRepository = new Repository($oldStore, new DefaultEventBus(), Profile::class);
-        $newRepository = new Repository($newStore, new DefaultEventBus(), Profile::class);
+        $oldRepository = new DefaultRepository($oldStore, new DefaultEventBus(), Profile::class);
+        $newRepository = new DefaultRepository($newStore, new DefaultEventBus(), Profile::class);
 
         $profile = Profile::create('1');
         $profile->visit();

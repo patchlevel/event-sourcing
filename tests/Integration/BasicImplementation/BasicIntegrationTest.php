@@ -11,7 +11,8 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
-use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Repository\SnapshotRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
@@ -70,7 +71,7 @@ final class BasicIntegrationTest extends TestCase
             'eventstore'
         );
 
-        $repository = new Repository($store, $eventStream, Profile::class);
+        $repository = new DefaultRepository($store, $eventStream, Profile::class);
 
         // create tables
         $profileProjection->create();
@@ -86,7 +87,7 @@ final class BasicIntegrationTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
-        $repository = new Repository($store, $eventStream, Profile::class);
+        $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
@@ -112,7 +113,7 @@ final class BasicIntegrationTest extends TestCase
             'eventstore'
         );
 
-        $repository = new Repository($store, $eventStream, Profile::class);
+        $repository = new DefaultRepository($store, $eventStream, Profile::class);
 
         // create tables
         $profileProjection->create();
@@ -127,7 +128,7 @@ final class BasicIntegrationTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
-        $repository = new Repository($store, $eventStream, Profile::class);
+        $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
@@ -151,7 +152,7 @@ final class BasicIntegrationTest extends TestCase
             [Profile::class => 'profile']
         );
 
-        $repository = new Repository($store, $eventStream, Profile::class);
+        $repository = new DefaultRepository($store, $eventStream, Profile::class);
 
         // create tables
         $profileProjection->create();
@@ -166,7 +167,7 @@ final class BasicIntegrationTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
-        $repository = new Repository($store, $eventStream, Profile::class);
+        $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
@@ -193,7 +194,7 @@ final class BasicIntegrationTest extends TestCase
 
         $snapshotStore = new InMemorySnapshotStore();
 
-        $repository = new Repository($store, $eventStream, Profile::class, $snapshotStore);
+        $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
 
         // create tables
         $profileProjection->create();
@@ -208,7 +209,7 @@ final class BasicIntegrationTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
 
-        $repository = new Repository($store, $eventStream, Profile::class, $snapshotStore);
+        $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());

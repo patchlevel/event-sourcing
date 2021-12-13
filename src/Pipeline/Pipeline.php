@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline;
 
+use Closure;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
 use Patchlevel\EventSourcing\Pipeline\Source\Source;
@@ -26,16 +27,10 @@ final class Pipeline
     }
 
     /**
-     * @param (callable(EventBucket $event):void)|null $observer
+     * @param ?Closure(EventBucket):void $observer
      */
-    public function run(?callable $observer = null): void
+    public function run(?Closure $observer = null): void
     {
-        if ($observer === null) {
-            /** @var callable(EventBucket $event):void $observer */
-            $observer = static function (): void {
-            };
-        }
-
         foreach ($this->source->load() as $bucket) {
             $result = ($this->middlewares)($bucket);
 
@@ -43,7 +38,9 @@ final class Pipeline
                 $this->target->save($resultBucket);
             }
 
-            $observer($bucket);
+            if ($observer) {
+                $observer($bucket);
+            }
         }
     }
 

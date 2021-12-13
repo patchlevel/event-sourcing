@@ -32,12 +32,12 @@ final class Profile extends SnapshotableAggregateRoot
 
 
 ```php
-use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\SnapshotRepository;
 use Patchlevel\EventSourcing\Snapshot\Psr16SnapshotStore;
 
 $snapshotStore = new Psr16SnapshotStore($cache);
 
-$repository = new Repository($store, $eventStream, Profile::class, $snapshotStore);
+$repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
 ```
 
 

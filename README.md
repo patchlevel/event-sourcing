@@ -200,7 +200,7 @@ final class MessageProjection implements Projection
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
-use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 
@@ -219,7 +219,7 @@ $store = new SingleTableStore(
     'eventstore'
 );
 
-$repository = new Repository($store, $eventStream, Profile::class);
+$repository = new DefaultRepository($store, $eventStream, Profile::class);
 
 // create tables
 $profileProjection->create();
