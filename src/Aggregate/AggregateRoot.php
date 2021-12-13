@@ -55,6 +55,11 @@ abstract class AggregateRoot
 
         foreach ($stream as $message) {
             $self->playhead++;
+
+            if ($self->playhead !== $message->playhead()) {
+                throw new PlayheadSequenceMismatch();
+            }
+
             $self->apply($message);
         }
 
