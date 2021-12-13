@@ -12,7 +12,7 @@ interface WatchServer
     public function start(): void;
 
     /**
-     * @param Closure(AggregateChanged, int):void $callback
+     * @param Closure(AggregateChanged<array<string, mixed>>, int):void $callback
      */
     public function listen(Closure $callback): void;
 
