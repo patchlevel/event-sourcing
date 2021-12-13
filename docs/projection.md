@@ -91,4 +91,4 @@ $projectionRepository = new DefaultProjectionRepository([
 $eventBus->addListener(new ProjectionListener($projectionRepository));
 ```
 
-> :book: You can find out more about the event bus [here](./event_bus.md). 
+> :book: You can find out more about the event bus [here](./event_bus.md).
