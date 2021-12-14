@@ -25,7 +25,7 @@ abstract class SnapshotableAggregateRoot extends AggregateRoot
      *
      * @return static
      */
-    public static function createFromSnapshot(Snapshot $snapshot, array $stream): self
+    final public static function createFromSnapshot(Snapshot $snapshot, array $stream): self
     {
         $self = static::deserialize($snapshot->payload());
         $self->playhead = $snapshot->playhead();
@@ -43,7 +43,7 @@ abstract class SnapshotableAggregateRoot extends AggregateRoot
         return $self;
     }
 
-    public function toSnapshot(): Snapshot
+    final public function toSnapshot(): Snapshot
     {
         return new Snapshot(
             static::class,
