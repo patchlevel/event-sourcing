@@ -36,7 +36,7 @@ abstract class DoctrineStore implements Store
      *
      * @template T
      */
-    protected static function normalizeResult(AbstractPlatform $platform, array $result): array
+    final protected static function normalizeResult(AbstractPlatform $platform, array $result): array
     {
         $result['recordedOn'] = self::normalizeRecordedOn($result['recordedOn'], $platform);
         $result['playhead'] = self::normalizePlayhead($result['playhead'], $platform);
