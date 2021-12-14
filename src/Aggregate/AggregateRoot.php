@@ -23,7 +23,7 @@ abstract class AggregateRoot
     /**
      * @param AggregateChanged<array<string, mixed>> $event
      */
-    protected function record(AggregateChanged $event): void
+    final protected function record(AggregateChanged $event): void
     {
         $this->playhead++;
 
@@ -36,7 +36,7 @@ abstract class AggregateRoot
     /**
      * @return array<AggregateChanged>
      */
-    public function releaseEvents(): array
+    final public function releaseEvents(): array
     {
         $events = $this->uncommittedEvents;
         $this->uncommittedEvents = [];
@@ -49,7 +49,7 @@ abstract class AggregateRoot
      *
      * @return static
      */
-    public static function createFromEventStream(array $stream): self
+    final public static function createFromEventStream(array $stream): self
     {
         $self = new static();
 
@@ -66,7 +66,7 @@ abstract class AggregateRoot
         return $self;
     }
 
-    public function playhead(): int
+    final public function playhead(): int
     {
         return $this->playhead;
     }

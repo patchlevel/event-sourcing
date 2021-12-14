@@ -38,17 +38,17 @@ abstract class AggregateChanged
         $this->recordedOn = null;
     }
 
-    public function aggregateId(): string
+    final public function aggregateId(): string
     {
         return $this->aggregateId;
     }
 
-    public function playhead(): ?int
+    final public function playhead(): ?int
     {
         return $this->playhead;
     }
 
-    public function recordedOn(): ?DateTimeImmutable
+    final public function recordedOn(): ?DateTimeImmutable
     {
         return $this->recordedOn;
     }
@@ -56,7 +56,7 @@ abstract class AggregateChanged
     /**
      * @return T
      */
-    public function payload(): array
+    final public function payload(): array
     {
         return $this->payload;
     }
@@ -66,7 +66,7 @@ abstract class AggregateChanged
      *
      * @return static
      */
-    public function recordNow(int $playhead): self
+    final public function recordNow(int $playhead): self
     {
         if ($this->playhead !== null) {
             throw new AggregateChangeRecordedAlready();
@@ -87,7 +87,7 @@ abstract class AggregateChanged
      *
      * @template E of self
      */
-    public static function deserialize(array $data): self
+    final public static function deserialize(array $data): self
     {
         $class = $data['event'];
 
@@ -104,7 +104,7 @@ abstract class AggregateChanged
     /**
      * @return array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable}
      */
-    public function serialize(): array
+    final public function serialize(): array
     {
         $recordedOn = $this->recordedOn;
         $playhead = $this->playhead;
