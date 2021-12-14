@@ -86,17 +86,7 @@ parameters:
 			path: src/Store/MultiTableStore.php
 
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\WatchServer\\\\WatchServer\\:\\:listen\\(\\) has parameter \\$callback with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
-			count: 1
-			path: src/WatchServer/WatchServer.php
-
-		-
 			message: "#^While loop condition is always true\\.$#"
 			count: 1
-			path: src/WatchServer/WatchServer.php
-
-		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\WatchServer\\\\WatchServerClient\\:\\:send\\(\\) has parameter \\$event with generic class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged but does not specify its types\\: T$#"
-			count: 1
-			path: src/WatchServer/WatchServerClient.php
+			path: src/WatchServer/DefaultWatchServer.php
 
