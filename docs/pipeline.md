@@ -174,7 +174,8 @@ $buckets = $target->buckets();
 
 Middelwares can be used to manipulate, delete or expand events during the process.
 
-> :warning: It is important to know that some middlewares require recalculation from the playhead. 
+> :warning: It is important to know that some middlewares require recalculation from the playhead,
+> if the target is a store.
 > This is a numbering of the events that must be in ascending order.
 > A corresponding note is supplied with every middleware.
 
@@ -254,6 +255,8 @@ $middleware = new ClassRenameMiddleware([
 ]);
 ```
 
+> :book: The middleware takes over the payload, playhead and recordedAt information.
+
 ### until
 
 A use case could also be that you want to look at the projection from a previous point in time.
@@ -264,6 +267,8 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
 
 $middleware = new UntilEventMiddleware(new DateTimeImmutable('2020-01-01 12:00:00'));
 ```
+
+> :warning: After this middleware, the playhead must be recalculated!
 
 ### recalculate playhead
 

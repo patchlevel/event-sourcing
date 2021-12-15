@@ -324,6 +324,8 @@ final class ChangeNameHandler
 }
 ```
 
+> :book: You can read more about Repository [here](./repository.md).
+
 Here the aggregate is loaded from the `repository` by fetching all events from the database.
 These events are then executed again with the `apply` methods in order to rebuild the current state.
 All of this happens automatically in the `load` method.
@@ -617,7 +619,8 @@ This is not a problem, as the `apply` methods are always executed immediately.
 
 In the next case we throw an exception if the hotel is already overbooked.
 Besides that, we record another event `FullyBooked`, if the hotel is fully booked with the last booking. 
-With this event we could notify external systems or fill a projection with fully booked hotels.
+With this event we could [notify](./processor.md) external systems 
+or fill a [projection](./projection.md) with fully booked hotels.
 
 ```php
 <?php

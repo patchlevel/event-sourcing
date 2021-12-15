@@ -18,7 +18,7 @@ This interface can be used for the typehints so that a change is possible at any
 ### Default Repository
 
 The default repository acts directly with the `store` and therefore needs one.
-The `event bus` is used as a further parameter to dispatch new events.
+The [event bus](./event_bus.md) is used as a further parameter to dispatch new events.
 Finally, the `aggregate` class is needed, which aggregates the repository should take care of.
 
 ```php
@@ -56,7 +56,8 @@ saving it or checking whether it exists.
 An `aggregate` can be `saved`. 
 All new events that have not yet been written to the database are fetched from the aggregate. 
 These events are then also append to the database. 
-After the events have been written, the new events are dispatched on the event bus.
+After the events have been written, 
+the new events are dispatched on the [event bus](./event_bus.md).
 
 ```php
 $profile = Profile::create('david.badura@patchlevel.de');
