@@ -13,12 +13,6 @@ Either a file, a relational database, a no-sql database like mongodb or an elast
 In this example we always create a new data set in a relational database when a profile is created:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Projection;
-
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Projection\Projection;

@@ -109,8 +109,6 @@ We have also defined the `create`, `checkIn` and `checkOut` methods accordingly.
 These events are thrown here and the state of the hotel is also changed.
 
 ```php
-use App\Domain\Profile\Event\MessagePublished;
-use App\Domain\Profile\Event\ProfileCreated;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
@@ -205,7 +203,6 @@ we need a projection for it.
 
 ```php
 use Doctrine\DBAL\Connection;
-use App\Infrastructure\MongoDb\MongoDbManager;
 use Patchlevel\EventSourcing\Projection\Projection;
 
 final class HotelProjection implements Projection

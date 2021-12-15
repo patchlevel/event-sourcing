@@ -16,13 +16,6 @@ A UUID can be generated for the `aggregateId`. There are two popular libraries t
 The `aggregate` does not care how the id is generated, since only an aggregate-wide unique string is expected here.
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
-use App\Profile\Event\ProfileCreated;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Ramsey\Uuid\Uuid;
@@ -73,12 +66,6 @@ This allows you to ensure that the correct id is always used.
 The whole thing looks like this:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
 use Ramsey\Uuid\Uuid;
 
 class ProfileId 
@@ -103,16 +90,8 @@ class ProfileId
 ```
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
-use App\Profile\Event\ProfileCreated;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 
 use Ramsey\Uuid\UuidInterface;
 
@@ -167,12 +146,6 @@ Instead, you just have to wrap these repositories.
 This also gives you more type security.
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
 use Patchlevel\EventSourcing\Repository\Repository;
 
 class ProfileRepository 
