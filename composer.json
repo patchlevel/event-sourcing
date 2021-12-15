@@ -22,8 +22,7 @@
     "ext-json": "^7.4|^8.0",
     "doctrine/dbal": "^3.2.0",
     "psr/cache": "^1.0.1|^2.0.0",
-    "psr/simple-cache": "^1.0.1|^2.0.0",
-    "symfony/console": "^4.4.18|^5.1.10"
+    "psr/simple-cache": "^1.0.1|^2.0.0"
   },
   "require-dev": {
     "ext-pdo_sqlite": "^7.4|^8.0",
@@ -35,12 +34,14 @@
     "phpstan/phpstan": "^1.2.0",
     "phpunit/phpunit": "^9.5.4",
     "psalm/plugin-phpunit": "^0.16.1",
+    "symfony/console": "^4.4.18|^5.1.10",
     "symfony/messenger": "^4.4.18|^5.1.10",
     "symfony/var-dumper": "^5.4.1",
     "vimeo/psalm": "^4.15.0"
   },
   "suggest": {
-    "symfony/messenger": "for an advanced message bus"
+    "symfony/messenger": "for an advanced message bus as event bus",
+    "symfony/console": "to use the predefined cli commands"
   },
   "config": {
     "preferred-install": {
