@@ -3,22 +3,17 @@
 [![Latest Stable Version](https://poser.pugx.org/patchlevel/event-sourcing/v)](//packagist.org/packages/patchlevel/event-sourcing)
 [![License](https://poser.pugx.org/patchlevel/event-sourcing/license)](//packagist.org/packages/patchlevel/event-sourcing)
 
-# event-sourcing
+# Event-Sourcing
 
 Small lightweight event-sourcing library.
 
-## installation
+## Installation
 
 ```
 composer require patchlevel/event-sourcing
 ```
 
-## integration
-
-* [Symfony](https://github.com/patchlevel/event-sourcing-bundle)
-* [Psalm](https://github.com/patchlevel/event-sourcing-psalm-plugin)
-
-## documentation
+## Documentation
 
 * [Aggregate](docs/aggregate.md)
 * [Repository](docs/repository.md)
@@ -26,26 +21,28 @@ composer require patchlevel/event-sourcing
 * [Processor](docs/processor.md)
 * [Projection](docs/projection.md)
 * [Snapshots](docs/snapshots.md)
+* [Store](docs/store.md)
 * [Pipeline](docs/pipeline.md)
 * [Tests](docs/tests.md)
 * [FAQ](docs/faq.md)
+
+## Integration
+
+* [Symfony](https://github.com/patchlevel/event-sourcing-bundle)
+* [Psalm](https://github.com/patchlevel/event-sourcing-psalm-plugin)
 
 ## Getting Started
 
 In our little getting started example, we manage hotels. 
 We keep the example small, so we can only create hotels and let guests check in and check out.
 
-### define some events
+### Define some events
 
 First we define the events that happen in our system.
 
 A hotel can be created with a `name`:
 
 ```php
-<?php declare(strict_types=1);
-
-namespace App\Domain\Hotel\Event;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class HotelCreated extends AggregateChanged
@@ -70,10 +67,6 @@ final class HotelCreated extends AggregateChanged
 A guest can check in by name:
 
 ```php
-<?php declare(strict_types=1);
-
-namespace App\Domain\Hotel\Event;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class GuestIsCheckedIn extends AggregateChanged
@@ -93,10 +86,6 @@ final class GuestIsCheckedIn extends AggregateChanged
 And also check out again:
 
 ```php
-<?php declare(strict_types=1);
-
-namespace App\Domain\Hotel\Event;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class GuestIsCheckedOut extends AggregateChanged
@@ -113,17 +102,13 @@ final class GuestIsCheckedOut extends AggregateChanged
 }
 ```
 
-### define aggregates
+### Define aggregates
 
 Next we need to define the aggregate. So the hotel and how the hotel should behave. 
 We have also defined the `create`, `checkIn` and `checkOut` methods accordingly.
 These events are thrown here and the state of the hotel is also changed.
 
 ```php
-<?php declare(strict_types=1);
-
-namespace App\Domain\Hotel;
-
 use App\Domain\Profile\Event\MessagePublished;
 use App\Domain\Profile\Event\ProfileCreated;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
@@ -213,16 +198,12 @@ final class Hotel extends AggregateRoot
 
 > :book: You can find out more about aggregates and events [here](./docs/aggregate.md).
 
-### define projections
+### Define projections
 
 So that we can see all the hotels on our website and also see how many guests are currently visiting the hotels, 
 we need a projection for it.
 
 ```php
-<?php declare(strict_types=1);
-
-namespace App\Projection;
-
 use Doctrine\DBAL\Connection;
 use App\Infrastructure\MongoDb\MongoDbManager;
 use Patchlevel\EventSourcing\Projection\Projection;
@@ -285,17 +266,11 @@ final class HotelProjection implements Projection
 
 > :book: You can find out more about projections [here](./docs/projection.md).
 
-### processor
+### Processor
 
 In our example we also want to send an email to the head office as soon as a guest is checked in.
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile\Listener;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Listener;
 
@@ -317,7 +292,7 @@ final class SendCheckInEmailListener implements Listener
         $this->mailer->send(
             'hq@patchlevel.de',
             'Guest is checked in',
-            $event->guestName()
+            sprintf('A new guest named "%s" is checked in', $event->guestName())
         );
     }
 }
@@ -325,18 +300,25 @@ final class SendCheckInEmailListener implements Listener
 
 > :book: You can find out more about processor [here](./docs/processor.md).
 
-### configuration
+### Configuration
 
 After we have defined everything, we still have to plug the whole thing together:
 
 ```php
+use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 
-$hotelProjection = new HotelProjection($this->connection);
+$connection = DriverManager::getConnection([
+    'url' => 'mysql://user:secret@localhost/app'
+]);
+
+$mailer = /* your own mailer */;
+
+$hotelProjection = new HotelProjection($connection);
 $projectionRepository = new DefaultProjectionRepository(
     [$hotelProjection]
 );
@@ -346,7 +328,7 @@ $eventBus->addListener(new ProjectionListener($projectionRepository));
 $eventBus->addListener(new SendCheckInEmailListener($mailer));
 
 $store = new SingleTableStore(
-    $this->connection,
+    $connection,
     [Hotel::class => 'hotel'],
     'eventstore'
 );
@@ -354,7 +336,9 @@ $store = new SingleTableStore(
 $hotelRepository = new DefaultRepository($store, $eventBus, Hotel::class);
 ```
 
-### database setup
+> :book: You can find out more about stores [here](./docs/store.md).
+
+### Database setup
 
 So that we can actually write the data to a database, 
 we need the associated schema and databases.
@@ -366,7 +350,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 $hotelProjection->create();
 ```
 
-### usage
+### Usage
 
 We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
 
@@ -383,5 +367,5 @@ $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 ```
 
-Consult the documentation for more information. 
-If you still have questions, feel free to create an issue :)
+Consult the [documentation](#documentation) or [FAQ](./docs/faq.md) for more information.
+If you still have questions, feel free to create an issue for it :)

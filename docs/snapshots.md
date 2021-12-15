@@ -27,6 +27,8 @@ $snapshotStore = new Psr16SnapshotStore($cache);
 $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
 ```
 
+> :book: You can read more about Repository [here](./repository.md).
+
 So that the state can also be cached, the aggregate must be taught how to `serialize` and `deserialize` its state.
 To do this, the aggregate must inherit from the `SnapshotableAggregateRoot`
 instead of the `AggregateRoot` and implement the necessary methods.
