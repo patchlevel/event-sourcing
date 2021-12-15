@@ -34,12 +34,6 @@ To do this, the aggregate must inherit from the `SnapshotableAggregateRoot`
 instead of the `AggregateRoot` and implement the necessary methods.
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 
 final class Profile extends SnapshotableAggregateRoot

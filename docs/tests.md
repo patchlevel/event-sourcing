@@ -1,10 +1,6 @@
 # Tests
 
 ```php
-<?php declare(strict_types=1);
-
-namespace App\Tests\Unit\Domain\Profile;
-
 use PHPUnit\Framework\TestCase;
 
 final class ProfileTest extends TestCase

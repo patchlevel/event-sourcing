@@ -4,12 +4,6 @@ The `processor` is a kind of [event bus](./event_bus.md) listener that can execu
 A process can be for example used to send an email when a profile has been created:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile\Listener;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Listener;
 

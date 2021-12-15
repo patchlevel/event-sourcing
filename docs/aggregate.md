@@ -11,12 +11,6 @@ And the `apply` method is needed to make the changes described as events.
 The events will be added later, but the following is enough to make it executable:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
@@ -55,12 +49,6 @@ But it is possible to define different named constructors for different use-case
 After the basic structure for an aggregate is in place, it could theoretically be saved:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile\Handler;
-
 use App\Profile\Command\CreateProfile;
 use Patchlevel\EventSourcing\Repository\Repository;
 
@@ -101,12 +89,6 @@ An event must receive the `aggregateId` and the `payload` and has to inherit fro
 A `ProfileCreated` event is ideal here:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile\Event;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class ProfileCreated extends AggregateChanged
@@ -142,13 +124,6 @@ final class ProfileCreated extends AggregateChanged
 After we have defined the event, we have to adapt the creation of the profile:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
-use App\Profile\Event\ProfileCreated;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
@@ -198,12 +173,6 @@ In order to change the state of the aggregates afterwards, only further events h
 As example we can add a `NameChanged` event:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile\Event;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class NameChanged extends AggregateChanged
@@ -236,14 +205,6 @@ After we have defined the event, we can define a new public method called `chang
 This method then creates the event `NameChanged` and records it:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
-use App\Profile\Event\ProfileCreated;
-use App\Profile\Event\NameChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
@@ -295,13 +256,6 @@ We checked again that we had the right event and then overwritten the name.
 When using it, it can look like this:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile\Handler;
-
-use App\Profile\Command\ChangeName;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Repository\Repository;
 
@@ -361,14 +315,6 @@ If the method does not exist then an error is thrown.
 Here are two examples with the events `ProfileCreated` and `NameChanged`:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
-use App\Profile\Event\ProfileCreated;
-use App\Profile\Event\NameChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
@@ -401,14 +347,6 @@ The non-strict variant works in the same way as the strict one.
 The only difference is that events without a suitable method do not lead to errors.
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
-use App\Profile\Event\ProfileCreated;
-use App\Profile\Event\NameChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
@@ -451,14 +389,6 @@ and were then also saved in the database.
 In the next example we want to make sure that **the name is at least 3 characters long**:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
-use App\Profile\Event\ProfileCreated;
-use App\Profile\Event\NameChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
 
@@ -501,12 +431,6 @@ In order for this to work, we either have to duplicate the rule or outsource it.
 Here we show how we can do it all with a value object:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
 final class Name
 {
     private string $value;
@@ -530,14 +454,6 @@ final class Name
 We can now use the value object `Name` in our aggregate:
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile;
-
-use App\Profile\Event\ProfileCreated;
-use App\Profile\Event\NameChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
 
@@ -579,12 +495,6 @@ In order for the whole thing to work, we still have to adapt our `NameChanged` e
 since we only expected a string before but now passed a `Name` value object.
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Profile\Event;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class NameChanged extends AggregateChanged
@@ -623,12 +533,6 @@ With this event we could [notify](./processor.md) external systems
 or fill a [projection](./projection.md) with fully booked hotels.
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Hotel;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
 
