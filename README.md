@@ -32,8 +32,14 @@ composer require patchlevel/event-sourcing
 
 ## Getting Started
 
+In our little getting started example, we manage hotels. 
+We keep the example small, so we can only create hotels and let guests check in and check out.
 
 ### define some events
+
+First we define the events that happen in our system.
+
+A hotel can be created with a `name`:
 
 ```php
 <?php declare(strict_types=1);
@@ -61,6 +67,8 @@ final class HotelCreated extends AggregateChanged
 }
 ```
 
+A guest can check in by name:
+
 ```php
 <?php declare(strict_types=1);
 
@@ -81,6 +89,8 @@ final class GuestIsCheckedIn extends AggregateChanged
     }
 }
 ```
+
+And also check out again:
 
 ```php
 <?php declare(strict_types=1);
@@ -104,6 +114,10 @@ final class GuestIsCheckedOut extends AggregateChanged
 ```
 
 ### define aggregates
+
+Next we need to define the aggregate. So the hotel and how the hotel should behave. 
+We have also defined the `create`, `checkIn` and `checkOut` methods accordingly.
+These events are thrown here and the state of the hotel is also changed.
 
 ```php
 <?php declare(strict_types=1);
@@ -197,9 +211,12 @@ final class Hotel extends AggregateRoot
 }
 ```
 
-> :book: 
+> :book: You can find out more about aggregates and events [here](./docs/aggregate.md).
 
 ### define projections
+
+So that we can see all the hotels on our website and also see how many guests are currently visiting the hotels, 
+we need a projection for it.
 
 ```php
 <?php declare(strict_types=1);
@@ -266,7 +283,51 @@ final class HotelProjection implements Projection
 }
 ```
 
+> :book: You can find out more about projections [here](./docs/projection.md).
+
+### processor
+
+In our example we also want to send an email to the head office as soon as a guest is checked in.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Profile\Listener;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Listener;
+
+final class SendCheckInEmailListener implements Listener
+{
+    private Mailer $mailer;
+
+    private function __construct(Mailer $mailer) 
+    {
+        $this->mailer = $mailer;
+    }
+
+    public function __invoke(AggregateChanged $event): void
+    {
+        if (!$event instanceof GuestIsCheckedIn) {
+            return;
+        }
+
+        $this->mailer->send(
+            'hq@patchlevel.de',
+            'Guest is checked in',
+            $event->guestName()
+        );
+    }
+}
+```
+
+> :book: You can find out more about processor [here](./docs/processor.md).
+
 ### configuration
+
+After we have defined everything, we still have to plug the whole thing together:
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
@@ -282,6 +343,7 @@ $projectionRepository = new DefaultProjectionRepository(
 
 $eventBus = new DefaultEventBus();
 $eventBus->addListener(new ProjectionListener($projectionRepository));
+$eventBus->addListener(new SendCheckInEmailListener($mailer));
 
 $store = new SingleTableStore(
     $this->connection,
@@ -294,6 +356,9 @@ $hotelRepository = new DefaultRepository($store, $eventBus, Hotel::class);
 
 ### database setup
 
+So that we can actually write the data to a database, 
+we need the associated schema and databases.
+
 ```php
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 
@@ -303,6 +368,8 @@ $hotelProjection->create();
 
 ### usage
 
+We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
+
 ```php
 $hotel = Hotel::create('1', 'HOTEL');
 $hotel->checkIn('David');
@@ -310,4 +377,11 @@ $hotel->checkIn('Daniel');
 $hotel->checkOut('David');
 
 $hotelRepository->save($hotel);
+
+$hotel2 = $hotelRepository->load('2');
+$hotel2->checkIn('David');
+$hotelRepository->save($hotel2);
 ```
+
+Consult the documentation for more information. 
+If you still have questions, feel free to create an issue :)
