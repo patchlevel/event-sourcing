@@ -43,9 +43,11 @@ $symfonyMessenger = //...
 $eventBus = new SymfonyEventBus($symfonyMessenger);
 ```
 
-> :warning: Don't forget to allow no handler!
+> :warning: You can't mix it with a command bus.
+> You should create a [new bus](https://symfony.com/doc/current/messenger/multiple_buses.html) for it.
 
-> :warning: You can't mix it with a command bus! Create a new bus for it!
+> :book: An event bus can have zero or more listeners on an event. 
+> You should allow no handler in the [HandleMessageMiddleware](https://symfony.com/doc/current/components/messenger.html).
 
 ## Listener
 

@@ -32,66 +32,173 @@ composer require patchlevel/event-sourcing
 
 ## Getting Started
 
-### define aggregates
+In our little getting started example, we manage hotels. 
+We keep the example small, so we can only create hotels and let guests check in and check out.
+
+### define some events
+
+First we define the events that happen in our system.
+
+A hotel can be created with a `name`:
 
 ```php
 <?php declare(strict_types=1);
 
-namespace App\Domain\Profile;
+namespace App\Domain\Hotel\Event;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+
+final class HotelCreated extends AggregateChanged
+{
+    public static function raise(string $id, string $hotelName): self 
+    {
+        return new self($id, ['hotelId' => $id, 'hotelName' => $hotelName]);
+    }
+
+    public function hotelId(): string
+    {
+        return $this->aggregateId;
+    }
+
+    public function hotelName(): string
+    {
+        return $this->payload['hotelName'];
+    }
+}
+```
+
+A guest can check in by name:
+
+```php
+<?php declare(strict_types=1);
+
+namespace App\Domain\Hotel\Event;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+
+final class GuestIsCheckedIn extends AggregateChanged
+{
+    public static function raise(string $id, string $guestName): self 
+    {
+        return new self($id, ['guestName' => $guestName]);
+    }
+
+    public function guestName(): string
+    {
+        return $this->payload['guestName'];
+    }
+}
+```
+
+And also check out again:
+
+```php
+<?php declare(strict_types=1);
+
+namespace App\Domain\Hotel\Event;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+
+final class GuestIsCheckedOut extends AggregateChanged
+{
+    public static function raise(string $id, string $guestName): self 
+    {
+        return new self($id, ['guestName' => $guestName]);
+    }
+
+    public function guestName(): string
+    {
+        return $this->payload['guestName'];
+    }
+}
+```
+
+### define aggregates
+
+Next we need to define the aggregate. So the hotel and how the hotel should behave. 
+We have also defined the `create`, `checkIn` and `checkOut` methods accordingly.
+These events are thrown here and the state of the hotel is also changed.
+
+```php
+<?php declare(strict_types=1);
+
+namespace App\Domain\Hotel;
 
 use App\Domain\Profile\Event\MessagePublished;
 use App\Domain\Profile\Event\ProfileCreated;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
-final class Profile extends AggregateRoot
+final class Hotel extends AggregateRoot
 {
-    private ProfileId $id;
-    private Email $email;
-    /** @var array<Message> */
-    private array $messages;
-
-    public function email(): Email
-    {
-        return $this->email;
-    }
-
+    private string $id;
+    private string $name;
+    
     /**
-     * @return array<Message>
+     * @var list<string>
      */
-    public function messages(): array
+    private array $guests;
+
+    public function name(): string
     {
-        return $this->messages;
+        return $this->name;
     }
 
-    public static function createProfile(ProfileId $id, Email $email): self
+    public function guests(): int
+    {
+        return $this->guests;
+    }
+
+    public static function create(string $id, string $hotelName): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $email));
+        $self->record(HotelCreated::raise($id, $hotelName));
 
         return $self;
     }
 
-    public function publishMessage(Message $message): void
+    public function checkIn(string $guestName): void
     {
-        $this->record(MessagePublished::raise(
-            $this->id,
-            $message,
-        ));
+        if (in_array($guestName, $this->guests, true)) {
+            throw new GuestHasAlreadyCheckedIn($guestName);
+        }
+    
+        $this->record(GuestIsCheckedIn::raise($this->id, $guestName));
     }
+    
+    public function checkOut(string $guestName): void
+    {
+        if (!in_array($guestName, $this->guests, true)) {
+            throw new IsNotAGuest($guestName);
+        }
+    
+        $this->record(GuestIsCheckedOut::raise($this->id, $guestName));
+    }
+    
     
     protected function apply(AggregateChanged $event): void
     {
-        if ($event instanceof ProfileCreated) {
-            $this->id = $event->profileId();
-            $this->email = $event->email();
-            $this->messages = [];
+        if ($event instanceof HotelCreated) {
+            $this->id = $event->hotelId();
+            $this->name = $event->hotelName();
+            $this->guests = [];
             
             return;
         } 
         
-        if ($event instanceof MessagePublished) {
-            $this->messages[] = $event->message();
+        if ($event instanceof GuestIsCheckedIn) {
+            $this->guests[] = $event->guestName();
+            
+            return;
+        }
+        
+        if ($event instanceof GuestIsCheckedOut) {
+            $this->guests = array_values(
+                array_filter(
+                    $this->guests,
+                    fn ($name) => $name !== $event->guestName();
+                )
+            );
             
             return;
         }
@@ -104,154 +211,177 @@ final class Profile extends AggregateRoot
 }
 ```
 
-### define events
-
-```php
-<?php declare(strict_types=1);
-
-namespace App\Domain\Profile\Event;
-
-use App\Domain\Profile\Email;
-use App\Domain\Profile\ProfileId;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
-/**
- * @template-extends AggregateChanged<array{profileId: string, email: string}>
- */
-final class ProfileCreated extends AggregateChanged
-{
-    public static function raise(
-        ProfileId $id,
-        Email $email
-    ): AggregateChanged {
-        return new self(
-            $id->toString(),
-            [
-                'profileId' => $id->toString(),
-                'email' => $email->toString(),
-            ]
-        );
-    }
-
-    public function profileId(): ProfileId
-    {
-        return ProfileId::fromString($this->aggregateId);
-    }
-
-    public function email(): Email
-    {
-        return Email::fromString($this->payload['email']);
-    }
-}
-```
+> :book: You can find out more about aggregates and events [here](./docs/aggregate.md).
 
 ### define projections
 
+So that we can see all the hotels on our website and also see how many guests are currently visiting the hotels, 
+we need a projection for it.
+
 ```php
 <?php declare(strict_types=1);
 
-namespace App\ReadModel\Projection;
+namespace App\Projection;
 
-use const DATE_ATOM;
-use App\Domain\Profile\Event\MessagePublished;
+use Doctrine\DBAL\Connection;
 use App\Infrastructure\MongoDb\MongoDbManager;
 use Patchlevel\EventSourcing\Projection\Projection;
 
-final class MessageProjection implements Projection
+final class HotelProjection implements Projection
 {
-    private MongoDbManager $db;
+    private Connection $db;
 
-    public function __construct(MongoDbManager $db)
+    public function __construct(Connection $db)
     {
         $this->db = $db;
     }
 
     public static function getHandledMessages(): iterable
     {
-        yield MessagePublished::class => 'applyMessagePublished';
+        yield HotelCreated::class => 'applyHotelCreated';
+        yield GuestIsCheckedIn::class => 'applyGuestIsCheckedIn';
+        yield GuestIsCheckedOut::class => 'applyGuestIsCheckedOut';
     }
 
-    public function applyMessagePublished(MessagePublished $event): void
+    public function applyHotelCreated(HotelCreated $event): void
     {
-        $message = $event->message();
-
-        $this->db->collection('message')->insertOne([
-            '_id' => $message->id()->toString(),
-            'profile_id' => $event->profileId()->toString(),
-            'text' => $message->text(),
-            'created_at' => $message->createdAt()->format(DATE_ATOM),
-        ]);
+        $this->db->insert(
+            'hotel', 
+            [
+                'id' => $event->hotelId(), 
+                'name' => $event->hotelName(),
+                'guests' => 0
+            ]
+        );
+    }
+    
+    public function applyGuestIsCheckedIn(GuestIsCheckedIn $event): void
+    {
+        $this->db->executeStatement(
+            'UPDATE hotel SET guests = guests + 1 WHERE id = ?;',
+            [$event->aggregateId()]
+        );
+    }
+    
+    public function applyGuestIsCheckedOut(GuestIsCheckedOut $event): void
+    {
+        $this->db->executeStatement(
+            'UPDATE hotel SET guests = guests - 1 WHERE id = ?;',
+            [$event->aggregateId()]
+        );
     }
     
     public function create(): void
     {
-        // do nothing (collection will be created lazy automatically)
+        $this->db->executeStatement('CREATE TABLE IF NOT EXISTS hotel (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);');
     }
 
     public function drop(): void
     {
-        $this->db->collection('message')->drop();
+        $this->db->executeStatement('DROP TABLE IF EXISTS hotel;');
     }
 }
 ```
 
+> :book: You can find out more about projections [here](./docs/projection.md).
+
+### processor
+
+In our example we also want to send an email to the head office as soon as a guest is checked in.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Profile\Listener;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Listener;
+
+final class SendCheckInEmailListener implements Listener
+{
+    private Mailer $mailer;
+
+    private function __construct(Mailer $mailer) 
+    {
+        $this->mailer = $mailer;
+    }
+
+    public function __invoke(AggregateChanged $event): void
+    {
+        if (!$event instanceof GuestIsCheckedIn) {
+            return;
+        }
+
+        $this->mailer->send(
+            'hq@patchlevel.de',
+            'Guest is checked in',
+            $event->guestName()
+        );
+    }
+}
+```
+
+> :book: You can find out more about processor [here](./docs/processor.md).
+
 ### configuration
+
+After we have defined everything, we still have to plug the whole thing together:
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 
-$messageProjection = new MessageProjection($this->connection);
+$hotelProjection = new HotelProjection($this->connection);
 $projectionRepository = new DefaultProjectionRepository(
-    [$messageProjection]
+    [$hotelProjection]
 );
 
-$eventStream = new DefaultEventBus();
-$eventStream->addListener(new ProjectionListener($projectionRepository));
-$eventStream->addListener(new SendEmailProcessor());
+$eventBus = new DefaultEventBus();
+$eventBus->addListener(new ProjectionListener($projectionRepository));
+$eventBus->addListener(new SendCheckInEmailListener($mailer));
 
 $store = new SingleTableStore(
     $this->connection,
-    [Profile::class => 'profile'],
+    [Hotel::class => 'hotel'],
     'eventstore'
 );
 
-$repository = new DefaultRepository($store, $eventStream, Profile::class);
+$hotelRepository = new DefaultRepository($store, $eventBus, Hotel::class);
+```
 
-// create tables
-$profileProjection->create();
+### database setup
+
+So that we can actually write the data to a database, 
+we need the associated schema and databases.
+
+```php
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+
 (new DoctrineSchemaManager())->create($store);
+$hotelProjection->create();
 ```
 
 ### usage
 
+We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
+
 ```php
-<?php declare(strict_types=1);
+$hotel = Hotel::create('1', 'HOTEL');
+$hotel->checkIn('David');
+$hotel->checkIn('Daniel');
+$hotel->checkOut('David');
 
-namespace App\Domain\Profile\Handler;
+$hotelRepository->save($hotel);
 
-use App\Domain\Profile\Command\CreateProfile;
-use App\Domain\Profile\Profile;
-use App\Domain\Profile\ProfileRepository;
-
-final class CreateProfileHandler
-{
-    private ProfileRepository $profileRepository;
-
-    public function __construct(ProfileRepository $profileRepository)
-    {
-        $this->profileRepository = $profileRepository;
-    }
-
-    public function __invoke(CreateProfile $command): void
-    {
-        $profile = Profile::createProfile($command->profileId(), $command->email());
-
-        $this->profileRepository->store($profile);
-    }
-}
+$hotel2 = $hotelRepository->load('2');
+$hotel2->checkIn('David');
+$hotelRepository->save($hotel2);
 ```
+
+Consult the documentation for more information. 
+If you still have questions, feel free to create an issue :)

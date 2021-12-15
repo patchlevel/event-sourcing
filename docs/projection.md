@@ -8,6 +8,8 @@ and everything can always be reproduced from the events.
 The target of a projection can be anything. 
 Either a file, a relational database, a no-sql database like mongodb or an elasticsearch.
 
+## Define Projection
+
 In this example we always create a new data set in a relational database when a profile is created:
 
 ```php
@@ -85,10 +87,56 @@ $messageProjection = new MessageProjection($connection);
 
 $projectionRepository = new DefaultProjectionRepository([
     $profileProjection,
-    $messageProjection
+    $messageProjection,
 ]);
 
 $eventBus->addListener(new ProjectionListener($projectionRepository));
 ```
 
-> :book: You can find out more about the event bus [here](./event_bus.md). 
+> :book: You can find out more about the event bus [here](./event_bus.md).
+
+## Setup Projection
+
+A projection schama or database usually has to be created beforehand. 
+And with a rebuild, the projection has to be deleted. 
+To make this possible, projections have two methods `create` and `drop` that can be defined and executed.
+
+### Create Projection Schema
+
+You can either `create` the structure for a single `projection`:
+
+```php
+$profileProjection->create();
+```
+
+> :book: If no create is necessary, the method can also be left empty.
+
+Or for all projections in the `DefaultProjectionRepository`:
+
+```php
+$projectionRepository = new DefaultProjectionRepository([
+    $profileProjection,
+    $messageProjection,
+]);
+
+$projectionRepository->create();
+```
+
+### Drop Projection Schema
+
+The same goes for dropping. You can do it for a single `projection`.
+
+```php
+$profileProjection->drop();
+```
+
+Or for all projections in the `DefaultProjectionRepository`:
+
+```php
+$projectionRepository = new DefaultProjectionRepository([
+    $profileProjection,
+    $messageProjection,
+]);
+
+$projectionRepository->drop();
+```
