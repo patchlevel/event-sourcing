@@ -364,5 +364,7 @@ $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 ```
 
+> :book: An aggregateId can be an **uuid**, you can find more about this [here](./docs/faq.md).
+
 Consult the [documentation](#documentation) or [FAQ](./docs/faq.md) for more information.
 If you still have questions, feel free to create an issue for it :)
