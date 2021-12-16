@@ -97,7 +97,16 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 ## Migration
 
 You can also manage your schema with doctrine migrations. 
-To do this, we've added a schema provider that you can use.
+
+In order to be able to use `doctrine/migrations`, 
+you have to install the associated package.
+
+```bash
+composer require doctrine/migrations
+```
+
+We have added a `schema provider` for doctrine migrations 
+so that you just have to plug the whole thing together.
 
 ```php
 use Patchlevel\EventSourcing\Schema\MigrationSchemaProvider;
