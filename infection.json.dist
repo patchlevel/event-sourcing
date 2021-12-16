@@ -7,7 +7,7 @@
   "logs": {
     "text": "infection.log",
     "badge": {
-      "branch": "/^\\d+\\.\\d+\\.x$/"
+      "branch": "1.0.x"
     }
   },
   "mutators": {
