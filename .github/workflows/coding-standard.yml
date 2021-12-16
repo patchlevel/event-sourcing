@@ -4,11 +4,9 @@ name: "Check Coding Standard"
 
 on:
     pull_request:
-        branches:
-            - "master"
     push:
         branches:
-            - "master"
+            - "[0-9]+.[0-9]+.x"
 
 jobs:
     static-analysis-coding-standard:

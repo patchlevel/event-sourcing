@@ -34,7 +34,6 @@ class SnapshotRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $snapshotStore = $this->prophesize(SnapshotStore::class);
 
-
         $this->expectException(InvalidAggregateClass::class);
         $this->expectExceptionMessage('Class "stdClass" is not a SnapshotableAggregateRoot.');
         new SnapshotRepository(

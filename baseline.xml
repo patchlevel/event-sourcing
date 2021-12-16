@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.13.1@5cf660f63b548ccd4a56f62d916ee4d6028e01a3">
+<files psalm-version="v4.15.0@a1b5e489e6fcebe40cb804793d964e99fc347820">
+  <file src="src/Pipeline/Middleware/ExcludeEventMiddleware.php">
+    <RedundantConditionGivenDocblockType occurrences="1">
+      <code>$bucket-&gt;event() instanceof $class</code>
+    </RedundantConditionGivenDocblockType>
+  </file>
   <file src="src/Pipeline/Middleware/FilterEventMiddleware.php">
     <MixedPropertyTypeCoercion occurrences="1">
       <code>$callable</code>
     </MixedPropertyTypeCoercion>
+  </file>
+  <file src="src/Pipeline/Middleware/IncludeEventMiddleware.php">
+    <RedundantConditionGivenDocblockType occurrences="1">
+      <code>$bucket-&gt;event() instanceof $class</code>
+    </RedundantConditionGivenDocblockType>
   </file>
   <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
     <MoreSpecificImplementedParamType occurrences="1">
@@ -17,20 +27,6 @@
     <MissingClosureParamType occurrences="1">
       <code>$envelope</code>
     </MissingClosureParamType>
-  </file>
-  <file src="tests/Unit/Fixture/Message.php">
-    <MixedArgument occurrences="2">
-      <code>$data['createdAt']</code>
-      <code>$data['id']</code>
-    </MixedArgument>
-    <MixedAssignment occurrences="1">
-      <code>$self-&gt;text</code>
-    </MixedAssignment>
-    <PropertyNotSetInConstructor occurrences="3">
-      <code>$createdAt</code>
-      <code>$messageId</code>
-      <code>$text</code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <LessSpecificImplementedReturnType occurrences="1">

@@ -26,9 +26,6 @@ final class Pipeline
         $this->middlewares = new ChainMiddleware($middlewares);
     }
 
-    /**
-     * @param ?Closure(EventBucket):void $observer
-     */
     public function run(?Closure $observer = null): void
     {
         foreach ($this->source->load() as $bucket) {
@@ -38,9 +35,11 @@ final class Pipeline
                 $this->target->save($resultBucket);
             }
 
-            if ($observer) {
-                $observer($bucket);
+            if (!$observer) {
+                continue;
             }
+
+            $observer($bucket);
         }
     }
 
