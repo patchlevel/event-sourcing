@@ -99,7 +99,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 You can also manage your schema with doctrine migrations. 
 
 In order to be able to use `doctrine/migrations`, 
-you have to install the associated packet.
+you have to install the associated package.
 
 ```bash
 composer require doctrine/migrations
