@@ -49,7 +49,6 @@ But it is possible to define different named constructors for different use-case
 After the basic structure for an aggregate is in place, it could theoretically be saved:
 
 ```php
-use App\Profile\Command\CreateProfile;
 use Patchlevel\EventSourcing\Repository\Repository;
 
 final class CreateProfileHandler
