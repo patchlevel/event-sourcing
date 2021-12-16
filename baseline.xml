@@ -28,20 +28,6 @@
       <code>$envelope</code>
     </MissingClosureParamType>
   </file>
-  <file src="tests/Unit/Fixture/Message.php">
-    <MixedArgument occurrences="2">
-      <code>$data['createdAt']</code>
-      <code>$data['id']</code>
-    </MixedArgument>
-    <MixedAssignment occurrences="1">
-      <code>$self-&gt;text</code>
-    </MixedAssignment>
-    <PropertyNotSetInConstructor occurrences="3">
-      <code>$createdAt</code>
-      <code>$messageId</code>
-      <code>$text</code>
-    </PropertyNotSetInConstructor>
-  </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <LessSpecificImplementedReturnType occurrences="1">
       <code>SnapshotableAggregateRoot</code>

@@ -14,8 +14,11 @@ final class Message
     private string $text;
     private DateTimeImmutable $createdAt;
 
-    private function __construct()
+    private function __construct(MessageId $messageId, string $text, DateTimeImmutable $createdAt)
     {
+        $this->messageId = $messageId;
+        $this->text = $text;
+        $this->createdAt = $createdAt;
     }
 
     public function id(): MessageId
@@ -34,7 +37,7 @@ final class Message
     }
 
     /**
-     * @return array<string, string>
+     * @return array{id: string, text: string, createdAt: string}
      */
     public function toArray(): array
     {
@@ -47,24 +50,14 @@ final class Message
 
     public static function create(MessageId $messageId, string $text): self
     {
-        $self = new self();
-        $self->messageId = $messageId;
-        $self->text = $text;
-        $self->createdAt = new DateTimeImmutable();
-
-        return $self;
+        return new self($messageId, $text, new DateTimeImmutable());
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{id: string, text: string, createdAt: string} $data
      */
     public static function fromArray(array $data): self
     {
-        $self = new self();
-        $self->messageId = MessageId::fromString($data['id']);
-        $self->text = $data['text'];
-        $self->createdAt = new DateTimeImmutable($data['createdAt']);
-
-        return $self;
+        return new self(MessageId::fromString($data['id']), $data['text'], new DateTimeImmutable($data['createdAt']));
     }
 }
