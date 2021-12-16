@@ -2,9 +2,10 @@
   "name": "patchlevel/event-sourcing",
   "type": "library",
   "license": "MIT",
-  "description": "todo",
+  "description": "A lightweight and all in one event sourcing library.",
   "keywords": [
-    "event-sourcing"
+    "event-sourcing",
+    "ddd"
   ],
   "homepage": "https://github.com/patchlevel/event-sourcing",
   "authors": [
@@ -40,8 +41,9 @@
     "vimeo/psalm": "^4.15.0"
   },
   "suggest": {
-    "symfony/messenger": "for an advanced message bus as event bus",
-    "symfony/console": "to use the predefined cli commands"
+    "doctrine/migrations": "for schema migration support",
+    "symfony/messenger": "for an advanced event bus",
+    "symfony/console": "to use the cli commands"
   },
   "config": {
     "preferred-install": {
