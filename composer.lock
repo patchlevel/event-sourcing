@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "db9bd73044f3e5dadb119bf809fb214b",
+    "content-hash": "8d96a9db92b0ef2c0a66e6bfdc2775e7",
     "packages": [
         {
             "name": "doctrine/cache",
@@ -6338,5 +6338,5 @@
     "platform-dev": {
         "ext-pdo_sqlite": "^7.4|^8.0"
     },
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.1.0"
 }
