@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
-use function get_class;
 use function method_exists;
 
 final class DefaultProjectionRepository implements ProjectionRepository
@@ -34,7 +33,7 @@ final class DefaultProjectionRepository implements ProjectionRepository
                 }
 
                 if (!method_exists($projection, $method)) {
-                    throw new MethodDoesNotExist(get_class($projection), $method);
+                    throw new MethodDoesNotExist($projection::class, $method);
                 }
 
                 $projection->$method($event);

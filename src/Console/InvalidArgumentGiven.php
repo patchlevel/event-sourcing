@@ -11,13 +11,9 @@ use function sprintf;
 
 final class InvalidArgumentGiven extends InvalidArgumentException
 {
-    /** @var mixed */
-    private $value;
+    private mixed $value;
 
-    /**
-     * @param mixed $value
-     */
-    public function __construct($value, string $need)
+    public function __construct(mixed $value, string $need)
     {
         parent::__construct(
             sprintf(
@@ -30,10 +26,7 @@ final class InvalidArgumentGiven extends InvalidArgumentException
         $this->value = $value;
     }
 
-    /**
-     * @return mixed
-     */
-    public function value()
+    public function value(): mixed
     {
         return $this->value;
     }

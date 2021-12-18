@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Store\Store;
 
 use function array_key_exists;
 use function count;
-use function get_class;
 use function is_subclass_of;
 
 final class DefaultRepository implements Repository
@@ -67,7 +66,7 @@ final class DefaultRepository implements Repository
 
     public function save(AggregateRoot $aggregate): void
     {
-        $class = get_class($aggregate);
+        $class = $aggregate::class;
 
         if (!$aggregate instanceof $this->aggregateClass) {
             throw new WrongAggregate($class, $this->aggregateClass);
