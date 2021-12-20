@@ -22,8 +22,8 @@ class AggregateChangedWithClockTest extends TestCase
         $profile2 = ProfileId::fromString('2');
 
         $event = ProfileVisitedWithClock::raise($profile1, $profile2);
-        $event->recordNow(1);
+        $recordedEvent = $event->recordNow(1);
 
-        self::assertSame($date, $event->recordedOn());
+        self::assertSame($date, $recordedEvent->recordedOn());
     }
 }
