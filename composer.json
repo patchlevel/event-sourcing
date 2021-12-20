@@ -27,23 +27,28 @@
   },
   "require-dev": {
     "ext-pdo_sqlite": "^7.4|^8.0",
-    "doctrine/migrations": "^3.3",
+    "doctrine/migrations": "^3.3.2",
     "infection/infection": "^0.21.5",
     "patchlevel/coding-standard": "^1.1.1",
-    "patchlevel/event-sourcing-psalm-plugin": "^1.0",
+    "patchlevel/event-sourcing-psalm-plugin": "^1.0.0",
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^1.2.0",
-    "phpunit/phpunit": "^9.5.4",
+    "phpunit/phpunit": "^9.5.10",
     "psalm/plugin-phpunit": "^0.16.1",
-    "symfony/console": "^4.4.18|^5.1.10|^6.0",
-    "symfony/messenger": "^4.4.18|^5.1.10|^6.0",
-    "symfony/var-dumper": "^5.4.1|^6.0",
+    "symfony/console": "^4.4.34|^5.4.1|^6.0.1",
+    "symfony/messenger": "^4.4.34|^5.4.0|^6.0.1",
+    "symfony/var-dumper": "^5.4.1|^6.0.1",
     "vimeo/psalm": "^4.15.0"
   },
   "suggest": {
     "doctrine/migrations": "for schema migration support",
     "symfony/messenger": "for an advanced event bus",
     "symfony/console": "to use the cli commands"
+  },
+  "conflict": {
+    "doctrine/migrations": "<3.3",
+    "symfony/console": "<4.4",
+    "symfony/messenger": "<4.4"
   },
   "config": {
     "preferred-install": {
