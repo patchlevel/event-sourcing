@@ -63,10 +63,8 @@ abstract class AggregateChanged
 
     /**
      * @internal
-     *
-     * @return static
      */
-    final public function recordNow(int $playhead): self
+    final public function recordNow(int $playhead): static
     {
         if ($this->playhead !== null) {
             throw new AggregateChangeRecordedAlready();

@@ -86,9 +86,9 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
     /**
      * @param array{id: string, email: string} $payload
      */
-    protected static function deserialize(array $payload): SnapshotableAggregateRoot
+    protected static function deserialize(array $payload): static
     {
-        $self = new self();
+        $self = new static();
         $self->id = ProfileId::fromString($payload['id']);
         $self->email = Email::fromString($payload['email']);
 
