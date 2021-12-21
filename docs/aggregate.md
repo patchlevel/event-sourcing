@@ -92,9 +92,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class ProfileCreated extends AggregateChanged
 {
-    public static function raise(string $id, string $name): AggregateChanged
+    public static function raise(string $id, string $name): static
     {
-        return new self(
+        return new static(
             $id, 
             [
                 'id' => $id,
@@ -176,9 +176,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class NameChanged extends AggregateChanged
 {
-    public static function raise(string $id, string $name): AggregateChanged
+    public static function raise(string $id, string $name): static
     {
-        return new self(
+        return new static(
             $id,
             [
                 'name' => $name
@@ -222,9 +222,9 @@ final class Profile extends AggregateRoot
         return $this->name;
     }
 
-    public static function create(string $id, string $name): self
+    public static function create(string $id, string $name): static
     {
-        $self = new self();
+        $self = new static();
         $self->record(ProfileCreated::raise($id, $name));
 
         return $self;
@@ -463,9 +463,9 @@ final class Profile extends AggregateRoot
     private string $id;
     private Name $name;
     
-    public static function create(string $id, Name $name): self
+    public static function create(string $id, Name $name): static
     {
-        $self = new self();
+        $self = new static();
         $self->record(ProfileCreated::raise($id, $name));
 
         return $self;
@@ -498,9 +498,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class NameChanged extends AggregateChanged
 {
-    public static function raise(string $id, Name $name): AggregateChanged
+    public static function raise(string $id, Name $name): static
     {
-        return new self(
+        return new static(
             $id,
             [
                 'name' => $name->toString()

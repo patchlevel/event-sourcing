@@ -11,9 +11,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
  */
 final class ProfileVisited extends AggregateChanged
 {
-    public static function raise(ProfileId $visitedId, ProfileId $visitorId): self
+    public static function raise(ProfileId $visitedId, ProfileId $visitorId): static
     {
-        return new self(
+        return new static(
             $visitedId->toString(),
             [
                 'visitorId' => $visitorId->toString(),

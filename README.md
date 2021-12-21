@@ -47,9 +47,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class HotelCreated extends AggregateChanged
 {
-    public static function raise(string $id, string $hotelName): self 
+    public static function raise(string $id, string $hotelName): static 
     {
-        return new self($id, ['hotelId' => $id, 'hotelName' => $hotelName]);
+        return new static($id, ['hotelId' => $id, 'hotelName' => $hotelName]);
     }
 
     public function hotelId(): string
@@ -71,9 +71,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class GuestIsCheckedIn extends AggregateChanged
 {
-    public static function raise(string $id, string $guestName): self 
+    public static function raise(string $id, string $guestName): static 
     {
-        return new self($id, ['guestName' => $guestName]);
+        return new static($id, ['guestName' => $guestName]);
     }
 
     public function guestName(): string
@@ -90,9 +90,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class GuestIsCheckedOut extends AggregateChanged
 {
-    public static function raise(string $id, string $guestName): self 
+    public static function raise(string $id, string $guestName): static 
     {
-        return new self($id, ['guestName' => $guestName]);
+        return new static($id, ['guestName' => $guestName]);
     }
 
     public function guestName(): string
@@ -132,9 +132,9 @@ final class Hotel extends AggregateRoot
         return $this->guests;
     }
 
-    public static function create(string $id, string $hotelName): self
+    public static function create(string $id, string $hotelName): static
     {
-        $self = new self();
+        $self = new static();
         $self->record(HotelCreated::raise($id, $hotelName));
 
         return $self;
@@ -189,7 +189,7 @@ final class Hotel extends AggregateRoot
 
     public function aggregateRootId(): string
     {
-        return $this->id->toString();
+        return $this->id;
     }
 }
 ```
