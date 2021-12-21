@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Schema;
 use Patchlevel\EventSourcing\Store\Store;
 use RuntimeException;
 
-use function get_class;
 use function sprintf;
 
 final class StoreNotSupported extends RuntimeException
@@ -20,7 +19,7 @@ final class StoreNotSupported extends RuntimeException
         parent::__construct(
             sprintf(
                 'store "%s" is not supported, need "%s"',
-                get_class($store),
+                $store::class,
                 $need
             )
         );

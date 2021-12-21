@@ -54,7 +54,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregateId = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregateId: string, playhead: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recordedOn: string}> $result */
+        /** @var array<array{aggregateId: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recordedOn: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [

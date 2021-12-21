@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 use function end;
 use function explode;
-use function get_class;
 use function method_exists;
 
 /**
@@ -27,7 +26,7 @@ trait StrictApplyMethod
 
     private function findApplyMethod(AggregateChanged $event): string
     {
-        $classParts = explode('\\', get_class($event));
+        $classParts = explode('\\', $event::class);
 
         return 'apply' . end($classParts);
     }
