@@ -19,14 +19,19 @@ jobs:
                 dependencies:
                     - "lowest"
                     - "highest"
-                    - "locked"
                 php-version:
                     - "8.0"
                     - "8.1"
                 operating-system:
                     - "ubuntu-latest"
                     - "windows-latest"
-
+                include:
+                    - dependencies: "locked"
+                      php-version: "8.0"
+                      operating-system: "ubuntu-latest"
+                    - dependencies: "locked"
+                      php-version: "8.0"
+                      operating-system: "windows-latest"
         steps:
             - name: "Checkout"
               uses: "actions/checkout@v2"
