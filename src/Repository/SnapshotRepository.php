@@ -15,6 +15,10 @@ use function array_key_exists;
 use function count;
 use function is_subclass_of;
 
+/**
+ * @template T of SnapshotableAggregateRoot
+ * @implements Repository<T>
+ */
 final class SnapshotRepository implements Repository
 {
     private Store $store;
@@ -47,6 +51,9 @@ final class SnapshotRepository implements Repository
         $this->snapshotStore = $snapshotStore;
     }
 
+    /**
+     * @return T
+     */
     public function load(string $id): SnapshotableAggregateRoot
     {
         if (array_key_exists($id, $this->instances)) {
@@ -85,6 +92,9 @@ final class SnapshotRepository implements Repository
         return $this->store->has($this->aggregateClass, $id);
     }
 
+    /**
+     * @param T $aggregate
+     */
     public function save(AggregateRoot $aggregate): void
     {
         $class = $aggregate::class;
