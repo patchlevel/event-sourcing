@@ -21,14 +21,14 @@ final class DefaultRepository implements Repository
     private Store $store;
     private EventBus $eventStream;
 
-    /** @var class-string<AggregateRoot> */
+    /** @var class-string<T> */
     private string $aggregateClass;
 
-    /** @var array<string, AggregateRoot> */
+    /** @var array<string, T> */
     private array $instances = [];
 
     /**
-     * @param class-string $aggregateClass
+     * @param class-string<T> $aggregateClass
      */
     public function __construct(
         Store $store,

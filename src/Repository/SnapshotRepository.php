@@ -24,16 +24,16 @@ final class SnapshotRepository implements Repository
     private Store $store;
     private EventBus $eventStream;
 
-    /** @var class-string<SnapshotableAggregateRoot> */
+    /** @var class-string<T> */
     private string $aggregateClass;
 
-    /** @var array<string, SnapshotableAggregateRoot> */
+    /** @var array<string, T> */
     private array $instances = [];
 
     private SnapshotStore $snapshotStore;
 
     /**
-     * @param class-string $aggregateClass
+     * @param class-string<T> $aggregateClass
      */
     public function __construct(
         Store $store,
