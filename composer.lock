@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "59c7e82dd94ef9fbaf9f42b6a65dc038",
+    "content-hash": "17f3cb8ff18dadd5361efdf4defd8c90",
     "packages": [
         {
             "name": "doctrine/cache",
@@ -355,32 +355,32 @@
         },
         {
             "name": "ocramius/package-versions",
-            "version": "2.4.0",
+            "version": "2.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Ocramius/PackageVersions.git",
-                "reference": "8e96fb9f4671eff86e8e487ff45c49bdc2d2d677"
+                "reference": "f64411e9a63a35f8645d5fe04a9f55a2df2895c9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Ocramius/PackageVersions/zipball/8e96fb9f4671eff86e8e487ff45c49bdc2d2d677",
-                "reference": "8e96fb9f4671eff86e8e487ff45c49bdc2d2d677",
+                "url": "https://api.github.com/repos/Ocramius/PackageVersions/zipball/f64411e9a63a35f8645d5fe04a9f55a2df2895c9",
+                "reference": "f64411e9a63a35f8645d5fe04a9f55a2df2895c9",
                 "shasum": ""
             },
             "require": {
-                "composer-runtime-api": "^2.1.0",
-                "php": "~8.0.0 || ~8.1.0"
+                "composer-runtime-api": "^2.0.0",
+                "php": "~8.0.0"
             },
             "replace": {
                 "composer/package-versions-deprecated": "*"
             },
             "require-dev": {
-                "composer/composer": "^2.1.8",
-                "doctrine/coding-standard": "^9.0.0",
+                "composer/composer": "^2.0.0@dev",
+                "doctrine/coding-standard": "^8.1.0",
                 "ext-zip": "^1.15.0",
-                "phpunit/phpunit": "^9.5.9",
-                "roave/infection-static-analysis-plugin": "^1.10.0",
-                "vimeo/psalm": "^4.10.0"
+                "infection/infection": "dev-master#8d6c4d6b15ec58d3190a78b7774a5d604ec1075a",
+                "phpunit/phpunit": "~9.3.11",
+                "vimeo/psalm": "^4.0.1"
             },
             "type": "library",
             "autoload": {
@@ -401,7 +401,7 @@
             "description": "Provides efficient querying for installed package versions (no runtime IO)",
             "support": {
                 "issues": "https://github.com/Ocramius/PackageVersions/issues",
-                "source": "https://github.com/Ocramius/PackageVersions/tree/2.4.0"
+                "source": "https://github.com/Ocramius/PackageVersions/tree/2.3.0"
             },
             "funding": [
                 {
@@ -413,7 +413,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-09-19T02:32:19+00:00"
+            "time": "2020-12-23T03:16:25+00:00"
         },
         {
             "name": "psr/cache",
@@ -6120,10 +6120,10 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.0"
+        "php": "~8.0.0|~8.1.0"
     },
     "platform-dev": {
-        "ext-pdo_sqlite": "^8.0|^8.1"
+        "ext-pdo_sqlite": "~8.0.0|~8.1.0"
     },
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.0.0"
 }
