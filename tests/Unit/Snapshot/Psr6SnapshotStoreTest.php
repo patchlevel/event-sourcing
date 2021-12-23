@@ -25,7 +25,7 @@ class Psr6SnapshotStoreTest extends TestCase
         $item->set([
             'playhead' => 0,
             'payload' => ['foo' => 'bar'],
-        ])->shouldBeCalled();
+        ])->shouldBeCalled()->willReturn($item);
 
         $cache = $this->prophesize(CacheItemPoolInterface::class);
         $cache->getItem(sprintf('%s-1', ProfileWithSnapshot::class))->willReturn($item);
