@@ -46,10 +46,8 @@ abstract class AggregateRoot
 
     /**
      * @param array<AggregateChanged> $stream
-     *
-     * @return static
      */
-    final public static function createFromEventStream(array $stream): self
+    final public static function createFromEventStream(array $stream): static
     {
         $self = new static();
 

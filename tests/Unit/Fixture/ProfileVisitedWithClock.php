@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\ClockRecordDate;
 
 /**
  * @template-extends AggregateChanged<array{visitorId: string}>
  */
-final class ProfileVisited extends AggregateChanged
+final class ProfileVisitedWithClock extends AggregateChanged
 {
-    public static function raise(ProfileId $visitedId, ProfileId $visitorId): static
+    use ClockRecordDate;
+
+    public static function raise(ProfileId $visitedId, ProfileId $visitorId): self
     {
-        return new static(
+        return new self(
             $visitedId->toString(),
             [
                 'visitorId' => $visitorId->toString(),

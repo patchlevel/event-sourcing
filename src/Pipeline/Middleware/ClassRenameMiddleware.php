@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
 use function array_key_exists;
-use function get_class;
 
 final class ClassRenameMiddleware implements Middleware
 {
@@ -29,7 +28,7 @@ final class ClassRenameMiddleware implements Middleware
     public function __invoke(EventBucket $bucket): array
     {
         $event = $bucket->event();
-        $class = get_class($event);
+        $class = $event::class;
 
         if (!array_key_exists($class, $this->classes)) {
             return [$bucket];

@@ -46,6 +46,7 @@ class AggregateChangedTest extends TestCase
         $event = ProfileCreated::raise($id, $email);
         $recordedEvent = $event->recordNow(1);
 
+        self::assertInstanceOf(ProfileCreated::class, $recordedEvent);
         self::assertEquals($id, $recordedEvent->profileId());
         self::assertEquals($email, $recordedEvent->email());
         self::assertEquals(1, $recordedEvent->playhead());

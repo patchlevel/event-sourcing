@@ -45,9 +45,9 @@ final class Profile extends SnapshotableAggregateRoot
     /**
      * @param array{id: string} $payload
      */
-    protected static function deserialize(array $payload): self
+    protected static function deserialize(array $payload): static
     {
-        $self = new self();
+        $self = new static();
         $self->id = $payload['id'];
 
         return $self;

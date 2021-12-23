@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
-use function get_class;
 use function sprintf;
 
 final class ApplyMethodNotFound extends AggregateException
@@ -13,9 +12,9 @@ final class ApplyMethodNotFound extends AggregateException
     {
         parent::__construct(sprintf(
             'Apply method "%s::%s" could not be found for the event "%s"',
-            get_class($aggregate),
+            $aggregate::class,
             $method,
-            get_class($event)
+            $event::class
         ));
     }
 }

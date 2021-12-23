@@ -34,10 +34,8 @@ final class SymfonyEventBus implements EventBus
 
     /**
      * @param list<Listener> $listeners
-     *
-     * @return static
      */
-    public static function create(array $listeners = []): self
+    public static function create(array $listeners = []): static
     {
         $bus = new MessageBus([
             new HandleMessageMiddleware(
