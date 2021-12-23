@@ -32,6 +32,8 @@ class DefaultRepositoryTest extends TestCase
 
         $this->expectException(InvalidAggregateClass::class);
         $this->expectExceptionMessage('Class "stdClass" is not an AggregateRoot.');
+
+        /** @psalm-suppress InvalidArgument */
         new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
@@ -82,6 +84,8 @@ class DefaultRepositoryTest extends TestCase
         );
 
         $this->expectException(WrongAggregate::class);
+
+        /** @psalm-suppress InvalidArgument */
         $repository->save($aggregate);
     }
 

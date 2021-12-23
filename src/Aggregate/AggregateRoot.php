@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 abstract class AggregateRoot
 {
-    /** @var array<AggregateChanged> */
+    /** @var array<AggregateChanged<array<string, mixed>>> */
     private array $uncommittedEvents = [];
 
     /** @internal */
@@ -34,7 +34,7 @@ abstract class AggregateRoot
     }
 
     /**
-     * @return array<AggregateChanged>
+     * @return array<AggregateChanged<array<string, mixed>>>
      */
     final public function releaseEvents(): array
     {
@@ -45,7 +45,7 @@ abstract class AggregateRoot
     }
 
     /**
-     * @param array<AggregateChanged> $stream
+     * @param array<AggregateChanged<array<string, mixed>>> $stream
      */
     final public static function createFromEventStream(array $stream): static
     {

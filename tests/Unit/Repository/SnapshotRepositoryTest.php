@@ -36,6 +36,8 @@ class SnapshotRepositoryTest extends TestCase
 
         $this->expectException(InvalidAggregateClass::class);
         $this->expectExceptionMessage('Class "stdClass" is not a SnapshotableAggregateRoot.');
+
+        /** @psalm-suppress InvalidArgument */
         new SnapshotRepository(
             $store->reveal(),
             $eventBus->reveal(),
@@ -63,6 +65,8 @@ class SnapshotRepositoryTest extends TestCase
         );
 
         $this->expectException(WrongAggregate::class);
+
+        /** @psalm-suppress InvalidArgument */
         $repository->save($aggregate);
     }
 
