@@ -36,6 +36,6 @@ final class ProjectionCreateCommand extends Command
 
         $console->success('projection created');
 
-        return 0;
+        return parent::SUCCESS;
     }
 }

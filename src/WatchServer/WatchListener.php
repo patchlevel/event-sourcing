@@ -20,8 +20,8 @@ final class WatchListener implements Listener
     {
         try {
             $this->client->send($event);
-        } catch (SendingFailed $exception) {
-            // to nothing
+        } catch (SendingFailed) {
+            // do nothing
         }
     }
 }

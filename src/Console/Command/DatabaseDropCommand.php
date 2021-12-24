@@ -47,7 +47,7 @@ final class DatabaseDropCommand extends Command
         if (!$store instanceof DoctrineStore) {
             $console->error('Store is not supported!');
 
-            return 1;
+            return parent::FAILURE;
         }
 
         $connection = $store->connection();
@@ -61,7 +61,7 @@ final class DatabaseDropCommand extends Command
             $console->warning(sprintf('Would drop the database "%s". Please run the operation with --force to execute.', $databaseName));
             $console->caution('All data will be lost!');
 
-            return 2;
+            return parent::INVALID;
         }
 
         $ifExists = InputHelper::bool($input->getOption('if-exists'));
@@ -70,14 +70,14 @@ final class DatabaseDropCommand extends Command
         if ($ifExists && !$hasDatabase) {
             $console->warning(sprintf('Database "%s" doesn\'t exist. Skipped.', $databaseName));
 
-            return 0;
+            return parent::SUCCESS;
         }
 
         try {
             $this->helper->dropDatabase($tempConnection, $databaseName);
             $console->success(sprintf('Dropped database "%s"', $databaseName));
 
-            return 0;
+            return parent::SUCCESS;
         } catch (Throwable $e) {
             $console->error(sprintf('Could not drop database "%s"', $databaseName));
             $console->error($e->getMessage());

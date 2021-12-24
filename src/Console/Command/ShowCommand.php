@@ -59,7 +59,7 @@ final class ShowCommand extends Command
         if (!array_key_exists($aggregate, $map)) {
             $console->error(sprintf('aggregate type "%s" not exists', $aggregate));
 
-            return 1;
+            return parent::FAILURE;
         }
 
         $events = $this->store->load($map[$aggregate], $id);
@@ -67,13 +67,13 @@ final class ShowCommand extends Command
         if (count($events) === 0) {
             $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
 
-            return 1;
+            return parent::FAILURE;
         }
 
         foreach ($events as $event) {
             $dumper->write($console, $event);
         }
 
-        return 0;
+        return parent::SUCCESS;
     }
 }

@@ -36,6 +36,6 @@ final class ProjectionDropCommand extends Command
 
         $console->success('projection deleted');
 
-        return 0;
+        return parent::SUCCESS;
     }
 }

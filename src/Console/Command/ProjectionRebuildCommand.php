@@ -54,7 +54,7 @@ final class ProjectionRebuildCommand extends Command
         if (!$store instanceof PipelineStore) {
             $console->error('store is not supported');
 
-            return 1;
+            return parent::FAILURE;
         }
 
         if (InputHelper::bool($input->getOption('recreate'))) {
@@ -72,10 +72,10 @@ final class ProjectionRebuildCommand extends Command
         if (is_string($until)) {
             try {
                 $date = new DateTimeImmutable($until);
-            } catch (Throwable $exception) {
+            } catch (Throwable) {
                 $console->error(sprintf('date "%s" not supported. the format should be "2017-02-02 12:00"', $until));
 
-                return 1;
+                return parent::FAILURE;
             }
 
             $middlewares[] = new UntilEventMiddleware($date);
@@ -97,6 +97,6 @@ final class ProjectionRebuildCommand extends Command
         $console->progressFinish();
         $console->success('finish');
 
-        return 0;
+        return parent::SUCCESS;
     }
 }

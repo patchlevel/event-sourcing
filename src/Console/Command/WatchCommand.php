@@ -49,6 +49,6 @@ final class WatchCommand extends Command
             }
         );
 
-        return 0;
+        return parent::SUCCESS;
     }
 }

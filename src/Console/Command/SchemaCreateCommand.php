@@ -45,7 +45,7 @@ final class SchemaCreateCommand extends Command
             if (!$this->schemaManager instanceof DryRunSchemaManager) {
                 $console->error('SchemaManager dont support dry-run');
 
-                return 1;
+                return parent::FAILURE;
             }
 
             $actions = $this->schemaManager->dryRunCreate($this->store);
@@ -54,13 +54,13 @@ final class SchemaCreateCommand extends Command
                 $output->writeln($action);
             }
 
-            return 0;
+            return parent::SUCCESS;
         }
 
         $this->schemaManager->create($this->store);
 
         $console->success('schema created');
 
-        return 0;
+        return parent::SUCCESS;
     }
 }

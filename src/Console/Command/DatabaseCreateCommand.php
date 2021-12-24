@@ -46,7 +46,7 @@ final class DatabaseCreateCommand extends Command
         if (!$store instanceof DoctrineStore) {
             $console->error('Store is not supported!');
 
-            return 1;
+            return parent::FAILURE;
         }
 
         $connection = $store->connection();
@@ -61,7 +61,7 @@ final class DatabaseCreateCommand extends Command
             $console->warning(sprintf('Database "%s" already exists. Skipped.', $databaseName));
             $tempConnection->close();
 
-            return 0;
+            return parent::SUCCESS;
         }
 
         try {
@@ -73,11 +73,11 @@ final class DatabaseCreateCommand extends Command
 
             $tempConnection->close();
 
-            return 2;
+            return parent::INVALID;
         }
 
         $tempConnection->close();
 
-        return 0;
+        return parent::SUCCESS;
     }
 }

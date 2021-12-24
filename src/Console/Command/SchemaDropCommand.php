@@ -45,7 +45,7 @@ final class SchemaDropCommand extends Command
             if (!$this->schemaManager instanceof DryRunSchemaManager) {
                 $console->error('SchemaManager dont support dry-run');
 
-                return 1;
+                return parent::FAILURE;
             }
 
             $actions = $this->schemaManager->dryRunDrop($this->store);
@@ -54,7 +54,7 @@ final class SchemaDropCommand extends Command
                 $output->writeln($action);
             }
 
-            return 0;
+            return parent::SUCCESS;
         }
 
         $force = InputHelper::bool($input->getOption('force'));
@@ -62,13 +62,13 @@ final class SchemaDropCommand extends Command
         if (!$force) {
             $console->error('Please run the operation with --force to execute. All data will be lost!');
 
-            return 1;
+            return parent::FAILURE;
         }
 
         $this->schemaManager->drop($this->store);
 
         $console->success('schema deleted');
 
-        return 0;
+        return parent::SUCCESS;
     }
 }
