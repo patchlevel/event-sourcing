@@ -13,7 +13,7 @@
   "mutators": {
     "@default": true
   },
-  "minMsi": 58,
-  "minCoveredMsi": 89,
+  "minMsi": 60,
+  "minCoveredMsi": 90,
   "testFrameworkOptions": "--testsuite=unit"
 }
