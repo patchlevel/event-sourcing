@@ -5,11 +5,22 @@
 
 # Event-Sourcing
 
-Small lightweight event-sourcing library.
+A lightweight but also all-inclusive event sourcing library with a focus on developer experience.
+
+## Features
+
+* Everything is included in the package for event sourcing
+* Based on [doctrine dbal](https://github.com/doctrine/dbal) and their ecosystem
+* Developer experience oriented and fully typed
+* [Snapshots](docs/snapshots.md) system to quickly rebuild the aggregates
+* [Pipeline](docs/pipeline.md) to build new [projections](docs/projection.md) or to migrate events
+* [Scheme management](docs/store.md) and [doctrine migration](docs/store.md) support
+* Dev [tools](docs/tools.md) such as a realtime event watcher
+* Built in [cli commands](docs/cli.md) with [symfony](https://symfony.com/)
 
 ## Installation
 
-```
+```bash
 composer require patchlevel/event-sourcing
 ```
 
@@ -24,6 +35,8 @@ composer require patchlevel/event-sourcing
 * [Store](docs/store.md)
 * [Pipeline](docs/pipeline.md)
 * [Tests](docs/tests.md)
+* [Tools](docs/tools.md)
+* [CLI](docs/cli.md)
 * [FAQ](docs/faq.md)
 
 ## Integration

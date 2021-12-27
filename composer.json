@@ -2,7 +2,7 @@
   "name": "patchlevel/event-sourcing",
   "type": "library",
   "license": "MIT",
-  "description": "A lightweight and all in one event sourcing library.",
+  "description": "A lightweight but also all-inclusive event sourcing library with a focus on developer experience",
   "keywords": [
     "event-sourcing",
     "ddd"
