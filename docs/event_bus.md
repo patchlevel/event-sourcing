@@ -17,12 +17,22 @@ $eventBus->addListener($mailListener);
 $eventBus->addListener($projectionListener);
 ```
 
-> :book: If you need more features, use the symfony event bus.
+> :book: You can determine the order in which the listeners are executed. For example, 
+> you can also add listeners after `ProjectionListener`
+> to access the [projections](./projection.md).
 
 ## Symfony event bus
 
 You can also use the [symfony message bus](https://symfony.com/doc/current/components/messenger.html) 
-which is much more powerful. You can either let us build it with the `create` factory:
+which is much more powerful. 
+
+To use the optional symfony messenger you first have to `install` the packet.
+
+```bash
+composer require symfony/messenger
+```
+
+You can either let us build it with the `create` factory:
 
 ```php
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
@@ -32,6 +42,10 @@ $eventBus = SymfonyEventBus::create([
     $projectionListener
 ]);
 ```
+
+> :book: You can determine the order in which the listeners are executed. For example,
+> you can also add listeners after `ProjectionListener`
+> to access the [projections](./projection.md).
 
 Or plug it together by hand:
 
