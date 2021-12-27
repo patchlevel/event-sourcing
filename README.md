@@ -360,6 +360,8 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 $hotelProjection->create();
 ```
 
+> :book: you can use the predefined [cli commands](docs/cli.md) for this.
+
 ### Usage
 
 We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
