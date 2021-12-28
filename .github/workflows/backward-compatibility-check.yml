@@ -4,12 +4,12 @@ name: "Backward Compatibility Check"
 
 on:
     push:
+    pull_request:
 
 jobs:
     roave-backwards-compatibility-check:
         name: "Backward Compatibility Check"
         runs-on: ubuntu-latest
-
         steps:
           - uses: actions/checkout@v2
             with:
