@@ -108,3 +108,5 @@ use Patchlevel\EventSourcing\Snapshot\Psr6SnapshotStore;
 $psr6Store = new Psr6SnapshotStore($cache);
 $snapshotStore = new BatchSnapshotStore($psr6Store, 20);
 ```
+
+> :book: It uses an internal cache that you can clear with the `freeMemory` method.
