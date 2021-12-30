@@ -23,7 +23,7 @@ class Psr6SnapshotStoreTest extends TestCase
     {
         $item = $this->prophesize(CacheItemInterface::class);
         $item->set([
-            'playhead' => 0,
+            'playhead' => 1,
             'payload' => ['foo' => 'bar'],
         ])->shouldBeCalled()->willReturn($item);
 
@@ -36,7 +36,7 @@ class Psr6SnapshotStoreTest extends TestCase
         $snapshot = new Snapshot(
             ProfileWithSnapshot::class,
             '1',
-            0,
+            1,
             ['foo' => 'bar']
         );
 
@@ -48,14 +48,14 @@ class Psr6SnapshotStoreTest extends TestCase
         $snapshot = new Snapshot(
             ProfileWithSnapshot::class,
             '1',
-            0,
+            1,
             ['foo' => 'bar']
         );
 
         $item = $this->prophesize(CacheItemInterface::class);
         $item->isHit()->willReturn(true);
         $item->get()->willReturn([
-            'playhead' => 0,
+            'playhead' => 1,
             'payload' => ['foo' => 'bar'],
         ]);
 
