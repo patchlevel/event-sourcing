@@ -49,6 +49,32 @@ class BatchSnapshotStoreTest extends TestCase
         $store->save($snapshot);
     }
 
+    public function testNewAggregateShouldNotBeSavedTwice(): void
+    {
+        $snapshot = new Snapshot(
+            ProfileWithSnapshot::class,
+            '1',
+            11,
+            ['foo' => 'bar']
+        );
+
+        $newSnapshot = new Snapshot(
+            ProfileWithSnapshot::class,
+            '1',
+            13,
+            ['foo' => 'bar']
+        );
+
+        $wrappedStore = $this->prophesize(SnapshotStore::class);
+        $wrappedStore->save($snapshot)->shouldBeCalled();
+        $wrappedStore->save($newSnapshot)->shouldNotBeCalled();
+
+        $store = new BatchSnapshotStore($wrappedStore->reveal());
+
+        $store->save($snapshot);
+        $store->save($newSnapshot);
+    }
+
     public function testExistingAggregateShouldNotSaved(): void
     {
         $snapshot = new Snapshot(

@@ -35,6 +35,7 @@ final class BatchSnapshotStore implements SnapshotStore
         }
 
         $this->wrappedStore->save($snapshot);
+        $this->playheadCache[$key] = $snapshot->playhead();
     }
 
     public function load(string $aggregate, string $id): Snapshot
