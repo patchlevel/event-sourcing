@@ -8,10 +8,14 @@ use function sprintf;
 
 final class BatchSnapshotStore implements SnapshotStore
 {
+    /** @var array<string, int>  */
     private array $playheadCache;
     private SnapshotStore $wrappedStore;
     private int $batchSize;
 
+    /**
+     * @param positive-int $batchSize
+     */
     public function __construct(SnapshotStore $wrappedStore, int $batchSize = 10)
     {
         $this->playheadCache = [];
@@ -26,9 +30,11 @@ final class BatchSnapshotStore implements SnapshotStore
 
         $diff = $snapshot->playhead() - $beforePlayhead;
 
-        if ($diff >= $this->batchSize) {
-            $this->wrappedStore->save($snapshot);
+        if ($diff < $this->batchSize) {
+            return;
         }
+
+        $this->wrappedStore->save($snapshot);
     }
 
     public function load(string $aggregate, string $id): Snapshot
