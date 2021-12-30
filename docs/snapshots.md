@@ -92,3 +92,19 @@ use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
 
 $snapshotStore = new InMemorySnapshotStore();
 ```
+
+### batch store (since v1.2)
+
+Any other store can be wrapped with the `BatchSnapshotStore`. 
+It checks how many events away the last snapshot is to the current one. 
+Everything that is under the threshold is not written to the SnapshotStore. 
+As soon as the difference exceeds the specified value, the writing process is started.
+This prevents the cache from being slowed down by too many write processes.
+
+```php
+use Patchlevel\EventSourcing\Snapshot\BatchSnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\Psr6SnapshotStore;
+
+$psr6Store = new Psr6SnapshotStore($cache);
+$snapshotStore = new BatchSnapshotStore($psr6Store, 20);
+```
