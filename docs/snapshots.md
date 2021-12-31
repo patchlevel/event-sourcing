@@ -62,6 +62,15 @@ final class Profile extends SnapshotableAggregateRoot
 ## stores
 
 We offer a few `SnapshotStore` implementations that you can use.
+But not a direct implementation of a cache. 
+There are many good libraries out there that address this problem, 
+and before we reinvent the wheel, choose one of them. 
+Since there is a psr-6 and psr-16 standard, there are plenty of libraries. 
+Here are a few listed:
+
+* [symfony cache](https://symfony.com/doc/current/components/cache.html)
+* [laminas cache](https://docs.laminas.dev/laminas-cache/)
+* [scrapbook](https://www.scrapbook.cash/)
 
 ### psr6
 
