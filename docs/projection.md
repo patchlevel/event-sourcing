@@ -34,7 +34,7 @@ final class ProfileProjection implements Projection
 
     public function create(): void
     {
-        $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY);');
+        $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);');
     }
 
     public function drop(): void
@@ -45,7 +45,7 @@ final class ProfileProjection implements Projection
     public function handleProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->executeStatement(
-            'INSERT INTO projection_profile (`id`) VALUES(:id);',
+            'INSERT INTO projection_profile (`id`, `name`) VALUES(:id, :name);',
             [
                 'id' => $profileCreated->profileId(),
                 'name' => $profileCreated->name()
