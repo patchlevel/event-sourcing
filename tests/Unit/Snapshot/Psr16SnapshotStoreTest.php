@@ -24,7 +24,7 @@ class Psr16SnapshotStoreTest extends TestCase
         $cache->set(
             sprintf('%s-1', ProfileWithSnapshot::class),
             [
-                'playhead' => 0,
+                'playhead' => 1,
                 'payload' => ['foo' => 'bar'],
             ]
         )->shouldBeCalled();
@@ -34,7 +34,7 @@ class Psr16SnapshotStoreTest extends TestCase
         $snapshot = new Snapshot(
             ProfileWithSnapshot::class,
             '1',
-            0,
+            1,
             ['foo' => 'bar']
         );
 
@@ -46,13 +46,13 @@ class Psr16SnapshotStoreTest extends TestCase
         $snapshot = new Snapshot(
             ProfileWithSnapshot::class,
             '1',
-            0,
+            1,
             ['foo' => 'bar']
         );
 
         $cache = $this->prophesize(CacheInterface::class);
         $cache->get(sprintf('%s-1', ProfileWithSnapshot::class))->willReturn([
-            'playhead' => 0,
+            'playhead' => 1,
             'payload' => ['foo' => 'bar'],
         ]);
 

@@ -19,7 +19,7 @@ class InMemorySnapshotStoreTest extends TestCase
         $snapshot = new Snapshot(
             ProfileWithSnapshot::class,
             '1',
-            0,
+            1,
             ['foo' => 'bar']
         );
 

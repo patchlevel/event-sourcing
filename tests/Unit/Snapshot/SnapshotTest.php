@@ -15,13 +15,13 @@ class SnapshotTest extends TestCase
         $snapshot = new Snapshot(
             ProfileWithSnapshot::class,
             '1',
-            0,
+            1,
             ['foo' => 'bar']
         );
 
         self::assertEquals(ProfileWithSnapshot::class, $snapshot->aggregate());
         self::assertEquals('1', $snapshot->id());
-        self::assertEquals(0, $snapshot->playhead());
+        self::assertEquals(1, $snapshot->playhead());
         self::assertEquals(['foo' => 'bar'], $snapshot->payload());
     }
 }
