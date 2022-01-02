@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events;
+namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 /**
- * @template-extends AggregateChanged<array{id: string, name: string}>
+ * @template-extends AggregateChanged<array{name: string}>
  */
-final class ProfileCreated extends AggregateChanged
+final class NameChanged extends AggregateChanged
 {
     public static function raise(string $id, string $name): static
     {
-        return new static($id, ['id' => $id, 'name' => $name]);
+        return new static($id, ['name' => $name]);
     }
 
     public function profileId(): string
