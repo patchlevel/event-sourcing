@@ -295,8 +295,98 @@ all newly recorded events are then fetched and written to the database.
 The `apply` method must be implemented so that the events are processed on the aggregate. 
 This method can get quite big with some events.
 
-To make things structured, you can use two different traits 
+To make things structured, you can use three different traits 
 that allow you to define different apply methods for each event.
+
+### Attribute based apply method (since v1.2)
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
+
+final class Profile extends AggregateRoot
+{
+    use AttributeApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    // ...
+    
+    #[Apply(ProfileCreated::class)]
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId();
+        $this->name = $event->name();
+    }
+    
+    #[Apply(NameChanged::class)]
+    protected function applyNameChanged(NameChanged $event): void
+    {
+        $this->name = $event->name();
+    }
+}
+```
+
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\StrictApply;
+
+#[StrictApply]
+final class Profile extends AggregateRoot
+{
+    use AttributeApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    // ...
+    
+    #[Apply(ProfileCreated::class)]
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId();
+        $this->name = $event->name();
+    }
+}
+```
+
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\StrictApply;
+
+#[StrictApply]
+final class Profile extends AggregateRoot
+{
+    use AttributeApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    // ...
+    
+    #[Apply(ProfileCreated::class)]
+    #[Apply(NameChanged::class)]
+    protected function applyProfileCreated(ProfileCreated|NameChanged $event): void
+    {
+        if ($event instanceof ProfileCreated) {
+            $this->id = $event->profileId();
+        }
+        
+        $this->name = $event->name();
+    }
+}
+```
 
 ### Strict apply method
 
@@ -339,6 +429,8 @@ final class Profile extends AggregateRoot
     }
 }
 ```
+
+> :warning: indentical short name errors
 
 ### Non strict apply method
 
