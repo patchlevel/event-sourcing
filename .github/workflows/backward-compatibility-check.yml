@@ -3,16 +3,41 @@
 name: "Backward Compatibility Check"
 
 on:
-    push:
-    pull_request:
+  pull_request:
+  push:
+    branches:
+      - "[0-9]+.[0-9]+.x"
 
 jobs:
-    roave-backwards-compatibility-check:
-        name: "Backward Compatibility Check"
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v2
-            with:
-              fetch-depth: 0
-          - name: "Check for BC breaks"
-            uses: docker://nyholm/roave-bc-check-ga
+  roave-backwards-compatibility-check:
+    name: "Backward Compatibility Check"
+
+    runs-on: ${{ matrix.operating-system }}
+
+    strategy:
+      matrix:
+        dependencies:
+          - "locked"
+        php-version:
+          - "8.0"
+        operating-system:
+          - "ubuntu-latest"
+
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v2"
+
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          coverage: "pcov"
+          php-version: "${{ matrix.php-version }}"
+          ini-values: memory_limit=-1
+          extensions: pdo_sqlite
+
+      - uses: "ramsey/composer-install@v2"
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+
+      - name: "Check for BC breaks"
+        run: "vendor/bin/roave-backward-compatibility-check"
