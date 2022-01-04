@@ -41,5 +41,9 @@ static: psalm phpstan phpcs-check                                               
 
 test: phpunit                                                                   ## run tests
 
+.PHONY: benchmark
+benchmark: vendor                                                               ## run benchmarks
+	vendor/bin/phpbench run tests/Benchmark --report=default
+
 .PHONY: dev
 dev: static test                                                                ## run dev tools

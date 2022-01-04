@@ -15,6 +15,32 @@
       <code>$bucket-&gt;event() instanceof $class</code>
     </RedundantConditionGivenDocblockType>
   </file>
+  <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
+    <MoreSpecificImplementedParamType occurrences="1">
+      <code>$payload</code>
+    </MoreSpecificImplementedParamType>
+  </file>
+  <file src="tests/Benchmark/LoadEventsBench.php">
+    <MissingConstructor occurrences="2">
+      <code>$bus</code>
+      <code>$store</code>
+    </MissingConstructor>
+  </file>
+  <file src="tests/Benchmark/LoadEventsWithSnapshotsBench.php">
+    <MissingConstructor occurrences="3">
+      <code>$bus</code>
+      <code>$snapshotStore</code>
+      <code>$store</code>
+    </MissingConstructor>
+  </file>
+  <file src="tests/Benchmark/WriteEventsBench.php">
+    <MissingConstructor occurrences="4">
+      <code>$bus</code>
+      <code>$profile</code>
+      <code>$repository</code>
+      <code>$store</code>
+    </MissingConstructor>
+  </file>
   <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
     <MoreSpecificImplementedParamType occurrences="1">
       <code>$payload</code>
@@ -29,9 +55,6 @@
     </MissingClosureParamType>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
-    <LessSpecificImplementedReturnType occurrences="1">
-      <code>SnapshotableAggregateRoot</code>
-    </LessSpecificImplementedReturnType>
     <MoreSpecificImplementedParamType occurrences="1">
       <code>$payload</code>
     </MoreSpecificImplementedParamType>
