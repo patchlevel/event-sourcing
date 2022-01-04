@@ -78,7 +78,7 @@ final class BasicIntegrationTest extends TestCase
 
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1');
+        $profile = Profile::create('1', 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
@@ -86,12 +86,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
+        self::assertEquals('John', $result['name']);
 
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(1, $profile->playhead());
+        self::assertEquals('John', $profile->name());
         self::assertEquals(1, SendEmailMock::count());
     }
 
@@ -119,7 +121,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1');
+        $profile = Profile::create('1', 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
@@ -127,12 +129,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
+        self::assertEquals('John', $result['name']);
 
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(1, $profile->playhead());
+        self::assertEquals('John', $profile->name());
         self::assertEquals(1, SendEmailMock::count());
     }
 
@@ -158,7 +162,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1');
+        $profile = Profile::create('1', 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
@@ -166,12 +170,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
+        self::assertEquals('John', $result['name']);
 
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(1, $profile->playhead());
+        self::assertEquals('John', $profile->name());
         self::assertEquals(1, SendEmailMock::count());
     }
 
@@ -200,7 +206,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1');
+        $profile = Profile::create('1', 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
@@ -208,12 +214,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
         self::assertEquals('1', $result['id']);
+        self::assertEquals('John', $result['name']);
 
         $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
         $profile = $repository->load('1');
 
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(1, $profile->playhead());
+        self::assertEquals('John', $profile->name());
         self::assertEquals(1, SendEmailMock::count());
     }
 }
