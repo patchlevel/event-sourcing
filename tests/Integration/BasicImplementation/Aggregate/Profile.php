@@ -35,7 +35,7 @@ final class Profile extends SnapshotableAggregateRoot
     }
 
     /**
-     * @return array{id: string}
+     * @return array{id: string, name: string}
      */
     protected function serialize(): array
     {

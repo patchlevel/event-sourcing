@@ -67,4 +67,9 @@ final class Profile extends SnapshotableAggregateRoot
 
         return $self;
     }
+
+    public function name(): string
+    {
+        return $this->name;
+    }
 }

@@ -14,6 +14,7 @@
             <directory name="vendor"/>
         </ignoreFiles>
     </projectFiles>
+
     <plugins>
         <pluginClass class="Patchlevel\EventSourcingPsalmPlugin\Plugin"/>
         <pluginClass class="Psalm\PhpUnitPlugin\Plugin"/>

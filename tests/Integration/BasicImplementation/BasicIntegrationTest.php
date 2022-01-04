@@ -91,6 +91,7 @@ final class BasicIntegrationTest extends TestCase
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
+        self::assertInstanceOf(Profile::class, $profile);
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(1, $profile->playhead());
         self::assertEquals('John', $profile->name());
@@ -134,6 +135,7 @@ final class BasicIntegrationTest extends TestCase
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
+        self::assertInstanceOf(Profile::class, $profile);
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(1, $profile->playhead());
         self::assertEquals('John', $profile->name());
@@ -175,6 +177,7 @@ final class BasicIntegrationTest extends TestCase
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
+        self::assertInstanceOf(Profile::class, $profile);
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(1, $profile->playhead());
         self::assertEquals('John', $profile->name());
@@ -219,6 +222,7 @@ final class BasicIntegrationTest extends TestCase
         $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
         $profile = $repository->load('1');
 
+        self::assertInstanceOf(Profile::class, $profile);
         self::assertEquals('1', $profile->aggregateRootId());
         self::assertEquals(1, $profile->playhead());
         self::assertEquals('John', $profile->name());
