@@ -42,4 +42,4 @@ jobs:
           dependency-versions: ${{ matrix.dependencies }}
 
       - name: "Check for BC breaks"
-        run: "vendor/bin/roave-backward-compatibility-check --install-development-dependencies"
+        run: "vendor/bin/roave-backward-compatibility-check --format=github-actions --install-development-dependencies"
