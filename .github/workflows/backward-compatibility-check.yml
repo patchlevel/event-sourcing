@@ -35,7 +35,7 @@ jobs:
           coverage: "pcov"
           php-version: "${{ matrix.php-version }}"
           ini-values: memory_limit=-1
-          extensions: pdo_sqlite
+          extensions: pdo_sqlite, sodium
 
       - uses: "ramsey/composer-install@v2"
         with:
