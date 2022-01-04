@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: "Checkout"
         uses: "actions/checkout@v2"
+        with:
+          fetch-depth: 0
 
       - name: "Install PHP"
         uses: "shivammathur/setup-php@v2"
@@ -40,4 +42,4 @@ jobs:
           dependency-versions: ${{ matrix.dependencies }}
 
       - name: "Check for BC breaks"
-        run: "vendor/bin/roave-backward-compatibility-check"
+        run: "vendor/bin/roave-backward-compatibility-check --install-development-dependencies"
