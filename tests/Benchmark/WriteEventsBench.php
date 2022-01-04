@@ -20,7 +20,10 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Processor\SendE
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection\ProfileProjection;
 use PhpBench\Attributes as Bench;
 
-#[Bench\BeforeMethods("setUp")]
+use function file_exists;
+use function unlink;
+
+#[Bench\BeforeMethods('setUp')]
 final class WriteEventsBench
 {
     private const DB_PATH = __DIR__ . '/BasicImplementation/data/db.sqlite3';

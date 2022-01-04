@@ -16,7 +16,10 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profile;
 use PhpBench\Attributes as Bench;
 
-#[Bench\BeforeMethods("setUp")]
+use function file_exists;
+use function unlink;
+
+#[Bench\BeforeMethods('setUp')]
 final class LoadEventsWithSnapshotsBench
 {
     private const DB_PATH = __DIR__ . '/BasicImplementation/data/db.sqlite3';
