@@ -330,7 +330,6 @@ final class Profile extends AggregateRoot
 }
 ```
 
-
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
@@ -338,7 +337,36 @@ use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\StrictApply;
 
-#[StrictApply]
+final class Profile extends AggregateRoot
+{
+    use AttributeApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    // ...
+    
+    #[Apply(ProfileCreated::class)]
+    #[Apply(NameChanged::class)]
+    protected function applyProfileCreated(ProfileCreated|NameChanged $event): void
+    {
+        if ($event instanceof ProfileCreated) {
+            $this->id = $event->profileId();
+        }
+        
+        $this->name = $event->name();
+    }
+}
+```
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Suppress;
+
+#[Suppress([NameChanged::class])]
 final class Profile extends AggregateRoot
 {
     use AttributeApplyMethod;
@@ -357,7 +385,6 @@ final class Profile extends AggregateRoot
 }
 ```
 
-
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
@@ -365,7 +392,7 @@ use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\StrictApply;
 
-#[StrictApply]
+#[Suppress([Suppress::ALL])]
 final class Profile extends AggregateRoot
 {
     use AttributeApplyMethod;
@@ -376,13 +403,9 @@ final class Profile extends AggregateRoot
     // ...
     
     #[Apply(ProfileCreated::class)]
-    #[Apply(NameChanged::class)]
-    protected function applyProfileCreated(ProfileCreated|NameChanged $event): void
+    protected function applyProfileCreated(ProfileCreated $event): void
     {
-        if ($event instanceof ProfileCreated) {
-            $this->id = $event->profileId();
-        }
-        
+        $this->id = $event->profileId();
         $this->name = $event->name();
     }
 }

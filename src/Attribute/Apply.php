@@ -1,16 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
-#[Attribute(Attribute::TARGET_METHOD|Attribute::IS_REPEATABLE)]
+#[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 class Apply
 {
-    /**
-     * @var class-string<AggregateChanged>
-     */
+    /** @var class-string<AggregateChanged> */
     private string $aggregateChangedClass;
 
     /**

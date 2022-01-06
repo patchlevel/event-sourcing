@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithAttributeApply;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithAttributeApplySuppressAll;
 use PHPUnit\Framework\TestCase;
 
 class AggregateRootWithAttributeApplyTest extends TestCase
@@ -44,7 +45,7 @@ class AggregateRootWithAttributeApplyTest extends TestCase
         $profile->visitProfile($target);
 
         self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(1, $profile->playhead());
+        self::assertEquals(2, $profile->playhead());
         self::assertEquals($id, $profile->id());
         self::assertEquals($email, $profile->email());
         self::assertEquals(1, $profile->visited());
@@ -78,5 +79,39 @@ class AggregateRootWithAttributeApplyTest extends TestCase
                 'foo'
             )
         );
+    }
+
+    public function testSuppressEvent(): void
+    {
+        $profileId = ProfileId::fromString('1');
+        $email = Email::fromString('david.badura@patchlevel.de');
+
+        $messageId = MessageId::fromString('2');
+
+        $profile = ProfileWithAttributeApply::createProfile($profileId, $email);
+
+        $events = $profile->releaseEvents();
+
+        self::assertCount(1, $events);
+        self::assertEquals(1, $profile->playhead());
+        $event = $events[0];
+        self::assertEquals(1, $event->playhead());
+
+        $profile->deleteMessage($messageId);
+    }
+
+    public function testSuppressAll(): void
+    {
+        $profileId = ProfileId::fromString('1');
+        $email = Email::fromString('david.badura@patchlevel.de');
+
+        $profile = ProfileWithAttributeApplySuppressAll::createProfile($profileId, $email);
+
+        $events = $profile->releaseEvents();
+
+        self::assertCount(1, $events);
+        self::assertEquals(1, $profile->playhead());
+        $event = $events[0];
+        self::assertEquals(1, $event->playhead());
     }
 }

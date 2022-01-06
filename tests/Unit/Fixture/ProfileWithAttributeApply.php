@@ -7,7 +7,9 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Suppress;
 
+#[Suppress([MessageDeleted::class])]
 final class ProfileWithAttributeApply extends AggregateRoot
 {
     use AttributeApplyMethod;
@@ -44,6 +46,14 @@ final class ProfileWithAttributeApply extends AggregateRoot
         $this->record(MessagePublished::raise(
             $this->id,
             $message,
+        ));
+    }
+
+    public function deleteMessage(MessageId $messageId): void
+    {
+        $this->record(MessageDeleted::raise(
+            $this->id,
+            $messageId,
         ));
     }
 
