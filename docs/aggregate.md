@@ -300,6 +300,12 @@ that allow you to define different apply methods for each event.
 
 ### Attribute based apply method (since v1.2)
 
+The first variant is the preferred variant. 
+This uses [php attributes](https://www.php.net/manual/en/language.attributes.overview.php) 
+to find the right `apply` method. 
+You have to set the apply `attribute` to the appropriate method 
+and specify the event class for which it is responsible.
+
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
@@ -330,6 +336,11 @@ final class Profile extends AggregateRoot
 }
 ```
 
+> :book: If no apply method has been defined for an event, then you get an exception. 
+> But you can control this with the attribute suppress. 
+
+You can also define several apply attributes with different events using the same method.
+
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
@@ -359,6 +370,11 @@ final class Profile extends AggregateRoot
 }
 ```
 
+Sometimes you have events that do not change the state of the aggregate itself, 
+but are still recorded for the future, to listen on it or to create a projection. 
+So that you are not forced to write an apply method for it, 
+you can suppress the missing apply exceptions these events.
+
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
@@ -384,6 +400,8 @@ final class Profile extends AggregateRoot
     }
 }
 ```
+
+You can also completely deactivate the exceptions for missing apply methods.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
@@ -411,9 +429,11 @@ final class Profile extends AggregateRoot
 }
 ```
 
+> :warning: When all events are suppressed, debugging becomes more difficult if you forget an apply method.
+
 ### Strict apply method
 
-The trait implements the apply method for you.
+The event name is used here instead of attributes to find the right method.
 It is looking for a suitable method for the event by using the short name of the event class 
 and prefixing it with an `apply`.
 
@@ -453,7 +473,7 @@ final class Profile extends AggregateRoot
 }
 ```
 
-> :warning: indentical short name errors
+> :warning: Problems can arise if the short name is the same. To get around this, use the attribute variant.
 
 ### Non strict apply method
 
