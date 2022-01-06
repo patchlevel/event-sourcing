@@ -7,9 +7,9 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\Suppress;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
-#[Suppress([MessageDeleted::class])]
+#[SuppressMissingApply([MessageDeleted::class])]
 final class ProfileWithAttributeApply extends AggregateRoot
 {
     use AttributeApplyMethod;

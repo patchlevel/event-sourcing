@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use function is_string;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-class Suppress
+class SuppressMissingApply
 {
     public const ALL = '*';
 

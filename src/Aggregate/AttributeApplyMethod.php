@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Aggregate;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\Suppress;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;
 
 use function array_key_exists;
@@ -54,7 +54,7 @@ trait AttributeApplyMethod
         }
 
         $reflector = new ReflectionClass(self::class);
-        $attributes = $reflector->getAttributes(Suppress::class);
+        $attributes = $reflector->getAttributes(SuppressMissingApply::class);
 
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();

@@ -346,7 +346,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\StrictApply;
 
 final class Profile extends AggregateRoot
 {
@@ -373,16 +372,16 @@ final class Profile extends AggregateRoot
 Sometimes you have events that do not change the state of the aggregate itself, 
 but are still recorded for the future, to listen on it or to create a projection. 
 So that you are not forced to write an apply method for it, 
-you can suppress the missing apply exceptions these events.
+you can suppress the missing apply exceptions these events with the `SuppressMissingApply` attribute.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\Suppress;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
-#[Suppress([NameChanged::class])]
+#[SuppressMissingApply([NameChanged::class])]
 final class Profile extends AggregateRoot
 {
     use AttributeApplyMethod;
@@ -408,9 +407,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\StrictApply;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
-#[Suppress([Suppress::ALL])]
+#[SuppressMissingApply([SuppressMissingApply::ALL])]
 final class Profile extends AggregateRoot
 {
     use AttributeApplyMethod;

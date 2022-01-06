@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Attribute;
 
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Attribute\Suppress;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 
-class SuppressTest extends TestCase
+class SuppressMissingApplyTest extends TestCase
 {
     public function testSuppressEvents(): void
     {
-        $attribute = new Suppress([ProfileCreated::class]);
+        $attribute = new SuppressMissingApply([ProfileCreated::class]);
 
         self::assertEquals([ProfileCreated::class], $attribute->suppressEvents());
         self::assertEquals(false, $attribute->suppressAll());
@@ -21,7 +21,7 @@ class SuppressTest extends TestCase
 
     public function testSuppressAll(): void
     {
-        $attribute = new Suppress('*');
+        $attribute = new SuppressMissingApply('*');
 
         self::assertEquals([], $attribute->suppressEvents());
         self::assertEquals(true, $attribute->suppressAll());
@@ -31,6 +31,6 @@ class SuppressTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new Suppress('foo');
+        new SuppressMissingApply('foo');
     }
 }
