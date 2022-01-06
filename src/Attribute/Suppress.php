@@ -31,7 +31,9 @@ class Suppress
         }
 
         if (is_string($suppress)) {
-            throw new InvalidArgumentException("list<class-string<AggregateChanged>>|'*'");
+            throw new InvalidArgumentException(
+                'The value should either be an array of aggregate changed classes, or a "*" for all events.'
+            );
         }
 
         $this->suppressEvents = $suppress;
