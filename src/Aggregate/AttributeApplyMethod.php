@@ -79,8 +79,18 @@ trait AttributeApplyMethod
 
             foreach ($attributes as $attribute) {
                 $instance = $attribute->newInstance();
+                $eventClass = $instance->aggregateChangedClass();
 
-                self::$aggregateChangeMethodMap[$instance->aggregateChangedClass()] = $method->getName();
+                if (array_key_exists($eventClass, self::$aggregateChangeMethodMap)) {
+                    throw new DuplicateApplyMethod(
+                        self::class,
+                        $eventClass,
+                        self::$aggregateChangeMethodMap[$eventClass],
+                        $method->getName()
+                    );
+                }
+
+                self::$aggregateChangeMethodMap[$eventClass] = $method->getName();
             }
         }
 

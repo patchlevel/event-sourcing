@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\ApplyAttributeNotFound;
+use Patchlevel\EventSourcing\Aggregate\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithAttributeApply;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithAttributeApplyInvalid;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithAttributeApplySuppressAll;
 use PHPUnit\Framework\TestCase;
 
@@ -113,5 +115,15 @@ class AggregateRootWithAttributeApplyTest extends TestCase
         self::assertEquals(1, $profile->playhead());
         $event = $events[0];
         self::assertEquals(1, $event->playhead());
+    }
+
+    public function testDuplicateApplyMethods(): void
+    {
+        $this->expectException(DuplicateApplyMethod::class);
+
+        $profileId = ProfileId::fromString('1');
+        $email = Email::fromString('david.badura@patchlevel.de');
+
+        ProfileWithAttributeApplyInvalid::createProfile($profileId, $email);
     }
 }
