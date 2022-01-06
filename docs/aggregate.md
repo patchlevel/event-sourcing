@@ -300,7 +300,7 @@ that allow you to define different apply methods for each event.
 
 ### Attribute based apply method (since v1.2)
 
-The first variant is the preferred variant. 
+The first variant is the preferred one. 
 This uses [php attributes](https://www.php.net/manual/en/language.attributes.overview.php) 
 to find the right `apply` method. 
 You have to set the apply `attribute` to the appropriate method 
