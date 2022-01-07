@@ -35,11 +35,16 @@ jobs:
           coverage: "pcov"
           php-version: "${{ matrix.php-version }}"
           ini-values: memory_limit=-1
-          extensions: pdo_sqlite, sodium
+          extensions: pdo_sqlite, bcmath, intl, sodium
 
       - uses: "ramsey/composer-install@v2"
         with:
           dependency-versions: ${{ matrix.dependencies }}
 
+      - uses: "ramsey/composer-install@v2"
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+          working-directory: 'tools'
+
       - name: "Check for BC breaks"
-        run: "vendor/bin/roave-backward-compatibility-check --format=github-actions --install-development-dependencies"
+        run: "tools/vendor/bin/roave-backward-compatibility-check --format=github-actions --install-development-dependencies"
