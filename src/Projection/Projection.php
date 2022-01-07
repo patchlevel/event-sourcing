@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 interface Projection
 {
-    /** @return iterable<class-string<AggregateChanged<array<string, mixed>>>, string> */
+    /** @return iterable<class-string<AggregateChanged>, string> */
     public function handledEvents(): iterable;
 
     public function create(): void;
