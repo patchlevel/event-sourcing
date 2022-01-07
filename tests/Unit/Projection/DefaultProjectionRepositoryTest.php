@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\Projection\AttributeHandleMethod;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
-use Patchlevel\EventSourcing\Projection\DuplicateHandleMethod;
 use Patchlevel\EventSourcing\Projection\MethodDoesNotExist;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -128,77 +125,6 @@ final class DefaultProjectionRepositoryTest extends TestCase
         $projectionRepository = new DefaultProjectionRepository([$projection]);
 
         $this->expectException(MethodDoesNotExist::class);
-        $projectionRepository->handle($profileCreated);
-    }
-
-    public function testHandleWithAttributes(): void
-    {
-        $projection = new class implements Projection {
-            use AttributeHandleMethod;
-
-            public static ?AggregateChanged $handledEvent = null;
-
-            #[Handle(ProfileCreated::class)]
-            public function handleProfileCreated(ProfileCreated $event): void
-            {
-                self::$handledEvent = $event;
-            }
-
-            public function create(): void
-            {
-            }
-
-            public function drop(): void
-            {
-            }
-        };
-
-        $profileCreated = ProfileCreated::raise(
-            ProfileId::fromString('1'),
-            Email::fromString('profile@test.com')
-        );
-
-        $projectionRepository = new DefaultProjectionRepository([$projection]);
-        $projectionRepository->handle($profileCreated);
-
-        self::assertSame($profileCreated, $projection::$handledEvent);
-
-        $profileVisited = ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('2'));
-        $projectionRepository->handle($profileVisited);
-    }
-
-    public function testDuplicateHandleAttribute(): void
-    {
-        $this->expectException(DuplicateHandleMethod::class);
-
-        $projection = new class implements Projection {
-            use AttributeHandleMethod;
-
-            #[Handle(ProfileCreated::class)]
-            public function handleProfileCreated1(ProfileCreated $event): void
-            {
-            }
-
-            #[Handle(ProfileCreated::class)]
-            public function handleProfileCreated2(ProfileCreated $event): void
-            {
-            }
-
-            public function create(): void
-            {
-            }
-
-            public function drop(): void
-            {
-            }
-        };
-
-        $profileCreated = ProfileCreated::raise(
-            ProfileId::fromString('1'),
-            Email::fromString('profile@test.com')
-        );
-
-        $projectionRepository = new DefaultProjectionRepository([$projection]);
         $projectionRepository->handle($profileCreated);
     }
 
