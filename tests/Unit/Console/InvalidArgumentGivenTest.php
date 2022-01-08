@@ -15,7 +15,7 @@ final class InvalidArgumentGivenTest extends TestCase
         $expectedValue = 'foo';
         $exception = new InvalidArgumentGiven($expectedValue, 'int');
 
-        self::assertEquals('Invalid argument given: need type "int" got "string"', $exception->getMessage());
-        self::assertEquals($expectedValue, $exception->value());
+        self::assertSame('Invalid argument given: need type "int" got "string"', $exception->getMessage());
+        self::assertSame($expectedValue, $exception->value());
     }
 }

@@ -28,10 +28,10 @@ class AggregateChangedTest extends TestCase
 
         self::assertEquals($id, $event->profileId());
         self::assertEquals($email, $event->email());
-        self::assertEquals($id->toString(), $event->aggregateId());
-        self::assertEquals(null, $event->playhead());
-        self::assertEquals(null, $event->recordedOn());
-        self::assertEquals(
+        self::assertSame($id->toString(), $event->aggregateId());
+        self::assertNull($event->playhead());
+        self::assertNull($event->recordedOn());
+        self::assertSame(
             [
                 'profileId' => '1',
                 'email' => 'hallo@patchlevel.de',
@@ -51,9 +51,9 @@ class AggregateChangedTest extends TestCase
         self::assertInstanceOf(ProfileCreated::class, $recordedEvent);
         self::assertEquals($id, $recordedEvent->profileId());
         self::assertEquals($email, $recordedEvent->email());
-        self::assertEquals(1, $recordedEvent->playhead());
+        self::assertSame(1, $recordedEvent->playhead());
         self::assertInstanceOf(DateTimeImmutable::class, $recordedEvent->recordedOn());
-        self::assertEquals(
+        self::assertSame(
             [
                 'profileId' => '1',
                 'email' => 'hallo@patchlevel.de',
@@ -91,19 +91,19 @@ class AggregateChangedTest extends TestCase
         self::assertCount(5, $serializedEvent);
 
         self::assertArrayHasKey('aggregateId', $serializedEvent);
-        self::assertEquals('1', $serializedEvent['aggregateId']);
+        self::assertSame('1', $serializedEvent['aggregateId']);
 
         self::assertArrayHasKey('playhead', $serializedEvent);
-        self::assertEquals(1, $serializedEvent['playhead']);
+        self::assertSame(1, $serializedEvent['playhead']);
 
         self::assertArrayHasKey('event', $serializedEvent);
-        self::assertEquals(
+        self::assertSame(
             'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
             $serializedEvent['event']
         );
 
         self::assertArrayHasKey('payload', $serializedEvent);
-        self::assertEquals('{"profileId":"1","email":"hallo@patchlevel.de"}', $serializedEvent['payload']);
+        self::assertSame('{"profileId":"1","email":"hallo@patchlevel.de"}', $serializedEvent['payload']);
 
         self::assertArrayHasKey('recordedOn', $serializedEvent);
         self::assertDateTimeImmutableBetween(
@@ -140,9 +140,9 @@ class AggregateChangedTest extends TestCase
         self::assertInstanceOf(ProfileCreated::class, $event);
         self::assertEquals($id, $event->profileId());
         self::assertEquals($email, $event->email());
-        self::assertEquals(0, $event->playhead());
+        self::assertSame(0, $event->playhead());
         self::assertInstanceOf(DateTimeImmutable::class, $event->recordedOn());
-        self::assertEquals(
+        self::assertSame(
             [
                 'profileId' => '1',
                 'email' => 'hallo@patchlevel.de',
@@ -184,9 +184,9 @@ class AggregateChangedTest extends TestCase
         self::assertInstanceOf(ProfileCreated::class, $event);
         self::assertEquals($id, $event->profileId());
         self::assertEquals($email, $event->email());
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
         self::assertInstanceOf(DateTimeImmutable::class, $event->recordedOn());
-        self::assertEquals(
+        self::assertSame(
             [
                 'profileId' => '1',
                 'email' => 'hallo@patchlevel.de',

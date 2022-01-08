@@ -28,6 +28,6 @@ class InMemoryTargetTest extends TestCase
 
         $buckets = $inMemoryTarget->buckets();
         self::assertCount(1, $buckets);
-        self::assertEquals($bucket, $buckets[0]);
+        self::assertSame($bucket, $buckets[0]);
     }
 }

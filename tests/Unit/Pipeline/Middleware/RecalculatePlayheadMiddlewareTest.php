@@ -31,11 +31,11 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
         $result = $middleware($bucket);
 
         self::assertCount(1, $result);
-        self::assertEquals(Profile::class, $result[0]->aggregateClass());
+        self::assertSame(Profile::class, $result[0]->aggregateClass());
 
         $event = $result[0]->event();
 
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
     }
 
     public function testReculatePlayheadWithSamePlayhead(): void
@@ -54,10 +54,10 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
         $result = $middleware($bucket);
 
         self::assertCount(1, $result);
-        self::assertEquals(Profile::class, $result[0]->aggregateClass());
+        self::assertSame(Profile::class, $result[0]->aggregateClass());
 
         $event = $result[0]->event();
 
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
     }
 }

@@ -78,7 +78,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $exitCode = $command->run($input, $output);
 
-        self::assertEquals(0, $exitCode);
+        self::assertSame(0, $exitCode);
 
         $content = $output->fetch();
 
@@ -142,7 +142,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $exitCode = $command->run($input, $output);
 
-        self::assertEquals(0, $exitCode);
+        self::assertSame(0, $exitCode);
 
         $content = $output->fetch();
 
@@ -167,7 +167,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $exitCode = $command->run($input, $output);
 
-        self::assertEquals(1, $exitCode);
+        self::assertSame(1, $exitCode);
 
         $content = $output->fetch();
 

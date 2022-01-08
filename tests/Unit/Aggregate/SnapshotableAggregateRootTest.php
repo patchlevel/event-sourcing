@@ -25,10 +25,10 @@ class SnapshotableAggregateRootTest extends TestCase
         $profile = ProfileWithSnapshot::createProfile($id, $email);
         $snapshot = $profile->toSnapshot();
 
-        self::assertEquals('1', $snapshot->id());
-        self::assertEquals(1, $snapshot->playhead());
-        self::assertEquals(ProfileWithSnapshot::class, $snapshot->aggregate());
-        self::assertEquals(
+        self::assertSame('1', $snapshot->id());
+        self::assertSame(1, $snapshot->playhead());
+        self::assertSame(ProfileWithSnapshot::class, $snapshot->aggregate());
+        self::assertSame(
             [
                 'id' => '1',
                 'email' => 'hallo@patchlevel.de',
@@ -61,7 +61,7 @@ class SnapshotableAggregateRootTest extends TestCase
 
         $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $eventStream);
 
-        self::assertEquals('1', $profile->id()->toString());
+        self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
     }
 
@@ -89,7 +89,7 @@ class SnapshotableAggregateRootTest extends TestCase
 
         $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $eventStream);
 
-        self::assertEquals('1', $profile->id()->toString());
+        self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
     }
 
@@ -119,7 +119,7 @@ class SnapshotableAggregateRootTest extends TestCase
 
         $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $eventStream);
 
-        self::assertEquals('1', $profile->id()->toString());
+        self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
     }
 }

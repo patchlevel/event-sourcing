@@ -98,7 +98,7 @@ class BatchSnapshotStoreTest extends TestCase
             ['foo' => 'bar']
         );
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
 
         $store->save($newSnapshot);
     }
@@ -125,7 +125,7 @@ class BatchSnapshotStoreTest extends TestCase
 
         $store = new BatchSnapshotStore($wrappedStore->reveal());
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
 
         $store->save($newSnapshot);
     }
@@ -152,7 +152,7 @@ class BatchSnapshotStoreTest extends TestCase
 
         $store = new BatchSnapshotStore($wrappedStore->reveal());
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
 
         $store->freeMemory();
         $store->save($newSnapshot);

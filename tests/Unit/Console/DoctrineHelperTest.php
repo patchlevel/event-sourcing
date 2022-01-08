@@ -23,7 +23,7 @@ final class DoctrineHelperTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->getParams()->willReturn(['path' => 'test']);
 
-        self::assertEquals('test', $helper->databaseName($connection->reveal()));
+        self::assertSame('test', $helper->databaseName($connection->reveal()));
     }
 
     public function testDatabaseNameWithDatabaseName(): void
@@ -33,7 +33,7 @@ final class DoctrineHelperTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->getParams()->willReturn(['dbname' => 'test']);
 
-        self::assertEquals('test', $helper->databaseName($connection->reveal()));
+        self::assertSame('test', $helper->databaseName($connection->reveal()));
     }
 
     public function testDatabaseNameThrowException(): void
@@ -58,7 +58,7 @@ final class DoctrineHelperTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->createSchemaManager()->willReturn($schemaManager);
 
-        self::assertEquals(true, $helper->hasDatabase($connection->reveal(), 'test'));
+        self::assertSame(true, $helper->hasDatabase($connection->reveal(), 'test'));
     }
 
     public function testCreateDatabase(): void

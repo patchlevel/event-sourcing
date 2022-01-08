@@ -31,7 +31,7 @@ class IncludeEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([$bucket], $result);
+        self::assertSame([$bucket], $result);
     }
 
     public function testSkipEvent(): void
@@ -49,6 +49,6 @@ class IncludeEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([], $result);
+        self::assertSame([], $result);
     }
 }

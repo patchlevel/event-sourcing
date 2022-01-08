@@ -66,7 +66,7 @@ final class DoctrineSchemaManagerTest extends TestCase
         $doctrineSchemaManager = new DoctrineSchemaManager();
         $sqlStatements = $doctrineSchemaManager->dryRunCreate($store->reveal());
 
-        self::assertEquals(['this is sql!'], $sqlStatements);
+        self::assertSame(['this is sql!'], $sqlStatements);
     }
 
     public function testDryRunCreateNotSupportedStore(): void
@@ -167,7 +167,7 @@ final class DoctrineSchemaManagerTest extends TestCase
         $doctrineSchemaManager = new DoctrineSchemaManager();
         $sqlStatements = $doctrineSchemaManager->dryRunUpdate($store->reveal());
 
-        self::assertEquals([], $sqlStatements);
+        self::assertSame([], $sqlStatements);
     }
 
     public function testDryRunUpdateNotSupportedStore(): void
@@ -242,7 +242,7 @@ final class DoctrineSchemaManagerTest extends TestCase
 
         $doctrineSchemaManager = new DoctrineSchemaManager();
         $queries = $doctrineSchemaManager->dryRunDrop($store->reveal());
-        self::assertEquals(['DROP TABLE foo;'], $queries);
+        self::assertSame(['DROP TABLE foo;'], $queries);
     }
 
     public function testDryRunDropNotSupported(): void

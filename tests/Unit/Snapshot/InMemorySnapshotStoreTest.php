@@ -26,7 +26,7 @@ class InMemorySnapshotStoreTest extends TestCase
 
         $store->save($snapshot);
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
     }
 
     public function testSnapshotNotFound(): void

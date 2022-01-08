@@ -16,16 +16,16 @@ class SuppressMissingApplyTest extends TestCase
     {
         $attribute = new SuppressMissingApply([ProfileCreated::class]);
 
-        self::assertEquals([ProfileCreated::class], $attribute->suppressEvents());
-        self::assertEquals(false, $attribute->suppressAll());
+        self::assertSame([ProfileCreated::class], $attribute->suppressEvents());
+        self::assertSame(false, $attribute->suppressAll());
     }
 
     public function testSuppressAll(): void
     {
         $attribute = new SuppressMissingApply('*');
 
-        self::assertEquals([], $attribute->suppressEvents());
-        self::assertEquals(true, $attribute->suppressAll());
+        self::assertSame([], $attribute->suppressEvents());
+        self::assertSame(true, $attribute->suppressAll());
     }
 
     public function testInvalidString(): void

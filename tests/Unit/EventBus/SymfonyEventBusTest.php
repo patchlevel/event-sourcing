@@ -62,6 +62,6 @@ class SymfonyEventBusTest extends TestCase
         $eventBus = SymfonyEventBus::create([$listener]);
         $eventBus->dispatch($event);
 
-        self::assertEquals($event, $listener->event);
+        self::assertSame($event, $listener->event);
     }
 }

@@ -43,10 +43,10 @@ class ClassRenameMiddlewareTest extends TestCase
 
         self::assertInstanceOf(ProfileCreated::class, $newEvent);
         self::assertNotInstanceOf(AliasProfileCreated::class, $newEvent);
-        self::assertEquals($event->payload(), $newEvent->payload());
-        self::assertEquals($event->playhead(), $newEvent->playhead());
-        self::assertEquals($event->recordedOn(), $newEvent->recordedOn());
-        self::assertEquals($event->aggregateId(), $newEvent->aggregateId());
+        self::assertSame($event->payload(), $newEvent->payload());
+        self::assertSame($event->playhead(), $newEvent->playhead());
+        self::assertSame($event->recordedOn(), $newEvent->recordedOn());
+        self::assertSame($event->aggregateId(), $newEvent->aggregateId());
     }
 
     public function testSkip(): void
@@ -66,6 +66,6 @@ class ClassRenameMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([$bucket], $result);
+        self::assertSame([$bucket], $result);
     }
 }

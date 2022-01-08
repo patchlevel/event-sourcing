@@ -164,7 +164,7 @@ class SnapshotRepositoryTest extends TestCase
         $aggregate = $repository->load('1');
 
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
-        self::assertEquals(1, $aggregate->playhead());
+        self::assertSame(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
     }
@@ -195,7 +195,7 @@ class SnapshotRepositoryTest extends TestCase
         $aggregate = $repository->load('1');
 
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
-        self::assertEquals(1, $aggregate->playhead());
+        self::assertSame(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
     }
@@ -228,7 +228,7 @@ class SnapshotRepositoryTest extends TestCase
         $aggregate = $repository->load('1');
 
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
-        self::assertEquals(1, $aggregate->playhead());
+        self::assertSame(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
 
@@ -310,7 +310,7 @@ class SnapshotRepositoryTest extends TestCase
         $aggregate = $repository->load('1');
 
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
-        self::assertEquals(1, $aggregate->playhead());
+        self::assertSame(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
 

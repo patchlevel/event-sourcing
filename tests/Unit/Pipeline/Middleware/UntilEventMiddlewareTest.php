@@ -35,7 +35,7 @@ class UntilEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([$bucket], $result);
+        self::assertSame([$bucket], $result);
     }
 
     public function testNegative(): void
@@ -58,7 +58,7 @@ class UntilEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([], $result);
+        self::assertSame([], $result);
     }
 
     public function testNullEdgeCase(): void
@@ -81,6 +81,6 @@ class UntilEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([], $result);
+        self::assertSame([], $result);
     }
 }

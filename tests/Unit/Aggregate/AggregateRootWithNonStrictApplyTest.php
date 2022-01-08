@@ -21,8 +21,8 @@ class AggregateRootWithNonStrictApplyTest extends TestCase
 
         $profile = ProfileWithNonStrictApply::createProfile($id, $email);
 
-        self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(1, $profile->playhead());
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
         self::assertEquals($id, $profile->id());
         self::assertEquals($email, $profile->email());
 
@@ -30,7 +30,7 @@ class AggregateRootWithNonStrictApplyTest extends TestCase
 
         self::assertCount(1, $events);
         $event = $events[0];
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
     }
 
     public function testEventWithoutApplyMethod(): void
@@ -45,9 +45,9 @@ class AggregateRootWithNonStrictApplyTest extends TestCase
         $events = $profile->releaseEvents();
 
         self::assertCount(1, $events);
-        self::assertEquals(1, $profile->playhead());
+        self::assertSame(1, $profile->playhead());
         $event = $events[0];
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
 
         $profile->publishMessage(
             Message::create(
@@ -60,6 +60,6 @@ class AggregateRootWithNonStrictApplyTest extends TestCase
 
         self::assertCount(1, $events);
         $event = $events[0];
-        self::assertEquals(2, $event->playhead());
+        self::assertSame(2, $event->playhead());
     }
 }

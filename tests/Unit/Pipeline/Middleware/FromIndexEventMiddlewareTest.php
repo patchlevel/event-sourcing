@@ -30,7 +30,7 @@ class FromIndexEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([$bucket], $result);
+        self::assertSame([$bucket], $result);
     }
 
     public function testNegative(): void
@@ -48,6 +48,6 @@ class FromIndexEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([], $result);
+        self::assertSame([], $result);
     }
 }

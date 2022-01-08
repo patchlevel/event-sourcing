@@ -32,7 +32,7 @@ final class WatchCommandTest extends TestCase
 
         $exitCode = $command->run($input, $output);
 
-        self::assertEquals(0, $exitCode);
+        self::assertSame(0, $exitCode);
 
         $content = $output->fetch();
 

@@ -41,7 +41,7 @@ class AttributeHandleMethodTest extends TestCase
             }
         };
 
-        self::assertEquals(
+        self::assertSame(
             [
                 ProfileCreated::class => 'handleProfileCreated',
                 ProfileVisited::class => 'handleProfileCreated',

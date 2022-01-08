@@ -37,7 +37,7 @@ class DefaultEventBusTest extends TestCase
         $eventBus = new DefaultEventBus([$listener]);
         $eventBus->dispatch($event);
 
-        self::assertEquals($event, $listener->event);
+        self::assertSame($event, $listener->event);
     }
 
     public function testDynamicListener(): void
@@ -60,7 +60,7 @@ class DefaultEventBusTest extends TestCase
         $eventBus->addListener($listener);
         $eventBus->dispatch($event);
 
-        self::assertEquals($event, $listener->event);
+        self::assertSame($event, $listener->event);
     }
 
     public function testSynchroneEvents(): void

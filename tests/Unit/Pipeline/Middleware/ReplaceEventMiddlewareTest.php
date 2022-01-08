@@ -41,12 +41,12 @@ class ReplaceEventMiddlewareTest extends TestCase
         $result = $middleware($bucket);
 
         self::assertCount(1, $result);
-        self::assertEquals(Profile::class, $result[0]->aggregateClass());
+        self::assertSame(Profile::class, $result[0]->aggregateClass());
 
         $event = $result[0]->event();
 
         self::assertInstanceOf(ProfileVisited::class, $event);
-        self::assertEquals(5, $event->playhead());
+        self::assertSame(5, $event->playhead());
     }
 
     public function testReplaceInvalidClass(): void
@@ -74,11 +74,11 @@ class ReplaceEventMiddlewareTest extends TestCase
         $result = $middleware($bucket);
 
         self::assertCount(1, $result);
-        self::assertEquals(Profile::class, $result[0]->aggregateClass());
+        self::assertSame(Profile::class, $result[0]->aggregateClass());
 
         $event = $result[0]->event();
 
         self::assertInstanceOf(ProfileCreated::class, $event);
-        self::assertEquals(5, $event->playhead());
+        self::assertSame(5, $event->playhead());
     }
 }

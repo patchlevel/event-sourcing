@@ -95,12 +95,12 @@ final class PipelineChangeStoreTest extends TestCase
         $profile->visit();
 
         $oldRepository->save($profile);
-        self::assertEquals(4, $oldStore->count());
+        self::assertSame(4, $oldStore->count());
 
-        self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(4, $profile->playhead());
-        self::assertEquals(true, $profile->isPrivate());
-        self::assertEquals(2, $profile->count());
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(4, $profile->playhead());
+        self::assertSame(true, $profile->isPrivate());
+        self::assertSame(2, $profile->count());
 
         $pipeline = new Pipeline(
             new StoreSource($oldStore),
@@ -114,15 +114,15 @@ final class PipelineChangeStoreTest extends TestCase
             ]
         );
 
-        self::assertEquals(4, $pipeline->count());
+        self::assertSame(4, $pipeline->count());
         $pipeline->run();
 
         $newProfile = $newRepository->load('1');
 
         self::assertInstanceOf(Profile::class, $newProfile);
-        self::assertEquals('1', $newProfile->aggregateRootId());
-        self::assertEquals(3, $newProfile->playhead());
-        self::assertEquals(false, $newProfile->isPrivate());
-        self::assertEquals(-2, $newProfile->count());
+        self::assertSame('1', $newProfile->aggregateRootId());
+        self::assertSame(3, $newProfile->playhead());
+        self::assertSame(false, $newProfile->isPrivate());
+        self::assertSame(-2, $newProfile->count());
     }
 }

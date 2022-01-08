@@ -13,7 +13,7 @@ final class InputHelperTest extends TestCase
 {
     public function testValidString(): void
     {
-        self::assertEquals('foo', InputHelper::string('foo'));
+        self::assertSame('foo', InputHelper::string('foo'));
     }
 
     public function testInvalidString(): void
@@ -26,12 +26,12 @@ final class InputHelperTest extends TestCase
 
     public function testValidNullableString(): void
     {
-        self::assertEquals('foo', InputHelper::nullableString('foo'));
+        self::assertSame('foo', InputHelper::nullableString('foo'));
     }
 
     public function testValidNullableStringIsNull(): void
     {
-        self::assertEquals(null, InputHelper::nullableString(null));
+        self::assertSame(null, InputHelper::nullableString(null));
     }
 
     public function testInvalidNullableString(): void
@@ -44,7 +44,7 @@ final class InputHelperTest extends TestCase
 
     public function testValidBoolean(): void
     {
-        self::assertEquals(true, InputHelper::bool(true));
+        self::assertSame(true, InputHelper::bool(true));
     }
 
     public function testInvalidBoolean(): void

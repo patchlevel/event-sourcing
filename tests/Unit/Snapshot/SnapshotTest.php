@@ -20,9 +20,9 @@ class SnapshotTest extends TestCase
             ['foo' => 'bar']
         );
 
-        self::assertEquals(ProfileWithSnapshot::class, $snapshot->aggregate());
-        self::assertEquals('1', $snapshot->id());
-        self::assertEquals(1, $snapshot->playhead());
-        self::assertEquals(['foo' => 'bar'], $snapshot->payload());
+        self::assertSame(ProfileWithSnapshot::class, $snapshot->aggregate());
+        self::assertSame('1', $snapshot->id());
+        self::assertSame(1, $snapshot->playhead());
+        self::assertSame(['foo' => 'bar'], $snapshot->payload());
     }
 }
