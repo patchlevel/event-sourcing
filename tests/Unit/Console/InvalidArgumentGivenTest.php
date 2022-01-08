@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console;
 use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Console\InvalidArgumentGiven */
 final class InvalidArgumentGivenTest extends TestCase
 {
     public function testException(): void

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
+namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware */
 class UntilEventMiddlewareTest extends TestCase
 {
     public function testPositive(): void

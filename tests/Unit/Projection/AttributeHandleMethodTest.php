@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
+/** @coversNothing  */
 class AttributeHandleMethodTest extends TestCase
 {
     public function testHandleAttribute(): void

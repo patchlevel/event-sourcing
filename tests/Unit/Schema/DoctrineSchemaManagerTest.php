@@ -18,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+/** @covers \Patchlevel\EventSourcing\Schema\DoctrineSchemaManager */
 final class DoctrineSchemaManagerTest extends TestCase
 {
     use ProphecyTrait;

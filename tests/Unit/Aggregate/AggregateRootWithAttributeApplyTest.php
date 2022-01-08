@@ -15,12 +15,13 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithAttributeApplyInvalid
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithAttributeApplySuppressAll;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRoot */
 class AggregateRootWithAttributeApplyTest extends TestCase
 {
     public function testApplyMethod(): void
     {
         $id = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $profile = ProfileWithAttributeApply::createProfile($id, $email);
 
@@ -39,7 +40,7 @@ class AggregateRootWithAttributeApplyTest extends TestCase
     public function testMultipleApplyOnOneMethod(): void
     {
         $id = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $target = ProfileId::fromString('2');
 
@@ -62,7 +63,7 @@ class AggregateRootWithAttributeApplyTest extends TestCase
         $this->expectException(ApplyAttributeNotFound::class);
 
         $profileId = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $messageId = MessageId::fromString('2');
 
@@ -86,7 +87,7 @@ class AggregateRootWithAttributeApplyTest extends TestCase
     public function testSuppressEvent(): void
     {
         $profileId = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $messageId = MessageId::fromString('2');
 
@@ -105,7 +106,7 @@ class AggregateRootWithAttributeApplyTest extends TestCase
     public function testSuppressAll(): void
     {
         $profileId = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $profile = ProfileWithAttributeApplySuppressAll::createProfile($profileId, $email);
 
@@ -122,7 +123,7 @@ class AggregateRootWithAttributeApplyTest extends TestCase
         $this->expectException(DuplicateApplyMethod::class);
 
         $profileId = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         ProfileWithAttributeApplyInvalid::createProfile($profileId, $email);
     }

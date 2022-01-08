@@ -11,12 +11,13 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithNonStrictApply;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRoot */
 class AggregateRootWithNonStrictApplyTest extends TestCase
 {
     public function testApplyMethod(): void
     {
         $id = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $profile = ProfileWithNonStrictApply::createProfile($id, $email);
 
@@ -35,7 +36,7 @@ class AggregateRootWithNonStrictApplyTest extends TestCase
     public function testEventWithoutApplyMethod(): void
     {
         $profileId = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $messageId = MessageId::fromString('2');
 

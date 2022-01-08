@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+/** @covers \Patchlevel\EventSourcing\Store\SingleTableStore */
 final class SingleTableStoreTest extends TestCase
 {
     use ProphecyTrait;

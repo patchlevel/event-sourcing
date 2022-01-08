@@ -15,6 +15,7 @@ use Psr\Cache\CacheItemPoolInterface;
 
 use function sprintf;
 
+/** @covers \Patchlevel\EventSourcing\Snapshot\Psr6SnapshotStore */
 class Psr6SnapshotStoreTest extends TestCase
 {
     use ProphecyTrait;

@@ -15,6 +15,7 @@ use RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
+/** @covers \Patchlevel\EventSourcing\Console\Command\DatabaseCreateCommand */
 final class DatabaseCreateCommandTest extends TestCase
 {
     use ProphecyTrait;

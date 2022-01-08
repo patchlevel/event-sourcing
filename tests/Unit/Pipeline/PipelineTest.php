@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Pipeline  */
 class PipelineTest extends TestCase
 {
     public function testPipeline(): void
@@ -27,7 +28,7 @@ class PipelineTest extends TestCase
                 1,
                 ProfileCreated::raise(
                     ProfileId::fromString('1'),
-                    Email::fromString('d.a.badura@gmail.com')
+                    Email::fromString('hallo@patchlevel.de')
                 )->recordNow(0)
             ),
             new EventBucket(
@@ -51,7 +52,7 @@ class PipelineTest extends TestCase
                 4,
                 ProfileCreated::raise(
                     ProfileId::fromString('2'),
-                    Email::fromString('d.a.badura@gmail.com')
+                    Email::fromString('hallo@patchlevel.de')
                 )->recordNow(0)
             ),
             new EventBucket(
@@ -83,7 +84,7 @@ class PipelineTest extends TestCase
                 1,
                 ProfileCreated::raise(
                     ProfileId::fromString('1'),
-                    Email::fromString('d.a.badura@gmail.com')
+                    Email::fromString('hallo@patchlevel.de')
                 )->recordNow(0)
             ),
             new EventBucket(
@@ -107,7 +108,7 @@ class PipelineTest extends TestCase
                 4,
                 ProfileCreated::raise(
                     ProfileId::fromString('2'),
-                    Email::fromString('d.a.badura@gmail.com')
+                    Email::fromString('hallo@patchlevel.de')
                 )->recordNow(0)
             ),
             new EventBucket(

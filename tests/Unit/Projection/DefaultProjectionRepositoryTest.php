@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+/** @covers \Patchlevel\EventSourcing\Projection\DefaultProjectionRepository */
 final class DefaultProjectionRepositoryTest extends TestCase
 {
     use ProphecyTrait;

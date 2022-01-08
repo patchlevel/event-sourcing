@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
+namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware */
 class RecalculatePlayheadMiddlewareTest extends TestCase
 {
     public function testReculatePlayhead(): void
@@ -23,7 +24,7 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
             1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(5)
         );
 
@@ -46,7 +47,7 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
             1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(0)
         );
 

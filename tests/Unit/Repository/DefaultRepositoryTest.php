@@ -21,6 +21,7 @@ use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use stdClass;
 
+/** @covers \Patchlevel\EventSourcing\Repository\DefaultRepository */
 class DefaultRepositoryTest extends TestCase
 {
     use ProphecyTrait;
@@ -59,7 +60,7 @@ class DefaultRepositoryTest extends TestCase
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('d.a.badura@gmail.com')
+            Email::fromString('hallo@patchlevel.de')
         );
 
         $repository->save($aggregate);
@@ -78,7 +79,7 @@ class DefaultRepositoryTest extends TestCase
 
         $aggregate = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('d.a.badura@gmail.com')
+            Email::fromString('hallo@patchlevel.de')
         );
 
         $this->expectException(WrongAggregate::class);
@@ -105,7 +106,7 @@ class DefaultRepositoryTest extends TestCase
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('d.a.badura@gmail.com')
+            Email::fromString('hallo@patchlevel.de')
         );
         $aggregate->releaseEvents();
 
@@ -121,7 +122,7 @@ class DefaultRepositoryTest extends TestCase
         )->willReturn([
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(1),
         ]);
 
@@ -138,7 +139,7 @@ class DefaultRepositoryTest extends TestCase
         self::assertInstanceOf(Profile::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
-        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
     }
 
     public function testLoadAggregateCached(): void
@@ -150,7 +151,7 @@ class DefaultRepositoryTest extends TestCase
         )->willReturn([
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(1),
         ]);
 
@@ -167,7 +168,7 @@ class DefaultRepositoryTest extends TestCase
         self::assertInstanceOf(Profile::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
-        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
 
         self::assertSame($aggregate, $repository->load('1'));
     }
@@ -220,7 +221,7 @@ class DefaultRepositoryTest extends TestCase
                 [
                     ProfileCreated::raise(
                         ProfileId::fromString('1'),
-                        Email::fromString('d.a.badura@gmail.com')
+                        Email::fromString('hallo@patchlevel.de')
                     )->recordNow(1),
                 ]
             );
@@ -239,7 +240,7 @@ class DefaultRepositoryTest extends TestCase
         self::assertInstanceOf(Profile::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
-        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
 
         self::assertTrue($repository->has('1'));
     }

@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Target\InMemoryTarget */
 class InMemoryTargetTest extends TestCase
 {
     public function testSave(): void

@@ -24,6 +24,7 @@ use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use stdClass;
 
+/** @covers \Patchlevel\EventSourcing\Repository\SnapshotRepository */
 class SnapshotRepositoryTest extends TestCase
 {
     use ProphecyTrait;
@@ -59,7 +60,7 @@ class SnapshotRepositoryTest extends TestCase
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('d.a.badura@gmail.com')
+            Email::fromString('hallo@patchlevel.de')
         );
 
         $this->expectException(WrongAggregate::class);
@@ -89,7 +90,7 @@ class SnapshotRepositoryTest extends TestCase
 
         $aggregate = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('d.a.badura@gmail.com')
+            Email::fromString('hallo@patchlevel.de')
         );
         $aggregate->releaseEvents();
 
@@ -120,7 +121,7 @@ class SnapshotRepositoryTest extends TestCase
 
         $aggregate = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('d.a.badura@gmail.com')
+            Email::fromString('hallo@patchlevel.de')
         );
 
         $repository->save($aggregate);
@@ -148,7 +149,7 @@ class SnapshotRepositoryTest extends TestCase
                 1,
                 [
                     'id' => '1',
-                    'email' => 'd.a.badura@gmail.com',
+                    'email' => 'hallo@patchlevel.de',
                 ]
             )
         );
@@ -165,7 +166,7 @@ class SnapshotRepositoryTest extends TestCase
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
-        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
     }
 
     public function testLoadAggregateWithoutSnapshot(): void
@@ -174,7 +175,7 @@ class SnapshotRepositoryTest extends TestCase
         $store->load(ProfileWithSnapshot::class, '1')->willReturn([
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(1),
         ]);
 
@@ -196,7 +197,7 @@ class SnapshotRepositoryTest extends TestCase
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
-        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
     }
 
     public function testLoadAggregateCached(): void
@@ -208,7 +209,7 @@ class SnapshotRepositoryTest extends TestCase
         )->willReturn([
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(1),
         ]);
 
@@ -229,7 +230,7 @@ class SnapshotRepositoryTest extends TestCase
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
-        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
 
         self::assertSame($aggregate, $repository->load('1'));
     }
@@ -288,7 +289,7 @@ class SnapshotRepositoryTest extends TestCase
                 [
                     ProfileCreated::raise(
                         ProfileId::fromString('1'),
-                        Email::fromString('d.a.badura@gmail.com')
+                        Email::fromString('hallo@patchlevel.de')
                     )->recordNow(1),
                 ]
             );
@@ -311,7 +312,7 @@ class SnapshotRepositoryTest extends TestCase
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertEquals(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
-        self::assertEquals(Email::fromString('d.a.badura@gmail.com'), $aggregate->email());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
 
         self::assertTrue($repository->has('1'));
     }

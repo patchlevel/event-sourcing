@@ -14,6 +14,7 @@ use Psr\SimpleCache\CacheInterface;
 
 use function sprintf;
 
+/** @covers  \Patchlevel\EventSourcing\Snapshot\Psr16SnapshotStore */
 class Psr16SnapshotStoreTest extends TestCase
 {
     use ProphecyTrait;

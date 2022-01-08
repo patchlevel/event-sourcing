@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Clock */
 class ClockTest extends TestCase
 {
     protected function setUp(): void

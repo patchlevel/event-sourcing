@@ -14,12 +14,13 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot */
 class SnapshotableAggregateRootTest extends TestCase
 {
     public function testSerialize(): void
     {
         $id = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $profile = ProfileWithSnapshot::createProfile($id, $email);
         $snapshot = $profile->toSnapshot();
@@ -30,7 +31,7 @@ class SnapshotableAggregateRootTest extends TestCase
         self::assertEquals(
             [
                 'id' => '1',
-                'email' => 'david.badura@patchlevel.de',
+                'email' => 'hallo@patchlevel.de',
             ],
             $snapshot->payload()
         );

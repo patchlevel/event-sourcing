@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
+namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware */
 class ClassRenameMiddlewareTest extends TestCase
 {
     public function testRename(): void
@@ -25,7 +26,7 @@ class ClassRenameMiddlewareTest extends TestCase
 
         $event = AliasProfileCreated::raise(
             ProfileId::fromString('1'),
-            Email::fromString('d.a.badura@gmail.com')
+            Email::fromString('hallo@patchlevel.de')
         )->recordNow(5);
 
         $bucket = new EventBucket(
@@ -59,7 +60,7 @@ class ClassRenameMiddlewareTest extends TestCase
             1,
             AliasProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(5)
         );
 

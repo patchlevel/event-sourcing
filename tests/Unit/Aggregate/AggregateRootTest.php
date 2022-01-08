@@ -14,12 +14,13 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRoot */
 class AggregateRootTest extends TestCase
 {
     public function testCreateAggregate(): void
     {
         $id = ProfileId::fromString('1');
-        $email = Email::fromString('d.a.badura@gmail.com');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $profile = Profile::createProfile($id, $email);
 
@@ -38,7 +39,7 @@ class AggregateRootTest extends TestCase
     public function testExecuteMethod(): void
     {
         $profileId = ProfileId::fromString('1');
-        $email = Email::fromString('d.a.badura@gmail.com');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $messageId = MessageId::fromString('2');
 

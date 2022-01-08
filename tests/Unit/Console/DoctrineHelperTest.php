@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+/** @covers \Patchlevel\EventSourcing\Console\DoctrineHelper */
 final class DoctrineHelperTest extends TestCase
 {
     use ProphecyTrait;

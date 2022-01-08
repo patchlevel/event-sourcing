@@ -16,6 +16,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
+/** @covers \Patchlevel\EventSourcing\EventBus\SymfonyEventBus */
 class SymfonyEventBusTest extends TestCase
 {
     use ProphecyTrait;

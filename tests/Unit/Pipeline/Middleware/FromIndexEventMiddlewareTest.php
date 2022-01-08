@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
+namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Pipeline\Middleware\FromIndexEventMiddleware;
@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\FromIndexEventMiddleware */
 class FromIndexEventMiddlewareTest extends TestCase
 {
     public function testPositive(): void
@@ -23,7 +24,7 @@ class FromIndexEventMiddlewareTest extends TestCase
             1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(0)
         );
 
@@ -41,7 +42,7 @@ class FromIndexEventMiddlewareTest extends TestCase
             1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(0)
         );
 

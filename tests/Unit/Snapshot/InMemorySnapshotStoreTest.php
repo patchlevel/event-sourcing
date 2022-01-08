@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore */
 class InMemorySnapshotStoreTest extends TestCase
 {
     public function testInMemorySnapshotStore(): void

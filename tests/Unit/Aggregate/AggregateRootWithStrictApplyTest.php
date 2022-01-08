@@ -12,12 +12,13 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithStrictApply;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRoot */
 class AggregateRootWithStrictApplyTest extends TestCase
 {
     public function testApplyMethod(): void
     {
         $id = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $profile = ProfileWithStrictApply::createProfile($id, $email);
 
@@ -38,7 +39,7 @@ class AggregateRootWithStrictApplyTest extends TestCase
         $this->expectException(ApplyMethodNotFound::class);
 
         $profileId = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $messageId = MessageId::fromString('2');
 

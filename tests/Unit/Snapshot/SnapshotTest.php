@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Snapshot\Snapshot */
 class SnapshotTest extends TestCase
 {
     public function testSnapshot(): void

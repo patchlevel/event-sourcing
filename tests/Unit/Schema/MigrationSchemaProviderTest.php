@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Store\DoctrineStore;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+/** @covers \Patchlevel\EventSourcing\Schema\MigrationSchemaProvider */
 final class MigrationSchemaProviderTest extends TestCase
 {
     use ProphecyTrait;

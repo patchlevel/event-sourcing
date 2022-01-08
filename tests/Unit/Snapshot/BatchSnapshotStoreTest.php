@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+/** @covers \Patchlevel\EventSourcing\Snapshot\BatchSnapshotStore */
 class BatchSnapshotStoreTest extends TestCase
 {
     use ProphecyTrait;

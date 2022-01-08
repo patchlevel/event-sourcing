@@ -13,6 +13,7 @@ use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+/** @covers \Patchlevel\EventSourcing\Console\EventPrinter */
 final class EventPrinterTest extends TestCase
 {
     use ProphecyTrait;

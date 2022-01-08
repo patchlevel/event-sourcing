@@ -13,6 +13,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
+/** @covers \Patchlevel\EventSourcing\Console\Command\SchemaUpdateCommand */
 final class SchemaUpdateCommandTest extends TestCase
 {
     use ProphecyTrait;
