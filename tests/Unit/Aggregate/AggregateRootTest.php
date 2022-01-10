@@ -47,8 +47,9 @@ class AggregateRootTest extends TestCase
 
         $events = $profile->releaseEvents();
 
+        $playhead = $profile->playhead();
         self::assertCount(1, $events);
-        self::assertSame(1, $profile->playhead());
+        self::assertSame(1, $playhead);
         $event = $events[0];
         self::assertSame(1, $event->playhead());
 
@@ -59,8 +60,9 @@ class AggregateRootTest extends TestCase
             )
         );
 
+        $playhead = $profile->playhead();
         self::assertSame('1', $profile->aggregateRootId());
-        self::assertSame(2, $profile->playhead());
+        self::assertSame(2, $playhead);
         self::assertEquals($profileId, $profile->id());
         self::assertEquals($email, $profile->email());
 
