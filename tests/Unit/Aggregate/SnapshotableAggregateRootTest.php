@@ -14,23 +14,24 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot */
 class SnapshotableAggregateRootTest extends TestCase
 {
     public function testSerialize(): void
     {
         $id = ProfileId::fromString('1');
-        $email = Email::fromString('david.badura@patchlevel.de');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $profile = ProfileWithSnapshot::createProfile($id, $email);
         $snapshot = $profile->toSnapshot();
 
-        self::assertEquals('1', $snapshot->id());
-        self::assertEquals(1, $snapshot->playhead());
-        self::assertEquals(ProfileWithSnapshot::class, $snapshot->aggregate());
-        self::assertEquals(
+        self::assertSame('1', $snapshot->id());
+        self::assertSame(1, $snapshot->playhead());
+        self::assertSame(ProfileWithSnapshot::class, $snapshot->aggregate());
+        self::assertSame(
             [
                 'id' => '1',
-                'email' => 'david.badura@patchlevel.de',
+                'email' => 'hallo@patchlevel.de',
             ],
             $snapshot->payload()
         );
@@ -60,7 +61,7 @@ class SnapshotableAggregateRootTest extends TestCase
 
         $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $eventStream);
 
-        self::assertEquals('1', $profile->id()->toString());
+        self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
     }
 
@@ -88,7 +89,7 @@ class SnapshotableAggregateRootTest extends TestCase
 
         $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $eventStream);
 
-        self::assertEquals('1', $profile->id()->toString());
+        self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
     }
 
@@ -118,7 +119,7 @@ class SnapshotableAggregateRootTest extends TestCase
 
         $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $eventStream);
 
-        self::assertEquals('1', $profile->id()->toString());
+        self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
     }
 }

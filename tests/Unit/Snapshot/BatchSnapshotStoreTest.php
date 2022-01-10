@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+/** @covers \Patchlevel\EventSourcing\Snapshot\BatchSnapshotStore */
 class BatchSnapshotStoreTest extends TestCase
 {
     use ProphecyTrait;
@@ -97,7 +98,7 @@ class BatchSnapshotStoreTest extends TestCase
             ['foo' => 'bar']
         );
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
 
         $store->save($newSnapshot);
     }
@@ -124,7 +125,7 @@ class BatchSnapshotStoreTest extends TestCase
 
         $store = new BatchSnapshotStore($wrappedStore->reveal());
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
 
         $store->save($newSnapshot);
     }
@@ -151,7 +152,7 @@ class BatchSnapshotStoreTest extends TestCase
 
         $store = new BatchSnapshotStore($wrappedStore->reveal());
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
 
         $store->freeMemory();
         $store->save($newSnapshot);

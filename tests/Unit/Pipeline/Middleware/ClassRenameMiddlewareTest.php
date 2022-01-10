@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
+namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware */
 class ClassRenameMiddlewareTest extends TestCase
 {
     public function testRename(): void
@@ -25,7 +26,7 @@ class ClassRenameMiddlewareTest extends TestCase
 
         $event = AliasProfileCreated::raise(
             ProfileId::fromString('1'),
-            Email::fromString('d.a.badura@gmail.com')
+            Email::fromString('hallo@patchlevel.de')
         )->recordNow(5);
 
         $bucket = new EventBucket(
@@ -42,10 +43,10 @@ class ClassRenameMiddlewareTest extends TestCase
 
         self::assertInstanceOf(ProfileCreated::class, $newEvent);
         self::assertNotInstanceOf(AliasProfileCreated::class, $newEvent);
-        self::assertEquals($event->payload(), $newEvent->payload());
-        self::assertEquals($event->playhead(), $newEvent->playhead());
-        self::assertEquals($event->recordedOn(), $newEvent->recordedOn());
-        self::assertEquals($event->aggregateId(), $newEvent->aggregateId());
+        self::assertSame($event->payload(), $newEvent->payload());
+        self::assertSame($event->playhead(), $newEvent->playhead());
+        self::assertSame($event->recordedOn(), $newEvent->recordedOn());
+        self::assertSame($event->aggregateId(), $newEvent->aggregateId());
     }
 
     public function testSkip(): void
@@ -59,12 +60,12 @@ class ClassRenameMiddlewareTest extends TestCase
             1,
             AliasProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(5)
         );
 
         $result = $middleware($bucket);
 
-        self::assertEquals([$bucket], $result);
+        self::assertSame([$bucket], $result);
     }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
+namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware */
 class RecalculatePlayheadMiddlewareTest extends TestCase
 {
     public function testReculatePlayhead(): void
@@ -23,18 +24,18 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
             1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(5)
         );
 
         $result = $middleware($bucket);
 
         self::assertCount(1, $result);
-        self::assertEquals(Profile::class, $result[0]->aggregateClass());
+        self::assertSame(Profile::class, $result[0]->aggregateClass());
 
         $event = $result[0]->event();
 
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
     }
 
     public function testReculatePlayheadWithSamePlayhead(): void
@@ -46,17 +47,17 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
             1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
-                Email::fromString('d.a.badura@gmail.com')
+                Email::fromString('hallo@patchlevel.de')
             )->recordNow(0)
         );
 
         $result = $middleware($bucket);
 
         self::assertCount(1, $result);
-        self::assertEquals(Profile::class, $result[0]->aggregateClass());
+        self::assertSame(Profile::class, $result[0]->aggregateClass());
 
         $event = $result[0]->event();
 
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
     }
 }

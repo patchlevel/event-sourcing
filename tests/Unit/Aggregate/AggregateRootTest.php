@@ -14,17 +14,18 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRoot */
 class AggregateRootTest extends TestCase
 {
     public function testCreateAggregate(): void
     {
         $id = ProfileId::fromString('1');
-        $email = Email::fromString('d.a.badura@gmail.com');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $profile = Profile::createProfile($id, $email);
 
-        self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(1, $profile->playhead());
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
         self::assertEquals($id, $profile->id());
         self::assertEquals($email, $profile->email());
 
@@ -32,13 +33,13 @@ class AggregateRootTest extends TestCase
 
         self::assertCount(1, $events);
         $event = $events[0];
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
     }
 
     public function testExecuteMethod(): void
     {
         $profileId = ProfileId::fromString('1');
-        $email = Email::fromString('d.a.badura@gmail.com');
+        $email = Email::fromString('hallo@patchlevel.de');
 
         $messageId = MessageId::fromString('2');
 
@@ -46,10 +47,11 @@ class AggregateRootTest extends TestCase
 
         $events = $profile->releaseEvents();
 
+        $playhead = $profile->playhead();
         self::assertCount(1, $events);
-        self::assertEquals(1, $profile->playhead());
+        self::assertSame(1, $playhead);
         $event = $events[0];
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
 
         $profile->publishMessage(
             Message::create(
@@ -58,8 +60,9 @@ class AggregateRootTest extends TestCase
             )
         );
 
-        self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(2, $profile->playhead());
+        $playhead = $profile->playhead();
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(2, $playhead);
         self::assertEquals($profileId, $profile->id());
         self::assertEquals($email, $profile->email());
 
@@ -67,7 +70,7 @@ class AggregateRootTest extends TestCase
 
         self::assertCount(1, $events);
         $event = $events[0];
-        self::assertEquals(2, $event->playhead());
+        self::assertSame(2, $event->playhead());
     }
 
     public function testEventWithoutApplyMethod(): void
@@ -79,9 +82,9 @@ class AggregateRootTest extends TestCase
 
         $events = $visitorProfile->releaseEvents();
         self::assertCount(1, $events);
-        self::assertEquals(1, $visitorProfile->playhead());
+        self::assertSame(1, $visitorProfile->playhead());
         $event = $events[0];
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
 
         $visitedProfile = Profile::createProfile(
             ProfileId::fromString('2'),
@@ -90,15 +93,15 @@ class AggregateRootTest extends TestCase
 
         $events = $visitedProfile->releaseEvents();
         self::assertCount(1, $events);
-        self::assertEquals(1, $visitedProfile->playhead());
+        self::assertSame(1, $visitedProfile->playhead());
         $event = $events[0];
-        self::assertEquals(1, $event->playhead());
+        self::assertSame(1, $event->playhead());
 
         $visitorProfile->visitProfile($visitedProfile->id());
 
         $events = $visitedProfile->releaseEvents();
         self::assertCount(0, $events);
-        self::assertEquals(1, $visitedProfile->playhead());
+        self::assertSame(1, $visitedProfile->playhead());
     }
 
     public function testInitliazingState(): void
@@ -119,7 +122,7 @@ class AggregateRootTest extends TestCase
 
         $profile = Profile::createFromEventStream($eventStream);
 
-        self::assertEquals('1', $profile->id()->toString());
+        self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
     }
 

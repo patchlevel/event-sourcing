@@ -16,6 +16,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
+/** @covers \Patchlevel\EventSourcing\EventBus\SymfonyEventBus */
 class SymfonyEventBusTest extends TestCase
 {
     use ProphecyTrait;
@@ -61,6 +62,6 @@ class SymfonyEventBusTest extends TestCase
         $eventBus = SymfonyEventBus::create([$listener]);
         $eventBus->dispatch($event);
 
-        self::assertEquals($event, $listener->event);
+        self::assertSame($event, $listener->event);
     }
 }

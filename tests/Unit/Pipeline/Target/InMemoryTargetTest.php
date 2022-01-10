@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Target\InMemoryTarget */
 class InMemoryTargetTest extends TestCase
 {
     public function testSave(): void
@@ -27,6 +28,6 @@ class InMemoryTargetTest extends TestCase
 
         $buckets = $inMemoryTarget->buckets();
         self::assertCount(1, $buckets);
-        self::assertEquals($bucket, $buckets[0]);
+        self::assertSame($bucket, $buckets[0]);
     }
 }

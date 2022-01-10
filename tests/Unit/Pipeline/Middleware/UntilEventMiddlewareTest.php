@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
+namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware */
 class UntilEventMiddlewareTest extends TestCase
 {
     public function testPositive(): void
@@ -34,7 +35,7 @@ class UntilEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([$bucket], $result);
+        self::assertSame([$bucket], $result);
     }
 
     public function testNegative(): void
@@ -57,7 +58,7 @@ class UntilEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([], $result);
+        self::assertSame([], $result);
     }
 
     public function testNullEdgeCase(): void
@@ -80,6 +81,6 @@ class UntilEventMiddlewareTest extends TestCase
 
         $result = $middleware($bucket);
 
-        self::assertEquals([], $result);
+        self::assertSame([], $result);
     }
 }

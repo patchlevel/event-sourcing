@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Pipeline\Pipeline  */
 class PipelineTest extends TestCase
 {
     public function testPipeline(): void
@@ -27,7 +28,7 @@ class PipelineTest extends TestCase
                 1,
                 ProfileCreated::raise(
                     ProfileId::fromString('1'),
-                    Email::fromString('d.a.badura@gmail.com')
+                    Email::fromString('hallo@patchlevel.de')
                 )->recordNow(0)
             ),
             new EventBucket(
@@ -51,7 +52,7 @@ class PipelineTest extends TestCase
                 4,
                 ProfileCreated::raise(
                     ProfileId::fromString('2'),
-                    Email::fromString('d.a.badura@gmail.com')
+                    Email::fromString('hallo@patchlevel.de')
                 )->recordNow(0)
             ),
             new EventBucket(
@@ -68,11 +69,11 @@ class PipelineTest extends TestCase
         $target = new InMemoryTarget();
         $pipeline = new Pipeline($source, $target);
 
-        self::assertEquals(5, $pipeline->count());
+        self::assertSame(5, $pipeline->count());
 
         $pipeline->run();
 
-        self::assertEquals($buckets, $target->buckets());
+        self::assertSame($buckets, $target->buckets());
     }
 
     public function testPipelineWithMiddleware(): void
@@ -83,7 +84,7 @@ class PipelineTest extends TestCase
                 1,
                 ProfileCreated::raise(
                     ProfileId::fromString('1'),
-                    Email::fromString('d.a.badura@gmail.com')
+                    Email::fromString('hallo@patchlevel.de')
                 )->recordNow(0)
             ),
             new EventBucket(
@@ -107,7 +108,7 @@ class PipelineTest extends TestCase
                 4,
                 ProfileCreated::raise(
                     ProfileId::fromString('2'),
-                    Email::fromString('d.a.badura@gmail.com')
+                    Email::fromString('hallo@patchlevel.de')
                 )->recordNow(0)
             ),
             new EventBucket(
@@ -131,7 +132,7 @@ class PipelineTest extends TestCase
             ]
         );
 
-        self::assertEquals(5, $pipeline->count());
+        self::assertSame(5, $pipeline->count());
 
         $pipeline->run();
 
@@ -140,15 +141,15 @@ class PipelineTest extends TestCase
         self::assertCount(3, $resultBuckets);
 
         self::assertInstanceOf(ProfileVisited::class, $resultBuckets[0]->event());
-        self::assertEquals('1', $resultBuckets[0]->event()->aggregateId());
-        self::assertEquals(1, $resultBuckets[0]->event()->playhead());
+        self::assertSame('1', $resultBuckets[0]->event()->aggregateId());
+        self::assertSame(1, $resultBuckets[0]->event()->playhead());
 
         self::assertInstanceOf(ProfileVisited::class, $resultBuckets[1]->event());
-        self::assertEquals('1', $resultBuckets[1]->event()->aggregateId());
-        self::assertEquals(2, $resultBuckets[1]->event()->playhead());
+        self::assertSame('1', $resultBuckets[1]->event()->aggregateId());
+        self::assertSame(2, $resultBuckets[1]->event()->playhead());
 
         self::assertInstanceOf(ProfileVisited::class, $resultBuckets[2]->event());
-        self::assertEquals('2', $resultBuckets[2]->event()->aggregateId());
-        self::assertEquals(1, $resultBuckets[2]->event()->playhead());
+        self::assertSame('2', $resultBuckets[2]->event()->aggregateId());
+        self::assertSame(1, $resultBuckets[2]->event()->playhead());
     }
 }

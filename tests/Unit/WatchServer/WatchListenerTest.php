@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\WatchServer\WatchServerClient;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+/** @covers \Patchlevel\EventSourcing\WatchServer\WatchListener */
 class WatchListenerTest extends TestCase
 {
     use ProphecyTrait;

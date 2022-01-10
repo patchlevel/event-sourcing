@@ -13,6 +13,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
+/** @covers \Patchlevel\EventSourcing\Console\Command\SchemaUpdateCommand */
 final class SchemaUpdateCommandTest extends TestCase
 {
     use ProphecyTrait;
@@ -35,7 +36,7 @@ final class SchemaUpdateCommandTest extends TestCase
 
         $exitCode = $command->run($input, $output);
 
-        self::assertEquals(0, $exitCode);
+        self::assertSame(0, $exitCode);
         $content = $output->fetch();
 
         self::assertStringContainsString('[OK] schema updated', $content);
@@ -58,7 +59,7 @@ final class SchemaUpdateCommandTest extends TestCase
 
         $exitCode = $command->run($input, $output);
 
-        self::assertEquals(1, $exitCode);
+        self::assertSame(1, $exitCode);
 
         $content = $output->fetch();
 
@@ -90,7 +91,7 @@ final class SchemaUpdateCommandTest extends TestCase
 
         $exitCode = $command->run($input, $output);
 
-        self::assertEquals(0, $exitCode);
+        self::assertSame(0, $exitCode);
         $content = $output->fetch();
 
         self::assertStringContainsString('update table 1;', $content);
@@ -115,7 +116,7 @@ final class SchemaUpdateCommandTest extends TestCase
 
         $exitCode = $command->run($input, $output);
 
-        self::assertEquals(1, $exitCode);
+        self::assertSame(1, $exitCode);
 
         $content = $output->fetch();
 

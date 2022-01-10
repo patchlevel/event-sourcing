@@ -85,17 +85,17 @@ final class BasicIntegrationTest extends TestCase
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
-        self::assertEquals('1', $result['id']);
-        self::assertEquals('John', $result['name']);
+        self::assertSame('1', $result['id']);
+        self::assertSame('John', $result['name']);
 
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
-        self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(1, $profile->playhead());
-        self::assertEquals('John', $profile->name());
-        self::assertEquals(1, SendEmailMock::count());
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
+        self::assertSame('John', $profile->name());
+        self::assertSame(1, SendEmailMock::count());
     }
 
     public function testWithSymfonySuccessful(): void
@@ -129,17 +129,17 @@ final class BasicIntegrationTest extends TestCase
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
-        self::assertEquals('1', $result['id']);
-        self::assertEquals('John', $result['name']);
+        self::assertSame('1', $result['id']);
+        self::assertSame('John', $result['name']);
 
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
-        self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(1, $profile->playhead());
-        self::assertEquals('John', $profile->name());
-        self::assertEquals(1, SendEmailMock::count());
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
+        self::assertSame('John', $profile->name());
+        self::assertSame(1, SendEmailMock::count());
     }
 
     public function testMultiTableSuccessful(): void
@@ -171,17 +171,17 @@ final class BasicIntegrationTest extends TestCase
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
-        self::assertEquals('1', $result['id']);
-        self::assertEquals('John', $result['name']);
+        self::assertSame('1', $result['id']);
+        self::assertSame('John', $result['name']);
 
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
-        self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(1, $profile->playhead());
-        self::assertEquals('John', $profile->name());
-        self::assertEquals(1, SendEmailMock::count());
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
+        self::assertSame('John', $profile->name());
+        self::assertSame(1, SendEmailMock::count());
     }
 
     public function testSnapshot(): void
@@ -216,16 +216,16 @@ final class BasicIntegrationTest extends TestCase
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
-        self::assertEquals('1', $result['id']);
-        self::assertEquals('John', $result['name']);
+        self::assertSame('1', $result['id']);
+        self::assertSame('John', $result['name']);
 
         $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
-        self::assertEquals('1', $profile->aggregateRootId());
-        self::assertEquals(1, $profile->playhead());
-        self::assertEquals('John', $profile->name());
-        self::assertEquals(1, SendEmailMock::count());
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
+        self::assertSame('John', $profile->name());
+        self::assertSame(1, SendEmailMock::count());
     }
 }
