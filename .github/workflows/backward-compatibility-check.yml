@@ -11,6 +11,7 @@ on:
 jobs:
   roave-backwards-compatibility-check:
     name: "Backward Compatibility Check"
+    continue-on-error: true
 
     runs-on: ${{ matrix.operating-system }}
 
