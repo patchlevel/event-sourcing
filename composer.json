@@ -38,7 +38,7 @@
     "symfony/console": "^4.4.34|^5.4.1|^6.0.1",
     "symfony/messenger": "^4.4.34|^5.4.0|^6.0.1",
     "symfony/var-dumper": "^5.4.1|^6.0.1",
-    "vimeo/psalm": "^4.15.0"
+    "vimeo/psalm": "^4.18.1"
   },
   "suggest": {
     "doctrine/migrations": "for schema migration support",
