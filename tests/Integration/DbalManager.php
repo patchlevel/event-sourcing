@@ -44,9 +44,9 @@ class DbalManager
 
         if (in_array($dbName, $databases, true)) {
             $schemaManager->dropDatabase($dbName);
-            $schemaManager->createDatabase($dbName);
         }
 
+        $schemaManager->createDatabase($dbName);
         $tempConnection->close();
 
         return $connection;
