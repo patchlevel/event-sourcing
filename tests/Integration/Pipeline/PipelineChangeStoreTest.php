@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\AbstractSQLiteDriver;
-use Doctrine\DBAL\DriverManager;
-use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
@@ -19,6 +16,7 @@ use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\OldVisited;
@@ -35,29 +33,8 @@ final class PipelineChangeStoreTest extends TestCase
 
     public function setUp(): void
     {
-        $url = getenv('DB_URL');
-
-        $this->connectionOld = DriverManager::getConnection([
-            'url' => $url,
-        ]);
-
-        $this->connectionNew = DriverManager::getConnection([
-            'url' => str_replace('eventstore', 'eventstore_new', $url),
-        ]);
-
-        if ($this->connectionNew->getDriver() instanceof AbstractSQLiteDriver) {
-            return;
-        }
-
-        $tempConnection = (new DoctrineHelper())->copyConnectionWithoutDatabase($this->connectionNew);
-
-        $tempConnection->createSchemaManager()->dropDatabase('eventstore');
-        $tempConnection->createSchemaManager()->createDatabase('eventstore');
-
-        $tempConnection->createSchemaManager()->dropDatabase('eventstore_new');
-        $tempConnection->createSchemaManager()->createDatabase('eventstore_new');
-
-        $tempConnection->close();
+        $this->connectionOld = DbalManager::createConnection();
+        $this->connectionNew = DbalManager::createConnection('eventstore_new');
     }
 
     public function tearDown(): void
