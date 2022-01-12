@@ -21,6 +21,7 @@
 
     <php>
         <env name="COLUMNS" value="120"/>
+        <env name="DB_URL" value="sqlite:///:memory:"/>
         <ini name="error_reporting" value="E_ALL"/>
     </php>
 </phpunit>

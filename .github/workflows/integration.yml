@@ -1,6 +1,6 @@
 # https://help.github.com/en/categories/automating-your-workflow-with-github-actions
 
-name: "Mutation tests"
+name: "Integration tests"
 
 on:
     pull_request:
@@ -9,19 +9,37 @@ on:
             - "[0-9]+.[0-9]+.x"
 
 jobs:
-    mutation-tests:
-        name: "Mutation tests"
+    postgres:
+        name: "Postgres tests"
 
         runs-on: ${{ matrix.operating-system }}
+
+        services:
+            postgres:
+                # Docker Hub image
+                image: postgres
+                # Provide the password for postgres
+                env:
+                    POSTGRES_PASSWORD: postgres
+                options: >-
+                  --health-cmd pg_isready
+                  --health-interval 10s
+                  --health-timeout 5s
+                  --health-retries 5
 
         strategy:
             matrix:
                 dependencies:
                     - "locked"
                 php-version:
-                    - "7.4"
+                    - "8.0"
                 operating-system:
                     - "ubuntu-latest"
+                images:
+                    - "postgres:latest"
+
+        env:
+            DB_URL: 'postgresql://postgres:postgres@127.0.0.1:5432/db?serverVersion=13&charset=utf8'
 
         steps:
             - name: "Checkout"
@@ -33,12 +51,11 @@ jobs:
                   coverage: "pcov"
                   php-version: "${{ matrix.php-version }}"
                   ini-values: memory_limit=-1
+                  extensions: pdo_sqlite
 
             - uses: "ramsey/composer-install@v2"
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
-            - name: "Infection"
-              run: "vendor/bin/infection"
-              env:
-                  STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+            - name: "Tests"
+              run: "vendor/bin/phpunit --testsuite=integration --coverage-clover=clover.xml --coverage-text"

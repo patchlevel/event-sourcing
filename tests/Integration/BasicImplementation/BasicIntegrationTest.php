@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
@@ -22,9 +21,6 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\Sen
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjection;
 use PHPUnit\Framework\TestCase;
 
-use function file_exists;
-use function unlink;
-
 /**
  * @coversNothing
  */
@@ -32,17 +28,10 @@ final class BasicIntegrationTest extends TestCase
 {
     private Connection $connection;
 
-    private const DB_PATH = __DIR__ . '/data/db.sqlite3';
-
     public function setUp(): void
     {
-        if (file_exists(self::DB_PATH)) {
-            unlink(self::DB_PATH);
-        }
-
         $this->connection = DriverManager::getConnection([
-            'driverClass' => Driver::class,
-            'path' => self::DB_PATH,
+            'url' => getenv('DB_URL')
         ]);
     }
 
@@ -50,8 +39,6 @@ final class BasicIntegrationTest extends TestCase
     {
         $this->connection->close();
         SendEmailMock::reset();
-
-        unlink(self::DB_PATH);
     }
 
     public function testSuccessful(): void
