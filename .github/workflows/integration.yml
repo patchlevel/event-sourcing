@@ -105,7 +105,7 @@ jobs:
             coverage: "pcov"
             php-version: "${{ matrix.php-version }}"
             ini-values: memory_limit=-1
-            extensions: pdo_sqlite
+            extensions: pdo_mysql
 
         - uses: "ramsey/composer-install@v2"
           with:
@@ -114,6 +114,55 @@ jobs:
         - name: "Tests"
           run: "vendor/bin/phpunit --testsuite=integration"
 
+    mysql:
+      name: "mysql"
+
+      runs-on: ${{ matrix.operating-system }}
+
+      services:
+        mysql:
+          image: "mysql:${{ matrix.mysql-version }}"
+
+          options: >-
+            --health-cmd "mysqladmin ping --silent"
+            -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
+            -e MYSQL_DATABASE=db
+          ports:
+            - "3306:3306"
+
+      strategy:
+        matrix:
+          dependencies:
+            - "locked"
+          php-version:
+            - "8.0"
+          operating-system:
+            - "ubuntu-latest"
+          mysql-version:
+            - "5.7"
+            - "8.0"
+
+      env:
+        DB_URL: 'mysql://root@localhost:3306/db?charset=utf8'
+
+      steps:
+        - name: "Checkout"
+          uses: "actions/checkout@v2"
+
+        - name: "Install PHP"
+          uses: "shivammathur/setup-php@v2"
+          with:
+            coverage: "pcov"
+            php-version: "${{ matrix.php-version }}"
+            ini-values: memory_limit=-1
+            extensions: pdo_mysql
+
+        - uses: "ramsey/composer-install@v2"
+          with:
+            dependency-versions: ${{ matrix.dependencies }}
+
+        - name: "Tests"
+          run: "vendor/bin/phpunit --testsuite=integration"
 
     sqlite:
       name: "Sqlite"
