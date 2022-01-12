@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\AbstractSQLiteDriver;
 use Doctrine\DBAL\DriverManager;
+use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
@@ -37,10 +38,16 @@ final class BasicIntegrationTest extends TestCase
             'url' => getenv('DB_URL'),
         ]);
 
-        if (!$this->connection->getDriver() instanceof AbstractSQLiteDriver) {
-            $this->connection->createSchemaManager()->dropDatabase('db');
-            $this->connection->createSchemaManager()->createDatabase('db');
+        if ($this->connection->getDriver() instanceof AbstractSQLiteDriver) {
+            return;
         }
+
+        $newConnection = (new DoctrineHelper())->copyConnectionWithoutDatabase($this->connection);
+
+        $newConnection->createSchemaManager()->dropDatabase('db');
+        $newConnection->createSchemaManager()->createDatabase('db');
+
+        $newConnection->close();
     }
 
     public function tearDown(): void
