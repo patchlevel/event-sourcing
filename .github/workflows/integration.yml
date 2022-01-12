@@ -21,6 +21,7 @@ jobs:
                 # Provide the password for postgres
                 env:
                     POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: db
                 options: >-
                   --health-cmd "pg_isready"
                 ports:
@@ -60,3 +61,36 @@ jobs:
 
             - name: "Tests"
               run: "vendor/bin/phpunit --testsuite=integration"
+
+    sqlite:
+      name: "Sqlite tests"
+
+      runs-on: ${{ matrix.operating-system }}
+
+      strategy:
+        matrix:
+          dependencies:
+            - "locked"
+          php-version:
+            - "8.0"
+          operating-system:
+            - "ubuntu-latest"
+
+      steps:
+        - name: "Checkout"
+          uses: "actions/checkout@v2"
+
+        - name: "Install PHP"
+          uses: "shivammathur/setup-php@v2"
+          with:
+            coverage: "pcov"
+            php-version: "${{ matrix.php-version }}"
+            ini-values: memory_limit=-1
+            extensions: pdo_sqlite
+
+        - uses: "ramsey/composer-install@v2"
+          with:
+            dependency-versions: ${{ matrix.dependencies }}
+
+        - name: "Tests"
+          run: "vendor/bin/phpunit --testsuite=integration"
