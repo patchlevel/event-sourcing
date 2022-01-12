@@ -44,8 +44,8 @@ final class BasicIntegrationTest extends TestCase
 
         $newConnection = (new DoctrineHelper())->copyConnectionWithoutDatabase($this->connection);
 
-        $newConnection->createSchemaManager()->dropDatabase('db');
-        $newConnection->createSchemaManager()->createDatabase('db');
+        $newConnection->createSchemaManager()->dropDatabase('eventstore');
+        $newConnection->createSchemaManager()->createDatabase('eventstore');
 
         $newConnection->close();
     }
