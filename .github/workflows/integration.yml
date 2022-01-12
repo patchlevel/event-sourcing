@@ -10,7 +10,7 @@ on:
 
 jobs:
     postgres:
-        name: "Postgres tests"
+        name: "Postgres"
 
         runs-on: ${{ matrix.operating-system }}
 
@@ -63,7 +63,7 @@ jobs:
               run: "vendor/bin/phpunit --testsuite=integration"
 
     sqlite:
-      name: "Sqlite tests"
+      name: "Sqlite"
 
       runs-on: ${{ matrix.operating-system }}
 
