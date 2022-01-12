@@ -21,6 +21,8 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\Sen
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjection;
 use PHPUnit\Framework\TestCase;
 
+use function getenv;
+
 /**
  * @coversNothing
  */
@@ -31,7 +33,7 @@ final class BasicIntegrationTest extends TestCase
     public function setUp(): void
     {
         $this->connection = DriverManager::getConnection([
-            'url' => getenv('DB_URL')
+            'url' => getenv('DB_URL'),
         ]);
     }
 

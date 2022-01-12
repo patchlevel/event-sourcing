@@ -39,7 +39,7 @@ jobs:
                     - "postgres:latest"
 
         env:
-            DB_URL: 'postgresql://postgres:postgres@127.0.0.1:5432/db?serverVersion=13&charset=utf8'
+            DB_URL: 'postgresql://postgres:postgres@postgres:5432/db?serverVersion=13&charset=utf8'
 
         steps:
             - name: "Checkout"
@@ -58,4 +58,4 @@ jobs:
                 dependency-versions: ${{ matrix.dependencies }}
 
             - name: "Tests"
-              run: "vendor/bin/phpunit --testsuite=integration --coverage-clover=clover.xml --coverage-text"
+              run: "vendor/bin/phpunit --testsuite=integration"
