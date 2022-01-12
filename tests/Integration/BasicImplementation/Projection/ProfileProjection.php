@@ -35,7 +35,7 @@ final class ProfileProjection implements Projection
     public function applyProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->executeStatement(
-            'INSERT INTO projection_profile (`id`) VALUES(:id);',
+            'INSERT INTO projection_profile ("id") VALUES(:id);',
             ['id' => $profileCreated->profileId()]
         );
     }
