@@ -30,7 +30,7 @@ abstract class DoctrineStore implements Store
     abstract public function schema(): Schema;
 
     /**
-     * @param array{aggregateId: string, playhead: string, event: class-string<T>, payload: string, recordedOn: string} $result
+     * @param array{aggregateId: string, playhead: string, event: class-string<T>, payload: string, recordedOn: string, recordedon: ?string, aggregateid: ?string} $result
      *
      * @return array{aggregateId: string, playhead: int, event: class-string<T>, payload: string, recordedOn: DateTimeImmutable}
      *
@@ -38,6 +38,13 @@ abstract class DoctrineStore implements Store
      */
     final protected static function normalizeResult(AbstractPlatform $platform, array $result): array
     {
+        if (array_key_exists('aggregateid', $result) && array_key_exists('recordedon', $result)) {
+            $result['aggregateId'] = $result['aggregateid'];
+            $result['recordedOn'] = $result['recordedon'];
+
+            unset($result['aggregateid'], $result['recordedon']);
+        }
+
         $result['recordedOn'] = self::normalizeRecordedOn($result['recordedOn'], $platform);
         $result['playhead'] = self::normalizePlayhead($result['playhead'], $platform);
 
