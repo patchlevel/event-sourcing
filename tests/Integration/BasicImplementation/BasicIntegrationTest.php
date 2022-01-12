@@ -123,7 +123,7 @@ final class BasicIntegrationTest extends TestCase
         $profile = Profile::create('1');
         $repository->save($profile);
 
-        $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = "1"');
+        $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);

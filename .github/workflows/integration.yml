@@ -123,10 +123,12 @@ jobs:
         mysql:
           image: "mysql:${{ matrix.mysql-version }}"
 
+          env:
+            MYSQL_ALLOW_EMPTY_PASSWORD: yes
+            MYSQL_DATABASE: "db"
+
           options: >-
             --health-cmd "mysqladmin ping --silent"
-            -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
-            -e MYSQL_DATABASE=db
           ports:
             - "3306:3306"
 
