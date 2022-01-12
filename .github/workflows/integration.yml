@@ -62,6 +62,59 @@ jobs:
             - name: "Tests"
               run: "vendor/bin/phpunit --testsuite=integration"
 
+    mariadb:
+      name: "mariadb"
+
+      runs-on: ${{ matrix.operating-system }}
+
+      services:
+        mariadb:
+          image: "mariadb:${{ matrix.mariadb-version }}"
+          env:
+            MYSQL_ALLOW_EMPTY_PASSWORD: yes
+            MYSQL_DATABASE: "db"
+
+          options: >-
+            --health-cmd "mysqladmin ping --silent"
+          ports:
+            - "3306:3306"
+
+      strategy:
+        matrix:
+          dependencies:
+            - "locked"
+          php-version:
+            - "8.0"
+          operating-system:
+            - "ubuntu-latest"
+          mariadb-version:
+            - "10.0"
+            - "10.2"
+            - "10.5"
+
+      env:
+        DB_URL: 'mysql://root@localhost:3306/db?charset=utf8'
+
+      steps:
+        - name: "Checkout"
+          uses: "actions/checkout@v2"
+
+        - name: "Install PHP"
+          uses: "shivammathur/setup-php@v2"
+          with:
+            coverage: "pcov"
+            php-version: "${{ matrix.php-version }}"
+            ini-values: memory_limit=-1
+            extensions: pdo_sqlite
+
+        - uses: "ramsey/composer-install@v2"
+          with:
+            dependency-versions: ${{ matrix.dependencies }}
+
+        - name: "Tests"
+          run: "vendor/bin/phpunit --testsuite=integration"
+
+
     sqlite:
       name: "Sqlite"
 
