@@ -63,7 +63,10 @@ abstract class DoctrineStore implements Store
         return $recordedOn;
     }
 
-    private static function normalizePlayhead(string $playheadAsString, AbstractPlatform $platform): int
+    /**
+     * @param string|int $playheadAsString
+     */
+    private static function normalizePlayhead($playheadAsString, AbstractPlatform $platform): int
     {
         $playhead = Type::getType(Types::INTEGER)->convertToPHPValue($playheadAsString, $platform);
 
