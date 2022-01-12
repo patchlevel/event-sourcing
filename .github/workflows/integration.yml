@@ -41,7 +41,7 @@ jobs:
                   - "14"
 
         env:
-            DB_URL: 'postgresql://postgres:postgres@localhost:5432/db?serverVersion=13&charset=utf8'
+            DB_URL: 'postgresql://postgres:postgres@localhost:5432/db?charset=utf8'
 
         steps:
             - name: "Checkout"
