@@ -29,6 +29,8 @@ final class ProfileProjection implements Projection
         $table->addColumn('id', 'string');
         $table->addColumn('name', 'string');
         $table->setPrimaryKey(['id']);
+
+        $this->connection->createSchemaManager()->createTable($table);
     }
 
     public function drop(): void
