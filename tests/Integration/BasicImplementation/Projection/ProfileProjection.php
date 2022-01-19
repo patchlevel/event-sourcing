@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
@@ -24,18 +25,22 @@ final class ProfileProjection implements Projection
 
     public function create(): void
     {
-        $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY);');
+        $table = new Table('projection_profile');
+        $table->addColumn('id', 'string');
+        $table->setPrimaryKey(['id']);
+
+        $this->connection->createSchemaManager()->createTable($table);
     }
 
     public function drop(): void
     {
-        $this->connection->executeStatement('DROP TABLE IF EXISTS projection_profile;');
+        $this->connection->createSchemaManager()->dropTable('projection_profile');
     }
 
     public function applyProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->executeStatement(
-            'INSERT INTO projection_profile (`id`) VALUES(:id);',
+            'INSERT INTO projection_profile (id) VALUES(:id);',
             ['id' => $profileCreated->profileId()]
         );
     }
