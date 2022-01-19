@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-use function get_class;
 use function json_encode;
 
 use const JSON_PRETTY_PRINT;
@@ -18,7 +17,7 @@ final class EventPrinter
 {
     public function write(SymfonyStyle $console, AggregateChanged $event): void
     {
-        $console->title(get_class($event));
+        $console->title($event::class);
 
         $date = $event->recordedOn();
 

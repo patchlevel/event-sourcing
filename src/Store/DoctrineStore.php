@@ -31,7 +31,7 @@ abstract class DoctrineStore implements Store
     abstract public function schema(): Schema;
 
     /**
-     * @param array{aggregateId: string, playhead: string|int, event: class-string<T>, payload: string, recordedOn: string, recordedon?: string, aggregateid?: string} $result
+     * @param array{aggregateId: string, playhead: int|string, event: class-string<T>, payload: string, recordedOn: string, recordedon?: string, aggregateid?: string} $result
      *
      * @return array{aggregateId: string, playhead: int, event: class-string<T>, payload: string, recordedOn: DateTimeImmutable}
      *
@@ -52,28 +52,25 @@ abstract class DoctrineStore implements Store
         return $result;
     }
 
-    private static function normalizeRecordedOn(string $recordedOnAsString, AbstractPlatform $platform): DateTimeImmutable
+    private static function normalizeRecordedOn(string $recordedOn, AbstractPlatform $platform): DateTimeImmutable
     {
-        $recordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue($recordedOnAsString, $platform);
+        $normalizedRecordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue($recordedOn, $platform);
 
-        if (!$recordedOn instanceof DateTimeImmutable) {
-            throw new InvalidType('recordedOn', 'DateTimeImmutable');
+        if (!$normalizedRecordedOn instanceof DateTimeImmutable) {
+            throw new InvalidType('recordedOn', DateTimeImmutable::class);
         }
 
-        return $recordedOn;
+        return $normalizedRecordedOn;
     }
 
-    /**
-     * @param string|int $playheadAsString
-     */
-    private static function normalizePlayhead($playheadAsString, AbstractPlatform $platform): int
+    private static function normalizePlayhead(string|int $playhead, AbstractPlatform $platform): int
     {
-        $playhead = Type::getType(Types::INTEGER)->convertToPHPValue($playheadAsString, $platform);
+        $normalizedPlayhead = Type::getType(Types::INTEGER)->convertToPHPValue($playhead, $platform);
 
-        if (!is_int($playhead)) {
+        if (!is_int($normalizedPlayhead)) {
             throw new InvalidType('playhead', 'int');
         }
 
-        return $playhead;
+        return $normalizedPlayhead;
     }
 }

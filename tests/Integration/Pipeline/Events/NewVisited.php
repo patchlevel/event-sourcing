@@ -11,9 +11,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
  */
 final class NewVisited extends AggregateChanged
 {
-    public static function raise(string $id): self
+    public static function raise(string $id): static
     {
-        return new self($id, ['id' => $id]);
+        return new static($id, ['id' => $id]);
     }
 
     public function profileId(): string

@@ -9,10 +9,7 @@ use function is_string;
 
 final class InputHelper
 {
-    /**
-     * @param mixed $value
-     */
-    public static function nullableString($value): ?string
+    public static function nullableString(mixed $value): ?string
     {
         if ($value === null) {
             return null;
@@ -25,10 +22,7 @@ final class InputHelper
         return $value;
     }
 
-    /**
-     * @param mixed $value
-     */
-    public static function string($value): string
+    public static function string(mixed $value): string
     {
         if (!is_string($value)) {
             throw new InvalidArgumentGiven($value, 'string');
@@ -37,10 +31,7 @@ final class InputHelper
         return $value;
     }
 
-    /**
-     * @param mixed $value
-     */
-    public static function bool($value): bool
+    public static function bool(mixed $value): bool
     {
         if (!is_bool($value)) {
             throw new InvalidArgumentGiven($value, 'boolean');

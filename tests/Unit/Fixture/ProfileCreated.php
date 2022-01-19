@@ -14,8 +14,8 @@ class ProfileCreated extends AggregateChanged
     public static function raise(
         ProfileId $id,
         Email $email
-    ): self {
-        return new self(
+    ): static {
+        return new static(
             $id->toString(),
             [
                 'profileId' => $id->toString(),

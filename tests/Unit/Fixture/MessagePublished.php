@@ -14,8 +14,8 @@ final class MessagePublished extends AggregateChanged
     public static function raise(
         ProfileId $id,
         Message $message
-    ): self {
-        return new self(
+    ): static {
+        return new static(
             $id->toString(),
             [
                 'message' => $message->toArray(),
