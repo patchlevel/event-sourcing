@@ -1,5 +1,9 @@
 # Tests
 
+The aggregates can also be tested very well. 
+You can test whether certain events have been thrown 
+or whether the state is set up correctly when the aggregate is set up again via the events.
+
 ```php
 use PHPUnit\Framework\TestCase;
 

@@ -13,16 +13,17 @@ final class Profile extends SnapshotableAggregateRoot
     use NonStrictApplyMethod;
 
     private string $id;
+    private string $name;
 
     public function aggregateRootId(): string
     {
         return $this->id;
     }
 
-    public static function create(string $id): self
+    public static function create(string $id, string $name): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id));
+        $self->record(ProfileCreated::raise($id, $name));
 
         return $self;
     }
@@ -30,26 +31,34 @@ final class Profile extends SnapshotableAggregateRoot
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId();
+        $this->name = $event->name();
     }
 
     /**
-     * @return array{id: string}
+     * @return array{id: string, name: string}
      */
     protected function serialize(): array
     {
         return [
             'id' => $this->id,
+            'name' => $this->name,
         ];
     }
 
     /**
-     * @param array{id: string} $payload
+     * @param array{id: string, name: string} $payload
      */
     protected static function deserialize(array $payload): static
     {
         $self = new static();
         $self->id = $payload['id'];
+        $self->name = $payload['name'];
 
         return $self;
+    }
+
+    public function name(): string
+    {
+        return $this->name;
     }
 }

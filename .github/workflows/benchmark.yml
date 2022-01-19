@@ -1,0 +1,43 @@
+# https://help.github.com/en/categories/automating-your-workflow-with-github-actions
+
+name: "Benchmark"
+
+on:
+    pull_request:
+    push:
+        branches:
+            - "[0-9]+.[0-9]+.x"
+
+jobs:
+    phpbench:
+        name: "Benchmark"
+
+        runs-on: ${{ matrix.operating-system }}
+
+        strategy:
+            matrix:
+                dependencies:
+                    - "locked"
+                php-version:
+                    - "8.0"
+                operating-system:
+                    - "ubuntu-latest"
+
+        steps:
+            - name: "Checkout"
+              uses: "actions/checkout@v2"
+
+            - name: "Install PHP"
+              uses: "shivammathur/setup-php@v2"
+              with:
+                  coverage: "pcov"
+                  php-version: "${{ matrix.php-version }}"
+                  ini-values: memory_limit=-1
+                  extensions: pdo_sqlite
+
+            - uses: "ramsey/composer-install@v2"
+              with:
+                dependency-versions: ${{ matrix.dependencies }}
+
+            - name: "PHPStan"
+              run: "vendor/bin/phpbench run tests/Benchmark --report=default"

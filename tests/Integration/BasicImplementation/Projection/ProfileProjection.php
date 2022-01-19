@@ -27,9 +27,8 @@ final class ProfileProjection implements Projection
     {
         $table = new Table('projection_profile');
         $table->addColumn('id', 'string');
+        $table->addColumn('name', 'string');
         $table->setPrimaryKey(['id']);
-
-        $this->connection->createSchemaManager()->createTable($table);
     }
 
     public function drop(): void
@@ -40,8 +39,11 @@ final class ProfileProjection implements Projection
     public function applyProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->executeStatement(
-            'INSERT INTO projection_profile (id) VALUES(:id);',
-            ['id' => $profileCreated->profileId()]
+            'INSERT INTO projection_profile (id, name) VALUES(:id, :name);',
+            [
+                'id' => $profileCreated->profileId(),
+                'name' => $profileCreated->name(),
+            ]
         );
     }
 }

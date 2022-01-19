@@ -37,10 +37,10 @@ final class DefaultProjectionRepositoryTest extends TestCase
 
             public function handledEvents(): iterable
             {
-                yield ProfileCreated::class => 'applyProfileCreated';
+                yield ProfileCreated::class => 'handleProfileCreated';
             }
 
-            public function applyProfileCreated(ProfileCreated $event): void
+            public function handleProfileCreated(ProfileCreated $event): void
             {
                 self::$handledEvent = $event;
             }
@@ -72,10 +72,10 @@ final class DefaultProjectionRepositoryTest extends TestCase
 
             public function handledEvents(): iterable
             {
-                yield ProfileCreated::class => 'applyProfileCreated';
+                yield ProfileCreated::class => 'handleProfileCreated';
             }
 
-            public function applyProfileCreated(ProfileCreated $event): void
+            public function handleProfileCreated(ProfileCreated $event): void
             {
                 self::$handledEvent = $event;
             }
@@ -105,7 +105,7 @@ final class DefaultProjectionRepositoryTest extends TestCase
         $projection = new class implements Projection {
             public function handledEvents(): iterable
             {
-                yield ProfileCreated::class => 'applyProfileCreated';
+                yield ProfileCreated::class => 'handleProfileCreated';
             }
 
             public function create(): void

@@ -295,12 +295,144 @@ all newly recorded events are then fetched and written to the database.
 The `apply` method must be implemented so that the events are processed on the aggregate. 
 This method can get quite big with some events.
 
-To make things structured, you can use two different traits 
+To make things structured, you can use three different traits 
 that allow you to define different apply methods for each event.
+
+### Attribute based apply method (since v1.2)
+
+The first variant is the preferred one. 
+This uses [php attributes](https://www.php.net/manual/en/language.attributes.overview.php) 
+to find the right `apply` method. 
+You have to set the apply `attribute` to the appropriate method 
+and specify the event class for which it is responsible.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
+
+final class Profile extends AggregateRoot
+{
+    use AttributeApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    // ...
+    
+    #[Apply(ProfileCreated::class)]
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId();
+        $this->name = $event->name();
+    }
+    
+    #[Apply(NameChanged::class)]
+    protected function applyNameChanged(NameChanged $event): void
+    {
+        $this->name = $event->name();
+    }
+}
+```
+
+> :book: If no apply method has been defined for an event, then you get an exception. 
+> But you can control this with the attribute suppress. 
+
+You can also define several apply attributes with different events using the same method.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
+
+final class Profile extends AggregateRoot
+{
+    use AttributeApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    // ...
+    
+    #[Apply(ProfileCreated::class)]
+    #[Apply(NameChanged::class)]
+    protected function applyProfileCreated(ProfileCreated|NameChanged $event): void
+    {
+        if ($event instanceof ProfileCreated) {
+            $this->id = $event->profileId();
+        }
+        
+        $this->name = $event->name();
+    }
+}
+```
+
+Sometimes you have events that do not change the state of the aggregate itself, 
+but are still recorded for the future, to listen on it or to create a projection. 
+So that you are not forced to write an apply method for it, 
+you can suppress the missing apply exceptions these events with the `SuppressMissingApply` attribute.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+
+#[SuppressMissingApply([NameChanged::class])]
+final class Profile extends AggregateRoot
+{
+    use AttributeApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    // ...
+    
+    #[Apply(ProfileCreated::class)]
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId();
+        $this->name = $event->name();
+    }
+}
+```
+
+You can also completely deactivate the exceptions for missing apply methods.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+
+#[SuppressMissingApply([SuppressMissingApply::ALL])]
+final class Profile extends AggregateRoot
+{
+    use AttributeApplyMethod;
+
+    private string $id;
+    private string $name;
+
+    // ...
+    
+    #[Apply(ProfileCreated::class)]
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId();
+        $this->name = $event->name();
+    }
+}
+```
+
+> :warning: When all events are suppressed, debugging becomes more difficult if you forget an apply method.
 
 ### Strict apply method
 
-The trait implements the apply method for you.
+The event name is used here instead of attributes to find the right method.
 It is looking for a suitable method for the event by using the short name of the event class 
 and prefixing it with an `apply`.
 
@@ -339,6 +471,8 @@ final class Profile extends AggregateRoot
     }
 }
 ```
+
+> :warning: Problems can arise if the short name is the same. To get around this, use the attribute variant.
 
 ### Non strict apply method
 

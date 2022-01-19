@@ -7,12 +7,13 @@
   "logs": {
     "text": "infection.log",
     "badge": {
-      "branch": "1.1.x"
+      "branch": "1.2.x"
     }
   },
   "mutators": {
     "@default": true
   },
-  "minMsi": 58,
-  "minCoveredMsi": 89
+  "minMsi": 59,
+  "minCoveredMsi": 89,
+  "testFrameworkOptions": "--testsuite=unit"
 }

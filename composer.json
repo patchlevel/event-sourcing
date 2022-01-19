@@ -2,7 +2,7 @@
   "name": "patchlevel/event-sourcing",
   "type": "library",
   "license": "MIT",
-  "description": "A lightweight and all in one event sourcing library.",
+  "description": "A lightweight but also all-inclusive event sourcing library with a focus on developer experience",
   "keywords": [
     "event-sourcing",
     "ddd"
@@ -27,9 +27,10 @@
   "require-dev": {
     "ext-pdo_sqlite": "~8.0.0|~8.1.0",
     "doctrine/migrations": "^3.3.2",
-    "infection/infection": "^0.21.5",
+    "infection/infection": "^0.25.5",
     "patchlevel/coding-standard": "^1.1.1",
     "patchlevel/event-sourcing-psalm-plugin": "^1.0.0",
+    "phpbench/phpbench": "^1.2",
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^1.2.0",
     "phpunit/phpunit": "^9.5.10",
@@ -53,7 +54,12 @@
     "preferred-install": {
       "*": "dist"
     },
-    "sort-packages": true
+    "sort-packages": true,
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "infection/extension-installer": true,
+      "composer/package-versions-deprecated": true
+    }
   },
   "autoload": {
     "psr-4": {

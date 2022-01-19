@@ -34,7 +34,7 @@ final class ProfileProjection implements Projection
 
     public function create(): void
     {
-        $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY);');
+        $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);');
     }
 
     public function drop(): void
@@ -45,7 +45,7 @@ final class ProfileProjection implements Projection
     public function handleProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->executeStatement(
-            'INSERT INTO projection_profile (`id`) VALUES(:id);',
+            'INSERT INTO projection_profile (`id`, `name`) VALUES(:id, :name);',
             [
                 'id' => $profileCreated->profileId(),
                 'name' => $profileCreated->name()
@@ -66,6 +66,53 @@ The event class is mapped in the hash map with the appropriate method.
 
 As soon as the event has been dispatched, the appropriate methods are then executed. 
 Several projections can also listen to the same event.
+
+## Attributes (since v1.2)
+
+Instead of defining a hashmap yourself, which methods are responsible for which events, 
+you can also use the trait `AttributeHandleMethod` and the `Handle` attributes.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Projection\AttributeHandleMethod;
+use Patchlevel\EventSourcing\Projection\Projection;
+
+final class ProfileProjection implements Projection
+{
+    use AttributeHandleMethod;
+
+    private Connection $connection;
+
+    public function __construct(Connection $connection)
+    {
+        $this->connection = $connection;
+    }
+
+    public function create(): void
+    {
+        $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);');
+    }
+
+    public function drop(): void
+    {
+        $this->connection->executeStatement('DROP TABLE IF EXISTS projection_profile;');
+    }
+
+    #[Handle(ProfileCreated::class)]
+    public function handleProfileCreated(ProfileCreated $profileCreated): void
+    {
+        $this->connection->executeStatement(
+            'INSERT INTO projection_profile (`id`, `name`) VALUES(:id, :name);',
+            [
+                'id' => $profileCreated->profileId(),
+                'name' => $profileCreated->name()
+            ]
+        );
+    }
+}
+```
 
 ## Register projections
 
