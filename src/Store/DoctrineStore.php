@@ -11,6 +11,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 
+use function array_key_exists;
 use function is_int;
 
 abstract class DoctrineStore implements Store
@@ -30,7 +31,7 @@ abstract class DoctrineStore implements Store
     abstract public function schema(): Schema;
 
     /**
-     * @param array{aggregateId: string, playhead: string, event: class-string<T>, payload: string, recordedOn: string} $result
+     * @param array{aggregateId: string, playhead: string|int, event: class-string<T>, payload: string, recordedOn: string, recordedon?: string, aggregateid?: string} $result
      *
      * @return array{aggregateId: string, playhead: int, event: class-string<T>, payload: string, recordedOn: DateTimeImmutable}
      *
@@ -38,6 +39,13 @@ abstract class DoctrineStore implements Store
      */
     final protected static function normalizeResult(AbstractPlatform $platform, array $result): array
     {
+        if (array_key_exists('aggregateid', $result) && array_key_exists('recordedon', $result)) {
+            $result['aggregateId'] = $result['aggregateid'];
+            $result['recordedOn'] = $result['recordedon'];
+
+            unset($result['aggregateid'], $result['recordedon']);
+        }
+
         $result['recordedOn'] = self::normalizeRecordedOn($result['recordedOn'], $platform);
         $result['playhead'] = self::normalizePlayhead($result['playhead'], $platform);
 
@@ -55,7 +63,10 @@ abstract class DoctrineStore implements Store
         return $recordedOn;
     }
 
-    private static function normalizePlayhead(string $playheadAsString, AbstractPlatform $platform): int
+    /**
+     * @param string|int $playheadAsString
+     */
+    private static function normalizePlayhead($playheadAsString, AbstractPlatform $platform): int
     {
         $playhead = Type::getType(Types::INTEGER)->convertToPHPValue($playheadAsString, $platform);
 

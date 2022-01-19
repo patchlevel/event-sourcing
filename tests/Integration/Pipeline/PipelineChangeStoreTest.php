@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
-use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
@@ -18,14 +16,12 @@ use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\OldVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\PrivacyAdded;
 use PHPUnit\Framework\TestCase;
-
-use function file_exists;
-use function unlink;
 
 /**
  * @coversNothing
@@ -35,37 +31,16 @@ final class PipelineChangeStoreTest extends TestCase
     private Connection $connectionOld;
     private Connection $connectionNew;
 
-    private const DB_PATH_OLD = __DIR__ . '/data/old.sqlite3';
-    private const DB_PATH_NEW = __DIR__ . '/data/new.sqlite3';
-
     public function setUp(): void
     {
-        if (file_exists(self::DB_PATH_OLD)) {
-            unlink(self::DB_PATH_OLD);
-        }
-
-        if (file_exists(self::DB_PATH_NEW)) {
-            unlink(self::DB_PATH_NEW);
-        }
-
-        $this->connectionOld = DriverManager::getConnection([
-            'driverClass' => Driver::class,
-            'path' => self::DB_PATH_OLD,
-        ]);
-
-        $this->connectionNew = DriverManager::getConnection([
-            'driverClass' => Driver::class,
-            'path' => self::DB_PATH_NEW,
-        ]);
+        $this->connectionOld = DbalManager::createConnection();
+        $this->connectionNew = DbalManager::createConnection('eventstore_new');
     }
 
     public function tearDown(): void
     {
         $this->connectionOld->close();
         $this->connectionNew->close();
-
-        unlink(self::DB_PATH_OLD);
-        unlink(self::DB_PATH_NEW);
     }
 
     public function testSuccessful(): void
