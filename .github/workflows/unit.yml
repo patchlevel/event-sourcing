@@ -1,6 +1,6 @@
 # https://help.github.com/en/categories/automating-your-workflow-with-github-actions
 
-name: "PHPUnit tests"
+name: "Unit tests"
 
 on:
     pull_request:
@@ -10,7 +10,7 @@ on:
 
 jobs:
     phpunit:
-        name: "PHPUnit tests"
+        name: "Unit tests"
 
         runs-on: ${{ matrix.operating-system }}
 
@@ -32,6 +32,7 @@ jobs:
                     - dependencies: "locked"
                       php-version: "8.0"
                       operating-system: "windows-latest"
+
         steps:
             - name: "Checkout"
               uses: "actions/checkout@v2"
@@ -49,4 +50,4 @@ jobs:
                 dependency-versions: ${{ matrix.dependencies }}
 
             - name: "Tests"
-              run: "vendor/bin/phpunit --coverage-clover=clover.xml --coverage-text"
+              run: "vendor/bin/phpunit --testsuite=unit --coverage-clover=clover.xml --coverage-text"
