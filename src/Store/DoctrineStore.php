@@ -11,7 +11,6 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 
-use function array_key_exists;
 use function is_int;
 
 abstract class DoctrineStore implements Store

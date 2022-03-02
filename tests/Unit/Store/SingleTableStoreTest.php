@@ -25,7 +25,7 @@ final class SingleTableStoreTest extends TestCase
 
         $connection = $this->prophesize(Connection::class);
         $connection->fetchAllAssociative(
-            'SELECT * FROM eventstore WHERE aggregate = :aggregate AND aggregateId = :id AND playhead > :playhead',
+            'SELECT * FROM eventstore WHERE aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead',
             [
                 'aggregate' => 'profile',
                 'id' => '1',
@@ -51,7 +51,7 @@ final class SingleTableStoreTest extends TestCase
 
         $connection = $this->prophesize(Connection::class);
         $connection->fetchAllAssociative(
-            'SELECT * FROM eventstore WHERE aggregate = :aggregate AND aggregateId = :id AND playhead > :playhead',
+            'SELECT * FROM eventstore WHERE aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead',
             [
                 'aggregate' => 'profile',
                 'id' => '1',
@@ -60,11 +60,11 @@ final class SingleTableStoreTest extends TestCase
         )->willReturn(
             [
                 [
-                    'aggregateId' => '1',
+                    'aggregate_id' => '1',
                     'playhead' => '0',
                     'event' => ProfileCreated::class,
                     'payload' => '{}',
-                    'recordedOn' => '2021-02-17 10:00:00',
+                    'recorded_on' => '2021-02-17 10:00:00',
                 ],
             ]
         );
