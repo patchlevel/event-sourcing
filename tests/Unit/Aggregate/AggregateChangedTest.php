@@ -90,8 +90,8 @@ class AggregateChangedTest extends TestCase
 
         self::assertCount(5, $serializedEvent);
 
-        self::assertArrayHasKey('aggregateId', $serializedEvent);
-        self::assertSame('1', $serializedEvent['aggregateId']);
+        self::assertArrayHasKey('aggregate_id', $serializedEvent);
+        self::assertSame('1', $serializedEvent['aggregate_id']);
 
         self::assertArrayHasKey('playhead', $serializedEvent);
         self::assertSame(1, $serializedEvent['playhead']);
@@ -105,11 +105,11 @@ class AggregateChangedTest extends TestCase
         self::assertArrayHasKey('payload', $serializedEvent);
         self::assertSame('{"profileId":"1","email":"hallo@patchlevel.de"}', $serializedEvent['payload']);
 
-        self::assertArrayHasKey('recordedOn', $serializedEvent);
+        self::assertArrayHasKey('recorded_on', $serializedEvent);
         self::assertDateTimeImmutableBetween(
             $beforeRecording,
             $afterRecording,
-            $serializedEvent['recordedOn'],
+            $serializedEvent['recorded_on'],
         );
     }
 
@@ -130,11 +130,11 @@ class AggregateChangedTest extends TestCase
         $email = Email::fromString('hallo@patchlevel.de');
 
         $event = ProfileCreated::deserialize([
-            'aggregateId' => '1',
+            'aggregate_id' => '1',
             'playhead' => 0,
             'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
             'payload' => '{"profileId":"1","email":"hallo@patchlevel.de"}',
-            'recordedOn' => new DateTimeImmutable('2020-11-20 13:57:49'),
+            'recorded_on' => new DateTimeImmutable('2020-11-20 13:57:49'),
         ]);
 
         self::assertInstanceOf(ProfileCreated::class, $event);
@@ -162,11 +162,11 @@ class AggregateChangedTest extends TestCase
         }
 
         ProfileCreated::deserialize([
-            'aggregateId' => '1',
+            'aggregate_id' => '1',
             'playhead' => 0,
             'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\NotFound',
             'payload' => '{"profileId":"1","email":"hallo@patchlevel.de"}',
-            'recordedOn' => '2020-11-20 13:57:49',
+            'recorded_on' => '2020-11-20 13:57:49',
         ]);
     }
 

@@ -25,11 +25,11 @@ class UntilEventMiddlewareTest extends TestCase
             Profile::class,
             1,
             AggregateChanged::deserialize([
-                'aggregateId' => '1',
+                'aggregate_id' => '1',
                 'playhead' => 0,
                 'event' => ProfileCreated::class,
                 'payload' => '{}',
-                'recordedOn' => new DateTimeImmutable('2020-02-01 00:00:00'),
+                'recorded_on' => new DateTimeImmutable('2020-02-01 00:00:00'),
             ])
         );
 
@@ -48,11 +48,11 @@ class UntilEventMiddlewareTest extends TestCase
             Profile::class,
             1,
             AggregateChanged::deserialize([
-                'aggregateId' => '1',
+                'aggregate_id' => '1',
                 'playhead' => 0,
                 'event' => ProfileCreated::class,
                 'payload' => '{}',
-                'recordedOn' => new DateTimeImmutable('2020-02-01 00:00:00'),
+                'recorded_on' => new DateTimeImmutable('2020-02-01 00:00:00'),
             ])
         );
 
@@ -71,11 +71,11 @@ class UntilEventMiddlewareTest extends TestCase
             Profile::class,
             1,
             AggregateChanged::deserialize([
-                'aggregateId' => '1',
+                'aggregate_id' => '1',
                 'playhead' => 0,
                 'event' => ProfileCreated::class,
                 'payload' => '{}',
-                'recordedOn' => null,
+                'recorded_on' => null,
             ])
         );
 
