@@ -79,7 +79,7 @@ abstract class AggregateChanged
     }
 
     /**
-     * @param array{aggregateId: string, playhead: int, event: class-string<E>, payload: string, recordedOn: DateTimeImmutable} $data
+     * @param array{aggregate_id: string, playhead: int, event: class-string<E>, payload: string, recorded_on: DateTimeImmutable} $data
      *
      * @return E
      *
@@ -92,15 +92,15 @@ abstract class AggregateChanged
         /** @var array<string, mixed> $payload */
         $payload = json_decode($data['payload'], true, 512, JSON_THROW_ON_ERROR);
 
-        $event = new $class($data['aggregateId'], $payload);
+        $event = new $class($data['aggregate_id'], $payload);
         $event->playhead = $data['playhead'];
-        $event->recordedOn = $data['recordedOn'];
+        $event->recordedOn = $data['recorded_on'];
 
         return $event;
     }
 
     /**
-     * @return array{aggregateId: string, playhead: int, event: class-string<self>, payload: string, recordedOn: DateTimeImmutable}
+     * @return array{aggregate_id: string, playhead: int, event: class-string<self>, payload: string, recorded_on: DateTimeImmutable}
      */
     final public function serialize(): array
     {
@@ -112,11 +112,11 @@ abstract class AggregateChanged
         }
 
         return [
-            'aggregateId' => $this->aggregateId,
+            'aggregate_id' => $this->aggregateId,
             'playhead' => $playhead,
             'event' => static::class,
             'payload' => json_encode($this->payload, JSON_THROW_ON_ERROR),
-            'recordedOn' => $recordedOn,
+            'recorded_on' => $recordedOn,
         ];
     }
 

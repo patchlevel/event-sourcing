@@ -47,10 +47,10 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->storeTableName)
-            ->where('aggregate = :aggregate AND aggregateId = :id AND playhead > :playhead')
+            ->where('aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregateId: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recordedOn: string}> $result */
+        /** @var array<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -82,7 +82,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
             ->from($this->storeTableName)
-            ->where('aggregate = :aggregate AND aggregateId = :id')
+            ->where('aggregate = :aggregate AND aggregate_id = :id')
             ->setMaxResults(1)
             ->getSQL();
 
@@ -124,7 +124,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                         $storeTableName,
                         $data,
                         [
-                            'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+                            'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
                         ]
                     );
                 }
@@ -147,12 +147,12 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         /**
          * @var array<array{
          *     id: string,
-         *     aggregateId: string,
+         *     aggregate_id: string,
          *     aggregate: string,
          *     playhead: string,
          *     event: class-string<AggregateChanged<array<string, mixed>>>,
          *     payload: string,
-         *     recordedOn: string
+         *     recorded_on: string
          * }> $result
          */
         $result = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
@@ -203,7 +203,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             $this->storeTableName,
             $data,
             [
-                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+                'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
             ]
         );
     }
@@ -218,7 +218,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('aggregate', Types::STRING)
             ->setNotnull(true);
-        $table->addColumn('aggregateId', Types::STRING)
+        $table->addColumn('aggregate_id', Types::STRING)
             ->setNotnull(true);
         $table->addColumn('playhead', Types::INTEGER)
             ->setNotnull(true);
@@ -226,11 +226,11 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('payload', Types::JSON)
             ->setNotnull(true);
-        $table->addColumn('recordedOn', Types::DATETIMETZ_IMMUTABLE)
+        $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
-        $table->addUniqueIndex(['aggregate', 'aggregateId', 'playhead']);
+        $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
 
         return $schema;
     }

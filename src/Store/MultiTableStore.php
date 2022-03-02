@@ -51,10 +51,10 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($tableName)
-            ->where('aggregateId = :id AND playhead > :playhead')
+            ->where('aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregateId: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recordedOn: string}> $result */
+        /** @var array<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -85,7 +85,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
             ->from($tableName)
-            ->where('aggregateId = :id')
+            ->where('aggregate_id = :id')
             ->setMaxResults(1)
             ->getSQL();
 
@@ -139,7 +139,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 ->getSQL();
 
             /**
-             * @var Traversable<array{id: string, aggregateId: string, playhead: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recordedOn: string}> $query
+             * @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $query
              */
             $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
@@ -158,7 +158,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->getSQL();
 
         /**
-         * @var Traversable<array{id: string, aggregateId: string, playhead: string, aggregate: string}> $metaQuery
+         * @var Traversable<array{id: string, aggregate_id: string, playhead: string, aggregate: string}> $metaQuery
          */
         $metaQuery = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
@@ -231,7 +231,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             $this->metadataTableName,
             [
                 'aggregate' => $aggregateName,
-                'aggregateId' => $data['aggregateId'],
+                'aggregate_id' => $data['aggregate_id'],
                 'playhead' => $data['playhead'],
             ],
         );
@@ -242,7 +242,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             $aggregateName,
             $data,
             [
-                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+                'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
             ]
         );
     }
@@ -269,13 +269,13 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('aggregate', Types::STRING)
             ->setNotnull(true);
-        $table->addColumn('aggregateId', Types::STRING)
+        $table->addColumn('aggregate_id', Types::STRING)
             ->setNotnull(true);
         $table->addColumn('playhead', Types::INTEGER)
             ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);
-        $table->addUniqueIndex(['aggregate', 'aggregateId', 'playhead']);
+        $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
     }
 
     private function addAggregateTableToSchema(Schema $schema, string $tableName): void
@@ -284,7 +284,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
         $table->addColumn('id', Types::BIGINT)
             ->setNotnull(true);
-        $table->addColumn('aggregateId', Types::STRING)
+        $table->addColumn('aggregate_id', Types::STRING)
             ->setNotnull(true);
         $table->addColumn('playhead', Types::INTEGER)
             ->setNotnull(true);
@@ -292,11 +292,11 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('payload', Types::JSON)
             ->setNotnull(true);
-        $table->addColumn('recordedOn', Types::DATETIMETZ_IMMUTABLE)
+        $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
-        $table->addUniqueIndex(['aggregateId', 'playhead']);
+        $table->addUniqueIndex(['aggregate_id', 'playhead']);
     }
 
     /**
