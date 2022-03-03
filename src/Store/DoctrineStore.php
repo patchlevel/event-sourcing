@@ -11,7 +11,6 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 
-use function array_key_exists;
 use function is_int;
 
 abstract class DoctrineStore implements Store
@@ -31,22 +30,15 @@ abstract class DoctrineStore implements Store
     abstract public function schema(): Schema;
 
     /**
-     * @param array{aggregateId: string, playhead: int|string, event: class-string<T>, payload: string, recordedOn: string, recordedon?: string, aggregateid?: string} $result
+     * @param array{aggregate_id: string, playhead: int|string, event: class-string<T>, payload: string, recorded_on: string} $result
      *
-     * @return array{aggregateId: string, playhead: int, event: class-string<T>, payload: string, recordedOn: DateTimeImmutable}
+     * @return array{aggregate_id: string, playhead: int, event: class-string<T>, payload: string, recorded_on: DateTimeImmutable}
      *
      * @template T
      */
     final protected static function normalizeResult(AbstractPlatform $platform, array $result): array
     {
-        if (array_key_exists('aggregateid', $result) && array_key_exists('recordedon', $result)) {
-            $result['aggregateId'] = $result['aggregateid'];
-            $result['recordedOn'] = $result['recordedon'];
-
-            unset($result['aggregateid'], $result['recordedon']);
-        }
-
-        $result['recordedOn'] = self::normalizeRecordedOn($result['recordedOn'], $platform);
+        $result['recorded_on'] = self::normalizeRecordedOn($result['recorded_on'], $platform);
         $result['playhead'] = self::normalizePlayhead($result['playhead'], $platform);
 
         return $result;
@@ -57,7 +49,7 @@ abstract class DoctrineStore implements Store
         $normalizedRecordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue($recordedOn, $platform);
 
         if (!$normalizedRecordedOn instanceof DateTimeImmutable) {
-            throw new InvalidType('recordedOn', DateTimeImmutable::class);
+            throw new InvalidType('recorded_on', DateTimeImmutable::class);
         }
 
         return $normalizedRecordedOn;
