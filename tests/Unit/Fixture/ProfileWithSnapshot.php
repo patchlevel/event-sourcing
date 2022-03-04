@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Apply;
 
 final class ProfileWithSnapshot extends SnapshotableAggregateRoot
 {
-    use NonStrictApplyMethod;
-
     private ProfileId $id;
     private Email $email;
     /** @var array<Message> */
@@ -55,6 +53,7 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
         $this->record(ProfileVisited::raise($this->id, $profileId));
     }
 
+    #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId();
@@ -62,6 +61,7 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
         $this->messages = [];
     }
 
+    #[Apply(MessagePublished::class)]
     protected function applyMessagePublished(MessagePublished $event): void
     {
         $this->messages[] = $event->message();

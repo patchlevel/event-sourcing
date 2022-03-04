@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[SuppressMissingApply([MessageDeleted::class])]
 final class ProfileWithAttributeApply extends AggregateRoot
 {
-    use AttributeApplyMethod;
-
     private ProfileId $id;
     private Email $email;
     private int $visited = 0;

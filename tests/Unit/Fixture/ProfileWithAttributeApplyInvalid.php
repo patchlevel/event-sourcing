@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 final class ProfileWithAttributeApplyInvalid extends AggregateRoot
 {
-    use AttributeApplyMethod;
-
     private ProfileId $id;
     private Email $email;
 

@@ -10,27 +10,24 @@ use ReflectionClass;
 
 use function array_key_exists;
 
-/**
- * @psalm-require-implements Projection
- */
-trait AttributeHandleMethod
+abstract class BaseProjection implements Projection
 {
-    /** @var array<class-string<AggregateChanged>, string>|null */
-    private static ?array $handleMethods = null;
+    /** @var  array<class-string<self>, array<class-string<AggregateChanged>, string>> */
+    private static array $handleMethods = [];
 
     /**
      * @return array<class-string<AggregateChanged>, string>
      */
     public function handledEvents(): array
     {
-        if (self::$handleMethods !== null) {
-            return self::$handleMethods;
+        if (array_key_exists(static::class, self::$handleMethods)) {
+            return self::$handleMethods[static::class];
         }
 
-        $reflector = new ReflectionClass(self::class);
+        $reflector = new ReflectionClass(static::class);
         $methods = $reflector->getMethods();
 
-        self::$handleMethods = [];
+        self::$handleMethods[static::class] = [];
 
         foreach ($methods as $method) {
             $attributes = $method->getAttributes(Handle::class);
@@ -39,19 +36,29 @@ trait AttributeHandleMethod
                 $instance = $attribute->newInstance();
                 $eventClass = $instance->aggregateChangedClass();
 
-                if (array_key_exists($eventClass, self::$handleMethods)) {
+                if (array_key_exists($eventClass, self::$handleMethods[static::class])) {
                     throw new DuplicateHandleMethod(
                         self::class,
                         $eventClass,
-                        self::$handleMethods[$eventClass],
+                        self::$handleMethods[static::class][$eventClass],
                         $method->getName()
                     );
                 }
 
-                self::$handleMethods[$eventClass] = $method->getName();
+                self::$handleMethods[static::class][$eventClass] = $method->getName();
             }
         }
 
-        return self::$handleMethods;
+        return self::$handleMethods[static::class];
+    }
+
+    public function create(): void
+    {
+        // do nothing
+    }
+
+    public function drop(): void
+    {
+        // do nothing
     }
 }

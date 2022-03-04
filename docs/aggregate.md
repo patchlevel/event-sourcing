@@ -5,9 +5,8 @@
 > 
 > :book: [DDD Aggregate - Martin Flower](https://martinfowler.com/bliki/DDD_Aggregate.html) 
 
-An AggregateRoot has to inherit from `AggregateRoot` and implement the methods `aggregateRootId` and `apply`.
+An AggregateRoot has to inherit from `AggregateRoot` and need to implement the method `aggregateRootId`.
 `aggregateRootId` is the identifier from `AggregateRoot` like a primary key for an entity.
-And the `apply` method is needed to make the changes described as events.
 The events will be added later, but the following is enough to make it executable:
 
 ```php
@@ -29,11 +28,6 @@ final class Profile extends AggregateRoot
         // todo: record create event
         
         return $self;
-    }
-    
-    public function apply(AggregateChanged $event): void
-    {
-        // todo: apply create event and set id
     }
 }
 ```
@@ -125,6 +119,7 @@ After we have defined the event, we have to adapt the creation of the profile:
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Apply;
 
 final class Profile extends AggregateRoot
 {
@@ -149,12 +144,11 @@ final class Profile extends AggregateRoot
         return $self;
     }
     
-    protected function apply(AggregateChanged $event): void 
+    #[Apply(AggregateChanged::class)]
+    protected function applyProfileCreated(ProfileCreated $event): void 
     {
-        if ($event instanceof ProfileCreated) {
-            $this->id = $event->profileId();
-            $this->name = $event->name();
-        }
+        $this->id = $event->profileId();
+        $this->name = $event->name();
     }
 }
 ```
@@ -206,6 +200,7 @@ This method then creates the event `NameChanged` and records it:
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Apply;
 
 final class Profile extends AggregateRoot
 {
@@ -235,16 +230,17 @@ final class Profile extends AggregateRoot
         $this->record(NameChanged::raise($this->id, $name));
     }
     
-    protected function apply(AggregateChanged $event): void
+    #[Apply(ProfileCreated::class)]
+    protected function applyProfileCreated(ProfileCreated $event): void
     {
-        if ($event instanceof ProfileCreated) {
-            $this->id = $event->profileId();
-            $this->name = $event->name();
-        }
-        
-        if ($event instanceof NameChanged) {
-            $this->name = $event->name();
-        }
+        $this->id = $event->profileId();
+        $this->name = $event->name();
+    }
+    
+    #[Apply(NameChanged::class)]
+    protected function applyNameChanged(NameChanged $event): void
+    {
+        $this->name = $event->name();
     }
 }
 ```
@@ -429,85 +425,6 @@ final class Profile extends AggregateRoot
 ```
 
 > :warning: When all events are suppressed, debugging becomes more difficult if you forget an apply method.
-
-### Strict apply method
-
-The event name is used here instead of attributes to find the right method.
-It is looking for a suitable method for the event by using the short name of the event class 
-and prefixing it with an `apply`.
-
-Let's assume that the `App\Profile\Event\NameChanged` event is recorded. 
-The short class name in this case would be `NameChanged`. 
-If we prefix the whole thing with `apply`, we get the method `applyNameChanged`.
-
-This method is then called automatically and the event is passed. 
-If the method does not exist then an error is thrown.
-
-Here are two examples with the events `ProfileCreated` and `NameChanged`:
-
-```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
-
-final class Profile extends AggregateRoot
-{
-    use StrictApplyMethod;
-
-    private string $id;
-    private string $name;
-
-    // ...
-
-    protected function applyProfileCreated(ProfileCreated $event): void
-    {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
-    }
-    
-    protected function applyNameChanged(NameChanged $event): void
-    {
-        $this->name = $event->name();
-    }
-}
-```
-
-> :warning: Problems can arise if the short name is the same. To get around this, use the attribute variant.
-
-### Non strict apply method
-
-The non-strict variant works in the same way as the strict one. 
-The only difference is that events without a suitable method do not lead to errors.
-
-```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
-
-final class Profile extends AggregateRoot
-{
-    use NonStrictApplyMethod;
-
-    private string $id;
-    private string $name;
-
-    // ...
-    
-    protected function applyProfileCreated(ProfileCreated $event): void
-    {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
-    }
-    
-    protected function applyNameChanged(NameChanged $event): void
-    {
-        $this->name = $event->name();
-    }
-}
-```
-
-> :warning: This can quickly lead to errors, since events are not executed on the aggregate 
-> and are very difficult to find. We recommend the strict variant.
 
 ## Business rules
 

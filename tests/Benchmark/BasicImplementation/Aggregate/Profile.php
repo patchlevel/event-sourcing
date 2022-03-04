@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\StrictApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
 final class Profile extends SnapshotableAggregateRoot
 {
-    use StrictApplyMethod;
-
     private string $id;
     private string $name;
 
@@ -34,12 +32,14 @@ final class Profile extends SnapshotableAggregateRoot
         $this->record(NameChanged::raise($this->id, $name));
     }
 
+    #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId();
         $this->name = $event->name();
     }
 
+    #[Apply(NameChanged::class)]
     protected function applyNameChanged(NameChanged $event): void
     {
         $this->name = $event->name();

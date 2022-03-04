@@ -4,8 +4,18 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+use ReflectionClass;
+
+use function array_key_exists;
+use function method_exists;
+
 abstract class AggregateRoot
 {
+    /** @var array<class-string<self>, AggregateRootMetadata> */
+    private static array $metadata = [];
+
     /** @var array<AggregateChanged> */
     private array $uncommittedEvents = [];
 
@@ -18,7 +28,26 @@ abstract class AggregateRoot
 
     abstract public function aggregateRootId(): string;
 
-    abstract protected function apply(AggregateChanged $event): void;
+    protected function apply(AggregateChanged $event): void
+    {
+        $metadata = self::metadata();
+
+        if (!array_key_exists($event::class, $metadata->applyMethods)) {
+            if (!$metadata->suppressAll && !array_key_exists($event::class, $metadata->suppressEvents)) {
+                throw new ApplyAttributeNotFound($this, $event);
+            }
+
+            return;
+        }
+
+        $method = $metadata->applyMethods[$event::class];
+
+        if (!method_exists($this, $method)) {
+            return;
+        }
+
+        $this->$method($event);
+    }
 
     /**
      * @param AggregateChanged<array<string, mixed>> $event
@@ -67,5 +96,55 @@ abstract class AggregateRoot
     final public function playhead(): int
     {
         return $this->playhead;
+    }
+
+    private static function metadata(): AggregateRootMetadata
+    {
+        if (array_key_exists(static::class, self::$metadata)) {
+            return self::$metadata[static::class];
+        }
+
+        $metadata = new AggregateRootMetadata();
+
+        $reflector = new ReflectionClass(static::class);
+        $attributes = $reflector->getAttributes(SuppressMissingApply::class);
+
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+
+            if ($instance->suppressAll()) {
+                $metadata->suppressAll = true;
+
+                continue;
+            }
+
+            foreach ($instance->suppressEvents() as $event) {
+                $metadata->suppressEvents[$event] = true;
+            }
+        }
+
+        $methods = $reflector->getMethods();
+
+        foreach ($methods as $method) {
+            $attributes = $method->getAttributes(Apply::class);
+
+            foreach ($attributes as $attribute) {
+                $instance = $attribute->newInstance();
+                $eventClass = $instance->aggregateChangedClass();
+
+                if (array_key_exists($eventClass, $metadata->applyMethods)) {
+                    throw new DuplicateApplyMethod(
+                        self::class,
+                        $eventClass,
+                        $metadata->applyMethods[$eventClass],
+                        $method->getName()
+                    );
+                }
+
+                $metadata->applyMethods[$eventClass] = $method->getName();
+            }
+        }
+
+        return $metadata;
     }
 }
