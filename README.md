@@ -124,6 +124,7 @@ These events are thrown here and the state of the hotel is also changed.
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Apply;
 
 final class Hotel extends AggregateRoot
 {
@@ -171,33 +172,29 @@ final class Hotel extends AggregateRoot
         $this->record(GuestIsCheckedOut::raise($this->id, $guestName));
     }
     
-    
-    protected function apply(AggregateChanged $event): void
+    #[Apply(HotelCreated::class)]
+    protected function applyHotelCreated(HotelCreated $event): void 
     {
-        if ($event instanceof HotelCreated) {
-            $this->id = $event->hotelId();
-            $this->name = $event->hotelName();
-            $this->guests = [];
-            
-            return;
-        } 
-        
-        if ($event instanceof GuestIsCheckedIn) {
-            $this->guests[] = $event->guestName();
-            
-            return;
-        }
-        
-        if ($event instanceof GuestIsCheckedOut) {
-            $this->guests = array_values(
-                array_filter(
-                    $this->guests,
-                    fn ($name) => $name !== $event->guestName();
-                )
-            );
-            
-            return;
-        }
+        $this->id = $event->hotelId();
+        $this->name = $event->hotelName();
+        $this->guests = [];    
+    }
+    
+    #[Apply(GuestIsCheckedIn::class)]
+    protected function applyGuestIsCheckedIn(GuestIsCheckedIn $event): void 
+    {
+        $this->guests[] = $event->guestName();
+    }
+    
+    #[Apply(GuestIsCheckedOut::class)]
+    protected function applyGuestIsCheckedOut(GuestIsCheckedOut $event): void 
+    {
+        $this->guests = array_values(
+            array_filter(
+                $this->guests,
+                fn ($name) => $name !== $event->guestName();
+            )
+        );
     }
 
     public function aggregateRootId(): string
@@ -216,9 +213,9 @@ we need a projection for it.
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\AttributeProjection;
 
-final class HotelProjection implements Projection
+final class HotelProjection extends AttributeProjection
 {
     private Connection $db;
 
@@ -227,14 +224,8 @@ final class HotelProjection implements Projection
         $this->db = $db;
     }
 
-    public static function getHandledMessages(): iterable
-    {
-        yield HotelCreated::class => 'applyHotelCreated';
-        yield GuestIsCheckedIn::class => 'applyGuestIsCheckedIn';
-        yield GuestIsCheckedOut::class => 'applyGuestIsCheckedOut';
-    }
-
-    public function applyHotelCreated(HotelCreated $event): void
+    #[Handle(HotelCreated::class)]
+    public function handleHotelCreated(HotelCreated $event): void
     {
         $this->db->insert(
             'hotel', 
@@ -246,7 +237,8 @@ final class HotelProjection implements Projection
         );
     }
     
-    public function applyGuestIsCheckedIn(GuestIsCheckedIn $event): void
+    #[Handle(GuestIsCheckedIn::class)]
+    public function handleGuestIsCheckedIn(GuestIsCheckedIn $event): void
     {
         $this->db->executeStatement(
             'UPDATE hotel SET guests = guests + 1 WHERE id = ?;',
@@ -254,7 +246,8 @@ final class HotelProjection implements Projection
         );
     }
     
-    public function applyGuestIsCheckedOut(GuestIsCheckedOut $event): void
+    #[Handle(GuestIsCheckedOut::class)]
+    public function handleGuestIsCheckedOut(GuestIsCheckedOut $event): void
     {
         $this->db->executeStatement(
             'UPDATE hotel SET guests = guests - 1 WHERE id = ?;',

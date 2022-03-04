@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate;
 
-use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
 final class Profile extends SnapshotableAggregateRoot
 {
-    use NonStrictApplyMethod;
-
     private string $id;
     private string $name;
 
@@ -28,6 +26,7 @@ final class Profile extends SnapshotableAggregateRoot
         return $self;
     }
 
+    #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId();

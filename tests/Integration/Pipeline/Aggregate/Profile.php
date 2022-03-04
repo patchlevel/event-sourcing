@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
+use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\OldVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\PrivacyAdded;
@@ -13,8 +13,6 @@ use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\ProfileCreated;
 
 final class Profile extends AggregateRoot
 {
-    use NonStrictApplyMethod;
-
     private string $id;
     private bool $privacy;
     private int $visited;
@@ -52,6 +50,7 @@ final class Profile extends AggregateRoot
         return $this->visited;
     }
 
+    #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId();
@@ -59,16 +58,19 @@ final class Profile extends AggregateRoot
         $this->visited = 0;
     }
 
+    #[Apply(OldVisited::class)]
     protected function applyOldVisited(OldVisited $event): void
     {
         $this->visited++;
     }
 
+    #[Apply(NewVisited::class)]
     protected function applyNewVisited(NewVisited $event): void
     {
         $this->visited--;
     }
 
+    #[Apply(PrivacyAdded::class)]
     protected function applyPrivacyAdded(PrivacyAdded $event): void
     {
         $this->privacy = true;
