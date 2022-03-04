@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+use Patchlevel\EventSourcing\EventBus\Message;
 use ReflectionClass;
 
 use function array_key_exists;
@@ -16,7 +17,7 @@ abstract class AggregateRoot
     /** @var array<class-string<self>, AggregateRootMetadata> */
     private static array $metadata = [];
 
-    /** @var array<AggregateChanged> */
+    /** @var list<Message> */
     private array $uncommittedEvents = [];
 
     /** @internal */
@@ -56,14 +57,18 @@ abstract class AggregateRoot
     {
         $this->playhead++;
 
-        $event = $event->recordNow($this->playhead);
-        $this->uncommittedEvents[] = $event;
-
         $this->apply($event);
+
+        $this->uncommittedEvents[] = new Message(
+            static::class,
+            $this->aggregateRootId(),
+            $this->playhead,
+            $event
+        );
     }
 
     /**
-     * @return array<AggregateChanged>
+     * @return list<Message>
      */
     final public function releaseEvents(): array
     {
@@ -74,7 +79,7 @@ abstract class AggregateRoot
     }
 
     /**
-     * @param array<AggregateChanged> $stream
+     * @param list<Message> $stream
      */
     final public static function createFromEventStream(array $stream): static
     {
@@ -87,7 +92,7 @@ abstract class AggregateRoot
                 throw new PlayheadSequenceMismatch();
             }
 
-            $self->apply($message);
+            $self->apply($message->event());
         }
 
         return $self;

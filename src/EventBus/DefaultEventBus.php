@@ -10,7 +10,7 @@ use function array_shift;
 
 final class DefaultEventBus implements EventBus
 {
-    /** @var list<AggregateChanged<array<string, mixed>>> */
+    /** @var list<Message> */
     private array $queue;
     /**  @var list<Listener> */
     private array $listeners;
@@ -27,12 +27,9 @@ final class DefaultEventBus implements EventBus
         $this->processing = false;
     }
 
-    /**
-     * @param AggregateChanged<array<string, mixed>> $event
-     */
-    public function dispatch(AggregateChanged $event): void
+    public function dispatch(Message $message): void
     {
-        $this->queue[] = $event;
+        $this->queue[] = $message;
 
         if ($this->processing) {
             return;
@@ -40,9 +37,9 @@ final class DefaultEventBus implements EventBus
 
         $this->processing = true;
 
-        while ($event = array_shift($this->queue)) {
+        while ($message = array_shift($this->queue)) {
             foreach ($this->listeners as $listener) {
-                $listener($event);
+                $listener($message);
             }
         }
 
