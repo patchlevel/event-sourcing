@@ -8,10 +8,13 @@ use DateTimeImmutable;
 use Error;
 use Patchlevel\EventSourcing\Aggregate\AggregateChangeNotRecorded;
 use Patchlevel\EventSourcing\Aggregate\AggregateChangeRecordedAlready;
+use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreatedWithCustomRecordedOn;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisitedWithClock;
 use PHPUnit\Framework\TestCase;
 
 use const PHP_VERSION_ID;
@@ -204,6 +207,21 @@ class AggregateChangedTest extends TestCase
         $recordedEvent = $event->recordNow(1);
 
         self::assertEquals(new DateTimeImmutable('1.1.2022 10:00:00'), $recordedEvent->recordedOn());
+    }
+
+    public function testRecordedAtWithFreezedClock(): void
+    {
+        $date = new DateTimeImmutable();
+
+        Clock::freeze($date);
+
+        $profile1 = ProfileId::fromString('1');
+        $profile2 = ProfileId::fromString('2');
+
+        $event = ProfileVisited::raise($profile1, $profile2);
+        $recordedEvent = $event->recordNow(1);
+
+        self::assertSame($date, $recordedEvent->recordedOn());
     }
 
     private static function assertDateTimeImmutableBetween(
