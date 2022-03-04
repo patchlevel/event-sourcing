@@ -15,6 +15,8 @@ In this example we always create a new data set in a relational database when a 
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Attribute\Create;
+use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Projection\Projection;
 
@@ -27,11 +29,13 @@ final class ProfileProjection extends AttributeProjection
         $this->connection = $connection;
     }
 
+    #[Create]
     public function create(): void
     {
         $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);');
     }
 
+    #[Drop]
     public function drop(): void
     {
         $this->connection->executeStatement('DROP TABLE IF EXISTS projection_profile;');

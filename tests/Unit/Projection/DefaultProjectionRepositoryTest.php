@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Attribute\Create;
+use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
-use Patchlevel\EventSourcing\Projection\MethodDoesNotExist;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -36,22 +38,10 @@ final class DefaultProjectionRepositoryTest extends TestCase
         $projection = new class implements Projection {
             public static ?AggregateChanged $handledEvent = null;
 
-            public function handledEvents(): iterable
-            {
-                yield ProfileCreated::class => 'handleProfileCreated';
-            }
-
+            #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(ProfileCreated $event): void
             {
                 self::$handledEvent = $event;
-            }
-
-            public function create(): void
-            {
-            }
-
-            public function drop(): void
-            {
             }
         };
 
@@ -71,22 +61,10 @@ final class DefaultProjectionRepositoryTest extends TestCase
         $projection = new class implements Projection {
             public static ?AggregateChanged $handledEvent = null;
 
-            public function handledEvents(): iterable
-            {
-                yield ProfileCreated::class => 'handleProfileCreated';
-            }
-
+            #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(ProfileCreated $event): void
             {
                 self::$handledEvent = $event;
-            }
-
-            public function create(): void
-            {
-            }
-
-            public function drop(): void
-            {
             }
         };
 
@@ -101,57 +79,39 @@ final class DefaultProjectionRepositoryTest extends TestCase
         self::assertNull($projection::$handledEvent);
     }
 
-    public function testHandleButProjectionsMethodIsMissing(): void
+    public function testCreate(): void
     {
         $projection = new class implements Projection {
-            public function handledEvents(): iterable
-            {
-                yield ProfileCreated::class => 'handleProfileCreated';
-            }
+            public static bool $called = false;
 
-            public function create(): void
+            #[Create]
+            public function method(): void
             {
-            }
-
-            public function drop(): void
-            {
+                self::$called = true;
             }
         };
 
-        $profileCreated = ProfileCreated::raise(
-            ProfileId::fromString('1'),
-            Email::fromString('profile@test.com')
-        );
-
         $projectionRepository = new DefaultProjectionRepository([$projection]);
-
-        $this->expectException(MethodDoesNotExist::class);
-        $projectionRepository->handle($profileCreated);
-    }
-
-    public function testCreate(): void
-    {
-        $projection = $this->prophesize(Projection::class);
-        $projection->create()->shouldBeCalledOnce();
-
-        $projectionRepository = new DefaultProjectionRepository([$projection->reveal()]);
         $projectionRepository->create();
+
+        self::assertTrue($projection::$called);
     }
 
     public function testDrop(): void
     {
-        $projection = $this->prophesize(Projection::class);
-        $projection->drop()->shouldBeCalledOnce();
+        $projection = new class implements Projection {
+            public static bool $called = false;
 
-        $projectionRepository = new DefaultProjectionRepository([$projection->reveal()]);
+            #[Drop]
+            public function method(): void
+            {
+                self::$called = true;
+            }
+        };
+
+        $projectionRepository = new DefaultProjectionRepository([$projection]);
         $projectionRepository->drop();
-    }
 
-    public function testDropWithNoProjections(): void
-    {
-        $projectionRepository = new DefaultProjectionRepository([]);
-        $projectionRepository->drop();
-
-        $this->expectNotToPerformAssertions();
+        self::assertTrue($projection::$called);
     }
 }

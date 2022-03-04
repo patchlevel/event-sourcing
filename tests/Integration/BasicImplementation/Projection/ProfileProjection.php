@@ -6,11 +6,13 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Project
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
+use Patchlevel\EventSourcing\Attribute\Create;
+use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\Projection\AttributeProjection;
+use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
-final class ProfileProjection extends AttributeProjection
+final class ProfileProjection implements Projection
 {
     private Connection $connection;
 
@@ -19,6 +21,7 @@ final class ProfileProjection extends AttributeProjection
         $this->connection = $connection;
     }
 
+    #[Create]
     public function create(): void
     {
         $table = new Table('projection_profile');
@@ -29,6 +32,7 @@ final class ProfileProjection extends AttributeProjection
         $this->connection->createSchemaManager()->createTable($table);
     }
 
+    #[Drop]
     public function drop(): void
     {
         $this->connection->createSchemaManager()->dropTable('projection_profile');

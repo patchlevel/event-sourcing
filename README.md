@@ -214,6 +214,9 @@ we need a projection for it.
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Projection\AttributeProjection;
+use Patchlevel\EventSourcing\Attribute\Create;
+use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Handle;
 
 final class HotelProjection extends AttributeProjection
 {
@@ -255,11 +258,13 @@ final class HotelProjection extends AttributeProjection
         );
     }
     
+    #[Create]
     public function create(): void
     {
         $this->db->executeStatement('CREATE TABLE IF NOT EXISTS hotel (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);');
     }
 
+    #[Drop]
     public function drop(): void
     {
         $this->db->executeStatement('DROP TABLE IF EXISTS hotel;');
