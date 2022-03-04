@@ -10,7 +10,7 @@ use ReflectionClass;
 
 use function array_key_exists;
 
-abstract class BaseProjection implements Projection
+abstract class AttributeProjection implements Projection
 {
     /** @var  array<class-string<self>, array<class-string<AggregateChanged>, string>> */
     private static array $handleMethods = [];

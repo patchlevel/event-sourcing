@@ -15,74 +15,11 @@ In this example we always create a new data set in a relational database when a 
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Projection\Projection;
-
-final class ProfileProjection implements Projection
-{
-    private Connection $connection;
-
-    public function __construct(Connection $connection)
-    {
-        $this->connection = $connection;
-    }
-
-    /** @return iterable<class-string<AggregateChanged>, string> */
-    public function handledEvents(): iterable
-    {
-        yield ProfileCreated::class => 'handleProfileCreated';
-    }
-
-    public function create(): void
-    {
-        $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);');
-    }
-
-    public function drop(): void
-    {
-        $this->connection->executeStatement('DROP TABLE IF EXISTS projection_profile;');
-    }
-
-    public function handleProfileCreated(ProfileCreated $profileCreated): void
-    {
-        $this->connection->executeStatement(
-            'INSERT INTO projection_profile (`id`, `name`) VALUES(:id, :name);',
-            [
-                'id' => $profileCreated->profileId(),
-                'name' => $profileCreated->name()
-            ]
-        );
-    }
-}
-```
-
-> :warning: You should not execute any actions with projections, 
-> otherwise these will be executed again if you rebuild the projection!
-
-Projections have a `create` and a `drop` method that is executed when the projection is created or deleted.
-In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
-
-Furthermore you have to implement the method `handledEvents`, which returns a hash map. 
-The event class is mapped in the hash map with the appropriate method.
-
-As soon as the event has been dispatched, the appropriate methods are then executed. 
-Several projections can also listen to the same event.
-
-## Attributes (since v1.2)
-
-Instead of defining a hashmap yourself, which methods are responsible for which events, 
-you can also use the trait `AttributeHandleMethod` and the `Handle` attributes.
-
-```php
-use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\Projection\AttributeHandleMethod;
 use Patchlevel\EventSourcing\Projection\Projection;
 
-final class ProfileProjection implements Projection
+final class ProfileProjection extends AttributeProjection
 {
-    use AttributeHandleMethod;
-
     private Connection $connection;
 
     public function __construct(Connection $connection)
@@ -113,6 +50,18 @@ final class ProfileProjection implements Projection
     }
 }
 ```
+
+> :warning: You should not execute any actions with projections, 
+> otherwise these will be executed again if you rebuild the projection!
+
+Projections have a `create` and a `drop` method that is executed when the projection is created or deleted.
+In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
+
+In order for the projection to know which method is responsible for which event, 
+the methods must be given the `Handle` attribute with the respective event class name.
+
+As soon as the event has been dispatched, the appropriate methods are then executed. 
+Several projections can also listen to the same event.
 
 ## Register projections
 

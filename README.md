@@ -213,9 +213,9 @@ we need a projection for it.
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\AttributeProjection;
 
-final class HotelProjection implements Projection
+final class HotelProjection extends AttributeProjection
 {
     private Connection $db;
 

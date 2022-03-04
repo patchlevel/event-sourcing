@@ -6,21 +6,17 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Project
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Projection\AttributeProjection;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
-final class ProfileProjection implements Projection
+final class ProfileProjection extends AttributeProjection
 {
     private Connection $connection;
 
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-    }
-
-    public function handledEvents(): iterable
-    {
-        yield ProfileCreated::class => 'applyProfileCreated';
     }
 
     public function create(): void
@@ -38,7 +34,8 @@ final class ProfileProjection implements Projection
         $this->connection->createSchemaManager()->dropTable('projection_profile');
     }
 
-    public function applyProfileCreated(ProfileCreated $profileCreated): void
+    #[Handle(ProfileCreated::class)]
+    public function handleProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->executeStatement(
             'INSERT INTO projection_profile (id, name) VALUES(:id, :name);',
