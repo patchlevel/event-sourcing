@@ -38,11 +38,11 @@ The pipeline can also be used to create or rebuild a projection:
 ```php
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 
 $pipeline = new Pipeline(
     new StoreSource($store),
-    new ProjectionTarget($projection)
+    new ProjectionHandlerTarget($projectionHandler, [ProfileProjection::class])
 );
 ```
 
@@ -134,25 +134,22 @@ $target = new StoreTarget($store);
 
 ### Projection
 
-A projection can also be used as a target.
-For example, to set up a new projection or to build a new projection.
-
-```php
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
-
-$target = new ProjectionTarget($projection);
-```
-
-### Projection Repository
-
 If you want to build or create all projections from scratch,
-then you can also use the ProjectionRepositoryTarget. 
+then you can also use the ProjectionHandlerTarget. 
 In this, the individual projections are iterated and the events are then passed on.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 
-$target = new ProjectionHandlerTarget($projectionRepository);
+$target = new ProjectionHandlerTarget($projectionHandler);
+```
+
+You can also specify only certain projections by passing the respective classes as the second parameter.
+
+```php
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+
+$target = new ProjectionHandlerTarget($projectionHandler, [ProfileProjection::class]);
 ```
 
 ### In Memory

@@ -128,8 +128,8 @@ final class ProjectionRebuildCommandTest extends TestCase
         $store->stream(Argument::is(0))->willReturn($events());
 
         $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->drop()->shouldBeCalled();
-        $repository->create()->shouldBeCalled();
+        $repository->drop(null)->shouldBeCalled();
+        $repository->create(null)->shouldBeCalled();
         $repository->handle(Argument::type(ProfileVisited::class), null)->shouldBeCalledTimes(5);
 
         $command = new ProjectionRebuildCommand(

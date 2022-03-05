@@ -19,7 +19,7 @@ final class ProjectionCreateCommandTest extends TestCase
     public function testSuccessful(): void
     {
         $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->create()->shouldBeCalled();
+        $repository->create(null)->shouldBeCalled();
 
         $command = new ProjectionCreateCommand(
             $repository->reveal()

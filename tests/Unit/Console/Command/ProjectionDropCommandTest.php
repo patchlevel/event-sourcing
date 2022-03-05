@@ -19,7 +19,7 @@ final class ProjectionDropCommandTest extends TestCase
     public function testSuccessful(): void
     {
         $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->drop()->shouldBeCalled();
+        $repository->drop(null)->shouldBeCalled();
 
         $command = new ProjectionDropCommand(
             $repository->reveal()

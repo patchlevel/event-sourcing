@@ -10,17 +10,17 @@ interface ProjectionHandler
 {
     /**
      * @param AggregateChanged<array<string, mixed>> $event
-     * @param list<Projection>|null                  $onlyProjections
+     * @param non-empty-array<Projection>|null       $onlyProjections
      */
     public function handle(AggregateChanged $event, ?array $onlyProjections = null): void;
 
     /**
-     * @param list<Projection>|null $onlyProjections
+     * @param non-empty-array<Projection>|null $onlyProjections
      */
     public function create(?array $onlyProjections = null): void;
 
     /**
-     * @param list<Projection>|null $onlyProjections
+     * @param non-empty-array<Projection>|null $onlyProjections
      */
     public function drop(?array $onlyProjections = null): void;
 }

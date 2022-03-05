@@ -327,12 +327,12 @@ $connection = DriverManager::getConnection([
 $mailer = /* your own mailer */;
 
 $hotelProjection = new HotelProjection($connection);
-$projectionRepository = new DefaultProjectionHandler(
-    [$hotelProjection]
-);
+$projectionHandler = new DefaultProjectionHandler([
+    $hotelProjection,
+]);
 
 $eventBus = new DefaultEventBus();
-$eventBus->addListener(new ProjectionListener($projectionRepository));
+$eventBus->addListener(new ProjectionListener($projectionHandler));
 $eventBus->addListener(new SendCheckInEmailListener($mailer));
 
 $store = new SingleTableStore(
@@ -355,7 +355,7 @@ we need the associated schema and databases.
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 
 (new DoctrineSchemaManager())->create($store);
-$hotelProjection->create();
+$projectionHandler->create();
 ```
 
 > :book: you can use the predefined [cli commands](docs/cli.md) for this.

@@ -12,11 +12,11 @@ final class ProjectionHandlerTarget implements Target
 {
     private ProjectionHandler $projectionRepository;
 
-    /** @var list<Projection>|null */
+    /** @var non-empty-array<Projection>|null */
     private ?array $onlyProjections;
 
     /**
-     * @param list<Projection>|null $onlyProjections
+     * @param non-empty-array<Projection>|null $onlyProjections
      */
     public function __construct(ProjectionHandler $projectionRepository, ?array $onlyProjections = null)
     {

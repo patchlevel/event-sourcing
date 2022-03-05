@@ -13,7 +13,6 @@ use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -23,17 +22,15 @@ use Throwable;
 use function is_string;
 use function sprintf;
 
-final class ProjectionRebuildCommand extends Command
+final class ProjectionRebuildCommand extends ProjectionCommand
 {
     private Store $store;
-    private ProjectionHandler $projectionRepository;
 
     public function __construct(Store $store, ProjectionHandler $projectionRepository)
     {
-        parent::__construct();
+        parent::__construct($projectionRepository);
 
         $this->store = $store;
-        $this->projectionRepository = $projectionRepository;
     }
 
     protected function configure(): void
@@ -42,7 +39,8 @@ final class ProjectionRebuildCommand extends Command
             ->setName('event-sourcing:projection:rebuild')
             ->setDescription('rebuild projection')
             ->addOption('recreate', 'r', InputOption::VALUE_NONE, 'drop and create projections')
-            ->addOption('until', 'u', InputOption::VALUE_REQUIRED, 'create the projection up to a point in time [2017-02-02 12:00]');
+            ->addOption('until', 'u', InputOption::VALUE_REQUIRED, 'create the projection up to a point in time [2017-02-02 12:00]')
+            ->addOption('projection', 'p', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'run only for specific projections [FQCN]');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -57,11 +55,13 @@ final class ProjectionRebuildCommand extends Command
             return 1;
         }
 
+        $projections = $this->projections($input->getOption('projection'));
+
         if (InputHelper::bool($input->getOption('recreate'))) {
-            $this->projectionRepository->drop();
+            $this->projectionRepository->drop($projections);
             $console->success('projection schema deleted');
 
-            $this->projectionRepository->create();
+            $this->projectionRepository->create($projections);
             $console->success('projection schema created');
         }
 
@@ -83,7 +83,7 @@ final class ProjectionRebuildCommand extends Command
 
         $pipeline = new Pipeline(
             new StoreSource($store),
-            new ProjectionHandlerTarget($this->projectionRepository),
+            new ProjectionHandlerTarget($this->projectionRepository, $projections),
             $middlewares
         );
 
