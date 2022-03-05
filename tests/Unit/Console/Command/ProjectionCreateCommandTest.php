@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\ProjectionCreateCommand;
-use Patchlevel\EventSourcing\Projection\ProjectionRepository;
+use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -18,7 +18,7 @@ final class ProjectionCreateCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $repository = $this->prophesize(ProjectionRepository::class);
+        $repository = $this->prophesize(ProjectionHandler::class);
         $repository->create()->shouldBeCalled();
 
         $command = new ProjectionCreateCommand(

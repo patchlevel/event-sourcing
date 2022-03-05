@@ -9,8 +9,8 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget;
-use Patchlevel\EventSourcing\Projection\ProjectionRepository;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Command\Command;
@@ -26,9 +26,9 @@ use function sprintf;
 final class ProjectionRebuildCommand extends Command
 {
     private Store $store;
-    private ProjectionRepository $projectionRepository;
+    private ProjectionHandler $projectionRepository;
 
-    public function __construct(Store $store, ProjectionRepository $projectionRepository)
+    public function __construct(Store $store, ProjectionHandler $projectionRepository)
     {
         parent::__construct();
 
@@ -83,7 +83,7 @@ final class ProjectionRebuildCommand extends Command
 
         $pipeline = new Pipeline(
             new StoreSource($store),
-            new ProjectionRepositoryTarget($this->projectionRepository),
+            new ProjectionHandlerTarget($this->projectionRepository),
             $middlewares
         );
 

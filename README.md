@@ -315,7 +315,7 @@ After we have defined everything, we still have to plug the whole thing together
 ```php
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -327,7 +327,7 @@ $connection = DriverManager::getConnection([
 $mailer = /* your own mailer */;
 
 $hotelProjection = new HotelProjection($connection);
-$projectionRepository = new DefaultProjectionRepository(
+$projectionRepository = new DefaultProjectionHandler(
     [$hotelProjection]
 );
 

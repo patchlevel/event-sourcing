@@ -9,9 +9,9 @@ use Patchlevel\EventSourcing\EventBus\Listener;
 
 final class ProjectionListener implements Listener
 {
-    private ProjectionRepository $repository;
+    private ProjectionHandler $repository;
 
-    public function __construct(ProjectionRepository $repository)
+    public function __construct(ProjectionHandler $repository)
     {
         $this->repository = $repository;
     }

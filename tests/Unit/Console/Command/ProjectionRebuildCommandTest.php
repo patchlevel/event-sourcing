@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use Generator;
 use Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use Patchlevel\EventSourcing\Projection\ProjectionRepository;
+use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -65,8 +65,8 @@ final class ProjectionRebuildCommandTest extends TestCase
         $store->count(Argument::is(0))->willReturn(5);
         $store->stream(Argument::is(0))->willReturn($events());
 
-        $repository = $this->prophesize(ProjectionRepository::class);
-        $repository->handle(Argument::type(ProfileVisited::class))->shouldBeCalledTimes(5);
+        $repository = $this->prophesize(ProjectionHandler::class);
+        $repository->handle(Argument::type(ProfileVisited::class), null)->shouldBeCalledTimes(5);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
@@ -127,10 +127,10 @@ final class ProjectionRebuildCommandTest extends TestCase
         $store->count(Argument::is(0))->willReturn(5);
         $store->stream(Argument::is(0))->willReturn($events());
 
-        $repository = $this->prophesize(ProjectionRepository::class);
+        $repository = $this->prophesize(ProjectionHandler::class);
         $repository->drop()->shouldBeCalled();
         $repository->create()->shouldBeCalled();
-        $repository->handle(Argument::type(ProfileVisited::class))->shouldBeCalledTimes(5);
+        $repository->handle(Argument::type(ProfileVisited::class), null)->shouldBeCalledTimes(5);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
@@ -155,7 +155,7 @@ final class ProjectionRebuildCommandTest extends TestCase
     public function testStoreNotSupported(): void
     {
         $store = $this->prophesize(Store::class);
-        $repository = $this->prophesize(ProjectionRepository::class);
+        $repository = $this->prophesize(ProjectionHandler::class);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),

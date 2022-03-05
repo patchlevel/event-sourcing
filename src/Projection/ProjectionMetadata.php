@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
@@ -9,9 +11,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
  */
 class ProjectionMetadata
 {
-    /**
-     * @var array<class-string<AggregateChanged>, string>
-     */
+    /** @var array<class-string<AggregateChanged>, string> */
     public array $handleMethods = [];
 
     public ?string $createMethod = null;

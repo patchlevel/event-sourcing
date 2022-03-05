@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\ProjectionDropCommand;
-use Patchlevel\EventSourcing\Projection\ProjectionRepository;
+use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -18,7 +18,7 @@ final class ProjectionDropCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $repository = $this->prophesize(ProjectionRepository::class);
+        $repository = $this->prophesize(ProjectionHandler::class);
         $repository->drop()->shouldBeCalled();
 
         $command = new ProjectionDropCommand(

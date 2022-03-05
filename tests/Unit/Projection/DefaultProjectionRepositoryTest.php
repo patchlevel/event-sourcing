@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -17,14 +17,14 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Projection\DefaultProjectionRepository */
+/** @covers \Patchlevel\EventSourcing\Projection\DefaultProjectionHandler */
 final class DefaultProjectionRepositoryTest extends TestCase
 {
     use ProphecyTrait;
 
     public function testHandleWithNoProjections(): void
     {
-        $projectionRepository = new DefaultProjectionRepository([]);
+        $projectionRepository = new DefaultProjectionHandler([]);
         $projectionRepository->handle(ProfileCreated::raise(
             ProfileId::fromString('1'),
             Email::fromString('profile@test.com')
@@ -50,7 +50,7 @@ final class DefaultProjectionRepositoryTest extends TestCase
             Email::fromString('profile@test.com')
         );
 
-        $projectionRepository = new DefaultProjectionRepository([$projection]);
+        $projectionRepository = new DefaultProjectionHandler([$projection]);
         $projectionRepository->handle($profileCreated);
 
         self::assertSame($profileCreated, $projection::$handledEvent);
@@ -73,7 +73,7 @@ final class DefaultProjectionRepositoryTest extends TestCase
             ProfileId::fromString('2'),
         );
 
-        $projectionRepository = new DefaultProjectionRepository([$projection]);
+        $projectionRepository = new DefaultProjectionHandler([$projection]);
         $projectionRepository->handle($profileVisited);
 
         self::assertNull($projection::$handledEvent);
@@ -91,7 +91,7 @@ final class DefaultProjectionRepositoryTest extends TestCase
             }
         };
 
-        $projectionRepository = new DefaultProjectionRepository([$projection]);
+        $projectionRepository = new DefaultProjectionHandler([$projection]);
         $projectionRepository->create();
 
         self::assertTrue($projection::$called);
@@ -109,7 +109,7 @@ final class DefaultProjectionRepositoryTest extends TestCase
             }
         };
 
-        $projectionRepository = new DefaultProjectionRepository([$projection]);
+        $projectionRepository = new DefaultProjectionHandler([$projection]);
         $projectionRepository->drop();
 
         self::assertTrue($projection::$called);

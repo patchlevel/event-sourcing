@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Projection\ProjectionRepository;
+use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -12,9 +12,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class ProjectionCreateCommand extends Command
 {
-    private ProjectionRepository $projectionRepository;
+    private ProjectionHandler $projectionRepository;
 
-    public function __construct(ProjectionRepository $projectionRepository)
+    public function __construct(ProjectionHandler $projectionRepository)
     {
         parent::__construct();
 

@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use ReflectionClass;
 
-final class DefaultProjectionRepository implements ProjectionRepository
+use function array_key_exists;
+use function in_array;
+
+final class DefaultProjectionHandler implements ProjectionHandler
 {
-    /**
-     * @var array<class-string<Projection>, ProjectionMetadata>
-     */
+    /** @var array<class-string<Projection>, ProjectionMetadata> */
     private array $projectionMetadata = [];
 
     /** @var iterable<Projection> */
@@ -29,9 +29,13 @@ final class DefaultProjectionRepository implements ProjectionRepository
         $this->projections = $projections;
     }
 
-    public function handle(AggregateChanged $event): void
+    public function handle(AggregateChanged $event, ?array $onlyProjections = null): void
     {
         foreach ($this->projections as $projection) {
+            if ($onlyProjections && !in_array($projection::class, $onlyProjections)) {
+                continue;
+            }
+
             $metadata = $this->metadata($projection);
 
             if (!array_key_exists($event::class, $metadata->handleMethods)) {
@@ -44,9 +48,13 @@ final class DefaultProjectionRepository implements ProjectionRepository
         }
     }
 
-    public function create(): void
+    public function create(?array $onlyProjections = null): void
     {
         foreach ($this->projections as $projection) {
+            if ($onlyProjections && !in_array($projection::class, $onlyProjections)) {
+                continue;
+            }
+
             $metadata = $this->metadata($projection);
             $method = $metadata->createMethod;
 
@@ -58,9 +66,13 @@ final class DefaultProjectionRepository implements ProjectionRepository
         }
     }
 
-    public function drop(): void
+    public function drop(?array $onlyProjections = null): void
     {
         foreach ($this->projections as $projection) {
+            if ($onlyProjections && !in_array($projection::class, $onlyProjections)) {
+                continue;
+            }
+
             $metadata = $this->metadata($projection);
             $method = $metadata->dropMethod;
 
@@ -106,9 +118,11 @@ final class DefaultProjectionRepository implements ProjectionRepository
                 $metadata->createMethod = $method->getName();
             }
 
-            if ($method->getAttributes(Drop::class)) {
-                $metadata->dropMethod = $method->getName();
+            if (!$method->getAttributes(Drop::class)) {
+                continue;
             }
+
+            $metadata->dropMethod = $method->getName();
         }
 
         return $metadata;

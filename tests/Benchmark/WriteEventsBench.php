@@ -8,7 +8,7 @@ use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
@@ -45,7 +45,7 @@ final class WriteEventsBench
         ]);
 
         $profileProjection = new ProfileProjection($connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new DefaultProjectionHandler(
             [$profileProjection]
         );
 

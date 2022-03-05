@@ -150,9 +150,9 @@ then you can also use the ProjectionRepositoryTarget.
 In this, the individual projections are iterated and the events are then passed on.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 
-$target = new ProjectionRepositoryTarget($projectionRepository);
+$target = new ProjectionHandlerTarget($projectionRepository);
 ```
 
 ### In Memory
