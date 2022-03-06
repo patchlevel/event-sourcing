@@ -10,7 +10,8 @@ use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Symfony\Component\Console\Command\Command;
 
 use function is_array;
-use function is_object;
+use function is_string;
+use function is_subclass_of;
 
 abstract class ProjectionCommand extends Command
 {
@@ -24,23 +25,23 @@ abstract class ProjectionCommand extends Command
     }
 
     /**
-     * @return non-empty-array<Projection>|null
+     * @return non-empty-array<class-string<Projection>>|null
      */
     protected function projections(mixed $value): ?array
     {
+        if (is_string($value)) {
+            $value = [$value];
+        }
+
         if (!is_array($value)) {
-            throw new InvalidArgumentGiven($value, Projection::class . '[]');
+            throw new InvalidArgumentGiven($value, 'class-string<' . Projection::class . '>[]');
         }
 
         $result = [];
 
         foreach ($value as $entry) {
-            if (!is_object($entry)) {
-                throw new InvalidArgumentGiven($entry, Projection::class);
-            }
-
-            if (!$entry instanceof Projection) {
-                throw new InvalidArgumentGiven($entry, Projection::class);
+            if (!is_string($entry) || !is_subclass_of($entry, Projection::class)) {
+                throw new InvalidArgumentGiven($entry, 'class-string<' . Projection::class . '>');
             }
 
             $result[] = $entry;

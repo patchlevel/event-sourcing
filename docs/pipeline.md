@@ -38,11 +38,11 @@ The pipeline can also be used to create or rebuild a projection:
 ```php
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 
 $pipeline = new Pipeline(
     new StoreSource($store),
-    new ProjectionHandlerTarget($projectionHandler, [ProfileProjection::class])
+    new ProjectionTarget($projectionHandler, [ProfileProjection::class])
 );
 ```
 
@@ -139,17 +139,17 @@ then you can also use the ProjectionHandlerTarget.
 In this, the individual projections are iterated and the events are then passed on.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 
-$target = new ProjectionHandlerTarget($projectionHandler);
+$target = new ProjectionTarget($projectionHandler);
 ```
 
 You can also specify only certain projections by passing the respective classes as the second parameter.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 
-$target = new ProjectionHandlerTarget($projectionHandler, [ProfileProjection::class]);
+$target = new ProjectionTarget($projectionHandler, [ProfileProjection::class]);
 ```
 
 ### In Memory

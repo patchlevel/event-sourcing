@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -83,7 +83,7 @@ final class ProjectionRebuildCommand extends ProjectionCommand
 
         $pipeline = new Pipeline(
             new StoreSource($store),
-            new ProjectionHandlerTarget($this->projectionRepository, $projections),
+            new ProjectionTarget($this->projectionRepository, $projections),
             $middlewares
         );
 

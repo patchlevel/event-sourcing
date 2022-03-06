@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -14,8 +14,8 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget */
-class ProjectionHandlerTargetTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget */
+class ProjectionTargetTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -30,8 +30,8 @@ class ProjectionHandlerTargetTest extends TestCase
         $projectionRepository = $this->prophesize(ProjectionHandler::class);
         $projectionRepository->handle($bucket->event(), null)->shouldBeCalledOnce();
 
-        $projectionRepositoryTarget = new ProjectionHandlerTarget($projectionRepository->reveal());
+        $projectionTarget = new ProjectionTarget($projectionRepository->reveal());
 
-        $projectionRepositoryTarget->save($bucket);
+        $projectionTarget->save($bucket);
     }
 }

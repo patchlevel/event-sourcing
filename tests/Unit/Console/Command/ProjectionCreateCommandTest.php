@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\ProjectionCreateCommand;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyProjection;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -26,6 +27,27 @@ final class ProjectionCreateCommandTest extends TestCase
         );
 
         $input = new ArrayInput([]);
+        $output = new BufferedOutput();
+
+        $exitCode = $command->run($input, $output);
+
+        self::assertSame(0, $exitCode);
+
+        $content = $output->fetch();
+
+        self::assertStringContainsString('[OK] projection created', $content);
+    }
+
+    public function testSpecificProjection(): void
+    {
+        $repository = $this->prophesize(ProjectionHandler::class);
+        $repository->create([DummyProjection::class])->shouldBeCalled();
+
+        $command = new ProjectionCreateCommand(
+            $repository->reveal()
+        );
+
+        $input = new ArrayInput(['--projection' => DummyProjection::class]);
         $output = new BufferedOutput();
 
         $exitCode = $command->run($input, $output);

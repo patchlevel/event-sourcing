@@ -9,15 +9,15 @@ use Patchlevel\EventSourcing\EventBus\Listener;
 
 final class ProjectionListener implements Listener
 {
-    private ProjectionHandler $repository;
+    private ProjectionHandler $projectionHandler;
 
-    public function __construct(ProjectionHandler $repository)
+    public function __construct(ProjectionHandler $projectionHandler)
     {
-        $this->repository = $repository;
+        $this->projectionHandler = $projectionHandler;
     }
 
     public function __invoke(AggregateChanged $event): void
     {
-        $this->repository->handle($event);
+        $this->projectionHandler->handle($event);
     }
 }

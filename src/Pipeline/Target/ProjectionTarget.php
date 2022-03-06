@@ -8,25 +8,25 @@ use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 
-final class ProjectionHandlerTarget implements Target
+final class ProjectionTarget implements Target
 {
-    private ProjectionHandler $projectionRepository;
+    private ProjectionHandler $projectionHandler;
 
-    /** @var non-empty-array<Projection>|null */
+    /** @var non-empty-array<class-string<Projection>>|null */
     private ?array $onlyProjections;
 
     /**
-     * @param non-empty-array<Projection>|null $onlyProjections
+     * @param non-empty-array<class-string<Projection>>|null $onlyProjections
      */
-    public function __construct(ProjectionHandler $projectionRepository, ?array $onlyProjections = null)
+    public function __construct(ProjectionHandler $projectionHandler, ?array $onlyProjections = null)
     {
-        $this->projectionRepository = $projectionRepository;
+        $this->projectionHandler = $projectionHandler;
         $this->onlyProjections = $onlyProjections;
     }
 
     public function save(EventBucket $bucket): void
     {
-        $this->projectionRepository->handle(
+        $this->projectionHandler->handle(
             $bucket->event(),
             $this->onlyProjections
         );
