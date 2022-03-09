@@ -56,8 +56,8 @@ final class ProjectionDropCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertSame(0, $exitCode);
-        self::assertTrue($projectionA::$createCalled);
-        self::assertFalse($projectionB::$createCalled);
+        self::assertTrue($projectionA->dropCalled);
+        self::assertFalse($projectionB->dropCalled);
 
         $content = $output->fetch();
 

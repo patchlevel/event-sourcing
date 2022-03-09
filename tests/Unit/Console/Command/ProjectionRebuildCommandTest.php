@@ -117,8 +117,8 @@ final class ProjectionRebuildCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertSame(0, $exitCode);
-        self::assertNotNull($projectionA::$handledEvent);
-        self::assertNull($projectionB::$handledEvent);
+        self::assertNotNull($projectionA->handledEvent);
+        self::assertNull($projectionB->handledEvent);
 
         $content = $output->fetch();
 
@@ -178,12 +178,12 @@ final class ProjectionRebuildCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertSame(0, $exitCode);
-        self::assertNotNull($projectionA::$handledEvent);
-        self::assertTrue($projectionA::$createCalled);
-        self::assertTrue($projectionA::$dropCalled);
-        self::assertNull($projectionB::$handledEvent);
-        self::assertFalse($projectionB::$createCalled);
-        self::assertFalse($projectionB::$dropCalled);
+        self::assertNotNull($projectionA->handledEvent);
+        self::assertTrue($projectionA->createCalled);
+        self::assertTrue($projectionA->dropCalled);
+        self::assertNull($projectionB->handledEvent);
+        self::assertFalse($projectionB->createCalled);
+        self::assertFalse($projectionB->dropCalled);
 
         $content = $output->fetch();
 

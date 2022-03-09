@@ -56,8 +56,8 @@ final class ProjectionCreateCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertSame(0, $exitCode);
-        self::assertTrue($projectionA::$createCalled);
-        self::assertFalse($projectionB::$createCalled);
+        self::assertTrue($projectionA->createCalled);
+        self::assertFalse($projectionB->createCalled);
 
         $content = $output->fetch();
 

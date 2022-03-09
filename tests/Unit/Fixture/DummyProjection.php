@@ -12,25 +12,25 @@ use Patchlevel\EventSourcing\Projection\Projection;
 
 class DummyProjection implements Projection
 {
-    public static ?AggregateChanged $handledEvent = null;
-    public static bool $createCalled = false;
-    public static bool $dropCalled = false;
+    public ?AggregateChanged $handledEvent = null;
+    public bool $createCalled = false;
+    public bool $dropCalled = false;
 
     #[Handle(ProfileCreated::class)]
     public function handleProfileCreated(ProfileCreated $event): void
     {
-        self::$handledEvent = $event;
+        $this->handledEvent = $event;
     }
 
     #[Create]
     public function create(): void
     {
-        self::$createCalled = true;
+        $this->createCalled = true;
     }
 
     #[Drop]
     public function drop(): void
     {
-        self::$dropCalled = true;
+        $this->dropCalled = true;
     }
 }
