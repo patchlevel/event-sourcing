@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -55,13 +55,21 @@ final class ProjectionRebuildCommand extends ProjectionCommand
             return 1;
         }
 
-        $projections = $this->projections($input->getOption('projection'));
+        $projectionHandler = $this->projectionHandler;
+        $projections = $this->normalizeProjectionOption($input->getOption('projection'));
+
+        if ($projections) {
+            $projectionHandler = $this->filterProjectionInProjectionHandler(
+                $projectionHandler,
+                $projections
+            );
+        }
 
         if (InputHelper::bool($input->getOption('recreate'))) {
-            $this->projectionRepository->drop($projections);
+            $projectionHandler->drop();
             $console->success('projection schema deleted');
 
-            $this->projectionRepository->create($projections);
+            $projectionHandler->create();
             $console->success('projection schema created');
         }
 
@@ -83,7 +91,7 @@ final class ProjectionRebuildCommand extends ProjectionCommand
 
         $pipeline = new Pipeline(
             new StoreSource($store),
-            new ProjectionTarget($this->projectionRepository, $projections),
+            new ProjectionHandlerTarget($projectionHandler),
             $middlewares
         );
 

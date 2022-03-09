@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
-use Patchlevel\EventSourcing\Projection\ProjectionHandler;
+use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -21,17 +23,28 @@ class ProjectionTargetTest extends TestCase
 
     public function testSave(): void
     {
+        $event = ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
+
         $bucket = new EventBucket(
             Profile::class,
             1,
-            ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+            $event
         );
 
-        $projectionRepository = $this->prophesize(ProjectionHandler::class);
-        $projectionRepository->handle($bucket->event(), null)->shouldBeCalledOnce();
+        $projection = new class implements Projection {
+            public static ?AggregateChanged $handledEvent = null;
 
-        $projectionTarget = new ProjectionTarget($projectionRepository->reveal());
+            #[Handle(ProfileCreated::class)]
+            public function handleProfileCreated(ProfileCreated $event): void
+            {
+                self::$handledEvent = $event;
+            }
+        };
+
+        $projectionTarget = new ProjectionTarget($projection);
 
         $projectionTarget->save($bucket);
+
+        self::assertSame($event, $projection::$handledEvent);
     }
 }

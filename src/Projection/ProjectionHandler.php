@@ -9,18 +9,11 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 interface ProjectionHandler
 {
     /**
-     * @param AggregateChanged<array<string, mixed>>         $event
-     * @param non-empty-array<class-string<Projection>>|null $onlyProjections
+     * @param AggregateChanged<array<string, mixed>> $event
      */
-    public function handle(AggregateChanged $event, ?array $onlyProjections = null): void;
+    public function handle(AggregateChanged $event): void;
 
-    /**
-     * @param non-empty-array<class-string<Projection>>|null $onlyProjections
-     */
-    public function create(?array $onlyProjections = null): void;
+    public function create(): void;
 
-    /**
-     * @param non-empty-array<class-string<Projection>>|null $onlyProjections
-     */
-    public function drop(?array $onlyProjections = null): void;
+    public function drop(): void;
 }

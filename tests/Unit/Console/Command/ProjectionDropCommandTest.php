@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\ProjectionDropCommand;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Dummy2Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyProjection;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -20,7 +22,7 @@ final class ProjectionDropCommandTest extends TestCase
     public function testSuccessful(): void
     {
         $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->drop(null)->shouldBeCalled();
+        $repository->drop()->shouldBeCalled();
 
         $command = new ProjectionDropCommand(
             $repository->reveal()
@@ -40,11 +42,12 @@ final class ProjectionDropCommandTest extends TestCase
 
     public function testSpecificProjection(): void
     {
-        $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->drop([DummyProjection::class])->shouldBeCalled();
+        $projectionA = new DummyProjection();
+        $projectionB = new Dummy2Projection();
+        $handler = new DefaultProjectionHandler([$projectionA, $projectionB]);
 
         $command = new ProjectionDropCommand(
-            $repository->reveal()
+            $handler
         );
 
         $input = new ArrayInput(['--projection' => DummyProjection::class]);
@@ -53,6 +56,8 @@ final class ProjectionDropCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertSame(0, $exitCode);
+        self::assertTrue($projectionA::$createCalled);
+        self::assertFalse($projectionB::$createCalled);
 
         $content = $output->fetch();
 

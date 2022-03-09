@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\Projection;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyProjection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -57,35 +56,6 @@ final class DefaultProjectionHandlerTest extends TestCase
         self::assertSame($profileCreated, $projection::$handledEvent);
     }
 
-    public function testHandleSpecificProjection(): void
-    {
-        $projectionA = new class implements Projection {
-            public static ?AggregateChanged $handledEvent = null;
-
-            #[Handle(ProfileCreated::class)]
-            public function handleProfileCreated(ProfileCreated $event): void
-            {
-                self::$handledEvent = $event;
-            }
-        };
-
-        $projectionB = new DummyProjection();
-
-        $profileCreated = ProfileCreated::raise(
-            ProfileId::fromString('1'),
-            Email::fromString('profile@test.com')
-        );
-
-        $projectionRepository = new DefaultProjectionHandler([
-            $projectionA,
-            $projectionB,
-        ]);
-        $projectionRepository->handle($profileCreated, [DummyProjection::class]);
-
-        self::assertNull($projectionA::$handledEvent);
-        self::assertSame($profileCreated, $projectionB::$handledEvent);
-    }
-
     public function testHandleNotSupportedEvent(): void
     {
         $projection = new class implements Projection {
@@ -127,30 +97,9 @@ final class DefaultProjectionHandlerTest extends TestCase
         self::assertTrue($projection::$called);
     }
 
-    public function testCreateSpecificProjection(): void
-    {
-        $projectionA = new class implements Projection {
-            public static bool $called = false;
-
-            #[Create]
-            public function method(): void
-            {
-                self::$called = true;
-            }
-        };
-
-        $projectionB = new DummyProjection();
-
-        $projectionRepository = new DefaultProjectionHandler([$projectionA, $projectionB]);
-        $projectionRepository->create([DummyProjection::class]);
-
-        self::assertFalse($projectionA::$called);
-        self::assertTrue($projectionB::$createCalled);
-    }
-
     public function testDrop(): void
     {
-        $projectionA = new class implements Projection {
+        $projection = new class implements Projection {
             public static bool $called = false;
 
             #[Drop]
@@ -160,12 +109,9 @@ final class DefaultProjectionHandlerTest extends TestCase
             }
         };
 
-        $projectionB = new DummyProjection();
+        $projectionRepository = new DefaultProjectionHandler([$projection]);
+        $projectionRepository->drop();
 
-        $projectionRepository = new DefaultProjectionHandler([$projectionA, $projectionB]);
-        $projectionRepository->drop([DummyProjection::class]);
-
-        self::assertFalse($projectionA::$called);
-        self::assertTrue($projectionB::$dropCalled);
+        self::assertTrue($projection::$called);
     }
 }

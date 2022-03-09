@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 /**
  * @internal
  */
-class ProjectionMetadata
+final class ProjectionMetadata
 {
     /** @var array<class-string<AggregateChanged>, string> */
     public array $handleMethods = [];

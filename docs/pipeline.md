@@ -134,22 +134,25 @@ $target = new StoreTarget($store);
 
 ### Projection
 
+A projection can also be used as a target.
+For example, to set up a new projection or to build a new projection.
+
+```php
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
+
+$target = new ProjectionTarget($projection);
+```
+
+### Projection Handler
+
 If you want to build or create all projections from scratch,
-then you can also use the ProjectionHandlerTarget. 
+then you can also use the ProjectionRepositoryTarget.
 In this, the individual projections are iterated and the events are then passed on.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 
-$target = new ProjectionTarget($projectionHandler);
-```
-
-You can also specify only certain projections by passing the respective classes as the second parameter.
-
-```php
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
-
-$target = new ProjectionTarget($projectionHandler, [ProfileProjection::class]);
+$target = new ProjectionHandlerTarget($projectionHandler);
 ```
 
 ### In Memory

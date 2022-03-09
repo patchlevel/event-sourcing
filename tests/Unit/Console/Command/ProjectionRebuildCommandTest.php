@@ -8,13 +8,16 @@ use Closure;
 use Generator;
 use Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand;
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Dummy2Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyProjection;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -37,31 +40,31 @@ final class ProjectionRebuildCommandTest extends TestCase
             yield new EventBucket(
                 Profile::class,
                 1,
-                ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
+                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
             yield new EventBucket(
                 Profile::class,
                 2,
-                ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
+                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
             yield new EventBucket(
                 Profile::class,
                 3,
-                ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
+                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
             yield new EventBucket(
                 Profile::class,
                 4,
-                ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
+                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
             yield new EventBucket(
                 Profile::class,
                 5,
-                ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))
+                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
         };
     }
@@ -73,7 +76,7 @@ final class ProjectionRebuildCommandTest extends TestCase
         $store->stream(Argument::is(0))->willReturn(($this->events)());
 
         $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->handle(Argument::type(ProfileVisited::class), null)->shouldBeCalledTimes(5);
+        $repository->handle(Argument::type(ProfileCreated::class))->shouldBeCalledTimes(5);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
@@ -99,20 +102,23 @@ final class ProjectionRebuildCommandTest extends TestCase
         $store->count(Argument::is(0))->willReturn(5);
         $store->stream(Argument::is(0))->willReturn(($this->events)());
 
-        $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->handle(Argument::type(ProfileVisited::class), [DummyProjection::class])->shouldBeCalledTimes(5);
+        $projectionA = new DummyProjection();
+        $projectionB = new Dummy2Projection();
+        $handler = new DefaultProjectionHandler([$projectionA, $projectionB]);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $repository->reveal()
+            $handler
         );
 
-        $input = new ArrayInput(['--projection' => DummyProjection::class]);
+        $input = new ArrayInput(['--projection' => $projectionA::class]);
         $output = new BufferedOutput();
 
         $exitCode = $command->run($input, $output);
 
         self::assertSame(0, $exitCode);
+        self::assertNotNull($projectionA::$handledEvent);
+        self::assertNull($projectionB::$handledEvent);
 
         $content = $output->fetch();
 
@@ -129,7 +135,7 @@ final class ProjectionRebuildCommandTest extends TestCase
         $repository = $this->prophesize(ProjectionHandler::class);
         $repository->drop(null)->shouldBeCalled();
         $repository->create(null)->shouldBeCalled();
-        $repository->handle(Argument::type(ProfileVisited::class), null)->shouldBeCalledTimes(5);
+        $repository->handle(Argument::type(ProfileCreated::class))->shouldBeCalledTimes(5);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
@@ -157,14 +163,13 @@ final class ProjectionRebuildCommandTest extends TestCase
         $store->count(Argument::is(0))->willReturn(5);
         $store->stream(Argument::is(0))->willReturn(($this->events)());
 
-        $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->drop([DummyProjection::class])->shouldBeCalled();
-        $repository->create([DummyProjection::class])->shouldBeCalled();
-        $repository->handle(Argument::type(ProfileVisited::class), [DummyProjection::class])->shouldBeCalledTimes(5);
+        $projectionA = new DummyProjection();
+        $projectionB = new Dummy2Projection();
+        $handler = new DefaultProjectionHandler([$projectionA, $projectionB]);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $repository->reveal()
+            $handler
         );
 
         $input = new ArrayInput(['--recreate' => true, '--projection' => DummyProjection::class]);
@@ -173,6 +178,12 @@ final class ProjectionRebuildCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertSame(0, $exitCode);
+        self::assertNotNull($projectionA::$handledEvent);
+        self::assertTrue($projectionA::$createCalled);
+        self::assertTrue($projectionA::$dropCalled);
+        self::assertNull($projectionB::$handledEvent);
+        self::assertFalse($projectionB::$createCalled);
+        self::assertFalse($projectionB::$dropCalled);
 
         $content = $output->fetch();
 
