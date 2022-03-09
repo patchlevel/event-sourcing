@@ -42,7 +42,7 @@ use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 
 $pipeline = new Pipeline(
     new StoreSource($store),
-    new ProjectionTarget($projectionHandler, [ProfileProjection::class])
+    new ProjectionTarget($projection)
 );
 ```
 
