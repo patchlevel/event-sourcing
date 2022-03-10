@@ -23,17 +23,7 @@ final class ProjectionCreateCommand extends ProjectionCommand
     {
         $console = new SymfonyStyle($input, $output);
 
-        $projectionHandler = $this->projectionHandler;
-        $projections = $this->normalizeProjectionOption($input->getOption('projection'));
-
-        if ($projections) {
-            $projectionHandler = $this->filterProjectionInProjectionHandler(
-                $projectionHandler,
-                $projections
-            );
-        }
-
-        $projectionHandler->create();
+        $this->projectionHandler($input->getOption('projection'))->create();
 
         $console->success('projection created');
 

@@ -23,17 +23,7 @@ final class ProjectionDropCommand extends ProjectionCommand
     {
         $console = new SymfonyStyle($input, $output);
 
-        $projectionHandler = $this->projectionHandler;
-        $projections = $this->normalizeProjectionOption($input->getOption('projection'));
-
-        if ($projections) {
-            $projectionHandler = $this->filterProjectionInProjectionHandler(
-                $projectionHandler,
-                $projections
-            );
-        }
-
-        $projectionHandler->drop();
+        $this->projectionHandler($input->getOption('projection'))->drop();
 
         $console->success('projection deleted');
 

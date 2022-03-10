@@ -21,7 +21,7 @@ use function sprintf;
 
 abstract class ProjectionCommand extends Command
 {
-    protected ProjectionHandler $projectionHandler;
+    private ProjectionHandler $projectionHandler;
 
     public function __construct(ProjectionHandler $projectionHandler)
     {
@@ -30,22 +30,36 @@ abstract class ProjectionCommand extends Command
         $this->projectionHandler = $projectionHandler;
     }
 
+    protected function projectionHandler(mixed $projectionOption): ProjectionHandler
+    {
+        $normalizedProjectionOption = $this->normalizeProjectionOption($projectionOption);
+
+        if (!$normalizedProjectionOption) {
+            return $this->projectionHandler;
+        }
+
+        return $this->filterProjectionInProjectionHandler(
+            $this->projectionHandler,
+            $normalizedProjectionOption
+        );
+    }
+
     /**
      * @return non-empty-array<class-string<Projection>>|null
      */
-    protected function normalizeProjectionOption(mixed $value): ?array
+    private function normalizeProjectionOption(mixed $option): ?array
     {
-        if (is_string($value)) {
-            $value = [$value];
+        if (is_string($option)) {
+            $option = [$option];
         }
 
-        if (!is_array($value)) {
-            throw new InvalidArgumentGiven($value, 'class-string<' . Projection::class . '>[]');
+        if (!is_array($option)) {
+            throw new InvalidArgumentGiven($option, 'class-string<' . Projection::class . '>[]');
         }
 
         $result = [];
 
-        foreach ($value as $entry) {
+        foreach ($option as $entry) {
             if (!is_string($entry) || !is_subclass_of($entry, Projection::class)) {
                 throw new InvalidArgumentGiven($entry, 'class-string<' . Projection::class . '>');
             }
@@ -63,7 +77,7 @@ abstract class ProjectionCommand extends Command
     /**
      * @param non-empty-array<class-string<Projection>> $onlyProjections
      */
-    protected function filterProjectionInProjectionHandler(
+    private function filterProjectionInProjectionHandler(
         ProjectionHandler $projectionHandler,
         array $onlyProjections
     ): DefaultProjectionHandler {

@@ -26,9 +26,9 @@ final class ProjectionRebuildCommand extends ProjectionCommand
 {
     private Store $store;
 
-    public function __construct(Store $store, ProjectionHandler $projectionRepository)
+    public function __construct(Store $store, ProjectionHandler $projectionHandler)
     {
-        parent::__construct($projectionRepository);
+        parent::__construct($projectionHandler);
 
         $this->store = $store;
     }
@@ -55,15 +55,7 @@ final class ProjectionRebuildCommand extends ProjectionCommand
             return 1;
         }
 
-        $projectionHandler = $this->projectionHandler;
-        $projections = $this->normalizeProjectionOption($input->getOption('projection'));
-
-        if ($projections) {
-            $projectionHandler = $this->filterProjectionInProjectionHandler(
-                $projectionHandler,
-                $projections
-            );
-        }
+        $projectionHandler = $this->projectionHandler($input->getOption('projection'));
 
         if (InputHelper::bool($input->getOption('recreate'))) {
             $projectionHandler->drop();
