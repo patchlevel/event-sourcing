@@ -143,16 +143,16 @@ use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 $target = new ProjectionTarget($projection);
 ```
 
-### Projection Repository
+### Projection Handler
 
 If you want to build or create all projections from scratch,
-then you can also use the ProjectionRepositoryTarget. 
+then you can also use the ProjectionRepositoryTarget.
 In this, the individual projections are iterated and the events are then passed on.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 
-$target = new ProjectionRepositoryTarget($projectionRepository);
+$target = new ProjectionHandlerTarget($projectionHandler);
 ```
 
 ### In Memory

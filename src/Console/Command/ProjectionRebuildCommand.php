@@ -9,11 +9,10 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget;
-use Patchlevel\EventSourcing\Projection\ProjectionRepository;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -23,17 +22,15 @@ use Throwable;
 use function is_string;
 use function sprintf;
 
-final class ProjectionRebuildCommand extends Command
+final class ProjectionRebuildCommand extends ProjectionCommand
 {
     private Store $store;
-    private ProjectionRepository $projectionRepository;
 
-    public function __construct(Store $store, ProjectionRepository $projectionRepository)
+    public function __construct(Store $store, ProjectionHandler $projectionHandler)
     {
-        parent::__construct();
+        parent::__construct($projectionHandler);
 
         $this->store = $store;
-        $this->projectionRepository = $projectionRepository;
     }
 
     protected function configure(): void
@@ -42,7 +39,8 @@ final class ProjectionRebuildCommand extends Command
             ->setName('event-sourcing:projection:rebuild')
             ->setDescription('rebuild projection')
             ->addOption('recreate', 'r', InputOption::VALUE_NONE, 'drop and create projections')
-            ->addOption('until', 'u', InputOption::VALUE_REQUIRED, 'create the projection up to a point in time [2017-02-02 12:00]');
+            ->addOption('until', 'u', InputOption::VALUE_REQUIRED, 'create the projection up to a point in time [2017-02-02 12:00]')
+            ->addOption('projection', 'p', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'run only for specific projections [FQCN]');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -57,11 +55,13 @@ final class ProjectionRebuildCommand extends Command
             return 1;
         }
 
+        $projectionHandler = $this->projectionHandler($input->getOption('projection'));
+
         if (InputHelper::bool($input->getOption('recreate'))) {
-            $this->projectionRepository->drop();
+            $projectionHandler->drop();
             $console->success('projection schema deleted');
 
-            $this->projectionRepository->create();
+            $projectionHandler->create();
             $console->success('projection schema created');
         }
 
@@ -83,7 +83,7 @@ final class ProjectionRebuildCommand extends Command
 
         $pipeline = new Pipeline(
             new StoreSource($store),
-            new ProjectionRepositoryTarget($this->projectionRepository),
+            new ProjectionHandlerTarget($projectionHandler),
             $middlewares
         );
 

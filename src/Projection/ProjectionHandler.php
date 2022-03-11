@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
-interface ProjectionRepository
+interface ProjectionHandler
 {
     /**
      * @param AggregateChanged<array<string, mixed>> $event

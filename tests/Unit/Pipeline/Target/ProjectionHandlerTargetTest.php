@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
 use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget;
-use Patchlevel\EventSourcing\Projection\ProjectionRepository;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -14,8 +14,8 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Pipeline\Target\ProjectionRepositoryTarget */
-class ProjectionRepositoryTargetTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget */
+class ProjectionHandlerTargetTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -27,11 +27,11 @@ class ProjectionRepositoryTargetTest extends TestCase
             ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
 
-        $projectionRepository = $this->prophesize(ProjectionRepository::class);
-        $projectionRepository->handle($bucket->event())->shouldBeCalledOnce();
+        $projectionHandler = $this->prophesize(ProjectionHandler::class);
+        $projectionHandler->handle($bucket->event())->shouldBeCalledOnce();
 
-        $projectionRepositoryTarget = new ProjectionRepositoryTarget($projectionRepository->reveal());
+        $projectionHandlerTarget = new ProjectionHandlerTarget($projectionHandler->reveal());
 
-        $projectionRepositoryTarget->save($bucket);
+        $projectionHandlerTarget->save($bucket);
     }
 }

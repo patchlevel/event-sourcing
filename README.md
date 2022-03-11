@@ -214,6 +214,9 @@ we need a projection for it.
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Projection\AttributeProjection;
+use Patchlevel\EventSourcing\Attribute\Create;
+use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Handle;
 
 final class HotelProjection extends AttributeProjection
 {
@@ -255,11 +258,13 @@ final class HotelProjection extends AttributeProjection
         );
     }
     
+    #[Create]
     public function create(): void
     {
         $this->db->executeStatement('CREATE TABLE IF NOT EXISTS hotel (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);');
     }
 
+    #[Drop]
     public function drop(): void
     {
         $this->db->executeStatement('DROP TABLE IF EXISTS hotel;');
@@ -310,7 +315,7 @@ After we have defined everything, we still have to plug the whole thing together
 ```php
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -322,12 +327,12 @@ $connection = DriverManager::getConnection([
 $mailer = /* your own mailer */;
 
 $hotelProjection = new HotelProjection($connection);
-$projectionRepository = new DefaultProjectionRepository(
-    [$hotelProjection]
-);
+$projectionHandler = new DefaultProjectionHandler([
+    $hotelProjection,
+]);
 
 $eventBus = new DefaultEventBus();
-$eventBus->addListener(new ProjectionListener($projectionRepository));
+$eventBus->addListener(new ProjectionListener($projectionHandler));
 $eventBus->addListener(new SendCheckInEmailListener($mailer));
 
 $store = new SingleTableStore(
@@ -350,7 +355,7 @@ we need the associated schema and databases.
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 
 (new DoctrineSchemaManager())->create($store);
-$hotelProjection->create();
+$projectionHandler->create();
 ```
 
 > :book: you can use the predefined [cli commands](docs/cli.md) for this.

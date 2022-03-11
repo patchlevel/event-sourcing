@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\SnapshotRepository;
@@ -42,7 +42,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new DefaultProjectionHandler(
             [$profileProjection]
         );
 
@@ -85,7 +85,7 @@ final class BasicIntegrationTest extends TestCase
     public function testWithSymfonySuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new DefaultProjectionHandler(
             [$profileProjection]
         );
 
@@ -129,7 +129,7 @@ final class BasicIntegrationTest extends TestCase
     public function testMultiTableSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new DefaultProjectionHandler(
             [$profileProjection]
         );
 
@@ -171,7 +171,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSnapshot(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new DefaultProjectionHandler(
             [$profileProjection]
         );
 
