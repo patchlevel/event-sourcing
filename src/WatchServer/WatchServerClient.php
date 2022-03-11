@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\WatchServer;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 interface WatchServerClient
 {
-    /**
-     * @param AggregateChanged<array<string, mixed>> $event
-     */
-    public function send(AggregateChanged $event): void;
+    public function send(Message $message): void;
 }

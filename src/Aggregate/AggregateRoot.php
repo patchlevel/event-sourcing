@@ -18,7 +18,7 @@ abstract class AggregateRoot
     private static array $metadata = [];
 
     /** @var list<Message> */
-    private array $uncommittedEvents = [];
+    private array $uncommittedMessages = [];
 
     /** @internal */
     protected int $playhead = 0;
@@ -59,7 +59,7 @@ abstract class AggregateRoot
 
         $this->apply($event);
 
-        $this->uncommittedEvents[] = new Message(
+        $this->uncommittedMessages[] = new Message(
             static::class,
             $this->aggregateRootId(),
             $this->playhead,
@@ -70,18 +70,18 @@ abstract class AggregateRoot
     /**
      * @return list<Message>
      */
-    final public function releaseEvents(): array
+    final public function releaseMessages(): array
     {
-        $events = $this->uncommittedEvents;
-        $this->uncommittedEvents = [];
+        $messages = $this->uncommittedMessages;
+        $this->uncommittedMessages = [];
 
-        return $events;
+        return $messages;
     }
 
     /**
      * @param list<Message> $stream
      */
-    final public static function createFromEventStream(array $stream): static
+    final public static function createFromMessageStream(array $stream): static
     {
         $self = new static();
 

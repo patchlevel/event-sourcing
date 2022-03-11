@@ -10,7 +10,7 @@ use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 use function array_flip;
 use function array_key_exists;
@@ -38,7 +38,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     /**
      * @param class-string<AggregateRoot> $aggregate
      *
-     * @return array<AggregateChanged<array<string, mixed>>>
+     * @return list<Message>
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array
     {
@@ -63,8 +63,10 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $platform = $this->connection->getDatabasePlatform();
 
         return array_map(
-            static function (array $data) use ($platform) {
-                return AggregateChanged::deserialize(
+            static function (array $data) use ($platform, $aggregate) {
+                $data['aggregate_class'] = $aggregate;
+
+                return Message::deserialize(
                     self::normalizeResult($platform, $data)
                 );
             },
@@ -102,22 +104,18 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     }
 
     /**
-     * @param class-string<AggregateRoot>                   $aggregate
-     * @param array<AggregateChanged<array<string, mixed>>> $events
+     * @param list<Message> $messages
      */
-    public function saveBatch(string $aggregate, string $id, array $events): void
+    public function saveBatch(array $messages): void
     {
-        $shortName = $this->shortName($aggregate);
         $storeTableName = $this->storeTableName;
 
         $this->connection->transactional(
-            static function (Connection $connection) use ($shortName, $id, $events, $storeTableName): void {
-                foreach ($events as $event) {
-                    if ($event->aggregateId() !== $id) {
-                        throw new AggregateIdMismatch($id, $event->aggregateId());
-                    }
+            function (Connection $connection) use ($messages, $storeTableName): void {
+                foreach ($messages as $message) {
+                    $shortName = $this->shortName($message->aggregateClass());
 
-                    $data = $event->serialize();
+                    $data = $message->serialize();
                     $data['aggregate'] = $shortName;
 
                     $connection->insert(
@@ -133,7 +131,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     }
 
     /**
-     * @return Generator<EventBucket>
+     * @return Generator<Message>
      */
     public function stream(int $fromIndex = 0): Generator
     {
@@ -167,12 +165,10 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                 throw new AggregateNotDefined($name);
             }
 
-            yield new EventBucket(
-                $classMap[$name],
-                (int)$data['id'],
-                AggregateChanged::deserialize(
-                    self::normalizeResult($platform, $data)
-                )
+            $data['aggregate_class'] = $classMap[$name];
+
+            yield Message::deserialize(
+                self::normalizeResult($platform, $data)
             );
         }
     }
@@ -194,10 +190,10 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         return (int)$result;
     }
 
-    public function saveEventBucket(EventBucket $bucket): void
+    public function save(Message $message): void
     {
-        $data = $bucket->event()->serialize();
-        $data['aggregate'] = $this->shortName($bucket->aggregateClass());
+        $data = $message->serialize();
+        $data['aggregate'] = $this->shortName($message->aggregateClass());
 
         $this->connection->insert(
             $this->storeTableName,

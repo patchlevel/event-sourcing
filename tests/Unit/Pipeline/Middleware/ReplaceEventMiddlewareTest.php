@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessagePublished;
@@ -29,24 +29,25 @@ class ReplaceEventMiddlewareTest extends TestCase
             }
         );
 
-        $bucket = new EventBucket(
+        $message = new Message(
             Profile::class,
-            1,
+            '1',
+            5,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
-            )->recordNow(5)
+            )
         );
 
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
         self::assertCount(1, $result);
         self::assertSame(Profile::class, $result[0]->aggregateClass());
+        self::assertSame(5, $result[0]->playhead());
 
         $event = $result[0]->event();
 
         self::assertInstanceOf(ProfileVisited::class, $event);
-        self::assertSame(5, $event->playhead());
     }
 
     public function testReplaceInvalidClass(): void
@@ -62,23 +63,24 @@ class ReplaceEventMiddlewareTest extends TestCase
             }
         );
 
-        $bucket = new EventBucket(
+        $message = new Message(
             Profile::class,
-            1,
+            '1',
+            5,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
-            )->recordNow(5)
+            )
         );
 
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
         self::assertCount(1, $result);
         self::assertSame(Profile::class, $result[0]->aggregateClass());
+        self::assertSame(5, $result[0]->playhead());
 
         $event = $result[0]->event();
 
         self::assertInstanceOf(ProfileCreated::class, $event);
-        self::assertSame(5, $event->playhead());
     }
 }

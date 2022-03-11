@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 final class ExcludeEventMiddleware implements Middleware
 {
@@ -21,16 +21,16 @@ final class ExcludeEventMiddleware implements Middleware
     }
 
     /**
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    public function __invoke(EventBucket $bucket): array
+    public function __invoke(Message $message): array
     {
         foreach ($this->classes as $class) {
-            if ($bucket->event() instanceof $class) {
+            if ($message->event() instanceof $class) {
                 return [];
             }
         }
 
-        return [$bucket];
+        return [$message];
     }
 }

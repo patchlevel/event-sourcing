@@ -46,13 +46,13 @@ final class DefaultRepository implements Repository
             return $this->instances[$id];
         }
 
-        $events = $this->store->load($this->aggregateClass, $id);
+        $messages = $this->store->load($this->aggregateClass, $id);
 
-        if (count($events) === 0) {
+        if (count($messages) === 0) {
             throw new AggregateNotFound($this->aggregateClass, $id);
         }
 
-        return $this->instances[$id] = $this->aggregateClass::createFromEventStream($events);
+        return $this->instances[$id] = $this->aggregateClass::createFromMessageStream($messages);
     }
 
     public function has(string $id): bool
@@ -72,16 +72,16 @@ final class DefaultRepository implements Repository
             throw new WrongAggregate($class, $this->aggregateClass);
         }
 
-        $eventStream = $aggregate->releaseEvents();
+        $messageStream = $aggregate->releaseMessages();
 
-        if (count($eventStream) === 0) {
+        if (count($messageStream) === 0) {
             return;
         }
 
-        $this->store->saveBatch($this->aggregateClass, $aggregate->aggregateRootId(), $eventStream);
+        $this->store->saveBatch($messageStream);
 
-        foreach ($eventStream as $event) {
-            $this->eventStream->dispatch($event);
+        foreach ($messageStream as $message) {
+            $this->eventStream->dispatch($message);
         }
     }
 }

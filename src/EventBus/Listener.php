@@ -6,5 +6,5 @@ namespace Patchlevel\EventSourcing\EventBus;
 
 interface Listener
 {
-    public function __invoke(Message $event): void;
+    public function __invoke(Message $message): void;
 }

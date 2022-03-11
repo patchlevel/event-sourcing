@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use Patchlevel\EventSourcing\Store\PipelineStore;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Store\Store;
 
 final class StoreTarget implements Target
 {
-    private PipelineStore $store;
+    private Store $store;
 
-    public function __construct(PipelineStore $store)
+    public function __construct(Store $store)
     {
         $this->store = $store;
     }
 
-    public function save(EventBucket $bucket): void
+    public function save(Message $message): void
     {
-        $this->store->saveEventBucket($bucket);
+        $this->store->save($message);
     }
 }

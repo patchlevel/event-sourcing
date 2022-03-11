@@ -11,6 +11,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use function is_int;
 
 abstract class DoctrineStore implements Store
@@ -30,9 +31,9 @@ abstract class DoctrineStore implements Store
     abstract public function schema(): Schema;
 
     /**
-     * @param array{aggregate_id: string, playhead: int|string, event: class-string<T>, payload: string, recorded_on: string} $result
+     * @param array{aggregate_class: class-string<AggregateRoot>, aggregate_id: string, playhead: int|string, event: class-string<T>, payload: string, recorded_on: string} $result
      *
-     * @return array{aggregate_id: string, playhead: int, event: class-string<T>, payload: string, recorded_on: DateTimeImmutable}
+     * @return array{aggregate_class: class-string<AggregateRoot>, aggregate_id: string, playhead: int, event: class-string<T>, payload: string, recorded_on: DateTimeImmutable}
      *
      * @template T
      */

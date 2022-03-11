@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\AttributeProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\ProjectionMetadataFactory;
@@ -24,16 +24,24 @@ final class ProjectionTarget implements Target
         $this->metadataFactory = $projectionMetadataFactory ?? new AttributeProjectionMetadataFactory();
     }
 
-    public function save(EventBucket $bucket): void
+    public function save(Message $message): void
     {
         $metadata = $this->metadataFactory->metadata($this->projection);
-        $event = $bucket->event();
+        $event = $message->event();
 
         if (!array_key_exists($event::class, $metadata->handleMethods)) {
             return;
         }
 
-        $method = $metadata->handleMethods[$event::class];
+        $handlerMetadata = $metadata->handleMethods[$event::class];
+        $method = $handlerMetadata->methodName;
+
+        if ($handlerMetadata->passMessage) {
+            $this->projection->$method($message);
+
+            return;
+        }
+
         $this->projection->$method($event);
     }
 }

@@ -11,21 +11,13 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
  */
 final class MessagePublished extends AggregateChanged
 {
-    public static function raise(
-        ProfileId $id,
-        Message $message
-    ): static {
+    public static function raise(Message $message): static
+    {
         return new static(
-            $id->toString(),
             [
                 'message' => $message->toArray(),
             ]
         );
-    }
-
-    public function profileId(): ProfileId
-    {
-        return ProfileId::fromString($this->aggregateId);
     }
 
     public function message(): Message

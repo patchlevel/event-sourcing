@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\WatchServer;
 use Closure;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
@@ -64,11 +66,11 @@ final class DefaultWatchServer implements WatchServer
         foreach ($this->messages($socket) as $clientId => $message) {
             $this->logger->info('Received a payload from client {clientId}', ['clientId' => $clientId]);
 
-            /** @var array{aggregate_id: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, playhead: int, recorded_on: DateTimeImmutable} $payload */
+            /** @var array{aggregate_class: class-string<AggregateRoot>,aggregate_id: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, playhead: int, recorded_on: DateTimeImmutable} $payload */
             $payload = unserialize(base64_decode($message), ['allowed_classes' => [DateTimeImmutable::class]]);
-            $event = AggregateChanged::deserialize($payload);
+            $eventMessage = Message::deserialize($payload);
 
-            $callback($event, $clientId);
+            $callback($eventMessage, $clientId);
         }
     }
 

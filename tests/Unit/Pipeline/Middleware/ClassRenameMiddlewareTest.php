@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\AliasProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -27,26 +27,29 @@ class ClassRenameMiddlewareTest extends TestCase
         $event = AliasProfileCreated::raise(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de')
-        )->recordNow(5);
+        );
 
-        $bucket = new EventBucket(
+        $message = new Message(
             Profile::class,
+            '1',
             1,
             $event
         );
 
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
         self::assertCount(1, $result);
 
-        $newEvent = $result[0]->event();
+        $newMessage = $result[0];
+        $newEvent = $newMessage->event();
 
         self::assertInstanceOf(ProfileCreated::class, $newEvent);
         self::assertNotInstanceOf(AliasProfileCreated::class, $newEvent);
         self::assertSame($event->payload(), $newEvent->payload());
-        self::assertSame($event->playhead(), $newEvent->playhead());
-        self::assertSame($event->recordedOn(), $newEvent->recordedOn());
-        self::assertSame($event->aggregateId(), $newEvent->aggregateId());
+        self::assertSame($message->playhead(), $newMessage->playhead());
+        self::assertSame($message->recordedOn(), $newMessage->recordedOn());
+        self::assertSame($message->aggregateId(), $newMessage->aggregateId());
+        self::assertSame($message->aggregateClass(), $newMessage->aggregateClass());
     }
 
     public function testSkip(): void
@@ -55,17 +58,18 @@ class ClassRenameMiddlewareTest extends TestCase
             ProfileVisited::class => MessagePublished::class,
         ]);
 
-        $bucket = new EventBucket(
+        $message = new Message(
             Profile::class,
+            '1',
             1,
             AliasProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
-            )->recordNow(5)
+            )
         );
 
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
-        self::assertSame([$bucket], $result);
+        self::assertSame([$message], $result);
     }
 }

@@ -62,16 +62,16 @@ final class ShowCommand extends Command
             return 1;
         }
 
-        $events = $this->store->load($map[$aggregate], $id);
+        $messages = $this->store->load($map[$aggregate], $id);
 
-        if (count($events) === 0) {
+        if (count($messages) === 0) {
             $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
 
             return 1;
         }
 
-        foreach ($events as $event) {
-            $dumper->write($console, $event);
+        foreach ($messages as $message) {
+            $dumper->write($console, $message);
         }
 
         return 0;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Console\EventPrinter;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\WatchServer\WatchServer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -44,8 +44,8 @@ final class WatchCommand extends Command
         $dumper = new EventPrinter();
 
         $this->server->listen(
-            static function (AggregateChanged $event) use ($dumper, $console): void {
-                $dumper->write($console, $event);
+            static function (Message $message) use ($dumper, $console): void {
+                $dumper->write($console, $message);
             }
         );
 

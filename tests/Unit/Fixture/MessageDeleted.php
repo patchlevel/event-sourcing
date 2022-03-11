@@ -11,21 +11,13 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
  */
 final class MessageDeleted extends AggregateChanged
 {
-    public static function raise(
-        ProfileId $profileId,
-        MessageId $messageId
-    ): static {
+    public static function raise(MessageId $messageId): static
+    {
         return new static(
-            $profileId->toString(),
             [
                 'messageId' => $messageId->toString(),
             ]
         );
-    }
-
-    public function profileId(): ProfileId
-    {
-        return ProfileId::fromString($this->aggregateId);
     }
 
     public function messageId(): MessageId

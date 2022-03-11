@@ -57,23 +57,23 @@ final class SnapshotRepository implements Repository
 
         try {
             $snapshot = $this->snapshotStore->load($aggregateClass, $id);
-            $events = $this->store->load($aggregateClass, $id, $snapshot->playhead());
+            $messages = $this->store->load($aggregateClass, $id, $snapshot->playhead());
 
             return $this->instances[$id] = $aggregateClass::createFromSnapshot(
                 $snapshot,
-                $events
+                $messages
             );
         } catch (SnapshotNotFound $exception) {
             // do normal workflow
         }
 
-        $events = $this->store->load($aggregateClass, $id);
+        $messages = $this->store->load($aggregateClass, $id);
 
-        if (count($events) === 0) {
+        if (count($messages) === 0) {
             throw new AggregateNotFound($aggregateClass, $id);
         }
 
-        return $this->instances[$id] = $aggregateClass::createFromEventStream($events);
+        return $this->instances[$id] = $aggregateClass::createFromMessageStream($messages);
     }
 
     public function has(string $id): bool
@@ -93,19 +93,19 @@ final class SnapshotRepository implements Repository
             throw new WrongAggregate($class, $this->aggregateClass);
         }
 
-        $eventStream = $aggregate->releaseEvents();
+        $messages = $aggregate->releaseMessages();
 
-        if (count($eventStream) === 0) {
+        if (count($messages) === 0) {
             return;
         }
 
-        $this->store->saveBatch($this->aggregateClass, $aggregate->aggregateRootId(), $eventStream);
+        $this->store->saveBatch($messages);
 
         $snapshot = $aggregate->toSnapshot();
         $this->snapshotStore->save($snapshot);
 
-        foreach ($eventStream as $event) {
-            $this->eventStream->dispatch($event);
+        foreach ($messages as $message) {
+            $this->eventStream->dispatch($message);
         }
     }
 }

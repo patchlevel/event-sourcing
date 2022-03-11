@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Source;
 
 use Generator;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 
 final class StoreSource implements Source
@@ -20,7 +20,7 @@ final class StoreSource implements Source
     }
 
     /**
-     * @return Generator<EventBucket>
+     * @return Generator<Message>
      */
     public function load(): Generator
     {

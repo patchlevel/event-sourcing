@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 use function array_key_exists;
 
@@ -23,27 +23,27 @@ final class ClassRenameMiddleware implements Middleware
     }
 
     /**
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    public function __invoke(EventBucket $bucket): array
+    public function __invoke(Message $message): array
     {
-        $event = $bucket->event();
+        $event = $message->event();
         $class = $event::class;
 
         if (!array_key_exists($class, $this->classes)) {
-            return [$bucket];
+            return [$message];
         }
 
-        $data = $event->serialize();
-        $data['event'] = $this->classes[$class];
-
-        $newEvent = AggregateChanged::deserialize($data);
+        $newClass = $this->classes[$class];
+        $newEvent = new $newClass($event->payload());
 
         return [
-            new EventBucket(
-                $bucket->aggregateClass(),
-                $bucket->index(),
-                $newEvent
+            new Message(
+                $message->aggregateClass(),
+                $message->aggregateId(),
+                $message->playhead(),
+                $newEvent,
+                $message->recordedOn()
             ),
         ];
     }

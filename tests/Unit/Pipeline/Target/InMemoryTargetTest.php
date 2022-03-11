@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\InMemoryTarget;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -19,15 +19,16 @@ class InMemoryTargetTest extends TestCase
     {
         $inMemoryTarget = new InMemoryTarget();
 
-        $bucket = new EventBucket(
+        $message = new Message(
             Profile::class,
+            '1',
             1,
             ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
-        $inMemoryTarget->save($bucket);
+        $inMemoryTarget->save($message);
 
-        $buckets = $inMemoryTarget->buckets();
-        self::assertCount(1, $buckets);
-        self::assertSame($bucket, $buckets[0]);
+        $messages = $inMemoryTarget->messages();
+
+        self::assertSame([$message], $messages);
     }
 }

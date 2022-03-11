@@ -13,12 +13,12 @@ final class ProfileCreated extends AggregateChanged
 {
     public static function raise(string $id, string $name): static
     {
-        return new static($id, ['id' => $id, 'name' => $name]);
+        return new static(['id' => $id, 'name' => $name]);
     }
 
     public function profileId(): string
     {
-        return $this->aggregateId;
+        return $this->payload['id'];
     }
 
     public function name(): string
