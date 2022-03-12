@@ -9,11 +9,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Clock;
 
-use function json_decode;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 final class Message
 {
     /** @var class-string<AggregateRoot> */
@@ -71,43 +66,5 @@ final class Message
     public function recordedOn(): DateTimeImmutable
     {
         return $this->recordedOn;
-    }
-
-    /**
-     * @param array{aggregate_class: class-string<AggregateRoot>, aggregate_id: string, playhead: int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: DateTimeImmutable} $data
-     */
-    public static function deserialize(array $data): self
-    {
-        $class = $data['event'];
-
-        /** @var array<string, mixed> $payload */
-        $payload = json_decode($data['payload'], true, 512, JSON_THROW_ON_ERROR);
-
-        $event = new $class($payload);
-
-        return new Message(
-            $data['aggregate_class'],
-            $data['aggregate_id'],
-            $data['playhead'],
-            $event,
-            $data['recorded_on']
-        );
-    }
-
-    /**
-     * @return array{aggregate_class: class-string<AggregateRoot>, aggregate_id: string, playhead: int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: DateTimeImmutable}
-     */
-    public function serialize(): array
-    {
-        $event = $this->event;
-
-        return [
-            'aggregate_class' => $this->aggregateClass,
-            'aggregate_id' => $this->aggregateId,
-            'playhead' => $this->playhead,
-            'event' => $event::class,
-            'payload' => json_encode($event->payload(), JSON_THROW_ON_ERROR),
-            'recorded_on' => $this->recordedOn,
-        ];
     }
 }

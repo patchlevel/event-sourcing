@@ -10,7 +10,6 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function is_int;
 
@@ -30,22 +29,7 @@ abstract class DoctrineStore implements Store
 
     abstract public function schema(): Schema;
 
-    /**
-     * @param array{aggregate_class: class-string<AggregateRoot>, aggregate_id: string, playhead: int|string, event: class-string<T>, payload: string, recorded_on: string} $result
-     *
-     * @return array{aggregate_class: class-string<AggregateRoot>, aggregate_id: string, playhead: int, event: class-string<T>, payload: string, recorded_on: DateTimeImmutable}
-     *
-     * @template T
-     */
-    final protected static function normalizeResult(AbstractPlatform $platform, array $result): array
-    {
-        $result['recorded_on'] = self::normalizeRecordedOn($result['recorded_on'], $platform);
-        $result['playhead'] = self::normalizePlayhead($result['playhead'], $platform);
-
-        return $result;
-    }
-
-    private static function normalizeRecordedOn(string $recordedOn, AbstractPlatform $platform): DateTimeImmutable
+    protected static function normalizeRecordedOn(string $recordedOn, AbstractPlatform $platform): DateTimeImmutable
     {
         $normalizedRecordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue($recordedOn, $platform);
 
@@ -56,7 +40,7 @@ abstract class DoctrineStore implements Store
         return $normalizedRecordedOn;
     }
 
-    private static function normalizePlayhead(string|int $playhead, AbstractPlatform $platform): int
+    protected static function normalizePlayhead(string|int $playhead, AbstractPlatform $platform): int
     {
         $normalizedPlayhead = Type::getType(Types::INTEGER)->convertToPHPValue($playhead, $platform);
 

@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 use function base64_encode;
 use function fclose;
+use function json_encode;
 use function restore_error_handler;
 use function serialize;
 use function set_error_handler;
@@ -16,6 +17,7 @@ use function stream_socket_sendto;
 use function stream_socket_shutdown;
 use function strpos;
 
+use const JSON_THROW_ON_ERROR;
 use const STREAM_CLIENT_ASYNC_CONNECT;
 use const STREAM_CLIENT_CONNECT;
 use const STREAM_SHUT_RDWR;
@@ -48,7 +50,18 @@ final class DefaultWatchServerClient implements WatchServerClient
             throw new SendingFailed('socket connection could not be established');
         }
 
-        $encodedPayload = base64_encode(serialize($message->serialize())) . "\n";
+        $event = $message->event();
+
+        $data = [
+            'aggregate_class' => $message->aggregateClass(),
+            'aggregate_id' => $message->aggregateId(),
+            'playhead' => $message->playhead(),
+            'event' => $event::class,
+            'payload' => json_encode($event->payload(), JSON_THROW_ON_ERROR),
+            'recorded_on' => $message->recordedOn(),
+        ];
+
+        $encodedPayload = base64_encode(serialize($data)) . "\n";
 
         set_error_handler([self::class, 'nullErrorHandler']);
 
