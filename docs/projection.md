@@ -20,7 +20,7 @@ use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Projection\Projection;
 
-final class ProfileProjection extends AttributeProjection
+final class ProfileProjection implements Projection
 {
     private Connection $connection;
 
@@ -69,22 +69,23 @@ Several projections can also listen to the same event.
 
 ## Register projections
 
-So that the projections are known and also executed, you have to add them to the `ProjectionRepository`.
+So that the projections are known and also executed, you have to add them to the `ProjectionHandler`.
 Then add this to the event bus using the `ProjectionListener`.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 
 $profileProjection = new ProfileProjection($connection);
 $messageProjection = new MessageProjection($connection);
 
-$projectionRepository = new DefaultProjectionRepository([
+$projectionHandler = new DefaultProjectionHandler([
     $profileProjection,
     $messageProjection,
 ]);
 
-$eventBus->addListener(new ProjectionListener($projectionRepository));
+$eventBus->addListener(new ProjectionListener($projectionHandler));
 ```
 
 > :book: You can find out more about the event bus [here](./event_bus.md).
@@ -105,10 +106,10 @@ $profileProjection->create();
 
 > :book: If no create is necessary, the method can also be left empty.
 
-Or for all projections in the `DefaultProjectionRepository`:
+Or for all projections in the `DefaultProjectionHandler`:
 
 ```php
-$projectionRepository = new DefaultProjectionRepository([
+$projectionRepository = new DefaultProjectionHandler([
     $profileProjection,
     $messageProjection,
 ]);
@@ -124,10 +125,10 @@ The same goes for dropping. You can do it for a single `projection`.
 $profileProjection->drop();
 ```
 
-Or for all projections in the `DefaultProjectionRepository`:
+Or for all projections in the `DefaultProjectionHandler`:
 
 ```php
-$projectionRepository = new DefaultProjectionRepository([
+$projectionRepository = new DefaultProjectionHandler([
     $profileProjection,
     $messageProjection,
 ]);

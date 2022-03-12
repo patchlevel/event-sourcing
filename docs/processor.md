@@ -4,8 +4,8 @@ The `processor` is a kind of [event bus](./event_bus.md) listener that can execu
 A process can be for example used to send an email when a profile has been created:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 final class SendEmailListener implements Listener
 {
@@ -16,8 +16,10 @@ final class SendEmailListener implements Listener
         $this->mailer = $mailer;
     }
 
-    public function __invoke(AggregateChanged $event): void
+    public function __invoke(Message $message): void
     {
+        $event = $message->event();
+    
         if (!$event instanceof ProfileCreated) {
             return;
         }

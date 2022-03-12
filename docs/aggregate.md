@@ -78,7 +78,7 @@ These events are also used again to rebuild the current state of the aggregate.
 ### Create a new aggregate
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
-An event must receive the `aggregateId` and the `payload` and has to inherit from `AggregateChanged`.
+An event must receive the `payload` and has to inherit from `AggregateChanged`.
 A `ProfileCreated` event is ideal here:
 
 ```php
@@ -89,7 +89,6 @@ final class ProfileCreated extends AggregateChanged
     public static function raise(string $id, string $name): static
     {
         return new static(
-            $id, 
             [
                 'id' => $id,
                 'name' => $name
@@ -99,7 +98,7 @@ final class ProfileCreated extends AggregateChanged
 
     public function profileId(): string
     {
-        return $this->aggregateId;
+        return $this->payload['id'];
     }
     
     public function name(): string 
@@ -174,19 +173,13 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class NameChanged extends AggregateChanged
 {
-    public static function raise(string $id, string $name): static
+    public static function raise(string $name): static
     {
         return new static(
-            $id,
             [
                 'name' => $name
             ]
         );
-    }
-
-    public function profileId(): string
-    {
-        return $this->aggregateId;
     }
     
     public function name(): string 
@@ -231,7 +224,7 @@ final class Profile extends AggregateRoot
     
     public function changeName(string $name): void 
     {
-        $this->record(NameChanged::raise($this->id, $name));
+        $this->record(NameChanged::raise($name));
     }
     
     #[Apply(ProfileCreated::class)]
@@ -421,7 +414,7 @@ final class Profile extends AggregateRoot
             throw new NameIsToShortException($name);
         }
     
-        $this->record(NameChanged::raise($this->id, $name));
+        $this->record(NameChanged::raise($name));
     }
     
     #[Apply(NameChanged::class)]
@@ -489,7 +482,7 @@ final class Profile extends AggregateRoot
     
     public function changeName(Name $name): void 
     {
-        $this->record(NameChanged::raise($this->id, $name));
+        $this->record(NameChanged::raise($name));
     }
     
     #[Apply(NameChanged::class)]
@@ -508,19 +501,13 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class NameChanged extends AggregateChanged
 {
-    public static function raise(string $id, Name $name): static
+    public static function raise(Name $name): static
     {
         return new static(
-            $id,
             [
                 'name' => $name->toString()
             ]
         );
-    }
-
-    public function profileId(): string
-    {
-        return $this->aggregateId;
     }
     
     public function name(): Name 
@@ -561,10 +548,10 @@ final class Hotel extends AggregateRoot
             throw new NoPlaceException($name);
         }
         
-        $this->record(BookRoom::raise($this->id, $name));
+        $this->record(BookRoom::raise($name));
         
         if ($this->people === self::SIZE) {
-            $this->record(FullyBooked::raise($this->id));
+            $this->record(FullyBooked::raise());
         }
     }
     

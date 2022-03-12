@@ -62,12 +62,12 @@ final class HotelCreated extends AggregateChanged
 {
     public static function raise(string $id, string $hotelName): static 
     {
-        return new static($id, ['hotelId' => $id, 'hotelName' => $hotelName]);
+        return new static(['hotelId' => $id, 'hotelName' => $hotelName]);
     }
 
     public function hotelId(): string
     {
-        return $this->aggregateId;
+        return $this->payload['hotelId'];
     }
 
     public function hotelName(): string
@@ -84,9 +84,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class GuestIsCheckedIn extends AggregateChanged
 {
-    public static function raise(string $id, string $guestName): static 
+    public static function raise(string $guestName): static 
     {
-        return new static($id, ['guestName' => $guestName]);
+        return new static(['guestName' => $guestName]);
     }
 
     public function guestName(): string
@@ -103,9 +103,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 final class GuestIsCheckedOut extends AggregateChanged
 {
-    public static function raise(string $id, string $guestName): static 
+    public static function raise(string $guestName): static 
     {
-        return new static($id, ['guestName' => $guestName]);
+        return new static(['guestName' => $guestName]);
     }
 
     public function guestName(): string
@@ -160,7 +160,7 @@ final class Hotel extends AggregateRoot
             throw new GuestHasAlreadyCheckedIn($guestName);
         }
     
-        $this->record(GuestIsCheckedIn::raise($this->id, $guestName));
+        $this->record(GuestIsCheckedIn::raise($guestName));
     }
     
     public function checkOut(string $guestName): void
@@ -169,7 +169,7 @@ final class Hotel extends AggregateRoot
             throw new IsNotAGuest($guestName);
         }
     
-        $this->record(GuestIsCheckedOut::raise($this->id, $guestName));
+        $this->record(GuestIsCheckedOut::raise($guestName));
     }
     
     #[Apply(HotelCreated::class)]
@@ -217,9 +217,9 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\AttributeProjection;
+use Patchlevel\EventSourcing\Projection\Projection;
 
-final class HotelProjection extends AttributeProjection
+final class HotelProjection implements Projection
 {
     private Connection $db;
 
@@ -246,7 +246,7 @@ final class HotelProjection extends AttributeProjection
     {
         $this->db->executeStatement(
             'UPDATE hotel SET guests = guests + 1 WHERE id = ?;',
-            [$event->aggregateId()]
+            [$message->aggregateId()]
         );
     }
     
@@ -280,8 +280,8 @@ final class HotelProjection extends AttributeProjection
 In our example we also want to send an email to the head office as soon as a guest is checked in.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 final class SendCheckInEmailListener implements Listener
 {
@@ -292,8 +292,10 @@ final class SendCheckInEmailListener implements Listener
         $this->mailer = $mailer;
     }
 
-    public function __invoke(AggregateChanged $event): void
+    public function __invoke(Message $message): void
     {
+        $event = $message->event();
+    
         if (!$event instanceof GuestIsCheckedIn) {
             return;
         }
