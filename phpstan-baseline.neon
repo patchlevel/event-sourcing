@@ -6,11 +6,6 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Unable to resolve the template type E in call to method static method Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateChanged\\<array\\<string, mixed\\>\\>\\:\\:deserialize\\(\\)$#"
-			count: 1
-			path: src/Store/MultiTableStore.php
-
-		-
 			message: "#^Unable to resolve the template type T in call to method static method Patchlevel\\\\EventSourcing\\\\Store\\\\DoctrineStore\\:\\:normalizeResult\\(\\)$#"
 			count: 1
 			path: src/Store/MultiTableStore.php

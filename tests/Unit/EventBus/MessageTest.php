@@ -111,10 +111,10 @@ class MessageTest extends TestCase
         $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
 
         $message = Message::deserialize([
-            'aggregate_class' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile',
+            'aggregate_class' => Profile::class,
             'aggregate_id' => '1',
             'playhead' => 1,
-            'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
+            'event' => ProfileCreated::class,
             'payload' => '{"profileId":"1","email":"hallo@patchlevel.de"}',
             'recorded_on' => $recordedAt,
         ]);
