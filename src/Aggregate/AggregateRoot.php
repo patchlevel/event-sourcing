@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use ReflectionClass;
 
 use function array_key_exists;
-use function method_exists;
 
 abstract class AggregateRoot
 {
@@ -42,11 +41,6 @@ abstract class AggregateRoot
         }
 
         $method = $metadata->applyMethods[$event::class];
-
-        if (!method_exists($this, $method)) {
-            return;
-        }
-
         $this->$method($event);
     }
 
@@ -79,13 +73,13 @@ abstract class AggregateRoot
     }
 
     /**
-     * @param list<Message> $stream
+     * @param list<Message> $messages
      */
-    final public static function createFromMessageStream(array $stream): static
+    final public static function createFromMessages(array $messages): static
     {
         $self = new static();
 
-        foreach ($stream as $message) {
+        foreach ($messages as $message) {
             $self->playhead++;
 
             if ($self->playhead !== $message->playhead()) {

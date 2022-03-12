@@ -52,7 +52,7 @@ final class DefaultRepository implements Repository
             throw new AggregateNotFound($this->aggregateClass, $id);
         }
 
-        return $this->instances[$id] = $this->aggregateClass::createFromMessageStream($messages);
+        return $this->instances[$id] = $this->aggregateClass::createFromMessages($messages);
     }
 
     public function has(string $id): bool

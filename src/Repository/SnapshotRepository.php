@@ -73,7 +73,7 @@ final class SnapshotRepository implements Repository
             throw new AggregateNotFound($aggregateClass, $id);
         }
 
-        return $this->instances[$id] = $aggregateClass::createFromMessageStream($messages);
+        return $this->instances[$id] = $aggregateClass::createFromMessages($messages);
     }
 
     public function has(string $id): bool

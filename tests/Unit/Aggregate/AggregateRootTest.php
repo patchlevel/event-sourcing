@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\ApplyAttributeNotFound;
 use Patchlevel\EventSourcing\Aggregate\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Clock;
+use Patchlevel\EventSourcing\EventBus\Message as EventBusMessage;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
@@ -55,6 +56,35 @@ class AggregateRootTest extends TestCase
         self::assertInstanceOf(ProfileCreated::class, $event);
         self::assertEquals($id, $event->profileId());
         self::assertEquals($email, $event->email());
+    }
+
+    public function testCreateFromMessages(): void
+    {
+        $id = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
+
+        $event = ProfileCreated::raise($id, $email);
+
+        $messages = [
+            new EventBusMessage(
+                Profile::class,
+                '1',
+                1,
+                $event
+            )
+        ];
+
+        $profile = Profile::createFromMessages($messages);
+
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
+        self::assertEquals($id, $profile->id());
+        self::assertEquals($email, $profile->email());
+        self::assertSame(0, $profile->visited());
+
+        $messages = $profile->releaseMessages();
+
+        self::assertCount(0, $messages);
     }
 
     public function testMultipleApplyOnOneMethod(): void
