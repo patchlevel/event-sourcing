@@ -23,7 +23,6 @@ class ReplaceEventMiddlewareTest extends TestCase
             ProfileCreated::class,
             static function (ProfileCreated $event) {
                 return ProfileVisited::raise(
-                    $event->profileId(),
                     $event->profileId()
                 );
             }
@@ -57,7 +56,6 @@ class ReplaceEventMiddlewareTest extends TestCase
             MessagePublished::class,
             static function (ProfileCreated $event) {
                 return ProfileVisited::raise(
-                    $event->profileId(),
                     $event->profileId()
                 );
             }

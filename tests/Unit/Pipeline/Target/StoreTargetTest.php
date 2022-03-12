@@ -29,7 +29,7 @@ class StoreTargetTest extends TestCase
         );
 
         $pipelineStore = $this->prophesize(PipelineStore::class);
-        $pipelineStore->saveEventBucket($message)->shouldBeCalled();
+        $pipelineStore->save($message)->shouldBeCalled();
 
         $storeTarget = new StoreTarget($pipelineStore->reveal());
 

@@ -43,14 +43,13 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
     public function publishMessage(Message $message): void
     {
         $this->record(MessagePublished::raise(
-            $this->id,
-            $message,
+            $message
         ));
     }
 
     public function visitProfile(ProfileId $profileId): void
     {
-        $this->record(ProfileVisited::raise($this->id, $profileId));
+        $this->record(ProfileVisited::raise($profileId));
     }
 
     #[Apply(ProfileCreated::class)]

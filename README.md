@@ -213,10 +213,11 @@ we need a projection for it.
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Projection\AttributeProjection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\AttributeProjection;
 
 final class HotelProjection extends AttributeProjection
 {
@@ -241,7 +242,7 @@ final class HotelProjection extends AttributeProjection
     }
     
     #[Handle(GuestIsCheckedIn::class)]
-    public function handleGuestIsCheckedIn(GuestIsCheckedIn $event): void
+    public function handleGuestIsCheckedIn(Message $message): void
     {
         $this->db->executeStatement(
             'UPDATE hotel SET guests = guests + 1 WHERE id = ?;',
@@ -250,11 +251,11 @@ final class HotelProjection extends AttributeProjection
     }
     
     #[Handle(GuestIsCheckedOut::class)]
-    public function handleGuestIsCheckedOut(GuestIsCheckedOut $event): void
+    public function handleGuestIsCheckedOut(Message $message): void
     {
         $this->db->executeStatement(
             'UPDATE hotel SET guests = guests - 1 WHERE id = ?;',
-            [$event->aggregateId()]
+            [$message->aggregateId()]
         );
     }
     

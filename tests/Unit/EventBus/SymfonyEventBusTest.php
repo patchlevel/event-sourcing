@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +25,7 @@ class SymfonyEventBusTest extends TestCase
     public function testDispatchEvent(): void
     {
         $message = new Message(
-            ProfileCreated::class,
+            Profile::class,
             '1',
             1,
             ProfileCreated::raise(
@@ -60,7 +61,7 @@ class SymfonyEventBusTest extends TestCase
         };
 
         $message = new Message(
-            ProfileCreated::class,
+            Profile::class,
             '1',
             1,
             ProfileCreated::raise(

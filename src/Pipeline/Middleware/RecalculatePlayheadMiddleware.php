@@ -32,7 +32,7 @@ final class RecalculatePlayheadMiddleware implements Middleware
                 $playhead,
                 $message->event(),
                 $message->recordedOn()
-            )
+            ),
         ];
     }
 

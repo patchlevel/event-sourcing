@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
-final class ProfileWithAttributeApplyInvalid extends AggregateRoot
+final class ProfileInvalid extends AggregateRoot
 {
     private ProfileId $id;
     private Email $email;

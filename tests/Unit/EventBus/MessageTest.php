@@ -1,13 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
-
-use Patchlevel\EventSourcing\Aggregate\PlayheadSequenceMismatch;
+use DateTimeImmutable;
+use Patchlevel\EventSourcing\Clock;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessagePublished;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -16,133 +16,118 @@ use PHPUnit\Framework\TestCase;
 /** @covers \Patchlevel\EventSourcing\EventBus\Message */
 class MessageTest extends TestCase
 {
-    public function testCreateAggregate(): void
+    public function tearDown(): void
     {
+        Clock::reset();
+    }
+
+    public function testCreateMessage(): void
+    {
+        $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
+
+        Clock::freeze($recordedAt);
+
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
 
-        $profile = Profile::createProfile($id, $email);
+        $event = ProfileCreated::raise(
+            $id,
+            $email
+        );
 
-        self::assertSame('1', $profile->aggregateRootId());
-        self::assertSame(1, $profile->playhead());
-        self::assertEquals($id, $profile->id());
-        self::assertEquals($email, $profile->email());
+        $message = new Message(
+            Profile::class,
+            '1',
+            1,
+            $event
+        );
 
-        $events = $profile->releaseEvents();
-
-        self::assertCount(1, $events);
-        $event = $events[0];
-        self::assertSame(1, $event->playhead());
+        self::assertSame(Profile::class, $message->aggregateClass());
+        self::assertSame('1', $message->aggregateId());
+        self::assertSame(1, $message->playhead());
+        self::assertEquals($event, $message->event());
+        self::assertEquals($recordedAt, $message->recordedOn());
     }
 
-    public function testExecuteMethod(): void
+    public function testCreateMessageWithSpecificRecordOn(): void
     {
-        $profileId = ProfileId::fromString('1');
+        $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
+
+        $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
 
-        $messageId = MessageId::fromString('2');
-
-        $profile = Profile::createProfile($profileId, $email);
-
-        $events = $profile->releaseEvents();
-
-        $playhead = $profile->playhead();
-        self::assertCount(1, $events);
-        self::assertSame(1, $playhead);
-        $event = $events[0];
-        self::assertSame(1, $event->playhead());
-
-        $profile->publishMessage(
-            Message::create(
-                $messageId,
-                'foo'
-            )
+        $event = ProfileCreated::raise(
+            $id,
+            $email
         );
 
-        $playhead = $profile->playhead();
-        self::assertSame('1', $profile->aggregateRootId());
-        self::assertSame(2, $playhead);
-        self::assertEquals($profileId, $profile->id());
-        self::assertEquals($email, $profile->email());
-
-        $events = $profile->releaseEvents();
-
-        self::assertCount(1, $events);
-        $event = $events[0];
-        self::assertSame(2, $event->playhead());
-    }
-
-    public function testEventWithoutApplyMethod(): void
-    {
-        $visitorProfile = Profile::createProfile(
-            ProfileId::fromString('1'),
-            Email::fromString('visitor@test.com')
+        $message = new Message(
+            Profile::class,
+            '1',
+            1,
+            $event,
+            $recordedAt
         );
 
-        $events = $visitorProfile->releaseEvents();
-        self::assertCount(1, $events);
-        self::assertSame(1, $visitorProfile->playhead());
-        $event = $events[0];
-        self::assertSame(1, $event->playhead());
+        self::assertSame(Profile::class, $message->aggregateClass());
+        self::assertSame('1', $message->aggregateId());
+        self::assertSame(1, $message->playhead());
+        self::assertEquals($event, $message->event());
+        self::assertEquals($recordedAt, $message->recordedOn());
+    }
 
-        $visitedProfile = Profile::createProfile(
-            ProfileId::fromString('2'),
-            Email::fromString('visited@test.com')
+    public function testSerialize(): void
+    {
+        $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
+
+        $id = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
+
+        $event = ProfileCreated::raise(
+            $id,
+            $email
         );
 
-        $events = $visitedProfile->releaseEvents();
-        self::assertCount(1, $events);
-        self::assertSame(1, $visitedProfile->playhead());
-        $event = $events[0];
-        self::assertSame(1, $event->playhead());
+        $message = new Message(
+            Profile::class,
+            '1',
+            1,
+            $event,
+            $recordedAt
+        );
 
-        $visitorProfile->visitProfile($visitedProfile->id());
-
-        $events = $visitedProfile->releaseEvents();
-        self::assertCount(0, $events);
-        self::assertSame(1, $visitedProfile->playhead());
+        self::assertSame([
+            'aggregate_class' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile',
+            'aggregate_id' => '1',
+            'playhead' => 1,
+            'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
+            'payload' => '{"profileId":"1","email":"hallo@patchlevel.de"}',
+            'recorded_on' => $recordedAt,
+        ], $message->serialize());
     }
 
-    public function testInitliazingState(): void
+    public function testDeserialize(): void
     {
-        $eventStream = [
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('profile@test.com')
-            )->recordNow(1),
-            MessagePublished::raise(
-                ProfileId::fromString('1'),
-                Message::create(
-                    MessageId::fromString('2'),
-                    'message value'
-                )
-            )->recordNow(2),
-        ];
+        $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
 
-        $profile = Profile::createFromEventStream($eventStream);
+        $message = Message::deserialize([
+            'aggregate_class' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile',
+            'aggregate_id' => '1',
+            'playhead' => 1,
+            'event' => 'Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated',
+            'payload' => '{"profileId":"1","email":"hallo@patchlevel.de"}',
+            'recorded_on' => $recordedAt,
+        ]);
 
-        self::assertSame('1', $profile->id()->toString());
-        self::assertCount(1, $profile->messages());
-    }
+        self::assertSame(Profile::class, $message->aggregateClass());
+        self::assertSame('1', $message->aggregateId());
+        self::assertSame(1, $message->playhead());
+        self::assertEquals($recordedAt, $message->recordedOn());
 
-    public function testPlayheadSequenceMismatch(): void
-    {
-        $this->expectException(PlayheadSequenceMismatch::class);
+        $event = $message->event();
 
-        $eventStream = [
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('profile@test.com')
-            )->recordNow(1),
-            MessagePublished::raise(
-                ProfileId::fromString('1'),
-                Message::create(
-                    MessageId::fromString('2'),
-                    'message value'
-                )
-            )->recordNow(1),
-        ];
-
-        Profile::createFromEventStream($eventStream);
+        self::assertInstanceOf(ProfileCreated::class, $event);
+        self::assertEquals(ProfileId::fromString('1'), $event->profileId());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $event->email());
     }
 }

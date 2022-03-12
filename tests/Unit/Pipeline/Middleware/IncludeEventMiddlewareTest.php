@@ -44,8 +44,7 @@ class IncludeEventMiddlewareTest extends TestCase
             '1',
             1,
             ProfileVisited::raise(
-                ProfileId::fromString('1'),
-                ProfileId::fromString('2')
+                ProfileId::fromString('1')
             )
         );
 

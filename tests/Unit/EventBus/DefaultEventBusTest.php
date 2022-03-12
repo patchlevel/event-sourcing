@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -30,7 +31,7 @@ class DefaultEventBusTest extends TestCase
         };
 
         $message = new Message(
-            ProfileCreated::class,
+            Profile::class,
             '1',
             1,
             ProfileCreated::raise(
@@ -57,7 +58,7 @@ class DefaultEventBusTest extends TestCase
         };
 
         $message = new Message(
-            ProfileCreated::class,
+            Profile::class,
             '1',
             1,
             ProfileCreated::raise(
@@ -76,7 +77,7 @@ class DefaultEventBusTest extends TestCase
     public function testSynchroneEvents(): void
     {
         $messageA = new Message(
-            ProfileCreated::class,
+            Profile::class,
             '1',
             1,
             ProfileCreated::raise(
@@ -103,11 +104,10 @@ class DefaultEventBusTest extends TestCase
                 }
 
                 $messageB = new Message(
-                    ProfileCreated::class,
+                    Profile::class,
                     '1',
                     1,
                     ProfileVisited::raise(
-                        ProfileId::fromString('1'),
                         ProfileId::fromString('1'),
                     )
                 );

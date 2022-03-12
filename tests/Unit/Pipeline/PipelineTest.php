@@ -37,8 +37,7 @@ class PipelineTest extends TestCase
                 '1',
                 2,
                 ProfileVisited::raise(
-                    ProfileId::fromString('1'),
-                    ProfileId::fromString('2')
+                    ProfileId::fromString('1')
                 )
             ),
             new Message(
@@ -46,8 +45,7 @@ class PipelineTest extends TestCase
                 '1',
                 3,
                 ProfileVisited::raise(
-                    ProfileId::fromString('1'),
-                    ProfileId::fromString('3')
+                    ProfileId::fromString('1')
                 )
             ),
             new Message(
@@ -64,7 +62,6 @@ class PipelineTest extends TestCase
                 '1',
                 2,
                 ProfileVisited::raise(
-                    ProfileId::fromString('2'),
                     ProfileId::fromString('2')
                 )
             ),
@@ -98,8 +95,7 @@ class PipelineTest extends TestCase
                 '1',
                 2,
                 ProfileVisited::raise(
-                    ProfileId::fromString('1'),
-                    ProfileId::fromString('2')
+                    ProfileId::fromString('1')
                 )
             ),
             new Message(
@@ -107,13 +103,12 @@ class PipelineTest extends TestCase
                 '1',
                 3,
                 ProfileVisited::raise(
-                    ProfileId::fromString('1'),
-                    ProfileId::fromString('3')
+                    ProfileId::fromString('1')
                 )
             ),
             new Message(
                 Profile::class,
-                '1',
+                '2',
                 1,
                 ProfileCreated::raise(
                     ProfileId::fromString('2'),
@@ -122,10 +117,9 @@ class PipelineTest extends TestCase
             ),
             new Message(
                 Profile::class,
-                '1',
+                '2',
                 2,
                 ProfileVisited::raise(
-                    ProfileId::fromString('2'),
                     ProfileId::fromString('2')
                 )
             ),

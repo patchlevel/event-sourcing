@@ -20,8 +20,8 @@ class AggregateChangedTest extends TestCase
         $event = ProfileCreated::raise($id, $email);
 
         self::assertEquals([
-            'id' => '1',
-            'email' => 'hallo@patchlevel.de'
+            'profileId' => '1',
+            'email' => 'hallo@patchlevel.de',
         ], $event->payload());
     }
 }

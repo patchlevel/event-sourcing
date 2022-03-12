@@ -50,7 +50,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -116,6 +116,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                     $shortName = $this->shortName($message->aggregateClass());
 
                     $data = $message->serialize();
+                    unset($data['aggregate_class']);
                     $data['aggregate'] = $shortName;
 
                     $connection->insert(
@@ -193,6 +194,8 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     public function save(Message $message): void
     {
         $data = $message->serialize();
+
+        unset($data['aggregate_class']);
         $data['aggregate'] = $this->shortName($message->aggregateClass());
 
         $this->connection->insert(

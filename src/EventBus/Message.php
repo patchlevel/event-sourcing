@@ -1,11 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\EventBus;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Clock;
+
+use function json_decode;
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
 
 class Message
 {
@@ -46,9 +53,6 @@ class Message
         return $this->aggregateClass;
     }
 
-    /**
-     * @return string
-     */
     public function aggregateId(): string
     {
         return $this->aggregateId;

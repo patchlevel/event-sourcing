@@ -54,7 +54,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -216,6 +216,8 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
     private function saveMessage(Connection $connection, string $aggregateName, Message $message): void
     {
         $data = $message->serialize();
+
+        unset($data['aggregate_class']);
 
         $connection->insert(
             $this->metadataTableName,

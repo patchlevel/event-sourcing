@@ -10,8 +10,8 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+
 use function is_int;
 
 abstract class DoctrineStore implements Store

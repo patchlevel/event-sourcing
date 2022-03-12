@@ -49,7 +49,7 @@ final class ReplaceEventMiddleware implements Middleware
                 $message->playhead(),
                 $newEvent,
                 $message->recordedOn()
-            )
+            ),
         ];
     }
 }

@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[SuppressMissingApply(SuppressMissingApply::ALL)]
-final class ProfileWithAttributeApplySuppressAll extends AggregateRoot
+final class ProfileWithSuppressAll extends AggregateRoot
 {
     public static function createProfile(ProfileId $id, Email $email): self
     {

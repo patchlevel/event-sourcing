@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
 use Patchlevel\EventSourcing\EventBus\Message;
+
 use function array_key_exists;
 
 final class DefaultProjectionHandler implements ProjectionHandler

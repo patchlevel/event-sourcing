@@ -81,14 +81,15 @@ final class SingleTableStoreTest extends TestCase
             'eventstore'
         );
 
-        $events = $singleTableStore->load(Profile::class, '1');
-        self::assertCount(1, $events);
+        $messages = $singleTableStore->load(Profile::class, '1');
+        self::assertCount(1, $messages);
 
-        $event = $events[0];
-        self::assertInstanceOf(ProfileCreated::class, $event);
-        self::assertSame('1', $event->aggregateId());
-        self::assertSame(0, $event->playhead());
-        self::assertSame([], $event->payload());
-        self::assertEquals(new DateTimeImmutable('2021-02-17 10:00:00'), $event->recordedOn());
+        $message = $messages[0];
+
+        self::assertInstanceOf(ProfileCreated::class, $message->event());
+        self::assertSame('1', $message->aggregateId());
+        self::assertSame(0, $message->playhead());
+        self::assertSame([], $message->event()->payload());
+        self::assertEquals(new DateTimeImmutable('2021-02-17 10:00:00'), $message->recordedOn());
     }
 }
