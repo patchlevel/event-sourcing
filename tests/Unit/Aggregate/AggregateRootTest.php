@@ -71,7 +71,7 @@ class AggregateRootTest extends TestCase
                 '1',
                 1,
                 $event
-            )
+            ),
         ];
 
         $profile = Profile::createFromMessages($messages);

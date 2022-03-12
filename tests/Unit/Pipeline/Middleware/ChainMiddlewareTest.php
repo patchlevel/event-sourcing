@@ -41,7 +41,7 @@ class ChainMiddlewareTest extends TestCase
 
         $middleware = new ChainMiddleware([
             $child1->reveal(),
-            $child2->reveal()
+            $child2->reveal(),
         ]);
 
         $middleware($message);
