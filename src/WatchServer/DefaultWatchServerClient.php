@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\WatchServer;
 
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 
 use function base64_encode;
 use function fclose;
-use function json_encode;
 use function restore_error_handler;
 use function serialize;
 use function set_error_handler;
@@ -17,7 +18,6 @@ use function stream_socket_sendto;
 use function stream_socket_shutdown;
 use function strpos;
 
-use const JSON_THROW_ON_ERROR;
 use const STREAM_CLIENT_ASYNC_CONNECT;
 use const STREAM_CLIENT_CONNECT;
 use const STREAM_SHUT_RDWR;
@@ -26,19 +26,22 @@ final class DefaultWatchServerClient implements WatchServerClient
 {
     private string $host;
 
+    private Serializer $serializer;
+
     /** @var resource|null */
     private $socket;
 
     /**
      * @param string $host The server host
      */
-    public function __construct(string $host)
+    public function __construct(string $host, ?Serializer $serializer = null)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
         }
 
         $this->host = $host;
+        $this->serializer = $serializer ?? new JsonSerializer();
         $this->socket = null;
     }
 
@@ -57,7 +60,7 @@ final class DefaultWatchServerClient implements WatchServerClient
             'aggregate_id' => $message->aggregateId(),
             'playhead' => $message->playhead(),
             'event' => $event::class,
-            'payload' => json_encode($event->payload(), JSON_THROW_ON_ERROR),
+            'payload' => $this->serializer->serialize($event),
             'recorded_on' => $message->recordedOn(),
         ];
 
