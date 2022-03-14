@@ -20,9 +20,6 @@ use function array_key_exists;
 use function array_map;
 use function is_int;
 use function is_string;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
 
 final class MultiTableStore extends DoctrineStore implements PipelineStore
 {
@@ -189,8 +186,6 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 throw CorruptedMetadata::fromEntryMismatch($metaData['id'], $eventData['id']);
             }
 
-            $eventData['aggregate_class'] = $classMap[$name];
-
             yield new Message(
                 $classMap[$name],
                 $eventData['aggregate_id'],
@@ -247,7 +242,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 'aggregate_id' => $message->aggregateId(),
                 'playhead' => $message->playhead(),
                 'event' => $event::class,
-                'payload' => json_encode($event->payload(), JSON_THROW_ON_ERROR),
+                'payload' => $this->serializer->serialize($event),
                 'recorded_on' => $message->recordedOn(),
             ],
             [
