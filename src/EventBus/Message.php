@@ -14,7 +14,7 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-class Message
+final class Message
 {
     /** @var class-string<AggregateRoot> */
     private string $aggregateClass;
