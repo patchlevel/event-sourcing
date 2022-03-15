@@ -2,7 +2,7 @@
 <files psalm-version="v4.15.0@a1b5e489e6fcebe40cb804793d964e99fc347820">
   <file src="src/Pipeline/Middleware/ExcludeEventMiddleware.php">
     <RedundantConditionGivenDocblockType occurrences="1">
-      <code>$bucket-&gt;event() instanceof $class</code>
+      <code>$message-&gt;event() instanceof $class</code>
     </RedundantConditionGivenDocblockType>
   </file>
   <file src="src/Pipeline/Middleware/FilterEventMiddleware.php">
@@ -12,7 +12,7 @@
   </file>
   <file src="src/Pipeline/Middleware/IncludeEventMiddleware.php">
     <RedundantConditionGivenDocblockType occurrences="1">
-      <code>$bucket-&gt;event() instanceof $class</code>
+      <code>$message-&gt;event() instanceof $class</code>
     </RedundantConditionGivenDocblockType>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">

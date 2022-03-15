@@ -76,7 +76,7 @@ final class Message
     /**
      * @param array{aggregate_class: class-string<AggregateRoot>, aggregate_id: string, playhead: int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: DateTimeImmutable} $data
      */
-    final public static function deserialize(array $data): self
+    public static function deserialize(array $data): self
     {
         $class = $data['event'];
 
@@ -97,7 +97,7 @@ final class Message
     /**
      * @return array{aggregate_class: class-string<AggregateRoot>, aggregate_id: string, playhead: int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: DateTimeImmutable}
      */
-    final public function serialize(): array
+    public function serialize(): array
     {
         $event = $this->event;
 
