@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer;
 
+use JsonException;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 use function json_decode;
@@ -11,11 +12,15 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-class JsonSerializer implements Serializer
+final class JsonSerializer implements Serializer
 {
     public function serialize(AggregateChanged $event): string
     {
-        return json_encode($event->payload(), JSON_THROW_ON_ERROR);
+        try {
+            return json_encode($event->payload(), JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw new SerializationNotPossible($event, $e);
+        }
     }
 
     /**
@@ -27,8 +32,12 @@ class JsonSerializer implements Serializer
      */
     public function deserialize(string $class, string $data): AggregateChanged
     {
-        /** @var array<string, mixed> $payload */
-        $payload = json_decode($data, true, 512, JSON_THROW_ON_ERROR);
+        try {
+            /** @var array<string, mixed> $payload */
+            $payload = json_decode($data, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw new DeserializationNotPossible($class, $data, $e);
+        }
 
         return new $class($payload);
     }
