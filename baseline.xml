@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="v4.15.0@a1b5e489e6fcebe40cb804793d964e99fc347820">
+<files psalm-version="4.19.0@a2ad69ae4f5ab1f7d225a8dc4e2ec2d9415ed599">
   <file src="src/Pipeline/Middleware/ExcludeEventMiddleware.php">
-    <RedundantConditionGivenDocblockType occurrences="1">
+    <RedundantCondition occurrences="1">
       <code>$message-&gt;event() instanceof $class</code>
-    </RedundantConditionGivenDocblockType>
+    </RedundantCondition>
   </file>
   <file src="src/Pipeline/Middleware/FilterEventMiddleware.php">
     <MixedPropertyTypeCoercion occurrences="1">
@@ -11,9 +11,9 @@
     </MixedPropertyTypeCoercion>
   </file>
   <file src="src/Pipeline/Middleware/IncludeEventMiddleware.php">
-    <RedundantConditionGivenDocblockType occurrences="1">
+    <RedundantCondition occurrences="1">
       <code>$message-&gt;event() instanceof $class</code>
-    </RedundantConditionGivenDocblockType>
+    </RedundantCondition>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
     <MoreSpecificImplementedParamType occurrences="1">
@@ -46,20 +46,9 @@
       <code>$payload</code>
     </MoreSpecificImplementedParamType>
   </file>
-  <file src="tests/Unit/Aggregate/AggregateChangedTest.php">
-    <InvalidArgument occurrences="2"/>
-  </file>
-  <file src="tests/Unit/EventBus/SymfonyEventBusTest.php">
-    <MissingClosureParamType occurrences="1">
-      <code>$envelope</code>
-    </MissingClosureParamType>
-  </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <MoreSpecificImplementedParamType occurrences="1">
       <code>$payload</code>
     </MoreSpecificImplementedParamType>
-  </file>
-  <file src="tests/Unit/Pipeline/Middleware/UntilEventMiddlewareTest.php">
-    <InvalidArgument occurrences="1"/>
   </file>
 </files>
