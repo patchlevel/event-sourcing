@@ -1,19 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.19.0@a2ad69ae4f5ab1f7d225a8dc4e2ec2d9415ed599">
-  <file src="src/Pipeline/Middleware/ExcludeEventMiddleware.php">
-    <RedundantCondition occurrences="1">
-      <code>$message-&gt;event() instanceof $class</code>
-    </RedundantCondition>
-  </file>
-  <file src="src/Pipeline/Middleware/FilterEventMiddleware.php">
-    <MixedPropertyTypeCoercion occurrences="1">
-      <code>$callable</code>
-    </MixedPropertyTypeCoercion>
-  </file>
-  <file src="src/Pipeline/Middleware/IncludeEventMiddleware.php">
-    <RedundantCondition occurrences="1">
-      <code>$message-&gt;event() instanceof $class</code>
-    </RedundantCondition>
+  <file src="src/Serializer/Hydrator.php">
+    <MixedAssignment occurrences="5">
+      <code>$data[$fieldName]</code>
+      <code>$value</code>
+      <code>$value</code>
+      <code>$value</code>
+      <code>$value</code>
+    </MixedAssignment>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
     <MoreSpecificImplementedParamType occurrences="1">

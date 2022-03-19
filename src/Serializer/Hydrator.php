@@ -40,7 +40,7 @@ final class Hydrator
             try {
                 $property->setValue($object, $value);
             } catch (TypeError $error) {
-                throw $error; // todo create own exception
+                throw new TypeMismatch($error->getMessage(), 0, $error);
             }
         }
 
