@@ -11,6 +11,8 @@ use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 use Traversable;
 
 use function array_flip;
@@ -24,6 +26,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
     private string $metadataTableName;
+    private Serializer $serializer;
 
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
@@ -31,12 +34,14 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
     public function __construct(
         Connection $eventConnection,
         array $aggregates,
-        string $metadataTableName = 'eventstore_metadata'
+        string $metadataTableName = 'eventstore_metadata',
+        ?Serializer $serializer = null,
     ) {
         parent::__construct($eventConnection);
 
         $this->aggregates = $aggregates;
         $this->metadataTableName = $metadataTableName;
+        $this->serializer = $serializer ?? new JsonSerializer();
     }
 
     /**
@@ -66,11 +71,13 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $platform = $this->connection->getDatabasePlatform();
 
         return array_map(
-            static function (array $data) use ($platform, $aggregate): Message {
-                $data['aggregate_class'] = $aggregate;
-
-                return Message::deserialize(
-                    self::normalizeResult($platform, $data)
+            function (array $data) use ($platform, $aggregate): Message {
+                return new Message(
+                    $aggregate,
+                    $data['aggregate_id'],
+                    self::normalizePlayhead($data['playhead'], $platform),
+                    $this->serializer->deserialize($data['event'], $data['payload']),
+                    self::normalizeRecordedOn($data['recorded_on'], $platform)
                 );
             },
             $result
@@ -179,10 +186,12 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 throw CorruptedMetadata::fromEntryMismatch($metaData['id'], $eventData['id']);
             }
 
-            $eventData['aggregate_class'] = $classMap[$name];
-
-            yield Message::deserialize(
-                self::normalizeResult($platform, $eventData)
+            yield new Message(
+                $classMap[$name],
+                $eventData['aggregate_id'],
+                self::normalizePlayhead($eventData['playhead'], $platform),
+                $this->serializer->deserialize($eventData['event'], $eventData['payload']),
+                self::normalizeRecordedOn($eventData['recorded_on'], $platform)
             );
         }
     }
@@ -215,24 +224,27 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
     private function saveMessage(Connection $connection, string $aggregateName, Message $message): void
     {
-        $data = $message->serialize();
-
-        unset($data['aggregate_class']);
+        $event = $message->event();
 
         $connection->insert(
             $this->metadataTableName,
             [
                 'aggregate' => $aggregateName,
-                'aggregate_id' => $data['aggregate_id'],
-                'playhead' => $data['playhead'],
+                'aggregate_id' => $message->aggregateId(),
+                'playhead' => $message->playhead(),
             ],
         );
 
-        $data['id'] = (int)$connection->lastInsertId();
-
         $connection->insert(
             $aggregateName,
-            $data,
+            [
+                'id' => (int)$connection->lastInsertId(),
+                'aggregate_id' => $message->aggregateId(),
+                'playhead' => $message->playhead(),
+                'event' => $event::class,
+                'payload' => $this->serializer->serialize($event),
+                'recorded_on' => $message->recordedOn(),
+            ],
             [
                 'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
             ]

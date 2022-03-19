@@ -9,6 +9,8 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
@@ -31,16 +33,18 @@ final class DefaultWatchServer implements WatchServer
     /** @var resource|null */
     private $socket;
 
+    private Serializer $serializer;
     private LoggerInterface $logger;
 
-    public function __construct(string $host, ?LoggerInterface $logger = null)
+    public function __construct(string $host, ?Serializer $serializer = null, ?LoggerInterface $logger = null)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
         }
 
         $this->host = $host;
-        $this->logger = $logger ?: new NullLogger();
+        $this->serializer = $serializer ?? new JsonSerializer();
+        $this->logger = $logger ?? new NullLogger();
         $this->socket = null;
     }
 
@@ -63,14 +67,21 @@ final class DefaultWatchServer implements WatchServer
     {
         $socket = $this->socket();
 
-        foreach ($this->messages($socket) as $clientId => $message) {
+        foreach ($this->messages($socket) as $clientId => $clientMessage) {
             $this->logger->info('Received a payload from client {clientId}', ['clientId' => $clientId]);
 
-            /** @var array{aggregate_class: class-string<AggregateRoot>,aggregate_id: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, playhead: int, recorded_on: DateTimeImmutable} $payload */
-            $payload = unserialize(base64_decode($message), ['allowed_classes' => [DateTimeImmutable::class]]);
-            $eventMessage = Message::deserialize($payload);
+            /** @var array{aggregate_class: class-string<AggregateRoot>,aggregate_id: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, playhead: int, recorded_on: DateTimeImmutable} $data */
+            $data = unserialize(base64_decode($clientMessage), ['allowed_classes' => [DateTimeImmutable::class]]);
 
-            $callback($eventMessage, $clientId);
+            $message = new Message(
+                $data['aggregate_class'],
+                $data['aggregate_id'],
+                $data['playhead'],
+                $this->serializer->deserialize($data['event'], $data['payload']),
+                $data['recorded_on']
+            );
+
+            $callback($message, $clientId);
         }
     }
 

@@ -6,7 +6,7 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Unable to resolve the template type T in call to method static method Patchlevel\\\\EventSourcing\\\\Store\\\\DoctrineStore\\:\\:normalizeResult\\(\\)$#"
+			message: "#^Unable to resolve the template type T in call to method Patchlevel\\\\EventSourcing\\\\Serializer\\\\Serializer\\:\\:deserialize\\(\\)$#"
 			count: 1
 			path: src/Store/MultiTableStore.php
 

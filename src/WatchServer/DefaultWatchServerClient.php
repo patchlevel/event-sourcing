@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\WatchServer;
 
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 
 use function base64_encode;
 use function fclose;
@@ -24,19 +26,22 @@ final class DefaultWatchServerClient implements WatchServerClient
 {
     private string $host;
 
+    private Serializer $serializer;
+
     /** @var resource|null */
     private $socket;
 
     /**
      * @param string $host The server host
      */
-    public function __construct(string $host)
+    public function __construct(string $host, ?Serializer $serializer = null)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
         }
 
         $this->host = $host;
+        $this->serializer = $serializer ?? new JsonSerializer();
         $this->socket = null;
     }
 
@@ -48,7 +53,18 @@ final class DefaultWatchServerClient implements WatchServerClient
             throw new SendingFailed('socket connection could not be established');
         }
 
-        $encodedPayload = base64_encode(serialize($message->serialize())) . "\n";
+        $event = $message->event();
+
+        $data = [
+            'aggregate_class' => $message->aggregateClass(),
+            'aggregate_id' => $message->aggregateId(),
+            'playhead' => $message->playhead(),
+            'event' => $event::class,
+            'payload' => $this->serializer->serialize($event),
+            'recorded_on' => $message->recordedOn(),
+        ];
+
+        $encodedPayload = base64_encode(serialize($data)) . "\n";
 
         set_error_handler([self::class, 'nullErrorHandler']);
 
