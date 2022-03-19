@@ -10,19 +10,20 @@ use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\OldVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\PrivacyAdded;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Integration\Pipeline\ProfileId;
 
 final class Profile extends AggregateRoot
 {
-    private string $id;
+    private ProfileId $id;
     private bool $privacy;
     private int $visited;
 
     public function aggregateRootId(): string
     {
-        return $this->id;
+        return $this->id->toString();
     }
 
-    public static function create(string $id): self
+    public static function create(ProfileId $id): self
     {
         $self = new self();
         $self->record(new ProfileCreated($id));

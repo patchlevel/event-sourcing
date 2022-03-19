@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profile;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use PhpBench\Attributes as Bench;
 
 use function file_exists;
@@ -53,7 +54,7 @@ final class LoadEventsWithSnapshotsBench
         // create tables
         (new DoctrineSchemaManager())->create($this->store);
 
-        $profile = Profile::create('1', 'Peter');
+        $profile = Profile::create(ProfileId::fromString('1'), 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName('Peter');
