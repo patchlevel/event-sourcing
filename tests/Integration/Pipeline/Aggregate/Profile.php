@@ -25,19 +25,19 @@ final class Profile extends AggregateRoot
     public static function create(string $id): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id));
+        $self->record(new ProfileCreated($id));
 
         return $self;
     }
 
     public function visit(): void
     {
-        $this->record(OldVisited::raise($this->id));
+        $this->record(new OldVisited($this->id));
     }
 
     public function privacy(): void
     {
-        $this->record(PrivacyAdded::raise($this->id));
+        $this->record(new PrivacyAdded($this->id));
     }
 
     public function isPrivate(): bool
@@ -53,7 +53,7 @@ final class Profile extends AggregateRoot
     #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
-        $this->id = $event->profileId();
+        $this->id = $event->profileId;
         $this->privacy = false;
         $this->visited = 0;
     }

@@ -21,7 +21,7 @@ class ChainMiddlewareTest extends TestCase
 
     public function testChain(): void
     {
-        $event = ProfileCreated::raise(
+        $event = new ProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de')
         );

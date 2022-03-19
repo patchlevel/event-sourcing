@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\FilterEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -19,15 +18,15 @@ class FilterEventMiddlewareTest extends TestCase
 {
     public function testPositive(): void
     {
-        $middleware = new FilterEventMiddleware(static function (AggregateChanged $aggregateChanged) {
-            return $aggregateChanged instanceof ProfileCreated;
+        $middleware = new FilterEventMiddleware(static function (object $event) {
+            return $event instanceof ProfileCreated;
         });
 
         $message = new Message(
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
             )
@@ -40,15 +39,15 @@ class FilterEventMiddlewareTest extends TestCase
 
     public function testNegative(): void
     {
-        $middleware = new FilterEventMiddleware(static function (AggregateChanged $aggregateChanged) {
-            return $aggregateChanged instanceof ProfileCreated;
+        $middleware = new FilterEventMiddleware(static function (object $event) {
+            return $event instanceof ProfileCreated;
         });
 
         $message = new Message(
             Profile::class,
             '1',
             1,
-            ProfileVisited::raise(
+            new ProfileVisited(
                 ProfileId::fromString('1')
             )
         );

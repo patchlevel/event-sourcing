@@ -54,8 +54,8 @@ class AggregateRootTest extends TestCase
         $event = $message->event();
 
         self::assertInstanceOf(ProfileCreated::class, $event);
-        self::assertEquals($id, $event->profileId());
-        self::assertEquals($email, $event->email());
+        self::assertEquals($id, $event->profileId);
+        self::assertEquals($email, $event->email);
     }
 
     public function testCreateFromMessages(): void
@@ -63,7 +63,7 @@ class AggregateRootTest extends TestCase
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
 
-        $event = ProfileCreated::raise($id, $email);
+        $event = new ProfileCreated($id, $email);
 
         $messages = [
             new EventBusMessage(

@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
 interface Serializer
 {
-    public function serialize(AggregateChanged $event): string;
+    public function serialize(object $event): string;
 
     /**
      * @param class-string<T> $class
      *
      * @return T
      *
-     * @template T of AggregateChanged
+     * @template T of object
      */
-    public function deserialize(string $class, string $data): AggregateChanged;
+    public function deserialize(string $class, string $data): object;
 }

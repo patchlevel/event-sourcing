@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Message;
 
 use function array_key_exists;
 
 final class ClassRenameMiddleware implements Middleware
 {
-    /** @var array<class-string<AggregateChanged<array<string, mixed>>>, class-string<AggregateChanged<array<string, mixed>>>> */
+    /** @var array<class-string, class-string> */
     private array $classes;
 
     /**
-     * @param array<class-string<AggregateChanged<array<string, mixed>>>, class-string<AggregateChanged<array<string, mixed>>>> $classes
+     * @param array<class-string, class-string> $classes
      */
     public function __construct(array $classes)
     {

@@ -36,7 +36,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
 
             foreach ($attributes as $attribute) {
                 $instance = $attribute->newInstance();
-                $eventClass = $instance->aggregateChangedClass();
+                $eventClass = $instance->eventClass();
 
                 if (array_key_exists($eventClass, $metadata->handleMethods)) {
                     throw new DuplicateHandleMethod(

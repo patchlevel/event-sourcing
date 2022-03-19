@@ -4,24 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
-/**
- * @template-extends AggregateChanged<array{messageId: string}>
- */
-final class MessageDeleted extends AggregateChanged
+final class MessageDeleted
 {
-    public static function raise(MessageId $messageId): static
+    public function __construct(
+        public MessageId $messageId
+    )
     {
-        return new static(
-            [
-                'messageId' => $messageId->toString(),
-            ]
-        );
-    }
-
-    public function messageId(): MessageId
-    {
-        return MessageId::fromString($this->payload['messageId']);
     }
 }

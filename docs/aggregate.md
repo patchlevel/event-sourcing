@@ -10,7 +10,6 @@ An AggregateRoot has to inherit from `AggregateRoot` and need to implement the m
 The events will be added later, but the following is enough to make it executable:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 final class Profile extends AggregateRoot
@@ -82,29 +81,12 @@ An event must receive the `payload` and has to inherit from `AggregateChanged`.
 A `ProfileCreated` event is ideal here:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
-final class ProfileCreated extends AggregateChanged
+final class ProfileCreated
 {
-    public static function raise(string $id, string $name): static
-    {
-        return new static(
-            [
-                'id' => $id,
-                'name' => $name
-            ]
-        );
-    }
-
-    public function profileId(): string
-    {
-        return $this->payload['id'];
-    }
-    
-    public function name(): string 
-    {
-        return $this->payload['name'];
-    }
+    public function __construct(
+        public readonly string $profileId,
+        public readonly string $name
+    ) {}
 }
 ```
 > :warning: The payload must be serializable and unserializable as json.
@@ -116,7 +98,6 @@ final class ProfileCreated extends AggregateChanged
 After we have defined the event, we have to adapt the creation of the profile:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
@@ -138,16 +119,16 @@ final class Profile extends AggregateRoot
     public static function create(string $id, string $name): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $name));
+        $self->record(new ProfileCreated($id, $name));
 
         return $self;
     }
     
-    #[Apply(AggregateChanged::class)]
+    #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void 
     {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
+        $this->id = $event->profileId;
+        $this->name = $event->name;
     }
 }
 ```
@@ -169,22 +150,11 @@ In order to change the state of the aggregates afterwards, only further events h
 As example we can add a `NameChanged` event:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
-final class NameChanged extends AggregateChanged
+final class NameChanged
 {
-    public static function raise(string $name): static
-    {
-        return new static(
-            [
-                'name' => $name
-            ]
-        );
-    }
-    
-    public function name(): string 
-    {
-        return $this->payload['name'];
+    public function __construct(
+        public readonly string $name
+    ) {
     }
 }
 ```
@@ -195,7 +165,6 @@ After we have defined the event, we can define a new public method called `chang
 This method then creates the event `NameChanged` and records it:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
@@ -217,27 +186,27 @@ final class Profile extends AggregateRoot
     public static function create(string $id, string $name): static
     {
         $self = new static();
-        $self->record(ProfileCreated::raise($id, $name));
+        $self->record(new ProfileCreated($id, $name));
 
         return $self;
     }
     
     public function changeName(string $name): void 
     {
-        $this->record(NameChanged::raise($name));
+        $this->record(new NameChanged($name));
     }
     
     #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
+        $this->id = $event->profileId;
+        $this->name = $event->name;
     }
     
     #[Apply(NameChanged::class)]
     protected function applyNameChanged(NameChanged $event): void
     {
-        $this->name = $event->name();
+        $this->name = $event->name;
     }
 }
 ```
@@ -288,15 +257,11 @@ all newly recorded events are then fetched and written to the database.
 You can also define several apply attributes with different events using the same method.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 final class Profile extends AggregateRoot
 {
-    use AttributeApplyMethod;
-
     private string $id;
     private string $name;
 
@@ -307,10 +272,10 @@ final class Profile extends AggregateRoot
     protected function applyProfileCreated(ProfileCreated|NameChanged $event): void
     {
         if ($event instanceof ProfileCreated) {
-            $this->id = $event->profileId();
+            $this->id = $event->profileId;
         }
         
-        $this->name = $event->name();
+        $this->name = $event->name;
     }
 }
 ```
@@ -323,17 +288,13 @@ So that you are not forced to write an apply method for it,
 you can suppress the missing apply exceptions these events with the `SuppressMissingApply` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[SuppressMissingApply([NameChanged::class])]
 final class Profile extends AggregateRoot
 {
-    use AttributeApplyMethod;
-
     private string $id;
     private string $name;
 
@@ -342,8 +303,8 @@ final class Profile extends AggregateRoot
     #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
+        $this->id = $event->profileId;
+        $this->name = $event->name;
     }
 }
 ```
@@ -353,17 +314,13 @@ final class Profile extends AggregateRoot
 You can also completely deactivate the exceptions for missing apply methods.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AttributeApplyMethod;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[SuppressMissingApply([SuppressMissingApply::ALL])]
 final class Profile extends AggregateRoot
 {
-    use AttributeApplyMethod;
-
     private string $id;
     private string $name;
 
@@ -372,8 +329,8 @@ final class Profile extends AggregateRoot
     #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
+        $this->id = $event->profileId;
+        $this->name = $event->name;
     }
 }
 ```
@@ -414,7 +371,7 @@ final class Profile extends AggregateRoot
             throw new NameIsToShortException($name);
         }
     
-        $this->record(NameChanged::raise($name));
+        $this->record(new NameChanged($name));
     }
     
     #[Apply(NameChanged::class)]
@@ -468,7 +425,7 @@ final class Profile extends AggregateRoot
     public static function create(string $id, Name $name): static
     {
         $self = new static();
-        $self->record(ProfileCreated::raise($id, $name));
+        $self->record(new ProfileCreated($id, $name));
 
         return $self;
     }
@@ -482,13 +439,13 @@ final class Profile extends AggregateRoot
     
     public function changeName(Name $name): void 
     {
-        $this->record(NameChanged::raise($name));
+        $this->record(new NameChanged($name));
     }
     
     #[Apply(NameChanged::class)]
     protected function applyNameChanged(NameChanged $event): void 
     {
-        $this->name = $event->name();
+        $this->name = $event->name;
     }
 }
 ```
@@ -497,23 +454,14 @@ In order for the whole thing to work, we still have to adapt our `NameChanged` e
 since we only expected a string before but now passed a `Name` value object.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Attribute\Normalize;
 
-final class NameChanged extends AggregateChanged
+final class NameChanged
 {
-    public static function raise(Name $name): static
-    {
-        return new static(
-            [
-                'name' => $name->toString()
-            ]
-        );
-    }
-    
-    public function name(): Name 
-    {
-        return new Name($this->payload['name']);
-    }
+    public function __construct(
+        #[Normalize(new NameNormalizer())]
+        public readonly Name $name
+    ) {}
 }
 ```
 
@@ -548,14 +496,15 @@ final class Hotel extends AggregateRoot
             throw new NoPlaceException($name);
         }
         
-        $this->record(BookRoom::raise($name));
+        $this->record(new RoomBocked($name));
         
         if ($this->people === self::SIZE) {
-            $this->record(FullyBooked::raise());
+            $this->record(new FullyBooked());
         }
     }
     
-    protected function applyBookRoom(BookRoom $event): void 
+    #[Apply(RoomBocked::class)]
+    protected function applyRoomBocked(RoomBocked $event): void 
     {
         $this->people++;
     }

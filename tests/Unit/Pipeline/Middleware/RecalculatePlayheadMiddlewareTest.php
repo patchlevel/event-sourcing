@@ -23,7 +23,7 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
             Profile::class,
             '1',
             5,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
             )
@@ -44,7 +44,7 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
             )

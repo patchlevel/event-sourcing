@@ -13,7 +13,7 @@ final class ProfileWithSuppressAll extends AggregateRoot
     public static function createProfile(ProfileId $id, Email $email): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $email));
+        $self->record(new ProfileCreated($id, $email));
 
         return $self;
     }

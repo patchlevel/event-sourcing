@@ -23,7 +23,7 @@ $pipeline = new Pipeline(
     [
         new ExcludeEventMiddleware([PrivacyAdded::class]),
         new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
-            return NewVisited::raise($oldVisited->profileId());
+            return new NewVisited($oldVisited->profileId());
         }),
         new RecalculatePlayheadMiddleware(),
     ]
@@ -78,7 +78,7 @@ $source = new InMemorySource([
         Profile::class,
         '1',
         1,
-        ProfileCreated::raise(Email::fromString('david.badura@patchlevel.de')),
+        new ProfileCreated(Email::fromString('david.badura@patchlevel.de')),
     ),
     // ...
 ]);
@@ -236,7 +236,7 @@ And as a second parameter a callback, that the old event awaits and a new event 
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
 
 $middleware = new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
-    return NewVisited::raise($oldVisited->profileId());
+    return new NewVisited($oldVisited->profileId());
 });
 ```
 

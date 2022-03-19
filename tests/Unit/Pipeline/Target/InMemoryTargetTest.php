@@ -23,7 +23,7 @@ class InMemoryTargetTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
         $inMemoryTarget->save($message);
 

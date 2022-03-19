@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
 use function sprintf;
 
 final class DuplicateHandleMethod extends ProjectionException
 {
     /**
      * @param class-string<Projection>       $projection
-     * @param class-string<AggregateChanged> $event
+     * @param class-string $event
      */
     public function __construct(string $projection, string $event, string $fistMethod, string $secondMethod)
     {

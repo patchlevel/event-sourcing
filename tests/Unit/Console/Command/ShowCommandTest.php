@@ -29,7 +29,7 @@ final class ShowCommandTest extends TestCase
                 Profile::class,
                 '1',
                 1,
-                ProfileVisited::raise(ProfileId::fromString('1'))
+                new ProfileVisited(ProfileId::fromString('1'))
             ),
         ]);
 

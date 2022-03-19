@@ -27,7 +27,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '1',
                 1,
-                ProfileCreated::raise(
+                new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
                 )
@@ -36,7 +36,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '1',
                 2,
-                ProfileVisited::raise(
+                new ProfileVisited(
                     ProfileId::fromString('1')
                 )
             ),
@@ -44,7 +44,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '1',
                 3,
-                ProfileVisited::raise(
+                new ProfileVisited(
                     ProfileId::fromString('1')
                 )
             ),
@@ -52,7 +52,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '1',
                 1,
-                ProfileCreated::raise(
+                new ProfileCreated(
                     ProfileId::fromString('2'),
                     Email::fromString('hallo@patchlevel.de')
                 )
@@ -61,7 +61,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '1',
                 2,
-                ProfileVisited::raise(
+                new ProfileVisited(
                     ProfileId::fromString('2')
                 )
             ),
@@ -85,7 +85,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '1',
                 1,
-                ProfileCreated::raise(
+                new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
                 )
@@ -94,7 +94,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '1',
                 2,
-                ProfileVisited::raise(
+                new ProfileVisited(
                     ProfileId::fromString('1')
                 )
             ),
@@ -102,7 +102,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '1',
                 3,
-                ProfileVisited::raise(
+                new ProfileVisited(
                     ProfileId::fromString('1')
                 )
             ),
@@ -110,7 +110,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '2',
                 1,
-                ProfileCreated::raise(
+                new ProfileCreated(
                     ProfileId::fromString('2'),
                     Email::fromString('hallo@patchlevel.de')
                 )
@@ -119,7 +119,7 @@ class PipelineTest extends TestCase
                 Profile::class,
                 '2',
                 2,
-                ProfileVisited::raise(
+                new ProfileVisited(
                     ProfileId::fromString('2')
                 )
             ),
