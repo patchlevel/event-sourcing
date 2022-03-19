@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\DefaultHydrator;
 use Patchlevel\EventSourcing\Serializer\Hydrator;
 
 use function array_key_exists;
@@ -18,10 +19,10 @@ final class ClassRenameMiddleware implements Middleware
     /**
      * @param array<class-string, class-string> $classes
      */
-    public function __construct(array $classes)
+    public function __construct(array $classes, ?Hydrator $hydrator = null)
     {
         $this->classes = $classes;
-        $this->hydrator = new Hydrator();
+        $this->hydrator = $hydrator ?? new DefaultHydrator();
     }
 
     /**

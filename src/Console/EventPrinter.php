@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Console;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\DefaultHydrator;
 use Patchlevel\EventSourcing\Serializer\Hydrator;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -18,9 +19,9 @@ final class EventPrinter
 {
     private Hydrator $hydrator;
 
-    public function __construct()
+    public function __construct(?Hydrator $hydrator = null)
     {
-        $this->hydrator = new Hydrator();
+        $this->hydrator = $hydrator ?? new DefaultHydrator();
     }
 
     public function write(SymfonyStyle $console, Message $message): void

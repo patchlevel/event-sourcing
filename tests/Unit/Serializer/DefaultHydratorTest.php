@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer;
 
-use Patchlevel\EventSourcing\Serializer\Hydrator;
+use Patchlevel\EventSourcing\Serializer\DefaultHydrator;
 use Patchlevel\EventSourcing\Serializer\TypeMismatch;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\EmptyEvent;
@@ -13,12 +13,12 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\SimpleEvent;
 use PHPUnit\Framework\TestCase;
 
-class HydratorTest extends TestCase
+class DefaultHydratorTest extends TestCase
 {
     public function testHydrateEmptyObject(): void
     {
         $expected = new EmptyEvent();
-        $event = (new Hydrator())->hydrate(EmptyEvent::class, []);
+        $event = (new DefaultHydrator())->hydrate(EmptyEvent::class, []);
 
         self::assertEquals($expected, $event);
     }
@@ -28,7 +28,7 @@ class HydratorTest extends TestCase
         $expected = new SimpleEvent();
         $expected->name = 'test';
 
-        $event = (new Hydrator())->hydrate(
+        $event = (new DefaultHydrator())->hydrate(
             SimpleEvent::class,
             ['name' => 'test']
         );
@@ -41,7 +41,7 @@ class HydratorTest extends TestCase
         $expected = new SimpleEvent();
         $expected->name = null;
 
-        $event = (new Hydrator())->hydrate(
+        $event = (new DefaultHydrator())->hydrate(
             SimpleEvent::class,
             []
         );
@@ -56,7 +56,7 @@ class HydratorTest extends TestCase
             Email::fromString('info@patchlevel.de')
         );
 
-        $event = (new Hydrator())->hydrate(
+        $event = (new DefaultHydrator())->hydrate(
             ProfileCreated::class,
             [
                 'profileId' => '1',
@@ -71,7 +71,7 @@ class HydratorTest extends TestCase
     {
         $this->expectException(TypeMismatch::class);
 
-        (new Hydrator())->hydrate(ProfileCreated::class, []);
+        (new DefaultHydrator())->hydrate(ProfileCreated::class, []);
     }
 
     public function testExtractEmptyObject(): void
@@ -79,7 +79,7 @@ class HydratorTest extends TestCase
         $event = new EmptyEvent();
 
         $expected = [];
-        $data = (new Hydrator())->extract($event);
+        $data = (new DefaultHydrator())->extract($event);
 
         self::assertEquals($expected, $data);
     }
@@ -91,7 +91,7 @@ class HydratorTest extends TestCase
 
         $expected = ['name' => 'test'];
 
-        $data = (new Hydrator())->extract($event);
+        $data = (new DefaultHydrator())->extract($event);
 
         self::assertEquals($expected, $data);
     }
@@ -103,7 +103,7 @@ class HydratorTest extends TestCase
 
         $expected = ['name' => null];
 
-        $data = (new Hydrator())->extract($event);
+        $data = (new DefaultHydrator())->extract($event);
 
         self::assertEquals($expected, $data);
     }
@@ -120,7 +120,7 @@ class HydratorTest extends TestCase
             'email' => 'info@patchlevel.de',
         ];
 
-        $data = (new Hydrator())->extract($event);
+        $data = (new DefaultHydrator())->extract($event);
 
         self::assertEquals($expected, $data);
     }

@@ -15,9 +15,9 @@ final class JsonSerializer implements Serializer
 {
     private Hydrator $hydrator;
 
-    public function __construct()
+    public function __construct(?Hydrator $hydrator = null)
     {
-        $this->hydrator = new Hydrator();
+        $this->hydrator = $hydrator ?? new DefaultHydrator();
     }
 
     public function serialize(object $event): string
