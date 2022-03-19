@@ -10,20 +10,20 @@ use ReflectionProperty;
 use RuntimeException;
 use TypeError;
 
+use function array_key_exists;
+use function assert;
+use function is_string;
+
 final class Hydrator
 {
-    /**
-     * @var array<class-string, array<string, array{reflection: ReflectionProperty, fieldName: string, normalizer: ?Normalizer}>>
-     */
+    /** @var array<class-string, array<string, array{reflection: ReflectionProperty, fieldName: string, normalizer: ?Normalizer}>> */
     private static array $propertyMetadataCache = [];
 
-    /**
-     * @var array<class-string, ReflectionClass>
-     */
+    /** @var array<class-string, ReflectionClass> */
     private static array $reflectionClassCache = [];
 
     /**
-     * @param class-string<T> $class
+     * @param class-string<T>      $class
      * @param array<string, mixed> $data
      *
      * @return T
@@ -38,7 +38,6 @@ final class Hydrator
         $metadata = self::propertyMetadata($class);
 
         foreach ($metadata as $propertyMetadata) {
-
             $value = $data[$propertyMetadata['fieldName']] ?? null;
 
             if ($propertyMetadata['normalizer']) {
@@ -79,6 +78,7 @@ final class Hydrator
 
     /**
      * @param class-string $class
+     *
      * @return array<string, array{reflection: ReflectionProperty, fieldName: string, normalizer: ?Normalizer}>
      */
     private static function propertyMetadata(string $class): array
@@ -108,7 +108,7 @@ final class Hydrator
             $metadata[$property->name] = [
                 'reflection' => $property,
                 'fieldName' => self::fieldName($property),
-                'normalizer' => $normalizer
+                'normalizer' => $normalizer,
             ];
         }
 
@@ -119,7 +119,6 @@ final class Hydrator
 
     /**
      * @param class-string $class
-     * @return ReflectionClass
      */
     private static function reflectionClass(string $class): ReflectionClass
     {
