@@ -11,7 +11,7 @@ on:
 jobs:
   roave-backwards-compatibility-check:
     name: "Backward Compatibility Check"
-    continue-on-error: true
+    if: ${{github.event_name == 'pull_request'}}
 
     runs-on: ${{ matrix.operating-system }}
 
