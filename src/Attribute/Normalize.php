@@ -10,22 +10,24 @@ use Patchlevel\EventSourcing\Serializer\Normalizer;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class Normalize
 {
-    /** @var class-string<Normalizer> */
-    private string $normalizerClass;
+    private Normalizer $normalizer;
 
     /**
-     * @param class-string<Normalizer> $normalizerClass
+     * @param Normalizer|class-string<Normalizer> $normalizer
      */
-    public function __construct(string $normalizerClass)
+    public function __construct(Normalizer|string $normalizer)
     {
-        $this->normalizerClass = $normalizerClass;
+        if (is_string($normalizer)) {
+            $this->normalizer = new $normalizer();
+
+            return;
+        }
+
+        $this->normalizer = $normalizer;
     }
 
-    /**
-     * @return class-string<Normalizer>
-     */
-    public function normalizerClass(): string
+    public function normalizer(): Normalizer
     {
-        return $this->normalizerClass;
+        return $this->normalizer;
     }
 }

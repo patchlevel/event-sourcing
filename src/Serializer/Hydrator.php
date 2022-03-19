@@ -2,6 +2,7 @@
 
 namespace Patchlevel\EventSourcing\Serializer;
 
+use Patchlevel\EventSourcing\Attribute\Normalize;
 use ReflectionClass;
 use ReflectionProperty;
 
@@ -24,8 +25,15 @@ final class Hydrator
             $property->setAccessible(true);
 
             $fieldName = $this->fieldName($property);
+            $value = $data[$fieldName] ?? null;
 
-            $property->setValue($object, $data[$fieldName] ?? null);
+            $attributes = $property->getAttributes(Normalize::class);
+            foreach ($attributes as $attribute) {
+                $attributeInstance = $attribute->newInstance();
+                $value = $attributeInstance->normalizer()->denormalize($value);
+            }
+
+            $property->setValue($object, $value);
         }
 
         return $object;
@@ -42,9 +50,16 @@ final class Hydrator
 
         foreach ($reflectionClass->getProperties() as $property) {
             $property->setAccessible(true);
+            $value = $property->getValue($object);
+
+            $attributes = $property->getAttributes(Normalize::class);
+            foreach ($attributes as $attribute) {
+                $attributeInstance = $attribute->newInstance();
+                $value = $attributeInstance->normalizer()->normalize($value);
+            }
 
             $fieldName = $this->fieldName($property);
-            $data[$fieldName] = $property->getValue($object);
+            $data[$fieldName] = $value;
         }
 
         return $data;
