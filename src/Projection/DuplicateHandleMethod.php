@@ -9,8 +9,8 @@ use function sprintf;
 final class DuplicateHandleMethod extends ProjectionException
 {
     /**
-     * @param class-string<Projection>       $projection
-     * @param class-string $event
+     * @param class-string<Projection> $projection
+     * @param class-string             $event
      */
     public function __construct(string $projection, string $event, string $fistMethod, string $secondMethod)
     {

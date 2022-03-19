@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\Attribute;
 use Attribute;
 use Patchlevel\EventSourcing\Serializer\Normalizer;
 
+use function is_string;
+
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class Normalize
 {

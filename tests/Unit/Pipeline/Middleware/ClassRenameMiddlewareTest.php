@@ -45,8 +45,8 @@ class ClassRenameMiddlewareTest extends TestCase
 
         self::assertInstanceOf(ProfileCreated::class, $newEvent);
         self::assertNotInstanceOf(AliasProfileCreated::class, $newEvent);
-        self::assertSame($event->profileId, $newEvent->profileId);
-        self::assertSame($event->email, $newEvent->email);
+        self::assertEquals($event->profileId, $newEvent->profileId);
+        self::assertEquals($event->email, $newEvent->email);
         self::assertSame($message->playhead(), $newMessage->playhead());
         self::assertSame($message->recordedOn(), $newMessage->recordedOn());
         self::assertSame($message->aggregateId(), $newMessage->aggregateId());

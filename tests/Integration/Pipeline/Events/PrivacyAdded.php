@@ -8,5 +8,6 @@ final class PrivacyAdded
 {
     public function __construct(
         public string $profileId
-    ) {}
+    ) {
+    }
 }
