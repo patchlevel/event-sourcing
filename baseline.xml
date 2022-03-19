@@ -2,7 +2,7 @@
 <files psalm-version="4.19.0@a2ad69ae4f5ab1f7d225a8dc4e2ec2d9415ed599">
   <file src="src/Serializer/Hydrator.php">
     <MixedAssignment occurrences="5">
-      <code>$data[$fieldName]</code>
+      <code>$data[$propertyMetadata['fieldName']]</code>
       <code>$value</code>
       <code>$value</code>
       <code>$value</code>
