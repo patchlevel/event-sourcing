@@ -4,14 +4,10 @@ name: "Backward Compatibility Check"
 
 on:
   pull_request:
-  push:
-    branches:
-      - "[0-9]+.[0-9]+.x"
 
 jobs:
   roave-backwards-compatibility-check:
     name: "Backward Compatibility Check"
-    continue-on-error: true
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -48,4 +44,4 @@ jobs:
           working-directory: 'tools'
 
       - name: "Check for BC breaks"
-        run: "tools/vendor/bin/roave-backward-compatibility-check --format=github-actions --install-development-dependencies"
+        run: "tools/vendor/bin/roave-backward-compatibility-check --format=github-actions --install-development-dependencies --from=origin/${{ github.base_ref }}"
