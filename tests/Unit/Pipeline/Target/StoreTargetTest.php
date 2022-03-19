@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -21,17 +21,18 @@ class StoreTargetTest extends TestCase
 
     public function testSave(): void
     {
-        $bucket = new EventBucket(
+        $message = new Message(
             Profile::class,
+            '1',
             1,
             ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
 
         $pipelineStore = $this->prophesize(PipelineStore::class);
-        $pipelineStore->saveEventBucket($bucket)->shouldBeCalled();
+        $pipelineStore->save($message)->shouldBeCalled();
 
         $storeTarget = new StoreTarget($pipelineStore->reveal());
 
-        $storeTarget->save($bucket);
+        $storeTarget->save($message);
     }
 }

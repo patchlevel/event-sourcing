@@ -11,14 +11,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
  */
 final class NameChanged extends AggregateChanged
 {
-    public static function raise(string $id, string $name): static
+    public static function raise(string $name): static
     {
-        return new static($id, ['name' => $name]);
-    }
-
-    public function profileId(): string
-    {
-        return $this->aggregateId;
+        return new static(['name' => $name]);
     }
 
     public function name(): string

@@ -51,12 +51,6 @@ There is a source where the data comes from.
 A target where the data should flow.
 And any number of middlewares to do something with the data beforehand.
 
-## EventBucket
-
-The pipeline works with so-called `EventBucket`. 
-This `EventBucket` wraps the event or `AggregateChanged` and adds further meta information
-like the `aggregateClass` and the event `index`.
-
 ## Source
 
 The first thing you need is a source of where the data should come from.
@@ -73,16 +67,18 @@ $source = new StoreSource($store);
 
 ### In Memory
 
-There is an `InMemorySource` that receives the events in an array. This source can be used to write pipeline tests.
+There is an `InMemorySource` that receives the messages in an array. This source can be used to write pipeline tests.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\InMemorySource;
 
 $source = new InMemorySource([
-    new EventBucket(
+    new Message(
         Profile::class,
-        ProfileCreated::raise(Email::fromString('david.badura@patchlevel.de'))->recordNow(0),
+        '1',
+        1,
+        ProfileCreated::raise(Email::fromString('david.badura@patchlevel.de')),
     ),
     // ...
 ]);
@@ -94,16 +90,21 @@ You can also create your own source class. It has to inherit from `Source`.
 Here you can, for example, create a migration from another event sourcing system or similar system.
 
 ```php
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\Source;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
 
 $source = new class implements Source {
     /**
-     * @return Generator<EventBucket>
+     * @return Generator<Message>
      */
     public function load(): Generator
     {
-        yield new EventBucket(Profile::class, 0, new ProfileCreated('1', ['name' => 'David']));
+        yield new Message(
+            Profile::class,
+            '1',
+            0, 
+            new ProfileCreated('1', ['name' => 'David'])
+        );
     }
 
     public function count(): int
@@ -158,7 +159,7 @@ $target = new ProjectionHandlerTarget($projectionHandler);
 ### In Memory
 
 There is also an in-memory variant for the target. This target can also be used for tests.
-With the `buckets` method you get all `EventBuckets` that have reached the target.
+With the `messages` method you get all `Messages` that have reached the target.
 
 ```php
 use Patchlevel\EventSourcing\Pipeline\Target\InMemoryTarget;
@@ -167,12 +168,12 @@ $target = new InMemoryTarget();
 
 // run pipeline
 
-$buckets = $target->buckets();
+$messages = $target->messages();
 ```
 
 ## Middlewares
 
-Middelwares can be used to manipulate, delete or expand events during the process.
+Middelwares can be used to manipulate, delete or expand messages or events during the process.
 
 > :warning: It is important to know that some middlewares require recalculation from the playhead,
 > if the target is a store.

@@ -7,7 +7,10 @@ namespace Patchlevel\EventSourcing\Projection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\EventBus\Message;
 use ReflectionClass;
+use ReflectionMethod;
+use ReflectionNamedType;
 
 use function array_key_exists;
 use function sprintf;
@@ -39,12 +42,15 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
                     throw new DuplicateHandleMethod(
                         $projection::class,
                         $eventClass,
-                        $metadata->handleMethods[$eventClass],
+                        $metadata->handleMethods[$eventClass]->methodName,
                         $method->getName()
                     );
                 }
 
-                $metadata->handleMethods[$eventClass] = $method->getName();
+                $metadata->handleMethods[$eventClass] = new ProjectionHandleMetadata(
+                    $method->getName(),
+                    $this->passMessage($method)
+                );
             }
 
             if ($method->getAttributes(Create::class)) {
@@ -75,5 +81,23 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
         }
 
         return $metadata;
+    }
+
+    private function passMessage(ReflectionMethod $method): bool
+    {
+        $parameters = $method->getParameters();
+
+        if ($parameters === []) {
+            return false;
+        }
+
+        $firstParameter = $parameters[0];
+        $type = $firstParameter->getType();
+
+        if (!$type instanceof ReflectionNamedType) {
+            return false;
+        }
+
+        return $type->getName() === Message::class;
     }
 }

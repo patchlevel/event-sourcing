@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Projection\AttributeProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Projection\MetadataException;
 use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\ProjectionHandleMetadata;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
@@ -52,7 +53,7 @@ class AttributeProjectionMetadataFactoryTest extends TestCase
         $metadata = $metadataFactory->metadata($projection);
 
         self::assertEquals(
-            [ProfileVisited::class => 'handle'],
+            [ProfileVisited::class => new ProjectionHandleMetadata('handle')],
             $metadata->handleMethods
         );
 
@@ -75,8 +76,8 @@ class AttributeProjectionMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => 'handle',
-                ProfileCreated::class => 'handle',
+                ProfileVisited::class => new ProjectionHandleMetadata('handle'),
+                ProfileCreated::class => new ProjectionHandleMetadata('handle'),
             ],
             $metadata->handleMethods
         );

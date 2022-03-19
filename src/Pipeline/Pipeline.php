@@ -28,18 +28,18 @@ final class Pipeline
 
     public function run(?Closure $observer = null): void
     {
-        foreach ($this->source->load() as $bucket) {
-            $result = ($this->middlewares)($bucket);
+        foreach ($this->source->load() as $message) {
+            $result = ($this->middlewares)($message);
 
-            foreach ($result as $resultBucket) {
-                $this->target->save($resultBucket);
+            foreach ($result as $resultMessage) {
+                $this->target->save($resultMessage);
             }
 
             if (!$observer) {
                 continue;
             }
 
-            $observer($bucket);
+            $observer($message);
         }
     }
 

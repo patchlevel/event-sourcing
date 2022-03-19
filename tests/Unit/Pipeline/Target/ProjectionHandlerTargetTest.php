@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -21,17 +21,18 @@ class ProjectionHandlerTargetTest extends TestCase
 
     public function testSave(): void
     {
-        $bucket = new EventBucket(
+        $message = new Message(
             Profile::class,
+            '1',
             1,
             ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
 
         $projectionHandler = $this->prophesize(ProjectionHandler::class);
-        $projectionHandler->handle($bucket->event())->shouldBeCalledOnce();
+        $projectionHandler->handle($message)->shouldBeCalledOnce();
 
         $projectionHandlerTarget = new ProjectionHandlerTarget($projectionHandler->reveal());
 
-        $projectionHandlerTarget->save($bucket);
+        $projectionHandlerTarget->save($message);
     }
 }

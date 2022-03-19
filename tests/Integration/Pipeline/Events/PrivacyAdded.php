@@ -13,11 +13,11 @@ final class PrivacyAdded extends AggregateChanged
 {
     public static function raise(string $id): static
     {
-        return new static($id, ['id' => $id]);
+        return new static(['id' => $id]);
     }
 
     public function profileId(): string
     {
-        return $this->aggregateId;
+        return $this->payload['id'];
     }
 }

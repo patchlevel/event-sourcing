@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\Command\ShowCommand;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -23,7 +24,14 @@ final class ShowCommandTest extends TestCase
     public function testSuccessful(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->load(Profile::class, '1')->willReturn([ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))]);
+        $store->load(Profile::class, '1')->willReturn([
+            new Message(
+                Profile::class,
+                '1',
+                1,
+                ProfileVisited::raise(ProfileId::fromString('1'))
+            ),
+        ]);
 
         $command = new ShowCommand(
             $store->reveal(),

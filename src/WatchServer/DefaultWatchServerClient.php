@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\WatchServer;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 use function base64_encode;
 use function fclose;
@@ -40,7 +40,7 @@ final class DefaultWatchServerClient implements WatchServerClient
         $this->socket = null;
     }
 
-    public function send(AggregateChanged $event): void
+    public function send(Message $message): void
     {
         $socket = $this->createSocket();
 
@@ -48,7 +48,7 @@ final class DefaultWatchServerClient implements WatchServerClient
             throw new SendingFailed('socket connection could not be established');
         }
 
-        $encodedPayload = base64_encode(serialize($event->serialize())) . "\n";
+        $encodedPayload = base64_encode(serialize($message->serialize())) . "\n";
 
         set_error_handler([self::class, 'nullErrorHandler']);
 

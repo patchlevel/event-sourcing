@@ -1,6 +1,6 @@
 # Store
 
-In the end, the events have to be saved somewhere. 
+In the end, the events/messages have to be saved somewhere. 
 The library is based on [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html) 
 and offers two different store strategies.
 

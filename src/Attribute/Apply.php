@@ -8,7 +8,7 @@ use Attribute;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
-class Apply
+final class Apply
 {
     /** @var class-string<AggregateChanged> */
     private string $aggregateChangedClass;

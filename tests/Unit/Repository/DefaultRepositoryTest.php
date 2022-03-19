@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\InvalidAggregateClass;
@@ -44,13 +45,11 @@ class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->saveBatch(
-            Profile::class,
-            '1',
             Argument::size(1)
         )->shouldBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type(AggregateChanged::class))->shouldBeCalled();
+        $eventBus->dispatch(Argument::type(Message::class))->shouldBeCalled();
 
         $repository = new DefaultRepository(
             $store->reveal(),
@@ -90,8 +89,6 @@ class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->saveBatch(
-            Profile::class,
-            '1',
             Argument::size(1)
         )->shouldNotBeCalled();
 
@@ -108,7 +105,7 @@ class DefaultRepositoryTest extends TestCase
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de')
         );
-        $aggregate->releaseEvents();
+        $aggregate->releaseMessages();
 
         $repository->save($aggregate);
     }
@@ -120,10 +117,15 @@ class DefaultRepositoryTest extends TestCase
             Profile::class,
             '1'
         )->willReturn([
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )->recordNow(1),
+            new Message(
+                Profile::class,
+                '1',
+                1,
+                ProfileCreated::raise(
+                    ProfileId::fromString('1'),
+                    Email::fromString('hallo@patchlevel.de')
+                )
+            ),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -149,10 +151,15 @@ class DefaultRepositoryTest extends TestCase
             Profile::class,
             '1'
         )->willReturn([
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )->recordNow(1),
+            new Message(
+                Profile::class,
+                '1',
+                1,
+                ProfileCreated::raise(
+                    ProfileId::fromString('1'),
+                    Email::fromString('hallo@patchlevel.de')
+                )
+            ),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -217,14 +224,18 @@ class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->load(Profile::class, '1')
-            ->willReturn(
-                [
+            ->willReturn([
+                new Message(
+                    Profile::class,
+                    '1',
+                    1,
                     ProfileCreated::raise(
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de')
-                    )->recordNow(1),
-                ]
-            );
+                    )
+                ),
+            ]);
+
         $store->has(Profile::class, '1')->shouldNotBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);

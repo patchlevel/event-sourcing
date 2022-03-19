@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 interface ProjectionHandler
 {
-    /**
-     * @param AggregateChanged<array<string, mixed>> $event
-     */
-    public function handle(AggregateChanged $event): void;
+    public function handle(Message $message): void;
 
     public function create(): void;
 

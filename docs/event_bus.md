@@ -69,14 +69,14 @@ A listener must implement the `Listener` interface and define the `__invoke` met
 This listener is then called for all saved events.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 $listener = new class implements Listener 
 {
-    public function __invoke(AggregateChanged $event): void
+    public function __invoke(Message $message): void
     {
-        if ($event instanceof ProfileCreated) {
+        if ($message->event() instanceof ProfileCreated) {
             echo 'Welcome!';
         }
     }

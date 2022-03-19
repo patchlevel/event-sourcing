@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
 use Patchlevel\EventSourcing\Repository\InvalidAggregateClass;
 use Patchlevel\EventSourcing\Repository\SnapshotRepository;
@@ -71,13 +71,11 @@ class SnapshotRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->saveBatch(
-            ProfileWithSnapshot::class,
-            '1',
             Argument::size(1)
         )->shouldNotBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type(AggregateChanged::class))->shouldNotBeCalled();
+        $eventBus->dispatch(Argument::type(Message::class))->shouldNotBeCalled();
 
         $snapshotStore = $this->prophesize(SnapshotStore::class);
 
@@ -92,7 +90,7 @@ class SnapshotRepositoryTest extends TestCase
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de')
         );
-        $aggregate->releaseEvents();
+        $aggregate->releaseMessages();
 
         $repository->save($aggregate);
     }
@@ -101,13 +99,11 @@ class SnapshotRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->saveBatch(
-            ProfileWithSnapshot::class,
-            '1',
             Argument::size(1)
         )->shouldBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type(AggregateChanged::class))->shouldBeCalled();
+        $eventBus->dispatch(Argument::type(Message::class))->shouldBeCalled();
 
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->save(Argument::type(Snapshot::class))->shouldBeCalled();
@@ -173,10 +169,15 @@ class SnapshotRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->load(ProfileWithSnapshot::class, '1')->willReturn([
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )->recordNow(1),
+            new Message(
+                ProfileWithSnapshot::class,
+                '1',
+                1,
+                ProfileCreated::raise(
+                    ProfileId::fromString('1'),
+                    Email::fromString('hallo@patchlevel.de')
+                )
+            ),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -207,10 +208,15 @@ class SnapshotRepositoryTest extends TestCase
             ProfileWithSnapshot::class,
             '1'
         )->willReturn([
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )->recordNow(1),
+            new Message(
+                ProfileWithSnapshot::class,
+                '1',
+                1,
+                ProfileCreated::raise(
+                    ProfileId::fromString('1'),
+                    Email::fromString('hallo@patchlevel.de')
+                )
+            ),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -287,10 +293,15 @@ class SnapshotRepositoryTest extends TestCase
         $store->load(ProfileWithSnapshot::class, '1')
             ->willReturn(
                 [
-                    ProfileCreated::raise(
-                        ProfileId::fromString('1'),
-                        Email::fromString('hallo@patchlevel.de')
-                    )->recordNow(1),
+                    new Message(
+                        ProfileWithSnapshot::class,
+                        '1',
+                        1,
+                        ProfileCreated::raise(
+                            ProfileId::fromString('1'),
+                            Email::fromString('hallo@patchlevel.de')
+                        )
+                    ),
                 ]
             );
         $store->has(ProfileWithSnapshot::class, '1')->shouldNotBeCalled();

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\PlayheadSequenceMismatch;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message as MessageDomain;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessagePublished;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -39,14 +40,18 @@ class SnapshotableAggregateRootTest extends TestCase
 
     public function testInitliazingState(): void
     {
-        $eventStream = [
-            MessagePublished::raise(
-                ProfileId::fromString('1'),
-                Message::create(
-                    MessageId::fromString('2'),
-                    'message value'
+        $messages = [
+            new Message(
+                ProfileWithSnapshot::class,
+                '1',
+                2,
+                MessagePublished::raise(
+                    MessageDomain::create(
+                        MessageId::fromString('2'),
+                        'message value'
+                    )
                 )
-            )->recordNow(2),
+            ),
         ];
 
         $snapshot = new Snapshot(
@@ -59,7 +64,7 @@ class SnapshotableAggregateRootTest extends TestCase
             ]
         );
 
-        $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $eventStream);
+        $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $messages);
 
         self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
@@ -67,14 +72,18 @@ class SnapshotableAggregateRootTest extends TestCase
 
     public function testCreateFromSnapshot(): void
     {
-        $eventStream = [
-            MessagePublished::raise(
-                ProfileId::fromString('1'),
-                Message::create(
-                    MessageId::fromString('2'),
-                    'message value'
+        $messages = [
+            new Message(
+                ProfileWithSnapshot::class,
+                '1',
+                2,
+                MessagePublished::raise(
+                    MessageDomain::create(
+                        MessageId::fromString('2'),
+                        'message value'
+                    )
                 )
-            )->recordNow(2),
+            ),
         ];
 
         $snapshot = new Snapshot(
@@ -87,7 +96,7 @@ class SnapshotableAggregateRootTest extends TestCase
             ]
         );
 
-        $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $eventStream);
+        $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $messages);
 
         self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());
@@ -97,14 +106,18 @@ class SnapshotableAggregateRootTest extends TestCase
     {
         $this->expectException(PlayheadSequenceMismatch::class);
 
-        $eventStream = [
-            MessagePublished::raise(
-                ProfileId::fromString('1'),
-                Message::create(
-                    MessageId::fromString('2'),
-                    'message value'
+        $messages = [
+            new Message(
+                ProfileWithSnapshot::class,
+                '1',
+                5,
+                MessagePublished::raise(
+                    MessageDomain::create(
+                        MessageId::fromString('2'),
+                        'message value'
+                    )
                 )
-            )->recordNow(5),
+            ),
         ];
 
         $snapshot = new Snapshot(
@@ -117,7 +130,7 @@ class SnapshotableAggregateRootTest extends TestCase
             ]
         );
 
-        $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $eventStream);
+        $profile = ProfileWithSnapshot::createFromSnapshot($snapshot, $messages);
 
         self::assertSame('1', $profile->id()->toString());
         self::assertCount(1, $profile->messages());

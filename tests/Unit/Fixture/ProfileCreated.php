@@ -16,7 +16,6 @@ class ProfileCreated extends AggregateChanged
         Email $email
     ): static {
         return new static(
-            $id->toString(),
             [
                 'profileId' => $id->toString(),
                 'email' => $email->toString(),
@@ -26,7 +25,7 @@ class ProfileCreated extends AggregateChanged
 
     public function profileId(): ProfileId
     {
-        return ProfileId::fromString($this->aggregateId);
+        return ProfileId::fromString($this->payload['profileId']);
     }
 
     public function email(): Email

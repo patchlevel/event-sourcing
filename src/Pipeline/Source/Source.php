@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Source;
 
 use Generator;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 interface Source
 {
     /**
-     * @return Generator<EventBucket>
+     * @return Generator<Message>
      */
     public function load(): Generator;
 

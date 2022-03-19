@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -21,53 +22,68 @@ class DefaultEventBusTest extends TestCase
     public function testDispatchEvent(): void
     {
         $listener = new class implements Listener {
-            public ?AggregateChanged $event = null;
+            public ?Message $message = null;
 
-            public function __invoke(AggregateChanged $event): void
+            public function __invoke(Message $message): void
             {
-                $this->event = $event;
+                $this->message = $message;
             }
         };
 
-        $event = ProfileCreated::raise(
-            ProfileId::fromString('1'),
-            Email::fromString('d.badura@gmx.de')
+        $message = new Message(
+            Profile::class,
+            '1',
+            1,
+            ProfileCreated::raise(
+                ProfileId::fromString('1'),
+                Email::fromString('d.badura@gmx.de')
+            )
         );
 
         $eventBus = new DefaultEventBus([$listener]);
-        $eventBus->dispatch($event);
+        $eventBus->dispatch($message);
 
-        self::assertSame($event, $listener->event);
+        self::assertSame($message, $listener->message);
     }
 
     public function testDynamicListener(): void
     {
         $listener = new class implements Listener {
-            public ?AggregateChanged $event = null;
+            public ?Message $message = null;
 
-            public function __invoke(AggregateChanged $event): void
+            public function __invoke(Message $message): void
             {
-                $this->event = $event;
+                $this->message = $message;
             }
         };
 
-        $event = ProfileCreated::raise(
-            ProfileId::fromString('1'),
-            Email::fromString('d.badura@gmx.de')
+        $message = new Message(
+            Profile::class,
+            '1',
+            1,
+            ProfileCreated::raise(
+                ProfileId::fromString('1'),
+                Email::fromString('d.badura@gmx.de')
+            )
         );
 
         $eventBus = new DefaultEventBus();
         $eventBus->addListener($listener);
-        $eventBus->dispatch($event);
+        $eventBus->dispatch($message);
 
-        self::assertSame($event, $listener->event);
+        self::assertSame($message, $listener->message);
     }
 
     public function testSynchroneEvents(): void
     {
-        $eventA = ProfileCreated::raise(
-            ProfileId::fromString('1'),
-            Email::fromString('d.badura@gmx.de')
+        $messageA = new Message(
+            Profile::class,
+            '1',
+            1,
+            ProfileCreated::raise(
+                ProfileId::fromString('1'),
+                Email::fromString('d.badura@gmx.de')
+            )
         );
 
         $eventBus = new DefaultEventBus();
@@ -81,18 +97,22 @@ class DefaultEventBusTest extends TestCase
                 $this->bus = $bus;
             }
 
-            public function __invoke(AggregateChanged $event): void
+            public function __invoke(Message $message): void
             {
-                if (!$event instanceof ProfileCreated) {
+                if (!$message->event() instanceof ProfileCreated) {
                     return;
                 }
 
-                $eventB = ProfileVisited::raise(
-                    ProfileId::fromString('1'),
-                    ProfileId::fromString('1'),
+                $messageB = new Message(
+                    Profile::class,
+                    '1',
+                    1,
+                    ProfileVisited::raise(
+                        ProfileId::fromString('1'),
+                    )
                 );
 
-                $this->bus->dispatch($eventB);
+                $this->bus->dispatch($messageB);
 
                 $this->time = microtime(true);
             }
@@ -101,9 +121,9 @@ class DefaultEventBusTest extends TestCase
         $listenerB = new class implements Listener {
             public ?float $time = null;
 
-            public function __invoke(AggregateChanged $event): void
+            public function __invoke(Message $message): void
             {
-                if (!$event instanceof ProfileVisited) {
+                if (!$message->event() instanceof ProfileVisited) {
                     return;
                 }
 
@@ -114,7 +134,7 @@ class DefaultEventBusTest extends TestCase
         $eventBus->addListener($listenerA);
         $eventBus->addListener($listenerB);
 
-        $eventBus->dispatch($eventA);
+        $eventBus->dispatch($messageA);
 
         self::assertNotNull($listenerA->time);
         self::assertNotNull($listenerB->time);

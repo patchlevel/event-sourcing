@@ -29,13 +29,13 @@ You can subscribe to the watch server and process or display each event as you w
 As soon as you execute `start`, the server will be started until you terminate the php process.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\WatchServer\DefaultWatchServer;
 
 $watchServer = new DefaultWatchServer('127.0.0.1:5000');
 $watchServer->listen(
-    function (AggregateChanged $event) {
-        var_dump($event);
+    function (Message $message) {
+        var_dump($message);
     }
 );
 $watchServer->start();

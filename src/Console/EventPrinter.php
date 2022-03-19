@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function json_encode;
@@ -15,21 +15,23 @@ use const JSON_THROW_ON_ERROR;
 
 final class EventPrinter
 {
-    public function write(SymfonyStyle $console, AggregateChanged $event): void
+    public function write(SymfonyStyle $console, Message $message): void
     {
+        $event = $message->event();
+
         $console->title($event::class);
 
-        $date = $event->recordedOn();
-
         $console->horizontalTable([
+            'aggregateClass',
             'aggregateId',
             'playhead',
             'recordedOn',
         ], [
             [
-                $event->aggregateId(),
-                $event->playhead(),
-                $date ? $date->format(DateTimeImmutable::ATOM) : 'null',
+                $message->aggregateClass(),
+                $message->aggregateId(),
+                $message->playhead(),
+                $message->recordedOn()->format(DateTimeImmutable::ATOM),
             ],
         ]);
 

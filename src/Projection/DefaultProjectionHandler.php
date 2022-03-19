@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 use function array_key_exists;
 
@@ -24,8 +24,10 @@ final class DefaultProjectionHandler implements ProjectionHandler
         $this->metadataFactor = $metadataFactory ?? new AttributeProjectionMetadataFactory();
     }
 
-    public function handle(AggregateChanged $event): void
+    public function handle(Message $message): void
     {
+        $event = $message->event();
+
         foreach ($this->projections as $projection) {
             $metadata = $this->metadataFactor->metadata($projection);
 
@@ -33,7 +35,14 @@ final class DefaultProjectionHandler implements ProjectionHandler
                 continue;
             }
 
-            $method = $metadata->handleMethods[$event::class];
+            $handleMetadata = $metadata->handleMethods[$event::class];
+            $method = $handleMetadata->methodName;
+
+            if ($handleMetadata->passMessage) {
+                $projection->$method($message);
+
+                continue;
+            }
 
             $projection->$method($event);
         }

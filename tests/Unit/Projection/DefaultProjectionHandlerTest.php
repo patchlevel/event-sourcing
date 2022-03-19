@@ -8,9 +8,11 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -24,11 +26,20 @@ final class DefaultProjectionHandlerTest extends TestCase
 
     public function testHandleWithNoProjections(): void
     {
-        $projectionRepository = new DefaultProjectionHandler([]);
-        $projectionRepository->handle(ProfileCreated::raise(
+        $event = ProfileCreated::raise(
             ProfileId::fromString('1'),
             Email::fromString('profile@test.com')
-        ));
+        );
+
+        $message = new Message(
+            Profile::class,
+            '1',
+            1,
+            $event
+        );
+
+        $projectionRepository = new DefaultProjectionHandler([]);
+        $projectionRepository->handle($message);
 
         $this->expectNotToPerformAssertions();
     }
@@ -45,15 +56,52 @@ final class DefaultProjectionHandlerTest extends TestCase
             }
         };
 
-        $profileCreated = ProfileCreated::raise(
+        $event = ProfileCreated::raise(
             ProfileId::fromString('1'),
             Email::fromString('profile@test.com')
         );
 
-        $projectionRepository = new DefaultProjectionHandler([$projection]);
-        $projectionRepository->handle($profileCreated);
+        $message = new Message(
+            Profile::class,
+            '1',
+            1,
+            $event
+        );
 
-        self::assertSame($profileCreated, $projection::$handledEvent);
+        $projectionRepository = new DefaultProjectionHandler([$projection]);
+        $projectionRepository->handle($message);
+
+        self::assertSame($event, $projection::$handledEvent);
+    }
+
+    public function testHandleWithMessage(): void
+    {
+        $projection = new class implements Projection {
+            public static ?Message $handledMessage = null;
+
+            #[Handle(ProfileCreated::class)]
+            public function handleProfileCreated(Message $message): void
+            {
+                self::$handledMessage = $message;
+            }
+        };
+
+        $event = ProfileCreated::raise(
+            ProfileId::fromString('1'),
+            Email::fromString('profile@test.com')
+        );
+
+        $message = new Message(
+            Profile::class,
+            '1',
+            1,
+            $event
+        );
+
+        $projectionRepository = new DefaultProjectionHandler([$projection]);
+        $projectionRepository->handle($message);
+
+        self::assertSame($message, $projection::$handledMessage);
     }
 
     public function testHandleNotSupportedEvent(): void
@@ -68,13 +116,19 @@ final class DefaultProjectionHandlerTest extends TestCase
             }
         };
 
-        $profileVisited = ProfileVisited::raise(
-            ProfileId::fromString('1'),
-            ProfileId::fromString('2'),
+        $event = ProfileVisited::raise(
+            ProfileId::fromString('1')
+        );
+
+        $message = new Message(
+            Profile::class,
+            '1',
+            1,
+            $event
         );
 
         $projectionRepository = new DefaultProjectionHandler([$projection]);
-        $projectionRepository->handle($profileVisited);
+        $projectionRepository->handle($message);
 
         self::assertNull($projection::$handledEvent);
     }

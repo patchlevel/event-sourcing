@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
-use ReturnTypeWillChange;
 
 abstract class SnapshotableAggregateRoot extends AggregateRoot
 {
@@ -16,14 +16,11 @@ abstract class SnapshotableAggregateRoot extends AggregateRoot
 
     /**
      * @param array<string, mixed> $payload
-     *
-     * @return static
      */
-    #[ReturnTypeWillChange]
-    abstract protected static function deserialize(array $payload): self;
+    abstract protected static function deserialize(array $payload): static;
 
     /**
-     * @param array<AggregateChanged<array<string, mixed>>> $stream
+     * @param list<Message> $stream
      */
     final public static function createFromSnapshot(Snapshot $snapshot, array $stream): static
     {
@@ -37,7 +34,7 @@ abstract class SnapshotableAggregateRoot extends AggregateRoot
                 throw new PlayheadSequenceMismatch();
             }
 
-            $self->apply($message);
+            $self->apply($message->event());
         }
 
         return $self;

@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
+#[SuppressMissingApply([MessageDeleted::class])]
 final class Profile extends AggregateRoot
 {
     private ProfileId $id;
     private Email $email;
-    /** @var array<Message> */
-    private array $messages;
+    private int $visited = 0;
 
     public function id(): ProfileId
     {
@@ -24,12 +25,9 @@ final class Profile extends AggregateRoot
         return $this->email;
     }
 
-    /**
-     * @return array<Message>
-     */
-    public function messages(): array
+    public function visited(): int
     {
-        return $this->messages;
+        return $this->visited;
     }
 
     public static function createProfile(ProfileId $id, Email $email): self
@@ -43,35 +41,38 @@ final class Profile extends AggregateRoot
     public function publishMessage(Message $message): void
     {
         $this->record(MessagePublished::raise(
-            $this->id,
-            $message,
+            $message
+        ));
+    }
+
+    public function deleteMessage(MessageId $messageId): void
+    {
+        $this->record(MessageDeleted::raise(
+            $messageId
         ));
     }
 
     public function visitProfile(ProfileId $profileId): void
     {
-        $this->record(ProfileVisited::raise($this->id, $profileId));
+        $this->record(ProfileVisited::raise($profileId));
+    }
+
+    #[Apply(ProfileCreated::class)]
+    #[Apply(ProfileVisited::class)]
+    protected function applyProfileCreated(ProfileCreated|ProfileVisited $event): void
+    {
+        if ($event instanceof ProfileCreated) {
+            $this->id = $event->profileId();
+            $this->email = $event->email();
+
+            return;
+        }
+
+        $this->visited++;
     }
 
     public function aggregateRootId(): string
     {
         return $this->id->toString();
-    }
-
-    protected function apply(AggregateChanged $event): void
-    {
-        if ($event instanceof ProfileCreated) {
-            $this->id = $event->profileId();
-            $this->email = $event->email();
-            $this->messages = [];
-
-            return;
-        }
-
-        if ($event instanceof MessagePublished) {
-            $this->messages[] = $event->message();
-
-            return;
-        }
     }
 }

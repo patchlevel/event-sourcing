@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 interface Middleware
 {
     /**
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    public function __invoke(EventBucket $bucket): array;
+    public function __invoke(Message $message): array;
 }

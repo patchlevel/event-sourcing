@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -20,16 +20,17 @@ class ExcludeEventMiddlewareTest extends TestCase
     {
         $middleware = new ExcludeEventMiddleware([ProfileCreated::class]);
 
-        $bucket = new EventBucket(
+        $message = new Message(
             Profile::class,
+            '1',
             1,
             ProfileCreated::raise(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
-            )->recordNow(0)
+            )
         );
 
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
         self::assertSame([], $result);
     }
@@ -38,17 +39,17 @@ class ExcludeEventMiddlewareTest extends TestCase
     {
         $middleware = new ExcludeEventMiddleware([ProfileCreated::class]);
 
-        $bucket = new EventBucket(
+        $message = new Message(
             Profile::class,
+            '1',
             1,
             ProfileVisited::raise(
-                ProfileId::fromString('1'),
-                ProfileId::fromString('2')
-            )->recordNow(0)
+                ProfileId::fromString('1')
+            )
         );
 
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
-        self::assertSame([$bucket], $result);
+        self::assertSame([$message], $result);
     }
 }

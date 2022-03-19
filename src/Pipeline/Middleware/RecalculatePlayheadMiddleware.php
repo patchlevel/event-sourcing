@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use ReflectionClass;
-use ReflectionProperty;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 use function array_key_exists;
 
@@ -17,31 +14,26 @@ final class RecalculatePlayheadMiddleware implements Middleware
     /** @var array<class-string<AggregateRoot>, array<string, int>> */
     private array $index = [];
 
-    private ReflectionProperty $reflectionProperty;
-
-    public function __construct()
-    {
-        $reflectionClass = new ReflectionClass(AggregateChanged::class);
-
-        $this->reflectionProperty = $reflectionClass->getProperty('playhead');
-        $this->reflectionProperty->setAccessible(true);
-    }
-
     /**
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    public function __invoke(EventBucket $bucket): array
+    public function __invoke(Message $message): array
     {
-        $event = $bucket->event();
-        $playhead = $this->nextPlayhead($bucket->aggregateClass(), $event->aggregateId());
+        $playhead = $this->nextPlayhead($message->aggregateClass(), $message->aggregateId());
 
-        if ($event->playhead() === $playhead) {
-            return [$bucket];
+        if ($message->playhead() === $playhead) {
+            return [$message];
         }
 
-        $this->reflectionProperty->setValue($event, $playhead);
-
-        return [$bucket];
+        return [
+            new Message(
+                $message->aggregateClass(),
+                $message->aggregateId(),
+                $playhead,
+                $message->event(),
+                $message->recordedOn()
+            ),
+        ];
     }
 
     /**

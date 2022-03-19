@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
@@ -22,50 +22,52 @@ class PipelineTest extends TestCase
 {
     public function testPipeline(): void
     {
-        $buckets = [
-            new EventBucket(
+        $messages = [
+            new Message(
                 Profile::class,
+                '1',
                 1,
                 ProfileCreated::raise(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
-                )->recordNow(0)
+                )
             ),
-            new EventBucket(
+            new Message(
                 Profile::class,
+                '1',
                 2,
                 ProfileVisited::raise(
-                    ProfileId::fromString('1'),
-                    ProfileId::fromString('2')
-                )->recordNow(1)
+                    ProfileId::fromString('1')
+                )
             ),
-            new EventBucket(
+            new Message(
                 Profile::class,
+                '1',
                 3,
                 ProfileVisited::raise(
-                    ProfileId::fromString('1'),
-                    ProfileId::fromString('3')
-                )->recordNow(2)
+                    ProfileId::fromString('1')
+                )
             ),
-            new EventBucket(
+            new Message(
                 Profile::class,
-                4,
+                '1',
+                1,
                 ProfileCreated::raise(
                     ProfileId::fromString('2'),
                     Email::fromString('hallo@patchlevel.de')
-                )->recordNow(0)
+                )
             ),
-            new EventBucket(
+            new Message(
                 Profile::class,
-                5,
+                '1',
+                2,
                 ProfileVisited::raise(
-                    ProfileId::fromString('2'),
                     ProfileId::fromString('2')
-                )->recordNow(1)
+                )
             ),
         ];
 
-        $source = new InMemorySource($buckets);
+        $source = new InMemorySource($messages);
         $target = new InMemoryTarget();
         $pipeline = new Pipeline($source, $target);
 
@@ -73,55 +75,57 @@ class PipelineTest extends TestCase
 
         $pipeline->run();
 
-        self::assertSame($buckets, $target->buckets());
+        self::assertSame($messages, $target->messages());
     }
 
     public function testPipelineWithMiddleware(): void
     {
-        $buckets = [
-            new EventBucket(
+        $messages = [
+            new Message(
                 Profile::class,
+                '1',
                 1,
                 ProfileCreated::raise(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
-                )->recordNow(0)
+                )
             ),
-            new EventBucket(
+            new Message(
                 Profile::class,
+                '1',
                 2,
                 ProfileVisited::raise(
-                    ProfileId::fromString('1'),
-                    ProfileId::fromString('2')
-                )->recordNow(1)
+                    ProfileId::fromString('1')
+                )
             ),
-            new EventBucket(
+            new Message(
                 Profile::class,
+                '1',
                 3,
                 ProfileVisited::raise(
-                    ProfileId::fromString('1'),
-                    ProfileId::fromString('3')
-                )->recordNow(2)
+                    ProfileId::fromString('1')
+                )
             ),
-            new EventBucket(
+            new Message(
                 Profile::class,
-                4,
+                '2',
+                1,
                 ProfileCreated::raise(
                     ProfileId::fromString('2'),
                     Email::fromString('hallo@patchlevel.de')
-                )->recordNow(0)
+                )
             ),
-            new EventBucket(
+            new Message(
                 Profile::class,
-                5,
+                '2',
+                2,
                 ProfileVisited::raise(
-                    ProfileId::fromString('2'),
                     ProfileId::fromString('2')
-                )->recordNow(1)
+                )
             ),
         ];
 
-        $source = new InMemorySource($buckets);
+        $source = new InMemorySource($messages);
         $target = new InMemoryTarget();
         $pipeline = new Pipeline(
             $source,
@@ -136,20 +140,20 @@ class PipelineTest extends TestCase
 
         $pipeline->run();
 
-        $resultBuckets = $target->buckets();
+        $resultMessages = $target->messages();
 
-        self::assertCount(3, $resultBuckets);
+        self::assertCount(3, $resultMessages);
 
-        self::assertInstanceOf(ProfileVisited::class, $resultBuckets[0]->event());
-        self::assertSame('1', $resultBuckets[0]->event()->aggregateId());
-        self::assertSame(1, $resultBuckets[0]->event()->playhead());
+        self::assertInstanceOf(ProfileVisited::class, $resultMessages[0]->event());
+        self::assertSame('1', $resultMessages[0]->aggregateId());
+        self::assertSame(1, $resultMessages[0]->playhead());
 
-        self::assertInstanceOf(ProfileVisited::class, $resultBuckets[1]->event());
-        self::assertSame('1', $resultBuckets[1]->event()->aggregateId());
-        self::assertSame(2, $resultBuckets[1]->event()->playhead());
+        self::assertInstanceOf(ProfileVisited::class, $resultMessages[1]->event());
+        self::assertSame('1', $resultMessages[1]->aggregateId());
+        self::assertSame(2, $resultMessages[1]->playhead());
 
-        self::assertInstanceOf(ProfileVisited::class, $resultBuckets[2]->event());
-        self::assertSame('2', $resultBuckets[2]->event()->aggregateId());
-        self::assertSame(1, $resultBuckets[2]->event()->playhead());
+        self::assertInstanceOf(ProfileVisited::class, $resultMessages[2]->event());
+        self::assertSame('2', $resultMessages[2]->aggregateId());
+        self::assertSame(1, $resultMessages[2]->playhead());
     }
 }

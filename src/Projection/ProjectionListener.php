@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 final class ProjectionListener implements Listener
 {
@@ -16,8 +16,8 @@ final class ProjectionListener implements Listener
         $this->projectionHandler = $projectionHandler;
     }
 
-    public function __invoke(AggregateChanged $event): void
+    public function __invoke(Message $message): void
     {
-        $this->projectionHandler->handle($event);
+        $this->projectionHandler->handle($message);
     }
 }

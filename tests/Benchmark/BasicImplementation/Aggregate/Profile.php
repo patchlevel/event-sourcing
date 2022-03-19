@@ -29,7 +29,7 @@ final class Profile extends SnapshotableAggregateRoot
 
     public function changeName(string $name): void
     {
-        $this->record(NameChanged::raise($this->id, $name));
+        $this->record(NameChanged::raise($name));
     }
 
     #[Apply(ProfileCreated::class)]

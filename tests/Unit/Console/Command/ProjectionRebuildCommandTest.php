@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use Closure;
 use Generator;
 use Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
@@ -24,45 +24,53 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
-/** @covers \Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand */
+/**
+ * @covers \Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand
+ * @covers \Patchlevel\EventSourcing\Console\Command\ProjectionCommand
+ */
 final class ProjectionRebuildCommandTest extends TestCase
 {
     use ProphecyTrait;
 
-    private Closure $events;
+    private Closure $messages;
 
     public function setUp(): void
     {
         /**
-         * @return Generator<EventBucket>
+         * @return Generator<Message>
          */
-        $this->events = static function (): Generator {
-            yield new EventBucket(
+        $this->messages = static function (): Generator {
+            yield new Message(
                 Profile::class,
+                '1',
                 1,
                 ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
-            yield new EventBucket(
+            yield new Message(
                 Profile::class,
+                '1',
                 2,
                 ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
-            yield new EventBucket(
+            yield new Message(
                 Profile::class,
+                '1',
                 3,
                 ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
-            yield new EventBucket(
+            yield new Message(
                 Profile::class,
+                '1',
                 4,
                 ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
-            yield new EventBucket(
+            yield new Message(
                 Profile::class,
+                '1',
                 5,
                 ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
@@ -73,10 +81,10 @@ final class ProjectionRebuildCommandTest extends TestCase
     {
         $store = $this->prophesize(PipelineStore::class);
         $store->count(Argument::is(0))->willReturn(5);
-        $store->stream(Argument::is(0))->willReturn(($this->events)());
+        $store->stream(Argument::is(0))->willReturn(($this->messages)());
 
         $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->handle(Argument::type(ProfileCreated::class))->shouldBeCalledTimes(5);
+        $repository->handle(Argument::type(Message::class))->shouldBeCalledTimes(5);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
@@ -100,7 +108,7 @@ final class ProjectionRebuildCommandTest extends TestCase
     {
         $store = $this->prophesize(PipelineStore::class);
         $store->count(Argument::is(0))->willReturn(5);
-        $store->stream(Argument::is(0))->willReturn(($this->events)());
+        $store->stream(Argument::is(0))->willReturn(($this->messages)());
 
         $projectionA = new DummyProjection();
         $projectionB = new Dummy2Projection();
@@ -130,12 +138,12 @@ final class ProjectionRebuildCommandTest extends TestCase
     {
         $store = $this->prophesize(PipelineStore::class);
         $store->count(Argument::is(0))->willReturn(5);
-        $store->stream(Argument::is(0))->willReturn(($this->events)());
+        $store->stream(Argument::is(0))->willReturn(($this->messages)());
 
         $repository = $this->prophesize(ProjectionHandler::class);
         $repository->drop(null)->shouldBeCalled();
         $repository->create(null)->shouldBeCalled();
-        $repository->handle(Argument::type(ProfileCreated::class))->shouldBeCalledTimes(5);
+        $repository->handle(Argument::type(Message::class))->shouldBeCalledTimes(5);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
@@ -161,7 +169,7 @@ final class ProjectionRebuildCommandTest extends TestCase
     {
         $store = $this->prophesize(PipelineStore::class);
         $store->count(Argument::is(0))->willReturn(5);
-        $store->stream(Argument::is(0))->willReturn(($this->events)());
+        $store->stream(Argument::is(0))->willReturn(($this->messages)());
 
         $projectionA = new DummyProjection();
         $projectionB = new Dummy2Projection();

@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
  */
 final class ProjectionMetadata
 {
-    /** @var array<class-string<AggregateChanged>, string> */
+    /** @var array<class-string<AggregateChanged>, ProjectionHandleMetadata> */
     public array $handleMethods = [];
 
     public ?string $createMethod = null;

@@ -6,18 +6,18 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+use Patchlevel\EventSourcing\EventBus\Message;
 use ReflectionClass;
 
 use function array_key_exists;
-use function method_exists;
 
 abstract class AggregateRoot
 {
     /** @var array<class-string<self>, AggregateRootMetadata> */
     private static array $metadata = [];
 
-    /** @var array<AggregateChanged> */
-    private array $uncommittedEvents = [];
+    /** @var list<Message> */
+    private array $uncommittedMessages = [];
 
     /** @internal */
     protected int $playhead = 0;
@@ -41,11 +41,6 @@ abstract class AggregateRoot
         }
 
         $method = $metadata->applyMethods[$event::class];
-
-        if (!method_exists($this, $method)) {
-            return;
-        }
-
         $this->$method($event);
     }
 
@@ -56,38 +51,42 @@ abstract class AggregateRoot
     {
         $this->playhead++;
 
-        $event = $event->recordNow($this->playhead);
-        $this->uncommittedEvents[] = $event;
-
         $this->apply($event);
+
+        $this->uncommittedMessages[] = new Message(
+            static::class,
+            $this->aggregateRootId(),
+            $this->playhead,
+            $event
+        );
     }
 
     /**
-     * @return array<AggregateChanged>
+     * @return list<Message>
      */
-    final public function releaseEvents(): array
+    final public function releaseMessages(): array
     {
-        $events = $this->uncommittedEvents;
-        $this->uncommittedEvents = [];
+        $messages = $this->uncommittedMessages;
+        $this->uncommittedMessages = [];
 
-        return $events;
+        return $messages;
     }
 
     /**
-     * @param array<AggregateChanged> $stream
+     * @param list<Message> $messages
      */
-    final public static function createFromEventStream(array $stream): static
+    final public static function createFromMessages(array $messages): static
     {
         $self = new static();
 
-        foreach ($stream as $message) {
+        foreach ($messages as $message) {
             $self->playhead++;
 
             if ($self->playhead !== $message->playhead()) {
                 throw new PlayheadSequenceMismatch();
             }
 
-            $self->apply($message);
+            $self->apply($message->event());
         }
 
         return $self;

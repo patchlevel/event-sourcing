@@ -10,7 +10,7 @@ use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Traversable;
 
 use function array_flip;
@@ -42,7 +42,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
     /**
      * @param class-string<AggregateRoot> $aggregate
      *
-     * @return array<AggregateChanged<array<string, mixed>>>
+     * @return list<Message>
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array
     {
@@ -54,7 +54,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -66,8 +66,10 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $platform = $this->connection->getDatabasePlatform();
 
         return array_map(
-            static function (array $data) use ($platform): AggregateChanged {
-                return AggregateChanged::deserialize(
+            static function (array $data) use ($platform, $aggregate): Message {
+                $data['aggregate_class'] = $aggregate;
+
+                return Message::deserialize(
                     self::normalizeResult($platform, $data)
                 );
             },
@@ -102,24 +104,17 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
     }
 
     /**
-     * @param class-string<AggregateRoot>                   $aggregate
-     * @param array<AggregateChanged<array<string, mixed>>> $events
+     * @param list<Message> $messages
      */
-    public function saveBatch(string $aggregate, string $id, array $events): void
+    public function saveBatch(array $messages): void
     {
-        $tableName = $this->tableName($aggregate);
-
         $this->connection->transactional(
-            function (Connection $connection) use ($tableName, $id, $events): void {
-                foreach ($events as $event) {
-                    if ($event->aggregateId() !== $id) {
-                        throw new AggregateIdMismatch($id, $event->aggregateId());
-                    }
-
-                    $this->saveEvent(
+            function (Connection $connection) use ($messages): void {
+                foreach ($messages as $message) {
+                    $this->saveMessage(
                         $connection,
-                        $tableName,
-                        $event
+                        $this->tableName($message->aggregateClass()),
+                        $message
                     );
                 }
             }
@@ -184,12 +179,10 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 throw CorruptedMetadata::fromEntryMismatch($metaData['id'], $eventData['id']);
             }
 
-            yield new EventBucket(
-                $classMap[$name],
-                (int)$metaData['id'],
-                AggregateChanged::deserialize(
-                    self::normalizeResult($platform, $eventData)
-                )
+            $eventData['aggregate_class'] = $classMap[$name];
+
+            yield Message::deserialize(
+                self::normalizeResult($platform, $eventData)
             );
         }
     }
@@ -211,21 +204,20 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         return (int)$result;
     }
 
-    public function saveEventBucket(EventBucket $bucket): void
+    public function save(Message $message): void
     {
-        $this->saveEvent(
+        $this->saveMessage(
             $this->connection,
-            $this->tableName($bucket->aggregateClass()),
-            $bucket->event()
+            $this->tableName($message->aggregateClass()),
+            $message
         );
     }
 
-    /**
-     * @param AggregateChanged<array<string, mixed>> $event
-     */
-    private function saveEvent(Connection $connection, string $aggregateName, AggregateChanged $event): void
+    private function saveMessage(Connection $connection, string $aggregateName, Message $message): void
     {
-        $data = $event->serialize();
+        $data = $message->serialize();
+
+        unset($data['aggregate_class']);
 
         $connection->insert(
             $this->metadataTableName,
