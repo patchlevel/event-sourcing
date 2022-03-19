@@ -7,12 +7,23 @@ namespace Patchlevel\EventSourcing\Serializer;
 use Patchlevel\EventSourcing\Attribute\Normalize;
 use ReflectionClass;
 use ReflectionProperty;
+use RuntimeException;
 use TypeError;
 
 final class Hydrator
 {
     /**
-     * @param class-string<T>      $class
+     * @var array<class-string, array<string, array{reflection: ReflectionProperty, fieldName: string, normalizer: ?Normalizer}>>
+     */
+    private static array $propertyMetadataCache = [];
+
+    /**
+     * @var array<class-string, ReflectionClass>
+     */
+    private static array $reflectionClassCache = [];
+
+    /**
+     * @param class-string<T> $class
      * @param array<string, mixed> $data
      *
      * @return T
@@ -21,24 +32,21 @@ final class Hydrator
      */
     public function hydrate(string $class, array $data): object
     {
-        $reflectionClass = new ReflectionClass($class);
+        $object = self::reflectionClass($class)->newInstanceWithoutConstructor();
+        assert($object instanceof $class);
 
-        $object = $reflectionClass->newInstanceWithoutConstructor();
+        $metadata = self::propertyMetadata($class);
 
-        foreach ($reflectionClass->getProperties() as $property) {
-            $property->setAccessible(true);
+        foreach ($metadata as $propertyMetadata) {
 
-            $fieldName = $this->fieldName($property);
-            $value = $data[$fieldName] ?? null;
+            $value = $data[$propertyMetadata['fieldName']] ?? null;
 
-            $attributes = $property->getAttributes(Normalize::class);
-            foreach ($attributes as $attribute) {
-                $attributeInstance = $attribute->newInstance();
-                $value = $attributeInstance->normalizer()->denormalize($value);
+            if ($propertyMetadata['normalizer']) {
+                $value = $propertyMetadata['normalizer']->denormalize($value);
             }
 
             try {
-                $property->setValue($object, $value);
+                $propertyMetadata['reflection']->setValue($object, $value);
             } catch (TypeError $error) {
                 throw new TypeMismatch($error->getMessage(), 0, $error);
             }
@@ -52,28 +60,77 @@ final class Hydrator
      */
     public function extract(object $object): array
     {
-        $reflectionClass = new ReflectionClass($object);
+        $metadata = self::propertyMetadata($object::class);
 
         $data = [];
 
-        foreach ($reflectionClass->getProperties() as $property) {
-            $property->setAccessible(true);
-            $value = $property->getValue($object);
+        foreach ($metadata as $propertyMetadata) {
+            $value = $propertyMetadata['reflection']->getValue($object);
 
-            $attributes = $property->getAttributes(Normalize::class);
-            foreach ($attributes as $attribute) {
-                $attributeInstance = $attribute->newInstance();
-                $value = $attributeInstance->normalizer()->normalize($value);
+            if ($propertyMetadata['normalizer']) {
+                $value = $propertyMetadata['normalizer']->normalize($value);
             }
 
-            $fieldName = $this->fieldName($property);
-            $data[$fieldName] = $value;
+            $data[$propertyMetadata['fieldName']] = $value;
         }
 
         return $data;
     }
 
-    private function fieldName(ReflectionProperty $property): string
+    /**
+     * @param class-string $class
+     * @return array<string, array{reflection: ReflectionProperty, fieldName: string, normalizer: ?Normalizer}>
+     */
+    private static function propertyMetadata(string $class): array
+    {
+        if (array_key_exists($class, self::$propertyMetadataCache)) {
+            return self::$propertyMetadataCache[$class];
+        }
+
+        $reflectionClass = self::reflectionClass($class);
+        $metadata = [];
+
+        foreach ($reflectionClass->getProperties() as $property) {
+            $property->setAccessible(true);
+
+            $normalizer = null;
+            $attributeReflectionList = $property->getAttributes(Normalize::class);
+
+            if ($attributeReflectionList !== []) {
+                $attribute = $attributeReflectionList[0]->newInstance();
+                $normalizer = $attribute->normalizer();
+            }
+
+            if (!is_string($property->name)) {
+                throw new RuntimeException('how?');
+            }
+
+            $metadata[$property->name] = [
+                'reflection' => $property,
+                'fieldName' => self::fieldName($property),
+                'normalizer' => $normalizer
+            ];
+        }
+
+        self::$propertyMetadataCache[$class] = $metadata;
+
+        return $metadata;
+    }
+
+    /**
+     * @param class-string $class
+     * @return ReflectionClass
+     */
+    private static function reflectionClass(string $class): ReflectionClass
+    {
+        if (!array_key_exists($class, self::$reflectionClassCache)) {
+            self::$reflectionClassCache[$class] = new ReflectionClass($class);
+        }
+
+        return self::$reflectionClassCache[$class];
+    }
+
+    private static function fieldName(ReflectionProperty $property): string
     {
         return $property->getName();
     }
