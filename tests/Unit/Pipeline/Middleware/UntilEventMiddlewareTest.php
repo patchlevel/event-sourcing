@@ -26,7 +26,7 @@ class UntilEventMiddlewareTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de')
             ),
@@ -48,7 +48,7 @@ class UntilEventMiddlewareTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de')
             ),

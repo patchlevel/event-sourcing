@@ -21,7 +21,7 @@ class WatchListenerTest extends TestCase
 
     public function testListener(): void
     {
-        $event = ProfileVisited::raise(
+        $event = new ProfileVisited(
             ProfileId::fromString('1')
         );
 
@@ -41,7 +41,7 @@ class WatchListenerTest extends TestCase
 
     public function testIgnoreErrors(): void
     {
-        $event = ProfileVisited::raise(
+        $event = new ProfileVisited(
             ProfileId::fromString('1')
         );
 

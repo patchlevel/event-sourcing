@@ -10,7 +10,7 @@ final class DuplicateApplyMethod extends AggregateException
 {
     /**
      * @param class-string<AggregateRoot>    $aggregate
-     * @param class-string<AggregateChanged> $event
+     * @param class-string $event
      */
     public function __construct(string $aggregate, string $event, string $fistMethod, string $secondMethod)
     {

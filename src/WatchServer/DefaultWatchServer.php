@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\WatchServer;
 
 use Closure;
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\JsonSerializer;
@@ -70,7 +69,7 @@ final class DefaultWatchServer implements WatchServer
         foreach ($this->messages($socket) as $clientId => $clientMessage) {
             $this->logger->info('Received a payload from client {clientId}', ['clientId' => $clientId]);
 
-            /** @var array{aggregate_class: class-string<AggregateRoot>,aggregate_id: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, playhead: int, recorded_on: DateTimeImmutable} $data */
+            /** @var array{aggregate_class: class-string<AggregateRoot>,aggregate_id: string, event: class-string, payload: string, playhead: int, recorded_on: DateTimeImmutable} $data */
             $data = unserialize(base64_decode($clientMessage), ['allowed_classes' => [DateTimeImmutable::class]]);
 
             $message = new Message(

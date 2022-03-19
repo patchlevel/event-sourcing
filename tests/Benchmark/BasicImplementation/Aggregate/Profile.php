@@ -22,27 +22,27 @@ final class Profile extends SnapshotableAggregateRoot
     public static function create(string $id, string $name): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $name));
+        $self->record(new ProfileCreated($id, $name));
 
         return $self;
     }
 
     public function changeName(string $name): void
     {
-        $this->record(NameChanged::raise($name));
+        $this->record(new NameChanged($name));
     }
 
     #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
+        $this->id = $event->profileId;
+        $this->name = $event->name;
     }
 
     #[Apply(NameChanged::class)]
     protected function applyNameChanged(NameChanged $event): void
     {
-        $this->name = $event->name();
+        $this->name = $event->name;
     }
 
     /**

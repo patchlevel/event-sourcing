@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\EventBus;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Clock;
 
@@ -18,8 +17,7 @@ final class Message
 
     private int $playhead;
 
-    /** @var AggregateChanged<array<string, mixed>> */
-    private AggregateChanged $event;
+    private object $event;
 
     private DateTimeImmutable $recordedOn;
 
@@ -30,13 +28,13 @@ final class Message
         string $aggregateClass,
         string $aggregateId,
         int $playhead,
-        AggregateChanged $aggregateChanged,
+        object $event,
         ?DateTimeImmutable $recordedOn = null
     ) {
         $this->aggregateClass = $aggregateClass;
         $this->aggregateId = $aggregateId;
         $this->playhead = $playhead;
-        $this->event = $aggregateChanged;
+        $this->event = $event;
         $this->recordedOn = $recordedOn ?? Clock::createDateTimeImmutable();
     }
 
@@ -58,7 +56,7 @@ final class Message
         return $this->playhead;
     }
 
-    public function event(): AggregateChanged
+    public function event(): object
     {
         return $this->event;
     }

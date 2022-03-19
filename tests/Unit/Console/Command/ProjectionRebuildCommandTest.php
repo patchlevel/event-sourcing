@@ -44,35 +44,35 @@ final class ProjectionRebuildCommandTest extends TestCase
                 Profile::class,
                 '1',
                 1,
-                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
             yield new Message(
                 Profile::class,
                 '1',
                 2,
-                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
             yield new Message(
                 Profile::class,
                 '1',
                 3,
-                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
             yield new Message(
                 Profile::class,
                 '1',
                 4,
-                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
 
             yield new Message(
                 Profile::class,
                 '1',
                 5,
-                ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
             );
         };
     }

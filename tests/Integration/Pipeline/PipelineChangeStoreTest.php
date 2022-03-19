@@ -83,7 +83,7 @@ final class PipelineChangeStoreTest extends TestCase
             [
                 new ExcludeEventMiddleware([PrivacyAdded::class]),
                 new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
-                    return NewVisited::raise($oldVisited->profileId());
+                    return new NewVisited($oldVisited->profileId);
                 }),
                 new RecalculatePlayheadMiddleware(),
             ]

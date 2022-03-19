@@ -9,11 +9,11 @@ namespace Patchlevel\EventSourcing\Aggregate;
  */
 final class AggregateRootMetadata
 {
-    /** @var array<class-string<AggregateChanged>, true> */
+    /** @var array<class-string, true> */
     public array $suppressEvents = [];
 
     public bool $suppressAll = false;
 
-    /** @var array<class-string<AggregateChanged>, string> */
+    /** @var array<class-string, string> */
     public array $applyMethods = [];
 }

@@ -30,7 +30,7 @@ class MessageTest extends TestCase
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
 
-        $event = ProfileCreated::raise(
+        $event = new ProfileCreated(
             $id,
             $email
         );
@@ -56,7 +56,7 @@ class MessageTest extends TestCase
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
 
-        $event = ProfileCreated::raise(
+        $event = new ProfileCreated(
             $id,
             $email
         );

@@ -173,7 +173,7 @@ class SnapshotRepositoryTest extends TestCase
                 ProfileWithSnapshot::class,
                 '1',
                 1,
-                ProfileCreated::raise(
+                new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
                 )
@@ -212,7 +212,7 @@ class SnapshotRepositoryTest extends TestCase
                 ProfileWithSnapshot::class,
                 '1',
                 1,
-                ProfileCreated::raise(
+                new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
                 )
@@ -297,7 +297,7 @@ class SnapshotRepositoryTest extends TestCase
                         ProfileWithSnapshot::class,
                         '1',
                         1,
-                        ProfileCreated::raise(
+                        new ProfileCreated(
                             ProfileId::fromString('1'),
                             Email::fromString('hallo@patchlevel.de')
                         )

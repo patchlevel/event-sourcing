@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Throwable;
 
 use function sprintf;
 
 final class SerializationNotPossible extends SerializeException
 {
-    private AggregateChanged $event;
+    private object $event;
 
-    public function __construct(AggregateChanged $event, ?Throwable $previous = null)
+    public function __construct(object $event, ?Throwable $previous = null)
     {
         $this->event = $event;
 
@@ -27,7 +26,7 @@ final class SerializationNotPossible extends SerializeException
         );
     }
 
-    public function event(): AggregateChanged
+    public function event(): object
     {
         return $this->event;
     }

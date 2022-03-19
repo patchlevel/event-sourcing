@@ -89,7 +89,6 @@ final class SingleTableStoreTest extends TestCase
         self::assertInstanceOf(ProfileCreated::class, $message->event());
         self::assertSame('1', $message->aggregateId());
         self::assertSame(0, $message->playhead());
-        self::assertSame([], $message->event()->payload());
         self::assertEquals(new DateTimeImmutable('2021-02-17 10:00:00'), $message->recordedOn());
     }
 }

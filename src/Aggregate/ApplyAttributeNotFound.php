@@ -8,7 +8,7 @@ use function sprintf;
 
 final class ApplyAttributeNotFound extends AggregateException
 {
-    public function __construct(AggregateRoot $aggregate, AggregateChanged $event)
+    public function __construct(AggregateRoot $aggregate, object $event)
     {
         parent::__construct(
             sprintf(

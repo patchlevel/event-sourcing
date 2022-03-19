@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
@@ -93,7 +92,7 @@ class DefaultRepositoryTest extends TestCase
         )->shouldNotBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type(AggregateChanged::class))->shouldNotBeCalled();
+        $eventBus->dispatch(Argument::type('object'))->shouldNotBeCalled();
 
         $repository = new DefaultRepository(
             $store->reveal(),
@@ -121,7 +120,7 @@ class DefaultRepositoryTest extends TestCase
                 Profile::class,
                 '1',
                 1,
-                ProfileCreated::raise(
+                new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
                 )
@@ -155,7 +154,7 @@ class DefaultRepositoryTest extends TestCase
                 Profile::class,
                 '1',
                 1,
-                ProfileCreated::raise(
+                new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
                 )
@@ -229,7 +228,7 @@ class DefaultRepositoryTest extends TestCase
                     Profile::class,
                     '1',
                     1,
-                    ProfileCreated::raise(
+                    new ProfileCreated(
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de')
                     )

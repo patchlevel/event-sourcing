@@ -35,35 +35,35 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
     public static function createProfile(ProfileId $id, Email $email): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $email));
+        $self->record(new ProfileCreated($id, $email));
 
         return $self;
     }
 
     public function publishMessage(Message $message): void
     {
-        $this->record(MessagePublished::raise(
+        $this->record(new MessagePublished(
             $message
         ));
     }
 
     public function visitProfile(ProfileId $profileId): void
     {
-        $this->record(ProfileVisited::raise($profileId));
+        $this->record(new ProfileVisited($profileId));
     }
 
     #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
-        $this->id = $event->profileId();
-        $this->email = $event->email();
+        $this->id = $event->profileId;
+        $this->email = $event->email;
         $this->messages = [];
     }
 
     #[Apply(MessagePublished::class)]
     protected function applyMessagePublished(MessagePublished $event): void
     {
-        $this->messages[] = $event->message();
+        $this->messages[] = $event->message;
     }
 
     public function aggregateRootId(): string

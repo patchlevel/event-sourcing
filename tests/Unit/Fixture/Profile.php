@@ -33,28 +33,28 @@ final class Profile extends AggregateRoot
     public static function createProfile(ProfileId $id, Email $email): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $email));
+        $self->record(new ProfileCreated($id, $email));
 
         return $self;
     }
 
     public function publishMessage(Message $message): void
     {
-        $this->record(MessagePublished::raise(
+        $this->record(new MessagePublished(
             $message
         ));
     }
 
     public function deleteMessage(MessageId $messageId): void
     {
-        $this->record(MessageDeleted::raise(
+        $this->record(new MessageDeleted(
             $messageId
         ));
     }
 
     public function visitProfile(ProfileId $profileId): void
     {
-        $this->record(ProfileVisited::raise($profileId));
+        $this->record(new ProfileVisited($profileId));
     }
 
     #[Apply(ProfileCreated::class)]
@@ -62,8 +62,8 @@ final class Profile extends AggregateRoot
     protected function applyProfileCreated(ProfileCreated|ProfileVisited $event): void
     {
         if ($event instanceof ProfileCreated) {
-            $this->id = $event->profileId();
-            $this->email = $event->email();
+            $this->id = $event->profileId;
+            $this->email = $event->email;
 
             return;
         }
