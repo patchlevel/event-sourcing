@@ -62,7 +62,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1', 'John');
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -106,7 +106,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1', 'John');
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -148,7 +148,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1', 'John');
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -193,7 +193,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1', 'John');
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
