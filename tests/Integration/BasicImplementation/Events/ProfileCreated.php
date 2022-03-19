@@ -9,5 +9,6 @@ final class ProfileCreated
     public function __construct(
         public string $profileId,
         public string $name
-    ) {}
+    ) {
+    }
 }

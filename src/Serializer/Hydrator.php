@@ -1,19 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Serializer;
 
 use Patchlevel\EventSourcing\Attribute\Normalize;
 use ReflectionClass;
 use ReflectionProperty;
+use TypeError;
 
 final class Hydrator
 {
     /**
-     * @template T of object
-     *
-     * @param class-string<T> $class
+     * @param class-string<T>      $class
      * @param array<string, mixed> $data
+     *
      * @return T
+     *
+     * @template T of object
      */
     public function hydrate(string $class, array $data): object
     {
@@ -33,7 +37,11 @@ final class Hydrator
                 $value = $attributeInstance->normalizer()->denormalize($value);
             }
 
-            $property->setValue($object, $value);
+            try {
+                $property->setValue($object, $value);
+            } catch (TypeError $error) {
+                throw $error; // todo create own exception
+            }
         }
 
         return $object;

@@ -8,7 +8,6 @@ final class MessageDeleted
 {
     public function __construct(
         public MessageId $messageId
-    )
-    {
+    ) {
     }
 }

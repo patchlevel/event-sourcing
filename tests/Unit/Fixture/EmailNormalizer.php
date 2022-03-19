@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Serializer\Normalizer;
+
+use function is_string;
 
 class EmailNormalizer implements Normalizer
 {

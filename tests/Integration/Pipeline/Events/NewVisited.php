@@ -8,5 +8,6 @@ final class NewVisited
 {
     public function __construct(
         public string $profileId
-    ) {}
+    ) {
+    }
 }
