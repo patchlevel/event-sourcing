@@ -33,7 +33,7 @@ abstract class AggregateRoot
 
         if (!array_key_exists($event::class, $metadata->applyMethods)) {
             if (!$metadata->suppressAll && !array_key_exists($event::class, $metadata->suppressEvents)) {
-                throw new ApplyAttributeNotFound($this, $event);
+                throw new ApplyMethodNotFound($this, $event);
             }
 
             return;
