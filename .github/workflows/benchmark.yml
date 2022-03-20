@@ -62,7 +62,9 @@ jobs:
       - name: "Get Bench Result"
         id: phpbench
         run: |
-          echo "::set-env name=bench::$(<bench.txt)"
+          echo 'BENCH_RESULT<<EOF' >> $GITHUB_ENV
+          cat bench.txt >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
 
       - name: "Echo for testing"
         run: |
@@ -86,7 +88,7 @@ jobs:
             Benchmark Result:
             
             \`\`\`
-            ${{ env.bench }}
+            ${{ env.BENCH_RESULT }}
             \`\`\`
             
             `;
