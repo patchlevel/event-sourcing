@@ -64,6 +64,11 @@ jobs:
         run: |
           echo "::set-output name=bench::$(<bench.txt)"
 
+      - name: "Echo for testing"
+        run: |
+          echo ${{ steps.phpbench.outputs.bench }}
+          cat bench.txt
+
       - uses: actions/github-script@v6
         with:
           script: |
