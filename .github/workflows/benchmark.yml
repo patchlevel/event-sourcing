@@ -73,7 +73,7 @@ jobs:
             const botComment = comments.find(comment => comment.user.id === 41898282)                                                                       
             const commentBody = "Hello from actions/github-script! (${{ github.sha }})"
 
-            if (context.payload.pull_request.head.repo.full_name !== 'actions/github-script') {
+            if (context.payload.pull_request.head.repo.full_name !== 'patchlevel/event-sourcing') {
               console.log('Not attempting to write comment on PR from fork');
             } else {
               if (botComment) {
