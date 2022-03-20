@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Target;
 
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\AttributeProjectionMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection;
-use Patchlevel\EventSourcing\Projection\ProjectionMetadataFactory;
-
 use function array_key_exists;
 
 final class ProjectionTarget implements Target
@@ -26,7 +25,7 @@ final class ProjectionTarget implements Target
 
     public function save(Message $message): void
     {
-        $metadata = $this->metadataFactory->metadata($this->projection);
+        $metadata = $this->metadataFactory->metadata($this->projection::class);
         $event = $message->event();
 
         if (!array_key_exists($event::class, $metadata->handleMethods)) {

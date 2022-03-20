@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 
 use function array_key_exists;
 
@@ -29,7 +31,7 @@ final class DefaultProjectionHandler implements ProjectionHandler
         $event = $message->event();
 
         foreach ($this->projections as $projection) {
-            $metadata = $this->metadataFactor->metadata($projection);
+            $metadata = $this->metadataFactor->metadata($projection::class);
 
             if (!array_key_exists($event::class, $metadata->handleMethods)) {
                 continue;
@@ -51,7 +53,7 @@ final class DefaultProjectionHandler implements ProjectionHandler
     public function create(): void
     {
         foreach ($this->projections as $projection) {
-            $metadata = $this->metadataFactor->metadata($projection);
+            $metadata = $this->metadataFactor->metadata($projection::class);
             $method = $metadata->createMethod;
 
             if (!$method) {
@@ -65,7 +67,7 @@ final class DefaultProjectionHandler implements ProjectionHandler
     public function drop(): void
     {
         foreach ($this->projections as $projection) {
-            $metadata = $this->metadataFactor->metadata($projection);
+            $metadata = $this->metadataFactor->metadata($projection::class);
             $method = $metadata->dropMethod;
 
             if (!$method) {

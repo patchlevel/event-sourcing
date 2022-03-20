@@ -6,9 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\ApplyAttributeNotFound;
-use Patchlevel\EventSourcing\Aggregate\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\EventBus\Message as EventBusMessage;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;

@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Projection;
+namespace Patchlevel\EventSourcing\Metadata\Projection;
+
+use Patchlevel\EventSourcing\Metadata\MetadataException;
+use Patchlevel\EventSourcing\Projection\Projection;
 
 use function sprintf;
 
-final class DuplicateHandleMethod extends ProjectionException
+final class DuplicateHandleMethod extends MetadataException
 {
     /**
      * @param class-string<Projection> $projection
