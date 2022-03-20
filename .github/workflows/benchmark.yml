@@ -57,7 +57,7 @@ jobs:
         run: "vendor/bin/phpbench log"
 
       - name: "phpbench diff"
-        run: "vendor/bin/phpbench run tests/Benchmark --report=default --ref=base >&1 | tee bench.txt"
+        run: "vendor/bin/phpbench run tests/Benchmark --report=default --ref=base > bench.txt"
 
       - name: "Get Bench Result"
         id: phpbench
