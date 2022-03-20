@@ -59,7 +59,7 @@ jobs:
       - name: "phpbench diff"
         run: "vendor/bin/phpbench run tests/Benchmark --report=default --ref=base"
 
-      - uses: ./
+      - uses: actions/github-script@v6
         with:
           script: |
             // Get the existing comments.
