@@ -24,9 +24,6 @@ jobs:
                     - "ubuntu-latest"
 
         steps:
-            - name: "Checkout"
-              uses: actions/checkout@v3
-
             - name: "Install PHP"
               uses: "shivammathur/setup-php@v2"
               with:
@@ -35,9 +32,30 @@ jobs:
                   ini-values: memory_limit=-1
                   extensions: pdo_sqlite
 
+            - name: "Checkout base"
+              uses: actions/checkout@v3
+              with:
+                ref: ${{ github.base_ref }}
+
             - uses: ramsey/composer-install@2.1.0
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
-            - name: "PHPStan"
-              run: "vendor/bin/phpbench run tests/Benchmark --report=default"
+            - name: "phpbench on base"
+              run: "vendor/bin/phpbench run tests/Benchmark --report=default --tag=base"
+
+            - name: "Cache base"
+              uses: actions/cache@v2
+              with:
+                path: ./phpbench
+                key: ${{ runner.os }}-phpbench-${{ hashFiles('./phpbench') }}
+
+            - name: "Checkout"
+              uses: actions/checkout@v3
+
+            - uses: ramsey/composer-install@2.1.0
+              with:
+                dependency-versions: ${{ matrix.dependencies }}
+
+            - name: "phpbench on base"
+              run: "vendor/bin/phpbench run tests/Benchmark --report=default --ref=base"
