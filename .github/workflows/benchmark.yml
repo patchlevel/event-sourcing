@@ -54,7 +54,7 @@ jobs:
           dependency-versions: ${{ matrix.dependencies }}
 
       - name: "phpbench diff"
-        run: "vendor/bin/phpbench run tests/Benchmark --progress=none --report=aggregate --ref=base > bench.txt"
+        run: "vendor/bin/phpbench run tests/Benchmark --report=aggregate --ref=base > bench.txt"
 
       - name: "Get Bench Result"
         id: phpbench
