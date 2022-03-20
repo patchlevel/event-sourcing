@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection;
+
 use function array_key_exists;
 
 final class ProjectionTarget implements Target

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Metadata\MetadataException;
+
 use function sprintf;
 
 final class DuplicateApplyMethod extends MetadataException

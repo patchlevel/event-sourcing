@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
 /**
  * @internal
  */

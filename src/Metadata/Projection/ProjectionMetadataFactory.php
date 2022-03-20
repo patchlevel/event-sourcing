@@ -10,7 +10,6 @@ interface ProjectionMetadataFactory
 {
     /**
      * @param class-string<Projection> $projection
-     * @return ProjectionMetadata
      */
     public function metadata(string $projection): ProjectionMetadata;
 }
