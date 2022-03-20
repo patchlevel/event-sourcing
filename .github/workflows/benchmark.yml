@@ -62,7 +62,7 @@ jobs:
       - name: "Get Bench Result"
         id: phpbench
         run: |
-          echo "::set-output name=bench::$(cat bench.txt)"
+          echo "::set-output name=bench::$(<bench.txt)"
 
       - uses: actions/github-script@v6
         with:
