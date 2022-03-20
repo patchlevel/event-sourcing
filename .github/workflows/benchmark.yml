@@ -41,14 +41,18 @@ jobs:
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
-            - name: "phpbench on base"
-              run: "vendor/bin/phpbench run tests/Benchmark --report=default --tag=base"
-
             - name: "Cache base"
               uses: actions/cache@v2
               with:
                 path: ./phpbench
-                key: ${{ runner.os }}-phpbench-${{ hashFiles('./phpbench') }}
+                key: phpbench-${{ runner.os }}-${{ matrix.php-version }}-${{ hashFiles('./phpbench') }}
+                restore-keys: |
+                  phpbench-${{ runner.os }}-${{ matrix.php-version }}-
+                  phpbench-${{ runner.os }}-
+                  phpbench-
+
+            - name: "phpbench on base"
+              run: "vendor/bin/phpbench run tests/Benchmark --report=default --tag=base"
 
             - name: "Checkout"
               uses: actions/checkout@v3
@@ -57,5 +61,5 @@ jobs:
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
-            - name: "phpbench on base"
+            - name: "phpbench diff"
               run: "vendor/bin/phpbench run tests/Benchmark --report=default --ref=base"
