@@ -28,7 +28,7 @@ class SymfonyEventBusTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('d.badura@gmx.de')
             )
@@ -64,7 +64,7 @@ class SymfonyEventBusTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('d.badura@gmx.de')
             )

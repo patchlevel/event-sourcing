@@ -24,7 +24,7 @@ class ExcludeEventMiddlewareTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
             )
@@ -43,7 +43,7 @@ class ExcludeEventMiddlewareTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileVisited::raise(
+            new ProfileVisited(
                 ProfileId::fromString('1')
             )
         );

@@ -56,23 +56,12 @@ First we define the events that happen in our system.
 A hotel can be created with a `name`:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
-final class HotelCreated extends AggregateChanged
+final class HotelCreated
 {
-    public static function raise(string $id, string $hotelName): static 
-    {
-        return new static(['hotelId' => $id, 'hotelName' => $hotelName]);
-    }
-
-    public function hotelId(): string
-    {
-        return $this->payload['hotelId'];
-    }
-
-    public function hotelName(): string
-    {
-        return $this->payload['hotelName'];
+    public function __construct(
+        public readonly string $hotelId,
+        public readonly string $hotelName
+    ) {
     }
 }
 ```
@@ -80,18 +69,11 @@ final class HotelCreated extends AggregateChanged
 A guest can check in by name:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
-final class GuestIsCheckedIn extends AggregateChanged
+final class GuestIsCheckedIn
 {
-    public static function raise(string $guestName): static 
-    {
-        return new static(['guestName' => $guestName]);
-    }
-
-    public function guestName(): string
-    {
-        return $this->payload['guestName'];
+    public function __construct(
+        public readonly string $guestName
+    ) {
     }
 }
 ```
@@ -99,18 +81,11 @@ final class GuestIsCheckedIn extends AggregateChanged
 And also check out again:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-
-final class GuestIsCheckedOut extends AggregateChanged
+final class GuestIsCheckedOut
 {
-    public static function raise(string $guestName): static 
-    {
-        return new static(['guestName' => $guestName]);
-    }
-
-    public function guestName(): string
-    {
-        return $this->payload['guestName'];
+    public function __construct(
+        public readonly string $guestName
+    ) {
     }
 }
 ```
@@ -149,7 +124,7 @@ final class Hotel extends AggregateRoot
     public static function create(string $id, string $hotelName): static
     {
         $self = new static();
-        $self->record(HotelCreated::raise($id, $hotelName));
+        $self->record(new HotelCreated($id, $hotelName));
 
         return $self;
     }
@@ -160,7 +135,7 @@ final class Hotel extends AggregateRoot
             throw new GuestHasAlreadyCheckedIn($guestName);
         }
     
-        $this->record(GuestIsCheckedIn::raise($guestName));
+        $this->record(new GuestIsCheckedIn($guestName));
     }
     
     public function checkOut(string $guestName): void
@@ -169,21 +144,21 @@ final class Hotel extends AggregateRoot
             throw new IsNotAGuest($guestName);
         }
     
-        $this->record(GuestIsCheckedOut::raise($guestName));
+        $this->record(new GuestIsCheckedOut($guestName));
     }
     
     #[Apply(HotelCreated::class)]
     protected function applyHotelCreated(HotelCreated $event): void 
     {
-        $this->id = $event->hotelId();
-        $this->name = $event->hotelName();
+        $this->id = $event->hotelId;
+        $this->name = $event->hotelName;
         $this->guests = [];    
     }
     
     #[Apply(GuestIsCheckedIn::class)]
     protected function applyGuestIsCheckedIn(GuestIsCheckedIn $event): void 
     {
-        $this->guests[] = $event->guestName();
+        $this->guests[] = $event->guestName;
     }
     
     #[Apply(GuestIsCheckedOut::class)]
@@ -192,7 +167,7 @@ final class Hotel extends AggregateRoot
         $this->guests = array_values(
             array_filter(
                 $this->guests,
-                fn ($name) => $name !== $event->guestName();
+                fn ($name) => $name !== $event->guestName;
             )
         );
     }
@@ -234,8 +209,8 @@ final class HotelProjection implements Projection
         $this->db->insert(
             'hotel', 
             [
-                'id' => $event->hotelId(), 
-                'name' => $event->hotelName(),
+                'id' => $event->hotelId, 
+                'name' => $event->hotelName,
                 'guests' => 0
             ]
         );
@@ -303,7 +278,7 @@ final class SendCheckInEmailListener implements Listener
         $this->mailer->send(
             'hq@patchlevel.de',
             'Guest is checked in',
-            sprintf('A new guest named "%s" is checked in', $event->guestName())
+            sprintf('A new guest named "%s" is checked in', $event->guestName)
         );
     }
 }

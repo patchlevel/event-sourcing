@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Throwable;
 
 use function sprintf;
 
 final class DeserializationNotPossible extends SerializeException
 {
-    /** @var class-string<AggregateChanged> */
+    /** @var class-string */
     private string $eventClass;
     private string $data;
 
     /**
-     * @param class-string<AggregateChanged> $eventClass
+     * @param class-string $eventClass
      */
     public function __construct(string $eventClass, string $data, ?Throwable $previous = null)
     {
@@ -35,7 +34,7 @@ final class DeserializationNotPossible extends SerializeException
     }
 
     /**
-     * @return class-string<AggregateChanged>
+     * @return class-string
      */
     public function eventClass(): string
     {

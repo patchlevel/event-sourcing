@@ -34,7 +34,7 @@ class DefaultEventBusTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('d.badura@gmx.de')
             )
@@ -61,7 +61,7 @@ class DefaultEventBusTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('d.badura@gmx.de')
             )
@@ -80,7 +80,7 @@ class DefaultEventBusTest extends TestCase
             Profile::class,
             '1',
             1,
-            ProfileCreated::raise(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('d.badura@gmx.de')
             )
@@ -107,7 +107,7 @@ class DefaultEventBusTest extends TestCase
                     Profile::class,
                     '1',
                     1,
-                    ProfileVisited::raise(
+                    new ProfileVisited(
                         ProfileId::fromString('1'),
                     )
                 );

@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 use function is_string;
 
@@ -15,12 +14,12 @@ final class SuppressMissingApply
 {
     public const ALL = '*';
 
-    /** @var list<class-string<AggregateChanged>> */
+    /** @var list<class-string> */
     private array $suppressEvents = [];
     private bool $suppressAll = false;
 
     /**
-     * @param list<class-string<AggregateChanged>>|string $suppress
+     * @param list<class-string>|string $suppress
      */
     public function __construct(string|array $suppress)
     {
@@ -40,7 +39,7 @@ final class SuppressMissingApply
     }
 
     /**
-     * @return list<class-string<AggregateChanged>>
+     * @return list<class-string>
      */
     public function suppressEvents(): array
     {

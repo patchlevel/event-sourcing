@@ -4,23 +4,22 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\EventBus\Message;
 
 /**
- * @template T of AggregateChanged
+ * @template T of object
  */
 final class ReplaceEventMiddleware implements Middleware
 {
     /** @var class-string<T> */
     private string $class;
 
-    /** @var callable(T $event):AggregateChanged<array<string, mixed>> */
+    /** @var callable(T $event):object */
     private $callable;
 
     /**
      * @param class-string<T> $class
-     * @param callable(T      $event):AggregateChanged<array<string, mixed>> $callable
+     * @param callable(T      $event):object $callable
      */
     public function __construct(string $class, callable $callable)
     {

@@ -16,7 +16,7 @@ class JsonSerializerTest extends TestCase
 {
     public function testSerialize(): void
     {
-        $event = ProfileCreated::raise(
+        $event = new ProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('info@patchlevel.de')
         );
@@ -29,7 +29,7 @@ class JsonSerializerTest extends TestCase
 
     public function testSerializeNotNormalizedEvent(): void
     {
-        $event = NotNormalizedProfileCreated::raise(
+        $event = new NotNormalizedProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('info@patchlevel.de')
         );
@@ -42,7 +42,7 @@ class JsonSerializerTest extends TestCase
 
     public function testDeserialize(): void
     {
-        $expected = ProfileCreated::raise(
+        $expected = new ProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('info@patchlevel.de')
         );

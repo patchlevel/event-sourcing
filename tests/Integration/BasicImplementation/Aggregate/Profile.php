@@ -7,21 +7,22 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggrega
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
 
 final class Profile extends SnapshotableAggregateRoot
 {
-    private string $id;
+    private ProfileId $id;
     private string $name;
 
     public function aggregateRootId(): string
     {
-        return $this->id;
+        return $this->id->toString();
     }
 
-    public static function create(string $id, string $name): self
+    public static function create(ProfileId $id, string $name): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $name));
+        $self->record(new ProfileCreated($id, $name));
 
         return $self;
     }
@@ -29,8 +30,8 @@ final class Profile extends SnapshotableAggregateRoot
     #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
-        $this->id = $event->profileId();
-        $this->name = $event->name();
+        $this->id = $event->profileId;
+        $this->name = $event->name;
     }
 
     /**
@@ -39,7 +40,7 @@ final class Profile extends SnapshotableAggregateRoot
     protected function serialize(): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->id->toString(),
             'name' => $this->name,
         ];
     }
@@ -50,7 +51,7 @@ final class Profile extends SnapshotableAggregateRoot
     protected static function deserialize(array $payload): static
     {
         $self = new static();
-        $self->id = $payload['id'];
+        $self->id = ProfileId::fromString($payload['id']);
         $self->name = $payload['name'];
 
         return $self;

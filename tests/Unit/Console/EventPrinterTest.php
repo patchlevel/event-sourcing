@@ -45,7 +45,7 @@ final class EventPrinterTest extends TestCase
             )
         )->shouldBeCalledOnce();
 
-        $event = ProfileCreated::raise(
+        $event = new ProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('foo@bar.com')
         );

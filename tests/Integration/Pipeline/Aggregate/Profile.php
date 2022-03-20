@@ -10,34 +10,35 @@ use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\OldVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\PrivacyAdded;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Integration\Pipeline\ProfileId;
 
 final class Profile extends AggregateRoot
 {
-    private string $id;
+    private ProfileId $id;
     private bool $privacy;
     private int $visited;
 
     public function aggregateRootId(): string
     {
-        return $this->id;
+        return $this->id->toString();
     }
 
-    public static function create(string $id): self
+    public static function create(ProfileId $id): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id));
+        $self->record(new ProfileCreated($id));
 
         return $self;
     }
 
     public function visit(): void
     {
-        $this->record(OldVisited::raise($this->id));
+        $this->record(new OldVisited($this->id));
     }
 
     public function privacy(): void
     {
-        $this->record(PrivacyAdded::raise($this->id));
+        $this->record(new PrivacyAdded($this->id));
     }
 
     public function isPrivate(): bool
@@ -53,7 +54,7 @@ final class Profile extends AggregateRoot
     #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
-        $this->id = $event->profileId();
+        $this->id = $event->profileId;
         $this->privacy = false;
         $this->visited = 0;
     }

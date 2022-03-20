@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Attribute\Normalize;
+use Patchlevel\EventSourcing\Tests\Integration\Pipeline\EventNormalizer\ProfileIdNormalizer;
+use Patchlevel\EventSourcing\Tests\Integration\Pipeline\ProfileId;
 
-/**
- * @template-extends AggregateChanged<array{id: string}>
- */
-final class NewVisited extends AggregateChanged
+final class NewVisited
 {
-    public static function raise(string $id): static
-    {
-        return new static(['id' => $id]);
-    }
-
-    public function profileId(): string
-    {
-        return $this->payload['id'];
+    public function __construct(
+        #[Normalize(ProfileIdNormalizer::class)]
+        public ProfileId $profileId
+    ) {
     }
 }

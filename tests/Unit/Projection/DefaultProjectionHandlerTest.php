@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
@@ -26,7 +25,7 @@ final class DefaultProjectionHandlerTest extends TestCase
 
     public function testHandleWithNoProjections(): void
     {
-        $event = ProfileCreated::raise(
+        $event = new ProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('profile@test.com')
         );
@@ -47,7 +46,7 @@ final class DefaultProjectionHandlerTest extends TestCase
     public function testHandle(): void
     {
         $projection = new class implements Projection {
-            public static ?AggregateChanged $handledEvent = null;
+            public static ?object $handledEvent = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(ProfileCreated $event): void
@@ -56,7 +55,7 @@ final class DefaultProjectionHandlerTest extends TestCase
             }
         };
 
-        $event = ProfileCreated::raise(
+        $event = new ProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('profile@test.com')
         );
@@ -86,7 +85,7 @@ final class DefaultProjectionHandlerTest extends TestCase
             }
         };
 
-        $event = ProfileCreated::raise(
+        $event = new ProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('profile@test.com')
         );
@@ -107,7 +106,7 @@ final class DefaultProjectionHandlerTest extends TestCase
     public function testHandleNotSupportedEvent(): void
     {
         $projection = new class implements Projection {
-            public static ?AggregateChanged $handledEvent = null;
+            public static ?object $handledEvent = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(ProfileCreated $event): void
@@ -116,7 +115,7 @@ final class DefaultProjectionHandlerTest extends TestCase
             }
         };
 
-        $event = ProfileVisited::raise(
+        $event = new ProfileVisited(
             ProfileId::fromString('1')
         );
 

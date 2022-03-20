@@ -45,7 +45,7 @@ class SnapshotableAggregateRootTest extends TestCase
                 ProfileWithSnapshot::class,
                 '1',
                 2,
-                MessagePublished::raise(
+                new MessagePublished(
                     MessageDomain::create(
                         MessageId::fromString('2'),
                         'message value'
@@ -77,7 +77,7 @@ class SnapshotableAggregateRootTest extends TestCase
                 ProfileWithSnapshot::class,
                 '1',
                 2,
-                MessagePublished::raise(
+                new MessagePublished(
                     MessageDomain::create(
                         MessageId::fromString('2'),
                         'message value'
@@ -111,7 +111,7 @@ class SnapshotableAggregateRootTest extends TestCase
                 ProfileWithSnapshot::class,
                 '1',
                 5,
-                MessagePublished::raise(
+                new MessagePublished(
                     MessageDomain::create(
                         MessageId::fromString('2'),
                         'message value'

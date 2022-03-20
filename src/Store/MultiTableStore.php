@@ -8,7 +8,6 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Generator;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\JsonSerializer;
@@ -59,7 +58,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var list<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: class-string, payload: string, recorded_on: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -141,7 +140,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 ->getSQL();
 
             /**
-             * @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $query
+             * @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: class-string, payload: string, recorded_on: string}> $query
              */
             $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 

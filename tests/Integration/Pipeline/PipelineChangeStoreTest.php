@@ -64,7 +64,7 @@ final class PipelineChangeStoreTest extends TestCase
         $oldRepository = new DefaultRepository($oldStore, new DefaultEventBus(), Profile::class);
         $newRepository = new DefaultRepository($newStore, new DefaultEventBus(), Profile::class);
 
-        $profile = Profile::create('1');
+        $profile = Profile::create(ProfileId::fromString('1'));
         $profile->visit();
         $profile->privacy();
         $profile->visit();
@@ -83,7 +83,7 @@ final class PipelineChangeStoreTest extends TestCase
             [
                 new ExcludeEventMiddleware([PrivacyAdded::class]),
                 new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
-                    return NewVisited::raise($oldVisited->profileId());
+                    return new NewVisited($oldVisited->profileId);
                 }),
                 new RecalculatePlayheadMiddleware(),
             ]

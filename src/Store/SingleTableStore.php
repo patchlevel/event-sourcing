@@ -8,7 +8,6 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Generator;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\JsonSerializer;
@@ -58,7 +57,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var list<array{aggregate_id: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: class-string, payload: string, recorded_on: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -162,7 +161,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
          *     aggregate_id: string,
          *     aggregate: string,
          *     playhead: string,
-         *     event: class-string<AggregateChanged<array<string, mixed>>>,
+         *     event: class-string,
          *     payload: string,
          *     recorded_on: string
          * }> $result

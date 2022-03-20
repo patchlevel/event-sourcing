@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Serializer;
 
 use JsonException;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 use function json_decode;
 use function json_encode;
@@ -14,10 +13,19 @@ use const JSON_THROW_ON_ERROR;
 
 final class JsonSerializer implements Serializer
 {
-    public function serialize(AggregateChanged $event): string
+    private Hydrator $hydrator;
+
+    public function __construct(?Hydrator $hydrator = null)
     {
+        $this->hydrator = $hydrator ?? new DefaultHydrator();
+    }
+
+    public function serialize(object $event): string
+    {
+        $data = $this->hydrator->extract($event);
+
         try {
-            return json_encode($event->payload(), JSON_THROW_ON_ERROR);
+            return json_encode($data, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw new SerializationNotPossible($event, $e);
         }
@@ -28,9 +36,9 @@ final class JsonSerializer implements Serializer
      *
      * @return T
      *
-     * @template T of AggregateChanged
+     * @template T of object
      */
-    public function deserialize(string $class, string $data): AggregateChanged
+    public function deserialize(string $class, string $data): object
     {
         try {
             /** @var array<string, mixed> $payload */
@@ -39,6 +47,6 @@ final class JsonSerializer implements Serializer
             throw new DeserializationNotPossible($class, $data, $e);
         }
 
-        return new $class($payload);
+        return $this->hydrator->hydrate($class, $payload);
     }
 }

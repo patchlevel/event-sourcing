@@ -28,7 +28,7 @@ abstract class AggregateRoot
 
     abstract public function aggregateRootId(): string;
 
-    protected function apply(AggregateChanged $event): void
+    protected function apply(object $event): void
     {
         $metadata = self::metadata();
 
@@ -44,10 +44,7 @@ abstract class AggregateRoot
         $this->$method($event);
     }
 
-    /**
-     * @param AggregateChanged<array<string, mixed>> $event
-     */
-    final protected function record(AggregateChanged $event): void
+    final protected function record(object $event): void
     {
         $this->playhead++;
 
@@ -129,7 +126,7 @@ abstract class AggregateRoot
 
             foreach ($attributes as $attribute) {
                 $instance = $attribute->newInstance();
-                $eventClass = $instance->aggregateChangedClass();
+                $eventClass = $instance->eventClass();
 
                 if (array_key_exists($eventClass, $metadata->applyMethods)) {
                     throw new DuplicateApplyMethod(

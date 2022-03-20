@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
@@ -23,7 +22,7 @@ class ProjectionTargetTest extends TestCase
 
     public function testSave(): void
     {
-        $event = ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
+        $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
 
         $message = new Message(
             Profile::class,
@@ -33,7 +32,7 @@ class ProjectionTargetTest extends TestCase
         );
 
         $projection = new class implements Projection {
-            public static ?AggregateChanged $handledEvent = null;
+            public static ?object $handledEvent = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(ProfileCreated $event): void
@@ -51,7 +50,7 @@ class ProjectionTargetTest extends TestCase
 
     public function testPassMessage(): void
     {
-        $event = ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
+        $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
 
         $message = new Message(
             Profile::class,

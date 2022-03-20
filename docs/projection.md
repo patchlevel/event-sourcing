@@ -14,7 +14,6 @@ In this example we always create a new data set in a relational database when a 
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
@@ -47,8 +46,8 @@ final class ProfileProjection implements Projection
         $this->connection->executeStatement(
             'INSERT INTO projection_profile (`id`, `name`) VALUES(:id, :name);',
             [
-                'id' => $profileCreated->profileId(),
-                'name' => $profileCreated->name()
+                'id' => $profileCreated->profileId,
+                'name' => $profileCreated->name
             ]
         );
     }

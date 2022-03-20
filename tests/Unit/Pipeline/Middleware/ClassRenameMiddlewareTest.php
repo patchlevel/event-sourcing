@@ -24,7 +24,7 @@ class ClassRenameMiddlewareTest extends TestCase
             AliasProfileCreated::class => ProfileCreated::class,
         ]);
 
-        $event = AliasProfileCreated::raise(
+        $event = new AliasProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de')
         );
@@ -45,7 +45,8 @@ class ClassRenameMiddlewareTest extends TestCase
 
         self::assertInstanceOf(ProfileCreated::class, $newEvent);
         self::assertNotInstanceOf(AliasProfileCreated::class, $newEvent);
-        self::assertSame($event->payload(), $newEvent->payload());
+        self::assertEquals($event->profileId, $newEvent->profileId);
+        self::assertEquals($event->email, $newEvent->email);
         self::assertSame($message->playhead(), $newMessage->playhead());
         self::assertSame($message->recordedOn(), $newMessage->recordedOn());
         self::assertSame($message->aggregateId(), $newMessage->aggregateId());
@@ -62,7 +63,7 @@ class ClassRenameMiddlewareTest extends TestCase
             Profile::class,
             '1',
             1,
-            AliasProfileCreated::raise(
+            new AliasProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
             )
