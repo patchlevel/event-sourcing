@@ -41,21 +41,13 @@ jobs:
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
-            - name: "Cache base"
-              uses: actions/cache@v2
-              with:
-                path: ./.phpbench
-                key: phpbench-${{ runner.os }}-${{ matrix.php-version }}-${{ hashFiles('./.phpbench') }}
-                restore-keys: |
-                  phpbench-${{ runner.os }}-${{ matrix.php-version }}-
-                  phpbench-${{ runner.os }}-
-                  phpbench-
-
             - name: "phpbench on base"
               run: "vendor/bin/phpbench run tests/Benchmark --report=default --tag=base"
 
             - name: "Checkout"
               uses: actions/checkout@v3
+              with:
+                clean: false
 
             - uses: ramsey/composer-install@2.1.0
               with:
