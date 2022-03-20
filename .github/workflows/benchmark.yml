@@ -61,5 +61,8 @@ jobs:
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
+            - name: "phpbench list"
+              run: "vendor/bin/phpbench log"
+
             - name: "phpbench diff"
               run: "vendor/bin/phpbench run tests/Benchmark --report=default --ref=base"
