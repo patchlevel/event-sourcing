@@ -77,12 +77,16 @@ jobs:
             const botComment = comments.find(comment => comment.user.id === 41898282)                                                                       
             const commentBody = `
             
-            Benchmark Result:
+            Hello :wave:
+          
+            here is the most recent benchmark result: 
             
             \`\`\`
             ${{ env.BENCH_RESULT }}
             \`\`\`
             
+            This comment gets update everytime a new commit comes in!
+
             `;
 
             if (context.payload.pull_request.head.repo.full_name !== 'patchlevel/event-sourcing') {
