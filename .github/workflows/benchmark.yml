@@ -79,12 +79,16 @@ jobs:
             
             Hello :wave:
           
-            here is the most recent benchmark result: 
+            <details>
+            <summary>here is the most recent benchmark result:</summary>
             
+            <p>
             \`\`\`
             ${{ env.BENCH_RESULT }}
             \`\`\`
-            
+            </p>            
+            </details>
+
             This comment gets update everytime a new commit comes in!
 
             `;
