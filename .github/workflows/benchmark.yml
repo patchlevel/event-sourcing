@@ -3,41 +3,114 @@
 name: "Benchmark"
 
 on:
-    pull_request:
-    push:
-        branches:
-            - "[0-9]+.[0-9]+.x"
+  pull_request:
+  push:
+    branches:
+      - "[0-9]+.[0-9]+.x"
 
 jobs:
-    phpbench:
-        name: "Benchmark"
+  phpbench:
+    name: "Benchmark"
 
-        runs-on: ${{ matrix.operating-system }}
+    runs-on: ${{ matrix.operating-system }}
 
-        strategy:
-            matrix:
-                dependencies:
-                    - "locked"
-                php-version:
-                    - "8.0"
-                operating-system:
-                    - "ubuntu-latest"
+    strategy:
+      matrix:
+        dependencies:
+          - "locked"
+        php-version:
+          - "8.0"
+        operating-system:
+          - "ubuntu-latest"
 
-        steps:
-            - name: "Checkout"
-              uses: actions/checkout@v3
+    steps:
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          coverage: "pcov"
+          php-version: "${{ matrix.php-version }}"
+          ini-values: memory_limit=-1
+          extensions: pdo_sqlite
 
-            - name: "Install PHP"
-              uses: "shivammathur/setup-php@v2"
-              with:
-                  coverage: "pcov"
-                  php-version: "${{ matrix.php-version }}"
-                  ini-values: memory_limit=-1
-                  extensions: pdo_sqlite
+      - name: "Checkout base"
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.base_ref }}
 
-            - uses: ramsey/composer-install@2.1.0
-              with:
-                dependency-versions: ${{ matrix.dependencies }}
+      - uses: ramsey/composer-install@2.1.0
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
 
-            - name: "PHPStan"
-              run: "vendor/bin/phpbench run tests/Benchmark --report=default"
+      - name: "phpbench on base"
+        run: "vendor/bin/phpbench run tests/Benchmark --progress=none --report=default --tag=base"
+
+      - name: "Checkout"
+        uses: actions/checkout@v3
+        with:
+          clean: false
+
+      - uses: ramsey/composer-install@2.1.0
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+
+      - name: "phpbench diff"
+        run: "vendor/bin/phpbench run tests/Benchmark --report=benchmark_compare --ref=base > bench.txt"
+
+      - name: "Get Bench Result"
+        id: phpbench
+        run: |
+          echo 'BENCH_RESULT<<EOF' >> $GITHUB_ENV
+          cat bench.txt >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            // Get the existing comments.
+            const {data: comments} = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.number,
+            })
+
+            // Find any comment already made by the bot.                                                                                                    
+            const botComment = comments.find(comment => comment.user.id === 41898282)                                                                       
+            const commentBody = `
+            
+            Hello :wave:
+          
+            <details>
+            <summary>here is the most recent benchmark result:</summary>
+            
+            <p>
+
+            \`\`\`
+            ${{ env.BENCH_RESULT }}
+            \`\`\`
+
+            </p>            
+            </details>
+
+            This comment gets update everytime a new commit comes in!
+
+            `;
+
+            if (context.payload.pull_request.head.repo.full_name !== 'patchlevel/event-sourcing') {
+              console.log('Not attempting to write comment on PR from fork');
+            } else {
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: commentBody
+                })
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.number,
+                  body: commentBody
+                })
+              }
+            }

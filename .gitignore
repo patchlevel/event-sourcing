@@ -5,3 +5,4 @@ phpunit.xml
 .phpcs-cache
 phpstan.neon
 infection.log
+.phpbench/
