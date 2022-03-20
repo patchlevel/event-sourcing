@@ -62,7 +62,7 @@ jobs:
       - name: "Get Bench Result"
         id: phpbench
         run: |
-          echo "::set-output name=bench::$(<bench.txt)"
+          echo "::set-env name=bench::$(<bench.txt)"
 
       - name: "Echo for testing"
         run: |
@@ -86,7 +86,7 @@ jobs:
             Benchmark Result:
             
             \`\`\`
-            ${{ steps.phpbench.outputs.bench }}
+            ${{ env.bench }}
             \`\`\`
             
             `;
