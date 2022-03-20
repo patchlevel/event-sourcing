@@ -7,12 +7,10 @@ namespace Patchlevel\EventSourcing\Serializer;
 use Patchlevel\EventSourcing\Attribute\Normalize;
 use ReflectionClass;
 use ReflectionProperty;
-use RuntimeException;
 use TypeError;
 
 use function array_key_exists;
 use function assert;
-use function is_string;
 
 final class DefaultHydrator implements Hydrator
 {
@@ -101,13 +99,9 @@ final class DefaultHydrator implements Hydrator
                 $normalizer = $attribute->normalizer();
             }
 
-            if (!is_string($property->name)) {
-                throw new RuntimeException('how?');
-            }
-
-            $metadata[$property->name] = [
+            $metadata[$property->getName()] = [
                 'reflection' => $property,
-                'fieldName' => self::fieldName($property),
+                'fieldName' => $property->getName(),
                 'normalizer' => $normalizer,
             ];
         }
@@ -127,10 +121,5 @@ final class DefaultHydrator implements Hydrator
         }
 
         return self::$reflectionClassCache[$class];
-    }
-
-    private static function fieldName(ReflectionProperty $property): string
-    {
-        return $property->getName();
     }
 }
