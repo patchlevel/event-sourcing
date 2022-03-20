@@ -53,11 +53,8 @@ jobs:
         with:
           dependency-versions: ${{ matrix.dependencies }}
 
-      - name: "phpbench list"
-        run: "vendor/bin/phpbench log"
-
       - name: "phpbench diff"
-        run: "vendor/bin/phpbench run tests/Benchmark --progress=none --report=default --ref=base > bench.txt"
+        run: "vendor/bin/phpbench run tests/Benchmark --progress=none --report=aggregate --ref=base > bench.txt"
 
       - name: "Get Bench Result"
         id: phpbench
@@ -65,11 +62,6 @@ jobs:
           echo 'BENCH_RESULT<<EOF' >> $GITHUB_ENV
           cat bench.txt >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
-
-      - name: "Echo for testing"
-        run: |
-          echo ${{ steps.phpbench.outputs.bench }}
-          cat bench.txt
 
       - uses: actions/github-script@v6
         with:
