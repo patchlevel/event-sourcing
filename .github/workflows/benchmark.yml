@@ -57,7 +57,12 @@ jobs:
         run: "vendor/bin/phpbench log"
 
       - name: "phpbench diff"
-        run: "vendor/bin/phpbench run tests/Benchmark --report=default --ref=base"
+        run: "vendor/bin/phpbench run tests/Benchmark --report=default --ref=base >&1 | tee bench.txt"
+
+      - name: "Get Bench Result"
+        id: phpbench
+        run: |
+          echo "::set-output name=bench::$(cat bench.txt)"
 
       - uses: actions/github-script@v6
         with:
@@ -71,7 +76,7 @@ jobs:
 
             // Find any comment already made by the bot.                                                                                                    
             const botComment = comments.find(comment => comment.user.id === 41898282)                                                                       
-            const commentBody = "Hello from actions/github-script! (${{ github.sha }})"
+            const commentBody = "Hello from actions/github-script! This is the bench result: ```${{ steps.phpbench.outputs.bench }}```"
 
             if (context.payload.pull_request.head.repo.full_name !== 'patchlevel/event-sourcing') {
               console.log('Not attempting to write comment on PR from fork');
