@@ -18,7 +18,7 @@ final class DuplicateDropMethod extends MetadataException
     {
         parent::__construct(
             sprintf(
-                'Two methods "%s" and "%s" on the projection "%s" has the "Drop" attribute.',
+                'Two methods "%s" and "%s" on the projection "%s" have been marked as "create" methods. Only one method can be defined like this.',
                 $fistMethod,
                 $secondMethod,
                 $projection,

@@ -19,7 +19,7 @@ final class DuplicateApplyMethod extends MetadataException
     {
         parent::__construct(
             sprintf(
-                'Two methods "%s" and "%s" on the aggregate "%s" want to apply the same event "%s".',
+                'Two methods "%s" and "%s" on the aggregate "%s" want to apply the same event "%s". Only one method can apply an event.',
                 $fistMethod,
                 $secondMethod,
                 $aggregate,

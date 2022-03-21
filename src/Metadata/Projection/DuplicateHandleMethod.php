@@ -19,7 +19,7 @@ final class DuplicateHandleMethod extends MetadataException
     {
         parent::__construct(
             sprintf(
-                'Two methods "%s" and "%s" on the projection "%s" want to handle the same event "%s".',
+                'Two methods "%s" and "%s" on the projection "%s" want to handle the same event "%s". Only one method can handle an event.',
                 $fistMethod,
                 $secondMethod,
                 $projection,
