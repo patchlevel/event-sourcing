@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use Patchlevel\EventSourcing\EventBus\Message;
-use ReflectionClass;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory;
 
 use function array_key_exists;
 
 abstract class AggregateRoot
 {
-    /** @var array<class-string<self>, AggregateRootMetadata> */
-    private static array $metadata = [];
+    private static ?AggregateRootMetadataFactory $metadataFactory = null;
 
     /** @var list<Message> */
     private array $uncommittedMessages = [];
@@ -34,7 +33,7 @@ abstract class AggregateRoot
 
         if (!array_key_exists($event::class, $metadata->applyMethods)) {
             if (!$metadata->suppressAll && !array_key_exists($event::class, $metadata->suppressEvents)) {
-                throw new ApplyAttributeNotFound($this, $event);
+                throw new ApplyMethodNotFound($this, $event);
             }
 
             return;
@@ -96,51 +95,10 @@ abstract class AggregateRoot
 
     private static function metadata(): AggregateRootMetadata
     {
-        if (array_key_exists(static::class, self::$metadata)) {
-            return self::$metadata[static::class];
+        if (!self::$metadataFactory) {
+            self::$metadataFactory = new AttributeAggregateRootMetadataFactory();
         }
 
-        $metadata = new AggregateRootMetadata();
-
-        $reflector = new ReflectionClass(static::class);
-        $attributes = $reflector->getAttributes(SuppressMissingApply::class);
-
-        foreach ($attributes as $attribute) {
-            $instance = $attribute->newInstance();
-
-            if ($instance->suppressAll()) {
-                $metadata->suppressAll = true;
-
-                continue;
-            }
-
-            foreach ($instance->suppressEvents() as $event) {
-                $metadata->suppressEvents[$event] = true;
-            }
-        }
-
-        $methods = $reflector->getMethods();
-
-        foreach ($methods as $method) {
-            $attributes = $method->getAttributes(Apply::class);
-
-            foreach ($attributes as $attribute) {
-                $instance = $attribute->newInstance();
-                $eventClass = $instance->eventClass();
-
-                if (array_key_exists($eventClass, $metadata->applyMethods)) {
-                    throw new DuplicateApplyMethod(
-                        self::class,
-                        $eventClass,
-                        $metadata->applyMethods[$eventClass],
-                        $method->getName()
-                    );
-                }
-
-                $metadata->applyMethods[$eventClass] = $method->getName();
-            }
-        }
-
-        return $metadata;
+        return self::$metadataFactory->metadata(static::class);
     }
 }

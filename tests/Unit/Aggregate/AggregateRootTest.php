@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\ApplyAttributeNotFound;
-use Patchlevel\EventSourcing\Aggregate\DuplicateApplyMethod;
+use Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound;
 use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\EventBus\Message as EventBusMessage;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
@@ -110,7 +110,7 @@ class AggregateRootTest extends TestCase
 
     public function testEventWithoutApplyMethod(): void
     {
-        $this->expectException(ApplyAttributeNotFound::class);
+        $this->expectException(ApplyMethodNotFound::class);
 
         $profileId = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');

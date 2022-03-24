@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Aggregate;
+namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 /**
  * @internal

@@ -2,15 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
+namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Projection;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\Projection\AttributeProjectionMetadataFactory;
-use Patchlevel\EventSourcing\Projection\MetadataException;
+use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projection\DuplicateCreateMethod;
+use Patchlevel\EventSourcing\Metadata\Projection\DuplicateDropMethod;
+use Patchlevel\EventSourcing\Metadata\Projection\ProjectionHandleMetadata;
 use Patchlevel\EventSourcing\Projection\Projection;
-use Patchlevel\EventSourcing\Projection\ProjectionHandleMetadata;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,7 @@ class AttributeProjectionMetadataFactoryTest extends TestCase
         };
 
         $metadataFactory = new AttributeProjectionMetadataFactory();
-        $metadata = $metadataFactory->metadata($projection);
+        $metadata = $metadataFactory->metadata($projection::class);
 
         self::assertSame([], $metadata->handleMethods);
         self::assertNull($metadata->createMethod);
@@ -50,7 +51,7 @@ class AttributeProjectionMetadataFactoryTest extends TestCase
         };
 
         $metadataFactory = new AttributeProjectionMetadataFactory();
-        $metadata = $metadataFactory->metadata($projection);
+        $metadata = $metadataFactory->metadata($projection::class);
 
         self::assertEquals(
             [ProfileVisited::class => new ProjectionHandleMetadata('handle')],
@@ -72,7 +73,7 @@ class AttributeProjectionMetadataFactoryTest extends TestCase
         };
 
         $metadataFactory = new AttributeProjectionMetadataFactory();
-        $metadata = $metadataFactory->metadata($projection);
+        $metadata = $metadataFactory->metadata($projection::class);
 
         self::assertEquals(
             [
@@ -85,7 +86,7 @@ class AttributeProjectionMetadataFactoryTest extends TestCase
 
     public function testDuplicateCreateAttributeException(): void
     {
-        $this->expectException(MetadataException::class);
+        $this->expectException(DuplicateCreateMethod::class);
 
         $projection = new class implements Projection {
             #[Create]
@@ -100,12 +101,12 @@ class AttributeProjectionMetadataFactoryTest extends TestCase
         };
 
         $metadataFactory = new AttributeProjectionMetadataFactory();
-        $metadataFactory->metadata($projection);
+        $metadataFactory->metadata($projection::class);
     }
 
     public function testDuplicateDropAttributeException(): void
     {
-        $this->expectException(MetadataException::class);
+        $this->expectException(DuplicateDropMethod::class);
 
         $projection = new class implements Projection {
             #[Drop]
@@ -120,6 +121,6 @@ class AttributeProjectionMetadataFactoryTest extends TestCase
         };
 
         $metadataFactory = new AttributeProjectionMetadataFactory();
-        $metadataFactory->metadata($projection);
+        $metadataFactory->metadata($projection::class);
     }
 }

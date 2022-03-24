@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Projection;
+namespace Patchlevel\EventSourcing\Metadata\Projection;
+
+use Patchlevel\EventSourcing\Metadata\MetadataException;
+use Patchlevel\EventSourcing\Projection\Projection;
 
 use function sprintf;
 
-final class DuplicateHandleMethod extends ProjectionException
+final class DuplicateHandleMethod extends MetadataException
 {
     /**
      * @param class-string<Projection> $projection
@@ -16,7 +19,7 @@ final class DuplicateHandleMethod extends ProjectionException
     {
         parent::__construct(
             sprintf(
-                'Two methods "%s" and "%s" on the projection "%s" want to handle the same event "%s".',
+                'Two methods "%s" and "%s" on the projection "%s" want to handle the same event "%s". Only one method can handle an event.',
                 $fistMethod,
                 $secondMethod,
                 $projection,
