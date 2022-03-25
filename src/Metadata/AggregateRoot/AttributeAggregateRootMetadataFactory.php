@@ -8,7 +8,11 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;
-
+use ReflectionIntersectionType;
+use ReflectionNamedType;
+use ReflectionType;
+use ReflectionUnionType;
+use RuntimeException;
 use function array_key_exists;
 
 final class AttributeAggregateRootMetadataFactory implements AggregateRootMetadataFactory
@@ -49,10 +53,29 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         foreach ($methods as $method) {
             $attributes = $method->getAttributes(Apply::class);
 
-            foreach ($attributes as $attribute) {
-                $instance = $attribute->newInstance();
-                $eventClass = $instance->eventClass();
+            if ($attributes === []) {
+                continue;
+            }
 
+            $propertyType = $method->getParameters()[0]?->getType();
+            $eventClasses = [];
+
+            if ($propertyType === null || $propertyType instanceof ReflectionIntersectionType) {
+                throw new RuntimeException();
+            }
+
+            if ($propertyType instanceof ReflectionNamedType) {
+                $eventClasses[] = $propertyType->getName();
+            }
+
+            if ($propertyType instanceof ReflectionUnionType) {
+                $eventClasses = array_map(
+                    fn (ReflectionType $reflectionType) => $reflectionType->getName(),
+                    $propertyType->getTypes()
+                );
+            }
+
+            foreach ($eventClasses as $eventClass) {
                 if (array_key_exists($eventClass, $metadata->applyMethods)) {
                     throw new DuplicateApplyMethod(
                         $aggregate,

@@ -8,6 +8,9 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Clock;
 
+/**
+ * @psalm-immutable
+ */
 final class Message
 {
     /** @var class-string<AggregateRoot> */
