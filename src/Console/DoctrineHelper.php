@@ -50,10 +50,7 @@ class DoctrineHelper
          */
         unset($params['dbname'], $params['path'], $params['url']);
 
-        $tmpConnection = DriverManager::getConnection($params);
-        $tmpConnection->connect();
-
-        return $tmpConnection;
+        return DriverManager::getConnection($params);
     }
 
     public function hasDatabase(Connection $connection, string $databaseName): bool

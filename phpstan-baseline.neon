@@ -1,14 +1,9 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Console\\\\DoctrineHelper\\:\\:databaseName\\(\\) should return string but returns mixed\\.$#"
-			count: 2
-			path: src/Console/DoctrineHelper.php
-
-		-
-			message: "#^Unable to resolve the template type T in call to method Patchlevel\\\\EventSourcing\\\\Serializer\\\\Serializer\\:\\:deserialize\\(\\)$#"
+			message: "#^Cannot unset offset 'url' on array\\{charset\\?\\: string, dbname\\?\\: string, defaultTableOptions\\?\\: array\\<string, mixed\\>, default_dbname\\?\\: string, driver\\?\\: 'ibm_db2'\\|'mysqli'\\|'oci8'\\|'pdo_mysql'\\|'pdo_oci'\\|'pdo_pgsql'\\|'pdo_sqlite'\\|'pdo_sqlsrv'\\|'sqlsrv', driverClass\\?\\: class\\-string\\<Doctrine\\\\DBAL\\\\Driver\\>, driverOptions\\?\\: array, host\\?\\: string, \\.\\.\\.\\}\\.$#"
 			count: 1
-			path: src/Store/MultiTableStore.php
+			path: src/Console/DoctrineHelper.php
 
 		-
 			message: "#^While loop condition is always true\\.$#"

@@ -173,6 +173,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 throw new AggregateNotDefined($name);
             }
 
+            /** @var array{id: string, aggregate_id: string, playhead: string, event: class-string, payload: string, recorded_on: string}|null $eventData */
             $eventData = $queries[$name]->current();
 
             if ($eventData === null) {
