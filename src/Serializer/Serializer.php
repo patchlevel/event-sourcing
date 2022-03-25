@@ -6,7 +6,11 @@ namespace Patchlevel\EventSourcing\Serializer;
 
 interface Serializer
 {
-    public function serialize(object $event): string;
+    /**
+     * @param object $event
+     * @return array{name: string, payload: string}
+     */
+    public function serialize(object $event): array;
 
     /**
      * @param class-string<T> $class
@@ -15,5 +19,5 @@ interface Serializer
      *
      * @template T of object
      */
-    public function deserialize(string $class, string $data): object;
+    public function deserialize(string $eventName, string $data): object;
 }

@@ -35,7 +35,7 @@ final class DefaultWatchServer implements WatchServer
     private Serializer $serializer;
     private LoggerInterface $logger;
 
-    public function __construct(string $host, ?Serializer $serializer = null, ?LoggerInterface $logger = null)
+    public function __construct(string $host, Serializer $serializer = null, ?LoggerInterface $logger = null)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;

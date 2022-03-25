@@ -6,22 +6,17 @@ namespace Patchlevel\EventSourcing\Console;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\DefaultHydrator;
-use Patchlevel\EventSourcing\Serializer\Hydrator;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
-
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
 
 final class EventPrinter
 {
-    private Hydrator $hydrator;
+    private Serializer $serializer;
 
-    public function __construct(?Hydrator $hydrator = null)
+    public function __construct(?Serializer $serializer = null)
     {
-        $this->hydrator = $hydrator ?? new DefaultHydrator();
+        $this->serializer = $serializer ?? new JsonSerializer(null, true);
     }
 
     public function write(SymfonyStyle $console, Message $message): void
@@ -44,8 +39,6 @@ final class EventPrinter
             ],
         ]);
 
-        $payload = $this->hydrator->extract($event);
-
-        $console->block(json_encode($payload, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
+        $console->block($this->serializer->serialize($event));
     }
 }
