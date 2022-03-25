@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
+use Attribute;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionIntersectionType;
+use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
@@ -57,22 +60,17 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 continue;
             }
 
-            $propertyType = $method->getParameters()[0]?->getType();
-            $eventClasses = [];
+            $eventClassesByProperties = $this->getEventClassesByPropertyTypes($method);
+            $eventClassesByAttributes = $this->getEventClassesByAttributes($attributes);
 
-            if ($propertyType === null || $propertyType instanceof ReflectionIntersectionType) {
-                throw new RuntimeException();
-            }
+            $eventClasses = $eventClassesByAttributes;
 
-            if ($propertyType instanceof ReflectionNamedType) {
-                $eventClasses[] = $propertyType->getName();
-            }
+            foreach ($eventClassesByProperties as $classesByProperty) {
+                if (in_array($classesByProperty, $eventClassesByAttributes)) {
+                    continue;
+                }
 
-            if ($propertyType instanceof ReflectionUnionType) {
-                $eventClasses = array_map(
-                    fn (ReflectionType $reflectionType) => $reflectionType->getName(),
-                    $propertyType->getTypes()
-                );
+                $eventClasses[] = $classesByProperty;
             }
 
             foreach ($eventClasses as $eventClass) {
@@ -92,5 +90,42 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         $this->aggregateMetadata[$aggregate] = $metadata;
 
         return $metadata;
+    }
+
+    /**
+     * @param ReflectionMethod $method
+     *
+     * @return list<class-string>
+     */
+    private function getEventClassesByPropertyTypes(ReflectionMethod $method): array
+    {
+        $propertyType = $method->getParameters()[0]?->getType();
+
+        if ($propertyType === null || $propertyType instanceof ReflectionIntersectionType) {
+            throw new RuntimeException();
+        }
+
+        if ($propertyType instanceof ReflectionNamedType) {
+            return [$propertyType->getName()];
+        }
+
+        if ($propertyType instanceof ReflectionUnionType) {
+            return array_map(
+                fn(ReflectionNamedType $reflectionType) => $reflectionType->getName(),
+                $propertyType->getTypes()
+            );
+        }
+
+        throw new RuntimeException();
+    }
+
+    /**
+     * @param array<ReflectionAttribute> $attributes
+     *
+     * @return list<class-string>
+     */
+    private function getEventClassesByAttributes(array $attributes): array
+    {
+        return array_map(fn(ReflectionAttribute $attribute) => $attribute->newInstance()->eventClass(), $attributes);
     }
 }
