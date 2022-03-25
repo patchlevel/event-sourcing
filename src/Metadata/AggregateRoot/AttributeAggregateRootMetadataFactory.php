@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
-use Attribute;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
@@ -13,10 +12,12 @@ use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
-use ReflectionType;
 use ReflectionUnionType;
 use RuntimeException;
+
 use function array_key_exists;
+use function array_map;
+use function in_array;
 
 final class AttributeAggregateRootMetadataFactory implements AggregateRootMetadataFactory
 {
@@ -93,8 +94,6 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
     }
 
     /**
-     * @param ReflectionMethod $method
-     *
      * @return list<class-string>
      */
     private function getEventClassesByPropertyTypes(ReflectionMethod $method): array
@@ -111,7 +110,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
 
         if ($propertyType instanceof ReflectionUnionType) {
             return array_map(
-                fn(ReflectionNamedType $reflectionType) => $reflectionType->getName(),
+                static fn (ReflectionNamedType $reflectionType) => $reflectionType->getName(),
                 $propertyType->getTypes()
             );
         }
@@ -126,6 +125,6 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
      */
     private function getEventClassesByAttributes(array $attributes): array
     {
-        return array_map(fn(ReflectionAttribute $attribute) => $attribute->newInstance()->eventClass(), $attributes);
+        return array_map(static fn (ReflectionAttribute $attribute) => $attribute->newInstance()->eventClass(), $attributes);
     }
 }
