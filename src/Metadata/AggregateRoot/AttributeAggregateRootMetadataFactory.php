@@ -94,37 +94,53 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
     }
 
     /**
-     * @return list<class-string>
+     * @return array<class-string>
      */
     private function getEventClassesByPropertyTypes(ReflectionMethod $method): array
     {
-        $propertyType = $method->getParameters()[0]?->getType();
+        $propertyType = $method->getParameters()[0]->getType();
+        $eventClasses = [];
 
         if ($propertyType === null || $propertyType instanceof ReflectionIntersectionType) {
             throw new RuntimeException();
         }
 
         if ($propertyType instanceof ReflectionNamedType) {
-            return [$propertyType->getName()];
+            $eventClasses = [$propertyType->getName()];
         }
 
         if ($propertyType instanceof ReflectionUnionType) {
-            return array_map(
+            $eventClasses = array_map(
                 static fn (ReflectionNamedType $reflectionType) => $reflectionType->getName(),
                 $propertyType->getTypes()
             );
         }
 
-        throw new RuntimeException();
+        $this->checkEventClasses($eventClasses);
+
+        return $eventClasses;
     }
 
     /**
-     * @param array<ReflectionAttribute> $attributes
+     * @param array<ReflectionAttribute<Apply>> $attributes
      *
-     * @return list<class-string>
+     * @return array<class-string>
      */
     private function getEventClassesByAttributes(array $attributes): array
     {
         return array_map(static fn (ReflectionAttribute $attribute) => $attribute->newInstance()->eventClass(), $attributes);
+    }
+
+    /**
+     * @psalm-assert array<class-string> $eventClasses
+     * @param array<string> $eventClasses
+     */
+    private function checkEventClasses(array $eventClasses): void
+    {
+        foreach ($eventClasses as $eventClass) {
+            if (!class_exists($eventClass)) {
+                throw new RuntimeException();
+            }
+        }
     }
 }
