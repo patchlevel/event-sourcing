@@ -116,9 +116,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             );
         }
 
-        $this->checkEventClasses($eventClasses);
-
-        return $eventClasses;
+        return $this->checkEventClasses($eventClasses);
     }
 
     /**
@@ -132,15 +130,22 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
     }
 
     /**
-     * @psalm-assert array<class-string> $eventClasses
      * @param array<string> $eventClasses
+     *
+     * @return list<class-string>
      */
-    private function checkEventClasses(array $eventClasses): void
+    private function checkEventClasses(array $eventClasses): array
     {
+        $result = [];
+
         foreach ($eventClasses as $eventClass) {
             if (!class_exists($eventClass)) {
                 throw new RuntimeException();
             }
+
+            $result[] = $eventClass;
         }
+
+        return $result;
     }
 }
