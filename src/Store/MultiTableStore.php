@@ -22,25 +22,25 @@ use function is_string;
 
 final class MultiTableStore extends DoctrineStore implements PipelineStore
 {
+    private Serializer $serializer;
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
     private string $metadataTableName;
-    private Serializer $serializer;
 
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
     public function __construct(
         Connection $eventConnection,
+        Serializer $serializer,
         array $aggregates,
         string $metadataTableName = 'eventstore_metadata',
-        ?Serializer $serializer = null,
     ) {
         parent::__construct($eventConnection);
 
+        $this->serializer = $serializer;
         $this->aggregates = $aggregates;
         $this->metadataTableName = $metadataTableName;
-        $this->serializer = $serializer ?? new JsonSerializer();
     }
 
     /**

@@ -17,12 +17,14 @@ use function sprintf;
 final class WatchCommand extends Command
 {
     private WatchServer $server;
+    private EventPrinter $eventPrinter;
 
-    public function __construct(WatchServer $server)
+    public function __construct(WatchServer $server, EventPrinter $eventPrinter)
     {
         parent::__construct();
 
         $this->server = $server;
+        $this->eventPrinter = $eventPrinter;
     }
 
     protected function configure(): void
@@ -41,11 +43,9 @@ final class WatchCommand extends Command
         $console->success(sprintf('Server listening on %s', $this->server->host()));
         $console->comment('Quit the server with CONTROL-C.');
 
-        $dumper = new EventPrinter();
-
         $this->server->listen(
-            static function (Message $message) use ($dumper, $console): void {
-                $dumper->write($console, $message);
+            function (Message $message) use ($console): void {
+                $this->eventPrinter->write($console, $message);
             }
         );
 

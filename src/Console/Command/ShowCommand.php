@@ -22,6 +22,7 @@ use function sprintf;
 final class ShowCommand extends Command
 {
     private Store $store;
+    private EventPrinter $eventPrinter;
 
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
@@ -29,11 +30,12 @@ final class ShowCommand extends Command
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
-    public function __construct(Store $store, array $aggregates)
+    public function __construct(Store $store, EventPrinter $eventPrinter, array $aggregates)
     {
         parent::__construct();
 
         $this->store = $store;
+        $this->eventPrinter = $eventPrinter;
         $this->aggregates = $aggregates;
     }
 
@@ -49,7 +51,6 @@ final class ShowCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $console = new SymfonyStyle($input, $output);
-        $dumper = new EventPrinter();
 
         $map = array_flip($this->aggregates);
 
@@ -71,7 +72,7 @@ final class ShowCommand extends Command
         }
 
         foreach ($messages as $message) {
-            $dumper->write($console, $message);
+            $this->eventPrinter->write($console, $message);
         }
 
         return 0;

@@ -6,17 +6,13 @@ namespace Patchlevel\EventSourcing\Console;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class EventPrinter
 {
-    private Serializer $serializer;
-
-    public function __construct(?Serializer $serializer = null)
+    public function __construct(private Serializer $serializer)
     {
-        $this->serializer = $serializer ?? new JsonSerializer(null, true);
     }
 
     public function write(SymfonyStyle $console, Message $message): void

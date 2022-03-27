@@ -21,25 +21,25 @@ use function is_string;
 
 final class SingleTableStore extends DoctrineStore implements PipelineStore
 {
+    private Serializer $serializer;
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
     private string $storeTableName;
-    private Serializer $serializer;
 
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
     public function __construct(
         Connection $connection,
+        Serializer $serializer,
         array $aggregates,
         string $storeTableName,
-        ?Serializer $serializer = null
     ) {
         parent::__construct($connection);
 
+        $this->serializer = $serializer;
         $this->aggregates = $aggregates;
         $this->storeTableName = $storeTableName;
-        $this->serializer = $serializer ?? new JsonSerializer();
     }
 
     /**
