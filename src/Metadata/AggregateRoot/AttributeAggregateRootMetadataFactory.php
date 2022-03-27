@@ -34,8 +34,18 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         }
 
         $metadata = new AggregateRootMetadata();
-
         $reflector = new ReflectionClass($aggregate);
+
+        $this->handleSuppressMissingApply($reflector, $metadata);
+        $this->handleApply($reflector, $metadata, $aggregate);
+
+        $this->aggregateMetadata[$aggregate] = $metadata;
+
+        return $metadata;
+    }
+
+    private function handleSuppressMissingApply(ReflectionClass $reflector, AggregateRootMetadata $metadata): void
+    {
         $attributes = $reflector->getAttributes(SuppressMissingApply::class);
 
         foreach ($attributes as $attribute) {
@@ -51,7 +61,13 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 $metadata->suppressEvents[$event] = true;
             }
         }
+    }
 
+    /**
+     * @param class-string<AggregateRoot> $aggregate
+     */
+    private function handleApply(ReflectionClass $reflector, AggregateRootMetadata $metadata, string $aggregate): void
+    {
         $methods = $reflector->getMethods();
 
         foreach ($methods as $method) {
@@ -87,10 +103,6 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 $metadata->applyMethods[$eventClass] = $method->getName();
             }
         }
-
-        $this->aggregateMetadata[$aggregate] = $metadata;
-
-        return $metadata;
     }
 
     /**
