@@ -77,17 +77,31 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 continue;
             }
 
-            $eventClassesByProperties = $this->getEventClassesByPropertyTypes($method);
-            $eventClassesByAttributes = $this->getEventClassesByAttributes($attributes);
+            $eventClasses = [];
+            $hasOneEmptyApply = false;
+            $hasOneNonEmptyApply = false;
 
-            $eventClasses = $eventClassesByAttributes;
+            foreach ($attributes as $attribute) {
+                $applyAttribute = $attribute->newInstance();
+                $eventClass = $applyAttribute->eventClass();
 
-            foreach ($eventClassesByProperties as $classesByProperty) {
-                if (in_array($classesByProperty, $eventClassesByAttributes)) {
+                if ($eventClass !== null) {
+                    $hasOneNonEmptyApply = true;
+                    $eventClasses[] = $eventClass;
+
                     continue;
                 }
 
-                $eventClasses[] = $classesByProperty;
+                if ($hasOneEmptyApply) {
+                    throw new RuntimeException('Double empty Apply! Makes no sense');
+                }
+
+                $hasOneEmptyApply = true;
+                $eventClasses = [...$eventClasses, ...$this->getEventClassesByPropertyTypes($method)];
+            }
+
+            if ($hasOneEmptyApply && $hasOneNonEmptyApply) {
+                throw new RuntimeException('Mixed usage!');
             }
 
             foreach ($eventClasses as $eventClass) {
@@ -142,18 +156,6 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $result[] = $eventClass;
         }
 
-        /** @psalm-trace $result */
-
         return $result;
-    }
-
-    /**
-     * @param array<ReflectionAttribute<Apply>> $attributes
-     *
-     * @return array<class-string>
-     */
-    private function getEventClassesByAttributes(array $attributes): array
-    {
-        return array_map(static fn (ReflectionAttribute $attribute) => $attribute->newInstance()->eventClass(), $attributes);
     }
 }
