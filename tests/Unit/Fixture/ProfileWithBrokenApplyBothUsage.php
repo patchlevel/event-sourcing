@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 final class ProfileWithBrokenApplyBothUsage extends AggregateRoot
 {

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Aggregate;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageDeleted;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\NameChanged;
@@ -18,6 +16,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyMultipleAp
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyNoType;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithEmptyApply;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class AttributeAggregateMetadataFactoryTest extends TestCase
 {
@@ -36,9 +35,7 @@ class AttributeAggregateMetadataFactoryTest extends TestCase
         );
         self::assertFalse($metadata->suppressAll);
         self::assertSame(
-            [
-                MessageDeleted::class => true
-            ],
+            [MessageDeleted::class => true],
             $metadata->suppressEvents
         );
     }
@@ -63,7 +60,7 @@ class AttributeAggregateMetadataFactoryTest extends TestCase
     public function testBrokenApplyWithNoType(): void
     {
         $metadataFactory = new AttributeAggregateRootMetadataFactory();
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
 
         $metadataFactory->metadata(ProfileWithBrokenApplyNoType::class);
     }
@@ -74,7 +71,7 @@ class AttributeAggregateMetadataFactoryTest extends TestCase
     public function testBrokenApplyWithIntersectionType(): void
     {
         $metadataFactory = new AttributeAggregateRootMetadataFactory();
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
 
         $metadataFactory->metadata(ProfileWithBrokenApplyIntersection::class);
     }
@@ -82,7 +79,7 @@ class AttributeAggregateMetadataFactoryTest extends TestCase
     public function testBrokenApplyWithMultipleApply(): void
     {
         $metadataFactory = new AttributeAggregateRootMetadataFactory();
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
 
         $metadataFactory->metadata(ProfileWithBrokenApplyMultipleApply::class);
     }
@@ -90,7 +87,7 @@ class AttributeAggregateMetadataFactoryTest extends TestCase
     public function testBrokenApplyWithBothUsages(): void
     {
         $metadataFactory = new AttributeAggregateRootMetadataFactory();
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
 
         $metadataFactory->metadata(ProfileWithBrokenApplyBothUsage::class);
     }

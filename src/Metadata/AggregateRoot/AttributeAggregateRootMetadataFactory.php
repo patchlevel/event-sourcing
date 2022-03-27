@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
-use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionMethod;
@@ -17,7 +16,7 @@ use RuntimeException;
 
 use function array_key_exists;
 use function array_map;
-use function in_array;
+use function class_exists;
 
 final class AttributeAggregateRootMetadataFactory implements AggregateRootMetadataFactory
 {
