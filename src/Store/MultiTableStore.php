@@ -20,7 +20,7 @@ use function array_map;
 use function is_int;
 use function is_string;
 
-final class MultiTableStore extends DoctrineStore implements PipelineStore, OutboxStore
+final class MultiTableStore extends DoctrineStore implements PipelineStore
 {
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;

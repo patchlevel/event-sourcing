@@ -35,7 +35,7 @@ final class SnapshotRepository implements Repository
         Store $store,
         EventBus $eventBus,
         string $aggregateClass,
-        ?SnapshotStore $snapshotStore = null,
+        SnapshotStore $snapshotStore
     ) {
         if (!is_subclass_of($aggregateClass, SnapshotableAggregateRoot::class)) {
             throw InvalidAggregateClass::notSnapshotableAggregateRoot($aggregateClass);
@@ -55,22 +55,16 @@ final class SnapshotRepository implements Repository
 
         $aggregateClass = $this->aggregateClass;
 
-        if ($this->snapshotStore) {
-            if (!is_subclass_of($aggregateClass, SnapshotableAggregateRoot::class)) {
-                throw InvalidAggregateClass::notSnapshotableAggregateRoot($aggregateClass);
-            }
+        try {
+            $snapshot = $this->snapshotStore->load($aggregateClass, $id);
+            $messages = $this->store->load($aggregateClass, $id, $snapshot->playhead());
 
-            try {
-                $snapshot = $this->snapshotStore->load($aggregateClass, $id);
-                $messages = $this->store->load($aggregateClass, $id, $snapshot->playhead());
-
-                return $this->instances[$id] = $aggregateClass::createFromSnapshot(
-                    $snapshot,
-                    $messages
-                );
-            } catch (SnapshotNotFound $exception) {
-                // do normal workflow
-            }
+            return $this->instances[$id] = $aggregateClass::createFromSnapshot(
+                $snapshot,
+                $messages
+            );
+        } catch (SnapshotNotFound) {
+            // do normal workflow
         }
 
         $messages = $this->store->load($aggregateClass, $id);
