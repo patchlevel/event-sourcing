@@ -147,7 +147,7 @@ final class Hotel extends AggregateRoot
         $this->record(new GuestIsCheckedOut($guestName));
     }
     
-    #[Apply(HotelCreated::class)]
+    #[Apply]
     protected function applyHotelCreated(HotelCreated $event): void 
     {
         $this->id = $event->hotelId;
@@ -155,13 +155,13 @@ final class Hotel extends AggregateRoot
         $this->guests = [];    
     }
     
-    #[Apply(GuestIsCheckedIn::class)]
+    #[Apply]
     protected function applyGuestIsCheckedIn(GuestIsCheckedIn $event): void 
     {
         $this->guests[] = $event->guestName;
     }
     
-    #[Apply(GuestIsCheckedOut::class)]
+    #[Apply]
     protected function applyGuestIsCheckedOut(GuestIsCheckedOut $event): void 
     {
         $this->guests = array_values(
