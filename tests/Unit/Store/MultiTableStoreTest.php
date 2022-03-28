@@ -8,14 +8,14 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Store\SingleTableStore */
-final class SingleTableStoreTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Store\MultiTableStore */
+final class MultiTableStoreTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -25,9 +25,8 @@ final class SingleTableStoreTest extends TestCase
 
         $connection = $this->prophesize(Connection::class);
         $connection->fetchAllAssociative(
-            'SELECT * FROM eventstore WHERE aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead',
+            'SELECT * FROM profile WHERE aggregate_id = :id AND playhead > :playhead',
             [
-                'aggregate' => 'profile',
                 'id' => '1',
                 'playhead' => 0,
             ]
@@ -35,7 +34,7 @@ final class SingleTableStoreTest extends TestCase
         $connection->createQueryBuilder()->willReturn($queryBuilder);
         $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
 
-        $singleTableStore = new SingleTableStore(
+        $singleTableStore = new MultiTableStore(
             $connection->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
@@ -51,9 +50,8 @@ final class SingleTableStoreTest extends TestCase
 
         $connection = $this->prophesize(Connection::class);
         $connection->fetchAllAssociative(
-            'SELECT * FROM eventstore WHERE aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead',
+            'SELECT * FROM profile WHERE aggregate_id = :id AND playhead > :playhead',
             [
-                'aggregate' => 'profile',
                 'id' => '1',
                 'playhead' => 0,
             ]
@@ -75,7 +73,7 @@ final class SingleTableStoreTest extends TestCase
         $abstractPlatform->getDateTimeTzFormatString()->willReturn('Y-m-d H:i:s');
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
 
-        $singleTableStore = new SingleTableStore(
+        $singleTableStore = new MultiTableStore(
             $connection->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
@@ -97,7 +95,7 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->beginTransaction()->shouldBeCalled();
 
-        $store = new SingleTableStore(
+        $store = new MultiTableStore(
             $connection->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
@@ -111,7 +109,7 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->commit()->shouldBeCalled();
 
-        $store = new SingleTableStore(
+        $store = new MultiTableStore(
             $connection->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
@@ -125,7 +123,7 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->rollBack()->shouldBeCalled();
 
-        $store = new SingleTableStore(
+        $store = new MultiTableStore(
             $connection->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
@@ -142,7 +140,7 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->transactional($callback)->shouldBeCalled();
 
-        $store = new SingleTableStore(
+        $store = new MultiTableStore(
             $connection->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
