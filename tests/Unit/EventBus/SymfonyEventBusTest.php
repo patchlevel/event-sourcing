@@ -30,7 +30,7 @@ class SymfonyEventBusTest extends TestCase
             1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('d.badura@gmx.de')
+                Email::fromString('info@patchlevel.de')
             )
         );
 
@@ -57,7 +57,7 @@ class SymfonyEventBusTest extends TestCase
             1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('d.badura@gmx.de')
+                Email::fromString('info@patchlevel.de')
             )
         );
 
@@ -67,7 +67,7 @@ class SymfonyEventBusTest extends TestCase
             1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('d.badura@gmx.de')
+                Email::fromString('info@patchlevel.de')
             )
         );
 
@@ -113,7 +113,7 @@ class SymfonyEventBusTest extends TestCase
             1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('d.badura@gmx.de')
+                Email::fromString('info@patchlevel.de')
             )
         );
 
