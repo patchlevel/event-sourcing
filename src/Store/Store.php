@@ -21,10 +21,5 @@ interface Store
      */
     public function has(string $aggregate, string $id): bool;
 
-    public function save(Message $message): void;
-
-    /**
-     * @param list<Message> $messages
-     */
-    public function saveBatch(array $messages): void;
+    public function save(Message ...$messages): void;
 }

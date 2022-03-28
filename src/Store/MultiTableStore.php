@@ -109,18 +109,36 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         return ((int)$result) > 0;
     }
 
-    /**
-     * @param list<Message> $messages
-     */
-    public function saveBatch(array $messages): void
+    public function save(Message ...$messages): void
     {
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
                 foreach ($messages as $message) {
-                    $this->saveMessage(
-                        $connection,
-                        $this->tableName($message->aggregateClass()),
-                        $message
+                    $event = $message->event();
+                    $aggregateName = $this->tableName($message->aggregateClass());
+
+                    $connection->insert(
+                        $this->metadataTableName,
+                        [
+                            'aggregate' => $aggregateName,
+                            'aggregate_id' => $message->aggregateId(),
+                            'playhead' => $message->playhead(),
+                        ],
+                    );
+
+                    $connection->insert(
+                        $aggregateName,
+                        [
+                            'id' => (int)$connection->lastInsertId(),
+                            'aggregate_id' => $message->aggregateId(),
+                            'playhead' => $message->playhead(),
+                            'event' => $event::class,
+                            'payload' => $this->serializer->serialize($event),
+                            'recorded_on' => $message->recordedOn(),
+                        ],
+                        [
+                            'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
+                        ]
                     );
                 }
             }
@@ -211,44 +229,6 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         }
 
         return (int)$result;
-    }
-
-    public function save(Message $message): void
-    {
-        $this->saveMessage(
-            $this->connection,
-            $this->tableName($message->aggregateClass()),
-            $message
-        );
-    }
-
-    private function saveMessage(Connection $connection, string $aggregateName, Message $message): void
-    {
-        $event = $message->event();
-
-        $connection->insert(
-            $this->metadataTableName,
-            [
-                'aggregate' => $aggregateName,
-                'aggregate_id' => $message->aggregateId(),
-                'playhead' => $message->playhead(),
-            ],
-        );
-
-        $connection->insert(
-            $aggregateName,
-            [
-                'id' => (int)$connection->lastInsertId(),
-                'aggregate_id' => $message->aggregateId(),
-                'playhead' => $message->playhead(),
-                'event' => $event::class,
-                'payload' => $this->serializer->serialize($event),
-                'recorded_on' => $message->recordedOn(),
-            ],
-            [
-                'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
-            ]
-        );
     }
 
     public function schema(): Schema

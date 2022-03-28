@@ -87,10 +87,8 @@ final class SnapshotRepository implements Repository
 
     public function save(AggregateRoot $aggregate): void
     {
-        $class = $aggregate::class;
-
         if (!$aggregate instanceof $this->aggregateClass) {
-            throw new WrongAggregate($class, $this->aggregateClass);
+            throw new WrongAggregate($aggregate::class, $this->aggregateClass);
         }
 
         $messages = $aggregate->releaseMessages();
@@ -99,13 +97,13 @@ final class SnapshotRepository implements Repository
             return;
         }
 
-        $this->store->saveBatch($messages);
-
-        $snapshot = $aggregate->toSnapshot();
-        $this->snapshotStore->save($snapshot);
+        $this->store->save(...$messages);
 
         foreach ($messages as $message) {
             $this->eventStream->dispatch($message);
         }
+
+        $snapshot = $aggregate->toSnapshot();
+        $this->snapshotStore->save($snapshot);
     }
 }
