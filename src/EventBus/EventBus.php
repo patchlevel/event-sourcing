@@ -6,5 +6,5 @@ namespace Patchlevel\EventSourcing\EventBus;
 
 interface EventBus
 {
-    public function dispatch(Message $message): void;
+    public function dispatch(Message ...$messages): void;
 }

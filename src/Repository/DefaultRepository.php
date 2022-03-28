@@ -66,10 +66,8 @@ final class DefaultRepository implements Repository
 
     public function save(AggregateRoot $aggregate): void
     {
-        $class = $aggregate::class;
-
         if (!$aggregate instanceof $this->aggregateClass) {
-            throw new WrongAggregate($class, $this->aggregateClass);
+            throw new WrongAggregate($aggregate::class, $this->aggregateClass);
         }
 
         $messageStream = $aggregate->releaseMessages();
@@ -79,9 +77,6 @@ final class DefaultRepository implements Repository
         }
 
         $this->store->save(...$messageStream);
-
-        foreach ($messageStream as $message) {
-            $this->eventStream->dispatch($message);
-        }
+        $this->eventStream->dispatch(...$messageStream);
     }
 }

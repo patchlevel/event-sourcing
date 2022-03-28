@@ -20,12 +20,14 @@ final class SymfonyEventBus implements EventBus
         $this->bus = $bus;
     }
 
-    public function dispatch(Message $message): void
+    public function dispatch(Message ...$messages): void
     {
-        $envelope = (new Envelope($message))
-            ->with(new DispatchAfterCurrentBusStamp());
+        foreach ($messages as $message) {
+            $envelope = (new Envelope($message))
+                ->with(new DispatchAfterCurrentBusStamp());
 
-        $this->bus->dispatch($envelope);
+            $this->bus->dispatch($envelope);
+        }
     }
 
     /**

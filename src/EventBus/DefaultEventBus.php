@@ -8,7 +8,7 @@ use function array_shift;
 
 final class DefaultEventBus implements EventBus
 {
-    /** @var list<Message> */
+    /** @var array<Message> */
     private array $queue;
     /**  @var list<Listener> */
     private array $listeners;
@@ -25,9 +25,9 @@ final class DefaultEventBus implements EventBus
         $this->processing = false;
     }
 
-    public function dispatch(Message $message): void
+    public function dispatch(Message ...$messages): void
     {
-        $this->queue[] = $message;
+        $this->queue += $messages;
 
         if ($this->processing) {
             return;

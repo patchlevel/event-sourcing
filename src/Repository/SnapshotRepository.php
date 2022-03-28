@@ -98,10 +98,7 @@ final class SnapshotRepository implements Repository
         }
 
         $this->store->save(...$messages);
-
-        foreach ($messages as $message) {
-            $this->eventStream->dispatch($message);
-        }
+        $this->eventStream->dispatch(...$messages);
 
         $snapshot = $aggregate->toSnapshot();
         $this->snapshotStore->save($snapshot);
