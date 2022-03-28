@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+use Closure;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
@@ -13,13 +14,33 @@ use Doctrine\DBAL\Types\Types;
 
 use function is_int;
 
-abstract class DoctrineStore implements Store
+abstract class DoctrineStore implements Store, TransactionStore
 {
     protected Connection $connection;
 
     public function __construct(Connection $eventConnection)
     {
         $this->connection = $eventConnection;
+    }
+
+    public function transactionBegin(): void
+    {
+        $this->connection->beginTransaction();
+    }
+
+    public function transactionCommit(): void
+    {
+        $this->connection->commit();
+    }
+
+    public function transactionRollback(): void
+    {
+        $this->connection->rollBack();
+    }
+
+    public function transactional(Closure $function): void
+    {
+        $this->connection->transactional($function);
     }
 
     public function connection(): Connection
