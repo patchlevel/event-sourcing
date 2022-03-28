@@ -43,8 +43,8 @@ class DefaultRepositoryTest extends TestCase
     public function testSaveAggregate(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->saveBatch(
-            Argument::size(1)
+        $store->save(
+            Argument::type(Message::class)
         )->shouldBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -87,8 +87,8 @@ class DefaultRepositoryTest extends TestCase
     public function testSaveAggregateWithEmptyEventStream(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->saveBatch(
-            Argument::size(1)
+        $store->save(
+            Argument::type(Message::class)
         )->shouldNotBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);

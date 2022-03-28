@@ -78,7 +78,7 @@ final class DefaultRepository implements Repository
             return;
         }
 
-        $this->store->saveBatch($messageStream);
+        $this->store->save(...$messageStream);
 
         foreach ($messageStream as $message) {
             $this->eventStream->dispatch($message);
