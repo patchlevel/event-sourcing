@@ -36,7 +36,7 @@ class DefaultEventBusTest extends TestCase
             1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('d.badura@gmx.de')
+                Email::fromString('info@patchlevel.de')
             )
         );
 
@@ -44,6 +44,46 @@ class DefaultEventBusTest extends TestCase
         $eventBus->dispatch($message);
 
         self::assertSame($message, $listener->message);
+    }
+
+    public function testDispatchMultipleMessages(): void
+    {
+        $listener = new class implements Listener {
+            /** @var list<Message> */
+            public array $message = [];
+
+            public function __invoke(Message $message): void
+            {
+                $this->message[] = $message;
+            }
+        };
+
+        $message1 = new Message(
+            Profile::class,
+            '1',
+            1,
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de')
+            )
+        );
+
+        $message2 = new Message(
+            Profile::class,
+            '1',
+            2,
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de')
+            )
+        );
+
+        $eventBus = new DefaultEventBus([$listener]);
+        $eventBus->dispatch($message1, $message2);
+
+        self::assertCount(2, $listener->message);
+        self::assertSame($message1, $listener->message[0]);
+        self::assertSame($message2, $listener->message[1]);
     }
 
     public function testDynamicListener(): void
@@ -63,7 +103,7 @@ class DefaultEventBusTest extends TestCase
             1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('d.badura@gmx.de')
+                Email::fromString('info@patchlevel.de')
             )
         );
 
@@ -82,7 +122,7 @@ class DefaultEventBusTest extends TestCase
             1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('d.badura@gmx.de')
+                Email::fromString('info@patchlevel.de')
             )
         );
 
