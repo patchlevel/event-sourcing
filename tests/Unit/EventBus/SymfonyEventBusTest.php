@@ -49,6 +49,53 @@ class SymfonyEventBusTest extends TestCase
         $eventBus->dispatch($message);
     }
 
+    public function testDispatchMultipleMessages(): void
+    {
+        $message1 = new Message(
+            Profile::class,
+            '1',
+            1,
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('d.badura@gmx.de')
+            )
+        );
+
+        $message2 = new Message(
+            Profile::class,
+            '1',
+            1,
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('d.badura@gmx.de')
+            )
+        );
+
+        $envelope1 = new Envelope($message1);
+
+        $symfony = $this->prophesize(MessageBusInterface::class);
+        $symfony->dispatch(Argument::that(static function ($envelope1) use ($message1) {
+            if (!$envelope1 instanceof Envelope) {
+                return false;
+            }
+
+            return $envelope1->getMessage() === $message1;
+        }))->willReturn($envelope1)->shouldBeCalled();
+
+        $envelope2 = new Envelope($message2);
+
+        $symfony->dispatch(Argument::that(static function ($envelope2) use ($message2) {
+            if (!$envelope2 instanceof Envelope) {
+                return false;
+            }
+
+            return $envelope2->getMessage() === $message2;
+        }))->willReturn($envelope2)->shouldBeCalled();
+
+        $eventBus = new SymfonyEventBus($symfony->reveal());
+        $eventBus->dispatch($message1, $message2);
+    }
+
     public function testDefaultEventBus(): void
     {
         $listener = new class implements Listener {
