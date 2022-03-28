@@ -15,7 +15,7 @@ use function is_subclass_of;
 final class DefaultRepository implements Repository
 {
     private Store $store;
-    private EventBus $eventStream;
+    private EventBus $eventBus;
 
     /** @var class-string<AggregateRoot> */
     private string $aggregateClass;
@@ -28,7 +28,7 @@ final class DefaultRepository implements Repository
      */
     public function __construct(
         Store $store,
-        EventBus $eventStream,
+        EventBus $eventBus,
         string $aggregateClass
     ) {
         if (!is_subclass_of($aggregateClass, AggregateRoot::class)) {
@@ -36,7 +36,7 @@ final class DefaultRepository implements Repository
         }
 
         $this->store = $store;
-        $this->eventStream = $eventStream;
+        $this->eventBus = $eventBus;
         $this->aggregateClass = $aggregateClass;
     }
 
@@ -70,13 +70,13 @@ final class DefaultRepository implements Repository
             throw new WrongAggregate($aggregate::class, $this->aggregateClass);
         }
 
-        $messageStream = $aggregate->releaseMessages();
+        $messages = $aggregate->releaseMessages();
 
-        if (count($messageStream) === 0) {
+        if (count($messages) === 0) {
             return;
         }
 
-        $this->store->save(...$messageStream);
-        $this->eventStream->dispatch(...$messageStream);
+        $this->store->save(...$messages);
+        $this->eventBus->dispatch(...$messages);
     }
 }

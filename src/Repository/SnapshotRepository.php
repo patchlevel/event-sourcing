@@ -18,7 +18,7 @@ use function is_subclass_of;
 final class SnapshotRepository implements Repository
 {
     private Store $store;
-    private EventBus $eventStream;
+    private EventBus $eventBus;
 
     /** @var class-string<SnapshotableAggregateRoot> */
     private string $aggregateClass;
@@ -33,7 +33,7 @@ final class SnapshotRepository implements Repository
      */
     public function __construct(
         Store $store,
-        EventBus $eventStream,
+        EventBus $eventBus,
         string $aggregateClass,
         SnapshotStore $snapshotStore
     ) {
@@ -42,7 +42,7 @@ final class SnapshotRepository implements Repository
         }
 
         $this->store = $store;
-        $this->eventStream = $eventStream;
+        $this->eventBus = $eventBus;
         $this->aggregateClass = $aggregateClass;
         $this->snapshotStore = $snapshotStore;
     }
@@ -98,7 +98,7 @@ final class SnapshotRepository implements Repository
         }
 
         $this->store->save(...$messages);
-        $this->eventStream->dispatch(...$messages);
+        $this->eventBus->dispatch(...$messages);
 
         $snapshot = $aggregate->toSnapshot();
         $this->snapshotStore->save($snapshot);
