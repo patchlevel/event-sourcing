@@ -12,7 +12,7 @@ final class ProfileWithBrokenApplyNoType extends AggregateRoot
     #[Apply]
 
     /**
-     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingAnyTypeHint
+     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
      */
     protected function applyWithNoType($event): void
     {

@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;
-use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionUnionType;
@@ -16,6 +15,7 @@ use RuntimeException;
 
 use function array_key_exists;
 use function array_map;
+use function array_merge;
 use function class_exists;
 
 final class AttributeAggregateRootMetadataFactory implements AggregateRootMetadataFactory
@@ -96,7 +96,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 }
 
                 $hasOneEmptyApply = true;
-                $eventClasses = [...$eventClasses, ...$this->getEventClassesByPropertyTypes($method)];
+                $eventClasses = array_merge($eventClasses, $this->getEventClassesByPropertyTypes($method));
             }
 
             if ($hasOneEmptyApply && $hasOneNonEmptyApply) {
@@ -130,9 +130,11 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             throw new RuntimeException();
         }
 
+        /* needs psalm to undestand ReflectionIntersectionType
         if ($propertyType instanceof ReflectionIntersectionType) {
             throw new RuntimeException();
         }
+        */
 
         if ($propertyType instanceof ReflectionNamedType) {
             $eventClasses = [$propertyType->getName()];

@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyBothUsage;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyIntersection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyMultipleApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyNoType;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithEmptyApply;
@@ -70,10 +69,14 @@ class AttributeAggregateMetadataFactoryTest extends TestCase
      */
     public function testBrokenApplyWithIntersectionType(): void
     {
+        $this->markTestSkipped('Needs Pslam to not crash on the intersection type. Should be at psalm 5.');
+
+        /*
         $metadataFactory = new AttributeAggregateRootMetadataFactory();
         $this->expectException(RuntimeException::class);
 
         $metadataFactory->metadata(ProfileWithBrokenApplyIntersection::class);
+        */
     }
 
     public function testBrokenApplyWithMultipleApply(): void

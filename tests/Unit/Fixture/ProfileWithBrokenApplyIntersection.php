@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+/*
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
@@ -19,3 +22,4 @@ final class ProfileWithBrokenApplyIntersection extends AggregateRoot
         return self::class;
     }
 }
+*/
