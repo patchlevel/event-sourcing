@@ -110,8 +110,11 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->beginTransaction()->shouldBeCalled();
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $store = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -124,8 +127,11 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->commit()->shouldBeCalled();
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $store = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -138,8 +144,11 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->rollBack()->shouldBeCalled();
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $store = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -155,8 +164,11 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->transactional($callback)->shouldBeCalled();
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $store = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );
