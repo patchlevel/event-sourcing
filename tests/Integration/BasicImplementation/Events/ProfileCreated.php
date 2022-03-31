@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\EventNormalizer\ProfileIdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
 
-#[Event('profile_created')]
+#[Event('profile.created')]
 final class ProfileCreated
 {
     public function __construct(

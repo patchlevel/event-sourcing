@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events;
 
 use Patchlevel\EventSourcing\Attribute\Event;
 
-#[Event('profile_name_changed')]
+#[Event('profile.name_changed')]
 final class NameChanged
 {
     public function __construct(

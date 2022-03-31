@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\Command\ShowCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\SerializedData;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -24,17 +25,23 @@ final class ShowCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
+        $event = new ProfileVisited(ProfileId::fromString('1'));
+
         $store = $this->prophesize(Store::class);
         $store->load(Profile::class, '1')->willReturn([
             new Message(
                 Profile::class,
                 '1',
                 1,
-                new ProfileVisited(ProfileId::fromString('1'))
+                $event
             ),
         ]);
 
         $serializer = $this->prophesize(Serializer::class);
+        $serializer->serialize($event, [Serializer::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedData(
+            'profile.visited',
+            '{"visitorId": "1"}',
+        ));
 
         $command = new ShowCommand(
             $store->reveal(),

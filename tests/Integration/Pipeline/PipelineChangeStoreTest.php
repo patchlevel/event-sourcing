@@ -48,7 +48,7 @@ final class PipelineChangeStoreTest extends TestCase
     {
         $oldStore = new MultiTableStore(
             $this->connectionOld,
-            JsonSerializer::createDefault(),
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -57,7 +57,7 @@ final class PipelineChangeStoreTest extends TestCase
 
         $newStore = new SingleTableStore(
             $this->connectionNew,
-            JsonSerializer::createDefault(),
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );

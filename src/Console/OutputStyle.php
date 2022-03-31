@@ -14,7 +14,7 @@ class OutputStyle extends SymfonyStyle
     public function message(Serializer $serializer, Message $message): void
     {
         $event = $message->event();
-        $data = $serializer->serialize($event);
+        $data = $serializer->serialize($event, [Serializer::OPTION_PRETTY_PRINT => true]);
 
         $this->title($data->name);
 

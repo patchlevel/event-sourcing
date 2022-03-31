@@ -43,7 +43,7 @@ final class LoadEventsBench
 
         $this->store = new SingleTableStore(
             $connection,
-            JsonSerializer::createDefault(),
+            JsonSerializer::createDefault([__DIR__ . '/BasicImplementation/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );

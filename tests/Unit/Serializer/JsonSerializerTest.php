@@ -15,6 +15,13 @@ use PHPUnit\Framework\TestCase;
 
 class JsonSerializerTest extends TestCase
 {
+    private JsonSerializer $serializer;
+
+    public function setUp(): void
+    {
+        $this->serializer = JsonSerializer::createDefault([__DIR__ . '/../Fixture']);
+    }
+
     public function testSerialize(): void
     {
         $event = new ProfileCreated(
@@ -22,9 +29,9 @@ class JsonSerializerTest extends TestCase
             Email::fromString('info@patchlevel.de')
         );
 
-        self::assertSame(
-            '{"profileId":"1","email":"info@patchlevel.de"}',
-            JsonSerializer::createDefault()->serialize($event)
+        self::assertEquals(
+            new SerializedData('profile_created', '{"profileId":"1","email":"info@patchlevel.de"}'),
+            $this->serializer->serialize($event)
         );
     }
 
@@ -35,9 +42,9 @@ class JsonSerializerTest extends TestCase
             Email::fromString('info@patchlevel.de')
         );
 
-        self::assertSame(
-            '{"profileId":{},"email":{}}',
-            JsonSerializer::createDefault()->serialize($event)
+        self::assertEquals(
+            new SerializedData('not_normalized_profile_created', '{"profileId":{},"email":{}}'),
+            $this->serializer->serialize($event)
         );
     }
 
@@ -48,9 +55,9 @@ class JsonSerializerTest extends TestCase
             Email::fromString('info@patchlevel.de')
         );
 
-        $event = JsonSerializer::createDefault()->deserialize(
+        $event = $this->serializer->deserialize(
             new SerializedData(
-                ProfileCreated::class,
+                'profile_created',
                 '{"profileId":"1","email":"info@patchlevel.de"}'
             )
         );
@@ -62,9 +69,9 @@ class JsonSerializerTest extends TestCase
     {
         $this->expectException(DeserializationNotPossible::class);
 
-        JsonSerializer::createDefault()->deserialize(
+        $this->serializer->deserialize(
             new SerializedData(
-                ProfileCreated::class,
+                'profile_created',
                 ''
             )
         );

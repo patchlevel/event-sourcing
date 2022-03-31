@@ -53,7 +53,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            JsonSerializer::createDefault(),
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -98,7 +98,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            JsonSerializer::createDefault(),
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -142,7 +142,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new MultiTableStore(
             $this->connection,
-            JsonSerializer::createDefault(),
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile']
         );
 
@@ -185,7 +185,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            JsonSerializer::createDefault(),
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );

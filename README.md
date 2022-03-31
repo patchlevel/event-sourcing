@@ -56,6 +56,7 @@ First we define the events that happen in our system.
 A hotel can be created with a `name`:
 
 ```php
+#[Event('hotel.created')]
 final class HotelCreated
 {
     public function __construct(
@@ -69,6 +70,7 @@ final class HotelCreated
 A guest can check in by name:
 
 ```php
+#[Event('hotel.guest.checked_in')]
 final class GuestIsCheckedIn
 {
     public function __construct(
@@ -81,6 +83,7 @@ final class GuestIsCheckedIn
 And also check out again:
 
 ```php
+#[Event('hotel.guest.checked_out')]
 final class GuestIsCheckedOut
 {
     public function __construct(
@@ -296,6 +299,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 
 $connection = DriverManager::getConnection([
@@ -313,11 +317,7 @@ $eventBus = new DefaultEventBus();
 $eventBus->addListener(new ProjectionListener($projectionHandler));
 $eventBus->addListener(new SendCheckInEmailListener($mailer));
 
-$serializer = \Patchlevel\EventSourcing\Serializer\JsonSerializer::createDefault(
-    (new \Patchlevel\EventSourcing\Metadata\Event\AttributeEventClassLoader)->load([
-        'src/Domain/Hotel/Event'
-    ])
-);
+$serializer = JsonSerializer::createDefault(['src/Domain/Hotel/Event']);
 
 $store = new SingleTableStore(
     $connection,

@@ -6,14 +6,13 @@ namespace Patchlevel\EventSourcing\Serializer;
 
 use function sprintf;
 
-final class EventClassNotFound extends SerializeException
+final class EventNameNotRegistered extends SerializeException
 {
-    public function __construct(string $evenName, string $eventClass)
+    public function __construct(string $evenName)
     {
         parent::__construct(
             sprintf(
-                'event class "%s" not found for "%s" event',
-                $eventClass,
+                'Event name "%s" is not registered',
                 $evenName
             ),
         );

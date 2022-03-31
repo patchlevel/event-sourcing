@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\SerializedData;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -28,12 +29,16 @@ final class OutputStyleTest extends TestCase
         $input = new ArrayInput([]);
         $output = new BufferedOutput();
 
-        $serializer = $this->prophesize(Serializer::class);
-
         $event = new ProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('foo@bar.com')
         );
+
+        $serializer = $this->prophesize(Serializer::class);
+        $serializer->serialize($event, [Serializer::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedData(
+            'profile.created',
+            '{"id":"1","email":"foo@bar.com"}',
+        ));
 
         $message = new Message(
             Profile::class,
@@ -44,9 +49,14 @@ final class OutputStyleTest extends TestCase
 
         $console = new OutputStyle($input, $output);
 
-        $content = '';
+        $console->message($serializer->reveal(), $message);
 
-        $this->assertEquals($content, $console->message($serializer->reveal(), $message));
+        $content = $output->fetch();
+
+        self::assertStringContainsString('profile.created', $content);
+        self::assertStringContainsString('Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated', $content);
+        self::assertStringContainsString('Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile', $content);
+        self::assertStringContainsString('{"id":"1","email":"foo@bar.com"}', $content);
     }
 
     public function setUp(): void

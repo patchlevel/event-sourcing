@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Serializer;
 
 use JsonException;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventClassLoader;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use ReflectionClass;
@@ -12,7 +13,7 @@ use TypeError;
 
 use function array_flip;
 use function array_key_exists;
-use function class_exists;
+use function assert;
 use function json_decode;
 use function json_encode;
 
@@ -44,6 +45,12 @@ final class JsonSerializer implements Serializer
 
     public function serialize(object $event, array $options = []): SerializedData
     {
+        if (!array_key_exists($event::class, $this->eventClassMapRevert)) {
+            throw new EventClassNotRegistered($event::class);
+        }
+
+        $eventName = $this->eventClassMapRevert[$event::class];
+
         $data = $this->extract($event);
 
         $flags = JSON_THROW_ON_ERROR;
@@ -54,7 +61,7 @@ final class JsonSerializer implements Serializer
 
         try {
             return new SerializedData(
-                $this->eventClassMapRevert[$event::class] ?? $event::class,
+                $eventName,
                 json_encode($data, $flags)
             );
         } catch (JsonException $e) {
@@ -64,11 +71,11 @@ final class JsonSerializer implements Serializer
 
     public function deserialize(SerializedData $data, array $options = []): object
     {
-        $class = $this->eventClassMap[$data->name] ?? $data->name;
-
-        if (!class_exists($class)) {
-            throw new EventClassNotFound($data->name, $class);
+        if (!array_key_exists($data->name, $this->eventClassMap)) {
+            throw new EventNameNotRegistered($data->name);
         }
+
+        $class = $this->eventClassMap[$data->name];
 
         try {
             /** @var array<string, mixed> $payload */
@@ -158,10 +165,13 @@ final class JsonSerializer implements Serializer
     }
 
     /**
-     * @param array<string, class-string> $eventClassMap
+     * @param non-empty-list<string> $paths
      */
-    public static function createDefault(array $eventClassMap = []): static
+    public static function createDefault(array $paths): static
     {
-        return new self(new AttributeEventMetadataFactory(), $eventClassMap);
+        return new self(
+            new AttributeEventMetadataFactory(),
+            (new AttributeEventClassLoader())->load($paths)
+        );
     }
 }

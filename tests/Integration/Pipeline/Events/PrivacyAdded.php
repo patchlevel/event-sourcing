@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\EventNormalizer\ProfileIdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\ProfileId;
 
-#[Event('privacy_added')]
+#[Event('profile.privacy_added')]
 final class PrivacyAdded
 {
     public function __construct(

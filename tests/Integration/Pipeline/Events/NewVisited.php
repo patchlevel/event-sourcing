@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\EventNormalizer\ProfileIdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\ProfileId;
 
-#[Event('new_visited')]
+#[Event('profile.new_visited')]
 final class NewVisited
 {
     public function __construct(
