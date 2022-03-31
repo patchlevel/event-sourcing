@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Patchlevel\EventSourcing\Console\OutputStyle;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class ProjectionCreateCommand extends ProjectionCommand
 {
@@ -21,7 +21,7 @@ final class ProjectionCreateCommand extends ProjectionCommand
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $console = new SymfonyStyle($input, $output);
+        $console = new OutputStyle($input, $output);
 
         $this->projectionHandler($input->getOption('projection'))->create();
 

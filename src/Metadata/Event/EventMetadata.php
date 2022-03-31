@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Event;
 
 /**
- * @internal
+ * @readonly
  */
 final class EventMetadata
 {
-    public string $name;
-
-    /**
-     * @var array<string, EventPropertyMetadata>
-     */
-    public array $properties = [];
+    public function __construct(
+        public string $name,
+        /** @var array<string, EventPropertyMetadata> */
+        public array $properties = []
+    ) {
+    }
 }

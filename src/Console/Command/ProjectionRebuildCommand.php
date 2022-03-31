@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
@@ -16,7 +17,6 @@ use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 use function is_string;
@@ -45,7 +45,7 @@ final class ProjectionRebuildCommand extends ProjectionCommand
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $console = new SymfonyStyle($input, $output);
+        $console = new OutputStyle($input, $output);
 
         $store = $this->store;
 

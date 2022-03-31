@@ -25,7 +25,6 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
             return $this->eventMetadata[$event];
         }
 
-        $metadata = new EventMetadata();
         $reflectionClass = new ReflectionClass($event);
 
         $attributeReflectionList = $reflectionClass->getAttributes(Event::class);
@@ -35,34 +34,44 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
         }
 
         $eventAttribute = $attributeReflectionList[0]->newInstance();
-        $metadata->name = $eventAttribute->name();
+        $eventName = $eventAttribute->name();
+
+        $properties = [];
 
         foreach ($reflectionClass->getProperties() as $property) {
             $property->setAccessible(true);
 
-            $propertyMetadata = new EventPropertyMetadata();
-            $propertyMetadata->reflection = $property;
-            $propertyMetadata->fieldName = $property->getName();
+            $reflection = $property;
+            $fieldName = $property->getName();
 
             $attributeReflectionList = $property->getAttributes(FieldName::class);
 
             if ($attributeReflectionList !== []) {
                 $attribute = $attributeReflectionList[0]->newInstance();
-                $propertyMetadata->fieldName = $attribute->name();
+                $fieldName = $attribute->name();
             }
 
             $attributeReflectionList = $property->getAttributes(Normalize::class);
 
+            $normalizer = null;
+
             if ($attributeReflectionList !== []) {
                 $attribute = $attributeReflectionList[0]->newInstance();
-                $propertyMetadata->normalizer = $attribute->normalizer();
+                $normalizer = $attribute->normalizer();
             }
 
-            $metadata->properties[$property->getName()] = $propertyMetadata;
+            $properties[$property->getName()] = new EventPropertyMetadata(
+                $fieldName,
+                $reflection,
+                $normalizer
+            );
         }
 
-        $this->eventMetadata[$event] = $metadata;
+        $this->eventMetadata[$event] = new EventMetadata(
+            $eventName,
+            $properties
+        );
 
-        return $metadata;
+        return $this->eventMetadata[$event];
     }
 }

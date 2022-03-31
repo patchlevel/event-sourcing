@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Console\EventPrinter;
+use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\WatchServer\WatchServer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function sprintf;
 
 final class WatchCommand extends Command
 {
     private WatchServer $server;
-    private EventPrinter $eventPrinter;
+    private Serializer $serializer;
 
-    public function __construct(WatchServer $server, EventPrinter $eventPrinter)
+    public function __construct(WatchServer $server, Serializer $serializer)
     {
         parent::__construct();
 
         $this->server = $server;
-        $this->eventPrinter = $eventPrinter;
+        $this->serializer = $serializer;
     }
 
     protected function configure(): void
@@ -36,7 +36,7 @@ final class WatchCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $console = new SymfonyStyle($input, $output);
+        $console = new OutputStyle($input, $output);
 
         $this->server->start();
 
@@ -45,7 +45,7 @@ final class WatchCommand extends Command
 
         $this->server->listen(
             function (Message $message) use ($console): void {
-                $this->eventPrinter->write($console, $message);
+                $console->message($this->serializer, $message);
             }
         );
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\WatchServer;
 
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 
 use function base64_encode;
@@ -34,14 +33,14 @@ final class DefaultWatchServerClient implements WatchServerClient
     /**
      * @param string $host The server host
      */
-    public function __construct(string $host, ?Serializer $serializer = null)
+    public function __construct(string $host, Serializer $serializer)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
         }
 
         $this->host = $host;
-        $this->serializer = $serializer ?? new JsonSerializer();
+        $this->serializer = $serializer;
         $this->socket = null;
     }
 

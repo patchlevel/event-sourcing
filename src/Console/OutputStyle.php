@@ -9,25 +9,24 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-final class EventPrinter
+class OutputStyle extends SymfonyStyle
 {
-    public function __construct(private Serializer $serializer)
-    {
-    }
-
-    public function write(SymfonyStyle $console, Message $message): void
+    public function message(Serializer $serializer, Message $message): void
     {
         $event = $message->event();
+        $data = $serializer->serialize($event);
 
-        $console->title($event::class);
+        $this->title($data->name);
 
-        $console->horizontalTable([
+        $this->horizontalTable([
+            'eventClass',
             'aggregateClass',
             'aggregateId',
             'playhead',
             'recordedOn',
         ], [
             [
+                $event::class,
                 $message->aggregateClass(),
                 $message->aggregateId(),
                 $message->playhead(),
@@ -35,6 +34,6 @@ final class EventPrinter
             ],
         ]);
 
-        $console->block($this->serializer->serialize($event));
+        $this->block($data->payload);
     }
 }

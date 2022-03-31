@@ -5,70 +5,83 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Serializer;
 
 use JsonException;
-
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use ReflectionClass;
 use TypeError;
 
+use function array_flip;
+use function array_key_exists;
+use function class_exists;
 use function json_decode;
 use function json_encode;
 
+use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 
 final class JsonSerializer implements Serializer
 {
     private EventMetadataFactory $metadataFactory;
 
-    private bool $prettyPrint;
+    /** @var array<string, class-string> */
+    private array $eventClassMap;
+
+    /** @var array<class-string, string> */
+    private array $eventClassMapRevert;
 
     /** @var array<class-string, ReflectionClass> */
     private array $reflectionClassCache = [];
 
-    public function __construct(array $eventClasses, ?EventMetadataFactory $metadataFactory = null, bool $prettyPrint = false)
+    /**
+     * @param array<string, class-string> $eventClassMap
+     */
+    public function __construct(EventMetadataFactory $metadataFactory, array $eventClassMap = [])
     {
-        $this->metadataFactory = $metadataFactory ?? new AttributeEventMetadataFactory();
-        $this->prettyPrint = $prettyPrint;
+        $this->metadataFactory = $metadataFactory;
+        $this->eventClassMap = $eventClassMap;
+        $this->eventClassMapRevert = array_flip($eventClassMap);
     }
 
-    public function serialize(object $event): string
+    public function serialize(object $event, array $options = []): SerializedData
     {
         $data = $this->extract($event);
 
         $flags = JSON_THROW_ON_ERROR;
 
-        if ($this->prettyPrint) {
-            $flags = $flags | JSON_PRETTY_PRINT;
+        if ($options[self::OPTION_PRETTY_PRINT] ?? false) {
+            $flags |= JSON_PRETTY_PRINT;
         }
 
         try {
-            return json_encode($data, $flags);
+            return new SerializedData(
+                $this->eventClassMapRevert[$event::class] ?? $event::class,
+                json_encode($data, $flags)
+            );
         } catch (JsonException $e) {
             throw new SerializationNotPossible($event, $e);
         }
     }
 
-    /**
-     * @param class-string<T> $class
-     *
-     * @return T
-     *
-     * @template T of object
-     */
-    public function deserialize(string $class, string $data): object
+    public function deserialize(SerializedData $data, array $options = []): object
     {
+        $class = $this->eventClassMap[$data->name] ?? $data->name;
+
+        if (!class_exists($class)) {
+            throw new EventClassNotFound($data->name, $class);
+        }
+
         try {
             /** @var array<string, mixed> $payload */
-            $payload = json_decode($data, true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($data->payload, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
-            throw new DeserializationNotPossible($class, $data, $e);
+            throw new DeserializationNotPossible($class, $data->payload, $e);
         }
 
         return $this->hydrate($class, $payload);
     }
 
     /**
-     * @param class-string<T> $class
+     * @param class-string<T>      $class
      * @param array<string, mixed> $data
      *
      * @return T
@@ -81,9 +94,11 @@ final class JsonSerializer implements Serializer
         $object = $this->newInstance($class);
 
         foreach ($metadata->properties as $propertyMetadata) {
+            /** @psalm-suppress MixedAssignment */
             $value = $data[$propertyMetadata->fieldName] ?? null;
 
             if ($propertyMetadata->normalizer) {
+                /** @psalm-suppress MixedAssignment */
                 $value = $propertyMetadata->normalizer->denormalize($value);
             }
 
@@ -107,12 +122,15 @@ final class JsonSerializer implements Serializer
         $data = [];
 
         foreach ($metadata->properties as $propertyMetadata) {
+            /** @psalm-suppress MixedAssignment */
             $value = $propertyMetadata->reflection->getValue($object);
 
             if ($propertyMetadata->normalizer) {
+                /** @psalm-suppress MixedAssignment */
                 $value = $propertyMetadata->normalizer->normalize($value);
             }
 
+            /** @psalm-suppress MixedAssignment */
             $data[$propertyMetadata->fieldName] = $value;
         }
 
@@ -120,10 +138,11 @@ final class JsonSerializer implements Serializer
     }
 
     /**
-     * @template T of object
-     *
      * @param class-string<T> $class
+     *
      * @return T
+     *
+     * @template T of object
      */
     private function newInstance(string $class): object
     {
@@ -131,6 +150,18 @@ final class JsonSerializer implements Serializer
             $this->reflectionClassCache[$class] = new ReflectionClass($class);
         }
 
-        return $this->reflectionClassCache[$class]->newInstanceWithoutConstructor();
+        $object = $this->reflectionClassCache[$class]->newInstanceWithoutConstructor();
+
+        assert($object instanceof $class);
+
+        return $object;
+    }
+
+    /**
+     * @param array<string, class-string> $eventClassMap
+     */
+    public static function createDefault(array $eventClassMap = []): static
+    {
+        return new self(new AttributeEventMetadataFactory(), $eventClassMap);
     }
 }

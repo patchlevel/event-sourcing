@@ -313,8 +313,15 @@ $eventBus = new DefaultEventBus();
 $eventBus->addListener(new ProjectionListener($projectionHandler));
 $eventBus->addListener(new SendCheckInEmailListener($mailer));
 
+$serializer = \Patchlevel\EventSourcing\Serializer\JsonSerializer::createDefault(
+    (new \Patchlevel\EventSourcing\Metadata\Event\AttributeEventClassLoader)->load([
+        'src/Domain/Hotel/Event'
+    ])
+);
+
 $store = new SingleTableStore(
     $connection,
+    $serializer,
     [Hotel::class => 'hotel'],
     'eventstore'
 );

@@ -1,8 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Metadata;
 
 use ReflectionClass;
+use Symfony\Component\Finder\Finder;
+
+use function count;
+use function get_declared_classes;
+use function in_array;
 
 class ClassFinder
 {
@@ -20,31 +27,6 @@ class ClassFinder
         }
 
         return $this->getClassesInPhpFiles($files);
-    }
-
-    /**
-     * @param list<string> $paths
-     * @param class-string $attributeClass
-     *
-     * @return list<class-string>
-     */
-    public function findClassNamesByAttribute(array $paths, string $attributeClass)
-    {
-        $classes = $this->findClassNames($paths);
-
-        $result = [];
-
-        foreach ($classes as $class) {
-            $reflection = $this->reflectionClass($class);
-
-            if (count($reflection->getAttributes($attributeClass)) === 0) {
-                continue;
-            }
-
-            $result[] = $class;
-        }
-
-        return $result;
     }
 
     /**
@@ -99,7 +81,7 @@ class ClassFinder
         $result = [];
 
         foreach ($classes as $class) {
-            $reflection = $this->reflectionClass($class);
+            $reflection = new ReflectionClass($class);
             $fileName = $reflection->getFileName();
 
             if ($fileName === false) {
@@ -114,14 +96,5 @@ class ClassFinder
         }
 
         return $result;
-    }
-
-    /**
-     * @param class-string $class
-     * @return ReflectionClass
-     */
-    private function reflectionClass(string $class): ReflectionClass
-    {
-        return new ReflectionClass($class);
     }
 }

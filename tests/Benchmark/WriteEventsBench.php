@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profile;
@@ -56,6 +57,7 @@ final class WriteEventsBench
 
         $this->store = new SingleTableStore(
             $connection,
+            JsonSerializer::createDefault(),
             [Profile::class => 'profile'],
             'eventstore'
         );

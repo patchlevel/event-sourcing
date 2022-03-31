@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Serializer;
 
 use Patchlevel\EventSourcing\Serializer\DeserializationNotPossible;
 use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedData;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\NotNormalizedProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -23,7 +24,7 @@ class JsonSerializerTest extends TestCase
 
         self::assertSame(
             '{"profileId":"1","email":"info@patchlevel.de"}',
-            (new JsonSerializer())->serialize($event)
+            JsonSerializer::createDefault()->serialize($event)
         );
     }
 
@@ -36,7 +37,7 @@ class JsonSerializerTest extends TestCase
 
         self::assertSame(
             '{"profileId":{},"email":{}}',
-            (new JsonSerializer())->serialize($event)
+            JsonSerializer::createDefault()->serialize($event)
         );
     }
 
@@ -47,9 +48,11 @@ class JsonSerializerTest extends TestCase
             Email::fromString('info@patchlevel.de')
         );
 
-        $event = (new JsonSerializer())->deserialize(
-            ProfileCreated::class,
-            '{"profileId":"1","email":"info@patchlevel.de"}'
+        $event = JsonSerializer::createDefault()->deserialize(
+            new SerializedData(
+                ProfileCreated::class,
+                '{"profileId":"1","email":"info@patchlevel.de"}'
+            )
         );
 
         self::assertEquals($expected, $event);
@@ -59,6 +62,11 @@ class JsonSerializerTest extends TestCase
     {
         $this->expectException(DeserializationNotPossible::class);
 
-        (new JsonSerializer())->deserialize(ProfileCreated::class, '');
+        JsonSerializer::createDefault()->deserialize(
+            new SerializedData(
+                ProfileCreated::class,
+                ''
+            )
+        );
     }
 }

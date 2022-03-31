@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\Command\ShowCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -33,8 +34,11 @@ final class ShowCommandTest extends TestCase
             ),
         ]);
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $command = new ShowCommand(
             $store->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile']
         );
 
@@ -57,9 +61,11 @@ final class ShowCommandTest extends TestCase
     public function testAggregateNotAString(): void
     {
         $store = $this->prophesize(Store::class);
+        $serializer = $this->prophesize(Serializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile']
         );
 
@@ -77,9 +83,11 @@ final class ShowCommandTest extends TestCase
     public function testIdNotAString(): void
     {
         $store = $this->prophesize(Store::class);
+        $serializer = $this->prophesize(Serializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile']
         );
 
@@ -97,9 +105,11 @@ final class ShowCommandTest extends TestCase
     public function testWrongAggregate(): void
     {
         $store = $this->prophesize(Store::class);
+        $serializer = $this->prophesize(Serializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile']
         );
 
@@ -124,8 +134,11 @@ final class ShowCommandTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(Profile::class, 'test')->willReturn([]);
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $command = new ShowCommand(
             $store->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile']
         );
 

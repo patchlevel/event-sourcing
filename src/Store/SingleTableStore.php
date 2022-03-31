@@ -10,7 +10,7 @@ use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedData;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 
 use function array_flip;
@@ -33,7 +33,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         Connection $connection,
         Serializer $serializer,
         array $aggregates,
-        string $storeTableName,
+        string $storeTableName = 'eventstore',
     ) {
         parent::__construct($connection);
 
@@ -57,7 +57,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var list<array{aggregate_id: string, playhead: string|int, event: class-string, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -75,7 +75,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                     $aggregate,
                     $data['aggregate_id'],
                     self::normalizePlayhead($data['playhead'], $platform),
-                    $this->serializer->deserialize($data['event'], $data['payload']),
+                    $this->serializer->deserialize(new SerializedData($data['event'], $data['payload'])),
                     self::normalizeRecordedOn($data['recorded_on'], $platform)
                 );
             },
@@ -119,14 +119,16 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                 foreach ($messages as $message) {
                     $event = $message->event();
 
+                    $data = $this->serializer->serialize($event);
+
                     $connection->insert(
                         $this->storeTableName,
                         [
                             'aggregate' => $this->shortName($message->aggregateClass()),
                             'aggregate_id' => $message->aggregateId(),
                             'playhead' => $message->playhead(),
-                            'event' => $event::class,
-                            'payload' => $this->serializer->serialize($event),
+                            'event' => $data->name,
+                            'payload' => $data->payload,
                             'recorded_on' => $message->recordedOn(),
                         ],
                         [
@@ -156,7 +158,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
          *     aggregate_id: string,
          *     aggregate: string,
          *     playhead: string,
-         *     event: class-string,
+         *     event: string,
          *     payload: string,
          *     recorded_on: string
          * }> $result
@@ -177,7 +179,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                 $classMap[$name],
                 $data['aggregate_id'],
                 self::normalizePlayhead($data['playhead'], $platform),
-                $this->serializer->deserialize($data['event'], $data['payload']),
+                $this->serializer->deserialize(new SerializedData($data['event'], $data['payload'])),
                 self::normalizeRecordedOn($data['recorded_on'], $platform)
             );
         }

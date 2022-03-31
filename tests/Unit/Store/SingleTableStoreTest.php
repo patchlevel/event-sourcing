@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -37,6 +38,7 @@ final class SingleTableStoreTest extends TestCase
 
         $singleTableStore = new SingleTableStore(
             $connection->reveal(),
+            JsonSerializer::createDefault(),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -77,6 +79,7 @@ final class SingleTableStoreTest extends TestCase
 
         $singleTableStore = new SingleTableStore(
             $connection->reveal(),
+            JsonSerializer::createDefault(),
             [Profile::class => 'profile'],
             'eventstore'
         );
