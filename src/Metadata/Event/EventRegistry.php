@@ -10,18 +10,18 @@ use function array_key_exists;
 final class EventRegistry
 {
     /** @var array<string, class-string> */
-    private array $eventClassMap;
+    private array $nameToClassMap;
 
     /** @var array<class-string, string> */
-    private array $eventClassMapRevert;
+    private array $classToNameMap;
 
     /**
-     * @param array<string, class-string> $eventClassMap
+     * @param array<string, class-string> $eventNameToClassMap
      */
-    public function __construct(array $eventClassMap)
+    public function __construct(array $eventNameToClassMap)
     {
-        $this->eventClassMap = $eventClassMap;
-        $this->eventClassMapRevert = array_flip($eventClassMap);
+        $this->nameToClassMap = $eventNameToClassMap;
+        $this->classToNameMap = array_flip($eventNameToClassMap);
     }
 
     /**
@@ -29,11 +29,11 @@ final class EventRegistry
      */
     public function eventName(string $eventClass): string
     {
-        if (!array_key_exists($eventClass, $this->eventClassMapRevert)) {
+        if (!array_key_exists($eventClass, $this->classToNameMap)) {
             throw new EventClassNotRegistered($eventClass);
         }
 
-        return $this->eventClassMapRevert[$eventClass];
+        return $this->classToNameMap[$eventClass];
     }
 
     /**
@@ -41,10 +41,28 @@ final class EventRegistry
      */
     public function eventClass(string $eventName): string
     {
-        if (!array_key_exists($eventName, $this->eventClassMap)) {
+        if (!array_key_exists($eventName, $this->nameToClassMap)) {
             throw new EventNameNotRegistered($eventName);
         }
 
-        return $this->eventClassMap[$eventName];
+        return $this->nameToClassMap[$eventName];
+    }
+
+    public function hasEventClass(string $eventClass): bool
+    {
+        return array_key_exists($eventClass, $this->classToNameMap);
+    }
+
+    public function hasEventName(string $eventName): bool
+    {
+        return array_key_exists($eventName, $this->nameToClassMap);
+    }
+
+    /**
+     * @return array<string, class-string>
+     */
+    public function eventClasses(): array
+    {
+        return $this->nameToClassMap;
     }
 }

@@ -10,6 +10,7 @@ use Symfony\Component\Finder\Finder;
 use function count;
 use function get_declared_classes;
 use function in_array;
+use function sort;
 
 class ClassFinder
 {
@@ -26,7 +27,11 @@ class ClassFinder
             return [];
         }
 
-        return $this->getClassesInPhpFiles($files);
+        $classes = $this->getClassesInPhpFiles($files);
+
+        sort($classes);
+
+        return $classes;
     }
 
     /**
