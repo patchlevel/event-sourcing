@@ -76,6 +76,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 continue;
             }
 
+            $methodName = $method->getName();
             $eventClasses = [];
             $hasOneEmptyApply = false;
             $hasOneNonEmptyApply = false;
@@ -92,7 +93,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 }
 
                 if ($hasOneEmptyApply) {
-                    throw new RuntimeException('Double empty Apply! Makes no sense');
+                    throw new DuplicateEmptyApplyAttribute($methodName);
                 }
 
                 $hasOneEmptyApply = true;
@@ -100,7 +101,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             }
 
             if ($hasOneEmptyApply && $hasOneNonEmptyApply) {
-                throw new RuntimeException('Mixed usage!');
+                throw new MixedApplyAttributeUsage($methodName);
             }
 
             foreach ($eventClasses as $eventClass) {
@@ -109,11 +110,11 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                         $aggregate,
                         $eventClass,
                         $metadata->applyMethods[$eventClass],
-                        $method->getName()
+                        $methodName
                     );
                 }
 
-                $metadata->applyMethods[$eventClass] = $method->getName();
+                $metadata->applyMethods[$eventClass] = $methodName;
             }
         }
     }
@@ -124,10 +125,11 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
     private function getEventClassesByPropertyTypes(ReflectionMethod $method): array
     {
         $propertyType = $method->getParameters()[0]->getType();
+        $methodName = $method->getName();
         $eventClasses = [];
 
         if ($propertyType === null) {
-            throw new RuntimeException();
+            throw new ArgumentTypeIsMissing($methodName);
         }
 
         /* needs psalm to undestand ReflectionIntersectionType
@@ -151,7 +153,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
 
         foreach ($eventClasses as $eventClass) {
             if (!class_exists($eventClass)) {
-                throw new RuntimeException();
+                throw new ArgumentTypeIsNotAClass($methodName, $eventClass);
             }
 
             $result[] = $eventClass;
