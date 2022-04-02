@@ -8,10 +8,10 @@ use JsonException;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventClassLoader;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use ReflectionClass;
 use TypeError;
 
-use function array_flip;
 use function array_key_exists;
 use function assert;
 use function json_decode;
@@ -23,33 +23,20 @@ use const JSON_THROW_ON_ERROR;
 final class JsonSerializer implements Serializer
 {
     private EventMetadataFactory $metadataFactory;
-
-    /** @var array<string, class-string> */
-    private array $eventClassMap;
-
-    /** @var array<class-string, string> */
-    private array $eventClassMapRevert;
+    private EventRegistry $eventRegistry;
 
     /** @var array<class-string, ReflectionClass> */
     private array $reflectionClassCache = [];
 
-    /**
-     * @param array<string, class-string> $eventClassMap
-     */
-    public function __construct(EventMetadataFactory $metadataFactory, array $eventClassMap = [])
+    public function __construct(EventMetadataFactory $metadataFactory, EventRegistry $eventRegistry)
     {
         $this->metadataFactory = $metadataFactory;
-        $this->eventClassMap = $eventClassMap;
-        $this->eventClassMapRevert = array_flip($eventClassMap);
+        $this->eventRegistry = $eventRegistry;
     }
 
     public function serialize(object $event, array $options = []): SerializedData
     {
-        if (!array_key_exists($event::class, $this->eventClassMapRevert)) {
-            throw new EventClassNotRegistered($event::class);
-        }
-
-        $eventName = $this->eventClassMapRevert[$event::class];
+        $eventName = $this->eventRegistry->eventName($event::class);
 
         $data = $this->extract($event);
 
@@ -71,11 +58,7 @@ final class JsonSerializer implements Serializer
 
     public function deserialize(SerializedData $data, array $options = []): object
     {
-        if (!array_key_exists($data->name, $this->eventClassMap)) {
-            throw new EventNameNotRegistered($data->name);
-        }
-
-        $class = $this->eventClassMap[$data->name];
+        $class = $this->eventRegistry->eventClass($data->name);
 
         try {
             /** @var array<string, mixed> $payload */
@@ -171,7 +154,9 @@ final class JsonSerializer implements Serializer
     {
         return new self(
             new AttributeEventMetadataFactory(),
-            (new AttributeEventClassLoader())->load($paths)
+            new EventRegistry(
+                (new AttributeEventClassLoader())->load($paths)
+            )
         );
     }
 }

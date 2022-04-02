@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Serializer;
+namespace Patchlevel\EventSourcing\Metadata\Event;
+
+use Patchlevel\EventSourcing\Metadata\MetadataException;
 
 use function sprintf;
 
-final class EventNameNotRegistered extends SerializeException
+final class EventNameNotRegistered extends MetadataException
 {
     public function __construct(string $evenName)
     {
