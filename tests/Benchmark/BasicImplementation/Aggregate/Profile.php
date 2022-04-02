@@ -33,14 +33,14 @@ final class Profile extends SnapshotableAggregateRoot
         $this->recordThat(new NameChanged($name));
     }
 
-    #[Apply(ProfileCreated::class)]
+    #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId;
         $this->name = $event->name;
     }
 
-    #[Apply(NameChanged::class)]
+    #[Apply]
     protected function applyNameChanged(NameChanged $event): void
     {
         $this->name = $event->name;

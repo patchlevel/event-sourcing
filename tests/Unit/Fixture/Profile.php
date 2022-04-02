@@ -71,6 +71,11 @@ final class Profile extends AggregateRoot
         $this->visited++;
     }
 
+    #[Apply(NameChanged::class)]
+    protected function applyNameChanged(NameChanged|ProfileVisited $event): void
+    {
+    }
+
     public function aggregateRootId(): string
     {
         return $this->id->toString();

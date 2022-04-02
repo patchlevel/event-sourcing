@@ -45,6 +45,11 @@
       <code>$payload</code>
     </MoreSpecificImplementedParamType>
   </file>
+  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
+    <MissingParamType occurrences="1">
+      <code>$event</code>
+    </MissingParamType>
+  </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <MoreSpecificImplementedParamType occurrences="1">
       <code>$payload</code>
