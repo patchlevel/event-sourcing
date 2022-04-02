@@ -10,14 +10,12 @@ use ReflectionClass;
 
 use function count;
 
-class AttributeEventClassLoader implements EventClassLoader
+class AttributeEventRegistryFactory implements EventRegistryFactory
 {
     /**
      * @param list<string> $paths
-     *
-     * @return array<string, class-string>
      */
-    public function load(array $paths): array
+    public function create(array $paths): EventRegistry
     {
         $classes = (new ClassFinder())->findClassNames($paths);
 
@@ -36,6 +34,6 @@ class AttributeEventClassLoader implements EventClassLoader
             $result[$eventName] = $class;
         }
 
-        return $result;
+        return new EventRegistry($result);
     }
 }

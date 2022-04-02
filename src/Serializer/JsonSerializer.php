@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Serializer;
 
 use JsonException;
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventClassLoader;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use ReflectionClass;
@@ -154,9 +154,7 @@ final class JsonSerializer implements Serializer
     {
         return new self(
             new AttributeEventMetadataFactory(),
-            new EventRegistry(
-                (new AttributeEventClassLoader())->load($paths)
-            )
+            (new AttributeEventRegistryFactory())->create($paths)
         );
     }
 }
