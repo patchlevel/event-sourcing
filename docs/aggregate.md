@@ -119,7 +119,7 @@ final class Profile extends AggregateRoot
     public static function create(string $id, string $name): self
     {
         $self = new self();
-        $self->record(new ProfileCreated($id, $name));
+        $self->recordThat(new ProfileCreated($id, $name));
 
         return $self;
     }
@@ -193,7 +193,7 @@ final class Profile extends AggregateRoot
     
     public function changeName(string $name): void 
     {
-        $this->record(new NameChanged($name));
+        $this->recordThat(new NameChanged($name));
     }
     
     #[Apply(ProfileCreated::class)]
@@ -371,7 +371,7 @@ final class Profile extends AggregateRoot
             throw new NameIsToShortException($name);
         }
     
-        $this->record(new NameChanged($name));
+        $this->recordThat(new NameChanged($name));
     }
     
     #[Apply(NameChanged::class)]
@@ -439,7 +439,7 @@ final class Profile extends AggregateRoot
     
     public function changeName(Name $name): void 
     {
-        $this->record(new NameChanged($name));
+        $this->recordThat(new NameChanged($name));
     }
     
     #[Apply(NameChanged::class)]
@@ -496,10 +496,10 @@ final class Hotel extends AggregateRoot
             throw new NoPlaceException($name);
         }
         
-        $this->record(new RoomBocked($name));
+        $this->recordThat(new RoomBocked($name));
         
         if ($this->people === self::SIZE) {
-            $this->record(new FullyBooked());
+            $this->recordThat(new FullyBooked());
         }
     }
     

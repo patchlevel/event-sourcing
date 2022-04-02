@@ -47,7 +47,7 @@ final class Profile extends AggregateRoot
         $id = Uuid::uuid4();
     
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $name));
+        $self->recordThat(ProfileCreated::raise($id, $name));
 
         return $self;
     }
@@ -121,7 +121,7 @@ final class Profile extends AggregateRoot
         $id = ProfileId::generate();
     
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $name));
+        $self->recordThat(ProfileCreated::raise($id, $name));
 
         return $self;
     }
