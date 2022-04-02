@@ -11,7 +11,6 @@ use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionUnionType;
-use RuntimeException;
 
 use function array_key_exists;
 use function array_map;
