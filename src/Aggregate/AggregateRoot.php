@@ -43,7 +43,7 @@ abstract class AggregateRoot
         $this->$method($event);
     }
 
-    final protected function record(object $event): void
+    final protected function recordThat(object $event): void
     {
         $this->playhead++;
 

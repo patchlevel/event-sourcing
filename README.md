@@ -135,7 +135,7 @@ final class Hotel extends AggregateRoot
             throw new GuestHasAlreadyCheckedIn($guestName);
         }
     
-        $this->record(new GuestIsCheckedIn($guestName));
+        $this->recordThat(new GuestIsCheckedIn($guestName));
     }
     
     public function checkOut(string $guestName): void
@@ -144,7 +144,7 @@ final class Hotel extends AggregateRoot
             throw new IsNotAGuest($guestName);
         }
     
-        $this->record(new GuestIsCheckedOut($guestName));
+        $this->recordThat(new GuestIsCheckedOut($guestName));
     }
     
     #[Apply(HotelCreated::class)]

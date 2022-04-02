@@ -33,28 +33,28 @@ final class Profile extends AggregateRoot
     public static function createProfile(ProfileId $id, Email $email): self
     {
         $self = new self();
-        $self->record(new ProfileCreated($id, $email));
+        $self->recordThat(new ProfileCreated($id, $email));
 
         return $self;
     }
 
     public function publishMessage(Message $message): void
     {
-        $this->record(new MessagePublished(
+        $this->recordThat(new MessagePublished(
             $message
         ));
     }
 
     public function deleteMessage(MessageId $messageId): void
     {
-        $this->record(new MessageDeleted(
+        $this->recordThat(new MessageDeleted(
             $messageId
         ));
     }
 
     public function visitProfile(ProfileId $profileId): void
     {
-        $this->record(new ProfileVisited($profileId));
+        $this->recordThat(new ProfileVisited($profileId));
     }
 
     #[Apply(ProfileCreated::class)]

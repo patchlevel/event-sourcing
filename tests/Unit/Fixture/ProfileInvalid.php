@@ -15,7 +15,7 @@ final class ProfileInvalid extends AggregateRoot
     public static function createProfile(ProfileId $id, Email $email): self
     {
         $self = new self();
-        $self->record(new ProfileCreated($id, $email));
+        $self->recordThat(new ProfileCreated($id, $email));
 
         return $self;
     }
