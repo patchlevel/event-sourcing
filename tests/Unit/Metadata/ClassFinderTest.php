@@ -14,14 +14,14 @@ class ClassFinderTest extends TestCase
         $finder = new ClassFinder();
         $classes = $finder->findClassNames([__DIR__ . '/../../../docs']);
 
-        $this->assertCount(0, $classes);
+        self::assertCount(0, $classes);
     }
 
     public function testLoadDirectory(): void
     {
         $finder = new ClassFinder();
-        $classes = $finder->findClassNames([__DIR__ . '/Projection']);
+        $classes = $finder->findClassNames([__DIR__ . '/../Fixture']);
 
-        $this->assertEquals(['Patchlevel\\EventSourcing\\Tests\\Unit\\Metadata\\Projection\\AttributeProjectionMetadataFactoryTest'], $classes);
+        self::assertContains('Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile', $classes);
     }
 }
