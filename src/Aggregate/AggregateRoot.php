@@ -33,7 +33,7 @@ abstract class AggregateRoot
 
         if (!array_key_exists($event::class, $metadata->applyMethods)) {
             if (!$metadata->suppressAll && !array_key_exists($event::class, $metadata->suppressEvents)) {
-                throw new ApplyMethodNotFound($this, $event);
+                throw new ApplyMethodNotFound($this::class, $event::class);
             }
 
             return;
@@ -79,7 +79,7 @@ abstract class AggregateRoot
             $self->playhead++;
 
             if ($self->playhead !== $message->playhead()) {
-                throw new PlayheadSequenceMismatch();
+                throw new PlayheadSequenceMismatch(static::class);
             }
 
             $self->apply($message->event());
