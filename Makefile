@@ -9,7 +9,7 @@ phpcs-check: vendor                                                             
 	vendor/bin/phpcs
 
 .PHONY: phpcs-fix
-phpcs-fix: vendor                                                               ## run phpcs fixer
+cs: vendor                                                               ## run phpcs fixer
 	vendor/bin/phpcbf
 
 .PHONY: phpstan

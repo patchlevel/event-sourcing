@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\SnapshotRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -52,6 +53,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -96,6 +98,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -139,6 +142,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new MultiTableStore(
             $this->connection,
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile']
         );
 
@@ -181,6 +185,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );

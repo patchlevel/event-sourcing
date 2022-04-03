@@ -8,9 +8,13 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Patchlevel\EventSourcing\Serializer\SerializedData;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -35,8 +39,11 @@ final class SingleTableStoreTest extends TestCase
         $connection->createQueryBuilder()->willReturn($queryBuilder);
         $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $singleTableStore = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -62,7 +69,7 @@ final class SingleTableStoreTest extends TestCase
                 [
                     'aggregate_id' => '1',
                     'playhead' => '0',
-                    'event' => ProfileCreated::class,
+                    'event' => 'profile.created',
                     'payload' => '{"profileId": "1", "email": "s"}',
                     'recorded_on' => '2021-02-17 10:00:00',
                 ],
@@ -75,8 +82,14 @@ final class SingleTableStoreTest extends TestCase
         $abstractPlatform->getDateTimeTzFormatString()->willReturn('Y-m-d H:i:s');
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
 
+        $serializer = $this->prophesize(Serializer::class);
+        $serializer->deserialize(
+            new SerializedData('profile.created', '{"profileId": "1", "email": "s"}'),
+        )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
+
         $singleTableStore = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -97,8 +110,11 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->beginTransaction()->shouldBeCalled();
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $store = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -111,8 +127,11 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->commit()->shouldBeCalled();
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $store = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -125,8 +144,11 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->rollBack()->shouldBeCalled();
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $store = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -142,8 +164,11 @@ final class SingleTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->transactional($callback)->shouldBeCalled();
 
+        $serializer = $this->prophesize(Serializer::class);
+
         $store = new SingleTableStore(
             $connection->reveal(),
+            $serializer->reveal(),
             [Profile::class => 'profile'],
             'eventstore'
         );

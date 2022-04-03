@@ -1,17 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.22.0@fc2c6ab4d5fa5d644d8617089f012f3bb84b8703">
-  <file src="src/Serializer/DefaultHydrator.php">
-    <MixedAssignment occurrences="5">
-      <code>$data[$propertyMetadata['fieldName']]</code>
-      <code>$value</code>
-      <code>$value</code>
-      <code>$value</code>
-      <code>$value</code>
-    </MixedAssignment>
-  </file>
   <file src="src/Store/MultiTableStore.php">
     <UnnecessaryVarAnnotation occurrences="1">
-      <code>array{id: string, aggregate_id: string, playhead: string, event: class-string, payload: string, recorded_on: string}|null</code>
+      <code>array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string}|null</code>
     </UnnecessaryVarAnnotation>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">

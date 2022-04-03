@@ -6,14 +6,15 @@ namespace Patchlevel\EventSourcing\Serializer;
 
 interface Serializer
 {
-    public function serialize(object $event): string;
+    public const OPTION_PRETTY_PRINT = 'pretty_print';
 
     /**
-     * @param class-string<T> $class
-     *
-     * @return T
-     *
-     * @template T of object
+     * @param array<string, mixed> $options
      */
-    public function deserialize(string $class, string $data): object;
+    public function serialize(object $event, array $options = []): SerializedData;
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function deserialize(SerializedData $data, array $options = []): object;
 }

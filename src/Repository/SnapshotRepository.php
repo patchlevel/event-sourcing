@@ -63,7 +63,7 @@ final class SnapshotRepository implements Repository
                 $snapshot,
                 $messages
             );
-        } catch (SnapshotNotFound $exception) {
+        } catch (SnapshotNotFound) {
             // do normal workflow
         }
 

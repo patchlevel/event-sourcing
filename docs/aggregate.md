@@ -81,6 +81,9 @@ An event must receive the `payload` and has to inherit from `AggregateChanged`.
 A `ProfileCreated` event is ideal here:
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Event;
+
+#[Event('profile.created')]
 final class ProfileCreated
 {
     public function __construct(
@@ -150,6 +153,9 @@ In order to change the state of the aggregates afterwards, only further events h
 As example we can add a `NameChanged` event:
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Event;
+
+#[Event('profile.name_changed')]
 final class NameChanged
 {
     public function __construct(
@@ -454,8 +460,10 @@ In order for the whole thing to work, we still have to adapt our `NameChanged` e
 since we only expected a string before but now passed a `Name` value object.
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\Normalize;
 
+#[Event('profile.name_changed')]
 final class NameChanged
 {
     public function __construct(

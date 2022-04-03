@@ -4,25 +4,27 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Console\EventPrinter;
+use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\WatchServer\WatchServer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function sprintf;
 
 final class WatchCommand extends Command
 {
     private WatchServer $server;
+    private Serializer $serializer;
 
-    public function __construct(WatchServer $server)
+    public function __construct(WatchServer $server, Serializer $serializer)
     {
         parent::__construct();
 
         $this->server = $server;
+        $this->serializer = $serializer;
     }
 
     protected function configure(): void
@@ -34,18 +36,16 @@ final class WatchCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $console = new SymfonyStyle($input, $output);
+        $console = new OutputStyle($input, $output);
 
         $this->server->start();
 
         $console->success(sprintf('Server listening on %s', $this->server->host()));
         $console->comment('Quit the server with CONTROL-C.');
 
-        $dumper = new EventPrinter();
-
         $this->server->listen(
-            static function (Message $message) use ($dumper, $console): void {
-                $dumper->write($console, $message);
+            function (Message $message) use ($console): void {
+                $console->message($this->serializer, $message);
             }
         );
 

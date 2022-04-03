@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
@@ -47,6 +48,7 @@ final class PipelineChangeStoreTest extends TestCase
     {
         $oldStore = new MultiTableStore(
             $this->connectionOld,
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );
@@ -55,6 +57,7 @@ final class PipelineChangeStoreTest extends TestCase
 
         $newStore = new SingleTableStore(
             $this->connectionNew,
+            JsonSerializer::createDefault([__DIR__ . '/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );

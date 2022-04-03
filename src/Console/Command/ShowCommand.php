@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Console\EventPrinter;
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function array_flip;
 use function array_key_exists;
@@ -23,17 +23,19 @@ final class ShowCommand extends Command
 {
     private Store $store;
 
+    private Serializer $serializer;
     /** @var array<class-string<AggregateRoot>, string> */
     private array $aggregates;
 
     /**
      * @param array<class-string<AggregateRoot>, string> $aggregates
      */
-    public function __construct(Store $store, array $aggregates)
+    public function __construct(Store $store, Serializer $serializer, array $aggregates)
     {
         parent::__construct();
 
         $this->store = $store;
+        $this->serializer = $serializer;
         $this->aggregates = $aggregates;
     }
 
@@ -48,8 +50,7 @@ final class ShowCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $console = new SymfonyStyle($input, $output);
-        $dumper = new EventPrinter();
+        $console = new OutputStyle($input, $output);
 
         $map = array_flip($this->aggregates);
 
@@ -71,7 +72,7 @@ final class ShowCommand extends Command
         }
 
         foreach ($messages as $message) {
-            $dumper->write($console, $message);
+            $console->message($this->serializer, $message);
         }
 
         return 0;

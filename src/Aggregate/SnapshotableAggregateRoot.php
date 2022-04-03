@@ -31,7 +31,7 @@ abstract class SnapshotableAggregateRoot extends AggregateRoot
             $self->playhead++;
 
             if ($self->playhead !== $message->playhead()) {
-                throw new PlayheadSequenceMismatch();
+                throw new PlayheadSequenceMismatch(static::class);
             }
 
             $self->apply($message->event());

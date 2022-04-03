@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Repository\SnapshotRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -44,6 +45,7 @@ final class LoadEventsWithSnapshotsBench
 
         $this->store = new SingleTableStore(
             $connection,
+            JsonSerializer::createDefault([__DIR__ . '/BasicImplementation/Events']),
             [Profile::class => 'profile'],
             'eventstore'
         );
