@@ -31,41 +31,48 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             return $this->aggregateMetadata[$aggregate];
         }
 
-        $metadata = new AggregateRootMetadata();
         $reflector = new ReflectionClass($aggregate);
+        $attributes = $reflector->getAttributes(SuppressMissingApply::class);
 
-        $this->handleSuppressMissingApply($reflector, $metadata);
-        $this->handleApply($reflector, $metadata, $aggregate);
+        $suppressAll = false;
+        $suppressEvents = [];
+
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+
+            if ($instance->suppressAll()) {
+                $suppressAll = true;
+
+                continue;
+            }
+
+            foreach ($instance->suppressEvents() as $event) {
+                $suppressEvents[$event] = true;
+            }
+        }
+
+        $applyMethods = $this->findApplyMethods($reflector, $aggregate);
+
+        $metadata = new AggregateRootMetadata(
+            $applyMethods,
+            $suppressEvents,
+            $suppressAll
+        );
 
         $this->aggregateMetadata[$aggregate] = $metadata;
 
         return $metadata;
     }
 
-    private function handleSuppressMissingApply(ReflectionClass $reflector, AggregateRootMetadata $metadata): void
-    {
-        $attributes = $reflector->getAttributes(SuppressMissingApply::class);
-
-        foreach ($attributes as $attribute) {
-            $instance = $attribute->newInstance();
-
-            if ($instance->suppressAll()) {
-                $metadata->suppressAll = true;
-
-                continue;
-            }
-
-            foreach ($instance->suppressEvents() as $event) {
-                $metadata->suppressEvents[$event] = true;
-            }
-        }
-    }
-
     /**
      * @param class-string<AggregateRoot> $aggregate
+     *
+     * @return array<class-string, string>
      */
-    private function handleApply(ReflectionClass $reflector, AggregateRootMetadata $metadata, string $aggregate): void
+    private function findApplyMethods(ReflectionClass $reflector, string $aggregate): array
     {
+        $applyMethods = [];
+
         $methods = $reflector->getMethods();
 
         foreach ($methods as $method) {
@@ -104,18 +111,20 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             }
 
             foreach ($eventClasses as $eventClass) {
-                if (array_key_exists($eventClass, $metadata->applyMethods)) {
+                if (array_key_exists($eventClass, $applyMethods)) {
                     throw new DuplicateApplyMethod(
                         $aggregate,
                         $eventClass,
-                        $metadata->applyMethods[$eventClass],
+                        $applyMethods[$eventClass],
                         $methodName
                     );
                 }
 
-                $metadata->applyMethods[$eventClass] = $methodName;
+                $applyMethods[$eventClass] = $methodName;
             }
         }
+
+        return $applyMethods;
     }
 
     /**

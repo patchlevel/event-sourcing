@@ -10,12 +10,11 @@ use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\SerializedData;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 use Traversable;
 
-use function array_flip;
-use function array_key_exists;
 use function array_map;
 use function is_int;
 use function is_string;
@@ -23,23 +22,19 @@ use function is_string;
 final class MultiTableStore extends DoctrineStore implements PipelineStore
 {
     private Serializer $serializer;
-    /** @var array<class-string<AggregateRoot>, string> */
-    private array $aggregates;
+    private AggregateRootRegistry $aggregateRootRegistry;
     private string $metadataTableName;
 
-    /**
-     * @param array<class-string<AggregateRoot>, string> $aggregates
-     */
     public function __construct(
         Connection $eventConnection,
         Serializer $serializer,
-        array $aggregates,
+        AggregateRootRegistry $aggregateRootRegistry,
         string $metadataTableName = 'eventstore_metadata',
     ) {
         parent::__construct($eventConnection);
 
         $this->serializer = $serializer;
-        $this->aggregates = $aggregates;
+        $this->aggregateRootRegistry = $aggregateRootRegistry;
         $this->metadataTableName = $metadataTableName;
     }
 
@@ -50,7 +45,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array
     {
-        $tableName = $this->tableName($aggregate);
+        $tableName = $this->aggregateRootRegistry->aggregateName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
@@ -88,7 +83,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
      */
     public function has(string $aggregate, string $id): bool
     {
-        $tableName = $this->tableName($aggregate);
+        $tableName = $this->aggregateRootRegistry->aggregateName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
@@ -115,7 +110,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             function (Connection $connection) use ($messages): void {
                 foreach ($messages as $message) {
                     $event = $message->event();
-                    $aggregateName = $this->tableName($message->aggregateClass());
+                    $aggregateName = $this->aggregateRootRegistry->aggregateName($message->aggregateClass());
 
                     $connection->insert(
                         $this->metadataTableName,
@@ -151,7 +146,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
     {
         $queries = [];
 
-        foreach ($this->aggregates as $aggregate) {
+        foreach ($this->aggregateRootRegistry->aggregateNames() as $aggregate) {
             $sql = $this->connection->createQueryBuilder()
                 ->select('*')
                 ->from($aggregate)
@@ -184,14 +179,9 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $metaQuery = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
         $platform = $this->connection->getDatabasePlatform();
-        $classMap = array_flip($this->aggregates);
 
         foreach ($metaQuery as $metaData) {
             $name = $metaData['aggregate'];
-
-            if (!array_key_exists($name, $classMap)) {
-                throw new AggregateNotDefined($name);
-            }
 
             /** @var array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string}|null $eventData */
             $eventData = $queries[$name]->current();
@@ -207,7 +197,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             }
 
             yield new Message(
-                $classMap[$name],
+                $this->aggregateRootRegistry->aggregateClass($name),
                 $eventData['aggregate_id'],
                 self::normalizePlayhead($eventData['playhead'], $platform),
                 $this->serializer->deserialize(new SerializedData($eventData['event'], $eventData['payload'])),
@@ -239,7 +229,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
         $this->addMetaTableToSchema($schema);
 
-        foreach ($this->aggregates as $tableName) {
+        foreach ($this->aggregateRootRegistry->aggregateNames() as $tableName) {
             $this->addAggregateTableToSchema($schema, $tableName);
         }
 
@@ -283,17 +273,5 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate_id', 'playhead']);
-    }
-
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
-    private function tableName(string $aggregate): string
-    {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
-
-        return $this->aggregates[$aggregate];
     }
 }

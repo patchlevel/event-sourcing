@@ -10,11 +10,10 @@ use Doctrine\DBAL\Types\Types;
 use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\SerializedData;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 
-use function array_flip;
-use function array_key_exists;
 use function array_map;
 use function is_int;
 use function is_string;
@@ -22,23 +21,19 @@ use function is_string;
 final class SingleTableStore extends DoctrineStore implements PipelineStore
 {
     private Serializer $serializer;
-    /** @var array<class-string<AggregateRoot>, string> */
-    private array $aggregates;
+    private AggregateRootRegistry $aggregateRootRegistry;
     private string $storeTableName;
 
-    /**
-     * @param array<class-string<AggregateRoot>, string> $aggregates
-     */
     public function __construct(
         Connection $connection,
         Serializer $serializer,
-        array $aggregates,
+        AggregateRootRegistry $aggregateRootRegistry,
         string $storeTableName = 'eventstore',
     ) {
         parent::__construct($connection);
 
         $this->serializer = $serializer;
-        $this->aggregates = $aggregates;
+        $this->aggregateRootRegistry = $aggregateRootRegistry;
         $this->storeTableName = $storeTableName;
     }
 
@@ -49,7 +44,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array
     {
-        $shortName = $this->shortName($aggregate);
+        $shortName = $this->aggregateRootRegistry->aggregateName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
@@ -88,7 +83,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
      */
     public function has(string $aggregate, string $id): bool
     {
-        $shortName = $this->shortName($aggregate);
+        $shortName = $this->aggregateRootRegistry->aggregateName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
@@ -124,7 +119,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                     $connection->insert(
                         $this->storeTableName,
                         [
-                            'aggregate' => $this->shortName($message->aggregateClass()),
+                            'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
                             'aggregate_id' => $message->aggregateId(),
                             'playhead' => $message->playhead(),
                             'event' => $data->name,
@@ -166,17 +161,9 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $result = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
         $platform = $this->connection->getDatabasePlatform();
 
-        $classMap = array_flip($this->aggregates);
-
         foreach ($result as $data) {
-            $name = $data['aggregate'];
-
-            if (!array_key_exists($name, $classMap)) {
-                throw new AggregateNotDefined($name);
-            }
-
             yield new Message(
-                $classMap[$name],
+                $this->aggregateRootRegistry->aggregateClass($data['aggregate']),
                 $data['aggregate_id'],
                 self::normalizePlayhead($data['playhead'], $platform),
                 $this->serializer->deserialize(new SerializedData($data['event'], $data['payload'])),
@@ -227,17 +214,5 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
 
         return $schema;
-    }
-
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
-    private function shortName(string $aggregate): string
-    {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
-
-        return $this->aggregates[$aggregate];
     }
 }

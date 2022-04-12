@@ -32,7 +32,9 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
         $reflector = new ReflectionClass($projection);
         $methods = $reflector->getMethods();
 
-        $metadata = new ProjectionMetadata();
+        $handleMethods = [];
+        $createMethod = null;
+        $dropMethod = null;
 
         foreach ($methods as $method) {
             $attributes = $method->getAttributes(Handle::class);
@@ -41,47 +43,53 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
                 $instance = $attribute->newInstance();
                 $eventClass = $instance->eventClass();
 
-                if (array_key_exists($eventClass, $metadata->handleMethods)) {
+                if (array_key_exists($eventClass, $handleMethods)) {
                     throw new DuplicateHandleMethod(
                         $projection,
                         $eventClass,
-                        $metadata->handleMethods[$eventClass]->methodName,
+                        $handleMethods[$eventClass]->methodName,
                         $method->getName()
                     );
                 }
 
-                $metadata->handleMethods[$eventClass] = new ProjectionHandleMetadata(
+                $handleMethods[$eventClass] = new ProjectionHandleMetadata(
                     $method->getName(),
                     $this->passMessage($method)
                 );
             }
 
             if ($method->getAttributes(Create::class)) {
-                if ($metadata->createMethod) {
+                if ($createMethod) {
                     throw new DuplicateCreateMethod(
                         $projection,
-                        $metadata->createMethod,
+                        $createMethod,
                         $method->getName()
                     );
                 }
 
-                $metadata->createMethod = $method->getName();
+                $createMethod = $method->getName();
             }
 
             if (!$method->getAttributes(Drop::class)) {
                 continue;
             }
 
-            if ($metadata->dropMethod) {
+            if ($dropMethod) {
                 throw new DuplicateDropMethod(
                     $projection,
-                    $metadata->dropMethod,
+                    $dropMethod,
                     $method->getName()
                 );
             }
 
-            $metadata->dropMethod = $method->getName();
+            $dropMethod = $method->getName();
         }
+
+        $metadata = new ProjectionMetadata(
+            $handleMethods,
+            $createMethod,
+            $dropMethod
+        );
 
         $this->projectionMetadata[$projection] = $metadata;
 

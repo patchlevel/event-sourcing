@@ -8,6 +8,7 @@ use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\SnapshotRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Serializer\JsonSerializer;
@@ -46,7 +47,7 @@ final class LoadEventsWithSnapshotsBench
         $this->store = new SingleTableStore(
             $connection,
             JsonSerializer::createDefault([__DIR__ . '/BasicImplementation/Events']),
-            [Profile::class => 'profile'],
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
             'eventstore'
         );
 

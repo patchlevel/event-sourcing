@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
@@ -54,7 +55,7 @@ final class BasicIntegrationTest extends TestCase
         $store = new SingleTableStore(
             $this->connection,
             JsonSerializer::createDefault([__DIR__ . '/Events']),
-            [Profile::class => 'profile'],
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
 
@@ -99,7 +100,7 @@ final class BasicIntegrationTest extends TestCase
         $store = new SingleTableStore(
             $this->connection,
             JsonSerializer::createDefault([__DIR__ . '/Events']),
-            [Profile::class => 'profile'],
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
 
@@ -143,7 +144,7 @@ final class BasicIntegrationTest extends TestCase
         $store = new MultiTableStore(
             $this->connection,
             JsonSerializer::createDefault([__DIR__ . '/Events']),
-            [Profile::class => 'profile']
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
         );
 
         $repository = new DefaultRepository($store, $eventStream, Profile::class);
@@ -186,7 +187,7 @@ final class BasicIntegrationTest extends TestCase
         $store = new SingleTableStore(
             $this->connection,
             JsonSerializer::createDefault([__DIR__ . '/Events']),
-            [Profile::class => 'profile'],
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
 

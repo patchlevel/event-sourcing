@@ -70,7 +70,7 @@ final class HotelCreated
 A guest can check in by name:
 
 ```php
-#[Event('hotel.guest.checked_in')]
+#[Event('hotel.guest_checked_in')]
 final class GuestIsCheckedIn
 {
     public function __construct(
@@ -83,7 +83,7 @@ final class GuestIsCheckedIn
 And also check out again:
 
 ```php
-#[Event('hotel.guest.checked_out')]
+#[Event('hotel.guest_checked_out')]
 final class GuestIsCheckedOut
 {
     public function __construct(
@@ -102,8 +102,10 @@ These events are thrown here and the state of the hotel is also changed.
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
+#[Aggregate('hotel')]
 final class Hotel extends AggregateRoot
 {
     private string $id;
@@ -127,7 +129,7 @@ final class Hotel extends AggregateRoot
     public static function create(string $id, string $hotelName): static
     {
         $self = new static();
-        $self->record(new HotelCreated($id, $hotelName));
+        $self->recordThat(new HotelCreated($id, $hotelName));
 
         return $self;
     }
@@ -318,11 +320,12 @@ $eventBus->addListener(new ProjectionListener($projectionHandler));
 $eventBus->addListener(new SendCheckInEmailListener($mailer));
 
 $serializer = JsonSerializer::createDefault(['src/Domain/Hotel/Event']);
+$aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
 
 $store = new SingleTableStore(
     $connection,
     $serializer,
-    [Hotel::class => 'hotel'],
+    $aggregateRegistry,
     'eventstore'
 );
 
