@@ -12,7 +12,7 @@ use function get_declared_classes;
 use function in_array;
 use function sort;
 
-class ClassFinder
+final class ClassFinder
 {
     /**
      * @param list<string> $paths

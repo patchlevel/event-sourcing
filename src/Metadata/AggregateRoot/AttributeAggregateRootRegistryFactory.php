@@ -12,7 +12,7 @@ use ReflectionClass;
 use function count;
 use function is_subclass_of;
 
-class AttributeAggregateRootRegistryFactory implements AggregateRootRegistryFactory
+final class AttributeAggregateRootRegistryFactory implements AggregateRootRegistryFactory
 {
     /**
      * @param list<string> $paths

@@ -6,6 +6,6 @@ namespace Patchlevel\EventSourcing\Metadata\Event;
 
 use Patchlevel\EventSourcing\Metadata\MetadataException;
 
-class ClassIsNotAnEvent extends MetadataException
+final class ClassIsNotAnEvent extends MetadataException
 {
 }

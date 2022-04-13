@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Metadata\MetadataException;
 
 use function sprintf;
 
-class NoAggregateRoot extends MetadataException
+final class NoAggregateRoot extends MetadataException
 {
     /**
      * @param class-string $class

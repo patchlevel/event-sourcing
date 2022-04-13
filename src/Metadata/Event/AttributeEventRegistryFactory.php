@@ -10,7 +10,7 @@ use ReflectionClass;
 
 use function count;
 
-class AttributeEventRegistryFactory implements EventRegistryFactory
+final class AttributeEventRegistryFactory implements EventRegistryFactory
 {
     /**
      * @param list<string> $paths
