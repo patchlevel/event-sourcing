@@ -101,4 +101,9 @@ abstract class AggregateRoot
 
         return self::$metadataFactory->metadata(static::class);
     }
+
+    public static function setMetadataFactory(AggregateRootMetadataFactory $metadataFactory): void
+    {
+        self::$metadataFactory = $metadataFactory;
+    }
 }
