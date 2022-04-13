@@ -8,8 +8,10 @@ use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
-use Patchlevel\EventSourcing\Repository\InvalidAggregateClass;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
+use Patchlevel\EventSourcing\Snapshot\Snapshot;
+use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
+use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -19,26 +21,11 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
-use stdClass;
 
 /** @covers \Patchlevel\EventSourcing\Repository\DefaultRepository */
 class DefaultRepositoryTest extends TestCase
 {
     use ProphecyTrait;
-
-    public function testInstantiateWithWrongClass(): void
-    {
-        $store = $this->prophesize(Store::class);
-        $eventBus = $this->prophesize(EventBus::class);
-
-        $this->expectException(InvalidAggregateClass::class);
-        $this->expectExceptionMessage('Class "stdClass" is not an AggregateRoot.');
-        new DefaultRepository(
-            $store->reveal(),
-            $eventBus->reveal(),
-            stdClass::class,
-        );
-    }
 
     public function testSaveAggregate(): void
     {
@@ -272,5 +259,111 @@ class DefaultRepositoryTest extends TestCase
         );
 
         self::assertFalse($repository->has('1'));
+    }
+
+    public function testSaveAggregateWithSnapshot(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->save(
+            Argument::type(Message::class)
+        )->shouldBeCalled();
+
+        $eventBus = $this->prophesize(EventBus::class);
+        $eventBus->dispatch(Argument::type(Message::class))->shouldBeCalled();
+
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+        $snapshotStore->save(Argument::type(Snapshot::class))->shouldBeCalled();
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
+        );
+
+        $aggregate = ProfileWithSnapshot::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de')
+        );
+
+        $repository->save($aggregate);
+    }
+
+    public function testLoadAggregateWithSnapshot(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->load(
+            ProfileWithSnapshot::class,
+            '1',
+            1
+        )->willReturn([]);
+
+        $eventBus = $this->prophesize(EventBus::class);
+
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+        $snapshotStore->load(
+            ProfileWithSnapshot::class,
+            '1'
+        )->willReturn(
+            new Snapshot(
+                ProfileWithSnapshot::class,
+                '1',
+                1,
+                [
+                    'id' => '1',
+                    'email' => 'hallo@patchlevel.de',
+                ]
+            )
+        );
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
+        );
+
+        $aggregate = $repository->load('1');
+
+        self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
+        self::assertSame(1, $aggregate->playhead());
+        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
+    }
+
+    public function testLoadAggregateWithoutSnapshot(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->load(ProfileWithSnapshot::class, '1')->willReturn([
+            new Message(
+                ProfileWithSnapshot::class,
+                '1',
+                1,
+                new ProfileCreated(
+                    ProfileId::fromString('1'),
+                    Email::fromString('hallo@patchlevel.de')
+                )
+            ),
+        ]);
+
+        $eventBus = $this->prophesize(EventBus::class);
+
+        $snapshotStore = $this->prophesize(SnapshotStore::class);
+        $snapshotStore->load(ProfileWithSnapshot::class, '1')
+            ->willThrow(SnapshotNotFound::class);
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            ProfileWithSnapshot::class,
+            $snapshotStore->reveal()
+        );
+
+        $aggregate = $repository->load('1');
+
+        self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
+        self::assertSame(1, $aggregate->playhead());
+        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
     }
 }

@@ -9,10 +9,12 @@ use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Repository\SnapshotRepository;
+use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Serializer\JsonSerializer;
-use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profile;
@@ -29,7 +31,7 @@ final class LoadEventsWithSnapshotsBench
 
     private Store $store;
     private EventBus $bus;
-    private InMemorySnapshotStore $snapshotStore;
+    private SnapshotStore $snapshotStore;
 
     public function setUp(): void
     {
@@ -51,8 +53,9 @@ final class LoadEventsWithSnapshotsBench
             'eventstore'
         );
 
-        $this->snapshotStore = new InMemorySnapshotStore();
-        $repository = new SnapshotRepository($this->store, $this->bus, Profile::class, $this->snapshotStore);
+        $this->snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
+
+        $repository = new DefaultRepository($this->store, $this->bus, Profile::class, $this->snapshotStore);
 
         // create tables
         (new DoctrineSchemaManager())->create($this->store);
@@ -70,7 +73,7 @@ final class LoadEventsWithSnapshotsBench
     #[Bench\Iterations(2)]
     public function benchLoadEvents(): void
     {
-        $repository = new SnapshotRepository($this->store, $this->bus, Profile::class, $this->snapshotStore);
+        $repository = new DefaultRepository($this->store, $this->bus, Profile::class, $this->snapshotStore);
 
         $repository->load('1');
     }

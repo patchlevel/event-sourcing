@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;
 use ReflectionMethod;
@@ -32,10 +34,35 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         }
 
         $reflector = new ReflectionClass($aggregate);
-        $attributes = $reflector->getAttributes(SuppressMissingApply::class);
 
-        $suppressAll = false;
+        $aggregateName = $this->findAggregateName($reflector);
+        [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflector);
+        $applyMethods = $this->findApplyMethods($reflector, $aggregate);
+        [$snapshotStore, $snapshotBatch] = $this->findSnapshot($reflector);
+
+        $metadata = new AggregateRootMetadata(
+            $aggregateName,
+            $applyMethods,
+            $suppressEvents,
+            $suppressAll,
+            $snapshotStore,
+            $snapshotBatch,
+        );
+
+        $this->aggregateMetadata[$aggregate] = $metadata;
+
+        return $metadata;
+    }
+
+    /**
+     * @return array{array<class-string, true>, bool}
+     */
+    private function findSuppressMissingApply(ReflectionClass $reflector): array
+    {
         $suppressEvents = [];
+        $suppressAll = false;
+
+        $attributes = $reflector->getAttributes(SuppressMissingApply::class);
 
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
@@ -51,17 +78,36 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             }
         }
 
-        $applyMethods = $this->findApplyMethods($reflector, $aggregate);
+        return [$suppressEvents, $suppressAll];
+    }
 
-        $metadata = new AggregateRootMetadata(
-            $applyMethods,
-            $suppressEvents,
-            $suppressAll
-        );
+    private function findAggregateName(ReflectionClass $reflector): string
+    {
+        $attributeReflectionList = $reflector->getAttributes(Aggregate::class);
 
-        $this->aggregateMetadata[$aggregate] = $metadata;
+        if (!$attributeReflectionList) {
+            throw new ClassIsNotAnAggregate($reflector->getName());
+        }
 
-        return $metadata;
+        $aggregateAttribute = $attributeReflectionList[0]->newInstance();
+
+        return $aggregateAttribute->name();
+    }
+
+    /**
+     * @return array{?string, ?int}
+     */
+    private function findSnapshot(ReflectionClass $reflector): array
+    {
+        $attributeReflectionList = $reflector->getAttributes(Snapshot::class);
+
+        if (!$attributeReflectionList) {
+            return [null, null];
+        }
+
+        $attribute = $attributeReflectionList[0]->newInstance();
+
+        return [$attribute->name(), $attribute->batch()];
     }
 
     /**
