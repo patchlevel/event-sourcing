@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Command\Command;
@@ -14,29 +14,22 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use function array_flip;
-use function array_key_exists;
 use function count;
 use function sprintf;
 
 final class ShowCommand extends Command
 {
     private Store $store;
-
     private Serializer $serializer;
-    /** @var array<class-string<AggregateRoot>, string> */
-    private array $aggregates;
+    private AggregateRootRegistry $aggregateRootRegistry;
 
-    /**
-     * @param array<class-string<AggregateRoot>, string> $aggregates
-     */
-    public function __construct(Store $store, Serializer $serializer, array $aggregates)
+    public function __construct(Store $store, Serializer $serializer, AggregateRootRegistry $aggregateRootRegistry)
     {
         parent::__construct();
 
         $this->store = $store;
         $this->serializer = $serializer;
-        $this->aggregates = $aggregates;
+        $this->aggregateRootRegistry = $aggregateRootRegistry;
     }
 
     protected function configure(): void
@@ -52,18 +45,16 @@ final class ShowCommand extends Command
     {
         $console = new OutputStyle($input, $output);
 
-        $map = array_flip($this->aggregates);
-
         $aggregate = InputHelper::string($input->getArgument('aggregate'));
         $id = InputHelper::string($input->getArgument('id'));
 
-        if (!array_key_exists($aggregate, $map)) {
+        if (!$this->aggregateRootRegistry->hasAggregateName($aggregate)) {
             $console->error(sprintf('aggregate type "%s" not exists', $aggregate));
 
             return 1;
         }
 
-        $messages = $this->store->load($map[$aggregate], $id);
+        $messages = $this->store->load($this->aggregateRootRegistry->aggregateClass($aggregate), $id);
 
         if (count($messages) === 0) {
             $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));

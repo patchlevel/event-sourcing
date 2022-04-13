@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\Command\ShowCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\SerializedData;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\Store\Store;
@@ -46,7 +47,7 @@ final class ShowCommandTest extends TestCase
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile']
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([
@@ -73,7 +74,7 @@ final class ShowCommandTest extends TestCase
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile']
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([
@@ -95,7 +96,7 @@ final class ShowCommandTest extends TestCase
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile']
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([
@@ -117,7 +118,7 @@ final class ShowCommandTest extends TestCase
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile']
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([
@@ -146,7 +147,7 @@ final class ShowCommandTest extends TestCase
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile']
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([
