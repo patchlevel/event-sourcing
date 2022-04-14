@@ -42,6 +42,8 @@ final class DefaultSnapshotStore implements SnapshotStore
             $snapshot->playhead(),
             $snapshot->payload()
         );
+
+        $this->playheadCache[$key] = $snapshot->playhead();
     }
 
     /**
@@ -80,9 +82,7 @@ final class DefaultSnapshotStore implements SnapshotStore
      */
     private function getAdapter(string $aggregateClass): SnapshotAdapter
     {
-        $metadata = $aggregateClass::metadata($aggregateClass);
-
-        $snapshotName = $metadata->snapshotStore;
+        $snapshotName = $aggregateClass::metadata($aggregateClass)->snapshotStore;
 
         if (!$snapshotName) {
             throw new SnapshotNotConfigured($aggregateClass);
@@ -114,12 +114,6 @@ final class DefaultSnapshotStore implements SnapshotStore
 
         $diff = $snapshot->playhead() - $beforePlayhead;
 
-        if ($diff < $batchSize) {
-            return false;
-        }
-
-        $this->playheadCache[$key] = $snapshot->playhead();
-
-        return true;
+        return $diff >= $batchSize;
     }
 }

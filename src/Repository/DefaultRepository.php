@@ -10,10 +10,15 @@ use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Throwable;
 
 use function array_key_exists;
+use function assert;
 use function count;
 use function is_subclass_of;
+use function sprintf;
 
 final class DefaultRepository implements Repository
 {
@@ -27,6 +32,7 @@ final class DefaultRepository implements Repository
     private array $instances = [];
 
     private ?SnapshotStore $snapshotStore;
+    private LoggerInterface $logger;
 
     /**
      * @param class-string<AggregateRoot> $aggregateClass
@@ -35,12 +41,14 @@ final class DefaultRepository implements Repository
         Store $store,
         EventBus $eventBus,
         string $aggregateClass,
-        ?SnapshotStore $snapshotStore = null
+        ?SnapshotStore $snapshotStore = null,
+        ?LoggerInterface $logger = null
     ) {
         $this->store = $store;
         $this->eventBus = $eventBus;
         $this->aggregateClass = $aggregateClass;
         $this->snapshotStore = $snapshotStore;
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function load(string $id): AggregateRoot
@@ -53,15 +61,17 @@ final class DefaultRepository implements Repository
 
         if ($this->snapshotStore && is_subclass_of($aggregateClass, SnapshotableAggregateRoot::class)) {
             try {
-                $snapshot = $this->snapshotStore->load($aggregateClass, $id);
-                $messages = $this->store->load($aggregateClass, $id, $snapshot->playhead());
-
-                return $this->instances[$id] = $aggregateClass::createFromSnapshot(
-                    $snapshot,
-                    $messages
-                );
+                return $this->loadFromSnapshot($aggregateClass, $id);
+            } catch (SnapshotRebuildFailed $exception) {
+                $this->logger->error($exception->getMessage());
             } catch (SnapshotNotFound) {
-                // do normal workflow
+                $this->logger->debug(
+                    sprintf(
+                        'snapshot for aggregate "%s" with the id "%s" not found',
+                        $aggregateClass,
+                        $id
+                    )
+                );
             }
         }
 
@@ -104,5 +114,25 @@ final class DefaultRepository implements Repository
 
         $snapshot = $aggregate->toSnapshot();
         $this->snapshotStore->save($snapshot);
+    }
+
+    /**
+     * @param class-string<SnapshotableAggregateRoot> $aggregateClass
+     */
+    private function loadFromSnapshot(string $aggregateClass, string $id): SnapshotableAggregateRoot
+    {
+        assert($this->snapshotStore instanceof SnapshotStore);
+
+        $snapshot = $this->snapshotStore->load($aggregateClass, $id);
+        $messages = $this->store->load($aggregateClass, $id, $snapshot->playhead());
+
+        try {
+            return $aggregateClass::createFromSnapshot(
+                $snapshot,
+                $messages
+            );
+        } catch (Throwable $exception) {
+            throw new SnapshotRebuildFailed($snapshot, $exception);
+        }
     }
 }
