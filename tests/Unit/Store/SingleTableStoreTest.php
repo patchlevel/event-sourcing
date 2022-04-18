@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\SerializedData;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -44,7 +45,7 @@ final class SingleTableStoreTest extends TestCase
         $singleTableStore = new SingleTableStore(
             $connection->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile'],
+            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore'
         );
 
@@ -90,7 +91,7 @@ final class SingleTableStoreTest extends TestCase
         $singleTableStore = new SingleTableStore(
             $connection->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile'],
+            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore'
         );
 
@@ -115,7 +116,7 @@ final class SingleTableStoreTest extends TestCase
         $store = new SingleTableStore(
             $connection->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile'],
+            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore'
         );
 
@@ -132,7 +133,7 @@ final class SingleTableStoreTest extends TestCase
         $store = new SingleTableStore(
             $connection->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile'],
+            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore'
         );
 
@@ -149,7 +150,7 @@ final class SingleTableStoreTest extends TestCase
         $store = new SingleTableStore(
             $connection->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile'],
+            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore'
         );
 
@@ -169,7 +170,7 @@ final class SingleTableStoreTest extends TestCase
         $store = new SingleTableStore(
             $connection->reveal(),
             $serializer->reveal(),
-            [Profile::class => 'profile'],
+            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore'
         );
 

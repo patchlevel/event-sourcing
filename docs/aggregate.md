@@ -192,7 +192,7 @@ final class Profile extends AggregateRoot
     public static function create(string $id, string $name): static
     {
         $self = new static();
-        $self->record(new ProfileCreated($id, $name));
+        $self->recordThat(new ProfileCreated($id, $name));
 
         return $self;
     }
@@ -431,7 +431,7 @@ final class Profile extends AggregateRoot
     public static function create(string $id, Name $name): static
     {
         $self = new static();
-        $self->record(new ProfileCreated($id, $name));
+        $self->recordThat(new ProfileCreated($id, $name));
 
         return $self;
     }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Projection;
 
 /**
- * @internal
+ * @readonly
  */
 final class ProjectionHandleMetadata
 {

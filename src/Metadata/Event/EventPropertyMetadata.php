@@ -10,7 +10,7 @@ use ReflectionProperty;
 /**
  * @readonly
  */
-class EventPropertyMetadata
+final class EventPropertyMetadata
 {
     public function __construct(
         public string $fieldName,

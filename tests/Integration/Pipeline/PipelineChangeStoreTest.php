@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
@@ -46,10 +47,13 @@ final class PipelineChangeStoreTest extends TestCase
 
     public function testSuccessful(): void
     {
+        $serializer = JsonSerializer::createDefault([__DIR__ . '/Events']);
+        $aggregateRootRegistry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
+
         $oldStore = new MultiTableStore(
             $this->connectionOld,
-            JsonSerializer::createDefault([__DIR__ . '/Events']),
-            [Profile::class => 'profile'],
+            $serializer,
+            $aggregateRootRegistry,
             'eventstore'
         );
 
@@ -57,8 +61,8 @@ final class PipelineChangeStoreTest extends TestCase
 
         $newStore = new SingleTableStore(
             $this->connectionNew,
-            JsonSerializer::createDefault([__DIR__ . '/Events']),
-            [Profile::class => 'profile'],
+            $serializer,
+            $aggregateRootRegistry,
             'eventstore'
         );
 
