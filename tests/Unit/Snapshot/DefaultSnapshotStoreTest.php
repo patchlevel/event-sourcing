@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 
-use Patchlevel\EventSourcing\Snapshot\BatchSnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
-use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Snapshot\BatchSnapshotStore */
-class BatchSnapshotStoreTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore */
+class DefaultSnapshotStoreTest extends TestCase
 {
     use ProphecyTrait;
 
     public function testNewAggregateShouldNotSaved(): void
     {
-        $wrappedStore = $this->prophesize(SnapshotStore::class);
+        $wrappedStore = $this->prophesize(SnapshotAdapter::class);
         $wrappedStore->save()->shouldNotBeCalled();
 
-        $store = new BatchSnapshotStore($wrappedStore->reveal());
+        $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
         $snapshot = new Snapshot(
             ProfileWithSnapshot::class,
@@ -42,10 +42,10 @@ class BatchSnapshotStoreTest extends TestCase
             ['foo' => 'bar']
         );
 
-        $wrappedStore = $this->prophesize(SnapshotStore::class);
-        $wrappedStore->save($snapshot)->shouldBeCalled();
+        $wrappedStore = $this->prophesize(SnapshotAdapter::class);
+        $wrappedStore->save('profile_with_snapshot-1', 11, ['foo' => 'bar'])->shouldBeCalled();
 
-        $store = new BatchSnapshotStore($wrappedStore->reveal());
+        $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
         $store->save($snapshot);
     }
@@ -66,11 +66,11 @@ class BatchSnapshotStoreTest extends TestCase
             ['foo' => 'bar']
         );
 
-        $wrappedStore = $this->prophesize(SnapshotStore::class);
-        $wrappedStore->save($snapshot)->shouldBeCalled();
-        $wrappedStore->save($newSnapshot)->shouldNotBeCalled();
+        $wrappedStore = $this->prophesize(SnapshotAdapter::class);
+        $wrappedStore->save('profile_with_snapshot-1', 11, ['foo' => 'bar'])->shouldBeCalled();
+        $wrappedStore->save('profile_with_snapshot-1', 13, ['foo' => 'bar'])->shouldNotBeCalled();
 
-        $store = new BatchSnapshotStore($wrappedStore->reveal());
+        $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
         $store->save($snapshot);
         $store->save($newSnapshot);
@@ -85,11 +85,11 @@ class BatchSnapshotStoreTest extends TestCase
             ['foo' => 'bar']
         );
 
-        $wrappedStore = $this->prophesize(SnapshotStore::class);
-        $wrappedStore->load(ProfileWithSnapshot::class, '1')->willReturn($snapshot);
+        $wrappedStore = $this->prophesize(SnapshotAdapter::class);
+        $wrappedStore->load('profile_with_snapshot-1')->willReturn([11, ['foo' => 'bar']]);
         $wrappedStore->save()->shouldNotBeCalled();
 
-        $store = new BatchSnapshotStore($wrappedStore->reveal());
+        $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
         $newSnapshot = new Snapshot(
             ProfileWithSnapshot::class,
@@ -98,7 +98,7 @@ class BatchSnapshotStoreTest extends TestCase
             ['foo' => 'bar']
         );
 
-        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
 
         $store->save($newSnapshot);
     }
@@ -119,13 +119,13 @@ class BatchSnapshotStoreTest extends TestCase
             ['foo' => 'bar']
         );
 
-        $wrappedStore = $this->prophesize(SnapshotStore::class);
-        $wrappedStore->load(ProfileWithSnapshot::class, '1')->willReturn($snapshot);
-        $wrappedStore->save($newSnapshot)->shouldBeCalled();
+        $wrappedStore = $this->prophesize(SnapshotAdapter::class);
+        $wrappedStore->load('profile_with_snapshot-1')->willReturn([11, ['foo' => 'bar']]);
+        $wrappedStore->save('profile_with_snapshot-1', 25, ['foo' => 'bar'])->shouldBeCalled();
 
-        $store = new BatchSnapshotStore($wrappedStore->reveal());
+        $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
-        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
 
         $store->save($newSnapshot);
     }
@@ -146,13 +146,13 @@ class BatchSnapshotStoreTest extends TestCase
             ['foo' => 'bar']
         );
 
-        $wrappedStore = $this->prophesize(SnapshotStore::class);
-        $wrappedStore->load(ProfileWithSnapshot::class, '1')->willReturn($snapshot);
-        $wrappedStore->save($newSnapshot)->shouldBeCalled();
+        $wrappedStore = $this->prophesize(SnapshotAdapter::class);
+        $wrappedStore->load('profile_with_snapshot-1')->willReturn([11, ['foo' => 'bar']]);
+        $wrappedStore->save('profile_with_snapshot-1', 13, ['foo' => 'bar'])->shouldBeCalled();
 
-        $store = new BatchSnapshotStore($wrappedStore->reveal());
+        $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
-        self::assertSame($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
 
         $store->freeMemory();
         $store->save($newSnapshot);

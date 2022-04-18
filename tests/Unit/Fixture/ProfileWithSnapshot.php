@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Snapshot;
 
+#[Aggregate('profile_with_snapshot')]
+#[Snapshot('memory', 10)]
 final class ProfileWithSnapshot extends SnapshotableAggregateRoot
 {
     private ProfileId $id;

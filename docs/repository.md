@@ -35,11 +35,10 @@ The `SnapshotRepository` is instantiated just like the DefaultRepository,
 except that it also needs a `SnapshotStore` to load and save the `Snapshots`.
 
 ```php
-use Patchlevel\EventSourcing\Repository\SnapshotRepository;
-use Patchlevel\EventSourcing\Snapshot\Psr6SnapshotStore;
+use Patchlevel\EventSourcing\Repository\DefaultRepository;use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
 
-$snapshot = new Psr6SnapshotStore(/* ... */);
-$repository = new SnapshotRepository($store, $eventBus, Profile::class, $snapshot);
+$snapshot = new Psr6SnapshotAdapter(/* ... */);
+$repository = new DefaultRepository($store, $eventBus, Profile::class, $snapshot);
 ```
 
 > :warning: The aggregate must inherit from the SnapshotableAggregateRoot

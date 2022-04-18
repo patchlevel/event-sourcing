@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Snapshot;
 
-use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotNotFound;
 
 interface SnapshotStore
 {
     public function save(Snapshot $snapshot): void;
 
     /**
-     * @param class-string<SnapshotableAggregateRoot> $aggregate
+     * @param class-string<AggregateRoot> $aggregateClass
      *
      * @throws SnapshotNotFound
      */
-    public function load(string $aggregate, string $id): Snapshot;
+    public function load(string $aggregateClass, string $id): Snapshot;
 }

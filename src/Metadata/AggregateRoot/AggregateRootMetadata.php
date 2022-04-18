@@ -10,11 +10,14 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 final class AggregateRootMetadata
 {
     public function __construct(
+        public string $name,
         /** @var array<class-string, string> */
         public array $applyMethods,
         /** @var array<class-string, true> */
         public array $suppressEvents,
         public bool $suppressAll,
+        public ?string $snapshotStore,
+        public ?int $snapshotBatch,
     ) {
     }
 }

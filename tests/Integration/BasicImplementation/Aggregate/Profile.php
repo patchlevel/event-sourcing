@@ -7,10 +7,12 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggrega
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
 
 #[Aggregate('profile')]
+#[Snapshot('default', 100)]
 final class Profile extends SnapshotableAggregateRoot
 {
     private ProfileId $id;

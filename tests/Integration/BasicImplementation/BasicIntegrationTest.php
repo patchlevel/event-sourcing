@@ -11,10 +11,10 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegist
 use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
-use Patchlevel\EventSourcing\Repository\SnapshotRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Serializer\JsonSerializer;
-use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
@@ -191,9 +191,9 @@ final class BasicIntegrationTest extends TestCase
             'eventstore'
         );
 
-        $snapshotStore = new InMemorySnapshotStore();
+        $snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
 
-        $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
+        $repository = new DefaultRepository($store, $eventStream, Profile::class, $snapshotStore);
 
         // create tables
         $profileProjection->create();
@@ -209,7 +209,7 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
+        $repository = new DefaultRepository($store, $eventStream, Profile::class, $snapshotStore);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);

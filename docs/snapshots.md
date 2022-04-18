@@ -19,12 +19,11 @@ To use the snapshot system, the `SnapshotRepository` must be used.
 In addition, a `SnapshotStore` must then be given.
 
 ```php
-use Patchlevel\EventSourcing\Repository\SnapshotRepository;
-use Patchlevel\EventSourcing\Snapshot\Psr16SnapshotStore;
+use Patchlevel\EventSourcing\Repository\DefaultRepository;use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
 
-$snapshotStore = new Psr16SnapshotStore($cache);
+$snapshotStore = new Psr16SnapshotAdapter($cache);
 
-$repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
+$repository = new DefaultRepository($store, $eventStream, Profile::class, $snapshotStore);
 ```
 
 > :book: You can read more about Repository [here](./repository.md).
@@ -77,9 +76,9 @@ Here are a few listed:
 A `Psr6SnapshotStore`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-6/).
 
 ```php
-use Patchlevel\EventSourcing\Snapshot\Psr6SnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
 
-$snapshotStore = new Psr6SnapshotStore($cache);
+$snapshotStore = new Psr6SnapshotAdapter($cache);
 ```
 
 ### psr16
@@ -87,9 +86,9 @@ $snapshotStore = new Psr6SnapshotStore($cache);
 A `Psr16SnapshotStore`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-16/).
 
 ```php
-use Patchlevel\EventSourcing\Snapshot\Psr16SnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
 
-$snapshotStore = new Psr16SnapshotStore($cache);
+$snapshotStore = new Psr16SnapshotAdapter($cache);
 ```
 
 ### in memory
@@ -97,9 +96,9 @@ $snapshotStore = new Psr16SnapshotStore($cache);
 A `InMemorySnapshotStore` that can be used for test purposes.
 
 ```php
-use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 
-$snapshotStore = new InMemorySnapshotStore();
+$snapshotStore = new InMemorySnapshotAdapter();
 ```
 
 ### batch store (since v1.2)
@@ -111,11 +110,10 @@ As soon as the difference exceeds the specified value, the writing process is st
 This prevents the cache from being slowed down by too many write processes.
 
 ```php
-use Patchlevel\EventSourcing\Snapshot\BatchSnapshotStore;
-use Patchlevel\EventSourcing\Snapshot\Psr6SnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\Adapter\BatchSnapshotAdapter;use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
 
-$psr6Store = new Psr6SnapshotStore($cache);
-$snapshotStore = new BatchSnapshotStore($psr6Store, 20);
+$psr6Store = new Psr6SnapshotAdapter($cache);
+$snapshotStore = new BatchSnapshotAdapter($psr6Store, 20);
 ```
 
 > :book: It uses an internal cache that you can clear with the `freeMemory` method.
