@@ -4,10 +4,6 @@ name: "Benchmark"
 
 on:
   pull_request:
-  push:
-    branches:
-      - "[0-9]+.[0-9]+.x"
-      - "renovate/*"
 
 jobs:
   phpbench:
