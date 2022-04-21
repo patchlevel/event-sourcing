@@ -29,7 +29,7 @@ abstract class AggregateRoot
 
     protected function apply(object $event): void
     {
-        $metadata = self::metadata(static::class);
+        $metadata = self::metadata();
 
         if (!array_key_exists($event::class, $metadata->applyMethods)) {
             if (!$metadata->suppressAll && !array_key_exists($event::class, $metadata->suppressEvents)) {
@@ -93,16 +93,17 @@ abstract class AggregateRoot
         return $this->playhead;
     }
 
-    /**
-     * @param class-string<self> $aggregateClass
-     */
-    public static function metadata(string $aggregateClass): AggregateRootMetadata
+    public static function metadata(): AggregateRootMetadata
     {
+        if (static::class === self::class) {
+            throw new MetadataNotPossible();
+        }
+
         if (!self::$metadataFactory) {
             self::$metadataFactory = new AttributeAggregateRootMetadataFactory();
         }
 
-        return self::$metadataFactory->metadata($aggregateClass);
+        return self::$metadataFactory->metadata(static::class);
     }
 
     public static function setMetadataFactory(AggregateRootMetadataFactory $metadataFactory): void

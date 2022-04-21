@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound;
+use Patchlevel\EventSourcing\Aggregate\MetadataNotPossible;
 use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\EventBus\Message as EventBusMessage;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
@@ -182,5 +185,19 @@ class AggregateRootTest extends TestCase
         $email = Email::fromString('hallo@patchlevel.de');
 
         ProfileInvalid::createProfile($profileId, $email);
+    }
+
+    public function testMetadata(): void
+    {
+        $metadata = Profile::metadata();
+
+        self::assertInstanceOf(AggregateRootMetadata::class, $metadata);
+    }
+
+    public function testMetadataNotPossible(): void
+    {
+        $this->expectException(MetadataNotPossible::class);
+
+        AggregateRoot::metadata();
     }
 }

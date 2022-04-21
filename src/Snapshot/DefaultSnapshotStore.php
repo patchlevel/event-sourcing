@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
 use Throwable;
 
+use function array_key_exists;
 use function sprintf;
 
 final class DefaultSnapshotStore implements SnapshotStore
@@ -35,7 +36,7 @@ final class DefaultSnapshotStore implements SnapshotStore
             return;
         }
 
-        $adapter = $this->getAdapter($aggregateClass);
+        $adapter = $this->adapter($aggregateClass);
 
         $adapter->save(
             $key,
@@ -53,7 +54,7 @@ final class DefaultSnapshotStore implements SnapshotStore
      */
     public function load(string $aggregateClass, string $id): Snapshot
     {
-        $adapter = $this->getAdapter($aggregateClass);
+        $adapter = $this->adapter($aggregateClass);
         $key = $this->key($aggregateClass, $id);
 
         try {
@@ -80,15 +81,19 @@ final class DefaultSnapshotStore implements SnapshotStore
     /**
      * @param class-string<AggregateRoot> $aggregateClass
      */
-    private function getAdapter(string $aggregateClass): SnapshotAdapter
+    public function adapter(string $aggregateClass): SnapshotAdapter
     {
-        $snapshotName = $aggregateClass::metadata($aggregateClass)->snapshotStore;
+        $adapterName = $aggregateClass::metadata()->snapshotStore;
 
-        if (!$snapshotName) {
+        if (!$adapterName) {
             throw new SnapshotNotConfigured($aggregateClass);
         }
 
-        return $this->snapshotAdapters[$snapshotName];
+        if (!array_key_exists($adapterName, $this->snapshotAdapters)) {
+            throw new AdapterNotFound($adapterName);
+        }
+
+        return $this->snapshotAdapters[$adapterName];
     }
 
     /**
@@ -96,7 +101,7 @@ final class DefaultSnapshotStore implements SnapshotStore
      */
     private function key(string $aggregateClass, string $aggregateId): string
     {
-        $aggregateName = $aggregateClass::metadata($aggregateClass)->name;
+        $aggregateName = $aggregateClass::metadata()->name;
 
         return sprintf('%s-%s', $aggregateName, $aggregateId);
     }
@@ -104,7 +109,7 @@ final class DefaultSnapshotStore implements SnapshotStore
     private function shouldBeSaved(Snapshot $snapshot, string $key): bool
     {
         $aggregateClass = $snapshot->aggregate();
-        $batchSize = $aggregateClass::metadata($snapshot->aggregate())->snapshotBatch;
+        $batchSize = $aggregateClass::metadata()->snapshotBatch;
 
         if (!$batchSize) {
             return true;

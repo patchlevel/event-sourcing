@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
+use Patchlevel\EventSourcing\Snapshot\AdapterNotFound;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
@@ -156,5 +157,21 @@ class DefaultSnapshotStoreTest extends TestCase
 
         $store->freeMemory();
         $store->save($newSnapshot);
+    }
+
+    public function testAdapterIsMissing(): void
+    {
+        $this->expectException(AdapterNotFound::class);
+
+        $store = new DefaultSnapshotStore([]);
+        $store->load(ProfileWithSnapshot::class, '1');
+    }
+
+    public function testGetAdapter(): void
+    {
+        $adapter = $this->prophesize(SnapshotAdapter::class)->reveal();
+        $store = new DefaultSnapshotStore(['memory' => $adapter]);
+
+        self::assertSame($adapter, $store->adapter(ProfileWithSnapshot::class));
     }
 }
