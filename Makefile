@@ -30,7 +30,7 @@ psalm-baseline: vendor                                                          
 
 .PHONY: phpunit
 phpunit: vendor                                                                 ## run phpunit tests
-	vendor/bin/phpunit --testdox --colors=always -v $(OPTIONS)
+	vendor/bin/phpunit --colors=always -v $(OPTIONS)
 
 .PHONY: infection
 infection: vendor                                                               ## run infection

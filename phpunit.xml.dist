@@ -26,7 +26,6 @@
         </include>
         <report>
             <html outputDirectory="./coverage"/>
-            <text outputFile="php://stdout"/>
         </report>
     </coverage>
 
