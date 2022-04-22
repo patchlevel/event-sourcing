@@ -242,22 +242,6 @@ $middleware = new ReplaceEventMiddleware(OldVisited::class, static function (Old
 
 > :book: The middleware takes over the playhead and recordedAt information.
 
-### class rename
-
-When mapping is not necessary and you just want to rename the class
-(e.g. if namespaces have changed), then you can use the `ClassRenameMiddleware`.
-You have to pass a hash map. The key is the old class name and the value is the new class name.
-
-```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
-
-$middleware = new ClassRenameMiddleware([
-    OldVisited::class => NewVisited::class
-]);
-```
-
-> :book: The middleware takes over the payload, playhead and recordedAt information.
-
 ### until
 
 A use case could also be that you want to look at the projection from a previous point in time.

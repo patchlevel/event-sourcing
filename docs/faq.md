@@ -18,10 +18,12 @@ The `aggregate` does not care how the id is generated, since only an aggregate-w
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
+#[Aggregate('profile')]
 final class Profile extends AggregateRoot
 {
     private UuidInterface $id;
@@ -52,7 +54,7 @@ final class Profile extends AggregateRoot
         return $self;
     }
     
-    #[Apply(ProfileCreated::class)]
+    #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void 
     {
         $this->id = $event->profileId();
@@ -92,10 +94,12 @@ class ProfileId
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 use Ramsey\Uuid\UuidInterface;
 
+#[Aggregate('profile')]
 final class Profile extends AggregateRoot
 {
     private ProfileId $id;
@@ -126,7 +130,7 @@ final class Profile extends AggregateRoot
         return $self;
     }
     
-    #[Apply(ProfileCreated::class)]
+    #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void 
     {
         $this->id = $event->profileId();

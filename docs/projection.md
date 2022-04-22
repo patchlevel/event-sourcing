@@ -97,14 +97,6 @@ To make this possible, projections have two methods `create` and `drop` that can
 
 ### Create Projection Schema
 
-You can either `create` the structure for a single `projection`:
-
-```php
-$profileProjection->create();
-```
-
-> :book: If no create is necessary, the method can also be left empty.
-
 Or for all projections in the `DefaultProjectionHandler`:
 
 ```php
@@ -117,12 +109,6 @@ $projectionRepository->create();
 ```
 
 ### Drop Projection Schema
-
-The same goes for dropping. You can do it for a single `projection`.
-
-```php
-$profileProjection->drop();
-```
 
 Or for all projections in the `DefaultProjectionHandler`:
 
