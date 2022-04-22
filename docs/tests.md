@@ -9,28 +9,40 @@ use PHPUnit\Framework\TestCase;
 
 final class ProfileTest extends TestCase
 {
+    use AggregateTestHelper;
+
     public function testCreateProfile(): void
     {
-        $profile = Profile::createProfile(ProfileId::generate(), Email::fromString('foo@email.com'));
+        $id = ProfileId::generate();
+        $profile = Profile::createProfile($id, Email::fromString('foo@email.com'));
 
-        $events = $profile->releaseEvents();
+        self::assertRecordedEvents(
+            $profile, 
+            [
+                new ProfileCreated($id, Email::fromString('foo@email.com')),        
+            ]
+        );
 
-        self::assertCount(1, $events);
-        self::assertInstanceOf(ProfileCreated::class, $events[0]);
         self::assertEquals('foo@email.com', $profile->email()->toString());
     }
-
-    public function testRebuild(): void
+    
+    public function testChangeName(): void
     {
         $id = ProfileId::generate();
+        $profile = self::createAggregateFromEvents([
+            new ProfileCreated($id, Email::fromString('foo@email.com')),
+        ]);
+        
+        $profile->changeEmail(Email::fromString('bar@email.com'));
+        
+        self::assertRecordedEvents(
+            $profile, 
+            [
+                new EmailChanged(Email::fromString('bar@email.com')),        
+            ]
+        );
 
-        $events = [
-            ProfileCreated::raise($id, Email::fromString('foo@email.com'))->recordNow(1),
-        ];
-
-        $profile = Profile::createFromEventStream($events);
-
-        self::assertEquals('foo@email.com', $profile->email()->toString());
+        self::assertEquals('bar@email.com', $profile->email()->toString());
     }
 }
 ```

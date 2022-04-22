@@ -9,9 +9,15 @@ An AggregateRoot has to inherit from `AggregateRoot` and need to implement the m
 `aggregateRootId` is the identifier from `AggregateRoot` like a primary key for an entity.
 The events will be added later, but the following is enough to make it executable:
 
+To register an aggregate you have to set the `Aggregate` attribute over the class,
+otherwise it will not be recognized as an aggregate.
+There you also have to give the aggregate a name.
+
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 
+#[Aggregate('profile')]
 final class Profile extends AggregateRoot
 {
     private string $id;
@@ -69,16 +75,10 @@ final class CreateProfileHandler
 > :book: A **command bus** system is not necessary, only recommended.
 > The interaction can also easily take place in a controller or service.
 
-## Event
-
-Aggregate state is only stored as events.
-These events are also used again to rebuild the current state of the aggregate.
-
 ### Create a new aggregate
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
-An event must receive the `payload` and has to inherit from `AggregateChanged`.
-A `ProfileCreated` event is ideal here:
+For our aggregate we create the Event `ProfileCreated`:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
@@ -92,18 +92,17 @@ final class ProfileCreated
     ) {}
 }
 ```
-> :warning: The payload must be serializable and unserializable as json.
-> In other words, it can only consist of simple data types (no objects).
 
-> :book: We recommend using **named constructors** and methods with **typehints**,
-> so that handling becomes easier and less error-prone.
+> :book: You can find out more about events [here](./events.md).
 
 After we have defined the event, we have to adapt the creation of the profile:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
+#[Aggregate('profile')]
 final class Profile extends AggregateRoot
 {
     private string $id;
@@ -172,8 +171,10 @@ This method then creates the event `NameChanged` and records it:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
+#[Aggregate('profile')]
 final class Profile extends AggregateRoot
 {
     private string $id;
@@ -264,8 +265,10 @@ You can also define several apply attributes with different events using the sam
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
+#[Aggregate('profile')]
 final class Profile extends AggregateRoot
 {
     private string $id;
@@ -295,9 +298,11 @@ you can suppress the missing apply exceptions these events with the `SuppressMis
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
+#[Aggregate('profile')]
 #[SuppressMissingApply([NameChanged::class])]
 final class Profile extends AggregateRoot
 {
@@ -321,10 +326,12 @@ You can also completely deactivate the exceptions for missing apply methods.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
-#[SuppressMissingApply([SuppressMissingApply::ALL])]
+#[Aggregate('profile')]
+#[SuppressMissingApply(SuppressMissingApply::ALL)]
 final class Profile extends AggregateRoot
 {
     private string $id;
@@ -357,8 +364,10 @@ In the next example we want to make sure that **the name is at least 3 character
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
+#[Aggregate('profile')]
 final class Profile extends AggregateRoot
 {
     private string $id;
@@ -421,8 +430,10 @@ We can now use the value object `Name` in our aggregate:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
+#[Aggregate('profile')]
 final class Profile extends AggregateRoot
 {
     private string $id;
@@ -467,13 +478,15 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 final class NameChanged
 {
     public function __construct(
-        #[Normalize(new NameNormalizer())]
+        #[Normalize(NameNormalizer::class)]
         public readonly Name $name
     ) {}
 }
 ```
 
 > :warning: The payload must be serializable and unserializable as json.
+
+> :book: You can find out more about event normalizer [here](./events.md#normalizer).
 
 There are also cases where business rules have to be defined depending on the aggregate state.
 Sometimes also from states, which were changed in the same method.
@@ -486,9 +499,11 @@ or fill a [projection](./projection.md) with fully booked hotels.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
+#[Aggregate('profile')]
 #[SuppressMissingApply([FullyBooked::class])]
 final class Hotel extends AggregateRoot
 {
@@ -517,4 +532,29 @@ final class Hotel extends AggregateRoot
         $this->people++;
     }
 }
+```
+
+## Aggregate Root Registry
+
+The library needs to know about all aggregates so that the correct aggregate class is used to load from the database.
+There is an `AggregateRootRegistry` for this purpose. The registry is a simple hashmap between aggregate name and aggregate class.
+
+```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+
+$aggregateRegistry = new AggregateRootRegistry([
+    'profile' => Profile::class
+]);
+```
+
+So that you don't have to create it by hand, you can use a factory.
+By default, the `AttributeAggregateRootRegistryFactory` is used.
+There, with the help of paths, all classes with the attribute `Aggregate` are searched for
+and the `AggregateRootRegistry` is built up.
+
+```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+
+$aggregateRegistry = (new AttributeEventRegistryFactory())->create($paths);
 ```

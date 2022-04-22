@@ -16,7 +16,7 @@ The watch client and the listener are used to send all events that are saved to 
 use Patchlevel\EventSourcing\WatchServer\DefaultWatchServerClient;
 use Patchlevel\EventSourcing\WatchServer\WatchListener;
 
-$watchServerClient = new DefaultWatchServerClient('127.0.0.1:5000');
+$watchServerClient = new DefaultWatchServerClient('127.0.0.1:5000', $serializer);
 $watchListener = new WatchListener($watchServerClient);
 ```
 
@@ -32,7 +32,7 @@ As soon as you execute `start`, the server will be started until you terminate t
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\WatchServer\DefaultWatchServer;
 
-$watchServer = new DefaultWatchServer('127.0.0.1:5000');
+$watchServer = new DefaultWatchServer('127.0.0.1:5000', $serializer);
 $watchServer->listen(
     function (Message $message) {
         var_dump($message);
@@ -53,7 +53,7 @@ use Symfony\Component\Console\Application;
 $cli = new Application('Event-Sourcing CLI');
 $cli->setCatchExceptions(true);
 
-$watchServer = new DefaultWatchServer('127.0.0.1:5000');
+$watchServer = new DefaultWatchServer('127.0.0.1:5000', $serializer);
 $command = new WatchCommand($watchServer);
 
 $cli->addCommands([

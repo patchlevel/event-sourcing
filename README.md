@@ -26,6 +26,7 @@ composer require patchlevel/event-sourcing
 
 ## Documentation
 
+* [Events](docs/events.md)
 * [Aggregate](docs/aggregate.md)
 * [Repository](docs/repository.md)
 * [Event Bus](docs/event_bus.md)
@@ -53,7 +54,7 @@ We keep the example small, so we can only create hotels and let guests check in 
 
 First we define the events that happen in our system.
 
-A hotel can be created with a `name`:
+A hotel can be created with a `name` and a `id`:
 
 ```php
 #[Event('hotel.created')]
@@ -67,7 +68,7 @@ final class HotelCreated
 }
 ```
 
-A guest can check in by name:
+A guest can check in by `name`:
 
 ```php
 #[Event('hotel.guest_checked_in')]
@@ -92,6 +93,8 @@ final class GuestIsCheckedOut
     }
 }
 ```
+
+> :book: You can find out more about events [here](./docs/events.md).
 
 ### Define aggregates
 
@@ -184,7 +187,7 @@ final class Hotel extends AggregateRoot
 }
 ```
 
-> :book: You can find out more about aggregates and events [here](./docs/aggregate.md).
+> :book: You can find out more about aggregates [here](./docs/aggregate.md).
 
 ### Define projections
 

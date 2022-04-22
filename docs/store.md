@@ -32,13 +32,16 @@ The dbal connection is needed, a mapping of the aggregate class and aggregate na
 and, last but not least, the table name.
 
 ```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 
 $store = new SingleTableStore(
     $connection,
-    [
-        Profile::class => 'profile'
-    ],
+    JsonSerializer::createDefault(['src/Event']),
+    new AggregateRootRegistry([
+        'profile' => Profile::class
+    ]),
     'eventstore'
 );
 ```
@@ -53,18 +56,25 @@ The dbal connection is needed, a mapping of the aggregate class and table name
 and, last but not least, the table name for the metadata.
 
 ```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Serializer\JsonSerializer;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 
 $store = new MultiTableStore(
     $connection,
-    [
-        Profile::class => 'profile'
-    ],
+    JsonSerializer::createDefault(['src/Event']),
+    new AggregateRootRegistry([
+        'profile' => Profile::class
+    ]),
     'eventstore'
 );
 ```
 
 > :book: You can switch between strategies using the [pipeline](./pipeline.md).
+
+## Transaction
+
+// TODO
 
 ## Schema Manager
 

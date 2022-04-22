@@ -35,9 +35,10 @@ The `SnapshotRepository` is instantiated just like the DefaultRepository,
 except that it also needs a `SnapshotStore` to load and save the `Snapshots`.
 
 ```php
-use Patchlevel\EventSourcing\Repository\DefaultRepository;use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
+use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 
-$snapshot = new Psr6SnapshotAdapter(/* ... */);
+$snapshot = new DefaultSnapshotStore([/* adapters */]);
 $repository = new DefaultRepository($store, $eventBus, Profile::class, $snapshot);
 ```
 

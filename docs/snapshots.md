@@ -19,9 +19,14 @@ To use the snapshot system, the `SnapshotRepository` must be used.
 In addition, a `SnapshotStore` must then be given.
 
 ```php
-use Patchlevel\EventSourcing\Repository\DefaultRepository;use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
+use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 
-$snapshotStore = new Psr16SnapshotAdapter($cache);
+$adapter = new Psr16SnapshotAdapter($cache);
+$snapshotStore = new DefaultSnapshotStore([
+    'default' => $adapter
+]);
 
 $repository = new DefaultRepository($store, $eventStream, Profile::class, $snapshotStore);
 ```
@@ -34,7 +39,11 @@ instead of the `AggregateRoot` and implement the necessary methods.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Snapshot;
 
+#[Aggregate('profile')]
+#[Snapshot('default')]
 final class Profile extends SnapshotableAggregateRoot
 {
     // ...
@@ -58,9 +67,13 @@ final class Profile extends SnapshotableAggregateRoot
 
 > :warning: In the end it has to be possible to serialize it as json.
 
-## stores
+## Batch
 
-We offer a few `SnapshotStore` implementations that you can use.
+
+
+## Adapter
+
+We offer a few `SnapshotAdapter` implementations that you can use.
 But not a direct implementation of a cache. 
 There are many good libraries out there that address this problem, 
 and before we reinvent the wheel, choose one of them. 
@@ -73,47 +86,30 @@ Here are a few listed:
 
 ### psr6
 
-A `Psr6SnapshotStore`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-6/).
+A `Psr6SnapshotAdapter`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-6/).
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
 
-$snapshotStore = new Psr6SnapshotAdapter($cache);
+$adapter = new Psr6SnapshotAdapter($cache);
 ```
 
 ### psr16
 
-A `Psr16SnapshotStore`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-16/).
+A `Psr16SnapshotAdapter`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-16/).
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
 
-$snapshotStore = new Psr16SnapshotAdapter($cache);
+$adapter = new Psr16SnapshotAdapter($cache);
 ```
 
 ### in memory
 
-A `InMemorySnapshotStore` that can be used for test purposes.
+A `InMemorySnapshotAdapter` that can be used for test purposes.
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 
-$snapshotStore = new InMemorySnapshotAdapter();
+$adapter = new InMemorySnapshotAdapter();
 ```
-
-### batch store (since v1.2)
-
-Any other store can be wrapped with the `BatchSnapshotStore`. 
-It checks how many events away the last snapshot is to the current one. 
-Everything that is under the threshold is not written to the SnapshotStore. 
-As soon as the difference exceeds the specified value, the writing process is started.
-This prevents the cache from being slowed down by too many write processes.
-
-```php
-use Patchlevel\EventSourcing\Snapshot\Adapter\BatchSnapshotAdapter;use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
-
-$psr6Store = new Psr6SnapshotAdapter($cache);
-$snapshotStore = new BatchSnapshotAdapter($psr6Store, 20);
-```
-
-> :book: It uses an internal cache that you can clear with the `freeMemory` method.
