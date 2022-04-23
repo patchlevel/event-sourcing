@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Serializer;
+namespace Patchlevel\EventSourcing\Serializer\Hydrator;
 
 interface Normalizer
 {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
-use Patchlevel\EventSourcing\Serializer\Normalizer;
+use Patchlevel\EventSourcing\Serializer\Hydrator\Normalizer;
 
 use function is_string;
 
