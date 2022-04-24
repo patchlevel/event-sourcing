@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 
 #[Aggregate('profile_with_snapshot')]
-#[Snapshot('memory', batch: 10, version: '1')]
+#[Snapshot('memory', batch: 10)]
 final class ProfileWithSnapshot extends AggregateRoot
 {
     #[Normalize(ProfileIdNormalizer::class)]

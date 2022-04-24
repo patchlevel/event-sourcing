@@ -9,12 +9,12 @@ use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotNotFound;
 
 interface SnapshotStore
 {
-    public function save(Snapshot $snapshot): void;
+    public function save(AggregateRoot $aggregateRoot): void;
 
     /**
      * @param class-string<AggregateRoot> $aggregateClass
      *
      * @throws SnapshotNotFound
      */
-    public function load(string $aggregateClass, string $id): Snapshot;
+    public function load(string $aggregateClass, string $id): AggregateRoot;
 }

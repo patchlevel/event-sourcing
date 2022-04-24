@@ -32,12 +32,12 @@ final class DefaultSnapshotStore implements SnapshotStore
         $this->hydrator = $hydrator ?? new MetadataAggregateRootHydrator();
     }
 
-    public function save(Snapshot $snapshot): void
+    public function save(AggregateRoot $aggregateRoot): void
     {
-        $aggregateClass = $snapshot->aggregate();
-        $key = $this->key($aggregateClass, $snapshot->id());
+        $aggregateClass = $aggregateRoot::class;
+        $key = $this->key($aggregateClass, $aggregateRoot->aggregateRootId());
 
-        if (!$this->shouldBeSaved($snapshot, $key)) {
+        if (!$this->shouldBeSaved($aggregateRoot, $key)) {
             return;
         }
 
@@ -49,7 +49,7 @@ final class DefaultSnapshotStore implements SnapshotStore
             $this->hydrator->extract($aggregateRoot),
         );
 
-        $this->playheadCache[$key] = $snapshot->playhead();
+        $this->playheadCache[$key] = $aggregateRoot->playhead();
     }
 
     /**
@@ -57,7 +57,7 @@ final class DefaultSnapshotStore implements SnapshotStore
      *
      * @throws SnapshotNotFound
      */
-    public function load(string $aggregateClass, string $id): Snapshot
+    public function load(string $aggregateClass, string $id): AggregateRoot
     {
         $adapter = $this->adapter($aggregateClass);
         $key = $this->key($aggregateClass, $id);
@@ -106,10 +106,9 @@ final class DefaultSnapshotStore implements SnapshotStore
         return sprintf('%s-%s', $aggregateName, $aggregateId);
     }
 
-    private function shouldBeSaved(Snapshot $snapshot, string $key): bool
+    private function shouldBeSaved(AggregateRoot $aggregateRoot, string $key): bool
     {
-        $aggregateClass = $snapshot->aggregate();
-        $batchSize = $aggregateClass::metadata()->snapshotBatch;
+        $batchSize = $aggregateRoot::metadata()->snapshotBatch;
 
         if (!$batchSize) {
             return true;
@@ -117,7 +116,7 @@ final class DefaultSnapshotStore implements SnapshotStore
 
         $beforePlayhead = $this->playheadCache[$key] ?? 0;
 
-        $diff = $snapshot->playhead() - $beforePlayhead;
+        $diff = $aggregateRoot->playhead() - $beforePlayhead;
 
         return $diff >= $batchSize;
     }

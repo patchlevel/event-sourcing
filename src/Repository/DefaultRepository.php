@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
@@ -17,7 +16,6 @@ use Throwable;
 use function array_key_exists;
 use function assert;
 use function count;
-use function is_subclass_of;
 use function sprintf;
 
 final class DefaultRepository implements Repository
@@ -33,6 +31,8 @@ final class DefaultRepository implements Repository
 
     private ?SnapshotStore $snapshotStore;
     private LoggerInterface $logger;
+
+    private ?bool $snapshotConfigured = null;
 
     /**
      * @param class-string<AggregateRoot> $aggregateClass
@@ -59,7 +59,7 @@ final class DefaultRepository implements Repository
 
         $aggregateClass = $this->aggregateClass;
 
-        if ($this->snapshotStore && is_subclass_of($aggregateClass, SnapshotableAggregateRoot::class)) {
+        if ($this->snapshotStore && $this->snapshotConfigured()) {
             try {
                 return $this->loadFromSnapshot($aggregateClass, $id);
             } catch (SnapshotRebuildFailed $exception) {
@@ -108,31 +108,40 @@ final class DefaultRepository implements Repository
         $this->store->save(...$messages);
         $this->eventBus->dispatch(...$messages);
 
-        if (!$this->snapshotStore || !($aggregate instanceof SnapshotableAggregateRoot)) {
+        if (!$this->snapshotStore || !$this->snapshotConfigured()) {
             return;
         }
 
-        $snapshot = $aggregate->toSnapshot();
-        $this->snapshotStore->save($snapshot);
+        $this->snapshotStore->save($aggregate);
     }
 
     /**
-     * @param class-string<SnapshotableAggregateRoot> $aggregateClass
+     * @param class-string<AggregateRoot> $aggregateClass
      */
-    private function loadFromSnapshot(string $aggregateClass, string $id): SnapshotableAggregateRoot
+    private function loadFromSnapshot(string $aggregateClass, string $id): AggregateRoot
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 
-        $snapshot = $this->snapshotStore->load($aggregateClass, $id);
-        $messages = $this->store->load($aggregateClass, $id, $snapshot->playhead());
+        $aggregate = $this->snapshotStore->load($aggregateClass, $id);
+        $messages = $this->store->load($aggregateClass, $id, $aggregate->playhead());
 
         try {
-            return $aggregateClass::createFromSnapshot(
-                $snapshot,
-                $messages
-            );
+            $aggregate->catchUp($messages);
+
+            return $aggregate;
         } catch (Throwable $exception) {
-            throw new SnapshotRebuildFailed($snapshot, $exception);
+            throw new SnapshotRebuildFailed($aggregateClass, $id, $exception);
         }
+    }
+
+    private function snapshotConfigured(): bool
+    {
+        if ($this->snapshotConfigured !== null) {
+            return $this->snapshotConfigured;
+        }
+
+        $aggregateClass = $this->aggregateClass;
+
+        return $this->snapshotConfigured = $aggregateClass::metadata()->snapshotStore !== null;
     }
 }
