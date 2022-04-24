@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-final class FieldName
+final class SerializedName
 {
     private string $name;
 
