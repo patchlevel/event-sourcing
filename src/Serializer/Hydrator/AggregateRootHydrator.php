@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer\Hydrator;
 
-interface Hydrator
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+
+interface AggregateRootHydrator
 {
     /**
      * @param class-string<T>      $class
@@ -12,12 +14,12 @@ interface Hydrator
      *
      * @return T
      *
-     * @template T of object
+     * @template T of AggregateRoot
      */
-    public function hydrate(string $class, array $data): object;
+    public function hydrate(string $class, array $data): AggregateRoot;
 
     /**
      * @return array<string, mixed>
      */
-    public function extract(object $object): array;
+    public function extract(AggregateRoot $object): array;
 }

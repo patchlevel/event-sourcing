@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events;
 
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\Normalize;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\EventNormalizer\ProfileIdNormalizer;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Normalizer\ProfileIdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
 
 #[Event('profile.created')]

@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\FieldName;
+use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;
@@ -39,10 +41,12 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflector);
         $applyMethods = $this->findApplyMethods($reflector, $aggregate);
         [$snapshotStore, $snapshotBatch] = $this->findSnapshot($reflector);
+        $properties = $this->getPropertyMetadataList($reflector);
 
         $metadata = new AggregateRootMetadata(
             $aggregateName,
             $applyMethods,
+            $properties,
             $suppressEvents,
             $suppressAll,
             $snapshotStore,
@@ -214,5 +218,44 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         }
 
         return $result;
+    }
+
+    /**
+     * @return array<string, AggregateRootPropertyMetadata>
+     */
+    private function getPropertyMetadataList(ReflectionClass $reflectionClass): array
+    {
+        $properties = [];
+
+        foreach ($reflectionClass->getProperties() as $property) {
+            $property->setAccessible(true);
+
+            $reflection = $property;
+            $fieldName = $property->getName();
+
+            $attributeReflectionList = $property->getAttributes(FieldName::class);
+
+            if ($attributeReflectionList !== []) {
+                $attribute = $attributeReflectionList[0]->newInstance();
+                $fieldName = $attribute->name();
+            }
+
+            $attributeReflectionList = $property->getAttributes(Normalize::class);
+
+            $normalizer = null;
+
+            if ($attributeReflectionList !== []) {
+                $attribute = $attributeReflectionList[0]->newInstance();
+                $normalizer = $attribute->normalizer();
+            }
+
+            $properties[$property->getName()] = new AggregateRootPropertyMetadata(
+                $fieldName,
+                $reflection,
+                $normalizer
+            );
+        }
+
+        return $properties;
     }
 }

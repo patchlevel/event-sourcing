@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profile;
@@ -44,7 +44,7 @@ final class LoadEventsBench
 
         $this->store = new SingleTableStore(
             $connection,
-            JsonSerializer::createDefault([__DIR__ . '/BasicImplementation/Events']),
+            DefaultEventSerializer::createDefault([__DIR__ . '/BasicImplementation/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
             'eventstore'
         );

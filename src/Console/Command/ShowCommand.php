@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -20,10 +20,10 @@ use function sprintf;
 final class ShowCommand extends Command
 {
     private Store $store;
-    private Serializer $serializer;
+    private EventSerializer $serializer;
     private AggregateRootRegistry $aggregateRootRegistry;
 
-    public function __construct(Store $store, Serializer $serializer, AggregateRootRegistry $aggregateRootRegistry)
+    public function __construct(Store $store, EventSerializer $serializer, AggregateRootRegistry $aggregateRootRegistry)
     {
         parent::__construct();
 

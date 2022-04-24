@@ -33,12 +33,12 @@ and, last but not least, the table name.
 
 ```php
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 
 $store = new SingleTableStore(
     $connection,
-    JsonSerializer::createDefault(['src/Event']),
+    DefaultEventSerializer::createDefault(['src/Event']),
     new AggregateRootRegistry([
         'profile' => Profile::class
     ]),
@@ -57,12 +57,12 @@ and, last but not least, the table name for the metadata.
 
 ```php
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 
 $store = new MultiTableStore(
     $connection,
-    JsonSerializer::createDefault(['src/Event']),
+    DefaultEventSerializer::createDefault(['src/Event']),
     new AggregateRootRegistry([
         'profile' => Profile::class
     ]),

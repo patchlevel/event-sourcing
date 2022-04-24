@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\EventNormalizer;
+namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Normalizer;
 
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Serializer\Hydrator\Normalizer;

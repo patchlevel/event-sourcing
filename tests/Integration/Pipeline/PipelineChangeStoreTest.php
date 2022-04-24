@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
@@ -47,7 +47,7 @@ final class PipelineChangeStoreTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $serializer = JsonSerializer::createDefault([__DIR__ . '/Events']);
+        $serializer = DefaultEventSerializer::createDefault([__DIR__ . '/Events']);
         $aggregateRootRegistry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
 
         $oldStore = new MultiTableStore(

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\WatchServer;
 
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
 
 use function base64_encode;
 use function fclose;
@@ -25,7 +25,7 @@ final class DefaultWatchServerClient implements WatchServerClient
 {
     private string $host;
 
-    private Serializer $serializer;
+    private EventSerializer $serializer;
 
     /** @var resource|null */
     private $socket;
@@ -33,7 +33,7 @@ final class DefaultWatchServerClient implements WatchServerClient
     /**
      * @param string $host The server host
      */
-    public function __construct(string $host, Serializer $serializer)
+    public function __construct(string $host, EventSerializer $serializer)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;

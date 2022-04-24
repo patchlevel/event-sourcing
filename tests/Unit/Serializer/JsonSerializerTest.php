@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer;
 
-use Patchlevel\EventSourcing\Serializer\DeserializationNotPossible;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
-use Patchlevel\EventSourcing\Serializer\SerializedData;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Serializer\Encoder\DecodeNotPossible;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\NotNormalizedProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -15,11 +15,11 @@ use PHPUnit\Framework\TestCase;
 
 class JsonSerializerTest extends TestCase
 {
-    private JsonSerializer $serializer;
+    private DefaultEventSerializer $serializer;
 
     public function setUp(): void
     {
-        $this->serializer = JsonSerializer::createDefault([__DIR__ . '/../Fixture']);
+        $this->serializer = DefaultEventSerializer::createDefault([__DIR__ . '/../Fixture']);
     }
 
     public function testSerialize(): void
@@ -30,7 +30,7 @@ class JsonSerializerTest extends TestCase
         );
 
         self::assertEquals(
-            new SerializedData('profile_created', '{"profileId":"1","email":"info@patchlevel.de"}'),
+            new SerializedEvent('profile_created', '{"profileId":"1","email":"info@patchlevel.de"}'),
             $this->serializer->serialize($event)
         );
     }
@@ -43,7 +43,7 @@ class JsonSerializerTest extends TestCase
         );
 
         self::assertEquals(
-            new SerializedData('not_normalized_profile_created', '{"profileId":{},"email":{}}'),
+            new SerializedEvent('not_normalized_profile_created', '{"profileId":{},"email":{}}'),
             $this->serializer->serialize($event)
         );
     }
@@ -56,7 +56,7 @@ class JsonSerializerTest extends TestCase
         );
 
         $event = $this->serializer->deserialize(
-            new SerializedData(
+            new SerializedEvent(
                 'profile_created',
                 '{"profileId":"1","email":"info@patchlevel.de"}'
             )
@@ -67,10 +67,10 @@ class JsonSerializerTest extends TestCase
 
     public function testDeserializeWithSyntaxError(): void
     {
-        $this->expectException(DeserializationNotPossible::class);
+        $this->expectException(DecodeNotPossible::class);
 
         $this->serializer->deserialize(
-            new SerializedData(
+            new SerializedEvent(
                 'profile_created',
                 ''
             )

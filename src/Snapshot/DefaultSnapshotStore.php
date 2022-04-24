@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Snapshot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Serializer\Hydrator\AggregateRootHydrator;
+use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataAggregateRootHydrator;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
 use Throwable;
 
@@ -16,15 +18,18 @@ final class DefaultSnapshotStore implements SnapshotStore
     /** @var array<string, SnapshotAdapter> */
     private array $snapshotAdapters;
 
+    private AggregateRootHydrator $hydrator;
+
     /** @var array<string, int> */
     private array $playheadCache = [];
 
     /**
      * @param array<string, SnapshotAdapter> $snapshotAdapters
      */
-    public function __construct(array $snapshotAdapters)
+    public function __construct(array $snapshotAdapters, ?AggregateRootHydrator $hydrator = null)
     {
         $this->snapshotAdapters = $snapshotAdapters;
+        $this->hydrator = $hydrator ?? new MetadataAggregateRootHydrator();
     }
 
     public function save(Snapshot $snapshot): void
@@ -40,8 +45,8 @@ final class DefaultSnapshotStore implements SnapshotStore
 
         $adapter->save(
             $key,
-            $snapshot->playhead(),
-            $snapshot->payload()
+            $aggregateRoot->playhead(),
+            $this->hydrator->extract($aggregateRoot),
         );
 
         $this->playheadCache[$key] = $snapshot->playhead();
@@ -65,12 +70,7 @@ final class DefaultSnapshotStore implements SnapshotStore
 
         $this->playheadCache[$key] = $playhead;
 
-        return new Snapshot(
-            $aggregateClass,
-            $id,
-            $playhead,
-            $payload
-        );
+        return $this->hydrator->hydrate($aggregateClass, $payload);
     }
 
     public function freeMemory(): void

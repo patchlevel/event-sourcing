@@ -58,6 +58,24 @@ abstract class AggregateRoot
     }
 
     /**
+     * @internal
+     *
+     * @param list<Message> $messages
+     */
+    final public function catchUp(array $messages): void
+    {
+        foreach ($messages as $message) {
+            $this->playhead++;
+
+            if ($this->playhead !== $message->playhead()) {
+                throw new PlayheadSequenceMismatch(static::class);
+            }
+
+            $this->apply($message->event());
+        }
+    }
+
+    /**
      * @return list<Message>
      */
     final public function releaseMessages(): array
