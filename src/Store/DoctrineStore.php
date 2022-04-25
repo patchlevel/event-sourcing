@@ -11,16 +11,24 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
+use function array_map;
 use function is_int;
+use function is_string;
 
-abstract class DoctrineStore implements Store, TransactionStore
+abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
 {
-    protected Connection $connection;
+    private const OUTBOX_TABLE = 'outbox';
 
-    public function __construct(Connection $eventConnection)
-    {
-        $this->connection = $eventConnection;
+    public function __construct(
+        protected Connection $connection,
+        protected EventSerializer $serializer,
+        protected AggregateRootRegistry $aggregateRootRegistry
+    ) {
     }
 
     public function transactionBegin(): void
@@ -48,6 +56,97 @@ abstract class DoctrineStore implements Store, TransactionStore
         return $this->connection;
     }
 
+    public function saveOutboxMessage(Message ...$messages): void
+    {
+        $this->connection->transactional(
+            function (Connection $connection) use ($messages): void {
+                foreach ($messages as $message) {
+                    $event = $message->event();
+
+                    $data = $this->serializer->serialize($event);
+
+                    $connection->insert(
+                        self::OUTBOX_TABLE,
+                        [
+                            'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
+                            'aggregate_id' => $message->aggregateId(),
+                            'playhead' => $message->playhead(),
+                            'event' => $data->name,
+                            'payload' => $data->payload,
+                            'recorded_on' => $message->recordedOn(),
+                        ],
+                        [
+                            'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
+                        ]
+                    );
+                }
+            }
+        );
+    }
+
+    /**
+     * @return list<Message>
+     */
+    public function retrieveOutboxMessages(?int $limit = null): array
+    {
+        $sql = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from(self::OUTBOX_TABLE)
+            ->setMaxResults($limit)
+            ->getSQL();
+
+        /** @var list<array{aggregate: string, aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string}> $result */
+        $result = $this->connection->fetchAllAssociative($sql);
+        $platform = $this->connection->getDatabasePlatform();
+
+        return array_map(
+            function (array $data) use ($platform) {
+                return new Message(
+                    $this->aggregateRootRegistry->aggregateClass($data['aggregate']),
+                    $data['aggregate_id'],
+                    self::normalizePlayhead($data['playhead'], $platform),
+                    $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
+                    self::normalizeRecordedOn($data['recorded_on'], $platform)
+                );
+            },
+            $result
+        );
+    }
+
+    public function markOutboxMessageConsumed(Message ...$messages): void
+    {
+        $this->connection->transactional(
+            function (Connection $connection) use ($messages): void {
+                foreach ($messages as $message) {
+                    $connection->delete(
+                        self::OUTBOX_TABLE,
+                        [
+                            'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
+                            'aggregate_id' => $message->aggregateId(),
+                            'playhead' => $message->playhead(),
+                        ]
+                    );
+                }
+            }
+        );
+    }
+
+    public function countOutboxMessages(): int
+    {
+        $sql = $this->connection->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from(self::OUTBOX_TABLE)
+            ->getSQL();
+
+        $result = $this->connection->fetchOne($sql);
+
+        if (!is_int($result) && !is_string($result)) {
+            throw new WrongQueryResult();
+        }
+
+        return (int)$result;
+    }
+
     abstract public function schema(): Schema;
 
     protected static function normalizeRecordedOn(string $recordedOn, AbstractPlatform $platform): DateTimeImmutable
@@ -70,5 +169,25 @@ abstract class DoctrineStore implements Store, TransactionStore
         }
 
         return $normalizedPlayhead;
+    }
+
+    protected function addOutboxSchema(Schema $schema): void
+    {
+        $table = $schema->createTable('outbox');
+
+        $table->addColumn('aggregate', Types::STRING)
+            ->setNotnull(true);
+        $table->addColumn('aggregate_id', Types::STRING)
+            ->setNotnull(true);
+        $table->addColumn('playhead', Types::INTEGER)
+            ->setNotnull(true);
+        $table->addColumn('event', Types::STRING)
+            ->setNotnull(true);
+        $table->addColumn('payload', Types::JSON)
+            ->setNotnull(true);
+        $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
+            ->setNotnull(false);
+
+        $table->setPrimaryKey(['aggregate', 'aggregate_id', 'playhead']);
     }
 }
