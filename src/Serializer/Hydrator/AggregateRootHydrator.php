@@ -21,5 +21,5 @@ interface AggregateRootHydrator
     /**
      * @return array<string, mixed>
      */
-    public function extract(AggregateRoot $object): array;
+    public function extract(AggregateRoot $aggregateRoot): array;
 }

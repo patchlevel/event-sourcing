@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer\Hydrator;
 
-use Closure;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use ReflectionClass;
+use ReflectionProperty;
 use TypeError;
 
 use function array_key_exists;
 use function assert;
+use function is_int;
 
 final class MetadataAggregateRootHydrator implements AggregateRootHydrator
 {
@@ -19,7 +20,7 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
     /** @var array<class-string, ReflectionClass> */
     private array $reflectionClassCache = [];
 
-    private ?Closure $playheadSetter = null;
+    private ?ReflectionProperty $playheadReflection = null;
 
     /**
      * @param class-string<T>      $class
@@ -32,7 +33,7 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
     public function hydrate(string $class, array $data): AggregateRoot
     {
         $metadata = $class::metadata();
-        $object = $this->newInstance($class);
+        $aggregateRoot = $this->newInstance($class);
 
         foreach ($metadata->properties as $propertyMetadata) {
             /** @psalm-suppress MixedAssignment */
@@ -44,29 +45,33 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
             }
 
             try {
-                $propertyMetadata->reflection->setValue($object, $value);
+                $propertyMetadata->reflection->setValue($aggregateRoot, $value);
             } catch (TypeError $error) {
                 throw new TypeMismatch($error->getMessage(), 0, $error);
             }
         }
 
-        ($this->playheadSetter())($object, $data[self::PLAYHEAD_KEY]);
+        if (!array_key_exists(self::PLAYHEAD_KEY, $data) || !is_int($data[self::PLAYHEAD_KEY])) {
+            throw new MissingPlayhead();
+        }
 
-        return $object;
+        $this->setPlayhead($aggregateRoot, $data[self::PLAYHEAD_KEY]);
+
+        return $aggregateRoot;
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function extract(AggregateRoot $object): array
+    public function extract(AggregateRoot $aggregateRoot): array
     {
-        $metadata = $object::metadata();
+        $metadata = $aggregateRoot::metadata();
 
         $data = [];
 
         foreach ($metadata->properties as $propertyMetadata) {
             /** @psalm-suppress MixedAssignment */
-            $value = $propertyMetadata->reflection->getValue($object);
+            $value = $propertyMetadata->reflection->getValue($aggregateRoot);
 
             if ($propertyMetadata->normalizer) {
                 /** @psalm-suppress MixedAssignment */
@@ -77,7 +82,7 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
             $data[$propertyMetadata->fieldName] = $value;
         }
 
-        $data[self::PLAYHEAD_KEY] = $object->playhead();
+        $data[self::PLAYHEAD_KEY] = $aggregateRoot->playhead();
 
         return $data;
     }
@@ -102,14 +107,13 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
         return $object;
     }
 
-    private function playheadSetter(): Closure
+    private function setPlayhead(AggregateRoot $aggregateRoot, int $playhead): void
     {
-        if ($this->playheadSetter !== null) {
-            return $this->playheadSetter;
+        if ($this->playheadReflection === null) {
+            $this->playheadReflection = new ReflectionProperty(AggregateRoot::class, 'playhead');
+            $this->playheadReflection->setAccessible(true);
         }
 
-        return $this->playheadSetter = Closure::bind(function (AggregateRoot $aggregateRoot, int $playhead): void {
-            $aggregateRoot->playhead = $playhead;
-        }, null, AggregateRoot::class);
+        $this->playheadReflection->setValue($aggregateRoot, $playhead);
     }
 }
