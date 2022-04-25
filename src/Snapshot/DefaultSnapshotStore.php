@@ -45,7 +45,6 @@ final class DefaultSnapshotStore implements SnapshotStore
 
         $adapter->save(
             $key,
-            $aggregateRoot->playhead(),
             $this->hydrator->extract($aggregateRoot),
         );
 
@@ -53,9 +52,13 @@ final class DefaultSnapshotStore implements SnapshotStore
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<T> $aggregateClass
+     *
+     * @return T
      *
      * @throws SnapshotNotFound
+     *
+     * @template T of AggregateRoot
      */
     public function load(string $aggregateClass, string $id): AggregateRoot
     {
@@ -63,14 +66,16 @@ final class DefaultSnapshotStore implements SnapshotStore
         $key = $this->key($aggregateClass, $id);
 
         try {
-            [$playhead, $payload] = $adapter->load($key);
+            $data = $adapter->load($key);
         } catch (Throwable $exception) {
             throw new SnapshotNotFound($aggregateClass, $id, $exception);
         }
 
-        $this->playheadCache[$key] = $playhead;
+        $aggregate = $this->hydrator->hydrate($aggregateClass, $data);
 
-        return $this->hydrator->hydrate($aggregateClass, $payload);
+        $this->playheadCache[$key] = $aggregate->playhead();
+
+        return $aggregate;
     }
 
     public function freeMemory(): void

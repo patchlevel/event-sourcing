@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
-class EventHydratorTest extends TestCase
+class MetadataEventHydratorTest extends TestCase
 {
     private MetadataEventEventHydrator $hydrator;
 

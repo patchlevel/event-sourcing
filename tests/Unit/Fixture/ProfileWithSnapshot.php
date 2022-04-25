@@ -9,9 +9,11 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[Aggregate('profile_with_snapshot')]
-#[Snapshot('memory', batch: 10)]
+#[Snapshot('memory', batch: 2)]
+#[SuppressMissingApply([ProfileVisited::class])]
 final class ProfileWithSnapshot extends AggregateRoot
 {
     #[Normalize(ProfileIdNormalizer::class)]

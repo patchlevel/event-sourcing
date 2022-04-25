@@ -18,8 +18,7 @@ abstract class AggregateRoot
     /** @var list<Message> */
     private array $uncommittedMessages = [];
 
-    /** @internal */
-    protected int $playhead = 0;
+    private int $playhead = 0;
 
     final protected function __construct()
     {
@@ -111,7 +110,7 @@ abstract class AggregateRoot
         return $this->playhead;
     }
 
-    public static function metadata(): AggregateRootMetadata
+    final public static function metadata(): AggregateRootMetadata
     {
         if (static::class === self::class) {
             throw new MetadataNotPossible();
@@ -124,7 +123,7 @@ abstract class AggregateRoot
         return self::$metadataFactory->metadata(static::class);
     }
 
-    public static function setMetadataFactory(AggregateRootMetadataFactory $metadataFactory): void
+    final public static function setMetadataFactory(AggregateRootMetadataFactory $metadataFactory): void
     {
         self::$metadataFactory = $metadataFactory;
     }

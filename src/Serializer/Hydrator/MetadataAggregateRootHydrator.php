@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer\Hydrator;
 
+use Closure;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use ReflectionClass;
 use TypeError;
@@ -13,8 +14,12 @@ use function assert;
 
 final class MetadataAggregateRootHydrator implements AggregateRootHydrator
 {
+    private const PLAYHEAD_KEY = '_playhead';
+
     /** @var array<class-string, ReflectionClass> */
     private array $reflectionClassCache = [];
+
+    private ?Closure $playheadSetter = null;
 
     /**
      * @param class-string<T>      $class
@@ -45,6 +50,8 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
             }
         }
 
+        ($this->playheadSetter())($object, $data[self::PLAYHEAD_KEY]);
+
         return $object;
     }
 
@@ -70,6 +77,8 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
             $data[$propertyMetadata->fieldName] = $value;
         }
 
+        $data[self::PLAYHEAD_KEY] = $object->playhead();
+
         return $data;
     }
 
@@ -91,5 +100,16 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
         assert($object instanceof $class);
 
         return $object;
+    }
+
+    private function playheadSetter(): Closure
+    {
+        if ($this->playheadSetter !== null) {
+            return $this->playheadSetter;
+        }
+
+        return $this->playheadSetter = Closure::bind(function (AggregateRoot $aggregateRoot, int $playhead): void {
+            $aggregateRoot->playhead = $playhead;
+        }, null, AggregateRoot::class);
     }
 }

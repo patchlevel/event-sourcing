@@ -31,6 +31,7 @@ class MessageListNormalizer implements Normalizer
             throw new InvalidArgumentException();
         }
 
+        /** @psalm-suppress MixedArgumentTypeCoercion */
         return array_map(static fn (array $data) => Message::fromArray($data), $value);
     }
 }

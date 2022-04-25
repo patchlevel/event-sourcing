@@ -12,9 +12,13 @@ interface SnapshotStore
     public function save(AggregateRoot $aggregateRoot): void;
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<T> $aggregateClass
+     *
+     * @return T
      *
      * @throws SnapshotNotFound
+     *
+     * @template T of AggregateRoot
      */
     public function load(string $aggregateClass, string $id): AggregateRoot;
 }
