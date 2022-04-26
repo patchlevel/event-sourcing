@@ -53,7 +53,7 @@ final class InputHelper
     public static function bool(mixed $value): bool
     {
         if (!is_bool($value)) {
-            throw new InvalidArgumentGiven($value, 'boolean');
+            throw new InvalidArgumentGiven($value, 'bool');
         }
 
         return $value;

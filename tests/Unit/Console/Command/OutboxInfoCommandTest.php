@@ -6,8 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\OutboxInfoCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\SerializedData;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\OutboxStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -36,8 +37,8 @@ final class OutboxInfoCommandTest extends TestCase
             ),
         ]);
 
-        $serializer = $this->prophesize(Serializer::class);
-        $serializer->serialize($event, [Serializer::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedData(
+        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
             'profile.visited',
             '{"visitorId": "1"}',
         ));
@@ -73,8 +74,8 @@ final class OutboxInfoCommandTest extends TestCase
             ),
         ]);
 
-        $serializer = $this->prophesize(Serializer::class);
-        $serializer->serialize($event, [Serializer::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedData(
+        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
             'profile.visited',
             '{"visitorId": "1"}',
         ));

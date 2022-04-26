@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\OutboxStore;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,9 +16,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class OutboxInfoCommand extends Command
 {
     private OutboxStore $store;
-    private Serializer $serializer;
+    private EventSerializer $serializer;
 
-    public function __construct(OutboxStore $store, Serializer $serializer)
+    public function __construct(OutboxStore $store, EventSerializer $serializer)
     {
         parent::__construct();
 

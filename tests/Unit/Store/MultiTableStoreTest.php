@@ -19,7 +19,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Store\MultiTableStore */
+/**
+ * @covers \Patchlevel\EventSourcing\Store\MultiTableStore
+ * @covers \Patchlevel\EventSourcing\Store\DoctrineStore
+ */
 final class MultiTableStoreTest extends TestCase
 {
     use ProphecyTrait;
