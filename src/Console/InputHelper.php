@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use function is_bool;
+use function is_int;
+use function is_numeric;
 use function is_string;
 
 final class InputHelper
@@ -29,6 +31,23 @@ final class InputHelper
         }
 
         return $value;
+    }
+
+    public static function nullableInt(mixed $value): ?int
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!is_string($value) && !is_int($value)) {
+            throw new InvalidArgumentGiven($value, 'int|null');
+        }
+
+        if (!is_numeric($value)) {
+            throw new InvalidArgumentGiven($value, 'int|null');
+        }
+
+        return (int)$value;
     }
 
     public static function bool(mixed $value): bool

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Serializer\Serializer;
 use Patchlevel\EventSourcing\Store\OutboxStore;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 final class OutboxInfoCommand extends Command
@@ -30,14 +31,14 @@ final class OutboxInfoCommand extends Command
         $this
             ->setName('event-sourcing:outbox:info')
             ->setDescription('show events from one aggregate')
-            ->addArgument('limit', InputArgument::OPTIONAL, 'limit', 10);
+            ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Maximum number of messages to be displayed');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $console = new OutputStyle($input, $output);
 
-        $limit = (int)$input->getArgument('limit');
+        $limit = InputHelper::nullableInt($input->getOption('limit'));
 
         $messages = $this->store->retrieveOutboxMessages($limit);
 
