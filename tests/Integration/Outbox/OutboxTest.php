@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
+use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
@@ -83,9 +84,17 @@ final class OutboxTest extends TestCase
             $message->event()
         );
 
-        $store->markOutboxMessageConsumed($message);
+        $consumer = new StoreOutboxConsumer($store, $realEventBus);
+        $consumer->consume();
 
         self::assertSame(0, $store->countOutboxMessages());
         self::assertCount(0, $store->retrieveOutboxMessages());
+
+        $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
+
+        self::assertIsArray($result);
+        self::assertArrayHasKey('id', $result);
+        self::assertSame('1', $result['id']);
+        self::assertSame('John', $result['name']);
     }
 }
