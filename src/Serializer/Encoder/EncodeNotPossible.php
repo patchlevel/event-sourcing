@@ -7,8 +7,6 @@ namespace Patchlevel\EventSourcing\Serializer\Encoder;
 use Patchlevel\EventSourcing\Serializer\SerializeException;
 use Throwable;
 
-use function sprintf;
-
 final class EncodeNotPossible extends SerializeException
 {
     /** @var array<string, mixed> */
@@ -20,9 +18,7 @@ final class EncodeNotPossible extends SerializeException
     public function __construct(array $data, ?Throwable $previous = null)
     {
         parent::__construct(
-            sprintf(
-                'serialization is not possible',
-            ),
+            'serialization is not possible',
             0,
             $previous
         );

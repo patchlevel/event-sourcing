@@ -11,7 +11,7 @@ use TypeError;
 use function array_key_exists;
 use function assert;
 
-final class MetadataEventEventHydrator implements EventHydrator
+final class MetadataEventHydrator implements EventHydrator
 {
     private EventMetadataFactory $metadataFactory;
 

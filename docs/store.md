@@ -38,7 +38,7 @@ use Patchlevel\EventSourcing\Store\SingleTableStore;
 
 $store = new SingleTableStore(
     $connection,
-    DefaultEventSerializer::createDefault(['src/Event']),
+    DefaultEventSerializer::createFromPaths(['src/Event']),
     new AggregateRootRegistry([
         'profile' => Profile::class
     ]),
@@ -62,7 +62,7 @@ use Patchlevel\EventSourcing\Store\MultiTableStore;
 
 $store = new MultiTableStore(
     $connection,
-    DefaultEventSerializer::createDefault(['src/Event']),
+    DefaultEventSerializer::createFromPaths(['src/Event']),
     new AggregateRootRegistry([
         'profile' => Profile::class
     ]),

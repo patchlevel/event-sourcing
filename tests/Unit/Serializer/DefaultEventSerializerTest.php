@@ -17,7 +17,7 @@ class DefaultEventSerializerTest extends TestCase
 
     public function setUp(): void
     {
-        $this->serializer = DefaultEventSerializer::createDefault([__DIR__ . '/../Fixture']);
+        $this->serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/../Fixture']);
     }
 
     public function testSerialize(): void

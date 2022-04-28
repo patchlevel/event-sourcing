@@ -227,20 +227,18 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
     {
         $properties = [];
 
-        foreach ($reflectionClass->getProperties() as $property) {
-            $property->setAccessible(true);
+        foreach ($reflectionClass->getProperties() as $reflectionProperty) {
+            $reflectionProperty->setAccessible(true);
+            $fieldName = $reflectionProperty->getName();
 
-            $reflection = $property;
-            $fieldName = $property->getName();
-
-            $attributeReflectionList = $property->getAttributes(SerializedName::class);
+            $attributeReflectionList = $reflectionProperty->getAttributes(SerializedName::class);
 
             if ($attributeReflectionList !== []) {
                 $attribute = $attributeReflectionList[0]->newInstance();
                 $fieldName = $attribute->name();
             }
 
-            $attributeReflectionList = $property->getAttributes(Normalize::class);
+            $attributeReflectionList = $reflectionProperty->getAttributes(Normalize::class);
 
             $normalizer = null;
 
@@ -249,9 +247,9 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 $normalizer = $attribute->normalizer();
             }
 
-            $properties[$property->getName()] = new AggregateRootPropertyMetadata(
+            $properties[$reflectionProperty->getName()] = new AggregateRootPropertyMetadata(
                 $fieldName,
-                $reflection,
+                $reflectionProperty,
                 $normalizer
             );
         }

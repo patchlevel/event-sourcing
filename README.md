@@ -322,7 +322,7 @@ $eventBus = new DefaultEventBus();
 $eventBus->addListener(new ProjectionListener($projectionHandler));
 $eventBus->addListener(new SendCheckInEmailListener($mailer));
 
-$serializer = DefaultEventSerializer::createDefault(['src/Domain/Hotel/Event']);
+$serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
 
 $store = new SingleTableStore(

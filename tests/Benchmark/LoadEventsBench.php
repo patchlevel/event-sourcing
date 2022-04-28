@@ -44,7 +44,7 @@ final class LoadEventsBench
 
         $this->store = new SingleTableStore(
             $connection,
-            DefaultEventSerializer::createDefault([__DIR__ . '/BasicImplementation/Events']),
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
             'eventstore'
         );

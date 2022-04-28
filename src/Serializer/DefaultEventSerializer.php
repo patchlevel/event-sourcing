@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Serializer\Hydrator\EventHydrator;
-use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataEventEventHydrator;
+use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataEventHydrator;
 
 final class DefaultEventSerializer implements EventSerializer
 {
@@ -47,11 +47,11 @@ final class DefaultEventSerializer implements EventSerializer
     /**
      * @param list<string> $paths
      */
-    public static function createDefault(array $paths): static
+    public static function createFromPaths(array $paths): static
     {
         return new self(
             (new AttributeEventRegistryFactory())->create($paths),
-            new MetadataEventEventHydrator(new AttributeEventMetadataFactory()),
+            new MetadataEventHydrator(new AttributeEventMetadataFactory()),
             new JsonEncoder()
         );
     }

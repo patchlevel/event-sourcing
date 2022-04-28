@@ -47,7 +47,7 @@ final class PipelineChangeStoreTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $serializer = DefaultEventSerializer::createDefault([__DIR__ . '/Events']);
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
         $aggregateRootRegistry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
 
         $oldStore = new MultiTableStore(

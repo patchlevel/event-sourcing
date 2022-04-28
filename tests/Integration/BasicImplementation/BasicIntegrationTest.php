@@ -54,7 +54,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            DefaultEventSerializer::createDefault([__DIR__ . '/Events']),
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
@@ -99,7 +99,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            DefaultEventSerializer::createDefault([__DIR__ . '/Events']),
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
@@ -143,7 +143,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new MultiTableStore(
             $this->connection,
-            DefaultEventSerializer::createDefault([__DIR__ . '/Events']),
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
         );
 
@@ -186,7 +186,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            DefaultEventSerializer::createDefault([__DIR__ . '/Events']),
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
