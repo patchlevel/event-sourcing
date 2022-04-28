@@ -8,12 +8,12 @@ use function array_key_exists;
 
 final class InMemorySnapshotAdapter implements SnapshotAdapter
 {
-    /** @var array<string, array{int, array<string, mixed>}> */
+    /** @var array<string, array<string, mixed>> */
     private array $snapshots = [];
 
-    public function save(string $key, int $playhead, array $payload): void
+    public function save(string $key, array $data): void
     {
-        $this->snapshots[$key] = [$playhead, $payload];
+        $this->snapshots[$key] = $data;
     }
 
     public function load(string $key): array

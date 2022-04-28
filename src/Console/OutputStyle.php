@@ -6,15 +6,16 @@ namespace Patchlevel\EventSourcing\Console;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 class OutputStyle extends SymfonyStyle
 {
-    public function message(Serializer $serializer, Message $message): void
+    public function message(EventSerializer $serializer, Message $message): void
     {
         $event = $message->event();
-        $data = $serializer->serialize($event, [Serializer::OPTION_PRETTY_PRINT => true]);
+        $data = $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true]);
 
         $this->title($data->name);
 

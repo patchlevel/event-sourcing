@@ -18,8 +18,7 @@ abstract class AggregateRoot
     /** @var list<Message> */
     private array $uncommittedMessages = [];
 
-    /** @internal */
-    protected int $playhead = 0;
+    private int $playhead = 0;
 
     final protected function __construct()
     {
@@ -58,6 +57,24 @@ abstract class AggregateRoot
     }
 
     /**
+     * @internal
+     *
+     * @param list<Message> $messages
+     */
+    final public function catchUp(array $messages): void
+    {
+        foreach ($messages as $message) {
+            $this->playhead++;
+
+            if ($this->playhead !== $message->playhead()) {
+                throw new PlayheadSequenceMismatch(static::class);
+            }
+
+            $this->apply($message->event());
+        }
+    }
+
+    /**
      * @return list<Message>
      */
     final public function releaseMessages(): array
@@ -93,7 +110,7 @@ abstract class AggregateRoot
         return $this->playhead;
     }
 
-    public static function metadata(): AggregateRootMetadata
+    final public static function metadata(): AggregateRootMetadata
     {
         if (static::class === self::class) {
             throw new MetadataNotPossible();
@@ -106,7 +123,7 @@ abstract class AggregateRoot
         return self::$metadataFactory->metadata(static::class);
     }
 
-    public static function setMetadataFactory(AggregateRootMetadataFactory $metadataFactory): void
+    final public static function setMetadataFactory(AggregateRootMetadataFactory $metadataFactory): void
     {
         self::$metadataFactory = $metadataFactory;
     }

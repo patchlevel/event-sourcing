@@ -304,7 +304,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 
 $connection = DriverManager::getConnection([
@@ -322,7 +322,7 @@ $eventBus = new DefaultEventBus();
 $eventBus->addListener(new ProjectionListener($projectionHandler));
 $eventBus->addListener(new SendCheckInEmailListener($mailer));
 
-$serializer = JsonSerializer::createDefault(['src/Domain/Hotel/Event']);
+$serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
 
 $store = new SingleTableStore(

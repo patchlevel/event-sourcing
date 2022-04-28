@@ -13,6 +13,8 @@ final class AggregateRootMetadata
         public string $name,
         /** @var array<class-string, string> */
         public array $applyMethods,
+        /** @var array<string, AggregateRootPropertyMetadata> */
+        public array $properties,
         /** @var array<class-string, true> */
         public array $suppressEvents,
         public bool $suppressAll,

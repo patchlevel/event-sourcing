@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
@@ -54,7 +54,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            JsonSerializer::createDefault([__DIR__ . '/Events']),
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
@@ -99,7 +99,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            JsonSerializer::createDefault([__DIR__ . '/Events']),
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
@@ -143,7 +143,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new MultiTableStore(
             $this->connection,
-            JsonSerializer::createDefault([__DIR__ . '/Events']),
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
         );
 
@@ -186,7 +186,7 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            JsonSerializer::createDefault([__DIR__ . '/Events']),
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );

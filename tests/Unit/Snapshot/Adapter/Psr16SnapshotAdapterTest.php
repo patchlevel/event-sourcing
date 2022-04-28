@@ -18,21 +18,21 @@ class Psr16SnapshotAdapterTest extends TestCase
     public function testSaveSnapshot(): void
     {
         $cache = $this->prophesize(CacheInterface::class);
-        $cache->set('key', [1, ['foo' => 'bar']])->shouldBeCalled();
+        $cache->set('key', ['foo' => 'bar'])->shouldBeCalled();
 
         $store = new Psr16SnapshotAdapter($cache->reveal());
 
-        $store->save('key', 1, ['foo' => 'bar']);
+        $store->save('key', ['foo' => 'bar']);
     }
 
     public function testLoadSnapshot(): void
     {
         $cache = $this->prophesize(CacheInterface::class);
-        $cache->get('key')->willReturn([1, ['foo' => 'bar']]);
+        $cache->get('key')->willReturn(['foo' => 'bar']);
 
         $store = new Psr16SnapshotAdapter($cache->reveal());
 
-        self::assertEquals([1, ['foo' => 'bar']], $store->load('key'));
+        self::assertEquals(['foo' => 'bar'], $store->load('key'));
     }
 
     public function testSnapshotNotFound(): void

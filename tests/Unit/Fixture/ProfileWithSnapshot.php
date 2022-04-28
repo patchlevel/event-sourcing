@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[Aggregate('profile_with_snapshot')]
-#[Snapshot('memory', 10)]
-final class ProfileWithSnapshot extends SnapshotableAggregateRoot
+#[Snapshot('memory', batch: 2)]
+#[SuppressMissingApply([ProfileVisited::class])]
+final class ProfileWithSnapshot extends AggregateRoot
 {
+    #[Normalize(ProfileIdNormalizer::class)]
     private ProfileId $id;
+    #[Normalize(EmailNormalizer::class)]
     private Email $email;
     /** @var array<Message> */
+    #[Normalize(MessageListNormalizer::class)]
     private array $messages;
 
     public function id(): ProfileId
@@ -73,28 +79,5 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
     public function aggregateRootId(): string
     {
         return $this->id->toString();
-    }
-
-    /**
-     * @return array{id: string, email: string}
-     */
-    protected function serialize(): array
-    {
-        return [
-            'id' => $this->id->toString(),
-            'email' => $this->email->toString(),
-        ];
-    }
-
-    /**
-     * @param array{id: string, email: string} $payload
-     */
-    protected static function deserialize(array $payload): static
-    {
-        $self = new static();
-        $self->id = ProfileId::fromString($payload['id']);
-        $self->email = Email::fromString($payload['email']);
-
-        return $self;
     }
 }

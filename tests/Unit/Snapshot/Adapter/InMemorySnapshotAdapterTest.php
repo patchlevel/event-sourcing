@@ -15,9 +15,9 @@ class InMemorySnapshotAdapterTest extends TestCase
     {
         $store = new InMemorySnapshotAdapter();
 
-        $store->save('baz', 1, ['foo' => 'bar']);
+        $store->save('baz', ['foo' => 'bar']);
 
-        self::assertSame([1, ['foo' => 'bar']], $store->load('baz'));
+        self::assertSame(['foo' => 'bar'], $store->load('baz'));
     }
 
     public function testSnapshotNotFound(): void

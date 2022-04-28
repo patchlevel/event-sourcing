@@ -45,9 +45,9 @@ That's what the serializer is for.
 The library comes with a `JsonSerializer` that can be given further instructions using attributes.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\JsonSerializer;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 
-$serializer = JsonSerializer::createDefault(['src/Domain']);
+$serializer = DefaultEventSerializer::createFromPaths(['src/Domain']);
 ```
 
 The serializer needs the path information where the event classes are located 

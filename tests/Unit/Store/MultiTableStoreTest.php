@@ -9,8 +9,8 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Serializer\SerializedData;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -39,7 +39,7 @@ final class MultiTableStoreTest extends TestCase
         $connection->createQueryBuilder()->willReturn($queryBuilder);
         $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
 
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $singleTableStore = new MultiTableStore(
             $connection->reveal(),
@@ -81,9 +81,9 @@ final class MultiTableStoreTest extends TestCase
         $abstractPlatform->getDateTimeTzFormatString()->willReturn('Y-m-d H:i:s');
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
 
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
         $serializer->deserialize(
-            new SerializedData('profile.created', '{"profileId": "1", "email": "s"}'),
+            new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'),
         )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
         $singleTableStore = new MultiTableStore(
@@ -109,7 +109,7 @@ final class MultiTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->beginTransaction()->shouldBeCalled();
 
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $store = new MultiTableStore(
             $connection->reveal(),
@@ -126,7 +126,7 @@ final class MultiTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->commit()->shouldBeCalled();
 
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $store = new MultiTableStore(
             $connection->reveal(),
@@ -143,7 +143,7 @@ final class MultiTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->rollBack()->shouldBeCalled();
 
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $store = new MultiTableStore(
             $connection->reveal(),
@@ -163,7 +163,7 @@ final class MultiTableStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->transactional($callback)->shouldBeCalled();
 
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $store = new MultiTableStore(
             $connection->reveal(),

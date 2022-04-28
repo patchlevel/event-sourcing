@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Snapshot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Serializer\Hydrator\AggregateRootHydrator;
+use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataAggregateRootHydrator;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
 use Throwable;
 
@@ -16,23 +18,26 @@ final class DefaultSnapshotStore implements SnapshotStore
     /** @var array<string, SnapshotAdapter> */
     private array $snapshotAdapters;
 
+    private AggregateRootHydrator $hydrator;
+
     /** @var array<string, int> */
     private array $playheadCache = [];
 
     /**
      * @param array<string, SnapshotAdapter> $snapshotAdapters
      */
-    public function __construct(array $snapshotAdapters)
+    public function __construct(array $snapshotAdapters, ?AggregateRootHydrator $hydrator = null)
     {
         $this->snapshotAdapters = $snapshotAdapters;
+        $this->hydrator = $hydrator ?? new MetadataAggregateRootHydrator();
     }
 
-    public function save(Snapshot $snapshot): void
+    public function save(AggregateRoot $aggregateRoot): void
     {
-        $aggregateClass = $snapshot->aggregate();
-        $key = $this->key($aggregateClass, $snapshot->id());
+        $aggregateClass = $aggregateRoot::class;
+        $key = $this->key($aggregateClass, $aggregateRoot->aggregateRootId());
 
-        if (!$this->shouldBeSaved($snapshot, $key)) {
+        if (!$this->shouldBeSaved($aggregateRoot, $key)) {
             return;
         }
 
@@ -40,37 +45,37 @@ final class DefaultSnapshotStore implements SnapshotStore
 
         $adapter->save(
             $key,
-            $snapshot->playhead(),
-            $snapshot->payload()
+            $this->hydrator->extract($aggregateRoot),
         );
 
-        $this->playheadCache[$key] = $snapshot->playhead();
+        $this->playheadCache[$key] = $aggregateRoot->playhead();
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<T> $aggregateClass
+     *
+     * @return T
      *
      * @throws SnapshotNotFound
+     *
+     * @template T of AggregateRoot
      */
-    public function load(string $aggregateClass, string $id): Snapshot
+    public function load(string $aggregateClass, string $id): AggregateRoot
     {
         $adapter = $this->adapter($aggregateClass);
         $key = $this->key($aggregateClass, $id);
 
         try {
-            [$playhead, $payload] = $adapter->load($key);
+            $data = $adapter->load($key);
         } catch (Throwable $exception) {
             throw new SnapshotNotFound($aggregateClass, $id, $exception);
         }
 
-        $this->playheadCache[$key] = $playhead;
+        $aggregate = $this->hydrator->hydrate($aggregateClass, $data);
 
-        return new Snapshot(
-            $aggregateClass,
-            $id,
-            $playhead,
-            $payload
-        );
+        $this->playheadCache[$key] = $aggregate->playhead();
+
+        return $aggregate;
     }
 
     public function freeMemory(): void
@@ -106,10 +111,9 @@ final class DefaultSnapshotStore implements SnapshotStore
         return sprintf('%s-%s', $aggregateName, $aggregateId);
     }
 
-    private function shouldBeSaved(Snapshot $snapshot, string $key): bool
+    private function shouldBeSaved(AggregateRoot $aggregateRoot, string $key): bool
     {
-        $aggregateClass = $snapshot->aggregate();
-        $batchSize = $aggregateClass::metadata()->snapshotBatch;
+        $batchSize = $aggregateRoot::metadata()->snapshotBatch;
 
         if (!$batchSize) {
             return true;
@@ -117,7 +121,7 @@ final class DefaultSnapshotStore implements SnapshotStore
 
         $beforePlayhead = $this->playheadCache[$key] ?? 0;
 
-        $diff = $snapshot->playhead() - $beforePlayhead;
+        $diff = $aggregateRoot->playhead() - $beforePlayhead;
 
         return $diff >= $batchSize;
     }

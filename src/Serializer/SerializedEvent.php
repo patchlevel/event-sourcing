@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Serializer;
 /**
  * @readonly
  */
-class SerializedData
+class SerializedEvent
 {
     public function __construct(
         public string $name,

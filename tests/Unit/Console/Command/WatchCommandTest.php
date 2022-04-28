@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\WatchCommand;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\WatchServer\WatchServer;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
@@ -26,7 +26,7 @@ final class WatchCommandTest extends TestCase
         $watchServer->host()->willReturn('tcp://foo.bar');
         $watchServer->listen(Argument::any())->shouldBeCalled();
 
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $command = new WatchCommand(
             $watchServer->reveal(),

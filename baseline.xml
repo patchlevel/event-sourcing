@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.22.0@fc2c6ab4d5fa5d644d8617089f012f3bb84b8703">
+  <file src="src/Serializer/Hydrator/MetadataAggregateRootHydrator.php">
+    <InaccessibleProperty occurrences="1">
+      <code>$aggregateRoot-&gt;playhead</code>
+    </InaccessibleProperty>
+  </file>
   <file src="src/Store/MultiTableStore.php">
     <UnnecessaryVarAnnotation occurrences="1">
       <code>array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string}|null</code>
     </UnnecessaryVarAnnotation>
-  </file>
-  <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
-    <MoreSpecificImplementedParamType occurrences="1">
-      <code>$payload</code>
-    </MoreSpecificImplementedParamType>
   </file>
   <file src="tests/Benchmark/LoadEventsBench.php">
     <MissingConstructor occurrences="2">
@@ -31,19 +31,9 @@
       <code>$store</code>
     </MissingConstructor>
   </file>
-  <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
-    <MoreSpecificImplementedParamType occurrences="1">
-      <code>$payload</code>
-    </MoreSpecificImplementedParamType>
-  </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType occurrences="1">
       <code>$event</code>
     </MissingParamType>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
-    <MoreSpecificImplementedParamType occurrences="1">
-      <code>$payload</code>
-    </MoreSpecificImplementedParamType>
   </file>
 </files>

@@ -7,7 +7,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\AdapterNotFound;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
-use Patchlevel\EventSourcing\Snapshot\Snapshot;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -24,139 +25,119 @@ class DefaultSnapshotStoreTest extends TestCase
 
         $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
-        $snapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            1,
-            ['foo' => 'bar']
+        $aggregate = ProfileWithSnapshot::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('info@patchlevel.de')
         );
 
-        $store->save($snapshot);
+        $store->save($aggregate);
     }
 
     public function testNewAggregateShouldBeSaved(): void
     {
-        $snapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            11,
-            ['foo' => 'bar']
-        );
-
         $wrappedStore = $this->prophesize(SnapshotAdapter::class);
-        $wrappedStore->save('profile_with_snapshot-1', 11, ['foo' => 'bar'])->shouldBeCalled();
+        $wrappedStore->save(
+            'profile_with_snapshot-1',
+            ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2]
+        )->shouldBeCalled();
 
         $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
-        $store->save($snapshot);
+        $aggregate = ProfileWithSnapshot::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('info@patchlevel.de')
+        );
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+
+        $store->save($aggregate);
     }
 
     public function testNewAggregateShouldNotBeSavedTwice(): void
     {
-        $snapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            11,
-            ['foo' => 'bar']
+        $aggregate = ProfileWithSnapshot::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('info@patchlevel.de')
         );
 
-        $newSnapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            13,
-            ['foo' => 'bar']
-        );
+        $aggregate->visitProfile(ProfileId::fromString('2'));
 
         $wrappedStore = $this->prophesize(SnapshotAdapter::class);
-        $wrappedStore->save('profile_with_snapshot-1', 11, ['foo' => 'bar'])->shouldBeCalled();
-        $wrappedStore->save('profile_with_snapshot-1', 13, ['foo' => 'bar'])->shouldNotBeCalled();
+        $wrappedStore->save(
+            'profile_with_snapshot-1',
+            ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2]
+        )->shouldBeCalled();
+
+        $wrappedStore->save(
+            'profile_with_snapshot-1',
+            ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 3]
+        )->shouldNotBeCalled();
 
         $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
-        $store->save($snapshot);
-        $store->save($newSnapshot);
+        $store->save($aggregate);
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+
+        $store->save($aggregate);
     }
 
     public function testExistingAggregateShouldNotSaved(): void
     {
-        $snapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            11,
-            ['foo' => 'bar']
-        );
-
         $wrappedStore = $this->prophesize(SnapshotAdapter::class);
-        $wrappedStore->load('profile_with_snapshot-1')->willReturn([11, ['foo' => 'bar']]);
+        $wrappedStore->load('profile_with_snapshot-1')->willReturn(
+            ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2]
+        );
         $wrappedStore->save()->shouldNotBeCalled();
 
         $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
-        $newSnapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            13,
-            ['foo' => 'bar']
-        );
+        $aggregate = $store->load(ProfileWithSnapshot::class, '1');
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        self::assertSame(2, $aggregate->playhead());
 
-        $store->save($newSnapshot);
+        $store->save($aggregate);
     }
 
     public function testExistingAggregateShouldBeSaved(): void
     {
-        $snapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            11,
-            ['foo' => 'bar']
-        );
-
-        $newSnapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            25,
-            ['foo' => 'bar']
-        );
-
         $wrappedStore = $this->prophesize(SnapshotAdapter::class);
-        $wrappedStore->load('profile_with_snapshot-1')->willReturn([11, ['foo' => 'bar']]);
-        $wrappedStore->save('profile_with_snapshot-1', 25, ['foo' => 'bar'])->shouldBeCalled();
+        $wrappedStore->load('profile_with_snapshot-1')->willReturn(
+            ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2]
+        );
+        $wrappedStore->save(
+            'profile_with_snapshot-1',
+            ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 4]
+        )->shouldBeCalled();
 
         $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        $aggregate = $store->load(ProfileWithSnapshot::class, '1');
 
-        $store->save($newSnapshot);
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+
+        $store->save($aggregate);
     }
 
     public function testFreeMemory(): void
     {
-        $snapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            11,
-            ['foo' => 'bar']
-        );
-
-        $newSnapshot = new Snapshot(
-            ProfileWithSnapshot::class,
-            '1',
-            13,
-            ['foo' => 'bar']
-        );
-
         $wrappedStore = $this->prophesize(SnapshotAdapter::class);
-        $wrappedStore->load('profile_with_snapshot-1')->willReturn([11, ['foo' => 'bar']]);
-        $wrappedStore->save('profile_with_snapshot-1', 13, ['foo' => 'bar'])->shouldBeCalled();
+
+        $wrappedStore->load('profile_with_snapshot-1')->willReturn(
+            ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2]
+        );
+        $wrappedStore->save(
+            'profile_with_snapshot-1',
+            ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2]
+        )->shouldBeCalled();
 
         $store = new DefaultSnapshotStore(['memory' => $wrappedStore->reveal()]);
 
-        self::assertEquals($snapshot, $store->load(ProfileWithSnapshot::class, '1'));
+        $aggregate = $store->load(ProfileWithSnapshot::class, '1');
 
         $store->freeMemory();
-        $store->save($newSnapshot);
+        $store->save($aggregate);
     }
 
     public function testAdapterIsMissing(): void

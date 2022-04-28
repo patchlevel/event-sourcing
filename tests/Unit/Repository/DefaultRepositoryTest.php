@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
-use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -263,6 +262,11 @@ class DefaultRepositoryTest extends TestCase
 
     public function testSaveAggregateWithSnapshot(): void
     {
+        $aggregate = ProfileWithSnapshot::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de')
+        );
+
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::type(Message::class)
@@ -272,18 +276,13 @@ class DefaultRepositoryTest extends TestCase
         $eventBus->dispatch(Argument::type(Message::class))->shouldBeCalled();
 
         $snapshotStore = $this->prophesize(SnapshotStore::class);
-        $snapshotStore->save(Argument::type(Snapshot::class))->shouldBeCalled();
+        $snapshotStore->save($aggregate)->shouldBeCalled();
 
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
             ProfileWithSnapshot::class,
             $snapshotStore->reveal()
-        );
-
-        $aggregate = ProfileWithSnapshot::createProfile(
-            ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
         );
 
         $repository->save($aggregate);
@@ -305,14 +304,9 @@ class DefaultRepositoryTest extends TestCase
             ProfileWithSnapshot::class,
             '1'
         )->willReturn(
-            new Snapshot(
-                ProfileWithSnapshot::class,
-                '1',
-                1,
-                [
-                    'id' => '1',
-                    'email' => 'hallo@patchlevel.de',
-                ]
+            ProfileWithSnapshot::createProfile(
+                ProfileId::fromString('1'),
+                Email::fromString('hallo@patchlevel.de')
             )
         );
 

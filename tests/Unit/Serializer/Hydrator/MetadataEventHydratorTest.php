@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer\Hydrator;
 
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
-use Patchlevel\EventSourcing\Serializer\Hydrator\EventHydrator;
+use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataEventHydrator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
-class EventHydratorTest extends TestCase
+class MetadataEventHydratorTest extends TestCase
 {
-    private EventHydrator $hydrator;
+    private MetadataEventHydrator $hydrator;
 
     public function setUp(): void
     {
-        $this->hydrator = new EventHydrator(new AttributeEventMetadataFactory());
+        $this->hydrator = new MetadataEventHydrator(new AttributeEventMetadataFactory());
     }
 
     public function testExtract(): void

@@ -8,8 +8,9 @@ use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\Command\ShowCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Serializer\SerializedData;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -38,8 +39,8 @@ final class ShowCommandTest extends TestCase
             ),
         ]);
 
-        $serializer = $this->prophesize(Serializer::class);
-        $serializer->serialize($event, [Serializer::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedData(
+        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
             'profile.visited',
             '{"visitorId": "1"}',
         ));
@@ -69,7 +70,7 @@ final class ShowCommandTest extends TestCase
     public function testAggregateNotAString(): void
     {
         $store = $this->prophesize(Store::class);
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),
@@ -91,7 +92,7 @@ final class ShowCommandTest extends TestCase
     public function testIdNotAString(): void
     {
         $store = $this->prophesize(Store::class);
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),
@@ -113,7 +114,7 @@ final class ShowCommandTest extends TestCase
     public function testWrongAggregate(): void
     {
         $store = $this->prophesize(Store::class);
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),
@@ -142,7 +143,7 @@ final class ShowCommandTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(Profile::class, 'test')->willReturn([]);
 
-        $serializer = $this->prophesize(Serializer::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),

@@ -11,8 +11,8 @@ use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Serializer\SerializedData;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
 
 use function array_map;
@@ -21,13 +21,13 @@ use function is_string;
 
 final class MultiTableStore extends DoctrineStore implements PipelineStore
 {
-    private Serializer $serializer;
+    private EventSerializer $serializer;
     private AggregateRootRegistry $aggregateRootRegistry;
     private string $metadataTableName;
 
     public function __construct(
         Connection $eventConnection,
-        Serializer $serializer,
+        EventSerializer $serializer,
         AggregateRootRegistry $aggregateRootRegistry,
         string $metadataTableName = 'eventstore_metadata',
     ) {
@@ -70,7 +70,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                     $aggregate,
                     $data['aggregate_id'],
                     self::normalizePlayhead($data['playhead'], $platform),
-                    $this->serializer->deserialize(new SerializedData($data['event'], $data['payload'])),
+                    $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
                     self::normalizeRecordedOn($data['recorded_on'], $platform)
                 );
             },
@@ -200,7 +200,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 $this->aggregateRootRegistry->aggregateClass($name),
                 $eventData['aggregate_id'],
                 self::normalizePlayhead($eventData['playhead'], $platform),
-                $this->serializer->deserialize(new SerializedData($eventData['event'], $eventData['payload'])),
+                $this->serializer->deserialize(new SerializedEvent($eventData['event'], $eventData['payload'])),
                 self::normalizeRecordedOn($eventData['recorded_on'], $platform)
             );
         }

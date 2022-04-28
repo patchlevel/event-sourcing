@@ -19,7 +19,7 @@ class Psr6SnapshotAdapterTest extends TestCase
     public function testSaveSnapshot(): void
     {
         $item = $this->prophesize(CacheItemInterface::class);
-        $item->set([1, ['foo' => 'bar']])->shouldBeCalled()->willReturn($item);
+        $item->set(['foo' => 'bar'])->shouldBeCalled()->willReturn($item);
 
         $cache = $this->prophesize(CacheItemPoolInterface::class);
         $cache->getItem('key')->willReturn($item);
@@ -27,21 +27,21 @@ class Psr6SnapshotAdapterTest extends TestCase
 
         $store = new Psr6SnapshotAdapter($cache->reveal());
 
-        $store->save('key', 1, ['foo' => 'bar']);
+        $store->save('key', ['foo' => 'bar']);
     }
 
     public function testLoadSnapshot(): void
     {
         $item = $this->prophesize(CacheItemInterface::class);
         $item->isHit()->willReturn(true);
-        $item->get()->willReturn([1, ['foo' => 'bar']]);
+        $item->get()->willReturn(['foo' => 'bar']);
 
         $cache = $this->prophesize(CacheItemPoolInterface::class);
         $cache->getItem('key')->willReturn($item);
 
         $store = new Psr6SnapshotAdapter($cache->reveal());
 
-        self::assertEquals([1, ['foo' => 'bar']], $store->load('key'));
+        self::assertEquals(['foo' => 'bar'], $store->load('key'));
     }
 
     public function testSnapshotNotFound(): void

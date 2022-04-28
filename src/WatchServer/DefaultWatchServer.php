@@ -8,8 +8,8 @@ use Closure;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\SerializedData;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
@@ -32,10 +32,10 @@ final class DefaultWatchServer implements WatchServer
     /** @var resource|null */
     private $socket;
 
-    private Serializer $serializer;
+    private EventSerializer $serializer;
     private LoggerInterface $logger;
 
-    public function __construct(string $host, Serializer $serializer, ?LoggerInterface $logger = null)
+    public function __construct(string $host, EventSerializer $serializer, ?LoggerInterface $logger = null)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
@@ -76,7 +76,7 @@ final class DefaultWatchServer implements WatchServer
                 $data['aggregate_class'],
                 $data['aggregate_id'],
                 $data['playhead'],
-                $this->serializer->deserialize(new SerializedData($data['event'], $data['payload'])),
+                $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
                 $data['recorded_on']
             );
 

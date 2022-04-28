@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\Serializer;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\WatchServer\WatchServer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -17,9 +17,9 @@ use function sprintf;
 final class WatchCommand extends Command
 {
     private WatchServer $server;
-    private Serializer $serializer;
+    private EventSerializer $serializer;
 
-    public function __construct(WatchServer $server, Serializer $serializer)
+    public function __construct(WatchServer $server, EventSerializer $serializer)
     {
         parent::__construct();
 
