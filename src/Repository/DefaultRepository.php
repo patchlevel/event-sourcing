@@ -18,15 +18,19 @@ use function assert;
 use function count;
 use function sprintf;
 
+/**
+ * @template T of AggregateRoot
+ * @implements Repository<T>
+ */
 final class DefaultRepository implements Repository
 {
     private Store $store;
     private EventBus $eventBus;
 
-    /** @var class-string<AggregateRoot> */
+    /** @var class-string<T> */
     private string $aggregateClass;
 
-    /** @var array<string, AggregateRoot> */
+    /** @var array<string, T> */
     private array $instances = [];
 
     private ?SnapshotStore $snapshotStore;
@@ -35,7 +39,7 @@ final class DefaultRepository implements Repository
     private ?bool $snapshotConfigured = null;
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<T> $aggregateClass
      */
     public function __construct(
         Store $store,
@@ -51,6 +55,9 @@ final class DefaultRepository implements Repository
         $this->logger = $logger ?? new NullLogger();
     }
 
+    /**
+     * @return T
+     */
     public function load(string $id): AggregateRoot
     {
         if (array_key_exists($id, $this->instances)) {
@@ -93,11 +100,12 @@ final class DefaultRepository implements Repository
         return $this->store->has($this->aggregateClass, $id);
     }
 
+    /**
+     * @param T $aggregate
+     */
     public function save(AggregateRoot $aggregate): void
     {
-        if (!$aggregate instanceof $this->aggregateClass) {
-            throw new WrongAggregate($aggregate::class, $this->aggregateClass);
-        }
+        $this->assertRightAggregate($aggregate);
 
         $messages = $aggregate->releaseMessages();
 
@@ -116,7 +124,9 @@ final class DefaultRepository implements Repository
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<T> $aggregateClass
+     *
+     * @return T
      */
     private function loadFromSnapshot(string $aggregateClass, string $id): AggregateRoot
     {
@@ -143,5 +153,12 @@ final class DefaultRepository implements Repository
         $aggregateClass = $this->aggregateClass;
 
         return $this->snapshotConfigured = $aggregateClass::metadata()->snapshotStore !== null;
+    }
+
+    private function assertRightAggregate(AggregateRoot $aggregate): void
+    {
+        if (!$aggregate instanceof $this->aggregateClass) {
+            throw new WrongAggregate($aggregate::class, $this->aggregateClass);
+        }
     }
 }
