@@ -30,7 +30,7 @@ final class OutboxInfoCommand extends Command
     {
         $this
             ->setName('event-sourcing:outbox:info')
-            ->setDescription('show events from one aggregate')
+            ->setDescription('displays the messages stored in the outbox store')
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Maximum number of messages to be displayed');
     }
 

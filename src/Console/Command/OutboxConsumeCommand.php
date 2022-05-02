@@ -22,7 +22,7 @@ final class OutboxConsumeCommand extends Command
     {
         $this
             ->setName('event-sourcing:outbox:consume')
-            ->setDescription('show events from one aggregate')
+            ->setDescription('published the messages from the outbox store')
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'How many messages should be consumed in one run');
     }
 
