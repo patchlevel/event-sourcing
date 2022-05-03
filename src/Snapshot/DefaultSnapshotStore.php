@@ -20,9 +20,6 @@ final class DefaultSnapshotStore implements SnapshotStore
 
     private AggregateRootHydrator $hydrator;
 
-    /** @var array<string, int> */
-    private array $playheadCache = [];
-
     /**
      * @param array<string, SnapshotAdapter> $snapshotAdapters
      */
@@ -37,18 +34,12 @@ final class DefaultSnapshotStore implements SnapshotStore
         $aggregateClass = $aggregateRoot::class;
         $key = $this->key($aggregateClass, $aggregateRoot->aggregateRootId());
 
-        if (!$this->shouldBeSaved($aggregateRoot, $key)) {
-            return;
-        }
-
         $adapter = $this->adapter($aggregateClass);
 
         $adapter->save(
             $key,
             $this->hydrator->extract($aggregateRoot),
         );
-
-        $this->playheadCache[$key] = $aggregateRoot->playhead();
     }
 
     /**
@@ -71,16 +62,7 @@ final class DefaultSnapshotStore implements SnapshotStore
             throw new SnapshotNotFound($aggregateClass, $id, $exception);
         }
 
-        $aggregate = $this->hydrator->hydrate($aggregateClass, $data);
-
-        $this->playheadCache[$key] = $aggregate->playhead();
-
-        return $aggregate;
-    }
-
-    public function freeMemory(): void
-    {
-        $this->playheadCache = [];
+        return $this->hydrator->hydrate($aggregateClass, $data);
     }
 
     /**
@@ -109,20 +91,5 @@ final class DefaultSnapshotStore implements SnapshotStore
         $aggregateName = $aggregateClass::metadata()->name;
 
         return sprintf('%s-%s', $aggregateName, $aggregateId);
-    }
-
-    private function shouldBeSaved(AggregateRoot $aggregateRoot, string $key): bool
-    {
-        $batchSize = $aggregateRoot::metadata()->snapshotBatch;
-
-        if (!$batchSize) {
-            return true;
-        }
-
-        $beforePlayhead = $this->playheadCache[$key] ?? 0;
-
-        $diff = $aggregateRoot->playhead() - $beforePlayhead;
-
-        return $diff >= $batchSize;
     }
 }

@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
@@ -32,6 +33,7 @@ final class LoadEventsWithSnapshotsBench
     private Store $store;
     private EventBus $bus;
     private SnapshotStore $snapshotStore;
+    private Repository $repository;
 
     public function setUp(): void
     {
@@ -55,7 +57,7 @@ final class LoadEventsWithSnapshotsBench
 
         $this->snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
 
-        $repository = new DefaultRepository($this->store, $this->bus, Profile::class, $this->snapshotStore);
+        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::class, $this->snapshotStore);
 
         // create tables
         (new DoctrineSchemaManager())->create($this->store);
@@ -66,15 +68,14 @@ final class LoadEventsWithSnapshotsBench
             $profile->changeName('Peter');
         }
 
-        $repository->save($profile);
+        $this->repository->save($profile);
+        $this->snapshotStore->save($profile);
     }
 
     #[Bench\Revs(10)]
     #[Bench\Iterations(2)]
     public function benchLoadEvents(): void
     {
-        $repository = new DefaultRepository($this->store, $this->bus, Profile::class, $this->snapshotStore);
-
-        $repository->load('1');
+        $this->repository->load('1');
     }
 }
