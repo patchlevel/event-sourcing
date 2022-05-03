@@ -67,6 +67,7 @@ final class LoadEventsWithSnapshotsBench
         }
 
         $repository->save($profile);
+        $this->snapshotStore->save($profile);
     }
 
     #[Bench\Revs(10)]
