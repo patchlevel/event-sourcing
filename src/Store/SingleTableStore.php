@@ -20,8 +20,6 @@ use function is_string;
 
 final class SingleTableStore extends DoctrineStore implements PipelineStore
 {
-    private EventSerializer $serializer;
-    private AggregateRootRegistry $aggregateRootRegistry;
     private string $storeTableName;
 
     public function __construct(
@@ -30,10 +28,8 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         AggregateRootRegistry $aggregateRootRegistry,
         string $storeTableName = 'eventstore',
     ) {
-        parent::__construct($connection);
+        parent::__construct($connection, $serializer, $aggregateRootRegistry);
 
-        $this->serializer = $serializer;
-        $this->aggregateRootRegistry = $aggregateRootRegistry;
         $this->storeTableName = $storeTableName;
     }
 
@@ -212,6 +208,8 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
 
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
+
+        $this->addOutboxSchema($schema);
 
         return $schema;
     }

@@ -21,20 +21,16 @@ use function is_string;
 
 final class MultiTableStore extends DoctrineStore implements PipelineStore
 {
-    private EventSerializer $serializer;
-    private AggregateRootRegistry $aggregateRootRegistry;
     private string $metadataTableName;
 
     public function __construct(
-        Connection $eventConnection,
+        Connection $connection,
         EventSerializer $serializer,
         AggregateRootRegistry $aggregateRootRegistry,
         string $metadataTableName = 'eventstore_metadata',
     ) {
-        parent::__construct($eventConnection);
+        parent::__construct($connection, $serializer, $aggregateRootRegistry);
 
-        $this->serializer = $serializer;
-        $this->aggregateRootRegistry = $aggregateRootRegistry;
         $this->metadataTableName = $metadataTableName;
     }
 
@@ -232,6 +228,8 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         foreach ($this->aggregateRootRegistry->aggregateNames() as $tableName) {
             $this->addAggregateTableToSchema($schema, $tableName);
         }
+
+        $this->addOutboxSchema($schema);
 
         return $schema;
     }
