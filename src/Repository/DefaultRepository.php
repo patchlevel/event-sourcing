@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -13,7 +14,6 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
 
-use function array_key_exists;
 use function assert;
 use function count;
 use function sprintf;
@@ -30,13 +30,10 @@ final class DefaultRepository implements Repository
     /** @var class-string<T> */
     private string $aggregateClass;
 
-    /** @var array<string, T> */
-    private array $instances = [];
-
     private ?SnapshotStore $snapshotStore;
     private LoggerInterface $logger;
 
-    private ?bool $snapshotConfigured = null;
+    private AggregateRootMetadata $metadata;
 
     /**
      * @param class-string<T> $aggregateClass
@@ -53,6 +50,7 @@ final class DefaultRepository implements Repository
         $this->aggregateClass = $aggregateClass;
         $this->snapshotStore = $snapshotStore;
         $this->logger = $logger ?? new NullLogger();
+        $this->metadata = $aggregateClass::metadata();
     }
 
     /**
@@ -60,13 +58,9 @@ final class DefaultRepository implements Repository
      */
     public function load(string $id): AggregateRoot
     {
-        if (array_key_exists($id, $this->instances)) {
-            return $this->instances[$id];
-        }
-
         $aggregateClass = $this->aggregateClass;
 
-        if ($this->snapshotStore && $this->snapshotConfigured()) {
+        if ($this->snapshotStore && $this->metadata->snapshotStore) {
             try {
                 return $this->loadFromSnapshot($aggregateClass, $id);
             } catch (SnapshotRebuildFailed $exception) {
@@ -88,15 +82,11 @@ final class DefaultRepository implements Repository
             throw new AggregateNotFound($aggregateClass, $id);
         }
 
-        return $this->instances[$id] = $aggregateClass::createFromMessages($messages);
+        return $aggregateClass::createFromMessages($messages);
     }
 
     public function has(string $id): bool
     {
-        if (array_key_exists($id, $this->instances)) {
-            return true;
-        }
-
         return $this->store->has($this->aggregateClass, $id);
     }
 
@@ -115,12 +105,6 @@ final class DefaultRepository implements Repository
 
         $this->store->save(...$messages);
         $this->eventBus->dispatch(...$messages);
-
-        if (!$this->snapshotStore || !$this->snapshotConfigured()) {
-            return;
-        }
-
-        $this->snapshotStore->save($aggregate);
     }
 
     /**
@@ -135,24 +119,23 @@ final class DefaultRepository implements Repository
         $aggregate = $this->snapshotStore->load($aggregateClass, $id);
         $messages = $this->store->load($aggregateClass, $id, $aggregate->playhead());
 
+        if ($messages === []) {
+            return $aggregate;
+        }
+
         try {
             $aggregate->catchUp($messages);
-
-            return $aggregate;
         } catch (Throwable $exception) {
             throw new SnapshotRebuildFailed($aggregateClass, $id, $exception);
         }
-    }
 
-    private function snapshotConfigured(): bool
-    {
-        if ($this->snapshotConfigured !== null) {
-            return $this->snapshotConfigured;
+        $batchSize = $this->metadata->snapshotBatch ?: 1;
+
+        if (count($messages) >= $batchSize) {
+            $this->snapshotStore->save($aggregate);
         }
 
-        $aggregateClass = $this->aggregateClass;
-
-        return $this->snapshotConfigured = $aggregateClass::metadata()->snapshotStore !== null;
+        return $aggregate;
     }
 
     private function assertRightAggregate(AggregateRoot $aggregate): void
