@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -28,6 +29,7 @@ final class LoadEventsBench
 
     private Store $store;
     private EventBus $bus;
+    private Repository $repository;
 
     public function setUp(): void
     {
@@ -49,7 +51,7 @@ final class LoadEventsBench
             'eventstore'
         );
 
-        $repository = new DefaultRepository($this->store, $this->bus, Profile::class);
+        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::class);
 
         // create tables
         (new DoctrineSchemaManager())->create($this->store);
@@ -60,15 +62,13 @@ final class LoadEventsBench
             $profile->changeName('Peter');
         }
 
-        $repository->save($profile);
+        $this->repository->save($profile);
     }
 
     #[Bench\Revs(10)]
     #[Bench\Iterations(2)]
     public function benchLoadEvents(): void
     {
-        $repository = new DefaultRepository($this->store, $this->bus, Profile::class);
-
-        $repository->load('1');
+        $this->repository->load('1');
     }
 }
