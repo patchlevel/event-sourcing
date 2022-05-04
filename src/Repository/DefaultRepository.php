@@ -142,7 +142,7 @@ final class DefaultRepository implements Repository
     }
 
     /**
-     * @param T $aggregate
+     * @param T             $aggregate
      * @param list<Message> $messages
      */
     private function saveSnapshot(AggregateRoot $aggregate, array $messages): void
@@ -151,9 +151,11 @@ final class DefaultRepository implements Repository
 
         $batchSize = $this->metadata->snapshotBatch ?: 1;
 
-        if (count($messages) >= $batchSize) {
-            $this->snapshotStore->save($aggregate);
+        if (count($messages) < $batchSize) {
+            return;
         }
+
+        $this->snapshotStore->save($aggregate);
     }
 
     private function assertRightAggregate(AggregateRoot $aggregate): void
