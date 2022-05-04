@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
-use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory;
@@ -15,8 +14,8 @@ abstract class AggregateRoot
 {
     private static ?AggregateRootMetadataFactory $metadataFactory = null;
 
-    /** @var list<Message> */
-    private array $uncommittedMessages = [];
+    /** @var list<object> */
+    private array $uncommittedEvents = [];
 
     private int $playhead = 0;
 
@@ -48,59 +47,40 @@ abstract class AggregateRoot
 
         $this->apply($event);
 
-        $this->uncommittedMessages[] = new Message(
-            static::class,
-            $this->aggregateRootId(),
-            $this->playhead,
-            $event
-        );
+        $this->uncommittedEvents[] = $event;
     }
 
     /**
      * @internal
      *
-     * @param list<Message> $messages
+     * @param list<object> $events
      */
-    final public function catchUp(array $messages): void
+    final public function catchUp(array $events): void
     {
-        foreach ($messages as $message) {
+        foreach ($events as $event) {
             $this->playhead++;
-
-            if ($this->playhead !== $message->playhead()) {
-                throw new PlayheadSequenceMismatch(static::class);
-            }
-
-            $this->apply($message->event());
+            $this->apply($event);
         }
     }
 
     /**
-     * @return list<Message>
+     * @return list<object>
      */
-    final public function releaseMessages(): array
+    final public function releaseEvents(): array
     {
-        $messages = $this->uncommittedMessages;
-        $this->uncommittedMessages = [];
+        $events = $this->uncommittedEvents;
+        $this->uncommittedEvents = [];
 
-        return $messages;
+        return $events;
     }
 
     /**
-     * @param list<Message> $messages
+     * @param list<object> $events
      */
-    final public static function createFromMessages(array $messages): static
+    final public static function createFromEvents(array $events): static
     {
         $self = new static();
-
-        foreach ($messages as $message) {
-            $self->playhead++;
-
-            if ($self->playhead !== $message->playhead()) {
-                throw new PlayheadSequenceMismatch(static::class);
-            }
-
-            $self->apply($message->event());
-        }
+        $self->catchUp($events);
 
         return $self;
     }

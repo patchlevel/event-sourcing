@@ -31,11 +31,33 @@ class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->save(
-            Argument::type(Message::class)
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 1;
+            })
         )->shouldBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type(Message::class))->shouldBeCalled();
+        $eventBus->dispatch(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 1;
+            })
+        )->shouldBeCalled();
 
         $repository = new DefaultRepository(
             $store->reveal(),
@@ -93,7 +115,7 @@ class DefaultRepositoryTest extends TestCase
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de')
         );
-        $aggregate->releaseMessages();
+        $aggregate->releaseEvents();
 
         $repository->save($aggregate);
     }

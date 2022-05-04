@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
 
+use function array_map;
 use function assert;
 use function count;
 use function sprintf;
@@ -83,7 +84,12 @@ final class DefaultRepository implements Repository
             throw new AggregateNotFound($aggregateClass, $id);
         }
 
-        $aggregate = $aggregateClass::createFromMessages($messages);
+        $aggregate = $aggregateClass::createFromEvents(
+            array_map(
+                static fn (Message $message) => $message->event(),
+                $messages
+            )
+        );
 
         if ($this->snapshotStore && $this->metadata->snapshotStore) {
             $this->saveSnapshot($aggregate, $messages);
@@ -104,11 +110,25 @@ final class DefaultRepository implements Repository
     {
         $this->assertRightAggregate($aggregate);
 
-        $messages = $aggregate->releaseMessages();
+        $events = $aggregate->releaseEvents();
 
-        if (count($messages) === 0) {
+        if (count($events) === 0) {
             return;
         }
+
+        $playhead = $aggregate->playhead() - count($events);
+
+        $messages = array_map(
+            static function (object $event) use ($aggregate, &$playhead) {
+                return new Message(
+                    $aggregate::class,
+                    $aggregate->aggregateRootId(),
+                    ++$playhead,
+                    $event
+                );
+            },
+            $events
+        );
 
         $this->store->save(...$messages);
         $this->eventBus->dispatch(...$messages);
@@ -130,8 +150,13 @@ final class DefaultRepository implements Repository
             return $aggregate;
         }
 
+        $events = array_map(
+            static fn (Message $message) => $message->event(),
+            $messages
+        );
+
         try {
-            $aggregate->catchUp($messages);
+            $aggregate->catchUp($events);
         } catch (Throwable $exception) {
             throw new SnapshotRebuildFailed($aggregateClass, $id, $exception);
         }

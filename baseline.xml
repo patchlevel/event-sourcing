@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.22.0@fc2c6ab4d5fa5d644d8617089f012f3bb84b8703">
+  <file src="src/Repository/DefaultRepository.php">
+    <MixedArgument occurrences="1">
+      <code>++$playhead</code>
+    </MixedArgument>
+    <MixedAssignment occurrences="1">
+      <code>$playhead</code>
+    </MixedAssignment>
+    <MixedOperand occurrences="1">
+      <code>$playhead</code>
+    </MixedOperand>
+  </file>
   <file src="src/Store/MultiTableStore.php">
     <UnnecessaryVarAnnotation occurrences="1">
       <code>array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string}|null</code>

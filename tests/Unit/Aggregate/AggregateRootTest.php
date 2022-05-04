@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
-use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound;
 use Patchlevel\EventSourcing\Aggregate\MetadataNotPossible;
-use Patchlevel\EventSourcing\Clock;
-use Patchlevel\EventSourcing\EventBus\Message as EventBusMessage;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -25,11 +22,6 @@ use PHPUnit\Framework\TestCase;
 /** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRoot */
 class AggregateRootTest extends TestCase
 {
-    public function setUp(): void
-    {
-        Clock::freeze(new DateTimeImmutable('2020-12-03 22:32:00'));
-    }
-
     public function testApplyMethod(): void
     {
         $id = ProfileId::fromString('1');
@@ -43,18 +35,11 @@ class AggregateRootTest extends TestCase
         self::assertEquals($email, $profile->email());
         self::assertSame(0, $profile->visited());
 
-        $messages = $profile->releaseMessages();
+        $events = $profile->releaseEvents();
 
-        self::assertCount(1, $messages);
+        self::assertCount(1, $events);
 
-        $message = $messages[0];
-
-        self::assertSame(Profile::class, $message->aggregateClass());
-        self::assertSame('1', $message->aggregateId());
-        self::assertSame(1, $message->playhead());
-        self::assertEquals(new DateTimeImmutable('2020-12-03 22:32:00'), $message->recordedOn());
-
-        $event = $message->event();
+        $event = $events[0];
 
         self::assertInstanceOf(ProfileCreated::class, $event);
         self::assertEquals($id, $event->profileId);
@@ -66,18 +51,7 @@ class AggregateRootTest extends TestCase
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
 
-        $event = new ProfileCreated($id, $email);
-
-        $messages = [
-            new EventBusMessage(
-                Profile::class,
-                '1',
-                1,
-                $event
-            ),
-        ];
-
-        $profile = Profile::createFromMessages($messages);
+        $profile = Profile::createFromEvents([new ProfileCreated($id, $email)]);
 
         self::assertSame('1', $profile->aggregateRootId());
         self::assertSame(1, $profile->playhead());
@@ -85,7 +59,7 @@ class AggregateRootTest extends TestCase
         self::assertEquals($email, $profile->email());
         self::assertSame(0, $profile->visited());
 
-        $messages = $profile->releaseMessages();
+        $messages = $profile->releaseEvents();
 
         self::assertCount(0, $messages);
     }
@@ -106,9 +80,9 @@ class AggregateRootTest extends TestCase
         self::assertEquals($email, $profile->email());
         self::assertSame(1, $profile->visited());
 
-        $messages = $profile->releaseMessages();
+        $events = $profile->releaseEvents();
 
-        self::assertCount(2, $messages);
+        self::assertCount(2, $events);
     }
 
     public function testEventWithoutApplyMethod(): void
@@ -122,14 +96,10 @@ class AggregateRootTest extends TestCase
 
         $profile = Profile::createProfile($profileId, $email);
 
-        $messages = $profile->releaseMessages();
+        $events = $profile->releaseEvents();
 
-        self::assertCount(1, $messages);
+        self::assertCount(1, $events);
         self::assertSame(1, $profile->playhead());
-
-        $message = $messages[0];
-
-        self::assertSame(1, $message->playhead());
 
         $profile->publishMessage(
             Message::create(
@@ -148,14 +118,10 @@ class AggregateRootTest extends TestCase
 
         $profile = Profile::createProfile($profileId, $email);
 
-        $messages = $profile->releaseMessages();
+        $events = $profile->releaseEvents();
 
-        self::assertCount(1, $messages);
+        self::assertCount(1, $events);
         self::assertSame(1, $profile->playhead());
-
-        $message = $messages[0];
-
-        self::assertSame(1, $message->playhead());
 
         $profile->deleteMessage($messageId);
     }
@@ -167,14 +133,10 @@ class AggregateRootTest extends TestCase
 
         $profile = ProfileWithSuppressAll::createProfile($profileId, $email);
 
-        $messages = $profile->releaseMessages();
+        $events = $profile->releaseEvents();
 
-        self::assertCount(1, $messages);
+        self::assertCount(1, $events);
         self::assertSame(1, $profile->playhead());
-
-        $message = $messages[0];
-
-        self::assertSame(1, $message->playhead());
     }
 
     public function testDuplicateApplyMethods(): void
