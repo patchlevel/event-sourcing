@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
@@ -82,7 +83,13 @@ final class DefaultRepository implements Repository
             throw new AggregateNotFound($aggregateClass, $id);
         }
 
-        return $aggregateClass::createFromMessages($messages);
+        $aggregate = $aggregateClass::createFromMessages($messages);
+
+        if ($this->snapshotStore && $this->metadata->snapshotStore) {
+            $this->saveSnapshot($aggregate, $messages);
+        }
+
+        return $aggregate;
     }
 
     public function has(string $id): bool
@@ -129,13 +136,26 @@ final class DefaultRepository implements Repository
             throw new SnapshotRebuildFailed($aggregateClass, $id, $exception);
         }
 
-        $batchSize = $this->metadata->snapshotBatch ?: 1;
-
-        if (count($messages) >= $batchSize) {
-            $this->snapshotStore->save($aggregate);
-        }
+        $this->saveSnapshot($aggregate, $messages);
 
         return $aggregate;
+    }
+
+    /**
+     * @param T             $aggregate
+     * @param list<Message> $messages
+     */
+    private function saveSnapshot(AggregateRoot $aggregate, array $messages): void
+    {
+        assert($this->snapshotStore instanceof SnapshotStore);
+
+        $batchSize = $this->metadata->snapshotBatch ?: 1;
+
+        if (count($messages) < $batchSize) {
+            return;
+        }
+
+        $this->snapshotStore->save($aggregate);
     }
 
     private function assertRightAggregate(AggregateRoot $aggregate): void
