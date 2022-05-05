@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 
 use function array_key_exists;
 
-final class DefaultProjectionHandler implements ProjectionHandler
+final class MetadataAwareProjectionHandler implements ProjectionHandler
 {
     /** @var iterable<Projection> */
     private iterable $projections;

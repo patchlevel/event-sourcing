@@ -73,13 +73,13 @@ Then add this to the event bus using the `ProjectionListener`.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 
 $profileProjection = new ProfileProjection($connection);
 $messageProjection = new MessageProjection($connection);
 
-$projectionHandler = new DefaultProjectionHandler([
+$projectionHandler = new MetadataAwareProjectionHandler([
     $profileProjection,
     $messageProjection,
 ]);

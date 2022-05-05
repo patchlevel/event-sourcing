@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -18,8 +18,8 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Projection\DefaultProjectionHandler */
-final class DefaultProjectionHandlerTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler */
+final class MetadataAwareProjectionHandlerTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -37,7 +37,7 @@ final class DefaultProjectionHandlerTest extends TestCase
             $event
         );
 
-        $projectionRepository = new DefaultProjectionHandler([]);
+        $projectionRepository = new MetadataAwareProjectionHandler([]);
         $projectionRepository->handle($message);
 
         $this->expectNotToPerformAssertions();
@@ -67,7 +67,7 @@ final class DefaultProjectionHandlerTest extends TestCase
             $event
         );
 
-        $projectionRepository = new DefaultProjectionHandler([$projection]);
+        $projectionRepository = new MetadataAwareProjectionHandler([$projection]);
         $projectionRepository->handle($message);
 
         self::assertSame($event, $projection::$handledEvent);
@@ -97,7 +97,7 @@ final class DefaultProjectionHandlerTest extends TestCase
             $event
         );
 
-        $projectionRepository = new DefaultProjectionHandler([$projection]);
+        $projectionRepository = new MetadataAwareProjectionHandler([$projection]);
         $projectionRepository->handle($message);
 
         self::assertSame($message, $projection::$handledMessage);
@@ -126,7 +126,7 @@ final class DefaultProjectionHandlerTest extends TestCase
             $event
         );
 
-        $projectionRepository = new DefaultProjectionHandler([$projection]);
+        $projectionRepository = new MetadataAwareProjectionHandler([$projection]);
         $projectionRepository->handle($message);
 
         self::assertNull($projection::$handledEvent);
@@ -144,7 +144,7 @@ final class DefaultProjectionHandlerTest extends TestCase
             }
         };
 
-        $projectionRepository = new DefaultProjectionHandler([$projection]);
+        $projectionRepository = new MetadataAwareProjectionHandler([$projection]);
         $projectionRepository->create();
 
         self::assertTrue($projection::$called);
@@ -162,7 +162,7 @@ final class DefaultProjectionHandlerTest extends TestCase
             }
         };
 
-        $projectionRepository = new DefaultProjectionHandler([$projection]);
+        $projectionRepository = new MetadataAwareProjectionHandler([$projection]);
         $projectionRepository->drop();
 
         self::assertTrue($projection::$called);

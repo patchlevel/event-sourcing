@@ -30,9 +30,9 @@ As soon as you execute `start`, the server will be started until you terminate t
 
 ```php
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\WatchServer\DefaultWatchServer;
+use Patchlevel\EventSourcing\WatchServer\SocketWatchServer;
 
-$watchServer = new DefaultWatchServer('127.0.0.1:5000', $serializer);
+$watchServer = new SocketWatchServer('127.0.0.1:5000', $serializer);
 $watchServer->listen(
     function (Message $message) {
         var_dump($message);
@@ -47,13 +47,13 @@ Here is an example of how to use it with a symfony cli.
 
 ```php
 use Patchlevel\EventSourcing\Console\Command;
-use Patchlevel\EventSourcing\WatchServer\DefaultWatchServer;
+use Patchlevel\EventSourcing\WatchServer\SocketWatchServer;
 use Symfony\Component\Console\Application;
 
 $cli = new Application('Event-Sourcing CLI');
 $cli->setCatchExceptions(true);
 
-$watchServer = new DefaultWatchServer('127.0.0.1:5000', $serializer);
+$watchServer = new SocketWatchServer('127.0.0.1:5000', $serializer);
 $command = new WatchCommand($watchServer);
 
 $cli->addCommands([

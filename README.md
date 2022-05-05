@@ -301,7 +301,7 @@ After we have defined everything, we still have to plug the whole thing together
 ```php
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -314,7 +314,7 @@ $connection = DriverManager::getConnection([
 $mailer = /* your own mailer */;
 
 $hotelProjection = new HotelProjection($connection);
-$projectionHandler = new DefaultProjectionHandler([
+$projectionHandler = new MetadataAwareProjectionHandler([
     $hotelProjection,
 ]);
 

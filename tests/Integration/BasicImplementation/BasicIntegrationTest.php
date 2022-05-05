@@ -8,7 +8,7 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
@@ -44,7 +44,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionHandler(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 
@@ -88,7 +88,7 @@ final class BasicIntegrationTest extends TestCase
     public function testWithSymfonySuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionHandler(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 
@@ -133,7 +133,7 @@ final class BasicIntegrationTest extends TestCase
     public function testMultiTableSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionHandler(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 
@@ -176,7 +176,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSnapshot(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionHandler(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 
