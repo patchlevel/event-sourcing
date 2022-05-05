@@ -97,10 +97,10 @@ To make this possible, projections have two methods `create` and `drop` that can
 
 ### Create Projection Schema
 
-Or for all projections in the `DefaultProjectionHandler`:
+Or for all projections in the `MetadataAwareProjectionHandler`:
 
 ```php
-$projectionRepository = new DefaultProjectionHandler([
+$projectionRepository = new MetadataAwareProjectionHandler([
     $profileProjection,
     $messageProjection,
 ]);
@@ -110,10 +110,10 @@ $projectionRepository->create();
 
 ### Drop Projection Schema
 
-Or for all projections in the `DefaultProjectionHandler`:
+Or for all projections in the `MetadataAwareProjectionHandler`:
 
 ```php
-$projectionRepository = new DefaultProjectionHandler([
+$projectionRepository = new MetadataAwareProjectionHandler([
     $profileProjection,
     $messageProjection,
 ]);
