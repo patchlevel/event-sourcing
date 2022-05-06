@@ -9,7 +9,7 @@ use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
@@ -48,7 +48,7 @@ final class WriteEventsBench
         ]);
 
         $profileProjection = new ProfileProjection($connection);
-        $projectionRepository = new DefaultProjectionHandler(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 

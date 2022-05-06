@@ -8,7 +8,7 @@ use Closure;
 use Generator;
 use Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -112,7 +112,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $projectionA = new DummyProjection();
         $projectionB = new Dummy2Projection();
-        $handler = new DefaultProjectionHandler([$projectionA, $projectionB]);
+        $handler = new MetadataAwareProjectionHandler([$projectionA, $projectionB]);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
@@ -173,7 +173,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $projectionA = new DummyProjection();
         $projectionB = new Dummy2Projection();
-        $handler = new DefaultProjectionHandler([$projectionA, $projectionB]);
+        $handler = new MetadataAwareProjectionHandler([$projectionA, $projectionB]);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),

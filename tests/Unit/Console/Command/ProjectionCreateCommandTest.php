@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\ProjectionCreateCommand;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Dummy2Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyProjection;
@@ -47,7 +47,7 @@ final class ProjectionCreateCommandTest extends TestCase
     {
         $projectionA = new DummyProjection();
         $projectionB = new Dummy2Projection();
-        $handler = new DefaultProjectionHandler([$projectionA, $projectionB]);
+        $handler = new MetadataAwareProjectionHandler([$projectionA, $projectionB]);
 
         $command = new ProjectionCreateCommand(
             $handler

@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionHandler;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Symfony\Component\Console\Command\Command;
@@ -80,12 +80,12 @@ abstract class ProjectionCommand extends Command
     private function filterProjectionInProjectionHandler(
         ProjectionHandler $projectionHandler,
         array $onlyProjections
-    ): DefaultProjectionHandler {
-        if (!$projectionHandler instanceof DefaultProjectionHandler) {
+    ): MetadataAwareProjectionHandler {
+        if (!$projectionHandler instanceof MetadataAwareProjectionHandler) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Filtering projections is only supported with "%s", but "%s" was used.',
-                    DefaultProjectionHandler::class,
+                    MetadataAwareProjectionHandler::class,
                     $projectionHandler::class
                 )
             );
@@ -98,7 +98,7 @@ abstract class ProjectionCommand extends Command
             )
         );
 
-        return new DefaultProjectionHandler(
+        return new MetadataAwareProjectionHandler(
             $projections,
             $projectionHandler->metadataFactory()
         );
