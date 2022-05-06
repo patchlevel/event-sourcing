@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -22,9 +21,6 @@ class ProjectionHandlerTargetTest extends TestCase
     public function testSave(): void
     {
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
 

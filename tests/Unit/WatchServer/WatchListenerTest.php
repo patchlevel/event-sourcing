@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\WatchServer;
 
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\WatchServer\SendingFailed;
@@ -21,16 +20,7 @@ class WatchListenerTest extends TestCase
 
     public function testListener(): void
     {
-        $event = new ProfileVisited(
-            ProfileId::fromString('1')
-        );
-
-        $message = new Message(
-            Profile::class,
-            '1',
-            1,
-            $event
-        );
+        $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
 
         $client = $this->prophesize(WatchServerClient::class);
         $client->send($message)->shouldBeCalled();
@@ -41,16 +31,7 @@ class WatchListenerTest extends TestCase
 
     public function testIgnoreErrors(): void
     {
-        $event = new ProfileVisited(
-            ProfileId::fromString('1')
-        );
-
-        $message = new Message(
-            Profile::class,
-            '1',
-            1,
-            $event
-        );
+        $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
 
         $client = $this->prophesize(WatchServerClient::class);
         $client->send($message)->shouldBeCalled()->willThrow(SendingFailed::class);

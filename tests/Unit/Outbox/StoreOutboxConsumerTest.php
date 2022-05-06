@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
 use Patchlevel\EventSourcing\Store\OutboxStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -23,9 +22,6 @@ class StoreOutboxConsumerTest extends TestCase
     public function testConsume(): void
     {
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de')
@@ -46,9 +42,6 @@ class StoreOutboxConsumerTest extends TestCase
     public function testConsumeWithLimit(): void
     {
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de')

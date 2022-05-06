@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -23,14 +22,13 @@ class UntilEventMiddlewareTest extends TestCase
         $middleware = new UntilEventMiddleware($until);
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de')
             ),
-            new DateTimeImmutable('2020-02-01 00:00:00')
+            [
+                Message::HEADER_RECORDED_ON => new DateTimeImmutable('2020-02-01 00:00:00'),
+            ]
         );
 
         $result = $middleware($message);
@@ -45,14 +43,13 @@ class UntilEventMiddlewareTest extends TestCase
         $middleware = new UntilEventMiddleware($until);
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de')
             ),
-            new DateTimeImmutable('2020-02-01 00:00:00')
+            [
+                Message::HEADER_RECORDED_ON => new DateTimeImmutable('2020-02-01 00:00:00'),
+            ]
         );
 
         $result = $middleware($message);

@@ -5,16 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\WatchServer;
 
 use Closure;
-use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Serializer\EventSerializer;
-use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
-use function base64_decode;
 use function fclose;
 use function feof;
 use function fgets;
@@ -23,7 +17,6 @@ use function stream_select;
 use function stream_socket_accept;
 use function stream_socket_server;
 use function strpos;
-use function unserialize;
 
 final class SocketWatchServer implements WatchServer
 {
@@ -32,10 +25,10 @@ final class SocketWatchServer implements WatchServer
     /** @var resource|null */
     private $socket;
 
-    private EventSerializer $serializer;
+    private MessageSerializer $serializer;
     private LoggerInterface $logger;
 
-    public function __construct(string $host, EventSerializer $serializer, ?LoggerInterface $logger = null)
+    public function __construct(string $host, MessageSerializer $serializer, ?LoggerInterface $logger = null)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
@@ -69,16 +62,7 @@ final class SocketWatchServer implements WatchServer
         foreach ($this->messages($socket) as $clientId => $clientMessage) {
             $this->logger->info('Received a payload from client {clientId}', ['clientId' => $clientId]);
 
-            /** @var array{aggregate_class: class-string<AggregateRoot>,aggregate_id: string, event: class-string, payload: string, playhead: int, recorded_on: DateTimeImmutable} $data */
-            $data = unserialize(base64_decode($clientMessage), ['allowed_classes' => [DateTimeImmutable::class]]);
-
-            $message = new Message(
-                $data['aggregate_class'],
-                $data['aggregate_id'],
-                $data['playhead'],
-                $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
-                $data['recorded_on']
-            );
+            $message = $this->serializer->deserialize($clientMessage);
 
             $callback($message, $clientId);
         }

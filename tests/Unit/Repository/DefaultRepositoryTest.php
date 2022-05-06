@@ -202,9 +202,6 @@ class DefaultRepositoryTest extends TestCase
             '1'
         )->willReturn([
             new Message(
-                Profile::class,
-                '1',
-                1,
                 new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
@@ -236,9 +233,6 @@ class DefaultRepositoryTest extends TestCase
             '1'
         )->willReturn([
             new Message(
-                Profile::class,
-                '1',
-                1,
                 new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
@@ -366,26 +360,17 @@ class DefaultRepositoryTest extends TestCase
         )->willReturn(
             [
                 new Message(
-                    Profile::class,
-                    '1',
-                    1,
                     new ProfileCreated(
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de')
                     )
                 ),
                 new Message(
-                    ProfileWithSnapshot::class,
-                    '1',
-                    2,
                     new ProfileVisited(
                         ProfileId::fromString('1'),
                     )
                 ),
                 new Message(
-                    ProfileWithSnapshot::class,
-                    '1',
-                    3,
                     new ProfileVisited(
                         ProfileId::fromString('1'),
                     )
@@ -432,25 +417,16 @@ class DefaultRepositoryTest extends TestCase
             1
         )->willReturn([
             new Message(
-                ProfileWithSnapshot::class,
-                '1',
-                2,
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 )
             ),
             new Message(
-                ProfileWithSnapshot::class,
-                '1',
-                3,
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 )
             ),
             new Message(
-                ProfileWithSnapshot::class,
-                '1',
-                4,
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 )
@@ -487,9 +463,6 @@ class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(ProfileWithSnapshot::class, '1')->willReturn([
             new Message(
-                ProfileWithSnapshot::class,
-                '1',
-                1,
                 new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')

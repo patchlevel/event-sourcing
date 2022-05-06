@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
@@ -42,10 +41,13 @@ final class OutputStyleTest extends TestCase
         ));
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
-            $event
+            $event,
+            [
+                Message::HEADER_AGGREGATE_CLASS => Profile::class,
+                Message::HEADER_AGGREGATE_ID => '1',
+                Message::HEADER_PLAYHEAD => 1,
+                Message::HEADER_RECORDED_ON => new DateTimeImmutable(),
+            ]
         );
 
         $console = new OutputStyle($input, $output);
@@ -58,15 +60,5 @@ final class OutputStyleTest extends TestCase
         self::assertStringContainsString('Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated', $content);
         self::assertStringContainsString('Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile', $content);
         self::assertStringContainsString('{"id":"1","email":"foo@bar.com"}', $content);
-    }
-
-    public function setUp(): void
-    {
-        Clock::freeze(new DateTimeImmutable('2022-03-11T17:22:46+01:00'));
-    }
-
-    public function tearDown(): void
-    {
-        Clock::reset();
     }
 }

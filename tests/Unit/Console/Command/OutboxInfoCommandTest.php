@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
+use DateTimeImmutable;
 use Patchlevel\EventSourcing\Console\Command\OutboxInfoCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
@@ -30,10 +31,13 @@ final class OutboxInfoCommandTest extends TestCase
         $store = $this->prophesize(OutboxStore::class);
         $store->retrieveOutboxMessages(null)->willReturn([
             new Message(
-                Profile::class,
-                '1',
-                1,
-                $event
+                $event,
+                [
+                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
+                    Message::HEADER_AGGREGATE_ID => '1',
+                    Message::HEADER_PLAYHEAD => 1,
+                    Message::HEADER_RECORDED_ON => new DateTimeImmutable(),
+                ]
             ),
         ]);
 
@@ -67,10 +71,13 @@ final class OutboxInfoCommandTest extends TestCase
         $store = $this->prophesize(OutboxStore::class);
         $store->retrieveOutboxMessages(100)->willReturn([
             new Message(
-                Profile::class,
-                '1',
-                1,
-                $event
+                $event,
+                [
+                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
+                    Message::HEADER_AGGREGATE_ID => '1',
+                    Message::HEADER_PLAYHEAD => 1,
+                    Message::HEADER_RECORDED_ON => new DateTimeImmutable(),
+                ]
             ),
         ]);
 

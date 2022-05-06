@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -25,9 +24,6 @@ class ProjectionTargetTest extends TestCase
         $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             $event
         );
 
@@ -53,9 +49,6 @@ class ProjectionTargetTest extends TestCase
         $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             $event
         );
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
@@ -121,10 +122,13 @@ final class DefaultRepository implements Repository
         $messages = array_map(
             static function (object $event) use ($aggregate, &$playhead) {
                 return new Message(
-                    $aggregate::class,
-                    $aggregate->aggregateRootId(),
-                    ++$playhead,
-                    $event
+                    $event,
+                    [
+                        Message::HEADER_AGGREGATE_CLASS => $aggregate::class,
+                        Message::HEADER_AGGREGATE_ID => $aggregate->aggregateRootId(),
+                        Message::HEADER_PLAYHEAD => ++$playhead,
+                        Message::HEADER_RECORDED_ON => Clock::createDateTimeImmutable(),
+                    ]
                 );
             },
             $events

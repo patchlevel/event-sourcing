@@ -26,13 +26,7 @@ final class RecalculatePlayheadMiddleware implements Middleware
         }
 
         return [
-            new Message(
-                $message->aggregateClass(),
-                $message->aggregateId(),
-                $playhead,
-                $message->event(),
-                $message->recordedOn()
-            ),
+            $message->withHeader(Message::HEADER_PLAYHEAD, $playhead),
         ];
     }
 

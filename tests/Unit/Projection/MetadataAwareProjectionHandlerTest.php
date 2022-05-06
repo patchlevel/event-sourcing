@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -31,9 +30,6 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
         );
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             $event
         );
 
@@ -61,9 +57,6 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
         );
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             $event
         );
 
@@ -91,9 +84,6 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
         );
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             $event
         );
 
@@ -120,9 +110,6 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
         );
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             $event
         );
 
