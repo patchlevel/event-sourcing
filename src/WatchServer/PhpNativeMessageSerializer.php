@@ -15,7 +15,7 @@ use function base64_encode;
 use function serialize;
 use function unserialize;
 
-final class DefaultMessageSerializer implements MessageSerializer
+final class PhpNativeMessageSerializer implements MessageSerializer
 {
     private EventSerializer $serializer;
 

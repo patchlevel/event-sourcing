@@ -18,7 +18,7 @@ use const STREAM_CLIENT_ASYNC_CONNECT;
 use const STREAM_CLIENT_CONNECT;
 use const STREAM_SHUT_RDWR;
 
-final class DefaultWatchServerClient implements WatchServerClient
+final class SocketWatchServerClient implements WatchServerClient
 {
     private string $host;
 
