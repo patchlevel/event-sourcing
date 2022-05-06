@@ -41,6 +41,17 @@ class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->playhead() === 1;
+            }),
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 2;
             })
         )->shouldBeCalled();
 
@@ -56,6 +67,17 @@ class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->playhead() === 1;
+            }),
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 2;
             })
         )->shouldBeCalled();
 
@@ -69,6 +91,58 @@ class DefaultRepositoryTest extends TestCase
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de')
         );
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+
+        $repository->save($aggregate);
+    }
+
+    public function testUpdateAggregate(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->save(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 2;
+            })
+        )->shouldBeCalled();
+
+        $eventBus = $this->prophesize(EventBus::class);
+        $eventBus->dispatch(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 2;
+            })
+        )->shouldBeCalled();
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::class,
+        );
+
+        $aggregate = Profile::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de')
+        );
+
+        $aggregate->releaseEvents(); // clear events
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
 
         $repository->save($aggregate);
     }
