@@ -145,6 +145,7 @@ class MessageTest extends TestCase
             )
         );
 
+        /** @psalm-suppress UnusedMethodCall */
         $message->header(Message::HEADER_AGGREGATE_ID);
     }
 }
