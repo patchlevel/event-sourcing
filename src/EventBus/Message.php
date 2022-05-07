@@ -19,10 +19,10 @@ final class Message
     public const HEADER_PLAYHEAD = 'playhead';
     public const HEADER_RECORDED_ON = 'recordedOn';
 
-    private object $event;
+    private readonly object $event;
 
     /** @var array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable} */
-    private array $headers;
+    private readonly array $headers;
 
     /**
      * @param array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable} $headers
@@ -90,10 +90,10 @@ final class Message
      */
     public function withHeader(string $name, mixed $value): self
     {
-        $new = clone $this;
-        $new->headers[$name] = $value;
-
-        return $new;
+        return new self(
+            $this->event,
+            [$name => $value] + $this->headers
+        );
     }
 
     /**
