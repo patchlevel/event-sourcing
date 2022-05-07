@@ -6,30 +6,28 @@ use Psr\Container\ContainerInterface;
 
 abstract class Factory
 {
-    private string $configKey;
+    private const PACKAGE_NAME = 'event_sourcing';
 
-    final public function __construct(string $configKey = 'event_sourcing')
+    final public function __construct()
     {
-        $this->configKey = $configKey;
     }
 
     public function __invoke(ContainerInterface $container): mixed
     {
-        return $this->createWithConfig($container, $this->configKey);
+        return $this->createWithConfig($container);
     }
 
-    abstract protected function createWithConfig(ContainerInterface $container, string $configKey): mixed;
+    abstract protected function createWithConfig(ContainerInterface $container): mixed;
 
     /**
-     * @param string $configKey
      * @return array<string, mixed>
      */
-    protected function defaultConfig(string $configKey): array
+    protected function defaultConfig(): array
     {
         return [];
     }
 
-    protected function retrieveConfig(ContainerInterface $container, string $configKey, string $section): array
+    protected function retrieveConfig(ContainerInterface $container, string $section): array
     {
         $applicationConfig = $container->has('config') ? $container->get('config') : [];
 
@@ -37,34 +35,19 @@ abstract class Factory
             throw new \RuntimeException('wrong config');
         }
 
-        $sectionConfig = $applicationConfig['doctrine'][$section] ?? [];
+        $sectionConfig = $applicationConfig[self::PACKAGE_NAME][$section] ?? [];
 
         if (!is_array($sectionConfig)) {
             throw new \RuntimeException('wrong config');
         }
 
-        if (array_key_exists($configKey, $sectionConfig)) {
-            return array_replace_recursive($this->defaultConfig($configKey), $sectionConfig[$configKey]);
-        }
-
-        return $this->defaultConfig($configKey);
+        return array_replace_recursive($this->defaultConfig(), $sectionConfig);
     }
 
-    /**
-     * @param class-string $factoryClassName
-     */
-    protected function retrieveDependency(
-        ContainerInterface $container,
-        string $configKey,
-        string $section,
-        string $factoryClassName
-    ): mixed {
-        $containerKey = sprintf('doctrine.%s.%s', $section, $configKey);
+    protected function get(ContainerInterface $container, string $name): mixed
+    {
+        $key = sprintf('%s.%s', self::PACKAGE_NAME, $name);
 
-        if ($container->has($containerKey)) {
-            return $container->get($containerKey);
-        }
-
-        return (new $factoryClassName($configKey))->__invoke($container);
+        return $container->get($key);
     }
 }

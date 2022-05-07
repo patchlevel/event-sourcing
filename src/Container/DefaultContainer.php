@@ -4,6 +4,7 @@ namespace Patchlevel\EventSourcing\Container;
 
 use Patchlevel\EventSourcing\Container\Factory\AggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Container\Factory\ConnectionFactory;
+use Patchlevel\EventSourcing\Container\Factory\RepositoryManagerFactory;
 use Patchlevel\EventSourcing\Container\Factory\SerializerFactory;
 use Patchlevel\EventSourcing\Container\Factory\StoreFactory;
 use Patchlevel\EventSourcing\Repository\Repository;
@@ -12,6 +13,8 @@ use Psr\Container\ContainerInterface;
 
 class DefaultContainer implements ContainerInterface
 {
+    public const PACKAGE_NAME = 'event_sourcing';
+
     /**
      * @var array<string, mixed>
      */
@@ -62,7 +65,7 @@ class DefaultContainer implements ContainerInterface
 
     public function repository(string $aggregateName): Repository
     {
-        return $this->get('event_sourcing.repository.'.$aggregateName);
+        return $this->get('event_sourcing.repository_manager')->get($aggregateName);
     }
 
     public function store(): Store
@@ -72,15 +75,22 @@ class DefaultContainer implements ContainerInterface
 
     /**
      * @param array<string, mixed> $config
+     * @param array<string, mixed> $definitions
      */
-    public static function create(array $config = []): self
+    public static function create(array $config = [], array $definitions = []): self
     {
-        return new DefaultContainer([
-            'config' => $config,
-            'event_sourcing.connection' => new ConnectionFactory(),
-            'event_sourcing.serializer' => new SerializerFactory(),
-            'event_sourcing.store' => new StoreFactory(),
-            'event_sourcing.aggregate_root_registry' => new AggregateRootRegistryFactory(),
-        ]);
+        return new DefaultContainer(
+            array_merge(
+                [
+                    'config' => $config,
+                    'event_sourcing.connection' => new ConnectionFactory(),
+                    'event_sourcing.serializer' => new SerializerFactory(),
+                    'event_sourcing.store' => new StoreFactory(),
+                    'event_sourcing.aggregate_root_registry' => new AggregateRootRegistryFactory(),
+                    'event_sourcing.repository_manager' => new RepositoryManagerFactory(),
+                ],
+                $definitions
+            )
+        );
     }
 }

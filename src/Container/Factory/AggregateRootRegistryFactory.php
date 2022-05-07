@@ -2,14 +2,16 @@
 
 namespace Patchlevel\EventSourcing\Container\Factory;
 
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Psr\Container\ContainerInterface;
 
-class AggregateRootRegistryFactory extends Factory
+final class AggregateRootRegistryFactory extends Factory
 {
-    protected function createWithConfig(ContainerInterface $container, string $configKey): mixed
+    protected function createWithConfig(ContainerInterface $container): AggregateRootRegistry
     {
-        $config = $this->retrieveConfig($container, $configKey, 'aggregate');
+        $config = $this->retrieveConfig($container, 'aggregate');
 
-        return null;
+        return (new AttributeAggregateRootRegistryFactory())->create($config['paths']);
     }
 }
