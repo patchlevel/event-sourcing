@@ -10,10 +10,9 @@ namespace Patchlevel\EventSourcing\Serializer\Upcast;
 final class Upcast
 {
     /**
-     * @param class-string         $class
      * @param array<string, mixed> $payload
      */
-    public function __construct(public string $class, public array $payload)
+    public function __construct(public string $eventName, public array $payload)
     {
     }
 }

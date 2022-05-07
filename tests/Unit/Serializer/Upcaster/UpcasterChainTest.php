@@ -20,7 +20,7 @@ final class UpcasterChainTest extends TestCase
             {
                 $this->counter++;
 
-                return new Upcast(self::class, $upcast->payload);
+                return new Upcast('profile_1', $upcast->payload);
             }
         };
 
@@ -31,19 +31,25 @@ final class UpcasterChainTest extends TestCase
             {
                 $this->counter++;
 
-                return new Upcast(self::class, $upcast->payload);
+                return new Upcast('profile_2', $upcast->payload + ['foo' => 'bar']);
             }
         };
 
         $inputPayload = ['bar' => 'baz'];
-        $inputClass = UpcasterChain::class;
+        $inputEventName = 'profile';
 
         $chain = new UpcasterChain([$upcasterOne, $upcasterTwo]);
-        $upcast = ($chain)(new Upcast($inputClass, $inputPayload));
+        $upcast = ($chain)(new Upcast($inputEventName, $inputPayload));
 
         self::assertSame(1, $upcasterOne->counter);
         self::assertSame(1, $upcasterTwo->counter);
-        self::assertSame($upcasterTwo::class, $upcast->class);
-        self::assertSame($inputPayload, $upcast->payload);
+        self::assertSame('profile_2', $upcast->eventName);
+        self::assertSame(
+            [
+                'bar' => 'baz',
+                'foo' => 'bar',
+            ],
+            $upcast->payload
+        );
     }
 }

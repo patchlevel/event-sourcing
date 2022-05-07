@@ -62,11 +62,11 @@ class DefaultEventSerializerTest extends TestCase
         $upcaster = new class implements Upcaster {
             public function __invoke(Upcast $upcast): Upcast
             {
-                if ($upcast->class !== ProfileCreated::class) {
+                if ($upcast->eventName !== 'profile_created_old') {
                     return $upcast;
                 }
 
-                return new Upcast($upcast->class, $upcast->payload + ['email' => 'info@patchlevel.de']);
+                return new Upcast('profile_created', $upcast->payload + ['email' => 'info@patchlevel.de']);
             }
         };
 
@@ -84,7 +84,7 @@ class DefaultEventSerializerTest extends TestCase
 
         $event = $serializer->deserialize(
             new SerializedEvent(
-                'profile_created',
+                'profile_created_old',
                 '{"profileId":"1"}'
             )
         );

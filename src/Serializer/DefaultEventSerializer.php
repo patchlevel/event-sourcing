@@ -44,11 +44,11 @@ final class DefaultEventSerializer implements EventSerializer
     public function deserialize(SerializedEvent $data, array $options = []): object
     {
         $payload = $this->encoder->decode($data->payload, $options);
-        $class = $this->eventRegistry->eventClass($data->name);
+        $upcast = ($this->upcaster)(new Upcast($data->name, $payload));
 
-        $upcast = ($this->upcaster)(new Upcast($class, $payload));
+        $class = $this->eventRegistry->eventClass($upcast->eventName);
 
-        return $this->hydrator->hydrate($upcast->class, $upcast->payload);
+        return $this->hydrator->hydrate($class, $upcast->payload);
     }
 
     /**
