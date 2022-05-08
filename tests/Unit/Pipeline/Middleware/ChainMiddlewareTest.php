@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -21,16 +20,11 @@ class ChainMiddlewareTest extends TestCase
 
     public function testChain(): void
     {
-        $event = new ProfileCreated(
-            ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
-        );
-
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
-            $event
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('hallo@patchlevel.de')
+            )
         );
 
         $child1 = $this->prophesize(Middleware::class);

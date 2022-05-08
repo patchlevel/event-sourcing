@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -22,9 +21,6 @@ class StoreTargetTest extends TestCase
     public function testSave(): void
     {
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
 

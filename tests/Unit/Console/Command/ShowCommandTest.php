@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
+use DateTimeImmutable;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\Command\ShowCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
@@ -32,18 +33,23 @@ final class ShowCommandTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(Profile::class, '1')->willReturn([
             new Message(
-                Profile::class,
-                '1',
-                1,
-                $event
+                $event,
+                [
+                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
+                    Message::HEADER_AGGREGATE_ID => '1',
+                    Message::HEADER_PLAYHEAD => 1,
+                    Message::HEADER_RECORDED_ON => new DateTimeImmutable(),
+                ]
             ),
         ]);
 
         $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
-            'profile.visited',
-            '{"visitorId": "1"}',
-        ));
+        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
+            new SerializedEvent(
+                'profile.visited',
+                '{"visitorId": "1"}',
+            )
+        );
 
         $command = new ShowCommand(
             $store->reveal(),

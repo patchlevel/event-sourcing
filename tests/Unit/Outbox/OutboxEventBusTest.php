@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 use Patchlevel\EventSourcing\Store\OutboxStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -22,9 +21,6 @@ class OutboxEventBusTest extends TestCase
     public function testDispatchEvent(): void
     {
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de')
@@ -41,9 +37,6 @@ class OutboxEventBusTest extends TestCase
     public function testDispatchMultipleMessages(): void
     {
         $message1 = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de')
@@ -51,9 +44,6 @@ class OutboxEventBusTest extends TestCase
         );
 
         $message2 = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de')

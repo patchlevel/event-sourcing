@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -22,9 +21,6 @@ final class ProjectionListenerTest extends TestCase
     public function testInvoke(): void
     {
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('foo@bar.com')

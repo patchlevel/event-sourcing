@@ -102,11 +102,13 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
         return array_map(
             function (array $data) use ($platform) {
                 return new Message(
-                    $this->aggregateRootRegistry->aggregateClass($data['aggregate']),
-                    $data['aggregate_id'],
-                    self::normalizePlayhead($data['playhead'], $platform),
                     $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
-                    self::normalizeRecordedOn($data['recorded_on'], $platform)
+                    [
+                        Message::HEADER_AGGREGATE_CLASS => $this->aggregateRootRegistry->aggregateClass($data['aggregate']),
+                        Message::HEADER_AGGREGATE_ID => $data['aggregate_id'],
+                        Message::HEADER_PLAYHEAD => self::normalizePlayhead($data['playhead'], $platform),
+                        Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($data['recorded_on'], $platform),
+                    ]
                 );
             },
             $result

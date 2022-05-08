@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.22.0@fc2c6ab4d5fa5d644d8617089f012f3bb84b8703">
+<files psalm-version="4.23.0@f1fe6ff483bf325c803df9f510d09a03fd796f88">
+  <file src="src/EventBus/Message.php">
+    <PropertyTypeCoercion occurrences="1">
+      <code>$new-&gt;headers</code>
+    </PropertyTypeCoercion>
+  </file>
   <file src="src/Repository/DefaultRepository.php">
-    <MixedArgument occurrences="1">
-      <code>++$playhead</code>
-    </MixedArgument>
+    <ArgumentTypeCoercion occurrences="1"/>
     <MixedAssignment occurrences="1">
       <code>$playhead</code>
     </MixedAssignment>

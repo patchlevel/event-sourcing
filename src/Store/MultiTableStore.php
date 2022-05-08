@@ -63,11 +63,13 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         return array_map(
             function (array $data) use ($platform, $aggregate): Message {
                 return new Message(
-                    $aggregate,
-                    $data['aggregate_id'],
-                    self::normalizePlayhead($data['playhead'], $platform),
                     $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
-                    self::normalizeRecordedOn($data['recorded_on'], $platform)
+                    [
+                        Message::HEADER_AGGREGATE_CLASS => $aggregate,
+                        Message::HEADER_AGGREGATE_ID => $data['aggregate_id'],
+                        Message::HEADER_PLAYHEAD => self::normalizePlayhead($data['playhead'], $platform),
+                        Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($data['recorded_on'], $platform),
+                    ]
                 );
             },
             $result
@@ -193,11 +195,13 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             }
 
             yield new Message(
-                $this->aggregateRootRegistry->aggregateClass($name),
-                $eventData['aggregate_id'],
-                self::normalizePlayhead($eventData['playhead'], $platform),
                 $this->serializer->deserialize(new SerializedEvent($eventData['event'], $eventData['payload'])),
-                self::normalizeRecordedOn($eventData['recorded_on'], $platform)
+                [
+                    Message::HEADER_AGGREGATE_CLASS => $this->aggregateRootRegistry->aggregateClass($name),
+                    Message::HEADER_AGGREGATE_ID => $eventData['aggregate_id'],
+                    Message::HEADER_PLAYHEAD => self::normalizePlayhead($eventData['playhead'], $platform),
+                    Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($eventData['recorded_on'], $platform),
+                ]
             );
         }
     }

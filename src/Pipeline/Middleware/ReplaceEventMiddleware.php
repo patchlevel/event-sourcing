@@ -43,11 +43,8 @@ final class ReplaceEventMiddleware implements Middleware
 
         return [
             new Message(
-                $message->aggregateClass(),
-                $message->aggregateId(),
-                $message->playhead(),
                 $newEvent,
-                $message->recordedOn()
+                $message->headers()
             ),
         ];
     }

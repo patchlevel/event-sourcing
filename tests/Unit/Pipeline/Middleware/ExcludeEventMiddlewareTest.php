@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -21,9 +20,6 @@ class ExcludeEventMiddlewareTest extends TestCase
         $middleware = new ExcludeEventMiddleware([ProfileCreated::class]);
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
@@ -40,9 +36,6 @@ class ExcludeEventMiddlewareTest extends TestCase
         $middleware = new ExcludeEventMiddleware([ProfileCreated::class]);
 
         $message = new Message(
-            Profile::class,
-            '1',
-            1,
             new ProfileVisited(
                 ProfileId::fromString('1')
             )

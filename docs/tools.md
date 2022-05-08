@@ -13,10 +13,10 @@ You can subscribe to it and display the information anywhere, e.g. in the CLI.
 The watch client and the listener are used to send all events that are saved to a specific host.
 
 ```php
-use Patchlevel\EventSourcing\WatchServer\DefaultWatchServerClient;
+use Patchlevel\EventSourcing\WatchServer\SocketWatchServerClient;
 use Patchlevel\EventSourcing\WatchServer\WatchListener;
 
-$watchServerClient = new DefaultWatchServerClient('127.0.0.1:5000', $serializer);
+$watchServerClient = new SocketWatchServerClient('127.0.0.1:5000', $serializer);
 $watchListener = new WatchListener($watchServerClient);
 ```
 
