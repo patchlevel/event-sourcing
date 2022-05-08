@@ -11,18 +11,23 @@ use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Serializer\Hydrator\EventHydrator;
 use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataEventHydrator;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
 
 final class DefaultEventSerializer implements EventSerializer
 {
     private EventRegistry $eventRegistry;
     private EventHydrator $hydrator;
     private Encoder $encoder;
+    private Upcaster $upcaster;
 
-    public function __construct(EventRegistry $eventRegistry, EventHydrator $hydrator, Encoder $encoder)
+    public function __construct(EventRegistry $eventRegistry, EventHydrator $hydrator, Encoder $encoder, Upcaster $upcaster)
     {
         $this->eventRegistry = $eventRegistry;
         $this->hydrator = $hydrator;
         $this->encoder = $encoder;
+        $this->upcaster = $upcaster;
     }
 
     public function serialize(object $event, array $options = []): SerializedEvent
@@ -38,10 +43,12 @@ final class DefaultEventSerializer implements EventSerializer
 
     public function deserialize(SerializedEvent $data, array $options = []): object
     {
-        $class = $this->eventRegistry->eventClass($data->name);
         $payload = $this->encoder->decode($data->payload, $options);
+        $upcast = ($this->upcaster)(new Upcast($data->name, $payload));
 
-        return $this->hydrator->hydrate($class, $payload);
+        $class = $this->eventRegistry->eventClass($upcast->eventName);
+
+        return $this->hydrator->hydrate($class, $upcast->payload);
     }
 
     /**
@@ -52,7 +59,8 @@ final class DefaultEventSerializer implements EventSerializer
         return new self(
             (new AttributeEventRegistryFactory())->create($paths),
             new MetadataEventHydrator(new AttributeEventMetadataFactory()),
-            new JsonEncoder()
+            new JsonEncoder(),
+            new UpcasterChain([])
         );
     }
 }
