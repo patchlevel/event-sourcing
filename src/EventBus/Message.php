@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\EventBus;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use RuntimeException;
 
 use function array_filter;
 use function array_key_exists;
@@ -36,7 +36,7 @@ final class Message
     {
         foreach ($headers as $header => $value) {
             if (!is_string($header)) {
-                throw new RuntimeException('The headers must be an associative array!');
+                throw new InvalidArgumentException('The headers must be an associative array!');
             }
         }
 
