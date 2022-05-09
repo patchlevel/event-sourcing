@@ -7,8 +7,11 @@ namespace Patchlevel\EventSourcing\EventBus;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
+use RuntimeException;
 use function array_filter;
 use function array_key_exists;
+
+use const ARRAY_FILTER_USE_KEY;
 
 /**
  * @psalm-immutable
@@ -30,6 +33,12 @@ final class Message
      */
     public function __construct(object $event, array $headers = [])
     {
+        foreach ($headers as $header => $value) {
+            if (!is_string($header)) {
+                throw new RuntimeException('The headers must be an associative array!');
+            }
+        }
+
         $this->event = $event;
         $this->headers = $headers;
     }
@@ -71,18 +80,19 @@ final class Message
     }
 
     /**
-     * @return array<mixed>
+     * @return array<string, mixed>
      */
     public function customHeaders(): array
     {
         return array_filter(
             $this->headers,
-            static function (mixed $key) {
+            static function (string $key) {
                 return match ($key) {
-                    self::HEADER_AGGREGATE_CLASS, self::HEADER_RECORDED_ON, self::HEADER_AGGREGATE_ID, self::HEADER_PLAYHEAD => true,
-                    default => false
+                    self::HEADER_AGGREGATE_CLASS, self::HEADER_RECORDED_ON, self::HEADER_AGGREGATE_ID, self::HEADER_PLAYHEAD => false,
+                    default => true
                 };
-            }
+            },
+            ARRAY_FILTER_USE_KEY
         );
     }
 

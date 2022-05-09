@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
 use function array_map;
+use function is_array;
 use function is_int;
 use function is_string;
 

@@ -148,4 +148,53 @@ class MessageTest extends TestCase
         /** @psalm-suppress UnusedMethodCall */
         $message->header(Message::HEADER_AGGREGATE_ID);
     }
+
+    public function testCustomHeaders(): void
+    {
+        $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
+
+        Clock::freeze($recordedAt);
+
+        $id = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
+
+        $event = new ProfileCreated(
+            $id,
+            $email
+        );
+
+        $message = new Message(
+            $event,
+            [
+                Message::HEADER_AGGREGATE_CLASS => Profile::class,
+                Message::HEADER_AGGREGATE_ID => '1',
+                Message::HEADER_PLAYHEAD => 1,
+                Message::HEADER_RECORDED_ON => $recordedAt,
+                'foo' => 'bar',
+            ]
+        );
+
+        $message = $message->withHeader(Message::HEADER_PLAYHEAD, 2);
+        $message = $message->withHeader('custom-field', 'foo-bar');
+
+        self::assertEquals(
+            [
+                Message::HEADER_AGGREGATE_CLASS => Profile::class,
+                Message::HEADER_AGGREGATE_ID => '1',
+                Message::HEADER_PLAYHEAD => 2,
+                Message::HEADER_RECORDED_ON => $recordedAt,
+                'foo' => 'bar',
+                'custom-field' => 'foo-bar',
+            ],
+            $message->headers()
+        );
+
+        self::assertEquals(
+            [
+                'foo' => 'bar',
+                'custom-field' => 'foo-bar',
+            ],
+            $message->customHeaders()
+        );
+    }
 }

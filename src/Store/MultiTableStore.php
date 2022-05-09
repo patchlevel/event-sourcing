@@ -183,7 +183,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         foreach ($metaQuery as $metaData) {
             $name = $metaData['aggregate'];
 
-            /** @var array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string}|null $eventData */
+            /** @var array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}|null $eventData */
             $eventData = $queries[$name]->current();
 
             if ($eventData === null) {

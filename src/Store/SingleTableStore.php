@@ -48,7 +48,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: array<mixed>}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -155,7 +155,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
          *     playhead: string,
          *     event: string,
          *     payload: string,
-         *     recorded_on: string
+         *     recorded_on: string,
          *     custom_headers: string
          * }> $result
          */
