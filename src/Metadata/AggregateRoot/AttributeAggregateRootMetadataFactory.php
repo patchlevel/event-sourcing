@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Attribute\SerializedName;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;
+use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionUnionType;
@@ -190,11 +191,9 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             throw new ArgumentTypeIsMissing($methodName);
         }
 
-        /* needs psalm to undestand ReflectionIntersectionType
         if ($propertyType instanceof ReflectionIntersectionType) {
-            throw new RuntimeException();
+            throw new ArgumentTypeIsMissing($methodName);
         }
-        */
 
         if ($propertyType instanceof ReflectionNamedType) {
             $eventClasses = [$propertyType->getName()];

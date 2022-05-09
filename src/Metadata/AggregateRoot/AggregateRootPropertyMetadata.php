@@ -7,15 +7,12 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 use Patchlevel\EventSourcing\Serializer\Hydrator\Normalizer;
 use ReflectionProperty;
 
-/**
- * @readonly
- */
 final class AggregateRootPropertyMetadata
 {
     public function __construct(
-        public string $fieldName,
-        public ReflectionProperty $reflection,
-        public ?Normalizer $normalizer = null
+        public readonly string $fieldName,
+        public readonly ReflectionProperty $reflection,
+        public readonly ?Normalizer $normalizer = null
     ) {
     }
 }

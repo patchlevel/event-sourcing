@@ -9,11 +9,11 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 final class Snapshot
 {
     /** @var class-string<AggregateRoot> */
-    private string $aggregate;
-    private string $id;
-    private int $playhead;
+    private readonly string $aggregate;
+    private readonly string $id;
+    private readonly int $playhead;
     /** @var array<string, mixed> */
-    private array $payload;
+    private readonly array $payload;
 
     /**
      * @param class-string<AggregateRoot> $aggregate

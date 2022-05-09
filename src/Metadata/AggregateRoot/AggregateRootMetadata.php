@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
-/**
- * @readonly
- */
 final class AggregateRootMetadata
 {
     public function __construct(
-        public string $name,
+        public readonly string $name,
         /** @var array<class-string, string> */
-        public array $applyMethods,
+        public readonly array $applyMethods,
         /** @var array<string, AggregateRootPropertyMetadata> */
-        public array $properties,
+        public readonly array $properties,
         /** @var array<class-string, true> */
-        public array $suppressEvents,
-        public bool $suppressAll,
-        public ?string $snapshotStore,
-        public ?int $snapshotBatch,
+        public readonly array $suppressEvents,
+        public readonly bool $suppressAll,
+        public readonly ?string $snapshotStore,
+        public readonly ?int $snapshotBatch,
     ) {
     }
 }

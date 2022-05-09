@@ -16,7 +16,7 @@ parameters:
 			path: src/EventBus/Message.php
 
 		-
-			message: "#^Property Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\:\\:\\$headers \\(array\\{aggregateClass\\?\\: class\\-string\\<Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\>, aggregateId\\?\\: string, playhead\\?\\: int, recordedOn\\?\\: DateTimeImmutable\\}\\) does not accept non\\-empty\\-array\\<T of string, mixed\\>\\.$#"
+			message: "#^Parameter \\#2 \\$headers of class Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message constructor expects array\\{aggregateClass\\?\\: class\\-string\\<Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\>, aggregateId\\?\\: string, playhead\\?\\: int, recordedOn\\?\\: DateTimeImmutable\\}, non\\-empty\\-array\\<T of string, mixed\\> given\\.$#"
 			count: 1
 			path: src/EventBus/Message.php
 
