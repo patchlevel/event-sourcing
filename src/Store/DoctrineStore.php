@@ -74,9 +74,11 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
                             'event' => $data->name,
                             'payload' => $data->payload,
                             'recorded_on' => $message->recordedOn(),
+                            'custom_headers' => $message->customHeaders(),
                         ],
                         [
                             'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
+                            'custom_headers' => Types::JSON,
                         ]
                     );
                 }
@@ -95,7 +97,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
             ->setMaxResults($limit)
             ->getSQL();
 
-        /** @var list<array{aggregate: string, aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate: string, aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: string}> $result */
         $result = $this->connection->fetchAllAssociative($sql);
         $platform = $this->connection->getDatabasePlatform();
 
@@ -108,7 +110,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
                         Message::HEADER_AGGREGATE_ID => $data['aggregate_id'],
                         Message::HEADER_PLAYHEAD => self::normalizePlayhead($data['playhead'], $platform),
                         Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($data['recorded_on'], $platform),
-                    ]
+                    ] + self::normalizeCustomHeaders($data['custom_headers'], $platform)
                 );
             },
             $result
@@ -173,6 +175,20 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
         return $normalizedPlayhead;
     }
 
+    /**
+     * @return array<mixed>
+     */
+    protected static function normalizeCustomHeaders(string $customHeaders, AbstractPlatform $platform): array
+    {
+        $normalizedCustomHeaders = Type::getType(Types::JSON)->convertToPHPValue($customHeaders, $platform);
+
+        if (!is_array($normalizedCustomHeaders)) {
+            throw new InvalidType('custom_headers', 'array');
+        }
+
+        return $normalizedCustomHeaders;
+    }
+
     protected function addOutboxSchema(Schema $schema): void
     {
         $table = $schema->createTable('outbox');
@@ -189,6 +205,9 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
+        $table->addColumn('custom_headers', Types::JSON)
+            ->setNotnull(true)
+            ->setDefault('[]');
 
         $table->setPrimaryKey(['aggregate', 'aggregate_id', 'playhead']);
     }

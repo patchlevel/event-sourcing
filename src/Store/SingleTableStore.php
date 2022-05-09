@@ -48,7 +48,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: array<mixed>}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -69,7 +69,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                         Message::HEADER_AGGREGATE_ID => $data['aggregate_id'],
                         Message::HEADER_PLAYHEAD => self::normalizePlayhead($data['playhead'], $platform),
                         Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($data['recorded_on'], $platform),
-                    ]
+                    ] + self::normalizeCustomHeaders($data['custom_headers'], $platform)
                 );
             },
             $result
@@ -123,9 +123,11 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                             'event' => $data->name,
                             'payload' => $data->payload,
                             'recorded_on' => $message->recordedOn(),
+                            'custom_headers' => $message->customHeaders(),
                         ],
                         [
                             'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
+                            'custom_headers' => Types::JSON,
                         ]
                     );
                 }
@@ -154,6 +156,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
          *     event: string,
          *     payload: string,
          *     recorded_on: string
+         *     custom_headers: string
          * }> $result
          */
         $result = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
@@ -167,7 +170,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                     Message::HEADER_AGGREGATE_ID => $data['aggregate_id'],
                     Message::HEADER_PLAYHEAD => self::normalizePlayhead($data['playhead'], $platform),
                     Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($data['recorded_on'], $platform),
-                ]
+                ] + self::normalizeCustomHeaders($data['custom_headers'], $platform)
             );
         }
     }
@@ -209,6 +212,9 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
+        $table->addColumn('custom_headers', Types::JSON)
+            ->setNotnull(true)
+            ->setDefault('[]');
 
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);

@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\EventBus;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
+use function array_filter;
 use function array_key_exists;
 
 /**
@@ -67,6 +68,22 @@ final class Message
     public function recordedOn(): DateTimeImmutable
     {
         return $this->header(self::HEADER_RECORDED_ON);
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    public function customHeaders(): array
+    {
+        return array_filter(
+            $this->headers,
+            static function (mixed $key) {
+                return match ($key) {
+                    self::HEADER_AGGREGATE_CLASS, self::HEADER_RECORDED_ON, self::HEADER_AGGREGATE_ID, self::HEADER_PLAYHEAD => true,
+                    default => false
+                };
+            }
+        );
     }
 
     /**
