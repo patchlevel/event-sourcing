@@ -13,17 +13,20 @@ use Patchlevel\EventSourcing\Serializer\Hydrator\EventHydrator;
 use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataEventHydrator;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
-use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
 
 final class DefaultEventSerializer implements EventSerializer
 {
     private EventRegistry $eventRegistry;
     private EventHydrator $hydrator;
     private Encoder $encoder;
-    private Upcaster $upcaster;
+    private ?Upcaster $upcaster;
 
-    public function __construct(EventRegistry $eventRegistry, EventHydrator $hydrator, Encoder $encoder, Upcaster $upcaster)
-    {
+    public function __construct(
+        EventRegistry $eventRegistry,
+        EventHydrator $hydrator,
+        Encoder $encoder,
+        ?Upcaster $upcaster = null
+    ) {
         $this->eventRegistry = $eventRegistry;
         $this->hydrator = $hydrator;
         $this->encoder = $encoder;
@@ -44,11 +47,17 @@ final class DefaultEventSerializer implements EventSerializer
     public function deserialize(SerializedEvent $data, array $options = []): object
     {
         $payload = $this->encoder->decode($data->payload, $options);
-        $upcast = ($this->upcaster)(new Upcast($data->name, $payload));
 
-        $class = $this->eventRegistry->eventClass($upcast->eventName);
+        $eventName = $data->name;
+        if ($this->upcaster) {
+            $upcast = ($this->upcaster)(new Upcast($data->name, $payload));
+            $eventName = $upcast->eventName;
+            $payload = $upcast->payload;
+        }
 
-        return $this->hydrator->hydrate($class, $upcast->payload);
+        $class = $this->eventRegistry->eventClass($eventName);
+
+        return $this->hydrator->hydrate($class, $payload);
     }
 
     /**
@@ -59,8 +68,7 @@ final class DefaultEventSerializer implements EventSerializer
         return new self(
             (new AttributeEventRegistryFactory())->create($paths),
             new MetadataEventHydrator(new AttributeEventMetadataFactory()),
-            new JsonEncoder(),
-            new UpcasterChain([])
+            new JsonEncoder()
         );
     }
 }
