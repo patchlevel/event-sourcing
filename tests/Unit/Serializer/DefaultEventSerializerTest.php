@@ -74,7 +74,7 @@ class DefaultEventSerializerTest extends TestCase
             (new AttributeEventRegistryFactory())->create([__DIR__ . '/../Fixture']),
             new MetadataEventHydrator(new AttributeEventMetadataFactory()),
             new JsonEncoder(),
-            new UpcasterChain([$upcaster])
+            $upcaster
         );
 
         $expected = new ProfileCreated(
@@ -86,6 +86,52 @@ class DefaultEventSerializerTest extends TestCase
             new SerializedEvent(
                 'profile_created_old',
                 '{"profileId":"1"}'
+            )
+        );
+
+        self::assertEquals($expected, $event);
+    }
+
+    public function testSerializeWithUpcastingChain(): void
+    {
+        $upcasterOne = new class implements Upcaster {
+            public function __invoke(Upcast $upcast): Upcast
+            {
+                if ($upcast->eventName !== 'profile_created_very_old') {
+                    return $upcast;
+                }
+
+                return new Upcast('profile_created_old', ['profileId' => $upcast->payload['id'] ?? 'None']);
+            }
+        };
+
+        $upcasterTwo = new class implements Upcaster {
+            public function __invoke(Upcast $upcast): Upcast
+            {
+                if ($upcast->eventName !== 'profile_created_old') {
+                    return $upcast;
+                }
+
+                return new Upcast('profile_created', $upcast->payload + ['email' => 'info@patchlevel.de']);
+            }
+        };
+
+        $serializer = new DefaultEventSerializer(
+            (new AttributeEventRegistryFactory())->create([__DIR__ . '/../Fixture']),
+            new MetadataEventHydrator(new AttributeEventMetadataFactory()),
+            new JsonEncoder(),
+            new UpcasterChain([$upcasterOne, $upcasterTwo])
+        );
+
+        $expected = new ProfileCreated(
+            ProfileId::fromString('1'),
+            Email::fromString('info@patchlevel.de')
+        );
+
+        $event = $serializer->deserialize(
+            new SerializedEvent(
+                'profile_created_very_old',
+                '{"id":"1"}'
             )
         );
 
