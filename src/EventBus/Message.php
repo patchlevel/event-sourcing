@@ -6,10 +6,11 @@ namespace Patchlevel\EventSourcing\EventBus;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-
 use RuntimeException;
+
 use function array_filter;
 use function array_key_exists;
+use function is_string;
 
 use const ARRAY_FILTER_USE_KEY;
 
