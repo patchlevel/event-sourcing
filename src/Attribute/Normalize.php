@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
-use Patchlevel\EventSourcing\Serializer\Hydrator\Normalizer;
+use Patchlevel\EventSourcing\Serializer\Normalizer\ArrayNormalizer;
+use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 
 use function is_string;
 
@@ -17,10 +18,14 @@ final class Normalize
     /**
      * @param Normalizer|class-string<Normalizer> $normalizer
      */
-    public function __construct(Normalizer|string $normalizer)
+    public function __construct(Normalizer|string $normalizer, bool $list = false)
     {
         if (is_string($normalizer)) {
-            $this->normalizer = new $normalizer();
+            $normalizer = new $normalizer();
+        }
+
+        if ($list) {
+            $this->normalizer = new ArrayNormalizer($normalizer);
 
             return;
         }

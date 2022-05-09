@@ -21,7 +21,7 @@ final class ProfileWithSnapshot extends AggregateRoot
     #[Normalize(EmailNormalizer::class)]
     private Email $email;
     /** @var array<Message> */
-    #[Normalize(MessageListNormalizer::class)]
+    #[Normalize(MessageNormalizer::class, list: true)]
     private array $messages;
 
     public function id(): ProfileId

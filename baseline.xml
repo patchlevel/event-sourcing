@@ -42,6 +42,11 @@
       <code>$store</code>
     </MissingConstructor>
   </file>
+  <file src="tests/Unit/Fixture/MessageNormalizer.php">
+    <MixedArgumentTypeCoercion occurrences="1">
+      <code>$value</code>
+    </MixedArgumentTypeCoercion>
+  </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType occurrences="1">
       <code>$event</code>

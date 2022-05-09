@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Event;
 
-use Patchlevel\EventSourcing\Serializer\Hydrator\Normalizer;
+use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 use ReflectionProperty;
 
 final class EventPropertyMetadata

@@ -21,6 +21,16 @@ parameters:
 			path: src/EventBus/Message.php
 
 		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Serializer\\\\Normalizer\\\\ArrayNormalizer\\:\\:denormalize\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Serializer/Normalizer/ArrayNormalizer.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Serializer\\\\Normalizer\\\\ArrayNormalizer\\:\\:normalize\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Serializer/Normalizer/ArrayNormalizer.php
+
+		-
 			message: "#^While loop condition is always true\\.$#"
 			count: 1
 			path: src/WatchServer/SocketWatchServer.php
