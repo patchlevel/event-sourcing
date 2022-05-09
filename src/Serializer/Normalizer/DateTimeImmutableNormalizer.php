@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 
-use DateTime;
+use DateTimeImmutable;
 
 use function is_string;
 
-class DateTimeNormalizer implements Normalizer
+class DateTimeImmutableNormalizer implements Normalizer
 {
     public function __construct(
-        private readonly string $format = DateTime::ATOM
+        private readonly string $format = DateTimeImmutable::ATOM
     ) {
     }
 
@@ -21,14 +21,14 @@ class DateTimeNormalizer implements Normalizer
             return null;
         }
 
-        if (!$value instanceof DateTime) {
+        if (!$value instanceof DateTimeImmutable) {
             throw new InvalidArgument();
         }
 
         return $value->format($this->format);
     }
 
-    public function denormalize(mixed $value): ?DateTime
+    public function denormalize(mixed $value): ?DateTimeImmutable
     {
         if ($value === null) {
             return null;
@@ -38,7 +38,7 @@ class DateTimeNormalizer implements Normalizer
             throw new InvalidArgument();
         }
 
-        $date = DateTime::createFromFormat($this->format, $value);
+        $date = DateTimeImmutable::createFromFormat($this->format, $value);
 
         if ($date === false) {
             throw new InvalidArgument();

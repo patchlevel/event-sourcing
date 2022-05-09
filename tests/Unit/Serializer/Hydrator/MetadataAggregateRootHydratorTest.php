@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer\Hydrator;
 
 use Patchlevel\EventSourcing\Serializer\Hydrator\AggregateRootHydrator;
+use Patchlevel\EventSourcing\Serializer\Hydrator\DenormalizationFailure;
 use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataAggregateRootHydrator;
 use Patchlevel\EventSourcing\Serializer\Hydrator\MissingPlayhead;
+use Patchlevel\EventSourcing\Serializer\Hydrator\NormalizationFailure;
+use Patchlevel\EventSourcing\Serializer\Hydrator\TypeMismatch;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\WrongNormalizerAggregate;
 use PHPUnit\Framework\TestCase;
 
 class MetadataAggregateRootHydratorTest extends TestCase
@@ -53,6 +57,35 @@ class MetadataAggregateRootHydratorTest extends TestCase
         $this->hydrator->hydrate(
             ProfileWithSnapshot::class,
             ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => []],
+        );
+    }
+
+    public function testWithTypeMismatch(): void
+    {
+        $this->expectException(TypeMismatch::class);
+
+        $this->hydrator->hydrate(
+            ProfileWithSnapshot::class,
+            ['id' => null, 'email' => null, 'messages' => []],
+        );
+    }
+
+    public function testDenormalizationFailure(): void
+    {
+        $this->expectException(DenormalizationFailure::class);
+
+        $this->hydrator->hydrate(
+            ProfileWithSnapshot::class,
+            ['id' => 123, 'email' => 123, 'messages' => []],
+        );
+    }
+
+    public function testNormalizationFailure(): void
+    {
+        $this->expectException(NormalizationFailure::class);
+
+        $this->hydrator->extract(
+            WrongNormalizerAggregate::createFromEvents([])
         );
     }
 }
