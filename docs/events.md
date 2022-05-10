@@ -88,7 +88,7 @@ You also need to implement a `normalize` and `denormalize` method.
 The important thing is that the result of Normalize is serializable.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Hydrator\Normalizer;
+use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 
 class NameNormalizer implements Normalizer
 {

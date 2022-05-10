@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Normalizer;
 
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Serializer\Hydrator\Normalizer;
+use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
 
 use function is_string;

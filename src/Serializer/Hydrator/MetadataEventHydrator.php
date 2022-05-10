@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Serializer\Hydrator;
 
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use ReflectionClass;
+use Throwable;
 use TypeError;
 
 use function array_key_exists;
@@ -41,14 +42,27 @@ final class MetadataEventHydrator implements EventHydrator
             $value = $data[$propertyMetadata->fieldName] ?? null;
 
             if ($propertyMetadata->normalizer) {
-                /** @psalm-suppress MixedAssignment */
-                $value = $propertyMetadata->normalizer->denormalize($value);
+                try {
+                    /** @psalm-suppress MixedAssignment */
+                    $value = $propertyMetadata->normalizer->denormalize($value);
+                } catch (Throwable $e) {
+                    throw new DenormalizationFailure(
+                        $class,
+                        $propertyMetadata->reflection->getName(),
+                        $propertyMetadata->normalizer::class,
+                        $e
+                    );
+                }
             }
 
             try {
                 $propertyMetadata->reflection->setValue($object, $value);
-            } catch (TypeError $error) {
-                throw new TypeMismatch($error->getMessage(), 0, $error);
+            } catch (TypeError $e) {
+                throw new TypeMismatch(
+                    $class,
+                    $propertyMetadata->reflection->getName(),
+                    $e
+                );
             }
         }
 
@@ -69,8 +83,17 @@ final class MetadataEventHydrator implements EventHydrator
             $value = $propertyMetadata->reflection->getValue($object);
 
             if ($propertyMetadata->normalizer) {
-                /** @psalm-suppress MixedAssignment */
-                $value = $propertyMetadata->normalizer->normalize($value);
+                try {
+                    /** @psalm-suppress MixedAssignment */
+                    $value = $propertyMetadata->normalizer->normalize($value);
+                } catch (Throwable $e) {
+                    throw new NormalizationFailure(
+                        $object::class,
+                        $propertyMetadata->reflection->getName(),
+                        $propertyMetadata->normalizer::class,
+                        $e
+                    );
+                }
             }
 
             /** @psalm-suppress MixedAssignment */

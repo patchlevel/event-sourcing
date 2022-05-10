@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Serializer\Hydrator\Normalizer;
+use Patchlevel\EventSourcing\Serializer\Normalizer\InvalidArgument;
+use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 
 use function is_string;
 
@@ -27,7 +28,7 @@ class EmailNormalizer implements Normalizer
         }
 
         if (!is_string($value)) {
-            throw new InvalidArgumentException();
+            throw new InvalidArgument();
         }
 
         return Email::fromString($value);
