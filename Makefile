@@ -5,11 +5,11 @@ vendor: composer.lock
 	composer install
 
 .PHONY: phpcs-check
-phpcs-check: vendor                                                             ## run phpcs
+cs-check: vendor                                                                ## run phpcs
 	vendor/bin/phpcs
 
 .PHONY: phpcs-fix
-cs: vendor                                                               ## run phpcs fixer
+cs: vendor                                                                      ## run phpcs fixer
 	vendor/bin/phpcbf
 
 .PHONY: phpstan

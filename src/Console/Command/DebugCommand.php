@@ -17,8 +17,8 @@ use function array_values;
 
 final class DebugCommand extends Command
 {
-    protected static string $defaultName = 'event-sourcing:debug';
-    protected static string $defaultDescription = 'show event sourcing debug information';
+    protected static $defaultName = 'event-sourcing:debug';
+    protected static $defaultDescription = 'show event sourcing debug information';
 
     public function __construct(
         private readonly AggregateRootRegistry $aggregateRootRegistry,
