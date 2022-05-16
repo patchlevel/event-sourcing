@@ -24,6 +24,9 @@ use function sprintf;
 
 final class ProjectionRebuildCommand extends ProjectionCommand
 {
+    protected static $defaultName = 'event-sourcing:projection:rebuild';
+    protected static $defaultDescription = 'rebuild projection';
+
     private Store $store;
 
     public function __construct(Store $store, ProjectionHandler $projectionHandler)
@@ -36,8 +39,6 @@ final class ProjectionRebuildCommand extends ProjectionCommand
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:projection:rebuild')
-            ->setDescription('rebuild projection')
             ->addOption('recreate', 'r', InputOption::VALUE_NONE, 'drop and create projections')
             ->addOption('until', 'u', InputOption::VALUE_REQUIRED, 'create the projection up to a point in time [2017-02-02 12:00]')
             ->addOption('projection', 'p', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'run only for specific projections [FQCN]');

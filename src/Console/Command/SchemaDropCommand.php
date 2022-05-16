@@ -16,6 +16,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class SchemaDropCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:schema:drop';
+    protected static $defaultDescription = 'drop eventstore schema';
+
     private Store $store;
     private SchemaManager $schemaManager;
 
@@ -30,8 +33,6 @@ final class SchemaDropCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:schema:drop')
-            ->setDescription('drop eventstore schema')
             ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'dump schema drop queries')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'force schema drop');
     }

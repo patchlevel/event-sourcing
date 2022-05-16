@@ -16,6 +16,9 @@ use function sprintf;
 
 final class WatchCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:watch';
+    protected static $defaultDescription = 'live stream of all aggregate events';
+
     private WatchServer $server;
     private EventSerializer $serializer;
 
@@ -25,13 +28,6 @@ final class WatchCommand extends Command
 
         $this->server = $server;
         $this->serializer = $serializer;
-    }
-
-    protected function configure(): void
-    {
-        $this
-            ->setName('event-sourcing:watch')
-            ->setDescription('live stream of all aggregate events');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

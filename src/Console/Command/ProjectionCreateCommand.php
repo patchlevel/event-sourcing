@@ -11,11 +11,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class ProjectionCreateCommand extends ProjectionCommand
 {
+    protected static $defaultName = 'event-sourcing:projection:create';
+    protected static $defaultDescription = 'create projection schema';
+
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:projection:create')
-            ->setDescription('create projection schema')
             ->addOption('projection', 'p', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'run only for specific projections [FQCN]');
     }
 

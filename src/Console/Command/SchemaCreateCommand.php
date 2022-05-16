@@ -16,6 +16,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class SchemaCreateCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:schema:create';
+    protected static $defaultDescription = 'create eventstore schema';
+
     private Store $store;
     private SchemaManager $schemaManager;
 
@@ -30,8 +33,6 @@ final class SchemaCreateCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:schema:create')
-            ->setDescription('create eventstore schema')
             ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'dump schema create queries');
     }
 

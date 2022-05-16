@@ -13,6 +13,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class OutboxConsumeCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:outbox:consume';
+    protected static $defaultDescription = 'published the messages from the outbox store';
+
     public function __construct(private OutboxConsumer $consumer)
     {
         parent::__construct();
@@ -21,8 +24,6 @@ final class OutboxConsumeCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:outbox:consume')
-            ->setDescription('published the messages from the outbox store')
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'How many messages should be consumed in one run');
     }
 

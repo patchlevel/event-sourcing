@@ -19,6 +19,9 @@ use function sprintf;
 
 final class DatabaseDropCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:database:drop';
+    protected static $defaultDescription = 'drop eventstore database';
+
     private Store $store;
     private DoctrineHelper $helper;
 
@@ -33,8 +36,6 @@ final class DatabaseDropCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:database:drop')
-            ->setDescription('drop eventstore database')
             ->addOption('if-exists', null, InputOption::VALUE_NONE, 'Don\'t trigger an error, when the database doesn\'t exist')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Set this parameter to execute this action');
     }
