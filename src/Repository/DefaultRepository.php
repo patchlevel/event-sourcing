@@ -125,15 +125,11 @@ final class DefaultRepository implements Repository
 
         $messages = array_map(
             static function (object $event) use ($aggregate, &$playhead, $messageDecorator) {
-                $message = new Message(
-                    $event,
-                    [
-                        Message::HEADER_AGGREGATE_CLASS => $aggregate::class,
-                        Message::HEADER_AGGREGATE_ID => $aggregate->aggregateRootId(),
-                        Message::HEADER_PLAYHEAD => ++$playhead,
-                        Message::HEADER_RECORDED_ON => Clock::createDateTimeImmutable(),
-                    ]
-                );
+                $message = Message::create($event)
+                    ->withAggregateClass($aggregate::class)
+                    ->withAggregateId($aggregate->aggregateRootId())
+                    ->withPlayhead(++$playhead)
+                    ->withRecordedOn(Clock::createDateTimeImmutable());
 
                 if ($messageDecorator) {
                     $message = $messageDecorator($message);

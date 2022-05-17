@@ -104,15 +104,14 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
 
         return array_map(
             function (array $data) use ($platform) {
-                return new Message(
-                    $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
-                    [
-                        Message::HEADER_AGGREGATE_CLASS => $this->aggregateRootRegistry->aggregateClass($data['aggregate']),
-                        Message::HEADER_AGGREGATE_ID => $data['aggregate_id'],
-                        Message::HEADER_PLAYHEAD => self::normalizePlayhead($data['playhead'], $platform),
-                        Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($data['recorded_on'], $platform),
-                    ] + self::normalizeCustomHeaders($data['custom_headers'], $platform)
-                );
+                $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
+
+                return Message::create($event)
+                    ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($data['aggregate']))
+                    ->withAggregateId($data['aggregate_id'])
+                    ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
+                    ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
+                    ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
             $result
         );
@@ -177,7 +176,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
     }
 
     /**
-     * @return array<mixed>
+     * @return array<string, mixed>
      */
     protected static function normalizeCustomHeaders(string $customHeaders, AbstractPlatform $platform): array
     {

@@ -62,15 +62,14 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
         return array_map(
             function (array $data) use ($platform, $aggregate): Message {
-                return new Message(
-                    $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
-                    [
-                        Message::HEADER_AGGREGATE_CLASS => $aggregate,
-                        Message::HEADER_AGGREGATE_ID => $data['aggregate_id'],
-                        Message::HEADER_PLAYHEAD => self::normalizePlayhead($data['playhead'], $platform),
-                        Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($data['recorded_on'], $platform),
-                    ] + self::normalizeCustomHeaders($data['custom_headers'], $platform)
-                );
+                $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
+
+                return Message::create($event)
+                    ->withAggregateClass($aggregate)
+                    ->withAggregateId($data['aggregate_id'])
+                    ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
+                    ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
+                    ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
             $result
         );
@@ -196,15 +195,14 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 throw CorruptedMetadata::fromEntryMismatch($metaData['id'], $eventData['id']);
             }
 
-            yield new Message(
-                $this->serializer->deserialize(new SerializedEvent($eventData['event'], $eventData['payload'])),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => $this->aggregateRootRegistry->aggregateClass($name),
-                    Message::HEADER_AGGREGATE_ID => $eventData['aggregate_id'],
-                    Message::HEADER_PLAYHEAD => self::normalizePlayhead($eventData['playhead'], $platform),
-                    Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($eventData['recorded_on'], $platform),
-                ] + self::normalizeCustomHeaders($eventData['custom_headers'], $platform)
-            );
+            $event = $this->serializer->deserialize(new SerializedEvent($eventData['event'], $eventData['payload']));
+
+            yield Message::create($event)
+                ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($name))
+                ->withAggregateId($eventData['aggregate_id'])
+                ->withPlayhead(self::normalizePlayhead($eventData['playhead'], $platform))
+                ->withRecordedOn(self::normalizeRecordedOn($eventData['recorded_on'], $platform))
+                ->withCustomHeaders(self::normalizeCustomHeaders($eventData['custom_headers'], $platform));
         }
     }
 
