@@ -273,8 +273,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
         $table->addColumn('custom_headers', Types::JSON)
-            ->setNotnull(true)
-            ->setDefault('[]');
+            ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate_id', 'playhead']);

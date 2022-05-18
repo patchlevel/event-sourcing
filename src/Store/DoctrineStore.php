@@ -206,8 +206,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
         $table->addColumn('custom_headers', Types::JSON)
-            ->setNotnull(true)
-            ->setDefault('[]');
+            ->setNotnull(true);
 
         $table->setPrimaryKey(['aggregate', 'aggregate_id', 'playhead']);
     }
