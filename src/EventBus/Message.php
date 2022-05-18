@@ -12,6 +12,7 @@ use function array_keys;
 
 /**
  * @psalm-immutable
+ * @psalm-type Headers = array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable}
  */
 final class Message
 {
@@ -165,12 +166,12 @@ final class Message
     }
 
     /**
-     * @return array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable}
+     * @return Headers
      */
     public function headers(): array
     {
         /**
-         * @var array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable}
+         * @var Headers
          */
         $headers = $this->customHeaders;
 
@@ -194,7 +195,7 @@ final class Message
     }
 
     /**
-     * @param array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable} $headers
+     * @param Headers $headers
      */
     public static function createWithHeaders(object $event, array $headers): self
     {
