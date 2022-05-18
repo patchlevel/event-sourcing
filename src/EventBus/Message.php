@@ -9,9 +9,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_key_exists;
 use function array_keys;
-use function is_a;
-use function is_int;
-use function is_string;
 
 /**
  * @psalm-immutable
@@ -168,10 +165,13 @@ final class Message
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable}
      */
     public function headers(): array
     {
+        /**
+         * @var array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable}
+         */
         $headers = $this->customHeaders;
 
         if ($this->aggregateClass !== null) {
@@ -194,44 +194,25 @@ final class Message
     }
 
     /**
-     * @param array<string, mixed> $headers
+     * @param array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable} $headers
      */
     public static function createWithHeaders(object $event, array $headers): self
     {
         $message = self::create($event);
 
         if (array_key_exists(self::HEADER_AGGREGATE_CLASS, $headers)) {
-            if (
-                !is_string($headers[self::HEADER_AGGREGATE_CLASS])
-                || !is_a($headers[self::HEADER_AGGREGATE_CLASS], AggregateRoot::class, true)
-            ) {
-                throw new InvalidHeader();
-            }
-
             $message = $message->withAggregateClass($headers[self::HEADER_AGGREGATE_CLASS]);
         }
 
         if (array_key_exists(self::HEADER_AGGREGATE_ID, $headers)) {
-            if (!is_string($headers[self::HEADER_AGGREGATE_ID])) {
-                throw new InvalidHeader();
-            }
-
             $message = $message->withAggregateId($headers[self::HEADER_AGGREGATE_ID]);
         }
 
         if (array_key_exists(self::HEADER_PLAYHEAD, $headers)) {
-            if (!is_int($headers[self::HEADER_PLAYHEAD])) {
-                throw new InvalidHeader();
-            }
-
             $message = $message->withPlayhead($headers[self::HEADER_PLAYHEAD]);
         }
 
         if (array_key_exists(self::HEADER_RECORDED_ON, $headers)) {
-            if (!$headers[self::HEADER_RECORDED_ON] instanceof DateTimeImmutable) {
-                throw new InvalidHeader();
-            }
-
             $message = $message->withRecordedOn($headers[self::HEADER_RECORDED_ON]);
         }
 
