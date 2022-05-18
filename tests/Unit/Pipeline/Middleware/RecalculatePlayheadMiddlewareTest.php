@@ -19,17 +19,15 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
     {
         $middleware = new RecalculatePlayheadMiddleware();
 
-        $message = new Message(
-            new ProfileCreated(
-                ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            ),
-            [
-                Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                Message::HEADER_AGGREGATE_ID => '1',
-                Message::HEADER_PLAYHEAD => 5,
-            ]
+        $event =  new ProfileCreated(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de')
         );
+
+        $message = Message::create($event)
+            ->withAggregateClass(Profile::class)
+            ->withAggregateId('1')
+            ->withPlayhead(5);
 
         $result = $middleware($message);
 
@@ -42,17 +40,15 @@ class RecalculatePlayheadMiddlewareTest extends TestCase
     {
         $middleware = new RecalculatePlayheadMiddleware();
 
-        $message = new Message(
-            new ProfileCreated(
-                ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            ),
-            [
-                Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                Message::HEADER_AGGREGATE_ID => '1',
-                Message::HEADER_PLAYHEAD => 1,
-            ]
+        $event =  new ProfileCreated(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de')
         );
+
+        $message = Message::create($event)
+            ->withAggregateClass(Profile::class)
+            ->withAggregateId('1')
+            ->withPlayhead(1);
 
         $result = $middleware($message);
 

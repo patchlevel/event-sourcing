@@ -42,7 +42,7 @@ final class PhpNativeMessageSerializer implements MessageSerializer
         /** @var array{event: class-string, payload: string, headers: array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable}} $data */
         $data = unserialize(base64_decode($content), ['allowed_classes' => [DateTimeImmutable::class]]);
 
-        return new Message(
+        return Message::createWithHeaders(
             $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
             $data['headers'],
         );

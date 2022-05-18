@@ -11,16 +11,6 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Offset T of string does not exist on array\\{aggregateClass\\?\\: class\\-string\\<Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\>, aggregateId\\?\\: string, playhead\\?\\: int, recordedOn\\?\\: DateTimeImmutable\\}\\.$#"
-			count: 1
-			path: src/EventBus/Message.php
-
-		-
-			message: "#^Parameter \\#2 \\$headers of class Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message constructor expects array\\{aggregateClass\\?\\: class\\-string\\<Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\>, aggregateId\\?\\: string, playhead\\?\\: int, recordedOn\\?\\: DateTimeImmutable\\}, non\\-empty\\-array\\<T of string, mixed\\> given\\.$#"
-			count: 1
-			path: src/EventBus/Message.php
-
-		-
 			message: "#^Method Patchlevel\\\\EventSourcing\\\\Serializer\\\\Normalizer\\\\ArrayNormalizer\\:\\:denormalize\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Serializer/Normalizer/ArrayNormalizer.php

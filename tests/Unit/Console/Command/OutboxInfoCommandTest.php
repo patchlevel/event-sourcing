@@ -30,22 +30,20 @@ final class OutboxInfoCommandTest extends TestCase
 
         $store = $this->prophesize(OutboxStore::class);
         $store->retrieveOutboxMessages(null)->willReturn([
-            new Message(
-                $event,
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '1',
-                    Message::HEADER_PLAYHEAD => 1,
-                    Message::HEADER_RECORDED_ON => new DateTimeImmutable(),
-                ]
-            ),
+            Message::create($event)
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('1')
+                ->withPlayhead(1)
+                ->withRecordedOn(new DateTimeImmutable()),
         ]);
 
         $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
-            'profile.visited',
-            '{"visitorId": "1"}',
-        ));
+        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
+            new SerializedEvent(
+                'profile.visited',
+                '{"visitorId": "1"}',
+            )
+        );
 
         $command = new OutboxInfoCommand(
             $store->reveal(),
@@ -70,22 +68,20 @@ final class OutboxInfoCommandTest extends TestCase
 
         $store = $this->prophesize(OutboxStore::class);
         $store->retrieveOutboxMessages(100)->willReturn([
-            new Message(
-                $event,
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '1',
-                    Message::HEADER_PLAYHEAD => 1,
-                    Message::HEADER_RECORDED_ON => new DateTimeImmutable(),
-                ]
-            ),
+            Message::create($event)
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('1')
+                ->withPlayhead(1)
+                ->withRecordedOn(new DateTimeImmutable()),
         ]);
 
         $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
-            'profile.visited',
-            '{"visitorId": "1"}',
-        ));
+        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
+            new SerializedEvent(
+                'profile.visited',
+                '{"visitorId": "1"}',
+            )
+        );
 
         $command = new OutboxInfoCommand(
             $store->reveal(),

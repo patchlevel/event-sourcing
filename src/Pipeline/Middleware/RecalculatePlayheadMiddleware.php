@@ -26,7 +26,7 @@ final class RecalculatePlayheadMiddleware implements Middleware
         }
 
         return [
-            $message->withHeader(Message::HEADER_PLAYHEAD, $playhead),
+            $message->withPlayhead($playhead),
         ];
     }
 

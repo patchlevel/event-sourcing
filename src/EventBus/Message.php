@@ -7,7 +7,11 @@ namespace Patchlevel\EventSourcing\EventBus;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
+use function array_key_exists;
 use function array_keys;
+use function is_a;
+use function is_int;
+use function is_string;
 
 /**
  * @psalm-immutable
@@ -161,5 +165,83 @@ final class Message
         $message->customHeaders += $headers;
 
         return $message;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function headers(): array
+    {
+        $headers = $this->customHeaders;
+
+        if ($this->aggregateClass !== null) {
+            $headers[self::HEADER_AGGREGATE_CLASS] = $this->aggregateClass;
+        }
+
+        if ($this->aggregateId !== null) {
+            $headers[self::HEADER_AGGREGATE_ID] = $this->aggregateId;
+        }
+
+        if ($this->playhead !== null) {
+            $headers[self::HEADER_PLAYHEAD] = $this->playhead;
+        }
+
+        if ($this->recordedOn !== null) {
+            $headers[self::HEADER_RECORDED_ON] = $this->recordedOn;
+        }
+
+        return $headers;
+    }
+
+    /**
+     * @param array<string, mixed> $headers
+     */
+    public static function createWithHeaders(object $event, array $headers): self
+    {
+        $message = self::create($event);
+
+        if (array_key_exists(self::HEADER_AGGREGATE_CLASS, $headers)) {
+            if (
+                !is_string($headers[self::HEADER_AGGREGATE_CLASS])
+                || !is_a($headers[self::HEADER_AGGREGATE_CLASS], AggregateRoot::class, true)
+            ) {
+                throw new InvalidHeader();
+            }
+
+            $message = $message->withAggregateClass($headers[self::HEADER_AGGREGATE_CLASS]);
+        }
+
+        if (array_key_exists(self::HEADER_AGGREGATE_ID, $headers)) {
+            if (!is_string($headers[self::HEADER_AGGREGATE_ID])) {
+                throw new InvalidHeader();
+            }
+
+            $message = $message->withAggregateId($headers[self::HEADER_AGGREGATE_ID]);
+        }
+
+        if (array_key_exists(self::HEADER_PLAYHEAD, $headers)) {
+            if (!is_int($headers[self::HEADER_PLAYHEAD])) {
+                throw new InvalidHeader();
+            }
+
+            $message = $message->withPlayhead($headers[self::HEADER_PLAYHEAD]);
+        }
+
+        if (array_key_exists(self::HEADER_RECORDED_ON, $headers)) {
+            if (!$headers[self::HEADER_RECORDED_ON] instanceof DateTimeImmutable) {
+                throw new InvalidHeader();
+            }
+
+            $message = $message->withRecordedOn($headers[self::HEADER_RECORDED_ON]);
+        }
+
+        unset(
+            $headers[self::HEADER_AGGREGATE_CLASS],
+            $headers[self::HEADER_AGGREGATE_ID],
+            $headers[self::HEADER_PLAYHEAD],
+            $headers[self::HEADER_RECORDED_ON],
+        );
+
+        return $message->withCustomHeaders($headers);
     }
 }
