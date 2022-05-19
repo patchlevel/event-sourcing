@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository;
 
+use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
@@ -129,7 +129,7 @@ final class DefaultRepository implements Repository
                     ->withAggregateClass($aggregate::class)
                     ->withAggregateId($aggregate->aggregateRootId())
                     ->withPlayhead(++$playhead)
-                    ->withRecordedOn(Clock::createDateTimeImmutable());
+                    ->withRecordedOn(new DateTimeImmutable());
 
                 if ($messageDecorator) {
                     $message = $messageDecorator($message);
