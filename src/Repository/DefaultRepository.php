@@ -6,9 +6,9 @@ namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Clock;
+use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\EventBus\MessageDecorator;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
@@ -47,15 +47,15 @@ final class DefaultRepository implements Repository
         EventBus $eventBus,
         string $aggregateClass,
         ?SnapshotStore $snapshotStore = null,
-        ?LoggerInterface $logger = null,
-        ?MessageDecorator $messageDecorator = null
+        ?MessageDecorator $messageDecorator = null,
+        ?LoggerInterface $logger = null
     ) {
         $this->store = $store;
         $this->eventBus = $eventBus;
         $this->aggregateClass = $aggregateClass;
         $this->snapshotStore = $snapshotStore;
-        $this->logger = $logger ?? new NullLogger();
         $this->messageDecorator = $messageDecorator;
+        $this->logger = $logger ?? new NullLogger();
         $this->metadata = $aggregateClass::metadata();
     }
 

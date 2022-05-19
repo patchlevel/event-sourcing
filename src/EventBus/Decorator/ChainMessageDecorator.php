@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\EventBus;
+namespace Patchlevel\EventSourcing\EventBus\Decorator;
 
-final class MessageDecoratorChain implements MessageDecorator
+use Patchlevel\EventSourcing\EventBus\Message;
+
+final class ChainMessageDecorator implements MessageDecorator
 {
     /**
      * @param array<MessageDecorator> $messageDecorators
