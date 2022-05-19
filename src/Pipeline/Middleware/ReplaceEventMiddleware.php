@@ -41,11 +41,6 @@ final class ReplaceEventMiddleware implements Middleware
         $callable = $this->callable;
         $newEvent = $callable($event);
 
-        return [
-            new Message(
-                $newEvent,
-                $message->headers()
-            ),
-        ];
+        return [Message::createWithHeaders($newEvent, $message->headers())];
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
+use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
@@ -133,6 +134,73 @@ class DefaultRepositoryTest extends TestCase
             $store->reveal(),
             $eventBus->reveal(),
             Profile::class,
+        );
+
+        $aggregate = Profile::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de')
+        );
+
+        $aggregate->releaseEvents(); // clear events
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+
+        $repository->save($aggregate);
+    }
+
+    public function testDecorator(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->save(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                if ($message->customHeader('test') !== 'foo') {
+                    return false;
+                }
+
+                return $message->playhead() === 2;
+            })
+        )->shouldBeCalled();
+
+        $eventBus = $this->prophesize(EventBus::class);
+        $eventBus->dispatch(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                if ($message->customHeader('test') !== 'foo') {
+                    return false;
+                }
+
+                return $message->playhead() === 2;
+            })
+        )->shouldBeCalled();
+
+        $decorator = new class implements MessageDecorator {
+            public function __invoke(Message $message): Message
+            {
+                return $message->withCustomHeader('test', 'foo');
+            }
+        };
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::class,
+            null,
+            $decorator
         );
 
         $aggregate = Profile::createProfile(

@@ -18,6 +18,7 @@ use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
@@ -59,7 +60,13 @@ final class BasicIntegrationTest extends TestCase
             'eventstore'
         );
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $repository = new DefaultRepository(
+            $store,
+            $eventStream,
+            Profile::class,
+            null,
+            new FooMessageDecorator()
+        );
 
         // create tables
         $profileProjection->create();
@@ -120,7 +127,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $repository = new DefaultRepository(
+            $store,
+            $eventStream,
+            Profile::class,
+            null,
+            new FooMessageDecorator()
+        );
+
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
@@ -147,7 +161,13 @@ final class BasicIntegrationTest extends TestCase
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
         );
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $repository = new DefaultRepository(
+            $store,
+            $eventStream,
+            Profile::class,
+            null,
+            new FooMessageDecorator()
+        );
 
         // create tables
         $profileProjection->create();
@@ -193,7 +213,13 @@ final class BasicIntegrationTest extends TestCase
 
         $snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class, $snapshotStore);
+        $repository = new DefaultRepository(
+            $store,
+            $eventStream,
+            Profile::class,
+            $snapshotStore,
+            new FooMessageDecorator()
+        );
 
         // create tables
         $profileProjection->create();

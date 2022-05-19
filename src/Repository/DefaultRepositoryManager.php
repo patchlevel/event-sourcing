@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootClassNotRegistered;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
@@ -21,6 +22,7 @@ final class DefaultRepositoryManager implements RepositoryManager
     private Store $store;
     private EventBus $eventBus;
     private ?SnapshotStore $snapshotStore;
+    private ?MessageDecorator $messageDecorator;
     private LoggerInterface $logger;
 
     /** @var array<class-string<AggregateRoot>, Repository> */
@@ -31,12 +33,14 @@ final class DefaultRepositoryManager implements RepositoryManager
         Store $store,
         EventBus $eventBus,
         ?SnapshotStore $snapshotStore = null,
+        ?MessageDecorator $messageDecorator = null,
         ?LoggerInterface $logger = null
     ) {
         $this->aggregateRootRegistry = $aggregateRootRegistry;
         $this->store = $store;
         $this->eventBus = $eventBus;
         $this->snapshotStore = $snapshotStore;
+        $this->messageDecorator = $messageDecorator;
         $this->logger = $logger ?? new NullLogger();
     }
 
@@ -65,6 +69,7 @@ final class DefaultRepositoryManager implements RepositoryManager
             $this->eventBus,
             $aggregateClass,
             $this->snapshotStore,
+            $this->messageDecorator,
             $this->logger
         );
     }

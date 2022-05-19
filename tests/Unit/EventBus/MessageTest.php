@@ -41,7 +41,6 @@ class MessageTest extends TestCase
         );
 
         self::assertEquals($event, $message->event());
-        self::assertEquals([], $message->headers());
     }
 
     public function testCreateMessageWithHeader(): void
@@ -58,26 +57,13 @@ class MessageTest extends TestCase
             $email
         );
 
-        $message = new Message(
-            $event,
-            [
-                Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                Message::HEADER_AGGREGATE_ID => '1',
-                Message::HEADER_PLAYHEAD => 1,
-                Message::HEADER_RECORDED_ON => $recordedAt,
-            ]
-        );
+        $message = Message::create($event)
+            ->withAggregateClass(Profile::class)
+            ->withAggregateId('1')
+            ->withPlayhead(1)
+            ->withRecordedOn($recordedAt);
 
         self::assertEquals($event, $message->event());
-        self::assertEquals(
-            [
-                Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                Message::HEADER_AGGREGATE_ID => '1',
-                Message::HEADER_PLAYHEAD => 1,
-                Message::HEADER_RECORDED_ON => $recordedAt,
-            ],
-            $message->headers()
-        );
         self::assertSame(Profile::class, $message->aggregateClass());
         self::assertSame('1', $message->aggregateId());
         self::assertSame(1, $message->playhead());
@@ -98,37 +84,18 @@ class MessageTest extends TestCase
             $email
         );
 
-        $message = new Message(
-            $event,
-            [
-                Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                Message::HEADER_AGGREGATE_ID => '1',
-                Message::HEADER_PLAYHEAD => 1,
-                Message::HEADER_RECORDED_ON => $recordedAt,
-            ]
-        );
+        $message = Message::create($event)
+            ->withAggregateClass(Profile::class)
+            ->withAggregateId('1')
+            ->withPlayhead(1)
+            ->withRecordedOn($recordedAt);
 
-        $message = $message->withHeader(Message::HEADER_PLAYHEAD, 2);
-        $message = $message->withHeader('custom-field', 'foo-bar');
-
-        self::assertEquals(
-            [
-                Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                Message::HEADER_AGGREGATE_ID => '1',
-                Message::HEADER_PLAYHEAD => 2,
-                Message::HEADER_RECORDED_ON => $recordedAt,
-                'custom-field' => 'foo-bar',
-            ],
-            $message->headers()
-        );
+        $message = $message->withPlayhead(2);
 
         self::assertSame(Profile::class, $message->aggregateClass());
         self::assertSame('1', $message->aggregateId());
         self::assertSame(2, $message->playhead());
         self::assertEquals($recordedAt, $message->recordedOn());
-
-        self::assertEquals(2, $message->header(Message::HEADER_PLAYHEAD));
-        self::assertEquals('foo-bar', $message->header('custom-field'));
     }
 
     public function testHeaderNotFound(): void
@@ -146,6 +113,33 @@ class MessageTest extends TestCase
         );
 
         /** @psalm-suppress UnusedMethodCall */
-        $message->header(Message::HEADER_AGGREGATE_ID);
+        $message->aggregateClass();
+    }
+
+    public function testCustomHeaders(): void
+    {
+        $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
+
+        Clock::freeze($recordedAt);
+
+        $id = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
+
+        $event = new ProfileCreated(
+            $id,
+            $email
+        );
+
+        $message = Message::create($event)
+            ->withAggregateClass(Profile::class)
+            ->withAggregateId('1')
+            ->withPlayhead(1)
+            ->withRecordedOn($recordedAt)
+            ->withCustomHeader('custom-field', 'foo-bar');
+
+        self::assertEquals(
+            ['custom-field' => 'foo-bar'],
+            $message->customHeaders()
+        );
     }
 }

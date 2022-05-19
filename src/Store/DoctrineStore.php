@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
 use function array_map;
+use function is_array;
 use function is_int;
 use function is_string;
 
@@ -74,9 +75,11 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
                             'event' => $data->name,
                             'payload' => $data->payload,
                             'recorded_on' => $message->recordedOn(),
+                            'custom_headers' => $message->customHeaders(),
                         ],
                         [
                             'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
+                            'custom_headers' => Types::JSON,
                         ]
                     );
                 }
@@ -95,21 +98,20 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
             ->setMaxResults($limit)
             ->getSQL();
 
-        /** @var list<array{aggregate: string, aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate: string, aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: string}> $result */
         $result = $this->connection->fetchAllAssociative($sql);
         $platform = $this->connection->getDatabasePlatform();
 
         return array_map(
             function (array $data) use ($platform) {
-                return new Message(
-                    $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
-                    [
-                        Message::HEADER_AGGREGATE_CLASS => $this->aggregateRootRegistry->aggregateClass($data['aggregate']),
-                        Message::HEADER_AGGREGATE_ID => $data['aggregate_id'],
-                        Message::HEADER_PLAYHEAD => self::normalizePlayhead($data['playhead'], $platform),
-                        Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($data['recorded_on'], $platform),
-                    ]
-                );
+                $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
+
+                return Message::create($event)
+                    ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($data['aggregate']))
+                    ->withAggregateId($data['aggregate_id'])
+                    ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
+                    ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
+                    ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
             $result
         );
@@ -173,6 +175,20 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
         return $normalizedPlayhead;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function normalizeCustomHeaders(string $customHeaders, AbstractPlatform $platform): array
+    {
+        $normalizedCustomHeaders = Type::getType(Types::JSON)->convertToPHPValue($customHeaders, $platform);
+
+        if (!is_array($normalizedCustomHeaders)) {
+            throw new InvalidType('custom_headers', 'array');
+        }
+
+        return $normalizedCustomHeaders;
+    }
+
     protected function addOutboxSchema(Schema $schema): void
     {
         $table = $schema->createTable('outbox');
@@ -189,6 +205,8 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
+        $table->addColumn('custom_headers', Types::JSON)
+            ->setNotnull(true);
 
         $table->setPrimaryKey(['aggregate', 'aggregate_id', 'playhead']);
     }

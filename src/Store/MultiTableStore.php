@@ -49,7 +49,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->where('aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -62,15 +62,14 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
 
         return array_map(
             function (array $data) use ($platform, $aggregate): Message {
-                return new Message(
-                    $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
-                    [
-                        Message::HEADER_AGGREGATE_CLASS => $aggregate,
-                        Message::HEADER_AGGREGATE_ID => $data['aggregate_id'],
-                        Message::HEADER_PLAYHEAD => self::normalizePlayhead($data['playhead'], $platform),
-                        Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($data['recorded_on'], $platform),
-                    ]
-                );
+                $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
+
+                return Message::create($event)
+                    ->withAggregateClass($aggregate)
+                    ->withAggregateId($data['aggregate_id'])
+                    ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
+                    ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
+                    ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
             $result
         );
@@ -130,9 +129,11 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                             'event' => $data->name,
                             'payload' => $data->payload,
                             'recorded_on' => $message->recordedOn(),
+                            'custom_headers' => $message->customHeaders(),
                         ],
                         [
                             'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
+                            'custom_headers' => Types::JSON,
                         ]
                     );
                 }
@@ -153,7 +154,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 ->getSQL();
 
             /**
-             * @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string}> $query
+             * @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}> $query
              */
             $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
@@ -181,7 +182,7 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         foreach ($metaQuery as $metaData) {
             $name = $metaData['aggregate'];
 
-            /** @var array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string}|null $eventData */
+            /** @var array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}|null $eventData */
             $eventData = $queries[$name]->current();
 
             if ($eventData === null) {
@@ -194,15 +195,14 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                 throw CorruptedMetadata::fromEntryMismatch($metaData['id'], $eventData['id']);
             }
 
-            yield new Message(
-                $this->serializer->deserialize(new SerializedEvent($eventData['event'], $eventData['payload'])),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => $this->aggregateRootRegistry->aggregateClass($name),
-                    Message::HEADER_AGGREGATE_ID => $eventData['aggregate_id'],
-                    Message::HEADER_PLAYHEAD => self::normalizePlayhead($eventData['playhead'], $platform),
-                    Message::HEADER_RECORDED_ON => self::normalizeRecordedOn($eventData['recorded_on'], $platform),
-                ]
-            );
+            $event = $this->serializer->deserialize(new SerializedEvent($eventData['event'], $eventData['payload']));
+
+            yield Message::create($event)
+                ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($name))
+                ->withAggregateId($eventData['aggregate_id'])
+                ->withPlayhead(self::normalizePlayhead($eventData['playhead'], $platform))
+                ->withRecordedOn(self::normalizeRecordedOn($eventData['recorded_on'], $platform))
+                ->withCustomHeaders(self::normalizeCustomHeaders($eventData['custom_headers'], $platform));
         }
     }
 
@@ -272,6 +272,8 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
+        $table->addColumn('custom_headers', Types::JSON)
+            ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate_id', 'playhead']);

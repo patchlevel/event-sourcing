@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Clock;
+use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
@@ -35,8 +36,8 @@ final class DefaultRepository implements Repository
 
     private ?SnapshotStore $snapshotStore;
     private LoggerInterface $logger;
-
     private AggregateRootMetadata $metadata;
+    private ?MessageDecorator $messageDecorator;
 
     /**
      * @param class-string<T> $aggregateClass
@@ -46,12 +47,14 @@ final class DefaultRepository implements Repository
         EventBus $eventBus,
         string $aggregateClass,
         ?SnapshotStore $snapshotStore = null,
+        ?MessageDecorator $messageDecorator = null,
         ?LoggerInterface $logger = null
     ) {
         $this->store = $store;
         $this->eventBus = $eventBus;
         $this->aggregateClass = $aggregateClass;
         $this->snapshotStore = $snapshotStore;
+        $this->messageDecorator = $messageDecorator;
         $this->logger = $logger ?? new NullLogger();
         $this->metadata = $aggregateClass::metadata();
     }
@@ -117,19 +120,22 @@ final class DefaultRepository implements Repository
             return;
         }
 
+        $messageDecorator = $this->messageDecorator;
         $playhead = $aggregate->playhead() - count($events);
 
         $messages = array_map(
-            static function (object $event) use ($aggregate, &$playhead) {
-                return new Message(
-                    $event,
-                    [
-                        Message::HEADER_AGGREGATE_CLASS => $aggregate::class,
-                        Message::HEADER_AGGREGATE_ID => $aggregate->aggregateRootId(),
-                        Message::HEADER_PLAYHEAD => ++$playhead,
-                        Message::HEADER_RECORDED_ON => Clock::createDateTimeImmutable(),
-                    ]
-                );
+            static function (object $event) use ($aggregate, &$playhead, $messageDecorator) {
+                $message = Message::create($event)
+                    ->withAggregateClass($aggregate::class)
+                    ->withAggregateId($aggregate->aggregateRootId())
+                    ->withPlayhead(++$playhead)
+                    ->withRecordedOn(Clock::createDateTimeImmutable());
+
+                if ($messageDecorator) {
+                    $message = $messageDecorator($message);
+                }
+
+                return $message;
             },
             $events
         );

@@ -17,65 +17,12 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Pipeline\Pipeline  */
+/** @covers \Patchlevel\EventSourcing\Pipeline\Pipeline */
 class PipelineTest extends TestCase
 {
     public function testPipeline(): void
     {
-        $messages = [
-            new Message(
-                new ProfileCreated(
-                    ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '1',
-                    Message::HEADER_PLAYHEAD => 1,
-                ]
-            ),
-            new Message(
-                new ProfileVisited(
-                    ProfileId::fromString('1')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '1',
-                    Message::HEADER_PLAYHEAD => 2,
-                ]
-            ),
-            new Message(
-                new ProfileVisited(
-                    ProfileId::fromString('1')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '1',
-                    Message::HEADER_PLAYHEAD => 3,
-                ]
-            ),
-            new Message(
-                new ProfileCreated(
-                    ProfileId::fromString('2'),
-                    Email::fromString('hallo@patchlevel.de')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '2',
-                    Message::HEADER_PLAYHEAD => 1,
-                ]
-            ),
-            new Message(
-                new ProfileVisited(
-                    ProfileId::fromString('2')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '2',
-                    Message::HEADER_PLAYHEAD => 2,
-                ]
-            ),
-        ];
+        $messages = $this->messages();
 
         $source = new InMemorySource($messages);
         $target = new InMemoryTarget();
@@ -90,60 +37,7 @@ class PipelineTest extends TestCase
 
     public function testPipelineWithMiddleware(): void
     {
-        $messages = [
-            new Message(
-                new ProfileCreated(
-                    ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '1',
-                    Message::HEADER_PLAYHEAD => 1,
-                ]
-            ),
-            new Message(
-                new ProfileVisited(
-                    ProfileId::fromString('1')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '1',
-                    Message::HEADER_PLAYHEAD => 2,
-                ]
-            ),
-            new Message(
-                new ProfileVisited(
-                    ProfileId::fromString('1')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '1',
-                    Message::HEADER_PLAYHEAD => 3,
-                ]
-            ),
-            new Message(
-                new ProfileCreated(
-                    ProfileId::fromString('2'),
-                    Email::fromString('hallo@patchlevel.de')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '2',
-                    Message::HEADER_PLAYHEAD => 1,
-                ]
-            ),
-            new Message(
-                new ProfileVisited(
-                    ProfileId::fromString('2')
-                ),
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '2',
-                    Message::HEADER_PLAYHEAD => 2,
-                ]
-            ),
-        ];
+        $messages = $this->messages();
 
         $source = new InMemorySource($messages);
         $target = new InMemoryTarget();
@@ -175,5 +69,60 @@ class PipelineTest extends TestCase
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[2]->event());
         self::assertSame('2', $resultMessages[2]->aggregateId());
         self::assertSame(1, $resultMessages[2]->playhead());
+    }
+
+    /**
+     * @return list<Message>
+     */
+    private function messages(): array
+    {
+        return [
+            Message::create(
+                new ProfileCreated(
+                    ProfileId::fromString('1'),
+                    Email::fromString('hallo@patchlevel.de')
+                )
+            )
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('1')
+                ->withPlayhead(1),
+
+            Message::create(
+                new ProfileVisited(
+                    ProfileId::fromString('1')
+                )
+            )
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('1')
+                ->withPlayhead(2),
+
+            Message::create(
+                new ProfileVisited(
+                    ProfileId::fromString('1')
+                )
+            )
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('1')
+                ->withPlayhead(3),
+
+            Message::create(
+                new ProfileCreated(
+                    ProfileId::fromString('2'),
+                    Email::fromString('hallo@patchlevel.de')
+                )
+            )
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('2')
+                ->withPlayhead(1),
+
+            Message::create(
+                new ProfileVisited(
+                    ProfileId::fromString('2')
+                )
+            )
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('2')
+                ->withPlayhead(2),
+        ];
     }
 }

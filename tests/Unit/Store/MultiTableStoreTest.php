@@ -74,6 +74,7 @@ final class MultiTableStoreTest extends TestCase
                     'event' => 'profile.created',
                     'payload' => '{"profileId": "1", "email": "s"}',
                     'recorded_on' => '2021-02-17 10:00:00',
+                    'custom_headers' => '[]',
                 ],
             ]
         );

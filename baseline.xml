@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.23.0@f1fe6ff483bf325c803df9f510d09a03fd796f88">
-  <file src="src/EventBus/Message.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>[$name =&gt; $value] + $this-&gt;headers</code>
-    </ArgumentTypeCoercion>
-  </file>
   <file src="src/Repository/DefaultRepository.php">
-    <ArgumentTypeCoercion occurrences="1"/>
+    <MixedArgument occurrences="1">
+      <code>++$playhead</code>
+    </MixedArgument>
     <MixedAssignment occurrences="1">
       <code>$playhead</code>
     </MixedAssignment>
@@ -14,9 +11,15 @@
       <code>$playhead</code>
     </MixedOperand>
   </file>
+  <file src="src/Store/DoctrineStore.php">
+    <MixedReturnTypeCoercion occurrences="2">
+      <code>$normalizedCustomHeaders</code>
+      <code>array&lt;string, mixed&gt;</code>
+    </MixedReturnTypeCoercion>
+  </file>
   <file src="src/Store/MultiTableStore.php">
     <UnnecessaryVarAnnotation occurrences="1">
-      <code>array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string}|null</code>
+      <code>array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}|null</code>
     </UnnecessaryVarAnnotation>
   </file>
   <file src="tests/Benchmark/LoadEventsBench.php">

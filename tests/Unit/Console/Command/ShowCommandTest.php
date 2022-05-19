@@ -32,15 +32,11 @@ final class ShowCommandTest extends TestCase
 
         $store = $this->prophesize(Store::class);
         $store->load(Profile::class, '1')->willReturn([
-            new Message(
-                $event,
-                [
-                    Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                    Message::HEADER_AGGREGATE_ID => '1',
-                    Message::HEADER_PLAYHEAD => 1,
-                    Message::HEADER_RECORDED_ON => new DateTimeImmutable(),
-                ]
-            ),
+            Message::create($event)
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('1')
+                ->withPlayhead(1)
+                ->withRecordedOn(new DateTimeImmutable()),
         ]);
 
         $serializer = $this->prophesize(EventSerializer::class);

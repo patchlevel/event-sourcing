@@ -40,15 +40,11 @@ final class OutputStyleTest extends TestCase
             '{"id":"1","email":"foo@bar.com"}',
         ));
 
-        $message = new Message(
-            $event,
-            [
-                Message::HEADER_AGGREGATE_CLASS => Profile::class,
-                Message::HEADER_AGGREGATE_ID => '1',
-                Message::HEADER_PLAYHEAD => 1,
-                Message::HEADER_RECORDED_ON => new DateTimeImmutable(),
-            ]
-        );
+        $message = Message::create($event)
+            ->withAggregateClass(Profile::class)
+            ->withAggregateId('1')
+            ->withPlayhead(1)
+            ->withRecordedOn(new DateTimeImmutable());
 
         $console = new OutputStyle($input, $output);
 

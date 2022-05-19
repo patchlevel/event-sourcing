@@ -37,7 +37,6 @@ class ReplaceEventMiddlewareTest extends TestCase
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame($message->headers(), $result[0]->headers());
 
         $event = $result[0]->event();
 
@@ -66,7 +65,6 @@ class ReplaceEventMiddlewareTest extends TestCase
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame($message->headers(), $result[0]->headers());
 
         $event = $result[0]->event();
 
