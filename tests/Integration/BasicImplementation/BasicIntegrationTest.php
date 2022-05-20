@@ -239,13 +239,11 @@ final class BasicIntegrationTest extends TestCase
             'eventstore'
         );
 
-        $snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
-
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             $eventStream,
-            null,
+            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
             new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
         );
         $repository = $manager->get(Profile::class);
