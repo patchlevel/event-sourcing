@@ -14,7 +14,7 @@ class SystemClockTest extends TestCase
     public function testCreateDateTimeImmutable(): void
     {
         $before = new DateTimeImmutable();
-        $date = (new SystemClock())->createDateTimeImmutable();
+        $date = (new SystemClock())->create();
         $after = new DateTimeImmutable();
 
         self::assertGreaterThanOrEqual($before, $date);

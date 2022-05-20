@@ -14,7 +14,7 @@ final class FreezeClock implements Clock
     {
     }
 
-    public function freeze(DateTimeImmutable $frozenDateTime): void
+    public function update(DateTimeImmutable $frozenDateTime): void
     {
         $this->frozenDateTime = $frozenDateTime;
     }
@@ -27,7 +27,7 @@ final class FreezeClock implements Clock
         $this->frozenDateTime = $this->frozenDateTime->modify(sprintf('+%s seconds', $seconds));
     }
 
-    public function createDateTimeImmutable(): DateTimeImmutable
+    public function create(): DateTimeImmutable
     {
         return $this->frozenDateTime;
     }

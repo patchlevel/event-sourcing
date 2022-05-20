@@ -16,7 +16,7 @@ class FreezeClockTest extends TestCase
         $current = new DateTimeImmutable();
         $clock = new FreezeClock($current);
 
-        $new = $clock->createDateTimeImmutable();
+        $new = $clock->create();
 
         self::assertSame($current, $new);
     }
@@ -26,7 +26,7 @@ class FreezeClockTest extends TestCase
         $date1 = new DateTimeImmutable();
         $clock = new FreezeClock($date1);
         $clock->sleep(1);
-        $date2 = $clock->createDateTimeImmutable();
+        $date2 = $clock->create();
 
         $diff = $date1->diff($date2);
 
@@ -37,11 +37,11 @@ class FreezeClockTest extends TestCase
     {
         $date1 = new DateTimeImmutable();
         $clock = new FreezeClock($date1);
-        $new1 = $clock->createDateTimeImmutable();
+        $new1 = $clock->create();
 
         $date2 = new DateTimeImmutable();
-        $clock->freeze($date2);
-        $new2 = $clock->createDateTimeImmutable();
+        $clock->update($date2);
+        $new2 = $clock->create();
 
         self::assertSame($date1, $new1);
         self::assertSame($date2, $new2);

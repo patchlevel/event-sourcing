@@ -8,7 +8,7 @@ use DateTimeImmutable;
 
 final class SystemClock implements Clock
 {
-    public function createDateTimeImmutable(): DateTimeImmutable
+    public function create(): DateTimeImmutable
     {
         return new DateTimeImmutable();
     }
