@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Clock;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -17,17 +16,8 @@ use PHPUnit\Framework\TestCase;
 /** @covers \Patchlevel\EventSourcing\EventBus\Message */
 class MessageTest extends TestCase
 {
-    public function tearDown(): void
-    {
-        Clock::reset();
-    }
-
     public function testEmptyMessage(): void
     {
-        $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
-
-        Clock::freeze($recordedAt);
-
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
 
@@ -46,8 +36,6 @@ class MessageTest extends TestCase
     public function testCreateMessageWithHeader(): void
     {
         $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
-
-        Clock::freeze($recordedAt);
 
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
@@ -73,8 +61,6 @@ class MessageTest extends TestCase
     public function testChangeHeader(): void
     {
         $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
-
-        Clock::freeze($recordedAt);
 
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
@@ -119,8 +105,6 @@ class MessageTest extends TestCase
     public function testCustomHeaders(): void
     {
         $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
-
-        Clock::freeze($recordedAt);
 
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');

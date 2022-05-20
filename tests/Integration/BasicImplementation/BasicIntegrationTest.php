@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Clock\SystemClock;
+use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
+use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
-use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
@@ -60,13 +64,14 @@ final class BasicIntegrationTest extends TestCase
             'eventstore'
         );
 
-        $repository = new DefaultRepository(
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             $eventStream,
-            Profile::class,
             null,
-            new FooMessageDecorator()
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
         );
+        $repository = $manager->get(Profile::class);
 
         // create tables
         $profileProjection->create();
@@ -82,7 +87,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+        );
+        $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
@@ -111,7 +123,14 @@ final class BasicIntegrationTest extends TestCase
             'eventstore'
         );
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+        );
+        $repository = $manager->get(Profile::class);
 
         // create tables
         $profileProjection->create();
@@ -127,13 +146,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new DefaultRepository(
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             $eventStream,
-            Profile::class,
             null,
-            new FooMessageDecorator()
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
         );
+        $repository = $manager->get(Profile::class);
 
         $profile = $repository->load('1');
 
@@ -161,13 +181,14 @@ final class BasicIntegrationTest extends TestCase
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
         );
 
-        $repository = new DefaultRepository(
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             $eventStream,
-            Profile::class,
             null,
-            new FooMessageDecorator()
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
         );
+        $repository = $manager->get(Profile::class);
 
         // create tables
         $profileProjection->create();
@@ -183,7 +204,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+        );
+        $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
@@ -211,15 +239,14 @@ final class BasicIntegrationTest extends TestCase
             'eventstore'
         );
 
-        $snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
-
-        $repository = new DefaultRepository(
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             $eventStream,
-            Profile::class,
-            $snapshotStore,
-            new FooMessageDecorator()
+            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
         );
+        $repository = $manager->get(Profile::class);
 
         // create tables
         $profileProjection->create();
@@ -235,7 +262,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class, $snapshotStore);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+        );
+        $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);

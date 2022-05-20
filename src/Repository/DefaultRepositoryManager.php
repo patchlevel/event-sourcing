@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
+use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootClassNotRegistered;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
@@ -22,7 +24,7 @@ final class DefaultRepositoryManager implements RepositoryManager
     private Store $store;
     private EventBus $eventBus;
     private ?SnapshotStore $snapshotStore;
-    private ?MessageDecorator $messageDecorator;
+    private MessageDecorator $messageDecorator;
     private LoggerInterface $logger;
 
     /** @var array<class-string<AggregateRoot>, Repository> */
@@ -40,7 +42,7 @@ final class DefaultRepositoryManager implements RepositoryManager
         $this->store = $store;
         $this->eventBus = $eventBus;
         $this->snapshotStore = $snapshotStore;
-        $this->messageDecorator = $messageDecorator;
+        $this->messageDecorator = $messageDecorator ??  new RecordedOnDecorator(new SystemClock());
         $this->logger = $logger ?? new NullLogger();
     }
 

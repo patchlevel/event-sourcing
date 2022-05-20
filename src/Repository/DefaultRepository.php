@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Clock;
+use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
+use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
@@ -37,7 +38,7 @@ final class DefaultRepository implements Repository
     private ?SnapshotStore $snapshotStore;
     private LoggerInterface $logger;
     private AggregateRootMetadata $metadata;
-    private ?MessageDecorator $messageDecorator;
+    private MessageDecorator $messageDecorator;
 
     /**
      * @param class-string<T> $aggregateClass
@@ -54,7 +55,7 @@ final class DefaultRepository implements Repository
         $this->eventBus = $eventBus;
         $this->aggregateClass = $aggregateClass;
         $this->snapshotStore = $snapshotStore;
-        $this->messageDecorator = $messageDecorator;
+        $this->messageDecorator = $messageDecorator ??  new RecordedOnDecorator(new SystemClock());
         $this->logger = $logger ?? new NullLogger();
         $this->metadata = $aggregateClass::metadata();
     }
@@ -128,14 +129,9 @@ final class DefaultRepository implements Repository
                 $message = Message::create($event)
                     ->withAggregateClass($aggregate::class)
                     ->withAggregateId($aggregate->aggregateRootId())
-                    ->withPlayhead(++$playhead)
-                    ->withRecordedOn(Clock::createDateTimeImmutable());
+                    ->withPlayhead(++$playhead);
 
-                if ($messageDecorator) {
-                    $message = $messageDecorator($message);
-                }
-
-                return $message;
+                return $messageDecorator($message);
             },
             $events
         );
