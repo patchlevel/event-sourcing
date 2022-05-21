@@ -19,6 +19,9 @@ use function sprintf;
 
 final class DatabaseCreateCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:database:create';
+    protected static $defaultDescription = 'create eventstore database';
+
     private Store $store;
     private DoctrineHelper $helper;
 
@@ -33,8 +36,6 @@ final class DatabaseCreateCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:database:create')
-            ->setDescription('create eventstore database')
             ->addOption('if-not-exists', null, InputOption::VALUE_NONE, 'Don\'t trigger an error, when the database already exists');
     }
 

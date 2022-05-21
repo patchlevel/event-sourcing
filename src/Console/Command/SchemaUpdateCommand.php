@@ -16,6 +16,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class SchemaUpdateCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:schema:update';
+    protected static $defaultDescription = 'update eventstore schema';
+
     private Store $store;
     private SchemaManager $schemaManager;
 
@@ -30,8 +33,6 @@ final class SchemaUpdateCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:schema:update')
-            ->setDescription('update eventstore schema')
             ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'dump schema update queries')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'force schema update');
 

@@ -11,11 +11,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class ProjectionDropCommand extends ProjectionCommand
 {
+    protected static $defaultName = 'event-sourcing:projection:drop';
+    protected static $defaultDescription = 'drop projection schema';
+
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:projection:drop')
-            ->setDescription('drop projection schema')
             ->addOption('projection', 'p', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'run only for specific projections [FQCN]');
     }
 

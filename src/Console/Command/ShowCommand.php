@@ -19,6 +19,9 @@ use function sprintf;
 
 final class ShowCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:show';
+    protected static $defaultDescription = 'show events from one aggregate';
+
     private Store $store;
     private EventSerializer $serializer;
     private AggregateRootRegistry $aggregateRootRegistry;
@@ -35,8 +38,6 @@ final class ShowCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:show')
-            ->setDescription('show events from one aggregate')
             ->addArgument('aggregate', InputArgument::REQUIRED, 'aggregate name')
             ->addArgument('id', InputArgument::REQUIRED, 'aggregate id');
     }

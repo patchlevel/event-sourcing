@@ -15,6 +15,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class OutboxInfoCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:outbox:info';
+    protected static $defaultDescription = 'displays the messages stored in the outbox store';
+
     private OutboxStore $store;
     private EventSerializer $serializer;
 
@@ -29,8 +32,6 @@ final class OutboxInfoCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:outbox:info')
-            ->setDescription('displays the messages stored in the outbox store')
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Maximum number of messages to be displayed');
     }
 
