@@ -1,17 +1,17 @@
-name: Publish docs
+name: Change latest docs
 on:
-  push:
-    branches:
-      - "[0-9]+.[0-9]+.x"
+  release:
+    types:
+      - published
 
 jobs:
   check:
-    name: Prepare
+    name: Check
     runs-on: ubuntu-latest
     outputs:
-      status: 'ok' # ${{ steps.check.outputs.status }}
-      version: '2.0' # '${{ steps.check.outputs.version }}
-      tag: '2.0.0-beta6' # '${{ steps.check.outputs.tag }}
+      status: ${{ steps.check.outputs.status }}
+      version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -32,7 +32,7 @@ jobs:
           fi
 
   build:
-    name: Deploy docs
+    name: Change
     runs-on: ubuntu-latest
     needs: check
     if: needs.check.outputs.status == 'ok'
@@ -61,7 +61,7 @@ jobs:
           repository: ${{ github.repository }}
           excludes: draft
 
-      - name: Deploy docs
+      - name: Setup deploy key
         env:
           REPOSITORY_ACCESS_KEY: ${{ secrets.REPOSITORY_ACCESS_KEY }}
         run: |
@@ -79,9 +79,6 @@ jobs:
           then
             # Here we deploy a new latest version
             mike deploy ${{ needs.check.outputs.version }} latest --config-file docs/mkdocs.yml --update-aliases --push --remote doc
-          else
-            # Here we deploy a version that's not the latest one
-            mike deploy ${{ needs.check.outputs.version }} --config-file docs/mkdocs.yml --push --remote doc
           fi
 
       - run: |
