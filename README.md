@@ -26,7 +26,7 @@ composer require patchlevel/event-sourcing
 
 ## Documentation
 
-* [Docs](https://patchlevel.github.io/event-sourcing-doc)
+* [Docs](https://patchlevel.github.io/event-sourcing-docs/latest)
 
 ## Integration
 
