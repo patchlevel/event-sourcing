@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
+
+site_name: Event Sourcing
+site_url: https://patchlevel.de/
+repo_url: https://github.com/patchlevel/event-sourcing
+repo_name: patchlevel/event-sourcing
+edit_uri: edit/2.0.x/docs/pages/
+docs_dir: pages
+
+extra:
+  meta:
+    title: Event Sourcing
+    description: A lightweight but also all-inclusive event sourcing library with a focus on developer experience.
+    image: img/patchlevel-banner.png
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/patchlevel
+    - icon: fontawesome/solid/globe
+      link: https://patchlevel.de
+  version:
+    provider: mike
+extra_css:
+  - stylesheets/extra.css
+
+theme:
+  name: material
+  custom_dir: overrides
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.annotate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - meta
+  - pymdownx.highlight:
+      anchor_linenums: true
+      extend_pygments_lang:
+        - name: php
+          lang: php
+          options:
+            startinline: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      auto_append:
+        - docs/includes/links.md
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+nav:
+  - Introduction: index.md
+  - Getting Started: getting_started.md
+  - FAQ: faq.md
+  - Basics:
+    - Aggregate: aggregate.md
+    - Events: events.md
+    - Repository: repository.md
+    - Store: store.md
+    - Event Bus:  event_bus.md
+    - Processor: processor.md
+    - Projection: projection.md
+  - Advance:
+    - Snapshots: snapshots.md
+    - Upcasting: upcasting.md
+    - Pipeline: pipeline.md
+  - Other:
+    - Tests: tests.md
+    - Tools: tools.md
+    - CLI: cli.md
