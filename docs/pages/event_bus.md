@@ -48,9 +48,11 @@ $eventBus->addListener($mailListener);
 $eventBus->addListener($projectionListener);
 ```
 
-> :book: You can determine the order in which the listeners are executed. For example, 
-> you can also add listeners after `ProjectionListener`
-> to access the [projections](./projection.md).
+!!! note
+
+    You can determine the order in which the listeners are executed. For example, 
+    you can also add listeners after `ProjectionListener`
+    to access the [projections](./projection.md).
 
 ## Symfony event bus
 
@@ -74,9 +76,11 @@ $eventBus = SymfonyEventBus::create([
 ]);
 ```
 
-> :book: You can determine the order in which the listeners are executed. For example,
-> you can also add listeners after `ProjectionListener`
-> to access the [projections](./projection.md).
+!!! note
+
+    You can determine the order in which the listeners are executed. For example,
+    you can also add listeners after `ProjectionListener`
+    to access the [projections](./projection.md).
 
 Or plug it together by hand:
 
@@ -88,11 +92,15 @@ $symfonyMessenger = //...
 $eventBus = new SymfonyEventBus($symfonyMessenger);
 ```
 
-> :warning: You can't mix it with a command bus.
-> You should create a [new bus](https://symfony.com/doc/current/messenger/multiple_buses.html) for it.
+!!! warning
 
-> :book: An event bus can have zero or more listeners on an event. 
-> You should allow no handler in the [HandleMessageMiddleware](https://symfony.com/doc/current/components/messenger.html).
+    You can't mix it with a command bus.
+    You should create a [new bus](https://symfony.com/doc/current/messenger/multiple_buses.html) for it.
+
+!!! note
+
+    An event bus can have zero or more listeners on an event. 
+    You should allow no handler in the [HandleMessageMiddleware](https://symfony.com/doc/current/components/messenger.html).
 
 ## Listener
 
@@ -114,7 +122,11 @@ $listener = new class implements Listener
 }
 ```
 
-> :warning: If you only want to listen to certain messages, then you have to check it in the `__invoke` method.
+!!! warning
 
-> :book: Basically, listeners can be categorized according to their tasks. 
-> We have a [processor](./processor.md) and [projections](./projection.md).
+    If you only want to listen to certain messages, then you have to check it in the `__invoke` method.
+
+!!! note
+
+    Basically, listeners can be categorized according to their tasks. 
+    We have a [processor](./processor.md) and [projections](./projection.md).

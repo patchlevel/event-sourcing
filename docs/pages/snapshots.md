@@ -31,7 +31,9 @@ $snapshotStore = new DefaultSnapshotStore([
 $repository = new DefaultRepository($store, $eventStream, Profile::class, $snapshotStore);
 ```
 
-> :book: You can read more about Repository [here](./repository.md).
+!!! note
+
+    You can read more about Repository [here](./repository.md).
 
 So that the state can also be cached, the aggregate must be taught how to `serialize` and `deserialize` its state.
 To do this, the aggregate must inherit from the `SnapshotableAggregateRoot`
@@ -65,11 +67,13 @@ final class Profile extends SnapshotableAggregateRoot
 }
 ```
 
-> :warning: In the end it has to be possible to serialize it as json.
+!!! warning
+
+    In the end it has to be possible to serialize it as json.
 
 ## Batch
 
-
+// Todo
 
 ## Adapter
 

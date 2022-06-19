@@ -54,8 +54,10 @@ final class ProfileProjection implements Projection
 }
 ```
 
-> :warning: You should not execute any actions with projections, 
-> otherwise these will be executed again if you rebuild the projection!
+!!! danger
+
+    You should not execute any actions with projections, 
+    otherwise these will be executed again if you rebuild the projection!
 
 Projections have a `create` and a `drop` method that is executed when the projection is created or deleted.
 In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
@@ -87,7 +89,9 @@ $projectionHandler = new MetadataAwareProjectionHandler([
 $eventBus->addListener(new ProjectionListener($projectionHandler));
 ```
 
-> :book: You can find out more about the event bus [here](./event_bus.md).
+!!! note
+
+    You can find out more about the event bus [here](./event_bus.md).
 
 ## Setup Projection
 

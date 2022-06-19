@@ -20,7 +20,9 @@ $watchServerClient = new SocketWatchServerClient('127.0.0.1:5000', $serializer);
 $watchListener = new WatchListener($watchServerClient);
 ```
 
-> :warning: This should only be used for dev purposes and should not be registered in production.
+!!! warning
+
+    This should only be used for dev purposes and should not be registered in production.
 
 ### Watch server
 
@@ -41,7 +43,9 @@ $watchServer->listen(
 $watchServer->start();
 ```
 
-> :warning: The host must match the one defined in the watch server client.
+!!! warning
+
+    The host must match the one defined in the watch server client.
 
 Here is an example of how to use it with a symfony cli.
 
@@ -64,4 +68,6 @@ $cli->addCommands([
 $cli->run();
 ```
 
-> :book: The command can be terminated with `ctrl+c` or `control+c`.
+!!! note
+
+    The command can be terminated with `ctrl+c` or `control+c`.

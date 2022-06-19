@@ -25,3 +25,7 @@ p {
 .md-typeset code {
     padding: .2em .4em;
 }
+
+.admonition-title {
+    margin-bottom: -1em !important;
+}

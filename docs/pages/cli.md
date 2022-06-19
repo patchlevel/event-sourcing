@@ -28,8 +28,10 @@ The database schema can also be created, updated and dropped.
 * SchemaUpdateCommand: `event-sourcing:schema:update`
 * SchemaDropCommand: `event-sourcing:schema:drop`
 
-> :book: You can also register doctrine migration commands,
-> see the [store](./store.md) documentation for this.
+!!! note
+
+    You can also register doctrine migration commands,
+    see the [store](./store.md) documentation for this.
 
 ## Projection commands
 
@@ -39,7 +41,9 @@ The creation, deletion and rebuilding of the projections is also possible via th
 * ProjectionDropCommand: `event-sourcing:projection:drop`
 * ProjectionRebuildCommand: `event-sourcing:projection:rebuild`
 
-> :book: The [pipeline](./pipeline.md) will be used to rebuild the projection.
+!!! note
+
+    The [pipeline](./pipeline.md) will be used to rebuild the projection.
 
 ## CLI example
 
@@ -74,5 +78,7 @@ $cli->addCommands(array(
 $cli->run();
 ```
 
-> :book: You can also register doctrine migration commands, 
-> see the [store](./store.md) documentation for this.
+!!! note
+
+    You can also register doctrine migration commands, 
+    see the [store](./store.md) documentation for this.

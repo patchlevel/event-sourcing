@@ -27,7 +27,9 @@ use Patchlevel\EventSourcing\Repository\Repository;
 $repository = new Repository($store, $eventBus, Profile::class);
 ```
 
-> :book: You can find out more about stores [here](./store.md)
+!!! note
+
+    You can find out more about stores [here](./store.md)
 
 ### Snapshot Repository
 
@@ -42,9 +44,9 @@ $snapshot = new DefaultSnapshotStore([/* adapters */]);
 $repository = new DefaultRepository($store, $eventBus, Profile::class, $snapshot);
 ```
 
-> :warning: The aggregate must inherit from the SnapshotableAggregateRoot
+!!! note
 
-> :book: You can find out more about snapshots [here](./snapshots.md)
+    You can find out more about snapshots [here](./snapshots.md)
 
 ## Usage
 
@@ -65,7 +67,9 @@ $profile = Profile::create('david.badura@patchlevel.de');
 $repository->save($profile);
 ```
 
-> :book: All events are written to the database with one transaction in order to ensure data consistency.
+!!! note
+
+    All events are written to the database with one transaction in order to ensure data consistency.
 
 ### Load
 
@@ -76,11 +80,10 @@ All events for the aggregate are loaded from the database and the current state 
 $profile = $repository->load('229286ff-6f95-4df6-bc72-0a239fe7b284');
 ```
 
-> :warning: You can only fetch one aggregate at a time and don't do any complex queries either. 
-> Projections are used for this purpose.
+!!! note
 
-> :book: The repository ensures that only one instance per aggregate is returned. 
-> A strict instance comparison is therefore easily possible.
+    You can only fetch one aggregate at a time and don't do any complex queries either. 
+    Projections are used for this purpose.
 
 ### Has
 
@@ -93,5 +96,7 @@ if($repository->has('229286ff-6f95-4df6-bc72-0a239fe7b284')) {
 }
 ```
 
-> :book: The query is fast and does not load any event. 
-> This means that the state of the aggregate is not rebuild either.
+!!! note
+
+    The query is fast and does not load any event. 
+    This means that the state of the aggregate is not rebuild either.

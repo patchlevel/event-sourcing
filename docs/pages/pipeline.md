@@ -30,8 +30,10 @@ $pipeline = new Pipeline(
 );
 ```
 
-> :warning: Under no circumstances may the same store be used that is used for the source.
-> Otherwise the store will be broken afterwards!
+!!! danger
+
+    Under no circumstances may the same store be used that is used for the source.
+    Otherwise the store will be broken afterwards!
 
 The pipeline can also be used to create or rebuild a projection:
 
@@ -127,11 +129,16 @@ use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 
 $target = new StoreTarget($store);
 ```
-> :warning: Under no circumstances may the same store be used that is used for the source. 
-> Otherwise the store will be broken afterwards!
 
-> :book: It does not matter whether the previous store was a SingleTable or a MultiTable.
-> You can switch back and forth between both store types using the pipeline.
+!!! danger
+
+    Under no circumstances may the same store be used that is used for the source. 
+    Otherwise the store will be broken afterwards!
+
+!!! note
+
+    It does not matter whether the previous store was a SingleTable or a MultiTable.
+    You can switch back and forth between both store types using the pipeline.
 
 ### Projection
 
@@ -175,12 +182,13 @@ $messages = $target->messages();
 
 Middelwares can be used to manipulate, delete or expand messages or events during the process.
 
-> :warning: It is important to know that some middlewares require recalculation from the playhead,
-> if the target is a store.
-> This is a numbering of the events that must be in ascending order.
-> A corresponding note is supplied with every middleware.
+!!! warning
 
-### exclude
+    It is important to know that some middlewares require recalculation from the playhead,
+    if the target is a store. This is a numbering of the events that must be in ascending order.
+    A corresponding note is supplied with every middleware.
+
+### Exclude
 
 With this middleware you can exclude certain events.
 
@@ -190,9 +198,11 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 $middleware = new ExcludeEventMiddleware([EmailChanged::class]);
 ```
 
-> :warning: After this middleware, the playhead must be recalculated!
+!!! warning
 
-### include
+    After this middleware, the playhead must be recalculated!
+
+### Include
 
 
 With this middleware you can only allow certain events.
@@ -203,9 +213,11 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware;
 $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
 ```
 
-> :warning: After this middleware, the playhead must be recalculated!
+!!! warning
 
-### filter
+    After this middleware, the playhead must be recalculated!
+
+### Filter
 
 If the middlewares `ExcludeEventMiddleware` and `IncludeEventMiddleware` are not sufficient, 
 you can also write your own filter. 
@@ -224,9 +236,11 @@ $middleware = new FilterEventMiddleware(function (AggregateChanged $event) {
 });
 ```
 
-> :warning: After this middleware, the playhead must be recalculated!
+!!! warning
 
-### replace
+    After this middleware, the playhead must be recalculated!
+
+### Replace
 
 If you want to replace an event, you can use the `ReplaceEventMiddleware`.
 The first parameter you have to define is the event class that you want to replace.
@@ -240,9 +254,11 @@ $middleware = new ReplaceEventMiddleware(OldVisited::class, static function (Old
 });
 ```
 
-> :book: The middleware takes over the playhead and recordedAt information.
+!!! note
 
-### until
+    The middleware takes over the playhead and recordedAt information.
+
+### Until
 
 A use case could also be that you want to look at the projection from a previous point in time.
 You can use the `UntilEventMiddleware` to only allow events that were `recorded` before this point in time.
@@ -253,9 +269,11 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
 $middleware = new UntilEventMiddleware(new DateTimeImmutable('2020-01-01 12:00:00'));
 ```
 
-> :warning: After this middleware, the playhead must be recalculated!
+!!! warning
 
-### recalculate playhead
+    After this middleware, the playhead must be recalculated!
+
+### Recalculate playhead
 
 This middleware can be used to recalculate the playhead.
 The playhead must always be in ascending order so that the data is valid. 
@@ -267,9 +285,11 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 $middleware = new RecalculatePlayheadMiddleware();
 ```
 
-> :book: You only need to add this middleware once at the end of the pipeline.
+!!! note
 
-### chain
+    You only need to add this middleware once at the end of the pipeline.
+
+### Chain
 
 If you want to group your middleware, you can use one or more `ChainMiddleware`.
 
