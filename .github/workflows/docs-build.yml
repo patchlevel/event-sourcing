@@ -28,21 +28,25 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Find latest release
-        id: latest
+        id: latest_release
         uses: pozetroninc/github-action-get-latest-release@v0.6.0
         with:
           repository: ${{ github.repository }}
           excludes: draft
 
-      - name: Normalize versions
-        id: version
+      - name: Normalize current versions
+        id: current
         uses: actions/github-script@v6
         with:
-          script: |
-            return {
-              latest: "${{steps.latest.outputs.release}}".match(/([0-9]+\.[0-9]+)\.[0-9]+/i)[1],
-              current: context.ref.match(/([0-9]+\.[0-9]+)\.x/i)[1]
-            }
+          script: return context.ref.match(/([0-9]+\.[0-9]+)\.x/i)[1];
+          result-encoding: string
+
+      - name: Normalize latest versions
+        id: latest
+        uses: actions/github-script@v6
+        with:
+          script: return "${{steps.latest_release.outputs.release}}".match(/([0-9]+\.[0-9]+)\.[0-9]+/i)[1];
+          result-encoding: string
 
       - name: Setup deploy key
         env:
@@ -58,13 +62,13 @@ jobs:
       - run: git fetch doc gh-pages --verbose
 
       - run: |
-          if [ "${{ steps.version.outputs.result.current }}" = "${{ steps.version.outputs.result.latest }}" ]
+          if [ "${{ steps.current.outputs.result }}" = "${{ steps.latest.outputs.result }}" ]
           then
             # Here we deploy a new latest version
-            mike deploy ${{ steps.version.outputs.result.current }} latest --config-file docs/mkdocs.yml --update-aliases --push --remote doc
+            mike deploy ${{ steps.current.outputs.result }} latest --config-file docs/mkdocs.yml --update-aliases --push --remote doc
           else
             # Here we deploy a version that's not the latest one
-            mike deploy ${{ steps.version.outputs.result.current }} --config-file docs/mkdocs.yml --push --remote doc
+            mike deploy ${{ steps.current.outputs.result }} --config-file docs/mkdocs.yml --push --remote doc
           fi
 
       - run: |
