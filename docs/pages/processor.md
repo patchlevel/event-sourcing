@@ -33,4 +33,6 @@ final class SendEmailListener implements Listener
 }
 ```
 
-> :warning: If you only want to listen to certain events, then you have to check it in the `__invoke` method.
+!!! warning
+
+    If you only want to listen to certain events, then you have to check it in the `__invoke` method.

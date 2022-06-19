@@ -27,9 +27,13 @@ final class ProfileCreated
 }
 ```
 
-> :warning: The payload must be serializable and unserializable as json.
+!!! warning
 
-> :book: An event should be named in the past because it has already happened.
+    The payload must be serializable and unserializable as json.
+
+!!! note
+
+    An event should be named in the past because it has already happened.
 
 Best practice is to prefix the event names with the aggregate name, lowercase everything, and replace spaces with underscores.
 Here are some examples:
@@ -149,8 +153,6 @@ final class NameChanged
     ) {}
 }
 ```
-
-> :warning: [new initializers](https://stitcher.io/blog/php-81-new-in-initializers) works only from php 8.1
 
 ### Serialized Name
 

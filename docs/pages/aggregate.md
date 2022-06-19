@@ -1,9 +1,11 @@
 # Aggregate
 
-> Aggregate is a pattern in Domain-Driven Design. A DDD aggregate is a cluster of domain objects 
-> that can be treated as a single unit. [...]
-> 
-> :book: [DDD Aggregate - Martin Flower](https://martinfowler.com/bliki/DDD_Aggregate.html) 
+!!! abstract
+
+    Aggregate is a pattern in Domain-Driven Design. A DDD aggregate is a cluster of domain objects 
+    that can be treated as a single unit. [...]
+
+    [DDD Aggregate - Martin Flower](https://martinfowler.com/bliki/DDD_Aggregate.html) 
 
 An AggregateRoot has to inherit from `AggregateRoot` and need to implement the method `aggregateRootId`.
 `aggregateRootId` is the identifier from `AggregateRoot` like a primary key for an entity.
@@ -37,9 +39,13 @@ final class Profile extends AggregateRoot
 }
 ```
 
-> :warning: The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
+!!! warning
 
-> :book: An aggregateId can be an **uuid**, you can find more about this [here](./faq.md).
+    The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
+
+!!! note
+
+    An aggregateId can be an **uuid**, you can find more about this [here](./faq.md).
 
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
@@ -68,12 +74,16 @@ final class CreateProfileHandler
 }
 ```
 
-> :warning: If you look in the database now, you would see that nothing has been saved.
-> This is because only events are stored in the database and as long as no events exist,
-> nothing happens.
+!!! warning
 
-> :book: A **command bus** system is not necessary, only recommended.
-> The interaction can also easily take place in a controller or service.
+    If you look in the database now, you would see that nothing has been saved.
+    This is because only events are stored in the database and as long as no events exist,
+    nothing happens.
+
+!!! note
+
+    A **command bus** system is not necessary, only recommended.
+    The interaction can also easily take place in a controller or service.
 
 ### Create a new aggregate
 
@@ -93,7 +103,9 @@ final class ProfileCreated
 }
 ```
 
-> :book: You can find out more about events [here](./events.md).
+!!! note
+
+    You can find out more about events [here](./events.md).
 
 After we have defined the event, we have to adapt the creation of the profile:
 
@@ -135,7 +147,9 @@ final class Profile extends AggregateRoot
 }
 ```
 
-> :book: Prefixing the apply methods with "apply" improves readability.
+!!! tip
+
+    Prefixing the apply methods with "apply" improves readability.
 
 In our named constructor `create` we have now created the event and recorded it with the method `record`.
 The aggregate remembers all recorded events in order to save them later.
@@ -164,7 +178,9 @@ final class NameChanged
 }
 ```
 
-> :book: Events should best be written in the past, as they describe a state that has happened.
+!!! note
+
+    Events should best be written in the past, as they describe a state that has happened.
 
 After we have defined the event, we can define a new public method called `changeName` to change the profile name. 
 This method then creates the event `NameChanged` and records it:
@@ -246,7 +262,9 @@ final class ChangeNameHandler
 }
 ```
 
-> :book: You can read more about Repository [here](./repository.md).
+!!! note
+
+    You can read more about Repository [here](./repository.md).
 
 Here the aggregate is loaded from the `repository` by fetching all events from the database.
 These events are then executed again with the `apply` methods in order to rebuild the current state.
@@ -348,7 +366,9 @@ final class Profile extends AggregateRoot
 }
 ```
 
-> :warning: When all events are suppressed, debugging becomes more difficult if you forget an apply method.
+!!! warning
+
+    When all events are suppressed, debugging becomes more difficult if you forget an apply method.
 
 ## Business rules
 
@@ -397,7 +417,9 @@ final class Profile extends AggregateRoot
 }
 ```
 
-> :warning: Disregarding this can break the rebuilding of the state!
+!!! danger
+
+    Disregarding this can break the rebuilding of the state!
 
 We have now ensured that this rule takes effect when a name is changed with the method `changeName`. 
 But when we create a new profile this rule does not currently apply.
@@ -483,10 +505,13 @@ final class NameChanged
     ) {}
 }
 ```
+!!! warning
 
-> :warning: The payload must be serializable and unserializable as json.
+    The payload must be serializable and unserializable as json.
 
-> :book: You can find out more about event normalizer [here](./events.md#normalizer).
+!!! note
+
+    You can find out more about event normalizer [here](./events.md#normalizer).
 
 There are also cases where business rules have to be defined depending on the aggregate state.
 Sometimes also from states, which were changed in the same method.

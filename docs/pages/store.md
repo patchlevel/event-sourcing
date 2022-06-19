@@ -18,8 +18,10 @@ $connection = DriverManager::getConnection([
 ]);
 ```
 
-> :book: You can find out more about how to create a connection 
-> [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
+!!! note
+
+    You can find out more about how to create a connection 
+    [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
 
 ## Store types
 
@@ -46,7 +48,9 @@ $store = new SingleTableStore(
 );
 ```
 
-> :book: You can switch between strategies using the [pipeline](./pipeline.md).
+!!! note
+
+    You can switch between strategies using the [pipeline](./pipeline.md).
 
 ### Multi Table Store
 
@@ -70,7 +74,9 @@ $store = new MultiTableStore(
 );
 ```
 
-> :book: You can switch between strategies using the [pipeline](./pipeline.md).
+!!! note
+
+    You can switch between strategies using the [pipeline](./pipeline.md).
 
 ## Transaction
 
@@ -169,8 +175,10 @@ $cli->addCommands(array(
 $cli->run();
 ```
 
-> :book: Here you can find more information on how to 
-> [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
+!!! note
+
+    Here you can find more information on how to 
+    [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
 
 Now you can execute commands like:
 

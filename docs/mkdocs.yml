@@ -68,7 +68,6 @@ markdown_extensions:
 nav:
   - Introduction: index.md
   - Getting Started: getting_started.md
-  - FAQ: faq.md
   - Basics:
     - Aggregate: aggregate.md
     - Events: events.md
@@ -85,3 +84,4 @@ nav:
     - Tests: tests.md
     - Tools: tools.md
     - CLI: cli.md
+    - FAQ: faq.md

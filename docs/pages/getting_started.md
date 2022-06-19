@@ -47,7 +47,9 @@ final class GuestIsCheckedOut
 }
 ```
 
-> :book: You can find out more about events [here](events.md).
+!!! note
+
+    You can find out more about events [here](events.md).    
 
 ## Define aggregates
 
@@ -140,7 +142,9 @@ final class Hotel extends AggregateRoot
 }
 ```
 
-> :book: You can find out more about aggregates [here](aggregate.md).
+!!! note
+
+    You can find out more about aggregates [here](aggregate.md).
 
 ## Define projections
 
@@ -209,7 +213,9 @@ final class HotelProjection implements Projection
 }
 ```
 
-> :book: You can find out more about projections [here](projection.md).
+!!! note
+
+    You can find out more about projections [here](projection.md).
 
 ## Processor
 
@@ -245,7 +251,9 @@ final class SendCheckInEmailListener implements Listener
 }
 ```
 
-> :book: You can find out more about processor [here](processor.md).
+!!! note 
+    
+    You can find out more about processor [here](processor.md).
 
 ## Configuration
 
@@ -288,7 +296,9 @@ $store = new SingleTableStore(
 $hotelRepository = new DefaultRepository($store, $eventBus, Hotel::class);
 ```
 
-> :book: You can find out more about stores [here](store.md).
+!!! note
+
+    You can find out more about stores [here](store.md).
 
 ## Database setup
 
@@ -302,7 +312,9 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 $projectionHandler->create();
 ```
 
-> :book: you can use the predefined [cli commands](cli.md) for this.
+!!! note
+
+    you can use the predefined [cli commands](cli.md) for this.
 
 ## Usage
 
@@ -321,7 +333,6 @@ $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 ```
 
-> :book: An aggregateId can be an **uuid**, you can find more about this [here](faq.md).
+!!! note
 
-Consult the [documentation](#documentation) or [FAQ](faq.md) for more information.
-If you still have questions, feel free to create an issue for it :)
+    An aggregateId can be an **uuid**, you can find more about this [here](faq.md).
