@@ -1,10 +1,13 @@
-## Upgrading to v2
+# Upgrading to v2
+
+We are only providing here the most important changes in detail. For the full BC-Break list go to
+the [full BC-Break list](#Full-BC-Break-list)
+
+## Detailed change list
 
 ### Events
 
-`AggregateChanged` was dropped and events don't need to extend a class anymore. With this there comes no restrictions to
-the event itself. Instead the events are defined via attribute where you need to provide an event
-name `#[Event('eventName')]` this must be unique.
+* Removed `AggregateChanged` abstract class. Use `#[Event('eventName')]` instead.
 
 Before:
 
@@ -45,7 +48,8 @@ final class ProfileCreated
 }
 ```
 
-For more complicated properties like ValueObjects there is the need to define `Normalizer` which handle the casting.
+* Added `#[Normalize(YourNormalizer::class)]` for more complicated properties like ValueObjects.
+* Added `#[SerializedName('foo')]`.
 
 ```php
 use YourApp\EmailNormalizer;
@@ -67,24 +71,49 @@ final class ProfileCreated
 
 ### Aggregates
 
-The Traits `AttributeApplyMethod`, `NonStrictApplyMethod` and `StrictApplyMethod` were removed. Defining apply methods
-by attribute is now the default behaviour. Also supressing missing apply methods is now done via an
-attribute `#[SuppressMissingApply]` which expects the events to be suppressed or * as a wildcard for all events.
-Aggregates now needs an attribute `#[Aggregate('name')]` with a unique name.
-The method `record` was renamed to `recordThat`.
+* Aggregates now needs an attribute `#[Aggregate('name')]` with a unique name.
+* Removed `AttributeApplyMethod` trait. Is default behaviour now.
+* Removed `StrictApplyMethod` trait. Is default behaviour now.
+* Removed `NonStrictApplyMethod` trait. Use `#[SuppressMissingApply]` instead.
+* Rename method `record` to `recordThat`.
+
+### Schema
+
+* Changed database field from `aggregateId` to `aggregate_id`. @TODO add reference for upgrading.
+* Changed database field from `recordedOn` to `recorded_on`. @TODO add reference for upgrading.
 
 ### Store & Pipeline
 
-In both interfaces `Store` and `PipelineStore` the method `saveBatch` was renamed to `save` which now only needs the
-events which will be provided as `Message`.
+* Renamed and adjusted parameters for `save` at `Store`
+* Removed `saveBatch` at `Store`. Use new `save` instead.
+* Renamed and adjusted parameters for `save` at `PipelineStore`
+* Removed `saveBatch` at `PipelineStore`. Use new `save` instead.
+* Changed parameter for `Middleware::__invoke` from `EventBucket` to `Message`.
+* Removed `EventBucket`. `Message` is kinda a replacement. 
+* Removed `ClassRenameMiddleware`. This is not needed anymore since the event name is saved instead.
+* Removed `FromIndexEventMiddleware`.
+
+### Projection
+
+* Removed `create` method from `Projection` interface. Use `#[Create]` instead.
+* Removed `drop` method from `Projection` interface. Use `#[Drop]` instead.
+* Removed `handledEvents` method from `Projection` interface. Use `#[Handle]` instead.
+* Rename `ProjectionRepository` to `ProjectionHandler`.
+* Rename `DefaultProjectionRepistory` to `DefaultProjectionHandler`.
+
+### EventBus
+
+* Changed `DefaultEventBus::dispatch` to accept multiple `Message` objects instead of one `AggregateChanged`.
+
+### Snapshot
+
+* Removed `SnapshotableAggregateRoot` abstract class. Use `#[Snapshot]` instead.
 
 ### Clock
 
-The clock singleton was removed in favor for a service approach. See `SystemClock` and `FreezeClock` for reference.
+* Removed `Clock` singleton class. See `SystemClock`, `FreezeClock` as an implementation of the `Clock` interface instead.
 
-
-
-### Full BC-Break list
+## Full BC-Break list
 
 #### Added
 
