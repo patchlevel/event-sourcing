@@ -8,5 +8,5 @@ use DateTimeImmutable;
 
 interface Clock
 {
-    public function new(): DateTimeImmutable;
+    public function now(): DateTimeImmutable;
 }

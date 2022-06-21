@@ -8,10 +8,15 @@ use DateTimeImmutable;
 
 use function sprintf;
 
-final class FreezeClock implements Clock
+final class FrozenClock implements Clock
 {
     public function __construct(private DateTimeImmutable $frozenDateTime)
     {
+    }
+
+    public function now(): DateTimeImmutable
+    {
+        return clone $this->frozenDateTime;
     }
 
     public function update(DateTimeImmutable $frozenDateTime): void
@@ -25,10 +30,5 @@ final class FreezeClock implements Clock
     public function sleep(int $seconds): void
     {
         $this->frozenDateTime = $this->frozenDateTime->modify(sprintf('+%s seconds', $seconds));
-    }
-
-    public function new(): DateTimeImmutable
-    {
-        return $this->frozenDateTime;
     }
 }

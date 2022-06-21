@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Clock;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Clock\FreezeClock;
+use Patchlevel\EventSourcing\Clock\FrozenClock;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Clock\FreezeClock */
+/** @covers \Patchlevel\EventSourcing\Clock\FrozenClock */
 class FreezeClockTest extends TestCase
 {
     public function testCreateDateTimeImmutableWithFrozenClock(): void
     {
         $current = new DateTimeImmutable();
-        $clock = new FreezeClock($current);
+        $clock = new FrozenClock($current);
 
-        $new = $clock->new();
+        $new = $clock->now();
 
         self::assertSame($current, $new);
     }
@@ -24,9 +24,9 @@ class FreezeClockTest extends TestCase
     public function testSleep(): void
     {
         $date1 = new DateTimeImmutable();
-        $clock = new FreezeClock($date1);
+        $clock = new FrozenClock($date1);
         $clock->sleep(1);
-        $date2 = $clock->new();
+        $date2 = $clock->now();
 
         $diff = $date1->diff($date2);
 
@@ -36,12 +36,12 @@ class FreezeClockTest extends TestCase
     public function testReFreeze(): void
     {
         $date1 = new DateTimeImmutable();
-        $clock = new FreezeClock($date1);
-        $new1 = $clock->new();
+        $clock = new FrozenClock($date1);
+        $new1 = $clock->now();
 
         $date2 = new DateTimeImmutable();
         $clock->update($date2);
-        $new2 = $clock->new();
+        $new2 = $clock->now();
 
         self::assertSame($date1, $new1);
         self::assertSame($date2, $new2);
