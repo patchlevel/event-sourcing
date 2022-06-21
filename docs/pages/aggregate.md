@@ -45,7 +45,7 @@ final class Profile extends AggregateRoot
 
 !!! note
 
-    An aggregateId can be an **uuid**, you can find more about this [here](./faq.md).
+    An aggregateId can be an **uuid**, you can find more about this [here](./uuid.md).
 
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
@@ -138,7 +138,7 @@ final class Profile extends AggregateRoot
         return $self;
     }
     
-    #[Apply(ProfileCreated::class)]
+    #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void 
     {
         $this->id = $event->profileId;
@@ -219,14 +219,14 @@ final class Profile extends AggregateRoot
         $this->recordThat(new NameChanged($name));
     }
     
-    #[Apply(ProfileCreated::class)]
+    #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId;
         $this->name = $event->name;
     }
     
-    #[Apply(NameChanged::class)]
+    #[Apply]
     protected function applyNameChanged(NameChanged $event): void
     {
         $this->name = $event->name;
@@ -329,7 +329,7 @@ final class Profile extends AggregateRoot
 
     // ...
     
-    #[Apply(ProfileCreated::class)]
+    #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId;
@@ -357,7 +357,7 @@ final class Profile extends AggregateRoot
 
     // ...
     
-    #[Apply(ProfileCreated::class)]
+    #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId;
@@ -409,7 +409,7 @@ final class Profile extends AggregateRoot
         $this->recordThat(new NameChanged($name));
     }
     
-    #[Apply(NameChanged::class)]
+    #[Apply]
     protected function applyNameChanged(NameChanged $event): void 
     {
         $this->name = $event->name();
@@ -481,7 +481,7 @@ final class Profile extends AggregateRoot
         $this->recordThat(new NameChanged($name));
     }
     
-    #[Apply(NameChanged::class)]
+    #[Apply]
     protected function applyNameChanged(NameChanged $event): void 
     {
         $this->name = $event->name;
@@ -551,7 +551,7 @@ final class Hotel extends AggregateRoot
         }
     }
     
-    #[Apply(RoomBocked::class)]
+    #[Apply]
     protected function applyRoomBocked(RoomBocked $event): void 
     {
         $this->people++;

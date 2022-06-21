@@ -22,26 +22,39 @@ The [event bus](./event_bus.md) is used as a further parameter to dispatch new e
 Finally, the `aggregate` class is needed, which aggregates the repository should take care of.
 
 ```php
-use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 
-$repository = new Repository($store, $eventBus, Profile::class);
+$repositoryManager = new DefaultRepositoryManager(
+    $aggregateRootRegistry,
+    $store,
+    $eventBus
+);
+
+$repository = $repositoryManager->get(Profile::class);
 ```
 
 !!! note
 
     You can find out more about stores [here](./store.md)
 
-### Snapshot Repository
+### Default Repository Manager
 
-The `SnapshotRepository` is instantiated just like the DefaultRepository, 
-except that it also needs a `SnapshotStore` to load and save the `Snapshots`.
+// todo
 
 ```php
-use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 
 $snapshot = new DefaultSnapshotStore([/* adapters */]);
-$repository = new DefaultRepository($store, $eventBus, Profile::class, $snapshot);
+
+$repositoryManager = new DefaultRepositoryManager(
+    $aggregateRootRegistry,
+    $store,
+    $eventBus,
+    $snapshot
+);
+
+$repository = $repositoryManager->get(Profile::class);
 ```
 
 !!! note
@@ -100,3 +113,45 @@ if($repository->has('229286ff-6f95-4df6-bc72-0a239fe7b284')) {
 
     The query is fast and does not load any event. 
     This means that the state of the aggregate is not rebuild either.
+
+
+## Custom Repository
+
+In clean code you want to have explicit type hints for the repositories
+so that you don't accidentally use the wrong repository.
+It would also help in frameworks with a dependency injection container,
+as this allows the services to be autowired.
+However, you cannot inherit from our repository implementations.
+Instead, you just have to wrap these repositories.
+This also gives you more type security.
+
+```php
+use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
+
+class ProfileRepository 
+{
+    /** @var Repository<Profile>  */
+    private Repository $repository;
+
+    public function __constructor(RepositoryManager $repositoryManager) 
+    {
+        $this->repository = $repositoryManager->get(Profile::class);
+    }
+    
+    public function load(ProfileId $id): Profile 
+    {
+        return $this->repository->load($id->toString());
+    }
+    
+    public function save(Profile $profile): void 
+    {
+        return $this->repository->save($profile);
+    }
+    
+    public function has(ProfileId $id): bool 
+    {
+        return $this->repository->has($id->toString());
+    }
+}
+```

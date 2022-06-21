@@ -1,12 +1,4 @@
-# FAQ
-
-Here you will find some answers to the most common questions 
-that did not fit in the actual documentation.
-
-* [How can i generate an aggregate id?](#how-can-i-generate-an-aggregate-id)
-* [How can i improve the handling of the repositories?](#how-can-i-improve-the-handling-of-the-repositories)
-
-## How can i generate an aggregate id?
+# UUID
 
 A UUID can be generated for the `aggregateId`. There are two popular libraries that can be used:
 
@@ -135,45 +127,6 @@ final class Profile extends AggregateRoot
     {
         $this->id = $event->profileId();
         $this->name = $event->name();
-    }
-}
-```
-
-## How can i improve the handling of the repositories?
-
-In clean code you want to have explicit type hints for the repositories 
-so that you don't accidentally use the wrong repository. 
-It would also help in frameworks with a dependency injection container, 
-as this allows the services to be autowired. 
-However, you cannot inherit from our repository implementations. 
-Instead, you just have to wrap these repositories. 
-This also gives you more type security.
-
-```php
-use Patchlevel\EventSourcing\Repository\Repository;
-
-class ProfileRepository 
-{
-    private Repository $repository;
-
-    public function __constructor(Repository $repository) 
-    {
-        $this->repository = $repository;
-    }
-    
-    public function load(ProfileId $id): Profile 
-    {
-        return $this->repository->load($id->toString());
-    }
-    
-    public function save(Profile $profile): void 
-    {
-        return $this->repository->save($profile);
-    }
-    
-    public function has(ProfileId $id): bool 
-    {
-        return $this->repository->has($id->toString());
     }
 }
 ```

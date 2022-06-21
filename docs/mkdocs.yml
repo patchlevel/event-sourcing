@@ -19,6 +19,7 @@ extra:
       link: https://patchlevel.de
   version:
     provider: mike
+
 extra_css:
   - stylesheets/extra.css
 
@@ -64,6 +65,9 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
 
 nav:
   - Introduction: index.md
@@ -76,12 +80,17 @@ nav:
     - Event Bus:  event_bus.md
     - Processor: processor.md
     - Projection: projection.md
-  - Advance:
+  - Advanced:
+    - Normalizer: normalizer.md
     - Snapshots: snapshots.md
     - Upcasting: upcasting.md
+    - Outbox: outbox.md
     - Pipeline: pipeline.md
-  - Other:
-    - Tests: tests.md
-    - Tools: tools.md
+    - Message Decorator: decorator.md
+    - Time / Clock: clock.md
+  - Other / Tools:
+    - UUID: uuid.md
     - CLI: cli.md
-    - FAQ: faq.md
+    - Schema Migration: migration.md
+    - Watch Server: watch_server.md
+    - Tests: tests.md

@@ -3,6 +3,14 @@
 In our little getting started example, we manage hotels.
 We keep the example small, so we can only create hotels and let guests check in and check out.
 
+- [x] Create some events
+- [x] Define an aggregate root
+- [x] Create projections
+- [x] Add a processor
+- [x] Configure your application
+- [x] Setup database
+- [x] Play with your domain
+
 ## Define some events
 
 First we define the events that happen in our system.
@@ -335,4 +343,13 @@ $hotelRepository->save($hotel2);
 
 !!! note
 
-    An aggregateId can be an **uuid**, you can find more about this [here](faq.md).
+    An aggregateId can be an **uuid**, you can find more about this [here](uuid.md).
+
+## Result
+
+!!! success
+
+    We have successfully implemented and used event sourcing.
+
+    Feel free to browse further in the documentation for more detailed information. 
+    If there are still open questions, create a ticket on Github and we will try to help you.

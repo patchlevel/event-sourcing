@@ -1,14 +1,10 @@
-# Tools
-
-The library offers a few developer tools to simplify the work and debug of event sourcing.
-
-## Watch
+# Watch
 
 We have implemented a watch server that can be used for development.
 Every event that is saved is sent to the watch server using a watch listener.
 You can subscribe to it and display the information anywhere, e.g. in the CLI.
 
-### Watch client
+## Watch client
 
 The watch client and the listener are used to send all events that are saved to a specific host.
 
@@ -24,7 +20,7 @@ $watchListener = new WatchListener($watchServerClient);
 
     This should only be used for dev purposes and should not be registered in production.
 
-### Watch server
+## Watch server
 
 The watch server is used to receive all events that are sent.
 You can subscribe to the watch server and process or display each event as you wish.
@@ -47,6 +43,8 @@ $watchServer->start();
 
     The host must match the one defined in the watch server client.
 
+## Watch server CLI
+
 Here is an example of how to use it with a symfony cli.
 
 ```php
@@ -67,6 +65,10 @@ $cli->addCommands([
 
 $cli->run();
 ```
+
+!!! warning
+
+    To use the watch server CLI command, you have to configure the [CLI](cli.md) beforehand.
 
 !!! note
 

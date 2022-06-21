@@ -33,8 +33,7 @@ $eventBus->dispatch($message);
 ```
 
 You don't have to create the message yourself, 
-it is automatically created in the aggregate 
-and automatically fetched, saved and dispatched from the repository.
+it is automatically created, saved and dispatched in the repository.
 
 ## Default event bus
 

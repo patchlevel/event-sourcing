@@ -48,7 +48,7 @@ $store = new SingleTableStore(
 );
 ```
 
-!!! note
+!!! tip
 
     You can switch between strategies using the [pipeline](./pipeline.md).
 
@@ -74,7 +74,7 @@ $store = new MultiTableStore(
 );
 ```
 
-!!! note
+!!! tip
 
     You can switch between strategies using the [pipeline](./pipeline.md).
 
@@ -82,9 +82,19 @@ $store = new MultiTableStore(
 
 // TODO
 
+!!! tip
+
+    To ensure that all listeners are executed for the released events 
+    or that the listeners are not executed if the transaction fails, 
+    you can use the [outbox](outbox.md) pattern for it.
+
 ## Schema Manager
 
 With the help of the `SchemaManager`, the database structure can be created, updated and deleted.
+
+!!! tip
+
+    You can also use doctrine [migration](migration.md) to create and keep your schema in sync.
 
 ### Create schema
 
@@ -108,81 +118,4 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 
 (new SchemaManager())->drop($store);
-```
-
-## Migration
-
-You can also manage your schema with doctrine migrations. 
-
-In order to be able to use `doctrine/migrations`, 
-you have to install the associated package.
-
-```bash
-composer require doctrine/migrations
-```
-
-We have added a `schema provider` for doctrine migrations 
-so that you just have to plug the whole thing together.
-
-```php
-use Patchlevel\EventSourcing\Schema\MigrationSchemaProvider;
-
-$schemaProvider = new MigrationSchemaProvider($store);
-```
-
-You can plug this together, for example, as follows to create CLI applications like `cli.php`:
-
-```php
-use Doctrine\DBAL\DriverManager;
-use Doctrine\Migrations\DependencyFactory;
-use Doctrine\Migrations\Configuration\Migration\PhpFile;
-use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
-use Doctrine\Migrations\Tools\Console\Command;
-use Symfony\Component\Console\Application;
-
-$connection = DriverManager::getConnection([
-    'url' => 'mysql://user:secret@localhost/app'
-]);
-
-$config = new PhpFile('migrations.php');
-
-$dependencyFactory = DependencyFactory::fromConnection(
-    $config, 
-    new ExistingConnection($connection)
-);
-
-$store = /* define your doctrine store */;
-
-$dependencyFactory->setService(
-    SchemaProvider::class, 
-    new MigrationSchemaProvider($store)
-);
-
-$cli = new Application('Doctrine Migrations');
-$cli->setCatchExceptions(true);
-
-$cli->addCommands(array(
-    new Command\ExecuteCommand($dependencyFactory),
-    new Command\GenerateCommand($dependencyFactory),
-    new Command\LatestCommand($dependencyFactory),
-    new Command\ListCommand($dependencyFactory),
-    new Command\MigrateCommand($dependencyFactory),
-    new Command\DiffCommand($dependencyFactory),
-    new Command\StatusCommand($dependencyFactory),
-    new Command\VersionCommand($dependencyFactory),
-));
-
-$cli->run();
-```
-
-!!! note
-
-    Here you can find more information on how to 
-    [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
-
-Now you can execute commands like:
-
-```bash
-cli.php migrations:diff
-cli.php migrations:migrate
 ```

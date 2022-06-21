@@ -10,7 +10,7 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * [Snapshots](snapshots.md) system to quickly rebuild the aggregates
 * [Pipeline](pipeline.md) to build new [projections](projection.md) or to migrate events
 * [Scheme management](store.md) and [doctrine migration](store.md) support
-* Dev [tools](tools.md) such as a realtime event watcher
+* Dev [tools](watch_server.md) such as a realtime event watcher
 * Built in [cli commands](cli.md) with [symfony](https://symfony.com/)
 
 ## Installation
@@ -18,3 +18,8 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 ```bash
 composer require patchlevel/event-sourcing
 ```
+
+## Integration
+
+* [Symfony](https://github.com/patchlevel/event-sourcing-bundle)
+* [Psalm](https://github.com/patchlevel/event-sourcing-psalm-plugin)
