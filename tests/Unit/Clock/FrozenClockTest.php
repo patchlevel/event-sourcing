@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Clock\FrozenClock;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Clock\FrozenClock */
-class FreezeClockTest extends TestCase
+class FrozenClockTest extends TestCase
 {
     public function testCreateDateTimeImmutableWithFrozenClock(): void
     {
@@ -18,7 +18,8 @@ class FreezeClockTest extends TestCase
 
         $new = $clock->now();
 
-        self::assertSame($current, $new);
+        self::assertEquals($current, $new);
+        self::assertNotSame($current, $new);
     }
 
     public function testSleep(): void
@@ -43,8 +44,8 @@ class FreezeClockTest extends TestCase
         $clock->update($date2);
         $new2 = $clock->now();
 
-        self::assertSame($date1, $new1);
-        self::assertSame($date2, $new2);
-        self::assertNotSame($new1, $new2);
+        self::assertEquals($date1, $new1);
+        self::assertEquals($date2, $new2);
+        self::assertNotEquals($new1, $new2);
     }
 }
