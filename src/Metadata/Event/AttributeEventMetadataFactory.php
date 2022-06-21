@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Metadata\Event;
 
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\Normalize;
-use Patchlevel\EventSourcing\Attribute\SerializedName;
+use Patchlevel\EventSourcing\Attribute\NormalizedName;
 use ReflectionClass;
 
 use function array_key_exists;
@@ -44,7 +44,7 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
             $reflection = $property;
             $fieldName = $property->getName();
 
-            $attributeReflectionList = $property->getAttributes(SerializedName::class);
+            $attributeReflectionList = $property->getAttributes(NormalizedName::class);
 
             if ($attributeReflectionList !== []) {
                 $attribute = $attributeReflectionList[0]->newInstance();

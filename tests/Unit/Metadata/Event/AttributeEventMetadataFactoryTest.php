@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Event;
 
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\Normalize;
-use Patchlevel\EventSourcing\Attribute\SerializedName;
+use Patchlevel\EventSourcing\Attribute\NormalizedName;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\ClassIsNotAnEvent;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -66,7 +66,7 @@ class AttributeEventMetadataFactoryTest extends TestCase
     {
         $event = new #[Event('profile_created')] class ('Foo') {
             public function __construct(
-                #[SerializedName('username')]
+                #[NormalizedName('username')]
                 public string $name
             ) {
             }
