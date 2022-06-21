@@ -49,7 +49,7 @@ final class ProfileCreated
 ```
 
 * Added `#[Normalize(YourNormalizer::class)]` for more complicated properties like ValueObjects.
-* Added `#[SerializedName('foo')]`.
+* Added `#[NormalizedName('foo')]`.
 
 ```php
 use YourApp\EmailNormalizer;
@@ -140,7 +140,7 @@ name. See for that the documentation.
 
 ### Clock
 
-* Removed `Clock` singleton class. See `SystemClock`, `FreezeClock` as an implementation of the `Clock` interface
+* Removed `Clock` singleton class. See `SystemClock`, `FrozenClock` as an implementation of the `Clock` interface
   instead.
 
 ## Full BC-Break list
