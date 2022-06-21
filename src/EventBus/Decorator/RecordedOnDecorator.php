@@ -15,6 +15,6 @@ final class RecordedOnDecorator implements MessageDecorator
 
     public function __invoke(Message $message): Message
     {
-        return $message->withRecordedOn($this->clock->create());
+        return $message->withRecordedOn($this->clock->now());
     }
 }
