@@ -50,8 +50,34 @@ final class InputHelperTest extends TestCase
     public function testInvalidBoolean(): void
     {
         $this->expectException(InvalidArgumentGiven::class);
-        $this->expectExceptionMessage('Invalid argument given: need type "boolean" got "integer"');
+        $this->expectExceptionMessage('Invalid argument given: need type "bool" got "integer"');
 
         InputHelper::bool(1);
+    }
+
+    public function testValidInt(): void
+    {
+        self::assertSame(1, InputHelper::nullableInt(1));
+    }
+
+    public function testValidNullInt(): void
+    {
+        self::assertSame(null, InputHelper::nullableInt(null));
+    }
+
+    public function testInvalidInt(): void
+    {
+        $this->expectException(InvalidArgumentGiven::class);
+        $this->expectExceptionMessage('Invalid argument given: need type "int|null" got "boolean"');
+
+        InputHelper::nullableInt(true);
+    }
+
+    public function testInvalidIntAsString(): void
+    {
+        $this->expectException(InvalidArgumentGiven::class);
+        $this->expectExceptionMessage('Invalid argument given: need type "int|null" got "string"');
+
+        InputHelper::nullableInt('foo');
     }
 }

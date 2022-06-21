@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware */
@@ -21,21 +21,16 @@ class UntilEventMiddlewareTest extends TestCase
 
         $middleware = new UntilEventMiddleware($until);
 
-        $bucket = new EventBucket(
-            Profile::class,
-            1,
-            AggregateChanged::deserialize([
-                'aggregateId' => '1',
-                'playhead' => 0,
-                'event' => ProfileCreated::class,
-                'payload' => '{}',
-                'recordedOn' => new DateTimeImmutable('2020-02-01 00:00:00'),
-            ])
-        );
+        $message = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de')
+            )
+        )->withRecordedOn(new DateTimeImmutable('2020-02-01 00:00:00'));
 
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
-        self::assertSame([$bucket], $result);
+        self::assertSame([$message], $result);
     }
 
     public function testNegative(): void
@@ -44,42 +39,14 @@ class UntilEventMiddlewareTest extends TestCase
 
         $middleware = new UntilEventMiddleware($until);
 
-        $bucket = new EventBucket(
-            Profile::class,
-            1,
-            AggregateChanged::deserialize([
-                'aggregateId' => '1',
-                'playhead' => 0,
-                'event' => ProfileCreated::class,
-                'payload' => '{}',
-                'recordedOn' => new DateTimeImmutable('2020-02-01 00:00:00'),
-            ])
-        );
+        $message = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de')
+            )
+        )->withRecordedOn(new DateTimeImmutable('2020-02-01 00:00:00'));
 
-        $result = $middleware($bucket);
-
-        self::assertSame([], $result);
-    }
-
-    public function testNullEdgeCase(): void
-    {
-        $until = new DateTimeImmutable('2020-01-01 00:00:00');
-
-        $middleware = new UntilEventMiddleware($until);
-
-        $bucket = new EventBucket(
-            Profile::class,
-            1,
-            AggregateChanged::deserialize([
-                'aggregateId' => '1',
-                'playhead' => 0,
-                'event' => ProfileCreated::class,
-                'payload' => '{}',
-                'recordedOn' => null,
-            ])
-        );
-
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
         self::assertSame([], $result);
     }

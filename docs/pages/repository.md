@@ -1,0 +1,157 @@
+# Repository
+
+A `repository` takes care of storing and loading the `aggregates`.
+The [design pattern](https://martinfowler.com/eaaCatalog/repository.html) of the same name is also used.
+
+Every aggregate needs a repository to be stored. 
+And each repository is only responsible for one aggregate.
+
+## Create
+
+We offer two implementations. One is a `DefaultRepository` that only reads or writes the data from one store. 
+And a `SnapshotRepository` that holds a state of the aggregate in a cache 
+so that loading and rebuilding of the aggregate is faster.
+
+Both repositories implement the `Repository` interface. 
+This interface can be used for the typehints so that a change is possible at any time.
+
+### Default Repository
+
+The default repository acts directly with the `store` and therefore needs one.
+The [event bus](./event_bus.md) is used as a further parameter to dispatch new events.
+Finally, the `aggregate` class is needed, which aggregates the repository should take care of.
+
+```php
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+
+$repositoryManager = new DefaultRepositoryManager(
+    $aggregateRootRegistry,
+    $store,
+    $eventBus
+);
+
+$repository = $repositoryManager->get(Profile::class);
+```
+
+!!! note
+
+    You can find out more about stores [here](./store.md)
+
+### Default Repository Manager
+
+// todo
+
+```php
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+
+$snapshot = new DefaultSnapshotStore([/* adapters */]);
+
+$repositoryManager = new DefaultRepositoryManager(
+    $aggregateRootRegistry,
+    $store,
+    $eventBus,
+    $snapshot
+);
+
+$repository = $repositoryManager->get(Profile::class);
+```
+
+!!! note
+
+    You can find out more about snapshots [here](./snapshots.md)
+
+## Usage
+
+Each `repository` has three methods that are responsible for loading an `aggregate`, 
+saving it or checking whether it exists.
+
+### Save
+
+An `aggregate` can be `saved`. 
+All new events that have not yet been written to the database are fetched from the aggregate. 
+These events are then also append to the database. 
+After the events have been written, 
+the new events are dispatched on the [event bus](./event_bus.md).
+
+```php
+$profile = Profile::create('david.badura@patchlevel.de');
+
+$repository->save($profile);
+```
+
+!!! note
+
+    All events are written to the database with one transaction in order to ensure data consistency.
+
+### Load
+
+An `aggregate` can be loaded using the `load` method. 
+All events for the aggregate are loaded from the database and the current state is rebuilt.
+
+```php
+$profile = $repository->load('229286ff-6f95-4df6-bc72-0a239fe7b284');
+```
+
+!!! note
+
+    You can only fetch one aggregate at a time and don't do any complex queries either. 
+    Projections are used for this purpose.
+
+### Has
+
+You can also check whether an `aggregate` with a certain id exists. 
+It is checked whether any event with this id exists in the database.
+
+```php
+if($repository->has('229286ff-6f95-4df6-bc72-0a239fe7b284')) {
+    // ...
+}
+```
+
+!!! note
+
+    The query is fast and does not load any event. 
+    This means that the state of the aggregate is not rebuild either.
+
+
+## Custom Repository
+
+In clean code you want to have explicit type hints for the repositories
+so that you don't accidentally use the wrong repository.
+It would also help in frameworks with a dependency injection container,
+as this allows the services to be autowired.
+However, you cannot inherit from our repository implementations.
+Instead, you just have to wrap these repositories.
+This also gives you more type security.
+
+```php
+use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
+
+class ProfileRepository 
+{
+    /** @var Repository<Profile>  */
+    private Repository $repository;
+
+    public function __constructor(RepositoryManager $repositoryManager) 
+    {
+        $this->repository = $repositoryManager->get(Profile::class);
+    }
+    
+    public function load(ProfileId $id): Profile 
+    {
+        return $this->repository->load($id->toString());
+    }
+    
+    public function save(Profile $profile): void 
+    {
+        return $this->repository->save($profile);
+    }
+    
+    public function has(ProfileId $id): bool 
+    {
+        return $this->repository->has($id->toString());
+    }
+}
+```

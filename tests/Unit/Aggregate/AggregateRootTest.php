@@ -4,20 +4,25 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
-use Patchlevel\EventSourcing\Aggregate\PlayheadSequenceMismatch;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound;
+use Patchlevel\EventSourcing\Aggregate\MetadataNotPossible;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessagePublished;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileInvalid;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSuppressAll;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRoot */
 class AggregateRootTest extends TestCase
 {
-    public function testCreateAggregate(): void
+    public function testApplyMethod(): void
     {
         $id = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
@@ -28,15 +33,83 @@ class AggregateRootTest extends TestCase
         self::assertSame(1, $profile->playhead());
         self::assertEquals($id, $profile->id());
         self::assertEquals($email, $profile->email());
+        self::assertSame(0, $profile->visited());
 
         $events = $profile->releaseEvents();
 
         self::assertCount(1, $events);
+
         $event = $events[0];
-        self::assertSame(1, $event->playhead());
+
+        self::assertInstanceOf(ProfileCreated::class, $event);
+        self::assertEquals($id, $event->profileId);
+        self::assertEquals($email, $event->email);
     }
 
-    public function testExecuteMethod(): void
+    public function testCreateFromMessages(): void
+    {
+        $id = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
+
+        $profile = Profile::createFromEvents([new ProfileCreated($id, $email)]);
+
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
+        self::assertEquals($id, $profile->id());
+        self::assertEquals($email, $profile->email());
+        self::assertSame(0, $profile->visited());
+
+        $messages = $profile->releaseEvents();
+
+        self::assertCount(0, $messages);
+    }
+
+    public function testMultipleApplyOnOneMethod(): void
+    {
+        $id = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
+
+        $target = ProfileId::fromString('2');
+
+        $profile = Profile::createProfile($id, $email);
+        $profile->visitProfile($target);
+
+        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame(2, $profile->playhead());
+        self::assertEquals($id, $profile->id());
+        self::assertEquals($email, $profile->email());
+        self::assertSame(1, $profile->visited());
+
+        $events = $profile->releaseEvents();
+
+        self::assertCount(2, $events);
+    }
+
+    public function testEventWithoutApplyMethod(): void
+    {
+        $this->expectException(ApplyMethodNotFound::class);
+
+        $profileId = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
+
+        $messageId = MessageId::fromString('2');
+
+        $profile = Profile::createProfile($profileId, $email);
+
+        $events = $profile->releaseEvents();
+
+        self::assertCount(1, $events);
+        self::assertSame(1, $profile->playhead());
+
+        $profile->publishMessage(
+            Message::create(
+                $messageId,
+                'foo'
+            )
+        );
+    }
+
+    public function testSuppressEvent(): void
     {
         $profileId = ProfileId::fromString('1');
         $email = Email::fromString('hallo@patchlevel.de');
@@ -47,103 +120,46 @@ class AggregateRootTest extends TestCase
 
         $events = $profile->releaseEvents();
 
-        $playhead = $profile->playhead();
         self::assertCount(1, $events);
-        self::assertSame(1, $playhead);
-        $event = $events[0];
-        self::assertSame(1, $event->playhead());
+        self::assertSame(1, $profile->playhead());
 
-        $profile->publishMessage(
-            Message::create(
-                $messageId,
-                'foo'
-            )
-        );
+        $profile->deleteMessage($messageId);
+    }
 
-        $playhead = $profile->playhead();
-        self::assertSame('1', $profile->aggregateRootId());
-        self::assertSame(2, $playhead);
-        self::assertEquals($profileId, $profile->id());
-        self::assertEquals($email, $profile->email());
+    public function testSuppressAll(): void
+    {
+        $profileId = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
+
+        $profile = ProfileWithSuppressAll::createProfile($profileId, $email);
 
         $events = $profile->releaseEvents();
 
         self::assertCount(1, $events);
-        $event = $events[0];
-        self::assertSame(2, $event->playhead());
+        self::assertSame(1, $profile->playhead());
     }
 
-    public function testEventWithoutApplyMethod(): void
+    public function testDuplicateApplyMethods(): void
     {
-        $visitorProfile = Profile::createProfile(
-            ProfileId::fromString('1'),
-            Email::fromString('visitor@test.com')
-        );
+        $this->expectException(DuplicateApplyMethod::class);
 
-        $events = $visitorProfile->releaseEvents();
-        self::assertCount(1, $events);
-        self::assertSame(1, $visitorProfile->playhead());
-        $event = $events[0];
-        self::assertSame(1, $event->playhead());
+        $profileId = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
 
-        $visitedProfile = Profile::createProfile(
-            ProfileId::fromString('2'),
-            Email::fromString('visited@test.com')
-        );
-
-        $events = $visitedProfile->releaseEvents();
-        self::assertCount(1, $events);
-        self::assertSame(1, $visitedProfile->playhead());
-        $event = $events[0];
-        self::assertSame(1, $event->playhead());
-
-        $visitorProfile->visitProfile($visitedProfile->id());
-
-        $events = $visitedProfile->releaseEvents();
-        self::assertCount(0, $events);
-        self::assertSame(1, $visitedProfile->playhead());
+        ProfileInvalid::createProfile($profileId, $email);
     }
 
-    public function testInitliazingState(): void
+    public function testMetadata(): void
     {
-        $eventStream = [
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('profile@test.com')
-            )->recordNow(1),
-            MessagePublished::raise(
-                ProfileId::fromString('1'),
-                Message::create(
-                    MessageId::fromString('2'),
-                    'message value'
-                )
-            )->recordNow(2),
-        ];
+        $metadata = Profile::metadata();
 
-        $profile = Profile::createFromEventStream($eventStream);
-
-        self::assertSame('1', $profile->id()->toString());
-        self::assertCount(1, $profile->messages());
+        self::assertInstanceOf(AggregateRootMetadata::class, $metadata);
     }
 
-    public function testPlayheadSequenceMismatch(): void
+    public function testMetadataNotPossible(): void
     {
-        $this->expectException(PlayheadSequenceMismatch::class);
+        $this->expectException(MetadataNotPossible::class);
 
-        $eventStream = [
-            ProfileCreated::raise(
-                ProfileId::fromString('1'),
-                Email::fromString('profile@test.com')
-            )->recordNow(1),
-            MessagePublished::raise(
-                ProfileId::fromString('1'),
-                Message::create(
-                    MessageId::fromString('2'),
-                    'message value'
-                )
-            )->recordNow(1),
-        ];
-
-        Profile::createFromEventStream($eventStream);
+        AggregateRoot::metadata();
     }
 }

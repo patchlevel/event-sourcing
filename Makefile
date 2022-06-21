@@ -5,11 +5,11 @@ vendor: composer.lock
 	composer install
 
 .PHONY: phpcs-check
-phpcs-check: vendor                                                             ## run phpcs
+cs-check: vendor                                                                ## run phpcs
 	vendor/bin/phpcs
 
 .PHONY: phpcs-fix
-phpcs-fix: vendor                                                               ## run phpcs fixer
+cs: vendor                                                                      ## run phpcs fixer
 	vendor/bin/phpcbf
 
 .PHONY: phpstan
@@ -26,11 +26,11 @@ psalm: vendor                                                                   
 
 .PHONY: psalm-baseline
 psalm-baseline: vendor                                                          ## run psalm static code analyser
-	vendor/bin/psalm --update-baseline
+	vendor/bin/psalm --update-baseline --set-baseline=baseline.xml
 
 .PHONY: phpunit
 phpunit: vendor                                                                 ## run phpunit tests
-	vendor/bin/phpunit --testdox --colors=always -v $(OPTIONS)
+	vendor/bin/phpunit --colors=always -v $(OPTIONS)
 
 .PHONY: infection
 infection: vendor                                                               ## run infection

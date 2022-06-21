@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 interface Store
 {
     /**
      * @param class-string<AggregateRoot> $aggregate
      *
-     * @return array<AggregateChanged<array<string, mixed>>>
+     * @return list<Message>
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array;
 
@@ -21,9 +21,5 @@ interface Store
      */
     public function has(string $aggregate, string $id): bool;
 
-    /**
-     * @param class-string<AggregateRoot>                   $aggregate
-     * @param array<AggregateChanged<array<string, mixed>>> $events
-     */
-    public function saveBatch(string $aggregate, string $id, array $events): void;
+    public function save(Message ...$messages): void;
 }

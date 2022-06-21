@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
 use Patchlevel\EventSourcing\Schema\SchemaManager;
 use Patchlevel\EventSourcing\Store\Store;
@@ -12,10 +13,12 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class SchemaCreateCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:schema:create';
+    protected static $defaultDescription = 'create eventstore schema';
+
     private Store $store;
     private SchemaManager $schemaManager;
 
@@ -30,14 +33,12 @@ final class SchemaCreateCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:schema:create')
-            ->setDescription('create eventstore schema')
             ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'dump schema create queries');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $console = new SymfonyStyle($input, $output);
+        $console = new OutputStyle($input, $output);
 
         $dryRun = InputHelper::bool($input->getOption('dry-run'));
 

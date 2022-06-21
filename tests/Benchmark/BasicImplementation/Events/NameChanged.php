@@ -4,25 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Attribute\Event;
 
-/**
- * @template-extends AggregateChanged<array{name: string}>
- */
-final class NameChanged extends AggregateChanged
+#[Event('profile.name_changed')]
+final class NameChanged
 {
-    public static function raise(string $id, string $name): static
-    {
-        return new static($id, ['name' => $name]);
-    }
-
-    public function profileId(): string
-    {
-        return $this->aggregateId;
-    }
-
-    public function name(): string
-    {
-        return $this->payload['name'];
+    public function __construct(
+        public string $name
+    ) {
     }
 }

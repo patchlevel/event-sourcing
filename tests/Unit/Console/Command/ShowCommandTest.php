@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
+use DateTimeImmutable;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\Command\ShowCommand;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -22,12 +28,29 @@ final class ShowCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
+        $event = new ProfileVisited(ProfileId::fromString('1'));
+
         $store = $this->prophesize(Store::class);
-        $store->load(Profile::class, '1')->willReturn([ProfileVisited::raise(ProfileId::fromString('1'), ProfileId::fromString('1'))]);
+        $store->load(Profile::class, '1')->willReturn([
+            Message::create($event)
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('1')
+                ->withPlayhead(1)
+                ->withRecordedOn(new DateTimeImmutable()),
+        ]);
+
+        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
+            new SerializedEvent(
+                'profile.visited',
+                '{"visitorId": "1"}',
+            )
+        );
 
         $command = new ShowCommand(
             $store->reveal(),
-            [Profile::class => 'profile']
+            $serializer->reveal(),
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([
@@ -49,10 +72,12 @@ final class ShowCommandTest extends TestCase
     public function testAggregateNotAString(): void
     {
         $store = $this->prophesize(Store::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),
-            [Profile::class => 'profile']
+            $serializer->reveal(),
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([
@@ -69,10 +94,12 @@ final class ShowCommandTest extends TestCase
     public function testIdNotAString(): void
     {
         $store = $this->prophesize(Store::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),
-            [Profile::class => 'profile']
+            $serializer->reveal(),
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([
@@ -89,10 +116,12 @@ final class ShowCommandTest extends TestCase
     public function testWrongAggregate(): void
     {
         $store = $this->prophesize(Store::class);
+        $serializer = $this->prophesize(EventSerializer::class);
 
         $command = new ShowCommand(
             $store->reveal(),
-            [Profile::class => 'profile']
+            $serializer->reveal(),
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([
@@ -116,9 +145,12 @@ final class ShowCommandTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(Profile::class, 'test')->willReturn([]);
 
+        $serializer = $this->prophesize(EventSerializer::class);
+
         $command = new ShowCommand(
             $store->reveal(),
-            [Profile::class => 'profile']
+            $serializer->reveal(),
+            new AggregateRootRegistry(['profile' => Profile::class])
         );
 
         $input = new ArrayInput([

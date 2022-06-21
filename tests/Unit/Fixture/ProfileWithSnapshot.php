@@ -4,16 +4,24 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\NonStrictApplyMethod;
-use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Normalize;
+use Patchlevel\EventSourcing\Attribute\Snapshot;
+use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
-final class ProfileWithSnapshot extends SnapshotableAggregateRoot
+#[Aggregate('profile_with_snapshot')]
+#[Snapshot('memory', batch: 2)]
+#[SuppressMissingApply([ProfileVisited::class])]
+final class ProfileWithSnapshot extends AggregateRoot
 {
-    use NonStrictApplyMethod;
-
+    #[Normalize(ProfileIdNormalizer::class)]
     private ProfileId $id;
+    #[Normalize(EmailNormalizer::class)]
     private Email $email;
     /** @var array<Message> */
+    #[Normalize(MessageNormalizer::class, list: true)]
     private array $messages;
 
     public function id(): ProfileId
@@ -37,61 +45,39 @@ final class ProfileWithSnapshot extends SnapshotableAggregateRoot
     public static function createProfile(ProfileId $id, Email $email): self
     {
         $self = new self();
-        $self->record(ProfileCreated::raise($id, $email));
+        $self->recordThat(new ProfileCreated($id, $email));
 
         return $self;
     }
 
     public function publishMessage(Message $message): void
     {
-        $this->record(MessagePublished::raise(
-            $this->id,
-            $message,
+        $this->recordThat(new MessagePublished(
+            $message
         ));
     }
 
     public function visitProfile(ProfileId $profileId): void
     {
-        $this->record(ProfileVisited::raise($this->id, $profileId));
+        $this->recordThat(new ProfileVisited($profileId));
     }
 
+    #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
-        $this->id = $event->profileId();
-        $this->email = $event->email();
+        $this->id = $event->profileId;
+        $this->email = $event->email;
         $this->messages = [];
     }
 
+    #[Apply(MessagePublished::class)]
     protected function applyMessagePublished(MessagePublished $event): void
     {
-        $this->messages[] = $event->message();
+        $this->messages[] = $event->message;
     }
 
     public function aggregateRootId(): string
     {
         return $this->id->toString();
-    }
-
-    /**
-     * @return array{id: string, email: string}
-     */
-    protected function serialize(): array
-    {
-        return [
-            'id' => $this->id->toString(),
-            'email' => $this->email->toString(),
-        ];
-    }
-
-    /**
-     * @param array{id: string, email: string} $payload
-     */
-    protected static function deserialize(array $payload): static
-    {
-        $self = new static();
-        $self->id = ProfileId::fromString($payload['id']);
-        $self->email = Email::fromString($payload['email']);
-
-        return $self;
     }
 }

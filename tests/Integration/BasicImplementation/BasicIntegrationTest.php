@@ -5,17 +5,24 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Clock\SystemClock;
+use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
+use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
-use Patchlevel\EventSourcing\Repository\DefaultRepository;
-use Patchlevel\EventSourcing\Repository\SnapshotRepository;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
-use Patchlevel\EventSourcing\Snapshot\InMemorySnapshotStore;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
@@ -42,7 +49,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 
@@ -52,17 +59,25 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            [Profile::class => 'profile'],
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
+        );
+        $repository = $manager->get(Profile::class);
 
         // create tables
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1', 'John');
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -72,7 +87,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+        );
+        $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
@@ -85,7 +107,7 @@ final class BasicIntegrationTest extends TestCase
     public function testWithSymfonySuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 
@@ -96,17 +118,25 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            [Profile::class => 'profile'],
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+        );
+        $repository = $manager->get(Profile::class);
 
         // create tables
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1', 'John');
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -116,7 +146,15 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
+        );
+        $repository = $manager->get(Profile::class);
+
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
@@ -129,7 +167,7 @@ final class BasicIntegrationTest extends TestCase
     public function testMultiTableSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 
@@ -139,16 +177,24 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new MultiTableStore(
             $this->connection,
-            [Profile::class => 'profile']
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
         );
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
+        );
+        $repository = $manager->get(Profile::class);
 
         // create tables
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1', 'John');
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -158,7 +204,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::class);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+        );
+        $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);
@@ -171,7 +224,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSnapshot(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 
@@ -181,19 +234,25 @@ final class BasicIntegrationTest extends TestCase
 
         $store = new SingleTableStore(
             $this->connection,
-            [Profile::class => 'profile'],
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore'
         );
 
-        $snapshotStore = new InMemorySnapshotStore();
-
-        $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
+        );
+        $repository = $manager->get(Profile::class);
 
         // create tables
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($store);
 
-        $profile = Profile::create('1', 'John');
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -203,7 +262,14 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = new SnapshotRepository($store, $eventStream, Profile::class, $snapshotStore);
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            $eventStream,
+            null,
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+        );
+        $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');
 
         self::assertInstanceOf(Profile::class, $profile);

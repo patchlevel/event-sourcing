@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 final class InMemoryTarget implements Target
 {
-    /** @var list<EventBucket> */
-    private array $buckets = [];
+    /** @var list<Message> */
+    private array $messages = [];
 
-    public function save(EventBucket $bucket): void
+    public function save(Message $message): void
     {
-        $this->buckets[] = $bucket;
+        $this->messages[] = $message;
     }
 
     /**
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    public function buckets(): array
+    public function messages(): array
     {
-        return $this->buckets;
+        return $this->messages;
     }
 }

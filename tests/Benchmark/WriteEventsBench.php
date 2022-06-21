@@ -8,15 +8,18 @@ use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionRepository;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
+use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Processor\SendEmailProcessor;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection\ProfileProjection;
 use PhpBench\Attributes as Bench;
 
@@ -45,7 +48,7 @@ final class WriteEventsBench
         ]);
 
         $profileProjection = new ProfileProjection($connection);
-        $projectionRepository = new DefaultProjectionRepository(
+        $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );
 
@@ -55,7 +58,8 @@ final class WriteEventsBench
 
         $this->store = new SingleTableStore(
             $connection,
-            [Profile::class => 'profile'],
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
             'eventstore'
         );
 
@@ -65,7 +69,7 @@ final class WriteEventsBench
         $profileProjection->create();
         (new DoctrineSchemaManager())->create($this->store);
 
-        $this->profile = Profile::create('1', 'Peter');
+        $this->profile = Profile::create(ProfileId::fromString('1'), 'Peter');
         $this->repository->save($this->profile);
     }
 

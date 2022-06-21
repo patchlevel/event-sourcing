@@ -4,48 +4,44 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Console\EventPrinter;
+use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\WatchServer\WatchServer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function sprintf;
 
 final class WatchCommand extends Command
 {
-    private WatchServer $server;
+    protected static $defaultName = 'event-sourcing:watch';
+    protected static $defaultDescription = 'live stream of all aggregate events';
 
-    public function __construct(WatchServer $server)
+    private WatchServer $server;
+    private EventSerializer $serializer;
+
+    public function __construct(WatchServer $server, EventSerializer $serializer)
     {
         parent::__construct();
 
         $this->server = $server;
-    }
-
-    protected function configure(): void
-    {
-        $this
-            ->setName('event-sourcing:watch')
-            ->setDescription('live stream of all aggregate events');
+        $this->serializer = $serializer;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $console = new SymfonyStyle($input, $output);
+        $console = new OutputStyle($input, $output);
 
         $this->server->start();
 
         $console->success(sprintf('Server listening on %s', $this->server->host()));
         $console->comment('Quit the server with CONTROL-C.');
 
-        $dumper = new EventPrinter();
-
         $this->server->listen(
-            static function (AggregateChanged $event) use ($dumper, $console): void {
-                $dumper->write($console, $event);
+            function (Message $message) use ($console): void {
+                $console->message($this->serializer, $message);
             }
         );
 

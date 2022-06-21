@@ -6,19 +6,22 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 use function sprintf;
 
 final class DatabaseDropCommand extends Command
 {
+    protected static $defaultName = 'event-sourcing:database:drop';
+    protected static $defaultDescription = 'drop eventstore database';
+
     private Store $store;
     private DoctrineHelper $helper;
 
@@ -33,15 +36,13 @@ final class DatabaseDropCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('event-sourcing:database:drop')
-            ->setDescription('drop eventstore database')
             ->addOption('if-exists', null, InputOption::VALUE_NONE, 'Don\'t trigger an error, when the database doesn\'t exist')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Set this parameter to execute this action');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $console = new SymfonyStyle($input, $output);
+        $console = new OutputStyle($input, $output);
         $store = $this->store;
 
         if (!$store instanceof DoctrineStore) {

@@ -8,13 +8,18 @@ use function sprintf;
 
 final class ApplyMethodNotFound extends AggregateException
 {
-    public function __construct(AggregateRoot $aggregate, AggregateChanged $event, string $method)
+    /**
+     * @param class-string<AggregateRoot> $aggregate
+     * @param class-string                $event
+     */
+    public function __construct(string $aggregate, string $event)
     {
-        parent::__construct(sprintf(
-            'Apply method "%s::%s" could not be found for the event "%s"',
-            $aggregate::class,
-            $method,
-            $event::class
-        ));
+        parent::__construct(
+            sprintf(
+                'Apply method in "%s" could not be found for the event "%s"',
+                $aggregate,
+                $event
+            )
+        );
     }
 }

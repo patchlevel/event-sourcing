@@ -4,74 +4,43 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
-use ReflectionClass;
-use ReflectionProperty;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 /**
- * @template T of AggregateChanged
+ * @template T of object
  */
 final class ReplaceEventMiddleware implements Middleware
 {
     /** @var class-string<T> */
     private string $class;
 
-    /** @var callable(T $event):AggregateChanged<array<string, mixed>> */
+    /** @var callable(T $event):object */
     private $callable;
-
-    private ReflectionProperty $recoredOnProperty;
-    private ReflectionProperty $playheadProperty;
 
     /**
      * @param class-string<T> $class
-     * @param callable(T      $event):AggregateChanged<array<string, mixed>> $callable
+     * @param callable(T      $event):object $callable
      */
     public function __construct(string $class, callable $callable)
     {
         $this->class = $class;
         $this->callable = $callable;
-
-        $reflectionClass = new ReflectionClass(AggregateChanged::class);
-
-        $this->recoredOnProperty = $reflectionClass->getProperty('recordedOn');
-        $this->recoredOnProperty->setAccessible(true);
-
-        $this->playheadProperty = $reflectionClass->getProperty('playhead');
-        $this->playheadProperty->setAccessible(true);
     }
 
     /**
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    public function __invoke(EventBucket $bucket): array
+    public function __invoke(Message $message): array
     {
-        $event = $bucket->event();
+        $event = $message->event();
 
         if (!$event instanceof $this->class) {
-            return [$bucket];
+            return [$message];
         }
 
         $callable = $this->callable;
-
         $newEvent = $callable($event);
 
-        $this->recoredOnProperty->setValue(
-            $newEvent,
-            $this->recoredOnProperty->getValue($event)
-        );
-
-        $this->playheadProperty->setValue(
-            $newEvent,
-            $this->playheadProperty->getValue($event)
-        );
-
-        return [
-            new EventBucket(
-                $bucket->aggregateClass(),
-                $bucket->index(),
-                $newEvent
-            ),
-        ];
+        return [Message::createWithHeaders($newEvent, $message->headers())];
     }
 }

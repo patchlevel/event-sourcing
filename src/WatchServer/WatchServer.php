@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\WatchServer;
 
 use Closure;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 interface WatchServer
 {
     public function start(): void;
 
     /**
-     * @param Closure(AggregateChanged<array<string, mixed>>, int):void $callback
+     * @param Closure(Message, int):void $callback
      */
     public function listen(Closure $callback): void;
 

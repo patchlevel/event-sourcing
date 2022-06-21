@@ -1,0 +1,95 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Patchlevel\EventSourcing\Snapshot;
+
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Serializer\Hydrator\AggregateRootHydrator;
+use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataAggregateRootHydrator;
+use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
+use Throwable;
+
+use function array_key_exists;
+use function sprintf;
+
+final class DefaultSnapshotStore implements SnapshotStore
+{
+    /** @var array<string, SnapshotAdapter> */
+    private array $snapshotAdapters;
+
+    private AggregateRootHydrator $hydrator;
+
+    /**
+     * @param array<string, SnapshotAdapter> $snapshotAdapters
+     */
+    public function __construct(array $snapshotAdapters, ?AggregateRootHydrator $hydrator = null)
+    {
+        $this->snapshotAdapters = $snapshotAdapters;
+        $this->hydrator = $hydrator ?? new MetadataAggregateRootHydrator();
+    }
+
+    public function save(AggregateRoot $aggregateRoot): void
+    {
+        $aggregateClass = $aggregateRoot::class;
+        $key = $this->key($aggregateClass, $aggregateRoot->aggregateRootId());
+
+        $adapter = $this->adapter($aggregateClass);
+
+        $adapter->save(
+            $key,
+            $this->hydrator->extract($aggregateRoot),
+        );
+    }
+
+    /**
+     * @param class-string<T> $aggregateClass
+     *
+     * @return T
+     *
+     * @throws SnapshotNotFound
+     *
+     * @template T of AggregateRoot
+     */
+    public function load(string $aggregateClass, string $id): AggregateRoot
+    {
+        $adapter = $this->adapter($aggregateClass);
+        $key = $this->key($aggregateClass, $id);
+
+        try {
+            $data = $adapter->load($key);
+        } catch (Throwable $exception) {
+            throw new SnapshotNotFound($aggregateClass, $id, $exception);
+        }
+
+        return $this->hydrator->hydrate($aggregateClass, $data);
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $aggregateClass
+     */
+    public function adapter(string $aggregateClass): SnapshotAdapter
+    {
+        $adapterName = $aggregateClass::metadata()->snapshotStore;
+
+        if (!$adapterName) {
+            throw new SnapshotNotConfigured($aggregateClass);
+        }
+
+        if (!array_key_exists($adapterName, $this->snapshotAdapters)) {
+            throw new AdapterNotFound($adapterName);
+        }
+
+        return $this->snapshotAdapters[$adapterName];
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $aggregateClass
+     */
+    private function key(string $aggregateClass, string $aggregateId): string
+    {
+        $aggregateName = $aggregateClass::metadata()->name;
+
+        return sprintf('%s-%s', $aggregateName, $aggregateId);
+    }
+}

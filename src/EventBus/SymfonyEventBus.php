@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\EventBus;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Handler\HandlersLocator;
 use Symfony\Component\Messenger\MessageBus;
@@ -21,15 +20,14 @@ final class SymfonyEventBus implements EventBus
         $this->bus = $bus;
     }
 
-    /**
-     * @param AggregateChanged<array<string, mixed>> $event
-     */
-    public function dispatch(AggregateChanged $event): void
+    public function dispatch(Message ...$messages): void
     {
-        $envelope = (new Envelope($event))
-            ->with(new DispatchAfterCurrentBusStamp());
+        foreach ($messages as $message) {
+            $envelope = (new Envelope($message))
+                ->with(new DispatchAfterCurrentBusStamp());
 
-        $this->bus->dispatch($envelope);
+            $this->bus->dispatch($envelope);
+        }
     }
 
     /**
@@ -39,7 +37,7 @@ final class SymfonyEventBus implements EventBus
     {
         $bus = new MessageBus([
             new HandleMessageMiddleware(
-                new HandlersLocator([AggregateChanged::class => $listeners]),
+                new HandlersLocator([Message::class => $listeners]),
                 true
             ),
         ]);

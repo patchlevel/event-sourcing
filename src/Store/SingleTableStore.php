@@ -8,49 +8,47 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Generator;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
-use function array_flip;
-use function array_key_exists;
 use function array_map;
 use function is_int;
 use function is_string;
 
 final class SingleTableStore extends DoctrineStore implements PipelineStore
 {
-    /** @var array<class-string<AggregateRoot>, string> */
-    private array $aggregates;
     private string $storeTableName;
 
-    /**
-     * @param array<class-string<AggregateRoot>, string> $aggregates
-     */
-    public function __construct(Connection $connection, array $aggregates, string $storeTableName)
-    {
-        parent::__construct($connection);
+    public function __construct(
+        Connection $connection,
+        EventSerializer $serializer,
+        AggregateRootRegistry $aggregateRootRegistry,
+        string $storeTableName = 'eventstore',
+    ) {
+        parent::__construct($connection, $serializer, $aggregateRootRegistry);
 
-        $this->aggregates = $aggregates;
         $this->storeTableName = $storeTableName;
     }
 
     /**
      * @param class-string<AggregateRoot> $aggregate
      *
-     * @return array<AggregateChanged<array<string, mixed>>>
+     * @return list<Message>
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array
     {
-        $shortName = $this->shortName($aggregate);
+        $shortName = $this->aggregateRootRegistry->aggregateName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->storeTableName)
-            ->where('aggregate = :aggregate AND aggregateId = :id AND playhead > :playhead')
+            ->where('aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead')
             ->getSQL();
 
-        /** @var array<array{aggregateId: string, playhead: string|int, event: class-string<AggregateChanged<array<string, mixed>>>, payload: string, recordedOn: string}> $result */
+        /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: string}> $result */
         $result = $this->connection->fetchAllAssociative(
             $sql,
             [
@@ -63,10 +61,15 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $platform = $this->connection->getDatabasePlatform();
 
         return array_map(
-            static function (array $data) use ($platform) {
-                return AggregateChanged::deserialize(
-                    self::normalizeResult($platform, $data)
-                );
+            function (array $data) use ($platform, $aggregate) {
+                $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
+
+                return Message::create($event)
+                    ->withAggregateClass($aggregate)
+                    ->withAggregateId($data['aggregate_id'])
+                    ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
+                    ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
+                    ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
             $result
         );
@@ -77,12 +80,12 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
      */
     public function has(string $aggregate, string $id): bool
     {
-        $shortName = $this->shortName($aggregate);
+        $shortName = $this->aggregateRootRegistry->aggregateName($aggregate);
 
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
             ->from($this->storeTableName)
-            ->where('aggregate = :aggregate AND aggregateId = :id')
+            ->where('aggregate = :aggregate AND aggregate_id = :id')
             ->setMaxResults(1)
             ->getSQL();
 
@@ -101,30 +104,29 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         return ((int)$result) > 0;
     }
 
-    /**
-     * @param class-string<AggregateRoot>                   $aggregate
-     * @param array<AggregateChanged<array<string, mixed>>> $events
-     */
-    public function saveBatch(string $aggregate, string $id, array $events): void
+    public function save(Message ...$messages): void
     {
-        $shortName = $this->shortName($aggregate);
-        $storeTableName = $this->storeTableName;
-
         $this->connection->transactional(
-            static function (Connection $connection) use ($shortName, $id, $events, $storeTableName): void {
-                foreach ($events as $event) {
-                    if ($event->aggregateId() !== $id) {
-                        throw new AggregateIdMismatch($id, $event->aggregateId());
-                    }
+            function (Connection $connection) use ($messages): void {
+                foreach ($messages as $message) {
+                    $event = $message->event();
 
-                    $data = $event->serialize();
-                    $data['aggregate'] = $shortName;
+                    $data = $this->serializer->serialize($event);
 
                     $connection->insert(
-                        $storeTableName,
-                        $data,
+                        $this->storeTableName,
                         [
-                            'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
+                            'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
+                            'aggregate_id' => $message->aggregateId(),
+                            'playhead' => $message->playhead(),
+                            'event' => $data->name,
+                            'payload' => $data->payload,
+                            'recorded_on' => $message->recordedOn(),
+                            'custom_headers' => $message->customHeaders(),
+                        ],
+                        [
+                            'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
+                            'custom_headers' => Types::JSON,
                         ]
                     );
                 }
@@ -133,7 +135,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     }
 
     /**
-     * @return Generator<EventBucket>
+     * @return Generator<Message>
      */
     public function stream(int $fromIndex = 0): Generator
     {
@@ -147,33 +149,27 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         /**
          * @var array<array{
          *     id: string,
-         *     aggregateId: string,
+         *     aggregate_id: string,
          *     aggregate: string,
          *     playhead: string,
-         *     event: class-string<AggregateChanged<array<string, mixed>>>,
+         *     event: string,
          *     payload: string,
-         *     recordedOn: string
+         *     recorded_on: string,
+         *     custom_headers: string
          * }> $result
          */
         $result = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
         $platform = $this->connection->getDatabasePlatform();
 
-        $classMap = array_flip($this->aggregates);
-
         foreach ($result as $data) {
-            $name = $data['aggregate'];
+            $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
-            if (!array_key_exists($name, $classMap)) {
-                throw new AggregateNotDefined($name);
-            }
-
-            yield new EventBucket(
-                $classMap[$name],
-                (int)$data['id'],
-                AggregateChanged::deserialize(
-                    self::normalizeResult($platform, $data)
-                )
-            );
+            yield Message::create($event)
+                ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($data['aggregate']))
+                ->withAggregateId($data['aggregate_id'])
+                ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
+                ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
+                ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
         }
     }
 
@@ -194,20 +190,6 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         return (int)$result;
     }
 
-    public function saveEventBucket(EventBucket $bucket): void
-    {
-        $data = $bucket->event()->serialize();
-        $data['aggregate'] = $this->shortName($bucket->aggregateClass());
-
-        $this->connection->insert(
-            $this->storeTableName,
-            $data,
-            [
-                'recordedOn' => Types::DATETIMETZ_IMMUTABLE,
-            ]
-        );
-    }
-
     public function schema(): Schema
     {
         $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
@@ -218,7 +200,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('aggregate', Types::STRING)
             ->setNotnull(true);
-        $table->addColumn('aggregateId', Types::STRING)
+        $table->addColumn('aggregate_id', Types::STRING)
             ->setNotnull(true);
         $table->addColumn('playhead', Types::INTEGER)
             ->setNotnull(true);
@@ -226,24 +208,16 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('payload', Types::JSON)
             ->setNotnull(true);
-        $table->addColumn('recordedOn', Types::DATETIMETZ_IMMUTABLE)
+        $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
+        $table->addColumn('custom_headers', Types::JSON)
+            ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);
-        $table->addUniqueIndex(['aggregate', 'aggregateId', 'playhead']);
+        $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
+
+        $this->addOutboxSchema($schema);
 
         return $schema;
-    }
-
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
-    private function shortName(string $aggregate): string
-    {
-        if (!array_key_exists($aggregate, $this->aggregates)) {
-            throw new AggregateNotDefined($aggregate);
-        }
-
-        return $this->aggregates[$aggregate];
     }
 }

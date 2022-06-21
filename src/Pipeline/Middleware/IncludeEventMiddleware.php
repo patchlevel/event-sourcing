@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 final class IncludeEventMiddleware implements Middleware
 {
-    /** @var list<class-string<AggregateChanged>> */
+    /** @var list<class-string> */
     private array $classes;
 
     /**
-     * @param list<class-string<AggregateChanged>> $classes
+     * @param list<class-string> $classes
      */
     public function __construct(array $classes)
     {
@@ -21,13 +20,13 @@ final class IncludeEventMiddleware implements Middleware
     }
 
     /**
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    public function __invoke(EventBucket $bucket): array
+    public function __invoke(Message $message): array
     {
         foreach ($this->classes as $class) {
-            if ($bucket->event() instanceof $class) {
-                return [$bucket];
+            if ($message->event() instanceof $class) {
+                return [$message];
             }
         }
 

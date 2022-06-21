@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\WatchServer;
 
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\WatchServer\SendingFailed;
@@ -19,29 +20,23 @@ class WatchListenerTest extends TestCase
 
     public function testListener(): void
     {
-        $event = ProfileVisited::raise(
-            ProfileId::fromString('1'),
-            ProfileId::fromString('1')
-        )->recordNow(0);
+        $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
 
         $client = $this->prophesize(WatchServerClient::class);
-        $client->send($event)->shouldBeCalled();
+        $client->send($message)->shouldBeCalled();
 
         $listener = new WatchListener($client->reveal());
-        $listener->__invoke($event);
+        $listener->__invoke($message);
     }
 
     public function testIgnoreErrors(): void
     {
-        $event = ProfileVisited::raise(
-            ProfileId::fromString('1'),
-            ProfileId::fromString('1')
-        )->recordNow(0);
+        $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
 
         $client = $this->prophesize(WatchServerClient::class);
-        $client->send($event)->shouldBeCalled()->willThrow(SendingFailed::class);
+        $client->send($message)->shouldBeCalled()->willThrow(SendingFailed::class);
 
         $listener = new WatchListener($client->reveal());
-        $listener->__invoke($event);
+        $listener->__invoke($message);
     }
 }

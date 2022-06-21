@@ -4,20 +4,17 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Attribute\Normalize;
+use Patchlevel\EventSourcing\Tests\Integration\Pipeline\EventNormalizer\ProfileIdNormalizer;
+use Patchlevel\EventSourcing\Tests\Integration\Pipeline\ProfileId;
 
-/**
- * @template-extends AggregateChanged<array{id: string}>
- */
-final class ProfileCreated extends AggregateChanged
+#[Event('profile.created')]
+final class ProfileCreated
 {
-    public static function raise(string $id): static
-    {
-        return new static($id, ['id' => $id]);
-    }
-
-    public function profileId(): string
-    {
-        return $this->aggregateId;
+    public function __construct(
+        #[Normalize(ProfileIdNormalizer::class)]
+        public ProfileId $profileId
+    ) {
     }
 }

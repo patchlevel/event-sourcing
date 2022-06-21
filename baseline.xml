@@ -1,34 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="v4.15.0@a1b5e489e6fcebe40cb804793d964e99fc347820">
-  <file src="src/Pipeline/Middleware/ExcludeEventMiddleware.php">
-    <RedundantConditionGivenDocblockType occurrences="1">
-      <code>$bucket-&gt;event() instanceof $class</code>
-    </RedundantConditionGivenDocblockType>
+<files psalm-version="4.23.0@f1fe6ff483bf325c803df9f510d09a03fd796f88">
+  <file src="src/Repository/DefaultRepository.php">
+    <MixedArgument occurrences="1">
+      <code>++$playhead</code>
+    </MixedArgument>
+    <MixedAssignment occurrences="1">
+      <code>$playhead</code>
+    </MixedAssignment>
+    <MixedOperand occurrences="1">
+      <code>$playhead</code>
+    </MixedOperand>
   </file>
-  <file src="src/Pipeline/Middleware/FilterEventMiddleware.php">
-    <MixedPropertyTypeCoercion occurrences="1">
-      <code>$callable</code>
-    </MixedPropertyTypeCoercion>
+  <file src="src/Store/DoctrineStore.php">
+    <MixedReturnTypeCoercion occurrences="2">
+      <code>$normalizedCustomHeaders</code>
+      <code>array&lt;string, mixed&gt;</code>
+    </MixedReturnTypeCoercion>
   </file>
-  <file src="src/Pipeline/Middleware/IncludeEventMiddleware.php">
-    <RedundantConditionGivenDocblockType occurrences="1">
-      <code>$bucket-&gt;event() instanceof $class</code>
-    </RedundantConditionGivenDocblockType>
-  </file>
-  <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
-    <MoreSpecificImplementedParamType occurrences="1">
-      <code>$payload</code>
-    </MoreSpecificImplementedParamType>
+  <file src="src/Store/MultiTableStore.php">
+    <UnnecessaryVarAnnotation occurrences="1">
+      <code>array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}|null</code>
+    </UnnecessaryVarAnnotation>
   </file>
   <file src="tests/Benchmark/LoadEventsBench.php">
-    <MissingConstructor occurrences="2">
+    <MissingConstructor occurrences="3">
       <code>$bus</code>
+      <code>$repository</code>
       <code>$store</code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/LoadEventsWithSnapshotsBench.php">
-    <MissingConstructor occurrences="3">
+    <MissingConstructor occurrences="4">
       <code>$bus</code>
+      <code>$repository</code>
       <code>$snapshotStore</code>
       <code>$store</code>
     </MissingConstructor>
@@ -41,25 +45,14 @@
       <code>$store</code>
     </MissingConstructor>
   </file>
-  <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
-    <MoreSpecificImplementedParamType occurrences="1">
-      <code>$payload</code>
-    </MoreSpecificImplementedParamType>
+  <file src="tests/Unit/Fixture/MessageNormalizer.php">
+    <MixedArgumentTypeCoercion occurrences="1">
+      <code>$value</code>
+    </MixedArgumentTypeCoercion>
   </file>
-  <file src="tests/Unit/Aggregate/AggregateChangedTest.php">
-    <InvalidArgument occurrences="2"/>
-  </file>
-  <file src="tests/Unit/EventBus/SymfonyEventBusTest.php">
-    <MissingClosureParamType occurrences="1">
-      <code>$envelope</code>
-    </MissingClosureParamType>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
-    <MoreSpecificImplementedParamType occurrences="1">
-      <code>$payload</code>
-    </MoreSpecificImplementedParamType>
-  </file>
-  <file src="tests/Unit/Pipeline/Middleware/UntilEventMiddlewareTest.php">
-    <InvalidArgument occurrences="1"/>
+  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
+    <MissingParamType occurrences="1">
+      <code>$event</code>
+    </MissingParamType>
   </file>
 </files>

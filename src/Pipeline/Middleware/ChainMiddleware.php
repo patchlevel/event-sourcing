@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 final class ChainMiddleware implements Middleware
 {
@@ -20,30 +20,30 @@ final class ChainMiddleware implements Middleware
     }
 
     /**
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    public function __invoke(EventBucket $bucket): array
+    public function __invoke(Message $message): array
     {
-        $buckets = [$bucket];
+        $messages = [$message];
 
         foreach ($this->middlewares as $middleware) {
-            $buckets = $this->processMiddleware($middleware, $buckets);
+            $messages = $this->processMiddleware($middleware, $messages);
         }
 
-        return $buckets;
+        return $messages;
     }
 
     /**
-     * @param list<EventBucket> $buckets
+     * @param list<Message> $messages
      *
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    private function processMiddleware(Middleware $middleware, array $buckets): array
+    private function processMiddleware(Middleware $middleware, array $messages): array
     {
         $result = [];
 
-        foreach ($buckets as $bucket) {
-            $result += $middleware($bucket);
+        foreach ($messages as $message) {
+            $result += $middleware($message);
         }
 
         return $result;

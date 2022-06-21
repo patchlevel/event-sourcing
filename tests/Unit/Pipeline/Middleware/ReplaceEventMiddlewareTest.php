@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessagePublished;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -22,31 +21,26 @@ class ReplaceEventMiddlewareTest extends TestCase
         $middleware = new ReplaceEventMiddleware(
             ProfileCreated::class,
             static function (ProfileCreated $event) {
-                return ProfileVisited::raise(
-                    $event->profileId(),
-                    $event->profileId()
+                return new ProfileVisited(
+                    $event->profileId
                 );
             }
         );
 
-        $bucket = new EventBucket(
-            Profile::class,
-            1,
-            ProfileCreated::raise(
+        $message = new Message(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
-            )->recordNow(5)
+            )
         );
 
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame(Profile::class, $result[0]->aggregateClass());
 
         $event = $result[0]->event();
 
         self::assertInstanceOf(ProfileVisited::class, $event);
-        self::assertSame(5, $event->playhead());
     }
 
     public function testReplaceInvalidClass(): void
@@ -55,30 +49,25 @@ class ReplaceEventMiddlewareTest extends TestCase
         $middleware = new ReplaceEventMiddleware(
             MessagePublished::class,
             static function (ProfileCreated $event) {
-                return ProfileVisited::raise(
-                    $event->profileId(),
-                    $event->profileId()
+                return new ProfileVisited(
+                    $event->profileId
                 );
             }
         );
 
-        $bucket = new EventBucket(
-            Profile::class,
-            1,
-            ProfileCreated::raise(
+        $message = new Message(
+            new ProfileCreated(
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de')
-            )->recordNow(5)
+            )
         );
 
-        $result = $middleware($bucket);
+        $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame(Profile::class, $result[0]->aggregateClass());
 
         $event = $result[0]->event();
 
         self::assertInstanceOf(ProfileCreated::class, $event);
-        self::assertSame(5, $event->playhead());
     }
 }

@@ -4,30 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
+use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Attribute\Normalize;
 
-/**
- * @template-extends AggregateChanged<array{visitorId: string}>
- */
-final class ProfileVisited extends AggregateChanged
+#[Event('profile_visited')]
+final class ProfileVisited
 {
-    public static function raise(ProfileId $visitedId, ProfileId $visitorId): static
-    {
-        return new static(
-            $visitedId->toString(),
-            [
-                'visitorId' => $visitorId->toString(),
-            ]
-        );
-    }
-
-    public function visitedId(): ProfileId
-    {
-        return ProfileId::fromString($this->aggregateId);
-    }
-
-    public function visitorId(): ProfileId
-    {
-        return ProfileId::fromString($this->payload['visitorId']);
+    public function __construct(
+        #[Normalize(ProfileIdNormalizer::class)]
+        public ProfileId $visitorId
+    ) {
     }
 }

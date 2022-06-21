@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -22,37 +21,51 @@ class ProjectionTargetTest extends TestCase
 
     public function testSave(): void
     {
-        $bucket = new EventBucket(
-            Profile::class,
-            1,
-            ProfileCreated::raise(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+        $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
+
+        $message = new Message(
+            $event
         );
 
-        $projectionRepository = new class implements Projection {
-            public static ?AggregateChanged $handledEvent = null;
+        $projection = new class implements Projection {
+            public static ?object $handledEvent = null;
 
-            public function handledEvents(): iterable
-            {
-                yield ProfileCreated::class => 'applyProfileCreated';
-            }
-
-            public function applyProfileCreated(ProfileCreated $event): void
+            #[Handle(ProfileCreated::class)]
+            public function handleProfileCreated(ProfileCreated $event): void
             {
                 self::$handledEvent = $event;
             }
+        };
 
-            public function create(): void
-            {
-            }
+        $projectionTarget = new ProjectionTarget($projection);
 
-            public function drop(): void
+        $projectionTarget->save($message);
+
+        self::assertSame($event, $projection::$handledEvent);
+    }
+
+    public function testPassMessage(): void
+    {
+        $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
+
+        $message = new Message(
+            $event
+        );
+
+        $projection = new class implements Projection {
+            public static ?Message $handledMessage = null;
+
+            #[Handle(ProfileCreated::class)]
+            public function handleProfileCreated(Message $message): void
             {
+                self::$handledMessage = $message;
             }
         };
 
-        $projectionTarget = new ProjectionTarget($projectionRepository);
-        $projectionTarget->save($bucket);
+        $projectionTarget = new ProjectionTarget($projection);
 
-        self::assertSame($bucket->event(), $projectionRepository::$handledEvent);
+        $projectionTarget->save($message);
+
+        self::assertSame($message, $projection::$handledMessage);
     }
 }

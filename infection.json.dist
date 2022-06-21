@@ -7,13 +7,13 @@
   "logs": {
     "text": "infection.log",
     "stryker": {
-      "badge": "1.3.x"
+      "report": "2.0.x"
     }
   },
   "mutators": {
     "@default": true
   },
-  "minMsi": 53,
-  "minCoveredMsi": 92,
+  "minMsi": 56,
+  "minCoveredMsi": 91,
   "testFrameworkOptions": "--testsuite=unit"
 }

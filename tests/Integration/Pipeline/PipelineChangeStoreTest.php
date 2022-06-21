@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
@@ -14,6 +15,7 @@ use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
@@ -45,9 +47,13 @@ final class PipelineChangeStoreTest extends TestCase
 
     public function testSuccessful(): void
     {
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
+        $aggregateRootRegistry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
+
         $oldStore = new MultiTableStore(
             $this->connectionOld,
-            [Profile::class => 'profile'],
+            $serializer,
+            $aggregateRootRegistry,
             'eventstore'
         );
 
@@ -55,7 +61,8 @@ final class PipelineChangeStoreTest extends TestCase
 
         $newStore = new SingleTableStore(
             $this->connectionNew,
-            [Profile::class => 'profile'],
+            $serializer,
+            $aggregateRootRegistry,
             'eventstore'
         );
 
@@ -64,7 +71,7 @@ final class PipelineChangeStoreTest extends TestCase
         $oldRepository = new DefaultRepository($oldStore, new DefaultEventBus(), Profile::class);
         $newRepository = new DefaultRepository($newStore, new DefaultEventBus(), Profile::class);
 
-        $profile = Profile::create('1');
+        $profile = Profile::create(ProfileId::fromString('1'));
         $profile->visit();
         $profile->privacy();
         $profile->visit();
@@ -83,7 +90,7 @@ final class PipelineChangeStoreTest extends TestCase
             [
                 new ExcludeEventMiddleware([PrivacyAdded::class]),
                 new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
-                    return NewVisited::raise($oldVisited->profileId());
+                    return new NewVisited($oldVisited->profileId);
                 }),
                 new RecalculatePlayheadMiddleware(),
             ]

@@ -1,0 +1,31 @@
+:root > * {
+    --md-code-hl-number-color: #6897BB;
+    --md-code-hl-special-color: #C7CDD7;
+    --md-code-hl-function-color: #FFC66D;
+    --md-code-hl-constant-color: #9876AA;
+    --md-code-hl-keyword-color: #CC7832;
+    --md-code-hl-string-color: #6A8759;
+    --md-code-hl-name-color: red;
+    --md-code-hl-operator-color: #C7CDD7;
+    --md-code-hl-punctuation-color: #C7CDD7;
+    --md-code-hl-comment-color: #629755;
+    --md-code-hl-generic-color: red;
+    --md-code-hl-variable-color: #9876AA;
+
+    --md-code-fg-color: #C7CDD7;
+    --md-code-bg-color: #2B2B2B;
+    --md-code-hl-color: red;
+}
+
+p {
+    margin-block-start: 2em;
+    margin-block-end: 2em;
+}
+
+.md-typeset code {
+    padding: .2em .4em;
+}
+
+.admonition-title {
+    margin-bottom: -1em !important;
+}

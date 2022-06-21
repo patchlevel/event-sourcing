@@ -5,27 +5,26 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
-class Handle
+final class Handle
 {
-    /** @var class-string<AggregateChanged> */
-    private string $aggregateChangedClass;
+    /** @var class-string */
+    private string $eventClass;
 
     /**
-     * @param class-string<AggregateChanged> $aggregateChangedClass
+     * @param class-string $eventClass
      */
-    public function __construct(string $aggregateChangedClass)
+    public function __construct(string $eventClass)
     {
-        $this->aggregateChangedClass = $aggregateChangedClass;
+        $this->eventClass = $eventClass;
     }
 
     /**
-     * @return class-string<AggregateChanged>
+     * @return class-string
      */
-    public function aggregateChangedClass(): string
+    public function eventClass(): string
     {
-        return $this->aggregateChangedClass;
+        return $this->eventClass;
     }
 }

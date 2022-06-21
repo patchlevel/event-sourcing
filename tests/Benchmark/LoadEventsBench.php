@@ -8,11 +8,15 @@ use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profile;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use PhpBench\Attributes as Bench;
 
 use function file_exists;
@@ -25,6 +29,7 @@ final class LoadEventsBench
 
     private Store $store;
     private EventBus $bus;
+    private Repository $repository;
 
     public function setUp(): void
     {
@@ -41,30 +46,29 @@ final class LoadEventsBench
 
         $this->store = new SingleTableStore(
             $connection,
-            [Profile::class => 'profile'],
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
+            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
             'eventstore'
         );
 
-        $repository = new DefaultRepository($this->store, $this->bus, Profile::class);
+        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::class);
 
         // create tables
         (new DoctrineSchemaManager())->create($this->store);
 
-        $profile = Profile::create('1', 'Peter');
+        $profile = Profile::create(ProfileId::fromString('1'), 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName('Peter');
         }
 
-        $repository->save($profile);
+        $this->repository->save($profile);
     }
 
     #[Bench\Revs(10)]
     #[Bench\Iterations(2)]
     public function benchLoadEvents(): void
     {
-        $repository = new DefaultRepository($this->store, $this->bus, Profile::class);
-
-        $repository->load('1');
+        $this->repository->load('1');
     }
 }

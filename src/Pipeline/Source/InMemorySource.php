@@ -5,35 +5,35 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Source;
 
 use Generator;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 use function count;
 
 final class InMemorySource implements Source
 {
-    /** @var list<EventBucket> */
-    private array $events;
+    /** @var list<Message> */
+    private array $messages;
 
     /**
-     * @param list<EventBucket> $events
+     * @param list<Message> $messages
      */
-    public function __construct(array $events)
+    public function __construct(array $messages)
     {
-        $this->events = $events;
+        $this->messages = $messages;
     }
 
     /**
-     * @return Generator<EventBucket>
+     * @return Generator<Message>
      */
     public function load(): Generator
     {
-        foreach ($this->events as $event) {
+        foreach ($this->messages as $event) {
             yield $event;
         }
     }
 
     public function count(): int
     {
-        return count($this->events);
+        return count($this->messages);
     }
 }

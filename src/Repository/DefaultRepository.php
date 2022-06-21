@@ -5,83 +5,194 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Clock\SystemClock;
+use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
+use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
+use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
+use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Throwable;
 
-use function array_key_exists;
+use function array_map;
+use function assert;
 use function count;
-use function is_subclass_of;
+use function sprintf;
 
+/**
+ * @template T of AggregateRoot
+ * @implements Repository<T>
+ */
 final class DefaultRepository implements Repository
 {
     private Store $store;
-    private EventBus $eventStream;
+    private EventBus $eventBus;
 
-    /** @var class-string<AggregateRoot> */
+    /** @var class-string<T> */
     private string $aggregateClass;
 
-    /** @var array<string, AggregateRoot> */
-    private array $instances = [];
+    private ?SnapshotStore $snapshotStore;
+    private LoggerInterface $logger;
+    private AggregateRootMetadata $metadata;
+    private MessageDecorator $messageDecorator;
 
     /**
-     * @param class-string $aggregateClass
+     * @param class-string<T> $aggregateClass
      */
     public function __construct(
         Store $store,
-        EventBus $eventStream,
-        string $aggregateClass
+        EventBus $eventBus,
+        string $aggregateClass,
+        ?SnapshotStore $snapshotStore = null,
+        ?MessageDecorator $messageDecorator = null,
+        ?LoggerInterface $logger = null
     ) {
-        if (!is_subclass_of($aggregateClass, AggregateRoot::class)) {
-            throw InvalidAggregateClass::notAggregateRoot($aggregateClass);
-        }
-
         $this->store = $store;
-        $this->eventStream = $eventStream;
+        $this->eventBus = $eventBus;
         $this->aggregateClass = $aggregateClass;
+        $this->snapshotStore = $snapshotStore;
+        $this->messageDecorator = $messageDecorator ??  new RecordedOnDecorator(new SystemClock());
+        $this->logger = $logger ?? new NullLogger();
+        $this->metadata = $aggregateClass::metadata();
     }
 
+    /**
+     * @return T
+     */
     public function load(string $id): AggregateRoot
     {
-        if (array_key_exists($id, $this->instances)) {
-            return $this->instances[$id];
+        $aggregateClass = $this->aggregateClass;
+
+        if ($this->snapshotStore && $this->metadata->snapshotStore) {
+            try {
+                return $this->loadFromSnapshot($aggregateClass, $id);
+            } catch (SnapshotRebuildFailed $exception) {
+                $this->logger->error($exception->getMessage());
+            } catch (SnapshotNotFound) {
+                $this->logger->debug(
+                    sprintf(
+                        'snapshot for aggregate "%s" with the id "%s" not found',
+                        $aggregateClass,
+                        $id
+                    )
+                );
+            }
         }
 
-        $events = $this->store->load($this->aggregateClass, $id);
+        $messages = $this->store->load($aggregateClass, $id);
 
-        if (count($events) === 0) {
-            throw new AggregateNotFound($this->aggregateClass, $id);
+        if (count($messages) === 0) {
+            throw new AggregateNotFound($aggregateClass, $id);
         }
 
-        return $this->instances[$id] = $this->aggregateClass::createFromEventStream($events);
+        $aggregate = $aggregateClass::createFromEvents(
+            array_map(
+                static fn (Message $message) => $message->event(),
+                $messages
+            )
+        );
+
+        if ($this->snapshotStore && $this->metadata->snapshotStore) {
+            $this->saveSnapshot($aggregate, $messages);
+        }
+
+        return $aggregate;
     }
 
     public function has(string $id): bool
     {
-        if (array_key_exists($id, $this->instances)) {
-            return true;
-        }
-
         return $this->store->has($this->aggregateClass, $id);
     }
 
+    /**
+     * @param T $aggregate
+     */
     public function save(AggregateRoot $aggregate): void
     {
-        $class = $aggregate::class;
+        $this->assertRightAggregate($aggregate);
 
-        if (!$aggregate instanceof $this->aggregateClass) {
-            throw new WrongAggregate($class, $this->aggregateClass);
-        }
+        $events = $aggregate->releaseEvents();
 
-        $eventStream = $aggregate->releaseEvents();
-
-        if (count($eventStream) === 0) {
+        if (count($events) === 0) {
             return;
         }
 
-        $this->store->saveBatch($this->aggregateClass, $aggregate->aggregateRootId(), $eventStream);
+        $messageDecorator = $this->messageDecorator;
+        $playhead = $aggregate->playhead() - count($events);
 
-        foreach ($eventStream as $event) {
-            $this->eventStream->dispatch($event);
+        $messages = array_map(
+            static function (object $event) use ($aggregate, &$playhead, $messageDecorator) {
+                $message = Message::create($event)
+                    ->withAggregateClass($aggregate::class)
+                    ->withAggregateId($aggregate->aggregateRootId())
+                    ->withPlayhead(++$playhead);
+
+                return $messageDecorator($message);
+            },
+            $events
+        );
+
+        $this->store->save(...$messages);
+        $this->eventBus->dispatch(...$messages);
+    }
+
+    /**
+     * @param class-string<T> $aggregateClass
+     *
+     * @return T
+     */
+    private function loadFromSnapshot(string $aggregateClass, string $id): AggregateRoot
+    {
+        assert($this->snapshotStore instanceof SnapshotStore);
+
+        $aggregate = $this->snapshotStore->load($aggregateClass, $id);
+        $messages = $this->store->load($aggregateClass, $id, $aggregate->playhead());
+
+        if ($messages === []) {
+            return $aggregate;
+        }
+
+        $events = array_map(
+            static fn (Message $message) => $message->event(),
+            $messages
+        );
+
+        try {
+            $aggregate->catchUp($events);
+        } catch (Throwable $exception) {
+            throw new SnapshotRebuildFailed($aggregateClass, $id, $exception);
+        }
+
+        $this->saveSnapshot($aggregate, $messages);
+
+        return $aggregate;
+    }
+
+    /**
+     * @param T             $aggregate
+     * @param list<Message> $messages
+     */
+    private function saveSnapshot(AggregateRoot $aggregate, array $messages): void
+    {
+        assert($this->snapshotStore instanceof SnapshotStore);
+
+        $batchSize = $this->metadata->snapshotBatch ?: 1;
+
+        if (count($messages) < $batchSize) {
+            return;
+        }
+
+        $this->snapshotStore->save($aggregate);
+    }
+
+    private function assertRightAggregate(AggregateRoot $aggregate): void
+    {
+        if (!$aggregate instanceof $this->aggregateClass) {
+            throw new WrongAggregate($aggregate::class, $this->aggregateClass);
         }
     }
 }

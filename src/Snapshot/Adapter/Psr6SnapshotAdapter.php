@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Patchlevel\EventSourcing\Snapshot\Adapter;
+
+use Psr\Cache\CacheItemPoolInterface;
+
+final class Psr6SnapshotAdapter implements SnapshotAdapter
+{
+    private CacheItemPoolInterface $cache;
+
+    public function __construct(CacheItemPoolInterface $cache)
+    {
+        $this->cache = $cache;
+    }
+
+    public function save(string $key, array $data): void
+    {
+        $item = $this->cache->getItem($key);
+        $item->set($data);
+        $this->cache->save($item);
+    }
+
+    public function load(string $key): array
+    {
+        $item = $this->cache->getItem($key);
+
+        if (!$item->isHit()) {
+            throw new SnapshotNotFound($key);
+        }
+
+        /**
+         * @var array<string, mixed> $data
+         */
+        $data = $item->get();
+
+        return $data;
+    }
+}

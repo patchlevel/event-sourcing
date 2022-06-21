@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Pipeline\EventBucket;
+use Patchlevel\EventSourcing\EventBus\Message;
 
 final class UntilEventMiddleware implements Middleware
 {
@@ -17,18 +17,14 @@ final class UntilEventMiddleware implements Middleware
     }
 
     /**
-     * @return list<EventBucket>
+     * @return list<Message>
      */
-    public function __invoke(EventBucket $bucket): array
+    public function __invoke(Message $message): array
     {
-        $recordedOn = $bucket->event()->recordedOn();
-
-        if ($recordedOn === null) {
-            return [];
-        }
+        $recordedOn = $message->recordedOn();
 
         if ($recordedOn < $this->until) {
-            return [$bucket];
+            return [$message];
         }
 
         return [];
