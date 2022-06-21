@@ -54,7 +54,7 @@ final class SocketWatchServerClient implements WatchServerClient
         set_error_handler([self::class, 'nullErrorHandler']);
 
         try {
-            if (stream_socket_sendto($socket, $encodedPayload) !== -1) {
+            if (@stream_socket_sendto($socket, $encodedPayload) !== -1) {
                 return;
             }
 
@@ -65,7 +65,7 @@ final class SocketWatchServerClient implements WatchServerClient
                 throw new SendingFailed('socket connection could not be established');
             }
 
-            if (stream_socket_sendto($socket, $encodedPayload) !== -1) {
+            if (@stream_socket_sendto($socket, $encodedPayload) !== -1) {
                 return;
             }
         } finally {
@@ -87,7 +87,7 @@ final class SocketWatchServerClient implements WatchServerClient
         set_error_handler([self::class, 'nullErrorHandler']);
 
         try {
-            $socket = stream_socket_client(
+            $socket = @stream_socket_client(
                 $this->host,
                 $errno,
                 $errstr,
@@ -115,7 +115,7 @@ final class SocketWatchServerClient implements WatchServerClient
             return;
         }
 
-        if (!stream_socket_shutdown($socket, STREAM_SHUT_RDWR)) {
+        if (!@stream_socket_shutdown($socket, STREAM_SHUT_RDWR)) {
             throw new SendingFailed('socket shutdown failed');
         }
 
