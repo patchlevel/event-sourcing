@@ -79,8 +79,37 @@ final class ProfileCreated
 
 ### Schema
 
-* Changed database field from `aggregateId` to `aggregate_id`. @TODO add reference for upgrading.
-* Changed database field from `recordedOn` to `recorded_on`. @TODO add reference for upgrading.
+* Changed database column from `aggregateId` to `aggregate_id`. 
+* Changed database column from `recordedOn` to `recorded_on`.
+* Changed value of database column `event` from FQCN of the event to the name provided via the attribute.
+
+Update the two columns, for single table store:
+
+```SQL
+ALTER TABLE eventstore RENAME COLUMN aggregateId TO aggregate_id;
+ALTER TABLE eventstore RENAME COLUMN recordedOn TO recorded_on;
+```
+
+For the event name change we recommend using the upcasting feature like this:
+
+```php
+use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+
+final class LegacyEventNameUpaster implements Upcaster
+{
+    public function __construct(private readonly EventRegistry $eventRegistry){}
+    
+    public function __invoke(Upcast $upcast) : Upcast
+    {
+        return new Upcast($this->eventRegistry->eventName($upcast->eventName), $upcast->payload);
+    }
+}
+```
+
+If you dont want to upcast everytime you could also use the pipeline to recreate the event-stream with the fixed event
+name. See for that the documentation.
 
 ### Store & Pipeline
 
@@ -89,7 +118,7 @@ final class ProfileCreated
 * Renamed and adjusted parameters for `save` at `PipelineStore`
 * Removed `saveBatch` at `PipelineStore`. Use new `save` instead.
 * Changed parameter for `Middleware::__invoke` from `EventBucket` to `Message`.
-* Removed `EventBucket`. `Message` is kinda a replacement. 
+* Removed `EventBucket`. `Message` is kinda a replacement.
 * Removed `ClassRenameMiddleware`. This is not needed anymore since the event name is saved instead.
 * Removed `FromIndexEventMiddleware`.
 
@@ -111,7 +140,8 @@ final class ProfileCreated
 
 ### Clock
 
-* Removed `Clock` singleton class. See `SystemClock`, `FreezeClock` as an implementation of the `Clock` interface instead.
+* Removed `Clock` singleton class. See `SystemClock`, `FreezeClock` as an implementation of the `Clock` interface
+  instead.
 
 ## Full BC-Break list
 
