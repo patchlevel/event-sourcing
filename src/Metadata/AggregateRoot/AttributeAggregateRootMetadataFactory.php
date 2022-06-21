@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Normalize;
-use Patchlevel\EventSourcing\Attribute\SerializedName;
+use Patchlevel\EventSourcing\Attribute\NormalizedName;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;
@@ -230,7 +230,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $reflectionProperty->setAccessible(true);
             $fieldName = $reflectionProperty->getName();
 
-            $attributeReflectionList = $reflectionProperty->getAttributes(SerializedName::class);
+            $attributeReflectionList = $reflectionProperty->getAttributes(NormalizedName::class);
 
             if ($attributeReflectionList !== []) {
                 $attribute = $attributeReflectionList[0]->newInstance();
