@@ -41,3 +41,6 @@ final class OnSystemRecordedDecorator implements MessageDecorator
 !!! note
 
     You can also set multiple headers with `withCustomHeaders` which expects an hashmap.
+
+## Adding a decorator
+
