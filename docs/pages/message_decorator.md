@@ -1,8 +1,9 @@
 # Message Decorator
 
 There are usecases where you want to add some extra context to your events like metadata which is not directly relevant
-for your domain. With `MessageDecorator` we are providing a solution to add this metadata to your events. We are
-internally using this to save the point of time the event is recorded. All decorators are always executed in a chain.
+for your domain. With `MessageDecorator` we are providing a solution to add this metadata to your events. The metadata
+will also be persisted in the database and can be retrieved later on. We are internally using this to save the point of
+time the event is recorded. Here is the code from this message decorator.
 
 ```php
 use Patchlevel\EventSourcing\Clock\Clock;
@@ -20,6 +21,7 @@ final class RecordedOnDecorator implements MessageDecorator
     }
 } 
 ```
+
 !!! note
 
     The Message is immutable, for more information look up [here](event_bus.md#message).
@@ -38,9 +40,10 @@ final class OnSystemRecordedDecorator implements MessageDecorator
     }
 } 
 ```
-!!! note
+
+!!! tip
 
     You can also set multiple headers with `withCustomHeaders` which expects an hashmap.
 
-## Adding a decorator
+## Adding a message decorator
 
