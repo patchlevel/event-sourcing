@@ -86,7 +86,7 @@ nav:
     - Upcasting: upcasting.md
     - Outbox: outbox.md
     - Pipeline: pipeline.md
-    - Message Decorator: decorator.md
+    - Message Decorator: message_decorator.md
     - Time / Clock: clock.md
   - Other / Tools:
     - UUID: uuid.md
