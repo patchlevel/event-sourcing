@@ -85,7 +85,7 @@ final class CreateProfileHandler
     A **command bus** system is not necessary, only recommended.
     The interaction can also easily take place in a controller or service.
 
-### Create a new aggregate
+## Create a new aggregate
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
 For our aggregate we create the Event `ProfileCreated`:

@@ -101,7 +101,7 @@ final class LegacyEventNameUpaster implements Upcaster
 {
     public function __construct(private readonly EventRegistry $eventRegistry){}
     
-    public function __invoke(Upcast $upcast) : Upcast
+    public function __invoke(Upcast $upcast): Upcast
     {
         return new Upcast($this->eventRegistry->eventName($upcast->eventName), $upcast->payload);
     }
