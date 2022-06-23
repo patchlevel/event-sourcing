@@ -1,6 +1,6 @@
 # Clock
 
-We have a `ClockInterface` which enables you to replace the actual clock implementation in your services for testing
+We have a `Clock` interface which enables you to replace the actual clock implementation in your services for testing
 purposes. We are using this clock to create the `recorded_on` datetime for the events.
 
 ## SystemClock
@@ -37,4 +37,4 @@ $date === $frozenDate // false, since it's not identity identical due to interna
 
 !!! note
 
-    The `ClockInterface` will be PSR-20 compatible as soon at it is published [here](https://github.com/php-fig/fig-standards/blob/master/proposed/clock.md).
+    The `Clock` interface will be PSR-20 compatible as soon at it is published [here](https://github.com/php-fig/fig-standards/blob/master/proposed/clock.md).
