@@ -9,15 +9,13 @@ use PHPUnit\Framework\TestCase;
 
 final class ProfileTest extends TestCase
 {
-    use AggregateTestHelper;
-
     public function testCreateProfile(): void
     {
         $id = ProfileId::generate();
         $profile = Profile::createProfile($id, Email::fromString('foo@email.com'));
 
-        self::assertRecordedEvents(
-            $profile, 
+        self::assertEquals(
+            $profile->releaseEvents(), 
             [
                 new ProfileCreated($id, Email::fromString('foo@email.com')),        
             ]
@@ -29,14 +27,15 @@ final class ProfileTest extends TestCase
     public function testChangeName(): void
     {
         $id = ProfileId::generate();
-        $profile = self::createAggregateFromEvents([
+        
+        $profile = Profile::createFromEvents([
             new ProfileCreated($id, Email::fromString('foo@email.com')),
         ]);
         
         $profile->changeEmail(Email::fromString('bar@email.com'));
         
-        self::assertRecordedEvents(
-            $profile, 
+        self::assertEquals(
+            $profile->releaseEvents(), 
             [
                 new EmailChanged(Email::fromString('bar@email.com')),        
             ]
