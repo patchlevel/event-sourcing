@@ -11,6 +11,7 @@ use function array_key_exists;
 use function array_keys;
 
 /**
+ * @template-covariant T of object
  * @psalm-immutable
  * @psalm-type Headers = array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable}
  */
@@ -30,18 +31,32 @@ final class Message
     /** @var array<string, mixed> */
     private array $customHeaders = [];
 
+    /** @var T */
     private readonly object $event;
 
+    /**
+     * @param T $event
+     */
     public function __construct(object $event)
     {
         $this->event = $event;
     }
 
+    /**
+     * @param T1 $event
+     *
+     * @return static<T1>
+     *
+     * @template T1 of object
+     */
     public static function create(object $event): self
     {
         return new self($event);
     }
 
+    /**
+     * @return T
+     */
     public function event(): object
     {
         return $this->event;

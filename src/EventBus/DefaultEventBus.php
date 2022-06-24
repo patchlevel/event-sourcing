@@ -8,7 +8,7 @@ use function array_shift;
 
 final class DefaultEventBus implements EventBus
 {
-    /** @var array<Message> */
+    /** @var array<Message<object>> */
     private array $queue;
     /**  @var list<Listener> */
     private array $listeners;
