@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
@@ -33,8 +34,10 @@ final class ProfileProjection implements Projection
     }
 
     #[Handle(ProfileCreated::class)]
-    public function handleProfileCreated(ProfileCreated $profileCreated): void
+    public function handleProfileCreated(Message $message): void
     {
+        $profileCreated = $message->event();
+
         $this->connection->executeStatement(
             'INSERT INTO projection_profile (`id`, `name`) VALUES(:id, :name);',
             [

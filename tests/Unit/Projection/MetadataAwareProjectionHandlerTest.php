@@ -42,33 +42,6 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
     public function testHandle(): void
     {
         $projection = new class implements Projection {
-            public static ?object $handledEvent = null;
-
-            #[Handle(ProfileCreated::class)]
-            public function handleProfileCreated(ProfileCreated $event): void
-            {
-                self::$handledEvent = $event;
-            }
-        };
-
-        $event = new ProfileCreated(
-            ProfileId::fromString('1'),
-            Email::fromString('profile@test.com')
-        );
-
-        $message = new Message(
-            $event
-        );
-
-        $projectionRepository = new MetadataAwareProjectionHandler([$projection]);
-        $projectionRepository->handle($message);
-
-        self::assertSame($event, $projection::$handledEvent);
-    }
-
-    public function testHandleWithMessage(): void
-    {
-        $projection = new class implements Projection {
             public static ?Message $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]
@@ -96,12 +69,12 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
     public function testHandleNotSupportedEvent(): void
     {
         $projection = new class implements Projection {
-            public static ?object $handledEvent = null;
+            public static ?Message $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]
-            public function handleProfileCreated(ProfileCreated $event): void
+            public function handleProfileCreated(Message $message): void
             {
-                self::$handledEvent = $event;
+                self::$handledMessage = $message;
             }
         };
 
@@ -116,7 +89,7 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
         $projectionRepository = new MetadataAwareProjectionHandler([$projection]);
         $projectionRepository->handle($message);
 
-        self::assertNull($projection::$handledEvent);
+        self::assertNull($projection::$handledMessage);
     }
 
     public function testCreate(): void

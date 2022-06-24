@@ -28,31 +28,6 @@ class ProjectionTargetTest extends TestCase
         );
 
         $projection = new class implements Projection {
-            public static ?object $handledEvent = null;
-
-            #[Handle(ProfileCreated::class)]
-            public function handleProfileCreated(ProfileCreated $event): void
-            {
-                self::$handledEvent = $event;
-            }
-        };
-
-        $projectionTarget = new ProjectionTarget($projection);
-
-        $projectionTarget->save($message);
-
-        self::assertSame($event, $projection::$handledEvent);
-    }
-
-    public function testPassMessage(): void
-    {
-        $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
-
-        $message = new Message(
-            $event
-        );
-
-        $projection = new class implements Projection {
             public static ?Message $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]

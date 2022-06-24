@@ -177,8 +177,10 @@ final class HotelProjection implements Projection
     }
 
     #[Handle(HotelCreated::class)]
-    public function handleHotelCreated(HotelCreated $event): void
+    public function handleHotelCreated(Message $message): void
     {
+        $event = $message->event();
+    
         $this->db->insert(
             'hotel', 
             [

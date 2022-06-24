@@ -109,8 +109,8 @@ final class ProjectionRebuildCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertSame(0, $exitCode);
-        self::assertNotNull($projectionA->handledEvent);
-        self::assertNull($projectionB->handledEvent);
+        self::assertNotNull($projectionA->handledMessage);
+        self::assertNull($projectionB->handledMessage);
 
         $content = $output->fetch();
 
@@ -170,10 +170,10 @@ final class ProjectionRebuildCommandTest extends TestCase
         $exitCode = $command->run($input, $output);
 
         self::assertSame(0, $exitCode);
-        self::assertNotNull($projectionA->handledEvent);
+        self::assertNotNull($projectionA->handledMessage);
         self::assertTrue($projectionA->createCalled);
         self::assertTrue($projectionA->dropCalled);
-        self::assertNull($projectionB->handledEvent);
+        self::assertNull($projectionB->handledMessage);
         self::assertFalse($projectionB->createCalled);
         self::assertFalse($projectionB->dropCalled);
 
