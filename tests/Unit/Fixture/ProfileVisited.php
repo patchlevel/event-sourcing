@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 final class ProfileVisited
 {
     public function __construct(
-        #[Normalize(ProfileIdNormalizer::class)]
+        #[Normalize(new ProfileIdNormalizer())]
         public ProfileId $visitorId
     ) {
     }

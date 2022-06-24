@@ -29,7 +29,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 final class DTO 
 {
     public function __construct(
-        #[Normalize(DateTimeImmutableNormalizer::class)]
+        #[Normalize(new DateTimeImmutableNormalizer())]
         public readonly DateTimeImmutable $date
     ) {}
 }

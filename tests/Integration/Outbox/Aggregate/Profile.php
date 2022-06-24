@@ -17,7 +17,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\ProfileId;
 #[Snapshot('default', 100)]
 final class Profile extends AggregateRoot
 {
-    #[Normalize(ProfileIdNormalizer::class)]
+    #[Normalize(new ProfileIdNormalizer())]
     private ProfileId $id;
     private string $name;
 

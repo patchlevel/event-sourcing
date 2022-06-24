@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 class WrongNormalizerEvent
 {
     public function __construct(
-        #[Normalize(EmailNormalizer::class)]
+        #[Normalize(new EmailNormalizer())]
         public bool $email
     ) {
     }

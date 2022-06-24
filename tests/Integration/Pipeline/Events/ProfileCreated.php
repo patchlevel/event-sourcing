@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Pipeline\ProfileId;
 final class ProfileCreated
 {
     public function __construct(
-        #[Normalize(ProfileIdNormalizer::class)]
+        #[Normalize(new ProfileIdNormalizer())]
         public ProfileId $profileId
     ) {
     }

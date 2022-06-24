@@ -90,7 +90,7 @@ class AttributeEventMetadataFactoryTest extends TestCase
     {
         $event = new #[Event('profile_created')] class (Email::fromString('info@patchlevel.de')) {
             public function __construct(
-                #[Normalize(EmailNormalizer::class)]
+                #[Normalize(new EmailNormalizer())]
                 public Email $email
             ) {
             }

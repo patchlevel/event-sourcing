@@ -16,12 +16,12 @@ use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 #[SuppressMissingApply([ProfileVisited::class])]
 final class ProfileWithSnapshot extends AggregateRoot
 {
-    #[Normalize(ProfileIdNormalizer::class)]
+    #[Normalize(new ProfileIdNormalizer())]
     private ProfileId $id;
-    #[Normalize(EmailNormalizer::class)]
+    #[Normalize(new EmailNormalizer())]
     private Email $email;
     /** @var array<Message> */
-    #[Normalize(MessageNormalizer::class, list: true)]
+    #[Normalize(new MessageNormalizer(), list: true)]
     private array $messages;
 
     public function id(): ProfileId
