@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 enum Status: string
 {
-case Draft = 'draft';
-case Pending = 'pending';
-case Closed = 'closed';
-    }
+    case Draft = 'draft';
+    case Pending = 'pending';
+    case Closed = 'closed';
+}
