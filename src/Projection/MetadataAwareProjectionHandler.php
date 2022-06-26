@@ -37,16 +37,9 @@ final class MetadataAwareProjectionHandler implements ProjectionHandler
                 continue;
             }
 
-            $handleMetadata = $metadata->handleMethods[$event::class];
-            $method = $handleMetadata->methodName;
+            $handleMethod = $metadata->handleMethods[$event::class];
 
-            if ($handleMetadata->passMessage) {
-                $projection->$method($message);
-
-                continue;
-            }
-
-            $projection->$method($event);
+            $projection->$handleMethod($message);
         }
     }
 

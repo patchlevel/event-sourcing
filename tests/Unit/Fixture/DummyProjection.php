@@ -7,18 +7,19 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\EventBus\Message as EventMessage;
 use Patchlevel\EventSourcing\Projection\Projection;
 
 class DummyProjection implements Projection
 {
-    public ?object $handledEvent = null;
+    public ?EventMessage $handledMessage = null;
     public bool $createCalled = false;
     public bool $dropCalled = false;
 
     #[Handle(ProfileCreated::class)]
-    public function handleProfileCreated(ProfileCreated $event): void
+    public function handleProfileCreated(EventMessage $message): void
     {
-        $this->handledEvent = $event;
+        $this->handledMessage = $message;
     }
 
     #[Create]
