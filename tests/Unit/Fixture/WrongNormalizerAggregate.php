@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 #[Aggregate('wrong_normalizer')]
 class WrongNormalizerAggregate extends AggregateRoot
 {
-    #[Normalize(EmailNormalizer::class)]
+    #[Normalize(new EmailNormalizer())]
     public bool $email = true;
 
     public function aggregateRootId(): string

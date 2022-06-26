@@ -11,9 +11,9 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 class ProfileCreated
 {
     public function __construct(
-        #[Normalize(ProfileIdNormalizer::class)]
+        #[Normalize(new ProfileIdNormalizer())]
         public ProfileId $profileId,
-        #[Normalize(EmailNormalizer::class)]
+        #[Normalize(new EmailNormalizer())]
         public Email $email
     ) {
     }

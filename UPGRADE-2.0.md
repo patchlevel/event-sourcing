@@ -48,7 +48,7 @@ final class ProfileCreated
 }
 ```
 
-* Added `#[Normalize(YourNormalizer::class)]` for more complicated properties like ValueObjects.
+* Added `#[Normalize(new YourNormalizer())]` for more complicated properties like ValueObjects.
 * Added `#[NormalizedName('foo')]`.
 
 ```php
@@ -61,7 +61,7 @@ final class ProfileCreated
     public function __construct(
         public readonly string $profileId, 
         public readonly string $name,
-        #[Normalize(EmailNormalizer::class)]
+        #[Normalize(new EmailNormalizer())]
         public readonly Email $email,
     ) 
     {
