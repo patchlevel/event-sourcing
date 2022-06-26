@@ -31,7 +31,7 @@
     "doctrine/migrations": "^3.3.2",
     "infection/infection": "^0.26.0",
     "patchlevel/coding-standard": "^1.1.1",
-    "patchlevel/event-sourcing-psalm-plugin": "^1.0.0",
+    "patchlevel/event-sourcing-psalm-plugin": "^2.0.0",
     "phpbench/phpbench": "^1.2.3",
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^1.4.3",
