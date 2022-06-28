@@ -329,7 +329,7 @@ $middleware = new ChainMiddleware([
 
 ### Custom middleware
 
-You can also write a custom middleware. The middleware gets a message and can return n messages. 
+You can also write a custom middleware. The middleware gets a message and can return `N` messages. 
 There are the following possibilities:
 
 * Return only the message to an array to leave it unchanged.
