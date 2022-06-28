@@ -63,12 +63,13 @@ final class DefaultEventSerializer implements EventSerializer
     /**
      * @param list<string> $paths
      */
-    public static function createFromPaths(array $paths): static
+    public static function createFromPaths(array $paths, ?Upcaster $upcaster = null): static
     {
         return new self(
             (new AttributeEventRegistryFactory())->create($paths),
             new MetadataEventHydrator(new AttributeEventMetadataFactory()),
-            new JsonEncoder()
+            new JsonEncoder(),
+            $upcaster
         );
     }
 }
