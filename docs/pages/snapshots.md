@@ -104,7 +104,7 @@ final class Profile extends AggregateRoot
 
 Since the loading of events in itself is quite fast and only becomes noticeably slower with thousands of events, 
 we do not need to create a snapshot after each event. That would also have a negative impact on performance. 
-Instead, we can also create a snapshot after `n` events. 
+Instead, we can also create a snapshot after `N` events. 
 The remaining events that are not in the snapshot are then loaded from store.
 
 ```php
