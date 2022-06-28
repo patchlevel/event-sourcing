@@ -3,7 +3,8 @@
 This library uses the core principle called [event bus](https://martinfowler.com/articles/201701-event-driven.html).
 
 For all events that are persisted (when the `save` method has been executed on the [repository](./repository.md)),
-the event wrapped in a message will be dispatched to the `event bus`. All listeners are then called for each event/message.
+the event wrapped in a message will be dispatched to the `event bus`. All listeners are then called for each
+event/message.
 
 ## Message
 
@@ -15,27 +16,60 @@ A message contains the following information:
 * playhead
 * event
 * recorded on
+* custom headers
 
 Each event is packed into a message and dispatched using the event bus.
 
 ```php
+use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-$event = new NameChanged('foo');
-$message = new Message(
-    Profile::class, // aggregate class
-    'bca7576c-536f-4428-b694-7b1f00c714b7', // aggregate id
-    2, // playhead
-    $event // event object
-);
+$clock = SystemClock();
+$message = Message::create(new NameChanged('foo'))
+    ->withAggregateClass(Profile::class)
+    ->withAggregateId('bca7576c-536f-4428-b694-7b1f00c714b7')
+    ->withPlayhead(2)
+    ->withRecordedOn($clock->now());
 
 $eventBus->dispatch($message);
 ```
 
-You don't have to create the message yourself, 
-it is automatically created, saved and dispatched in the repository.
+!!! note
 
-## Default event bus
+    The message object is immutable.
+
+You don't have to create the message yourself,
+it is automatically created, saved and dispatched in the [repository](repository.md).
+
+### Custom headers
+
+You can also enrich your own header or metadata information.
+This information is then accessible in the message object and is also stored in the database.
+
+```php
+use Patchlevel\EventSourcing\EventBus\Message;
+
+$message = Message::create(new NameChanged('foo'))
+    // ...
+    ->withCustomHeader('application-id', 'app');
+```
+
+!!! note
+
+    You can read about how to pass additional headers to the message object in the [message decorator](message_decorator.md) docs.
+
+You can also access your custom headers.
+
+```php
+use Patchlevel\EventSourcing\EventBus\Message;
+
+$message->customHeader('application-id'); // app
+$message->customHeaders(); // ['application-id' => 'app']
+```
+
+## Event Bus
+
+### Default event bus
 
 The library also delivers a light-weight event bus. This can only register listener and dispatch events.
 
@@ -53,10 +87,10 @@ $eventBus->addListener($projectionListener);
     you can also add listeners after `ProjectionListener`
     to access the [projections](./projection.md).
 
-## Symfony event bus
+### Symfony event bus
 
-You can also use the [symfony message bus](https://symfony.com/doc/current/components/messenger.html) 
-which is much more powerful. 
+You can also use the [symfony message bus](https://symfony.com/doc/current/components/messenger.html)
+which is much more powerful.
 
 To use the optional symfony messenger you first have to `install` the packet.
 

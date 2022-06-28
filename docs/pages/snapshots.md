@@ -15,65 +15,110 @@ Here, however, only the last events are loaded from the database and not all.
 
 ## Configuration
 
-To use the snapshot system, the `SnapshotRepository` must be used. 
-In addition, a `SnapshotStore` must then be given.
+First of all you have to define a snapshot store. This store may have multiple adapters for different caches. 
+These caches also need a name so that you can determine which aggregates should be stored in which cache.
 
 ```php
-use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 
-$adapter = new Psr16SnapshotAdapter($cache);
 $snapshotStore = new DefaultSnapshotStore([
-    'default' => $adapter
+    'default' => new Psr16SnapshotAdapter($defaultCache),
+    'other_cache' => new Psr16SnapshotAdapter($otherCache),
 ]);
+```
 
-$repository = new DefaultRepository($store, $eventStream, Profile::class, $snapshotStore);
+After creating the snapshot store, you need to pass that store to the DefaultRepositoryManager.
+
+```php
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+
+$snapshotStore = // ...
+
+$repositoryManager = new DefaultRepositoryManager(
+    $aggregateRootRegistry,
+    $store,
+    $eventBus,
+    $snapshotStore
+);
 ```
 
 !!! note
 
     You can read more about Repository [here](./repository.md).
 
-So that the state can also be cached, the aggregate must be taught how to `serialize` and `deserialize` its state.
-To do this, the aggregate must inherit from the `SnapshotableAggregateRoot`
-instead of the `AggregateRoot` and implement the necessary methods.
+Next we need to tell the Aggregate to take a snapshot of it. We do this using the snapshot attribute. 
+There we also specify where it should be saved.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\SnapshotableAggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
-final class Profile extends SnapshotableAggregateRoot
+final class Profile extends AggregateRoot
 {
     // ...
-    
-    protected function serialize(): array
-    {
-        return [
-            'id' => $this->id,
-        ];
-    }
-
-    protected static function deserialize(array $payload): static
-    {
-        $self = new static();
-        $self->id = $payload['id'];
-
-        return $self;
-    }
 }
 ```
+
+When taking a snapshot, all properties are extracted and saved. 
+When loading, this data is written back to the properties. 
+In other words, in the end everything has to be serializable. 
+To ensure this, the same system is used as for the events. 
+You can define normalizers to bring the properties into the correct format.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Snapshot;
+
+#[Aggregate('profile')]
+#[Snapshot('default')]
+final class Profile extends AggregateRoot
+{
+    public string $id;
+    public string $name,
+    #[Normalize(new DateTimeImmutableNormalizer())]
+    public DateTimeImmutable $createdAt;
+    
+    // ...
+}
+```
+
+!!! danger
+
+    If anything changes in the properties of the aggregate, then the cache must be cleared!
 
 !!! warning
 
     In the end it has to be possible to serialize it as json.
 
-## Batch
+!!! note
 
-// Todo
+    You can find more about normalizer [here](normalizer.md).
+
+### Snapshot batching
+
+Since the loading of events in itself is quite fast and only becomes noticeably slower with thousands of events, 
+we do not need to create a snapshot after each event. That would also have a negative impact on performance. 
+Instead, we can also create a snapshot after `n` events. 
+The remaining events that are not in the snapshot are then loaded from store.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Snapshot;
+
+#[Aggregate('profile')]
+#[Snapshot('default', batch: 1000)]
+final class Profile extends AggregateRoot
+{
+    // ...
+}
+```
 
 ## Adapter
 
