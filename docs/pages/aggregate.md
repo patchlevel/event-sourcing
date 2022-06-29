@@ -589,7 +589,7 @@ final class Profile extends AggregateRoot
 }
 ```
 
-But if you still want to make sure that the time is now and not in the past or future, you can pass a clock.
+But if you still want to make sure that the time is "now" and not in the past or future, you can pass a clock.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
@@ -616,7 +616,8 @@ final class Profile extends AggregateRoot
 }
 ```
 
-This gives you the option of implementing the clock, e.g. use the FrozenClock to always get the same time.
+Now you can pass the `SystemClock` to determine the current time. 
+Or for test purposes the `FrozenClock`, which always returns the same time.
 
 !!! note
 
