@@ -12,11 +12,11 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * Everything is included in the package for event sourcing
 * Based on [doctrine dbal](https://github.com/doctrine/dbal) and their ecosystem
 * Developer experience oriented and fully typed
-* [Snapshots](docs/snapshots.md) system to quickly rebuild the aggregates
-* [Pipeline](docs/pipeline.md) to build new [projections](docs/projection.md) or to migrate events
-* [Scheme management](docs/store.md) and [doctrine migration](docs/store.md) support
-* Dev [tools](docs/tools.md) such as a realtime event watcher
-* Built in [cli commands](docs/cli.md) with [symfony](https://symfony.com/)
+* [Snapshots](https://patchlevel.github.io/event-sourcing-docs/latest/snapshots/) system to quickly rebuild the aggregates
+* [Pipeline](https://patchlevel.github.io/event-sourcing-docs/latest/pipeline/) to build new [projections](https://patchlevel.github.io/event-sourcing-docs/latest/projection/) or to migrate events
+* [Scheme management](https://patchlevel.github.io/event-sourcing-docs/latest/store/) and [doctrine migration](https://patchlevel.github.io/event-sourcing-docs/latest/migration/) support
+* Dev [tools](https://patchlevel.github.io/event-sourcing-docs/latest/watch_server/) such as a realtime event watcher
+* Built in [cli commands](https://patchlevel.github.io/event-sourcing-docs/latest/cli/) with [symfony](https://symfony.com/)
 
 ## Installation
 
@@ -26,7 +26,8 @@ composer require patchlevel/event-sourcing
 
 ## Documentation
 
-* [Docs](https://patchlevel.github.io/event-sourcing-docs/latest)
+* Latest [Docs](https://patchlevel.github.io/event-sourcing-docs/latest)
+* 1.3 [Docs](https://github.com/patchlevel/event-sourcing/blob/1.3.x/README.md)
 
 ## Integration
 

@@ -45,6 +45,17 @@ The creation, deletion and rebuilding of the projections is also possible via th
 
     The [pipeline](./pipeline.md) will be used to rebuild the projection.
 
+## Outbox commands
+
+Interacting with the outbox store is also possible via the cli.
+
+* OutboxInfoCommand: `event-sourcing:outbox:info`
+* OutboxConsumeCommand: `event-sourcing:outbox:consume`
+
+!!! note
+
+    You can find out more about outbox [here](outbox.md).
+
 ## CLI example
 
 A cli php file can look like this:

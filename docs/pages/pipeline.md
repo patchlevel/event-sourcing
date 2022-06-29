@@ -178,6 +178,29 @@ $target = new InMemoryTarget();
 $messages = $target->messages();
 ```
 
+### Custom Target
+
+You can also define your own target. To do this, you need to implement the `Target` interface.
+
+```php
+use Patchlevel\EventSourcing\EventBus\Message;
+
+final class OtherStoreTarget implements Target
+{
+    private OtherStore $store;
+
+    public function __construct(OtherStore $store)
+    {
+        $this->store = $store;
+    }
+
+    public function save(Message $message): void
+    {
+        $this->store->save($message);
+    }
+}
+```
+
 ## Middlewares
 
 Middelwares can be used to manipulate, delete or expand messages or events during the process.
@@ -303,3 +326,55 @@ $middleware = new ChainMiddleware([
     new RecalculatePlayheadMiddleware()
 ]);
 ```
+
+### Custom middleware
+
+You can also write a custom middleware. The middleware gets a message and can return `N` messages. 
+There are the following possibilities:
+
+* Return only the message to an array to leave it unchanged.
+* Put another message in the array to swap the message.
+* Return an empty array to remove the message.
+* Or return multiple messages to enrich the stream.
+
+In our case, the domain has changed a bit. 
+In the beginning we had a `ProfileCreated` event that just created a profile. 
+Now we have a `ProfileRegistered` and a `ProfileActivated` event, 
+which should replace the `ProfileCreated` event.
+
+```php
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
+
+final class SplitProfileCreatedMiddleware implements Middleware
+{
+    public function __invoke(Message $message): array
+    {
+        $event = $message->event();
+        
+        if (!$event instanceof ProfileCreated) {
+            return [$message];
+        }
+        
+        $profileRegisteredMessage = Message::createWithHeaders(
+            new ProfileRegistered($event->id(), $event->name()), 
+            $message->headers()
+        );
+        
+        $profileActivatedMessage = Message::createWithHeaders(
+            new ProfileActivated($event->id()), 
+            $message->headers()
+        );
+
+        return [$profileRegisteredMessage, $profileActivatedMessage];
+    }    
+}
+```
+
+!!! warning
+
+    Since we changed the number of messages, we have to recalculate the playhead.
+
+!!! note
+
+    You can find more about messages [here](event_bus.md).

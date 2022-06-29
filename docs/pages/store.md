@@ -1,7 +1,7 @@
 # Store
 
-In the end, the events/messages have to be saved somewhere. 
-The library is based on [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html) 
+In the end, the events/messages have to be saved somewhere.
+The library is based on [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html)
 and offers two different store strategies.
 
 But it is also possible to develop your own store by implementing the `Store` interface.
@@ -29,8 +29,8 @@ We offer two store strategies that you can choose as you like.
 
 ### Single Table Store
 
-With the `SingleTableStore` everything is saved in one table. 
-The dbal connection is needed, a mapping of the aggregate class and aggregate name 
+With the `SingleTableStore` everything is saved in one table.
+The dbal connection is needed, a mapping of the aggregate class and aggregate name
 and, last but not least, the table name.
 
 ```php
@@ -54,9 +54,9 @@ $store = new SingleTableStore(
 
 ### Multi Table Store
 
-With the `MultiTableStore` a separate table is created for each aggregate type. 
-In addition, a meta table is created by referencing all events in the correct order. 
-The dbal connection is needed, a mapping of the aggregate class and table name 
+With the `MultiTableStore` a separate table is created for each aggregate type.
+In addition, a meta table is created by referencing all events in the correct order.
+The dbal connection is needed, a mapping of the aggregate class and table name
 and, last but not least, the table name for the metadata.
 
 ```php
@@ -80,7 +80,51 @@ $store = new MultiTableStore(
 
 ## Transaction
 
-// TODO
+Our stores also implement the `TransactionStore` interface.
+This allows you to combine several aggregate interactions in one transaction
+and thus ensure that everything is saved together or none of it.
+
+Since the library is based on doctrine dbal, our implementation is just a proxy.
+
+!!! note
+
+    You can find more about dbal transaction [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/transactions.html).
+
+### Begin transaction
+
+```php
+$store->transactionBegin();
+```
+
+### Commit transaction
+
+```php
+$store->transactionCommit();
+```
+
+### Rollback transaction
+
+```php
+$store->transactionRollback();
+```
+
+### Transactional function
+
+There is also the possibility of executing a function in a transaction. 
+Then dbal takes care of starting a transaction, committing it and then possibly rollback it again.
+
+```php
+$store->transactional(function () use ($command, $bankAccountRepository) {
+    $accountFrom = $bankAccountRepository->get($command->from());
+    $accountTo = $bankAccountRepository->get($command->to());
+    
+    $accountFrom->transferMoney($command->to(), $command->amount());
+    $accountTo->receiveMoney($command->from(), $command->amount());
+    
+    $bankAccountRepository->save($accountFrom);
+    $bankAccountRepository->save($accountTo);
+});
+```
 
 !!! tip
 

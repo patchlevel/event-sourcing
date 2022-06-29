@@ -12,7 +12,7 @@ The watch client and the listener are used to send all events that are saved to 
 use Patchlevel\EventSourcing\WatchServer\SocketWatchServerClient;
 use Patchlevel\EventSourcing\WatchServer\WatchListener;
 
-$watchServerClient = new SocketWatchServerClient('127.0.0.1:5000', $serializer);
+$watchServerClient = new SocketWatchServerClient('127.0.0.1:5000', $eventSerializer);
 $watchListener = new WatchListener($watchServerClient);
 ```
 
@@ -30,7 +30,7 @@ As soon as you execute `start`, the server will be started until you terminate t
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\WatchServer\SocketWatchServer;
 
-$watchServer = new SocketWatchServer('127.0.0.1:5000', $serializer);
+$watchServer = new SocketWatchServer('127.0.0.1:5000', $eventSerializer);
 $watchServer->listen(
     function (Message $message) {
         var_dump($message);
@@ -55,7 +55,7 @@ use Symfony\Component\Console\Application;
 $cli = new Application('Event-Sourcing CLI');
 $cli->setCatchExceptions(true);
 
-$watchServer = new SocketWatchServer('127.0.0.1:5000', $serializer);
+$watchServer = new SocketWatchServer('127.0.0.1:5000', $eventSerializer);
 $command = new WatchCommand($watchServer);
 
 $cli->addCommands([

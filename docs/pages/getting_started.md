@@ -3,14 +3,6 @@
 In our little getting started example, we manage hotels.
 We keep the example small, so we can only create hotels and let guests check in and check out.
 
-- [x] Create some events
-- [x] Define an aggregate root
-- [x] Create projections
-- [x] Add a processor
-- [x] Configure your application
-- [x] Setup database
-- [x] Play with your domain
-
 ## Define some events
 
 First we define the events that happen in our system.
@@ -274,7 +266,7 @@ use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
-use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 
@@ -303,7 +295,13 @@ $store = new SingleTableStore(
     'eventstore'
 );
 
-$hotelRepository = new DefaultRepository($store, $eventBus, Hotel::class);
+$repositoryManager = new DefaultRepositoryManager(
+    $aggregateRegistry,
+    $store,
+    $eventBus
+);
+
+$repository = $repositoryManager->get(Hotel::class);
 ```
 
 !!! note

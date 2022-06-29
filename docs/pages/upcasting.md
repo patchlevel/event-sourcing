@@ -49,13 +49,35 @@ use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 
 final class LegacyEventNameUpaster implements Upcaster
 {
-    public function __construct(private readonly EventRegistry $eventRegistry){}
+    public function __construct(
+        private readonly EventRegistry $eventRegistry
+    ){}
     
     public function __invoke(Upcast $upcast): Upcast
     {
         return new Upcast($this->eventRegistry->eventName($upcast->eventName), $upcast->payload);
     }
 }
+```
+
+## Use upcasting
+
+After we have defined the upcasting rules, we also have to pass the whole thing to the serializer. 
+Since we have multiple upcasters, we use a chain here.
+
+```php
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
+
+$upcaster = new UpcasterChain([
+    new ProfileCreatedEmailLowerCastUpcaster(),
+    new LegacyEventNameUpaster($eventRegistry)
+]);
+
+$serializer = DefaultEventSerializer::createFromPaths(
+    ['src/Domain'],
+    $upcaster
+);
 ```
 
 ## Update event stream
@@ -79,7 +101,11 @@ final class EventStreamCleanupCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $pipeline = new Pipeline(new StoreSource($sourceStore), new StoreTarget($targetStore));
+        $pipeline = new Pipeline(
+            new StoreSource($sourceStore), 
+            new StoreTarget($targetStore)
+        );
+        
         $pipeline->run();
     }
 ```

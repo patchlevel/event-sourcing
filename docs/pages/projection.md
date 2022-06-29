@@ -2,10 +2,10 @@
 
 With `projections` you can create your data optimized for reading.
 projections can be adjusted, deleted or rebuilt at any time.
-This is possible because the source of truth remains untouched 
+This is possible because the source of truth remains untouched
 and everything can always be reproduced from the events.
 
-The target of a projection can be anything. 
+The target of a projection can be anything.
 Either a file, a relational database, a no-sql database like mongodb or an elasticsearch.
 
 ## Define Projection
@@ -62,13 +62,18 @@ final class ProfileProjection implements Projection
     You should not execute any actions with projections, 
     otherwise these will be executed again if you rebuild the projection!
 
+!!! tip
+
+    If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
+    to make the event method return the correct type.
+
 Projections have a `create` and a `drop` method that is executed when the projection is created or deleted.
 In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
 
-In order for the projection to know which method is responsible for which event, 
+In order for the projection to know which method is responsible for which event,
 the methods must be given the `Handle` attribute with the respective event class name.
 
-As soon as the event has been dispatched, the appropriate methods are then executed. 
+As soon as the event has been dispatched, the appropriate methods are then executed.
 Several projections can also listen to the same event.
 
 ## Register projections
@@ -98,8 +103,8 @@ $eventBus->addListener(new ProjectionListener($projectionHandler));
 
 ## Setup Projection
 
-A projection schama or database usually has to be created beforehand. 
-And with a rebuild, the projection has to be deleted. 
+A projection schama or database usually has to be created beforehand.
+And with a rebuild, the projection has to be deleted.
 To make this possible, projections have two methods `create` and `drop` that can be defined and executed.
 
 ### Create Projection Schema

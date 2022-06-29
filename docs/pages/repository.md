@@ -1,25 +1,22 @@
 # Repository
 
 A `repository` takes care of storing and loading the `aggregates`.
-The [design pattern](https://martinfowler.com/eaaCatalog/repository.html) of the same name is also used.
+He is also responsible for building [messages](event_bus.md) from the events and then dispatching them to the event bus.
 
 Every aggregate needs a repository to be stored. 
 And each repository is only responsible for one aggregate.
 
-## Create
+## Create a repository
 
-We offer two implementations. One is a `DefaultRepository` that only reads or writes the data from one store. 
-And a `SnapshotRepository` that holds a state of the aggregate in a cache 
-so that loading and rebuilding of the aggregate is faster.
+The best way to create a repository is to use the `DefaultRepositoryManager`.
+This helps to build the repository correctly.
 
-Both repositories implement the `Repository` interface. 
-This interface can be used for the typehints so that a change is possible at any time.
+The `DefaultRepositoryManager` needs some services to work. 
+For one, it needs [AggregateRootRegistry](aggregate.md#aggregate-root-registry) so that it knows which aggregates exist. 
+The [store](store.md), which is then given to the repository so that it can save and load the events at the end. 
+And the [EventBus](event_bus.md) to publish the new events.
 
-### Default Repository
-
-The default repository acts directly with the `store` and therefore needs one.
-The [event bus](./event_bus.md) is used as a further parameter to dispatch new events.
-Finally, the `aggregate` class is needed, which aggregates the repository should take care of.
+After plugging the `DefaultRepositoryManager` together, you can create the repository associated with the aggregate.
 
 ```php
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
@@ -35,23 +32,30 @@ $repository = $repositoryManager->get(Profile::class);
 
 !!! note
 
-    You can find out more about stores [here](./store.md)
+    The same repository instance is always returned for a specific aggregate.
 
-### Default Repository Manager
+### Snapshots
 
-// todo
+Loading events for an aggregate is superfast. 
+You can have thousands of events in the database that load in a few milliseconds and build the corresponding aggregate.
+
+But at some point you realize that it takes time. To counteract this there is a snapshot store.
 
 ```php
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 
-$snapshot = new DefaultSnapshotStore([/* adapters */]);
+$adapter = new Psr16SnapshotAdapter($cache);
+$snapshotStore = new DefaultSnapshotStore([
+    'default' => $adapter
+]);
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
     $eventBus,
-    $snapshot
+    $snapshotStore
 );
 
 $repository = $repositoryManager->get(Profile::class);
@@ -59,14 +63,45 @@ $repository = $repositoryManager->get(Profile::class);
 
 !!! note
 
-    You can find out more about snapshots [here](./snapshots.md)
+    You can find out more about snapshots [here](snapshots.md).
 
-## Usage
+### Decorator
+
+If you want to add more metadata to the message, like e.g. an application id, then you can use decorator.
+
+```php
+use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+
+$decorator = new RecordedOnDecorator($clock);
+
+$repositoryManager = new DefaultRepositoryManager(
+    $aggregateRootRegistry,
+    $store,
+    $eventBus,
+    null,
+    $decorator
+);
+
+$repository = $repositoryManager->get(Profile::class);
+```
+
+!!! warning
+
+    We also use the decorator to fill in the `recordedOn` time. 
+    If you want to add your own decorator, then you need to make sure to add the `RecordedOnDecorator` as well. 
+    You can e.g. solve with the `ChainMessageDecorator`.
+
+!!! note
+
+    You can find out more about message decorator [here](message_decorator.md).
+
+## Use the repository
 
 Each `repository` has three methods that are responsible for loading an `aggregate`, 
 saving it or checking whether it exists.
 
-### Save
+### Save an aggregate
 
 An `aggregate` can be `saved`. 
 All new events that have not yet been written to the database are fetched from the aggregate. 
@@ -84,7 +119,12 @@ $repository->save($profile);
 
     All events are written to the database with one transaction in order to ensure data consistency.
 
-### Load
+!!! tip
+
+    If you want to make sure that dispatching events and storing events is transaction safe, 
+    then you should look at the [outbox](outbox.md) pattern.
+
+### Load an aggregate
 
 An `aggregate` can be loaded using the `load` method. 
 All events for the aggregate are loaded from the database and the current state is rebuilt.
@@ -93,12 +133,16 @@ All events for the aggregate are loaded from the database and the current state 
 $profile = $repository->load('229286ff-6f95-4df6-bc72-0a239fe7b284');
 ```
 
+!!! warning
+
+    When the method is called, the aggregate is always reloaded from the database and rebuilt.
+
 !!! note
 
     You can only fetch one aggregate at a time and don't do any complex queries either. 
     Projections are used for this purpose.
 
-### Has
+### Has an aggregate
 
 You can also check whether an `aggregate` with a certain id exists. 
 It is checked whether any event with this id exists in the database.
@@ -113,7 +157,6 @@ if($repository->has('229286ff-6f95-4df6-bc72-0a239fe7b284')) {
 
     The query is fast and does not load any event. 
     This means that the state of the aggregate is not rebuild either.
-
 
 ## Custom Repository
 

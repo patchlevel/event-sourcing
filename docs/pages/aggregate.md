@@ -7,7 +7,7 @@
 
     [DDD Aggregate - Martin Flower](https://martinfowler.com/bliki/DDD_Aggregate.html) 
 
-An AggregateRoot has to inherit from `AggregateRoot` and need to implement the method `aggregateRootId`.
+An Aggregate has to inherit from `AggregateRoot` and need to implement the method `aggregateRootId`.
 `aggregateRootId` is the identifier from `AggregateRoot` like a primary key for an entity.
 The events will be added later, but the following is enough to make it executable:
 
@@ -29,7 +29,7 @@ final class Profile extends AggregateRoot
         return $this->id;
     }
     
-    public static function create(string $id): self 
+    public static function register(string $id): self 
     {
         $self = new self();
         // todo: record create event
@@ -43,13 +43,13 @@ final class Profile extends AggregateRoot
 
     The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
 
-!!! note
+!!! tip
 
     An aggregateId can be an **uuid**, you can find more about this [here](./uuid.md).
 
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
-But it is possible to define different named constructors for different use-cases like `createFromRegistration`.
+But it is possible to define different named constructors for different use-cases like `import`.
 
 After the basic structure for an aggregate is in place, it could theoretically be saved:
 
@@ -58,16 +58,13 @@ use Patchlevel\EventSourcing\Repository\Repository;
 
 final class CreateProfileHandler
 {
-    private Repository $profileRepository;
-
-    public function __construct(Repository $profileRepository) 
-    {
-        $this->profileRepository = $profileRepository;
-    }
+    public function __construct(
+        private readonly Repository $profileRepository
+    ) {}
     
     public function __invoke(CreateProfile $command): void
     {
-        $profile = Profile::create($command->id());
+        $profile = Profile::register($command->id());
         
         $this->profileRepository->save($profile);
     }
@@ -88,13 +85,13 @@ final class CreateProfileHandler
 ## Create a new aggregate
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
-For our aggregate we create the Event `ProfileCreated`:
+For our aggregate we create the Event `ProfileRegistered`:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
 
-#[Event('profile.created')]
-final class ProfileCreated
+#[Event('profile.registered')]
+final class ProfileRegistered
 {
     public function __construct(
         public readonly string $profileId,
@@ -130,16 +127,16 @@ final class Profile extends AggregateRoot
         return $this->name;
     }
 
-    public static function create(string $id, string $name): self
+    public static function register(string $id, string $name): self
     {
         $self = new self();
-        $self->recordThat(new ProfileCreated($id, $name));
+        $self->recordThat(new ProfileRegistered($id, $name));
 
         return $self;
     }
     
     #[Apply]
-    protected function applyProfileCreated(ProfileCreated $event): void 
+    protected function applyProfileRegistered(ProfileRegistered $event): void 
     {
         $this->id = $event->profileId;
         $this->name = $event->name;
@@ -151,13 +148,13 @@ final class Profile extends AggregateRoot
 
     Prefixing the apply methods with "apply" improves readability.
 
-In our named constructor `create` we have now created the event and recorded it with the method `record`.
-The aggregate remembers all recorded events in order to save them later.
+In our named constructor `register` we have now created the event and recorded it with the method `recordThat`.
+The aggregate remembers all new recorded events in order to save them later.
 At the same time, a defined apply method is executed directly so that we can change our state.
 
 So that the AggregateRoot also knows which method it should call, 
-we have to provide it with the `Apply` [attributes](https://www.php.net/manual/en/language.attributes.overview.php).
-We did that in the `applyProfileCreated` method.
+we have to mark it with the `Apply` [attributes](https://www.php.net/manual/en/language.attributes.overview.php).
+We did that in the `applyProfileRegistered` method.
 In this method we change the `Profile` properties `id` and `name` with the transferred values.
 
 ### Modify an aggregate
@@ -206,10 +203,10 @@ final class Profile extends AggregateRoot
         return $this->name;
     }
 
-    public static function create(string $id, string $name): static
+    public static function register(string $id, string $name): static
     {
         $self = new static();
-        $self->recordThat(new ProfileCreated($id, $name));
+        $self->recordThat(new ProfileRegistered($id, $name));
 
         return $self;
     }
@@ -220,7 +217,7 @@ final class Profile extends AggregateRoot
     }
     
     #[Apply]
-    protected function applyProfileCreated(ProfileCreated $event): void
+    protected function applyProfileRegistered(ProfileRegistered $event): void
     {
         $this->id = $event->profileId;
         $this->name = $event->name;
@@ -276,6 +273,7 @@ The `applyNameChanged` method was also called again internally to adjust the sta
 
 When the `save` method is called on the repository, 
 all newly recorded events are then fetched and written to the database.
+In this specific case only the `NameChanged` changed event.
 
 ## Multiple apply attributes on the same method
 
@@ -461,10 +459,10 @@ final class Profile extends AggregateRoot
     private string $id;
     private Name $name;
     
-    public static function create(string $id, Name $name): static
+    public static function register(string $id, Name $name): static
     {
         $self = new static();
-        $self->recordThat(new ProfileCreated($id, $name));
+        $self->recordThat(new ProfileRegistered($id, $name));
 
         return $self;
     }
@@ -528,7 +526,7 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
-#[Aggregate('profile')]
+#[Aggregate('hotel')]
 #[SuppressMissingApply([FullyBooked::class])]
 final class Hotel extends AggregateRoot
 {
@@ -558,6 +556,72 @@ final class Hotel extends AggregateRoot
     }
 }
 ```
+
+## Working with dates
+
+An aggregate should always be deterministic. In other words, whenever I execute methods on the aggregate, 
+I always get the same result. This also makes testing much easier.
+
+But that often doesn't seem to be possible, e.g. if you want to save a createAt date. 
+But you can pass this information by yourself.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Apply;
+
+#[Aggregate('profile')]
+final class Profile extends AggregateRoot
+{
+    private string $id;
+    private Name $name;
+    private DateTimeImmutable $registeredAt;
+    
+    public static function register(string $id, string $name, DateTimeImmutable $registeredAt): static
+    {
+        $self = new static();
+        $self->recordThat(new ProfileRegistered($id, $name, $registeredAt));
+
+        return $self;
+    }
+    
+    // ...
+}
+```
+
+But if you still want to make sure that the time is "now" and not in the past or future, you can pass a clock.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Clock\Clock;
+
+#[Aggregate('profile')]
+final class Profile extends AggregateRoot
+{
+    private string $id;
+    private Name $name;
+    private DateTimeImmutable $registeredAt;
+    
+    public static function register(string $id, string $name, Clock $clock): static
+    {
+        $self = new static();
+        $self->recordThat(new ProfileRegistered($id, $name, $clock->now()));
+
+        return $self;
+    }
+    
+    // ...
+}
+```
+
+Now you can pass the `SystemClock` to determine the current time. 
+Or for test purposes the `FrozenClock`, which always returns the same time.
+
+!!! note
+
+    You can find out more about clock [here](./clock.md).
 
 ## Aggregate Root Registry
 

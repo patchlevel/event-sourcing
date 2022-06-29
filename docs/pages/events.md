@@ -46,7 +46,7 @@ final class ProfileCreated
 
 So that the events can be saved in the database, they must be serialized and deserialized.
 That's what the serializer is for. 
-The library comes with a `JsonSerializer` that can be given further instructions using attributes.
+The library comes with a `DefaultEventSerializer` that can be given further instructions using attributes.
 
 ```php
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
