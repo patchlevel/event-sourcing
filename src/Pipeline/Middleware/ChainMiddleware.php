@@ -8,15 +8,12 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 final class ChainMiddleware implements Middleware
 {
-    /** @var list<Middleware> */
-    private array $middlewares;
-
     /**
-     * @param list<Middleware> $middlewares
+     * @param iterable<Middleware> $middlewares
      */
-    public function __construct(array $middlewares)
-    {
-        $this->middlewares = $middlewares;
+    public function __construct(
+        private readonly iterable $middlewares
+    ) {
     }
 
     /**

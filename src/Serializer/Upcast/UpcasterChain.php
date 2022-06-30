@@ -7,10 +7,11 @@ namespace Patchlevel\EventSourcing\Serializer\Upcast;
 final class UpcasterChain implements Upcaster
 {
     /**
-     * @param array<Upcaster> $upcaster
+     * @param iterable<Upcaster> $upcaster
      */
-    public function __construct(private array $upcaster)
-    {
+    public function __construct(
+        private readonly iterable $upcaster
+    ) {
     }
 
     public function __invoke(Upcast $upcast): Upcast
