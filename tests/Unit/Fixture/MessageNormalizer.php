@@ -11,6 +11,9 @@ use function is_array;
 
 class MessageNormalizer implements Normalizer
 {
+    /**
+     * @return array<array-key, mixed>|null
+     */
     public function normalize(mixed $value): ?array
     {
         if ($value === null) {
