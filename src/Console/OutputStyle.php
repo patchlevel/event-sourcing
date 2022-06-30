@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class OutputStyle extends SymfonyStyle
+final class OutputStyle extends SymfonyStyle
 {
     public function message(EventSerializer $serializer, Message $message): void
     {

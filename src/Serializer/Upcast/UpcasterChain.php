@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer\Upcast;
 
-class UpcasterChain implements Upcaster
+final class UpcasterChain implements Upcaster
 {
     /**
      * @param array<Upcaster> $upcaster
