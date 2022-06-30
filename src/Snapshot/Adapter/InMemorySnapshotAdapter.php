@@ -11,11 +11,17 @@ final class InMemorySnapshotAdapter implements SnapshotAdapter
     /** @var array<string, array<string, mixed>> */
     private array $snapshots = [];
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function save(string $key, array $data): void
     {
         $this->snapshots[$key] = $data;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function load(string $key): array
     {
         if (!array_key_exists($key, $this->snapshots)) {

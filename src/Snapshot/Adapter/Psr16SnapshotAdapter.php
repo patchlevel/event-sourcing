@@ -15,11 +15,17 @@ final class Psr16SnapshotAdapter implements SnapshotAdapter
         $this->cache = $cache;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function save(string $key, array $data): void
     {
         $this->cache->set($key, $data);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function load(string $key): array
     {
         /**

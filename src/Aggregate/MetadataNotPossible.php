@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
-class MetadataNotPossible extends AggregateException
+final class MetadataNotPossible extends AggregateException
 {
     public function __construct()
     {

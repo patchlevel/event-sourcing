@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\EventBus;
 
 use function sprintf;
 
-class HeaderNotFound extends EventBusException
+final class HeaderNotFound extends EventBusException
 {
     private function __construct(string $name)
     {

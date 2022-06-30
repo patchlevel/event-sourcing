@@ -15,6 +15,9 @@ final class Psr6SnapshotAdapter implements SnapshotAdapter
         $this->cache = $cache;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function save(string $key, array $data): void
     {
         $item = $this->cache->getItem($key);
@@ -22,6 +25,11 @@ final class Psr6SnapshotAdapter implements SnapshotAdapter
         $this->cache->save($item);
     }
 
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws SnapshotNotFound
+     */
     public function load(string $key): array
     {
         $item = $this->cache->getItem($key);

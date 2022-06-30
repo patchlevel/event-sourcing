@@ -7,12 +7,15 @@ namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 use function array_map;
 use function is_array;
 
-class ArrayNormalizer implements Normalizer
+final class ArrayNormalizer implements Normalizer
 {
     public function __construct(private readonly Normalizer $normalizer)
     {
     }
 
+    /**
+     * @return array<array-key, mixed>|null
+     */
     public function normalize(mixed $value): ?array
     {
         if ($value === null) {
@@ -26,6 +29,9 @@ class ArrayNormalizer implements Normalizer
         return array_map(fn (mixed $value): mixed => $this->normalizer->normalize($value), $value);
     }
 
+    /**
+     * @return array<array-key, mixed>|null
+     */
     public function denormalize(mixed $value): ?array
     {
         if ($value === null) {

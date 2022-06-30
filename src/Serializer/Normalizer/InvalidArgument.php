@@ -6,6 +6,6 @@ namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 
 use Patchlevel\EventSourcing\Serializer\SerializeException;
 
-class InvalidArgument extends SerializeException
+final class InvalidArgument extends SerializeException
 {
 }

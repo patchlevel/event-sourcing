@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function sprintf;
 
-class SnapshotNotConfigured extends SnapshotException
+final class SnapshotNotConfigured extends SnapshotException
 {
     /**
      * @param class-string<AggregateRoot> $aggregateClass
