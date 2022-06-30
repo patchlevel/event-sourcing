@@ -9,7 +9,7 @@ use Throwable;
 
 use function sprintf;
 
-class SnapshotRebuildFailed extends RepositoryException
+final class SnapshotRebuildFailed extends RepositoryException
 {
     /** @var class-string<AggregateRoot> */
     private string $aggregateClass;

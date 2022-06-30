@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Outbox;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Store\OutboxStore;
 
-class StoreOutboxConsumer implements OutboxConsumer
+final class StoreOutboxConsumer implements OutboxConsumer
 {
     public function __construct(private OutboxStore $outboxStore, private EventBus $eventBus)
     {

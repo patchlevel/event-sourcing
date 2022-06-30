@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 use function array_map;
 use function is_array;
 
-class ArrayNormalizer implements Normalizer
+final class ArrayNormalizer implements Normalizer
 {
     public function __construct(private readonly Normalizer $normalizer)
     {

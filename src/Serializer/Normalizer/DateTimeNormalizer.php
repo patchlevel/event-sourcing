@@ -8,7 +8,7 @@ use DateTime;
 
 use function is_string;
 
-class DateTimeNormalizer implements Normalizer
+final class DateTimeNormalizer implements Normalizer
 {
     public function __construct(
         private readonly string $format = DateTime::ATOM

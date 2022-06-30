@@ -10,7 +10,7 @@ use ValueError;
 use function is_int;
 use function is_string;
 
-class EnumNormalizer implements Normalizer
+final class EnumNormalizer implements Normalizer
 {
     public function __construct(
         /** @var class-string<BackedEnum> */

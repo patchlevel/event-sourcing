@@ -8,7 +8,7 @@ use DateTimeZone;
 
 use function is_string;
 
-class DateTimeZoneNormalizer implements Normalizer
+final class DateTimeZoneNormalizer implements Normalizer
 {
     public function normalize(mixed $value): ?string
     {

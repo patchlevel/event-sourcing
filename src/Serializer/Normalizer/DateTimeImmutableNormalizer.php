@@ -8,7 +8,7 @@ use DateTimeImmutable;
 
 use function is_string;
 
-class DateTimeImmutableNormalizer implements Normalizer
+final class DateTimeImmutableNormalizer implements Normalizer
 {
     public function __construct(
         private readonly string $format = DateTimeImmutable::ATOM
