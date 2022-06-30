@@ -33,6 +33,9 @@ final class DefaultEventSerializer implements EventSerializer
         $this->upcaster = $upcaster;
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     public function serialize(object $event, array $options = []): SerializedEvent
     {
         $name = $this->eventRegistry->eventName($event::class);
@@ -44,6 +47,9 @@ final class DefaultEventSerializer implements EventSerializer
         );
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     public function deserialize(SerializedEvent $data, array $options = []): object
     {
         $payload = $this->encoder->decode($data->payload, $options);
