@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -15,11 +16,13 @@ use function array_keys;
 use function array_map;
 use function array_values;
 
+#[AsCommand(
+    'event-sourcing:debug',
+    'show event sourcing debug information',
+    ['debug:event-sourcing']
+)]
 final class DebugCommand extends Command
 {
-    protected static $defaultName = 'event-sourcing:debug';
-    protected static $defaultDescription = 'show event sourcing debug information';
-
     public function __construct(
         private readonly AggregateRootRegistry $aggregateRootRegistry,
         private readonly EventRegistry $eventRegistry

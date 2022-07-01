@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -17,11 +18,12 @@ use Throwable;
 
 use function sprintf;
 
+#[AsCommand(
+    'event-sourcing:database:create',
+    'create eventstore database'
+)]
 final class DatabaseCreateCommand extends Command
 {
-    protected static $defaultName = 'event-sourcing:database:create';
-    protected static $defaultDescription = 'create eventstore database';
-
     private Store $store;
     private DoctrineHelper $helper;
 

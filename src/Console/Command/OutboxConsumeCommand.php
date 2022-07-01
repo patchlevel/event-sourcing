@@ -6,16 +6,18 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Outbox\OutboxConsumer;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[AsCommand(
+    'event-sourcing:outbox:consume',
+    'published the messages from the outbox store'
+)]
 final class OutboxConsumeCommand extends Command
 {
-    protected static $defaultName = 'event-sourcing:outbox:consume';
-    protected static $defaultDescription = 'published the messages from the outbox store';
-
     public function __construct(private OutboxConsumer $consumer)
     {
         parent::__construct();

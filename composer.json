@@ -24,6 +24,7 @@
     "psr/cache": "^2.0.0|^3.0.0",
     "psr/log": "^2.0.0|^3.0.0",
     "psr/simple-cache": "^2.0.0|^3.0.0",
+    "symfony/console": "^5.4.1|^6.0.1",
     "symfony/finder": "^4.4.34|^5.4.0|^6.0.1"
   },
   "require-dev": {
@@ -38,19 +39,16 @@
     "phpunit/phpunit": "^9.5.10",
     "psalm/plugin-phpunit": "^0.17.0",
     "roave/infection-static-analysis-plugin": "^1.14.0",
-    "symfony/console": "^4.4.34|^5.4.1|^6.0.1",
     "symfony/messenger": "^4.4.34|^5.4.0|^6.0.1",
     "symfony/var-dumper": "^5.4.1|^6.0.1",
     "vimeo/psalm": "^4.22.0"
   },
   "suggest": {
     "doctrine/migrations": "for schema migration support",
-    "symfony/messenger": "for an advanced event bus",
-    "symfony/console": "to use the cli commands"
+    "symfony/messenger": "for an advanced event bus"
   },
   "conflict": {
     "doctrine/migrations": "<3.3",
-    "symfony/console": "<4.4",
     "symfony/messenger": "<4.4"
   },
   "config": {

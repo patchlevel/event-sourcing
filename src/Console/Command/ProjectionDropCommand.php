@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[AsCommand(
+    'event-sourcing:projection:drop',
+    'drop projection schema'
+)]
 final class ProjectionDropCommand extends ProjectionCommand
 {
-    protected static $defaultName = 'event-sourcing:projection:drop';
-    protected static $defaultDescription = 'drop projection schema';
-
     protected function configure(): void
     {
         $this

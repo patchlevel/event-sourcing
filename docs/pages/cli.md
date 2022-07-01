@@ -5,14 +5,6 @@ It is also possible to manage the `schema` and `projections`.
 These commands are `optional` and only wrap existing functionalities 
 that are also available in this way.
 
-## Require package
-
-To use the symfony cli command you first have to `install` the packet.
-
-```bash
-composer require symfony/console
-```
-
 ## Database commands
 
 There are two commands for creating and deleting a database.
