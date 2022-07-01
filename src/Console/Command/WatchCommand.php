@@ -8,17 +8,19 @@ use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\WatchServer\WatchServer;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 use function sprintf;
 
+#[AsCommand(
+    'event-sourcing:watch',
+    'live stream of all aggregate events'
+)]
 final class WatchCommand extends Command
 {
-    protected static $defaultName = 'event-sourcing:watch';
-    protected static $defaultDescription = 'live stream of all aggregate events';
-
     private WatchServer $server;
     private EventSerializer $serializer;
 

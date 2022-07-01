@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Store;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -17,11 +18,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 use function count;
 use function sprintf;
 
+#[AsCommand(
+    'event-sourcing:show',
+    'show events from one aggregate'
+)]
 final class ShowCommand extends Command
 {
-    protected static $defaultName = 'event-sourcing:show';
-    protected static $defaultDescription = 'show events from one aggregate';
-
     private Store $store;
     private EventSerializer $serializer;
     private AggregateRootRegistry $aggregateRootRegistry;

@@ -9,16 +9,18 @@ use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
 use Patchlevel\EventSourcing\Schema\SchemaManager;
 use Patchlevel\EventSourcing\Store\Store;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[AsCommand(
+    'event-sourcing:schema:create',
+    'create eventstore schema'
+)]
 final class SchemaCreateCommand extends Command
 {
-    protected static $defaultName = 'event-sourcing:schema:create';
-    protected static $defaultDescription = 'create eventstore schema';
-
     private Store $store;
     private SchemaManager $schemaManager;
 

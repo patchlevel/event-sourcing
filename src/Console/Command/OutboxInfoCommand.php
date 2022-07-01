@@ -8,16 +8,18 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\OutboxStore;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[AsCommand(
+    'event-sourcing:outbox:info',
+    'displays the messages stored in the outbox store'
+)]
 final class OutboxInfoCommand extends Command
 {
-    protected static $defaultName = 'event-sourcing:outbox:info';
-    protected static $defaultDescription = 'displays the messages stored in the outbox store';
-
     private OutboxStore $store;
     private EventSerializer $serializer;
 
