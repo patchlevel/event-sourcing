@@ -36,10 +36,12 @@ final class DefaultSnapshotStore implements SnapshotStore
 
         $adapter = $this->adapter($aggregateClass);
 
-        $adapter->save(
-            $key,
-            $this->hydrator->extract($aggregateRoot),
-        );
+        $data = [
+            'version' => $this->version($aggregateClass),
+            'payload' => $this->hydrator->extract($aggregateRoot),
+        ];
+
+        $adapter->save($key, $data);
     }
 
     /**
@@ -62,7 +64,18 @@ final class DefaultSnapshotStore implements SnapshotStore
             throw new SnapshotNotFound($aggregateClass, $id, $exception);
         }
 
-        return $this->hydrator->hydrate($aggregateClass, $data);
+        if (!array_key_exists('version', $data) && !array_key_exists('payload', $data)) {
+            $data = [
+                'version' => null,
+                'payload' => $data,
+            ];
+        }
+
+        if ($this->version($aggregateClass) !== $data['version']) {
+            throw new SnapshotVersionInvalid($key);
+        }
+
+        return $this->hydrator->hydrate($aggregateClass, $data['payload']);
     }
 
     /**
@@ -91,5 +104,13 @@ final class DefaultSnapshotStore implements SnapshotStore
         $aggregateName = $aggregateClass::metadata()->name;
 
         return sprintf('%s-%s', $aggregateName, $aggregateId);
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $aggregateClass
+     */
+    private function version(string $aggregateClass): string|int|null
+    {
+        return $aggregateClass::metadata()->snapshotVersion;
     }
 }

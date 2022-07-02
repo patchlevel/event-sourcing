@@ -11,11 +11,13 @@ final class Snapshot
 {
     private string $name;
     private ?int $batch;
+    private string|int|null $version;
 
-    public function __construct(string $name, ?int $batch = null)
+    public function __construct(string $name, ?int $batch = null, string|int|null $version = null)
     {
         $this->name = $name;
         $this->batch = $batch;
+        $this->version = $version;
     }
 
     public function name(): string
@@ -26,5 +28,10 @@ final class Snapshot
     public function batch(): ?int
     {
         return $this->batch;
+    }
+
+    public function version(): string|int|null
+    {
+        return $this->version;
     }
 }

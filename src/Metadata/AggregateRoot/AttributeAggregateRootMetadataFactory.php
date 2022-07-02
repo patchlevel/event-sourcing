@@ -41,7 +41,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         $aggregateName = $this->findAggregateName($reflector);
         [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflector);
         $applyMethods = $this->findApplyMethods($reflector, $aggregate);
-        [$snapshotStore, $snapshotBatch] = $this->findSnapshot($reflector);
+        $snapshot = $this->findSnapshot($reflector);
         $properties = $this->getPropertyMetadataList($reflector);
 
         $metadata = new AggregateRootMetadata(
@@ -50,8 +50,9 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $properties,
             $suppressEvents,
             $suppressAll,
-            $snapshotStore,
-            $snapshotBatch,
+            $snapshot?->name(),
+            $snapshot?->batch(),
+            $snapshot?->version()
         );
 
         $this->aggregateMetadata[$aggregate] = $metadata;
@@ -99,20 +100,15 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         return $aggregateAttribute->name();
     }
 
-    /**
-     * @return array{?string, ?int}
-     */
-    private function findSnapshot(ReflectionClass $reflector): array
+    private function findSnapshot(ReflectionClass $reflector): ?Snapshot
     {
         $attributeReflectionList = $reflector->getAttributes(Snapshot::class);
 
         if (!$attributeReflectionList) {
-            return [null, null];
+            return null;
         }
 
-        $attribute = $attributeReflectionList[0]->newInstance();
-
-        return [$attribute->name(), $attribute->batch()];
+        return $attributeReflectionList[0]->newInstance();
     }
 
     /**

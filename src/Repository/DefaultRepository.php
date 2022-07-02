@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
 use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -76,6 +77,14 @@ final class DefaultRepository implements Repository
                 $this->logger->debug(
                     sprintf(
                         'snapshot for aggregate "%s" with the id "%s" not found',
+                        $aggregateClass,
+                        $id
+                    )
+                );
+            } catch (SnapshotVersionInvalid) {
+                $this->logger->debug(
+                    sprintf(
+                        'snapshot for aggregate "%s" with the id "%s" is invalid',
                         $aggregateClass,
                         $id
                     )
