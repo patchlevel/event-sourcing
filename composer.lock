@@ -6602,5 +6602,5 @@
     "platform-dev": {
         "ext-pdo_sqlite": "~8.1.0"
     },
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.3.0"
 }
