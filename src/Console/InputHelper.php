@@ -33,6 +33,19 @@ final class InputHelper
         return $value;
     }
 
+    public static function int(mixed $value): int
+    {
+        if (!is_string($value) && !is_int($value)) {
+            throw new InvalidArgumentGiven($value, 'int');
+        }
+
+        if (!is_numeric($value)) {
+            throw new InvalidArgumentGiven($value, 'int');
+        }
+
+        return (int)$value;
+    }
+
     public static function nullableInt(mixed $value): ?int
     {
         if ($value === null) {
