@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Source\InMemorySource */
-class InMemorySourceTest extends TestCase
+final class InMemorySourceTest extends TestCase
 {
     public function testLoad(): void
     {

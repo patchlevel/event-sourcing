@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware */
-class RecalculatePlayheadMiddlewareTest extends TestCase
+final class RecalculatePlayheadMiddlewareTest extends TestCase
 {
     public function testReculatePlayhead(): void
     {

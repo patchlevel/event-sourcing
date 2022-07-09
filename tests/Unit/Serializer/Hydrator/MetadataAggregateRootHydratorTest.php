@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\WrongNormalizerAggregate;
 use PHPUnit\Framework\TestCase;
 
-class MetadataAggregateRootHydratorTest extends TestCase
+final class MetadataAggregateRootHydratorTest extends TestCase
 {
     private AggregateRootHydrator $hydrator;
 

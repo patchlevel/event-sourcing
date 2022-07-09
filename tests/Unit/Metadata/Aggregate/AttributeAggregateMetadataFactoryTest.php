@@ -20,7 +20,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyNoType;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithEmptyApply;
 use PHPUnit\Framework\TestCase;
 
-class AttributeAggregateMetadataFactoryTest extends TestCase
+final class AttributeAggregateMetadataFactoryTest extends TestCase
 {
     public function testProfile(): void
     {

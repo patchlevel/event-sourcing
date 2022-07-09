@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\EventBus\Message */
-class MessageTest extends TestCase
+final class MessageTest extends TestCase
 {
     public function testEmptyMessage(): void
     {

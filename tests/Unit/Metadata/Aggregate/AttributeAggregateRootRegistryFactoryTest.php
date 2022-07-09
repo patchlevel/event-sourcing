@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use PHPUnit\Framework\TestCase;
 
-class AttributeAggregateRootRegistryFactoryTest extends TestCase
+final class AttributeAggregateRootRegistryFactoryTest extends TestCase
 {
     public function testCreateRegistry(): void
     {

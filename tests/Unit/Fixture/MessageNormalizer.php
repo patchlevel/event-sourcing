@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 
 use function is_array;
 
-class MessageNormalizer implements Normalizer
+final class MessageNormalizer implements Normalizer
 {
     /**
      * @return array<array-key, mixed>|null

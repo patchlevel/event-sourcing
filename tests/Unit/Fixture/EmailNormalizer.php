@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 
 use function is_string;
 
-class EmailNormalizer implements Normalizer
+final class EmailNormalizer implements Normalizer
 {
     public function normalize(mixed $value): string
     {

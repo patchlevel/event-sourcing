@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware */
-class ExcludeEventMiddlewareTest extends TestCase
+final class ExcludeEventMiddlewareTest extends TestCase
 {
     public function testDeleteEvent(): void
     {

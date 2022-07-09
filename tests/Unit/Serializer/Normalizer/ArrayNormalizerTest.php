@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-class ArrayNormalizerTest extends TestCase
+final class ArrayNormalizerTest extends TestCase
 {
     use ProphecyTrait;
 

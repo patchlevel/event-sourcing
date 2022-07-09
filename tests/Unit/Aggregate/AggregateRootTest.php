@@ -20,7 +20,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSuppressAll;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRoot */
-class AggregateRootTest extends TestCase
+final class AggregateRootTest extends TestCase
 {
     public function testApplyMethod(): void
     {

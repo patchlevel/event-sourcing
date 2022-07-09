@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget */
-class ProjectionHandlerTargetTest extends TestCase
+final class ProjectionHandlerTargetTest extends TestCase
 {
     use ProphecyTrait;
 

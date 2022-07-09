@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Outbox\OutboxEventBus */
-class OutboxEventBusTest extends TestCase
+final class OutboxEventBusTest extends TestCase
 {
     use ProphecyTrait;
 

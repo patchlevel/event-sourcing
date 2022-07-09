@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Clock\FrozenClock;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Clock\FrozenClock */
-class FrozenClockTest extends TestCase
+final class FrozenClockTest extends TestCase
 {
     public function testCreateDateTimeImmutableWithFrozenClock(): void
     {

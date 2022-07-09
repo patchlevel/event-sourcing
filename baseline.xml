@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.24.0@06dd975cb55d36af80f242561738f16c5f58264f">
+  <file src="src/Console/DoctrineHelper.php">
+    <ClassNotFinal occurrences="1">
+      <code>class DoctrineHelper</code>
+    </ClassNotFinal>
+  </file>
   <file src="src/Repository/DefaultRepository.php">
     <MixedArgument occurrences="1">
       <code>++$playhead</code>

@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Repository\DefaultRepositoryManager */
-class DefaultRepositoryManagerTest extends TestCase
+final class DefaultRepositoryManagerTest extends TestCase
 {
     use ProphecyTrait;
 

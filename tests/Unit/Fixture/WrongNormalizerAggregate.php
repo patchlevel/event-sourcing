@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Normalize;
 
 #[Aggregate('wrong_normalizer')]
-class WrongNormalizerAggregate extends AggregateRoot
+final class WrongNormalizerAggregate extends AggregateRoot
 {
     #[Normalize(new EmailNormalizer())]
     public bool $email = true;
