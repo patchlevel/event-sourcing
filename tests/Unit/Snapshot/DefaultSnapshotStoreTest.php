@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore */
-class DefaultSnapshotStoreTest extends TestCase
+final class DefaultSnapshotStoreTest extends TestCase
 {
     use ProphecyTrait;
 

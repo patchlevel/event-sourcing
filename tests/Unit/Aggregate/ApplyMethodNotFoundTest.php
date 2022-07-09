@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 
-class ApplyMethodNotFoundTest extends TestCase
+final class ApplyMethodNotFoundTest extends TestCase
 {
     public function testCreate(): void
     {

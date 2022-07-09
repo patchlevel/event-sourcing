@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Attribute\SuppressMissingApply */
-class SuppressMissingApplyTest extends TestCase
+final class SuppressMissingApplyTest extends TestCase
 {
     public function testSuppressEvents(): void
     {

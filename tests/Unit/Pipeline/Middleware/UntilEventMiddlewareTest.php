@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware */
-class UntilEventMiddlewareTest extends TestCase
+final class UntilEventMiddlewareTest extends TestCase
 {
     public function testPositive(): void
     {

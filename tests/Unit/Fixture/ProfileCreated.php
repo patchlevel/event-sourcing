@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\Normalize;
 
 #[Event('profile_created')]
-class ProfileCreated
+final class ProfileCreated
 {
     public function __construct(
         #[Normalize(new ProfileIdNormalizer())]

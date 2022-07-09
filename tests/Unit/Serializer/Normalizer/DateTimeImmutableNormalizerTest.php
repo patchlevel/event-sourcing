@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\InvalidArgument;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-class DateTimeImmutableNormalizerTest extends TestCase
+final class DateTimeImmutableNormalizerTest extends TestCase
 {
     use ProphecyTrait;
 

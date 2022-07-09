@@ -24,7 +24,7 @@ use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Repository\DefaultRepository */
-class DefaultRepositoryTest extends TestCase
+final class DefaultRepositoryTest extends TestCase
 {
     use ProphecyTrait;
 

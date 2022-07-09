@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Status;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-class EnumNormalizerTest extends TestCase
+final class EnumNormalizerTest extends TestCase
 {
     use ProphecyTrait;
 

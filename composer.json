@@ -29,6 +29,7 @@
   },
   "require-dev": {
     "ext-pdo_sqlite": "~8.1.0",
+    "cspray/phinal": "^1.0",
     "doctrine/migrations": "^3.3.2",
     "infection/infection": "^0.26.0",
     "patchlevel/coding-standard": "^1.1.1",

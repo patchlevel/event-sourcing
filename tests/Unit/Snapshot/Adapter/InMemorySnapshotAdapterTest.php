@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotNotFound;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter */
-class InMemorySnapshotAdapterTest extends TestCase
+final class InMemorySnapshotAdapterTest extends TestCase
 {
     public function testInMemorySnapshotStore(): void
     {

@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware */
-class ChainMiddlewareTest extends TestCase
+final class ChainMiddlewareTest extends TestCase
 {
     use ProphecyTrait;
 

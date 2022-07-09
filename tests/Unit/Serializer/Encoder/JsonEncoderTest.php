@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
-class JsonEncoderTest extends TestCase
+final class JsonEncoderTest extends TestCase
 {
     private JsonEncoder $encoder;
 

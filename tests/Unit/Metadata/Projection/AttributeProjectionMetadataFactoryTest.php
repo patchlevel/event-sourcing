@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
-class AttributeProjectionMetadataFactoryTest extends TestCase
+final class AttributeProjectionMetadataFactoryTest extends TestCase
 {
     public function testEmptyProjection(): void
     {

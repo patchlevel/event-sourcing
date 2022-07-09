@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Clock\SystemClock;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Clock\SystemClock */
-class SystemClockTest extends TestCase
+final class SystemClockTest extends TestCase
 {
     public function testCreateDateTimeImmutable(): void
     {

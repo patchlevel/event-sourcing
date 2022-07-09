@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\WrongNormalizerEvent;
 use PHPUnit\Framework\TestCase;
 
-class MetadataEventHydratorTest extends TestCase
+final class MetadataEventHydratorTest extends TestCase
 {
     private MetadataEventHydrator $hydrator;
 

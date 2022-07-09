@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Target\StoreTarget */
-class StoreTargetTest extends TestCase
+final class StoreTargetTest extends TestCase
 {
     use ProphecyTrait;
 
