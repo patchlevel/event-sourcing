@@ -177,7 +177,7 @@ class ProfileRepository
     /** @var Repository<Profile>  */
     private Repository $repository;
 
-    public function __constructor(RepositoryManager $repositoryManager) 
+    public function __construct(RepositoryManager $repositoryManager) 
     {
         $this->repository = $repositoryManager->get(Profile::class);
     }
