@@ -90,7 +90,8 @@ final class Profile extends AggregateRoot
 
 !!! danger
 
-    If anything changes in the properties of the aggregate, then the cache must be cleared!
+    If anything changes in the properties of the aggregate, then the cache must be cleared.
+    Or the snapshot version needs to be changed so that the previous snapshot is invalid.
 
 !!! warning
 
@@ -119,6 +120,36 @@ final class Profile extends AggregateRoot
     // ...
 }
 ```
+
+### Snapshot versioning
+
+Whenever something changes on the aggregate, the previous snapshot must be discarded. 
+You can do this by removing the entire snapshot cache when deploying. 
+But that can be quickly forgotten. It is much easier to specify a snapshot version. 
+This snapshot version is also saved. When loading, the versions are compared and if they do not match, 
+the snapshot is discarded and the aggregate is rebuilt from scratch. 
+The new aggregate is then saved again as a snapshot.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Snapshot;
+
+#[Aggregate('profile')]
+#[Snapshot('default', version: '2')]
+final class Profile extends AggregateRoot
+{
+    // ...
+}
+```
+
+!!! warning
+
+    If the snapshots are discarded, a load peak can occur since the aggregates have to be rebuilt.
+
+!!! tip
+
+    You can also use uuids for the snapshot version.
 
 ## Adapter
 
