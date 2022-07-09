@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[Aggregate('profile_with_snapshot')]
-#[Snapshot('memory', batch: 2, version: 1)]
+#[Snapshot('memory', batch: 2, version: '1')]
 #[SuppressMissingApply([ProfileVisited::class])]
 final class ProfileWithSnapshot extends AggregateRoot
 {

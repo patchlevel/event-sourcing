@@ -25,7 +25,7 @@ class DefaultSnapshotStoreTest extends TestCase
         $adapter->save(
             'profile_with_snapshot-1',
             [
-                'version' => 1,
+                'version' => '1',
                 'payload' => ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2],
             ]
         )->shouldBeCalled();
@@ -49,7 +49,7 @@ class DefaultSnapshotStoreTest extends TestCase
             'profile_with_snapshot-1'
         )->willReturn(
             [
-                'version' => 1,
+                'version' => '1',
                 'payload' => ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2],
             ]
         );
@@ -86,7 +86,7 @@ class DefaultSnapshotStoreTest extends TestCase
             'profile_with_snapshot-1'
         )->willReturn(
             [
-                'version' => 2,
+                'version' => '2',
                 'payload' => ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2],
             ]
         );

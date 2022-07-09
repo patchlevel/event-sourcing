@@ -17,7 +17,7 @@ final class AggregateRootMetadata
         public readonly bool $suppressAll,
         public readonly ?string $snapshotStore,
         public readonly ?int $snapshotBatch,
-        public readonly int|string|null $snapshotVersion = null,
+        public readonly ?string $snapshotVersion = null,
     ) {
     }
 }

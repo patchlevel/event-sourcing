@@ -109,7 +109,7 @@ final class DefaultSnapshotStore implements SnapshotStore
     /**
      * @param class-string<AggregateRoot> $aggregateClass
      */
-    private function version(string $aggregateClass): string|int|null
+    private function version(string $aggregateClass): ?string
     {
         return $aggregateClass::metadata()->snapshotVersion;
     }

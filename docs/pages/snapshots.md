@@ -136,7 +136,7 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 
 #[Aggregate('profile')]
-#[Snapshot('default', version: 2)]
+#[Snapshot('default', version: '2')]
 final class Profile extends AggregateRoot
 {
     // ...
