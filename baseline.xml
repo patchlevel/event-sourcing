@@ -1,9 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.24.0@06dd975cb55d36af80f242561738f16c5f58264f">
+  <file src="src/Console/Command/OutboxConsumeCommand.php">
+    <ArgumentTypeCoercion occurrences="1">
+      <code>$sleep</code>
+    </ArgumentTypeCoercion>
+  </file>
   <file src="src/Console/DoctrineHelper.php">
     <ClassNotFinal occurrences="1">
       <code>class DoctrineHelper</code>
     </ClassNotFinal>
+  </file>
+  <file src="src/Console/Worker/DefaultWorker.php">
+    <TypeDoesNotContainType occurrences="1">
+      <code>$this-&gt;shouldStop</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Console/Worker/Listener/StopWorkerOnSigtermSignalListener.php">
+    <MoreSpecificReturnType occurrences="1">
+      <code>array&lt;class-string, string&gt;</code>
+    </MoreSpecificReturnType>
   </file>
   <file src="src/Repository/DefaultRepository.php">
     <MixedArgument occurrences="1">
