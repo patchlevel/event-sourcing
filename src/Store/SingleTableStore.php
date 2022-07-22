@@ -20,7 +20,7 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class SingleTableStore extends DoctrineStore implements PipelineStore, SchemaConfigurator
+final class SingleTableStore extends DoctrineStore implements StreamableStore, SchemaConfigurator
 {
     private string $storeTableName;
 
