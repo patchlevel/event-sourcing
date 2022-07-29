@@ -14,7 +14,10 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ChoiceQuestion;
+use Symfony\Component\Console\Question\Question;
 
+use function array_values;
 use function count;
 use function sprintf;
 
@@ -40,16 +43,30 @@ final class ShowCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('aggregate', InputArgument::REQUIRED, 'aggregate name')
-            ->addArgument('id', InputArgument::REQUIRED, 'aggregate id');
+            ->addArgument('aggregate', InputArgument::OPTIONAL, 'aggregate name')
+            ->addArgument('id', InputArgument::OPTIONAL, 'aggregate id');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $console = new OutputStyle($input, $output);
 
-        $aggregate = InputHelper::string($input->getArgument('aggregate'));
-        $id = InputHelper::string($input->getArgument('id'));
+        $aggregate = InputHelper::nullableString($input->getArgument('aggregate'));
+        while ($aggregate === null) {
+            $question = new ChoiceQuestion(
+                'Choose the aggregate',
+                array_values($this->aggregateRootRegistry->aggregateNames()),
+                null
+            );
+
+            $aggregate = InputHelper::nullableString($console->askQuestion($question));
+        }
+
+        $id = InputHelper::nullableString($input->getArgument('id'));
+        while ($id === null) {
+            $question = new Question('Enter the aggregate id');
+            $id = InputHelper::nullableString($console->askQuestion($question));
+        }
 
         if (!$this->aggregateRootRegistry->hasAggregateName($aggregate)) {
             $console->error(sprintf('aggregate type "%s" not exists', $aggregate));
