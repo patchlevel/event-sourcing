@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
@@ -66,9 +67,10 @@ final class DoctrineHelperTest extends TestCase
         $helper = new DoctrineHelper();
 
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createDatabase('test')->shouldBeCalled();
+        $schemaManager->createDatabase('`test`')->shouldBeCalled();
 
         $connection = $this->prophesize(Connection::class);
+        $connection->getDatabasePlatform()->willReturn(new MySQLPlatform());
         $connection->createSchemaManager()->willReturn($schemaManager);
 
         $helper->createDatabase($connection->reveal(), 'test');
@@ -79,9 +81,10 @@ final class DoctrineHelperTest extends TestCase
         $helper = new DoctrineHelper();
 
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->dropDatabase('test')->shouldBeCalled();
+        $schemaManager->dropDatabase('`test`')->shouldBeCalled();
 
         $connection = $this->prophesize(Connection::class);
+        $connection->getDatabasePlatform()->willReturn(new MySQLPlatform());
         $connection->createSchemaManager()->willReturn($schemaManager);
 
         $helper->dropDatabase($connection->reveal(), 'test');
