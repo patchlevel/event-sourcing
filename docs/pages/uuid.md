@@ -8,7 +8,6 @@ A UUID can be generated for the `aggregateId`. There are two popular libraries t
 The `aggregate` does not care how the id is generated, since only an aggregate-wide unique string is expected here.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
@@ -41,7 +40,7 @@ final class Profile extends AggregateRoot
         $id = Uuid::uuid4();
     
         $self = new self();
-        $self->recordThat(ProfileCreated::raise($id, $name));
+        $self->recordThat(new ProfileCreated($id, $name));
 
         return $self;
     }
@@ -84,7 +83,6 @@ class ProfileId
 ```
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
@@ -117,7 +115,7 @@ final class Profile extends AggregateRoot
         $id = ProfileId::generate();
     
         $self = new self();
-        $self->recordThat(ProfileCreated::raise($id, $name));
+        $self->recordThat(new ProfileCreated($id, $name));
 
         return $self;
     }
@@ -130,3 +128,8 @@ final class Profile extends AggregateRoot
     }
 }
 ```
+
+!!! note
+
+    If you want to use snapshots, then you have to make sure that the value objects are normalized. 
+    You can find how to do this [here](normalizer.md).

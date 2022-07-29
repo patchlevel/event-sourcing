@@ -60,11 +60,15 @@ class DoctrineHelper
 
     public function createDatabase(Connection $connection, string $databaseName): void
     {
-        $connection->createSchemaManager()->createDatabase($databaseName);
+        $connection->createSchemaManager()->createDatabase(
+            $connection->getDatabasePlatform()->quoteSingleIdentifier($databaseName)
+        );
     }
 
     public function dropDatabase(Connection $connection, string $databaseName): void
     {
-        $connection->createSchemaManager()->dropDatabase($databaseName);
+        $connection->createSchemaManager()->dropDatabase(
+            $connection->getDatabasePlatform()->quoteSingleIdentifier($databaseName)
+        );
     }
 }
