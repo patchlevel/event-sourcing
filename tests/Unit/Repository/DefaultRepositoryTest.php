@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
+use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
+use Patchlevel\EventSourcing\Store\SplitEventstreamStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -262,6 +265,108 @@ final class DefaultRepositoryTest extends TestCase
         $repository->save($aggregate);
     }
 
+    public function testSaveAggregateWithSplitStream(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->willImplement(SplitEventstreamStore::class);
+        $store->save(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 1;
+            }),
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 2;
+            }),
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 3;
+            }),
+        )->shouldBeCalled();
+        $store->archiveMessages(Profile::class, '1', 3)->shouldBeCalledOnce();
+        $store->transactional(Argument::any())->will(
+            /**
+             * @param array{0: callable} $args
+             */
+            static fn (array $args): mixed => $args[0]()
+        );
+
+        $eventBus = $this->prophesize(EventBus::class);
+        $eventBus->dispatch(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 1;
+            }),
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 2;
+            }),
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 3;
+            }),
+        )->shouldBeCalled();
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::class,
+            null,
+            new SplitStreamDecorator(new AttributeEventMetadataFactory())
+        );
+
+        $aggregate = Profile::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de')
+        );
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+        $aggregate->splitIt();
+
+        $repository->save($aggregate);
+    }
+
     public function testLoadAggregate(): void
     {
         $store = $this->prophesize(Store::class);
@@ -269,12 +374,12 @@ final class DefaultRepositoryTest extends TestCase
             Profile::class,
             '1'
         )->willReturn([
-            new Message(
+            Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
                 )
-            ),
+            )->withPlayhead(1),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -300,12 +405,12 @@ final class DefaultRepositoryTest extends TestCase
             Profile::class,
             '1'
         )->willReturn([
-            new Message(
+            Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
                 )
-            ),
+            )->withPlayhead(1),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -427,22 +532,22 @@ final class DefaultRepositoryTest extends TestCase
             '1'
         )->willReturn(
             [
-                new Message(
+                Message::create(
                     new ProfileCreated(
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de')
                     )
-                ),
-                new Message(
+                )->withPlayhead(1),
+                Message::create(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
                     )
-                ),
-                new Message(
+                )->withPlayhead(2),
+                Message::create(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
                     )
-                ),
+                )->withPlayhead(3),
             ]
         );
 
@@ -484,21 +589,21 @@ final class DefaultRepositoryTest extends TestCase
             '1',
             1
         )->willReturn([
-            new Message(
+            Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 )
-            ),
-            new Message(
+            )->withPlayhead(1),
+            Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 )
-            ),
-            new Message(
+            )->withPlayhead(2),
+            Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 )
-            ),
+            )->withPlayhead(3),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -530,12 +635,12 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->load(ProfileWithSnapshot::class, '1')->willReturn([
-            new Message(
+            Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de')
                 )
-            ),
+            )->withPlayhead(1),
         ]);
 
         $eventBus = $this->prophesize(EventBus::class);

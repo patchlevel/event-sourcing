@@ -134,7 +134,6 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
     {
         if ($this->playheadReflection === null) {
             $this->playheadReflection = new ReflectionProperty(AggregateRoot::class, 'playhead');
-            $this->playheadReflection->setAccessible(true);
         }
 
         $this->playheadReflection->setValue($aggregateRoot, $playhead);

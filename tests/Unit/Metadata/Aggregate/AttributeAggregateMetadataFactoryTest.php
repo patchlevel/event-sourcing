@@ -18,6 +18,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyIntersecti
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyMultipleApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyNoType;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithEmptyApply;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
 use PHPUnit\Framework\TestCase;
 
 final class AttributeAggregateMetadataFactoryTest extends TestCase
@@ -32,6 +33,7 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
                 ProfileCreated::class => 'applyProfileCreated',
                 ProfileVisited::class => 'applyProfileCreated',
                 NameChanged::class => 'applyNameChanged',
+                SplittingEvent::class => 'applySplittingEvent',
             ],
             $metadata->applyMethods
         );

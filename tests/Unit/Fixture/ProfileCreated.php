@@ -14,7 +14,7 @@ final class ProfileCreated
         #[Normalize(new ProfileIdNormalizer())]
         public ProfileId $profileId,
         #[Normalize(new EmailNormalizer())]
-        public Email $email
+        public Email $email,
     ) {
     }
 }
