@@ -177,7 +177,7 @@ final class ShowCommandTest extends TestCase
             new ShowCommand(
                 $this->prophesize(Store::class)->reveal(),
                 $this->prophesize(EventSerializer::class)->reveal(),
-                new AggregateRootRegistry(['test' => 'test'])
+                new AggregateRootRegistry(['test' => Profile::class])
             )
         );
 
@@ -191,7 +191,7 @@ final class ShowCommandTest extends TestCase
             new ShowCommand(
                 $this->prophesize(Store::class)->reveal(),
                 $this->prophesize(EventSerializer::class)->reveal(),
-                new AggregateRootRegistry(['test' => 'test'])
+                new AggregateRootRegistry(['test' => Profile::class])
             )
         );
 
