@@ -18,8 +18,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
+use Symfony\Component\Console\Exception\MissingInputException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Tester\CommandTester;
 
 /** @covers \Patchlevel\EventSourcing\Console\Command\ShowCommand */
 final class ShowCommandTest extends TestCase
@@ -167,5 +169,75 @@ final class ShowCommandTest extends TestCase
         $content = $output->fetch();
 
         self::assertStringContainsString('[ERROR] aggregate "profile" => "test" not found', $content);
+    }
+
+    public function testInteractiveMissingAggregateShouldRaiseException(): void
+    {
+        $commandTest = new CommandTester(
+            new ShowCommand(
+                $this->prophesize(Store::class)->reveal(),
+                $this->prophesize(EventSerializer::class)->reveal(),
+                new AggregateRootRegistry(['test' => 'test'])
+            )
+        );
+
+        $this->expectException(MissingInputException::class);
+        $commandTest->execute([]);
+    }
+
+    public function testInteractiveMissingIdShouldRaiseException(): void
+    {
+        $commandTest = new CommandTester(
+            new ShowCommand(
+                $this->prophesize(Store::class)->reveal(),
+                $this->prophesize(EventSerializer::class)->reveal(),
+                new AggregateRootRegistry(['test' => 'test'])
+            )
+        );
+
+        // Select "test" in first question
+        $commandTest->setInputs([0]);
+
+        $this->expectException(MissingInputException::class);
+        $commandTest->execute([]);
+    }
+
+    public function testInteractiveSuccessful(): void
+    {
+        $event = new ProfileVisited(ProfileId::fromString('1'));
+
+        $store = $this->prophesize(Store::class);
+        $store->load(Profile::class, '1')->willReturn([
+            Message::create($event)
+                ->withAggregateClass(Profile::class)
+                ->withAggregateId('1')
+                ->withPlayhead(1)
+                ->withRecordedOn(new DateTimeImmutable()),
+        ]);
+
+        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
+            new SerializedEvent(
+                'profile.visited',
+                '{"visitorId": "1"}',
+            )
+        );
+
+        $commandTest = new CommandTester(
+            new ShowCommand(
+                $store->reveal(),
+                $serializer->reveal(),
+                new AggregateRootRegistry(['profile' => Profile::class])
+            )
+        );
+
+        $commandTest->setInputs([0, 1]);
+        $commandTest->execute([]);
+
+        $display = $commandTest->getDisplay(true);
+
+        self::assertStringContainsString('Choose the aggregate', $display);
+        self::assertStringContainsString('Enter the aggregate id', $display);
+        self::assertStringContainsString('"visitorId": "1"', $display);
     }
 }

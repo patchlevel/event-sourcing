@@ -52,7 +52,7 @@ final class ShowCommand extends Command
         $console = new OutputStyle($input, $output);
 
         $aggregate = InputHelper::nullableString($input->getArgument('aggregate'));
-        while ($aggregate === null) {
+        if ($aggregate === null) {
             $question = new ChoiceQuestion(
                 'Choose the aggregate',
                 array_values($this->aggregateRootRegistry->aggregateNames()),
@@ -63,7 +63,7 @@ final class ShowCommand extends Command
         }
 
         $id = InputHelper::nullableString($input->getArgument('id'));
-        while ($id === null) {
+        if ($id === null) {
             $question = new Question('Enter the aggregate id');
             $id = InputHelper::nullableString($console->askQuestion($question));
         }
