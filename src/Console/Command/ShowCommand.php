@@ -59,13 +59,13 @@ final class ShowCommand extends Command
                 null
             );
 
-            $aggregate = InputHelper::nullableString($console->askQuestion($question));
+            $aggregate = InputHelper::string($console->askQuestion($question));
         }
 
         $id = InputHelper::nullableString($input->getArgument('id'));
         if ($id === null) {
             $question = new Question('Enter the aggregate id');
-            $id = InputHelper::nullableString($console->askQuestion($question));
+            $id = InputHelper::string($console->askQuestion($question));
         }
 
         if (!$this->aggregateRootRegistry->hasAggregateName($aggregate)) {
