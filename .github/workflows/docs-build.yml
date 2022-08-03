@@ -41,7 +41,7 @@ jobs:
         id: current
         uses: actions/github-script@v6
         with:
-          script: return context.ref.match(/([0-9]+\.[0-9]+)\.x/i)[1];
+          script: return context.ref.match(/([0-9]+\.[0-9]+)\.(x|[0-9]+)/i)[1];
           result-encoding: string
 
       - name: Normalize latest versions
