@@ -48,9 +48,9 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
     }
 
     /**
-     * @template ClosureReturn
-     *
      * @param Closure():ClosureReturn $function
+     *
+     * @template ClosureReturn
      */
     public function transactional(Closure $function): void
     {
