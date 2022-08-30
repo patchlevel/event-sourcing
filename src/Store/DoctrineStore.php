@@ -47,6 +47,11 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
         $this->connection->rollBack();
     }
 
+    /**
+     * @template ClosureReturn
+     *
+     * @param Closure():ClosureReturn $function
+     */
     public function transactional(Closure $function): void
     {
         $this->connection->transactional($function);
