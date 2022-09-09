@@ -37,8 +37,8 @@ jobs:
                 operating-system:
                     - "ubuntu-latest"
                 postgres-version:
-                  - "10.22"
-                  - "11.17"
+                  - "10.22-alpine"
+                  - "11.17-alpine"
                   - "12.12"
                   - "13.8"
                   - "14.5"
