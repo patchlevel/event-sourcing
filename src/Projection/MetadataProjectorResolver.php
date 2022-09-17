@@ -8,7 +8,6 @@ use Closure;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 use function array_key_exists;
 

@@ -74,5 +74,7 @@ final class ProjectionistTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
+
+        $projectionist->destroy();
     }
 }

@@ -10,12 +10,13 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
+use Patchlevel\EventSourcing\Projection\Projector;
+use Patchlevel\EventSourcing\Projection\ProjectorId;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
 use function sprintf;
 
-final class ProfileProjection extends Projector
+final class ProfileProjection implements Projector
 {
     private Connection $connection;
 
@@ -57,16 +58,15 @@ final class ProfileProjection extends Projector
 
     private function tableName(): string
     {
-        return sprintf('projection_%s_%s', $this->name(), $this->version());
+        return sprintf(
+            'projection_%s_%s',
+            $this->projectorId()->name(),
+            $this->projectorId()->version()
+        );
     }
 
-    public function version(): int
+    public function projectorId(): ProjectorId
     {
-        return 1;
-    }
-
-    public function name(): string
-    {
-        return 'profile';
+        return new ProjectorId('profile', 1);
     }
 }

@@ -14,6 +14,11 @@ use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
+use Patchlevel\EventSourcing\Projection\ProjectorId;
+use Patchlevel\EventSourcing\Projection\ProjectorStatus;
+use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorState;
+use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateNotFound;
+use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStore;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
@@ -22,9 +27,10 @@ use function is_array;
 use function is_int;
 use function is_string;
 
-abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, SplitEventstreamStore
+abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, ProjectorStore, SplitEventstreamStore
 {
     private const OUTBOX_TABLE = 'outbox';
+    private const PROJECTOR_TABLE = 'projector';
 
     public function __construct(
         protected Connection $connection,
@@ -171,6 +177,81 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
         return $schema;
     }
 
+    public function getProjectorState(ProjectorId $projectorId): ProjectorState
+    {
+        $sql = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from(self::PROJECTOR_TABLE)
+            ->where('projector = :projector AND version = :version')
+            ->setParameters([
+                'projector' => $projectorId->name(),
+                'version' => $projectorId->version(),
+            ])
+            ->getSQL();
+
+        /** @var array{projector: string, version: int, position: int, status: string}|false $result */
+        $result = $this->connection->fetchOne($sql);
+
+        if ($result === false) {
+            throw new ProjectorStateNotFound();
+        }
+
+        return new ProjectorState(
+            new ProjectorId($result['projector'], $result['version']),
+            ProjectorStatus::from($result['status']),
+            $result['position']
+        );
+    }
+
+    public function getStateFromAllProjectors(): array
+    {
+        $sql = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from(self::PROJECTOR_TABLE)
+            ->getSQL();
+
+        /** @var list<array{projector: string, version: int, position: int, status: string}> $result */
+        $result = $this->connection->fetchAllAssociative($sql);
+
+        return array_map(
+            static function (array $data) {
+                return new ProjectorState(
+                    new ProjectorId($data['projector'], $data['version']),
+                    ProjectorStatus::from($data['status']),
+                    $data['position']
+                );
+            },
+            $result
+        );
+    }
+
+    public function saveProjectorState(ProjectorState ...$projectorStates): void
+    {
+        $this->connection->transactional(
+            static function (Connection $connection) use ($projectorStates): void {
+                foreach ($projectorStates as $projectorState) {
+                    $connection->insert(
+                        self::PROJECTOR_TABLE,
+                        [
+                            'projector' => $projectorState->id()->name(),
+                            'version' => $projectorState->id()->version(),
+                            'position' => $projectorState->position(),
+                            'status' => $projectorState->status(),
+                        ]
+                    );
+                }
+            }
+        );
+    }
+
+    public function removeProjectorState(ProjectorId $projectorId): void
+    {
+        $this->connection->delete(self::PROJECTOR_TABLE, [
+            'projector' => $projectorId->name(),
+            'version' => $projectorId->version(),
+        ]);
+    }
+
     protected static function normalizeRecordedOn(string $recordedOn, AbstractPlatform $platform): DateTimeImmutable
     {
         $normalizedRecordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue($recordedOn, $platform);
@@ -212,7 +293,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
 
     protected function addOutboxSchema(Schema $schema): void
     {
-        $table = $schema->createTable('outbox');
+        $table = $schema->createTable(self::OUTBOX_TABLE);
 
         $table->addColumn('aggregate', Types::STRING)
             ->setNotnull(true);
@@ -230,5 +311,21 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
             ->setNotnull(true);
 
         $table->setPrimaryKey(['aggregate', 'aggregate_id', 'playhead']);
+    }
+
+    protected function addProjectorSchema(Schema $schema): void
+    {
+        $table = $schema->createTable(self::PROJECTOR_TABLE);
+
+        $table->addColumn('projector', Types::STRING)
+            ->setNotnull(true);
+        $table->addColumn('version', Types::INTEGER)
+            ->setNotnull(true);
+        $table->addColumn('position', Types::INTEGER)
+            ->setNotnull(true);
+        $table->addColumn('status', Types::STRING)
+            ->setNotnull(true);
+
+        $table->setPrimaryKey(['projector', 'version']);
     }
 }

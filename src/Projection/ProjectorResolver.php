@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Projection;
 
 use Closure;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 interface ProjectorResolver
 {

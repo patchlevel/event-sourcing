@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\ProjectorStore;
 
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorId;
+use Patchlevel\EventSourcing\Projection\ProjectorId;
 use Patchlevel\EventSourcing\Projection\ProjectorStatus;
 
-final class ProjectorData
+final class ProjectorState
 {
     public function __construct(
         private readonly ProjectorId $id,
-        private ProjectorStatus $status = ProjectorStatus::Pending,
+        private ProjectorStatus $status = ProjectorStatus::Booting,
         private int $position = 0
     ) {
     }
@@ -41,13 +41,13 @@ final class ProjectorData
         $this->status = ProjectorStatus::Error;
     }
 
-    public function stale(): void
+    public function outdated(): void
     {
-        $this->status = ProjectorStatus::Stale;
+        $this->status = ProjectorStatus::Outdated;
     }
 
-    public function running(): void
+    public function active(): void
     {
-        $this->status = ProjectorStatus::Running;
+        $this->status = ProjectorStatus::Active;
     }
 }

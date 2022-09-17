@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Projection\Projector;
+namespace Patchlevel\EventSourcing\Projection;
 
 use function sprintf;
 

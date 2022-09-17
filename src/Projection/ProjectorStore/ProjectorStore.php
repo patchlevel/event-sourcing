@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\ProjectorStore;
 
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorId;
+use Patchlevel\EventSourcing\Projection\ProjectorId;
 
 interface ProjectorStore
 {
-    public function get(ProjectorId $projectorId): ProjectorData;
+    public function getProjectorState(ProjectorId $projectorId): ProjectorState;
 
-    /** @return list<ProjectorData> */
-    public function all(): array;
+    /** @return list<ProjectorState> */
+    public function getStateFromAllProjectors(): array;
 
-    public function save(ProjectorData ...$positions): void;
+    public function saveProjectorState(ProjectorState ...$projectorStates): void;
+
+    public function removeProjectorState(ProjectorId $projectorId): void;
 }

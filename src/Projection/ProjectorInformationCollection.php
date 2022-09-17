@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Projection;
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorId;
 use Traversable;
 
 use function array_filter;
@@ -31,7 +30,7 @@ final class ProjectorInformationCollection implements Countable, IteratorAggrega
         $result = [];
 
         foreach ($projectorInformationList as $projectorInformation) {
-            $result[$projectorInformation->projectorData->id()->toString()] = $projectorInformation;
+            $result[$projectorInformation->projectorState->id()->toString()] = $projectorInformation;
         }
 
         $this->projectorInformation = $result;
@@ -39,11 +38,16 @@ final class ProjectorInformationCollection implements Countable, IteratorAggrega
 
     public function get(ProjectorId $projectorId): ProjectorInformation
     {
-        if (!array_key_exists($projectorId->toString(), $this->projectorInformation)) {
+        if (!$this->has($projectorId)) {
             throw new ProjectorInformationNotFound($projectorId);
         }
 
         return $this->projectorInformation[$projectorId->toString()];
+    }
+
+    public function has(ProjectorId $projectorId): bool
+    {
+        return array_key_exists($projectorId->toString(), $this->projectorInformation);
     }
 
     public function add(ProjectorInformation $information): self
@@ -61,11 +65,11 @@ final class ProjectorInformationCollection implements Countable, IteratorAggrega
         $min = 0;
 
         foreach ($this->projectorInformation as $projectorInformation) {
-            if ($projectorInformation->projectorData->position() >= $min) {
+            if ($projectorInformation->projectorState->position() >= $min) {
                 continue;
             }
 
-            $min = $projectorInformation->projectorData->position();
+            $min = $projectorInformation->projectorState->position();
         }
 
         return $min;
@@ -75,7 +79,7 @@ final class ProjectorInformationCollection implements Countable, IteratorAggrega
     {
         $projectors = array_filter(
             $this->projectorInformation,
-            static fn (ProjectorInformation $information) => $information->projectorData->status() === $status
+            static fn (ProjectorInformation $information) => $information->projectorState->status() === $status
         );
 
         return new self(array_values($projectors));

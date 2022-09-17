@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorId;
 use RuntimeException;
 
 use function sprintf;

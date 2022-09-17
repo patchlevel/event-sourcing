@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorId;
-use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorData;
+use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorState;
 use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStore;
 use Patchlevel\EventSourcing\Store\StreamableStore;
 
-use function array_key_exists;
 use function array_map;
 use function iterator_to_array;
 
@@ -21,7 +18,7 @@ final class DefaultProjectionist implements Projectionist
      */
     public function __construct(
         private readonly StreamableStore $streamableMessageStore,
-        private readonly ProjectorStore $positionStore,
+        private readonly ProjectorStore $projectorStore,
         private readonly iterable $projectors,
         private readonly ProjectorResolver $resolver = new MetadataProjectorResolver()
     ) {
@@ -29,15 +26,15 @@ final class DefaultProjectionist implements Projectionist
 
     public function boot(): void
     {
-        $informationCollection = $this->information()->filterByProjectorStatus(ProjectorStatus::Pending);
+        $informationCollection = $this->information()->filterByProjectorStatus(ProjectorStatus::Booting);
 
         foreach ($informationCollection as $information) {
             if (!$information->projector) {
-                continue;
+                continue; // throw an exception
             }
 
             $createMethod = $this->resolver->resolveCreateMethod($information->projector);
-            $information->projectorData->running();
+            $information->projectorState->active();
 
             if (!$createMethod) {
                 continue;
@@ -51,11 +48,11 @@ final class DefaultProjectionist implements Projectionist
         foreach ($stream as $message) {
             foreach ($informationCollection as $information) {
                 if (!$information->projector) {
-                    continue;
+                    continue; // throw an exception
                 }
 
                 $handleMethod = $this->resolver->resolveHandleMethod($information->projector, $message);
-                $information->projectorData->incrementPosition();
+                $information->projectorState->incrementPosition();
 
                 if (!$handleMethod) {
                     continue;
@@ -65,9 +62,9 @@ final class DefaultProjectionist implements Projectionist
             }
         }
 
-        $this->positionStore->save(
+        $this->projectorStore->saveProjectorState(
             ...array_map(
-                static fn (ProjectorInformation $information) => $information->projectorData,
+                static fn (ProjectorInformation $information) => $information->projectorState,
                 iterator_to_array($informationCollection)
             )
         );
@@ -75,7 +72,7 @@ final class DefaultProjectionist implements Projectionist
 
     public function run(?int $limit = null): void
     {
-        $informationCollection = $this->information()->filterByProjectorStatus(ProjectorStatus::Running);
+        $informationCollection = $this->information()->filterByProjectorStatus(ProjectorStatus::Active);
         $position = $informationCollection->minProjectorPosition();
         $stream = $this->streamableMessageStore->stream($position);
 
@@ -83,49 +80,85 @@ final class DefaultProjectionist implements Projectionist
             $toSave = [];
 
             foreach ($informationCollection as $information) {
-                if ($information->projectorData->position() > $position) {
+                if ($information->projectorState->position() > $position) {
                     continue;
                 }
 
-                $toSave[] = $information->projectorData;
+                $toSave[] = $information->projectorState;
 
-                $this->resolver->resolveHandleMethod($information->projector, $message)($message);
-                $information->projectorData->incrementPosition();
+                $handleMethod = $this->resolver->resolveHandleMethod($information->projector, $message);
+                $handleMethod($message);
+
+                $information->projectorState->incrementPosition();
             }
 
-            $this->positionStore->save(...$toSave);
+            $this->projectorStore->saveProjectorState(...$toSave);
             $position++;
+        }
+    }
+
+    public function teardown(): void
+    {
+        $informationCollection = $this->information()->filterByProjectorStatus(ProjectorStatus::Outdated);
+
+        foreach ($informationCollection as $information) {
+            if (!$information->projector) {
+                continue; // hmm........................
+            }
+
+            $dropMethod = $this->resolver->resolveDropMethod($information->projector);
+
+            if (!$dropMethod) {
+                continue;
+            }
+
+            $dropMethod();
+
+            $this->projectorStore->removeProjectorState($information->projectorState->id());
+        }
+    }
+
+    public function destroy(): void
+    {
+        $informationCollection = $this->information();
+
+        foreach ($informationCollection as $information) {
+            if ($information->projector) {
+                $dropMethod = $this->resolver->resolveDropMethod($information->projector);
+
+                if (!$dropMethod) {
+                    continue;
+                }
+
+                $dropMethod();
+            }
+
+            $this->projectorStore->removeProjectorState($information->projectorState->id());
         }
     }
 
     private function information(): ProjectorInformationCollection
     {
         $informationCollection = new ProjectorInformationCollection();
-        $found = [];
+        $projectorsStates = $this->projectorStore->getStateFromAllProjectors();
 
-        $projectorDataList = $this->positionStore->all();
-
-        foreach ($projectorDataList as $projectorData) {
+        foreach ($projectorsStates as $projectorState) {
             $informationCollection = $informationCollection->add(
                 new ProjectorInformation(
-                    $projectorData,
-                    $this->findProjector($projectorData->id()),
+                    $projectorState,
+                    $this->findProjector($projectorState->id()),
                 )
             );
-
-            $found[$projectorData->id()->toString()] = true;
         }
 
         foreach ($this->projectors as $projector) {
-            $projectorId = $projector->projectorId();
-
-            if (array_key_exists($projectorId->toString(), $found)) {
+            if ($informationCollection->has($projector->projectorId())) {
                 continue;
             }
 
             $informationCollection = $informationCollection->add(
                 new ProjectorInformation(
-                    new ProjectorData($projectorId),
+                    new ProjectorState($projector->projectorId()),
                     $projector
                 )
             );
