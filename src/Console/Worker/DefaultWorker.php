@@ -56,7 +56,7 @@ final class DefaultWorker implements Worker
             }
 
             $this->logger?->debug('Worker sleep for {sleepTimer}ms', ['sleepTimer' => $sleepFor]);
-            usleep($sleepFor);
+            usleep($sleepFor * 1000);
         }
 
         $this->logger?->debug('Worker stopped');

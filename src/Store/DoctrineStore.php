@@ -184,14 +184,13 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Pr
             ->select('*')
             ->from(self::PROJECTOR_TABLE)
             ->where('projector = :projector AND version = :version')
-            ->setParameters([
-                'projector' => $projectorId->name(),
-                'version' => $projectorId->version(),
-            ])
             ->getSQL();
 
         /** @var array{projector: string, version: int, position: int, status: string}|false $result */
-        $result = $this->connection->fetchOne($sql);
+        $result = $this->connection->fetchAssociative($sql, [
+            'projector' => $projectorId->name(),
+            'version' => $projectorId->version(),
+        ]);
 
         if ($result === false) {
             throw new ProjectorStateNotFound();
@@ -231,17 +230,32 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Pr
     public function saveProjectorState(ProjectorState ...$projectorStates): void
     {
         $this->connection->transactional(
-            static function (Connection $connection) use ($projectorStates): void {
+            function (Connection $connection) use ($projectorStates): void {
                 foreach ($projectorStates as $projectorState) {
-                    $connection->insert(
-                        self::PROJECTOR_TABLE,
-                        [
-                            'projector' => $projectorState->id()->name(),
-                            'version' => $projectorState->id()->version(),
-                            'position' => $projectorState->position(),
-                            'status' => $projectorState->status()->value,
-                        ]
-                    );
+                    try {
+                        $this->getProjectorState($projectorState->id());
+                        $connection->update(
+                            self::PROJECTOR_TABLE,
+                            [
+                                'position' => $projectorState->position(),
+                                'status' => $projectorState->status()->value,
+                            ],
+                            [
+                                'projector' => $projectorState->id()->name(),
+                                'version' => $projectorState->id()->version(),
+                            ]
+                        );
+                    } catch (ProjectorStateNotFound) {
+                        $connection->insert(
+                            self::PROJECTOR_TABLE,
+                            [
+                                'projector' => $projectorState->id()->name(),
+                                'version' => $projectorState->id()->version(),
+                                'position' => $projectorState->position(),
+                                'status' => $projectorState->status()->value,
+                            ]
+                        );
+                    }
                 }
             }
         );

@@ -90,6 +90,9 @@ final class DefaultProjectionist implements Projectionist
                 $projector = $this->findProjector($projectorState->id());
 
                 if (!$projector) {
+                    $projectorState->outdated();
+                    $toSave[] = $projectorState;
+
                     continue;
                 }
 
