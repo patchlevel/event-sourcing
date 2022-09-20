@@ -239,7 +239,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Pr
                             'projector' => $projectorState->id()->name(),
                             'version' => $projectorState->id()->version(),
                             'position' => $projectorState->position(),
-                            'status' => $projectorState->status(),
+                            'status' => $projectorState->status()->value,
                         ]
                     );
                 }

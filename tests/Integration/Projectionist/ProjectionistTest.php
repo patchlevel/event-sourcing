@@ -61,7 +61,7 @@ final class ProjectionistTest extends TestCase
 
         $projectionist = new DefaultProjectionist(
             $store,
-            new InMemory(),
+            $store,
             [new ProfileProjection($this->connection)],
         );
 
