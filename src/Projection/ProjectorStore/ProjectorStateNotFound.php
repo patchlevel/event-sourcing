@@ -6,6 +6,6 @@ namespace Patchlevel\EventSourcing\Projection\ProjectorStore;
 
 use RuntimeException;
 
-class ProjectorStateNotFound extends RuntimeException
+final class ProjectorStateNotFound extends RuntimeException
 {
 }

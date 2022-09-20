@@ -9,9 +9,9 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 interface ProjectorResolver
 {
-    public function resolveCreateMethod(Projector $projector): ?Closure;
+    public function resolveCreateMethod(Projection $projector): ?Closure;
 
-    public function resolveDropMethod(Projector $projector): ?Closure;
+    public function resolveDropMethod(Projection $projector): ?Closure;
 
-    public function resolveHandleMethod(Projector $projector, Message $message): ?Closure;
+    public function resolveHandleMethod(Projection $projector, Message $message): ?Closure;
 }

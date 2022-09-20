@@ -10,7 +10,7 @@ use RuntimeException;
 use function array_key_exists;
 use function array_values;
 
-class InMemory implements ProjectorStore
+final class InMemory implements ProjectorStore
 {
     /** @var array<string, ProjectorState> */
     private array $store = [];
@@ -30,10 +30,10 @@ class InMemory implements ProjectorStore
         return array_values($this->store);
     }
 
-    public function saveProjectorState(ProjectorState ...$data): void
+    public function saveProjectorState(ProjectorState ...$projectorStates): void
     {
-        foreach ($data as $item) {
-            $this->store[$item->id()->toString()] = $item;
+        foreach ($projectorStates as $state) {
+            $this->store[$state->id()->toString()] = $state;
         }
     }
 

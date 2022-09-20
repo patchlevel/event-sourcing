@@ -80,6 +80,10 @@ final class DefaultProjectionist implements Projectionist
             $toSave = [];
 
             foreach ($informationCollection as $information) {
+                if (!$information->projector) {
+                    continue;
+                }
+
                 if ($information->projectorState->position() > $position) {
                     continue;
                 }
@@ -87,7 +91,10 @@ final class DefaultProjectionist implements Projectionist
                 $toSave[] = $information->projectorState;
 
                 $handleMethod = $this->resolver->resolveHandleMethod($information->projector, $message);
-                $handleMethod($message);
+
+                if ($handleMethod) {
+                    $handleMethod($message);
+                }
 
                 $information->projectorState->incrementPosition();
             }
@@ -167,7 +174,7 @@ final class DefaultProjectionist implements Projectionist
         return $informationCollection;
     }
 
-    private function findProjector(ProjectorId $id): ?object
+    private function findProjector(ProjectorId $id): ?Projector
     {
         foreach ($this->projectors as $projector) {
             if ($id->toString() === $projector->projectorId()->toString()) {

@@ -6,19 +6,19 @@ namespace Patchlevel\EventSourcing\Projection;
 
 use Closure;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
-use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 
 use function array_key_exists;
 
 final class MetadataProjectorResolver implements ProjectorResolver
 {
     public function __construct(
-        private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory()
+        private readonly ProjectionMetadataFactory $metadataFactory = new AttributeProjectionMetadataFactory()
     ) {
     }
 
-    public function resolveCreateMethod(Projector $projector): ?Closure
+    public function resolveCreateMethod(Projection $projector): ?Closure
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
         $method = $metadata->createMethod;
@@ -30,7 +30,7 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$method(...);
     }
 
-    public function resolveDropMethod(Projector $projector): ?Closure
+    public function resolveDropMethod(Projection $projector): ?Closure
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
         $method = $metadata->dropMethod;
@@ -45,7 +45,7 @@ final class MetadataProjectorResolver implements ProjectorResolver
     /**
      * @return (Closure(Message):void)|null
      */
-    public function resolveHandleMethod(Projector $projector, Message $message): ?Closure
+    public function resolveHandleMethod(Projection $projector, Message $message): ?Closure
     {
         $event = $message->event();
         $metadata = $this->metadataFactory->metadata($projector::class);

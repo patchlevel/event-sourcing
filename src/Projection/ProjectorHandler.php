@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 
-interface ProjectionHandler
+interface ProjectorHandler
 {
     public function handle(Message $message): void;
 

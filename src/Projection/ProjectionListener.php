@@ -7,9 +7,6 @@ namespace Patchlevel\EventSourcing\Projection;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-/**
- * @deprecated
- */
 final class ProjectionListener implements Listener
 {
     private ProjectionHandler $projectionHandler;
