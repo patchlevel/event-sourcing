@@ -10,8 +10,7 @@ interface ProjectorStore
 {
     public function getProjectorState(ProjectorId $projectorId): ProjectorState;
 
-    /** @return list<ProjectorState> */
-    public function getStateFromAllProjectors(): array;
+    public function getStateFromAllProjectors(): ProjectorStateCollection;
 
     public function saveProjectorState(ProjectorState ...$projectorStates): void;
 

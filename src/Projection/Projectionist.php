@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
+use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorState;
+
 interface Projectionist
 {
     public function boot(): void;
@@ -13,4 +15,9 @@ interface Projectionist
     public function teardown(): void;
 
     public function destroy(): void;
+
+    /**
+     * @return list<ProjectorState>
+     */
+    public function status(): array;
 }

@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Projection\ProjectorId;
 use Patchlevel\EventSourcing\Projection\ProjectorStatus;
 use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorState;
+use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateCollection;
 use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateNotFound;
 use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStore;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
@@ -203,7 +204,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Pr
         );
     }
 
-    public function getStateFromAllProjectors(): array
+    public function getStateFromAllProjectors(): ProjectorStateCollection
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
@@ -213,15 +214,17 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Pr
         /** @var list<array{projector: string, version: int, position: int, status: string}> $result */
         $result = $this->connection->fetchAllAssociative($sql);
 
-        return array_map(
-            static function (array $data) {
-                return new ProjectorState(
-                    new ProjectorId($data['projector'], $data['version']),
-                    ProjectorStatus::from($data['status']),
-                    $data['position']
-                );
-            },
-            $result
+        return new ProjectorStateCollection(
+            array_map(
+                static function (array $data) {
+                    return new ProjectorState(
+                        new ProjectorId($data['projector'], $data['version']),
+                        ProjectorStatus::from($data['status']),
+                        $data['position']
+                    );
+                },
+                $result
+            )
         );
     }
 

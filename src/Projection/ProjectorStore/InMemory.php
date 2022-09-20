@@ -24,10 +24,9 @@ final class InMemory implements ProjectorStore
         throw new RuntimeException(); // todo
     }
 
-    /** @return list<ProjectorState> */
-    public function getStateFromAllProjectors(): array
+    public function getStateFromAllProjectors(): ProjectorStateCollection
     {
-        return array_values($this->store);
+        return new ProjectorStateCollection(array_values($this->store));
     }
 
     public function saveProjectorState(ProjectorState ...$projectorStates): void

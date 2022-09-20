@@ -22,10 +22,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[AsCommand(
-    'event-sourcing:projection:run',
-    'published the messages from the outbox store'
+    'event-sourcing:projectionist:run',
+    'TODO'
 )]
-final class ProjectionRunCommand extends Command
+final class ProjectionistRunCommand extends Command
 {
     public function __construct(
         private readonly Projectionist $projectionist
