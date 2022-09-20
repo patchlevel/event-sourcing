@@ -39,9 +39,8 @@ final class ProjectionistRunCommand extends Command
             ->addOption(
                 'run-limit',
                 null,
-                InputOption::VALUE_OPTIONAL,
-                'The maximum number of runs this command should execute',
-                1
+                InputOption::VALUE_REQUIRED,
+                'The maximum number of runs this command should execute'
             )
             ->addOption(
                 'memory-limit',

@@ -12,6 +12,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use function array_map;
+
 #[AsCommand(
     'event-sourcing:projectionist:status',
     'TODO'
@@ -37,7 +39,7 @@ final class ProjectionistStatusCommand extends Command
                 'status',
             ],
             array_map(
-                fn(ProjectorState $state) => [
+                static fn (ProjectorState $state) => [
                     $state->id()->name(),
                     $state->id()->version(),
                     $state->position(),

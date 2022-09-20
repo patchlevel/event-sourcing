@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\ProjectorStore\InMemory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
