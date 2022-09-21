@@ -21,7 +21,7 @@ final class ProjectionistStatusCommand extends ProjectionistCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new OutputStyle($input, $output);
-        $states = $this->projectionist->status();
+        $states = $this->projectionist->projectorStates();
 
         $io->table(
             [

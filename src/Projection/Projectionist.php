@@ -30,5 +30,5 @@ interface Projectionist
         ?LoggerInterface $logger = null
     ): void;
 
-    public function status(): ProjectorStateCollection;
+    public function projectorStates(): ProjectorStateCollection;
 }

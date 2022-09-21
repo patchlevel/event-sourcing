@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorState;
 use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateCollection;
 use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStore;
@@ -63,29 +64,7 @@ final class DefaultProjectionist implements Projectionist
 
         foreach ($stream as $message) {
             foreach ($projectorStates->filterByProjectorStatus(ProjectorStatus::Booting) as $projectorState) {
-                $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
-
-                if (!$projector) {
-                    throw new RuntimeException();
-                }
-
-                $handleMethod = $this->resolver->resolveHandleMethod($projector, $message);
-
-                if ($handleMethod) {
-                    try {
-                        $handleMethod($message);
-                    } catch (Throwable $e) {
-                        $logger?->error(sprintf('%s create error', $projectorState->id()->toString()));
-                        $logger?->error($e->getMessage());
-                        $projectorState->error();
-                        $this->projectorStore->saveProjectorState($projectorState);
-
-                        continue;
-                    }
-                }
-
-                $projectorState->incrementPosition();
-                $this->projectorStore->saveProjectorState($projectorState);
+                $this->handleMessage($message, $projectorState);
             }
         }
 
@@ -113,32 +92,7 @@ final class DefaultProjectionist implements Projectionist
                     continue;
                 }
 
-                $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
-
-                if (!$projector) {
-                    $projectorState->outdated(); // richtige stelle?
-                    $this->projectorStore->saveProjectorState($projectorState);
-
-                    continue;
-                }
-
-                $handleMethod = $this->resolver->resolveHandleMethod($projector, $message);
-
-                if ($handleMethod) {
-                    try {
-                        $handleMethod($message);
-                    } catch (Throwable $e) {
-                        $logger?->error(sprintf('%s create error', $projectorState->id()->toString()));
-                        $logger?->error($e->getMessage());
-                        $projectorState->error();
-                        $this->projectorStore->saveProjectorState($projectorState);
-
-                        continue;
-                    }
-                }
-
-                $projectorState->incrementPosition();
-                $this->projectorStore->saveProjectorState($projectorState);
+                $this->handleMessage($message, $projectorState);
             }
 
             $currentPosition++;
@@ -156,7 +110,6 @@ final class DefaultProjectionist implements Projectionist
 
             if (!$projector) {
                 $logger?->warning('WARNING!!!'); // todo
-
                 continue;
             }
 
@@ -207,9 +160,47 @@ final class DefaultProjectionist implements Projectionist
         }
     }
 
-    private function projectorStates(): ProjectorStateCollection
+    private function handleMessage(Message $message, ProjectorState $projectorState): void
+    {
+        $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
+
+        if (!$projector) {
+            throw new RuntimeException();
+        }
+
+        $handleMethod = $this->resolver->resolveHandleMethod($projector, $message);
+
+        if ($handleMethod) {
+            try {
+                $handleMethod($message);
+            } catch (Throwable $e) {
+                $logger?->error(sprintf('%s create error', $projectorState->id()->toString()));
+                $logger?->error($e->getMessage());
+                $projectorState->error();
+                $this->projectorStore->saveProjectorState($projectorState);
+
+                return;
+            }
+        }
+
+        $projectorState->incrementPosition();
+        $this->projectorStore->saveProjectorState($projectorState);
+    }
+
+    public function projectorStates(): ProjectorStateCollection
     {
         $projectorsStates = $this->projectorStore->getStateFromAllProjectors();
+
+        foreach ($projectorsStates as $projectorState) {
+            $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
+
+            if ($projector) {
+                continue;
+            }
+
+            $projectorState->outdated();
+            $this->projectorStore->saveProjectorState($projectorState);
+        }
 
         foreach ($this->projectorRepository->projectors() as $projector) {
             if ($projectorsStates->has($projector->projectorId())) {
@@ -220,10 +211,5 @@ final class DefaultProjectionist implements Projectionist
         }
 
         return $projectorsStates;
-    }
-
-    public function status(): ProjectorStateCollection
-    {
-        return $this->projectorStates();
     }
 }
