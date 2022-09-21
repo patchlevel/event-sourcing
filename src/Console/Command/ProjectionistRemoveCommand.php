@@ -10,7 +10,7 @@ use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    'event-sourcing:projectionist:destroy',
+    'event-sourcing:projectionist:remove',
     'TODO'
 )]
 final class ProjectionistRemoveCommand extends ProjectionistCommand
