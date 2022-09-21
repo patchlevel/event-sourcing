@@ -38,7 +38,7 @@ final class ProjectorState
 
     public function booting(): void
     {
-        $this->status = ProjectorStatus::Outdated;
+        $this->status = ProjectorStatus::Booting;
     }
 
     public function active(): void
