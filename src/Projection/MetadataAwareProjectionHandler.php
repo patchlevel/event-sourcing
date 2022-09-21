@@ -8,6 +8,9 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 
+/**
+ * @deprecated use MetadataProjectorResolver
+ */
 final class MetadataAwareProjectionHandler implements ProjectionHandler
 {
     /** @var iterable<Projection> */
