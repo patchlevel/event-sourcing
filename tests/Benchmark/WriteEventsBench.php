@@ -20,7 +20,7 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
-use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection\ProfileProjection;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection\ProfileProjector;
 use PhpBench\Attributes as Bench;
 
 use function file_exists;
@@ -47,7 +47,7 @@ final class WriteEventsBench
             'path' => self::DB_PATH,
         ]);
 
-        $profileProjection = new ProfileProjection($connection);
+        $profileProjection = new ProfileProjector($connection);
         $projectionRepository = new MetadataAwareProjectionHandler(
             [$profileProjection]
         );

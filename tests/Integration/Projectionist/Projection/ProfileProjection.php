@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Projection\Projector;
 use Patchlevel\EventSourcing\Projection\ProjectorId;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
+use function assert;
 use function sprintf;
 
 final class ProfileProjection implements Projector
@@ -46,6 +47,8 @@ final class ProfileProjection implements Projector
     public function handleProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();
+
+        assert($profileCreated instanceof ProfileCreated);
 
         $this->connection->executeStatement(
             'INSERT INTO ' . $this->tableName() . ' (id, name) VALUES(:id, :name);',

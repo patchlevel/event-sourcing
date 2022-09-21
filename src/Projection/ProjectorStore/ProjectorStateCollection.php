@@ -9,7 +9,6 @@ use Countable;
 use IteratorAggregate;
 use Patchlevel\EventSourcing\Projection\ProjectorId;
 use Patchlevel\EventSourcing\Projection\ProjectorStatus;
-use Traversable;
 
 use function array_filter;
 use function array_key_exists;
@@ -17,7 +16,7 @@ use function array_values;
 use function count;
 
 /**
- * @implements IteratorAggregate<string, ProjectorState>
+ * @implements IteratorAggregate<int, ProjectorState>
  */
 final class ProjectorStateCollection implements Countable, IteratorAggregate
 {
@@ -92,8 +91,11 @@ final class ProjectorStateCollection implements Countable, IteratorAggregate
         return count($this->projectorStates);
     }
 
-    public function getIterator(): Traversable
+    /**
+     * @return ArrayIterator<int, ProjectorState>
+     */
+    public function getIterator(): ArrayIterator
     {
-        return new ArrayIterator($this->projectorStates);
+        return new ArrayIterator(array_values($this->projectorStates));
     }
 }

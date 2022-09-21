@@ -168,6 +168,10 @@ final class DefaultProjectionist implements Projectionist
      */
     public function status(): array
     {
-        return array_values([...$this->projectorStates()]);
+        return array_values(
+            iterator_to_array(
+                $this->projectorStates()->getIterator()
+            )
+        );
     }
 }

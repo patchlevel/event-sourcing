@@ -42,9 +42,6 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$method(...);
     }
 
-    /**
-     * @return (Closure(Message):void)|null
-     */
     public function resolveHandleMethod(Projection $projector, Message $message): ?Closure
     {
         $event = $message->event();

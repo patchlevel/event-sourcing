@@ -10,16 +10,24 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projector;
+use Patchlevel\EventSourcing\Projection\ProjectorId;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
-final class ProfileProjection implements Projection
+use function assert;
+
+final class ProfileProjection implements Projector
 {
     private Connection $connection;
 
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
+    }
+
+    public function projectorId(): ProjectorId
+    {
+        return new ProjectorId('profile', 1);
     }
 
     #[Create]
@@ -43,6 +51,8 @@ final class ProfileProjection implements Projection
     public function handleProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();
+
+        assert($profileCreated instanceof ProfileCreated);
 
         $this->connection->executeStatement(
             'INSERT INTO projection_profile (id, name) VALUES(:id, :name);',
