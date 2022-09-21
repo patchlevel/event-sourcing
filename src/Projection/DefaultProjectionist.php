@@ -194,12 +194,15 @@ final class DefaultProjectionist implements Projectionist
         foreach ($projectorsStates as $projectorState) {
             $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
-            if ($projector) {
-                continue;
+            if ($projector && $projectorState->status() === ProjectorStatus::Outdated) {
+                $projectorState->active();
+                $this->projectorStore->saveProjectorState($projectorState);
             }
 
-            $projectorState->outdated();
-            $this->projectorStore->saveProjectorState($projectorState);
+            if (!$projector && $projectorState->status() !== ProjectorStatus::Outdated) {
+                $projectorState->outdated();
+                $this->projectorStore->saveProjectorState($projectorState);
+            }
         }
 
         foreach ($this->projectorRepository->projectors() as $projector) {
