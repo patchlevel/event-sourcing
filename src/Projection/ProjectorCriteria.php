@@ -10,7 +10,7 @@ final class ProjectorCriteria
      * @param list<string>|null $names
      */
     public function __construct(
-        public readonly ?array $names = null
+        public readonly ?array $names = null,
     ) {
     }
 }

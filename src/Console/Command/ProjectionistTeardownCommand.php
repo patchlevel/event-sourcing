@@ -4,27 +4,23 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Projection\Projectionist;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:projectionist:teardown',
     'TODO'
 )]
-final class ProjectionistTeardownCommand extends Command
+final class ProjectionistTeardownCommand extends ProjectionistCommand
 {
-    public function __construct(
-        private readonly Projectionist $projectionist
-    ) {
-        parent::__construct();
-    }
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->projectionist->teardown();
+        $logger = new ConsoleLogger($output);
+
+        $criteria = $this->projectorCriteria();
+        $this->projectionist->teardown($criteria, $logger);
 
         return 0;
     }

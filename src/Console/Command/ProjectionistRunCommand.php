@@ -12,9 +12,7 @@ use Patchlevel\EventSourcing\Console\Worker\Listener\StopWorkerOnIterationLimitL
 use Patchlevel\EventSourcing\Console\Worker\Listener\StopWorkerOnMemoryLimitListener;
 use Patchlevel\EventSourcing\Console\Worker\Listener\StopWorkerOnSigtermSignalListener;
 use Patchlevel\EventSourcing\Console\Worker\Listener\StopWorkerOnTimeLimitListener;
-use Patchlevel\EventSourcing\Projection\Projectionist;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -25,14 +23,8 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
     'event-sourcing:projectionist:run',
     'TODO'
 )]
-final class ProjectionistRunCommand extends Command
+final class ProjectionistRunCommand extends ProjectionistCommand
 {
-    public function __construct(
-        private readonly Projectionist $projectionist
-    ) {
-        parent::__construct();
-    }
-
     protected function configure(): void
     {
         $this
@@ -41,6 +33,13 @@ final class ProjectionistRunCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED,
                 'The maximum number of runs this command should execute'
+            )
+            ->addOption(
+                'message-limit',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'How many messages should be consumed in one run',
+                100
             )
             ->addOption(
                 'memory-limit',
@@ -66,9 +65,11 @@ final class ProjectionistRunCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $runLimit = InputHelper::nullableInt($input->getOption('run-limit'));
+        $messageLimit = InputHelper::int($input->getOption('message-limit'));
         $memoryLimit = InputHelper::nullableString($input->getOption('memory-limit'));
         $timeLimit = InputHelper::nullableInt($input->getOption('time-limit'));
         $sleep = InputHelper::int($input->getOption('sleep'));
+        $criteria = $this->projectorCriteria();
 
         $logger = new ConsoleLogger($output);
 
@@ -96,8 +97,8 @@ final class ProjectionistRunCommand extends Command
         }
 
         $worker = new DefaultWorker(
-            function (): void {
-                $this->projectionist->run();
+            function () use ($criteria, $messageLimit, $logger): void {
+                $this->projectionist->run($criteria, $messageLimit, $logger);
             },
             $eventDispatcher,
             $logger

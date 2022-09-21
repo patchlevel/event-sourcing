@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Projection\ProjectorStore;
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
+use Patchlevel\EventSourcing\Projection\ProjectorCriteria;
 use Patchlevel\EventSourcing\Projection\ProjectorId;
 use Patchlevel\EventSourcing\Projection\ProjectorStatus;
 
@@ -17,6 +18,7 @@ use function count;
 
 /**
  * @implements IteratorAggregate<int, ProjectorState>
+ * @psalm-immutable
  */
 final class ProjectorStateCollection implements Countable, IteratorAggregate
 {
@@ -81,6 +83,28 @@ final class ProjectorStateCollection implements Countable, IteratorAggregate
         $projectors = array_filter(
             $this->projectorStates,
             static fn (ProjectorState $projectorState) => $projectorState->status() === $status
+        );
+
+        return new self(array_values($projectors));
+    }
+
+    public function filterByCriteria(ProjectorCriteria $criteria): self
+    {
+        $projectors = array_filter(
+            $this->projectorStates,
+            static function (ProjectorState $projectorState) use ($criteria): bool {
+                if ($criteria->names !== null) {
+                    foreach ($criteria->names as $name) {
+                        if ($projectorState->id()->name() === $name) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+
+                return true;
+            }
         );
 
         return new self(array_values($projectors));

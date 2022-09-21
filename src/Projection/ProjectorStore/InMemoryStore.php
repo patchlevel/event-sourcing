@@ -10,7 +10,7 @@ use RuntimeException;
 use function array_key_exists;
 use function array_values;
 
-final class InMemory implements ProjectorStore
+final class InMemoryStore implements ProjectorStore
 {
     /** @var array<string, ProjectorState> */
     private array $store = [];

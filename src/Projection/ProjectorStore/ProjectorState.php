@@ -11,7 +11,7 @@ final class ProjectorState
 {
     public function __construct(
         private readonly ProjectorId $id,
-        private ProjectorStatus $status = ProjectorStatus::Booting,
+        private ProjectorStatus $status = ProjectorStatus::New,
         private int $position = 0
     ) {
     }
@@ -36,12 +36,7 @@ final class ProjectorState
         $this->position++;
     }
 
-    public function error(): void
-    {
-        $this->status = ProjectorStatus::Error;
-    }
-
-    public function outdated(): void
+    public function booting(): void
     {
         $this->status = ProjectorStatus::Outdated;
     }
@@ -49,5 +44,15 @@ final class ProjectorState
     public function active(): void
     {
         $this->status = ProjectorStatus::Active;
+    }
+
+    public function outdated(): void
+    {
+        $this->status = ProjectorStatus::Outdated;
+    }
+
+    public function error(): void
+    {
+        $this->status = ProjectorStatus::Error;
     }
 }
