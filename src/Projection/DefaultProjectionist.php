@@ -86,6 +86,15 @@ final class DefaultProjectionist implements Projectionist
         $currentPosition = $projectorStates->minProjectorPosition();
         $stream = $this->streamableMessageStore->stream($currentPosition);
 
+        foreach ($projectorStates as $projectorState) {
+            $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
+
+            if (!$projector) {
+                $projectorState->outdated();
+                $this->projectorStore->saveProjectorState($projectorState);
+            }
+        }
+
         foreach ($stream as $message) {
             foreach ($projectorStates->filterByProjectorStatus(ProjectorStatus::Active) as $projectorState) {
                 if ($projectorState->position() > $currentPosition) {
@@ -190,20 +199,6 @@ final class DefaultProjectionist implements Projectionist
     public function projectorStates(): ProjectorStateCollection
     {
         $projectorsStates = $this->projectorStore->getStateFromAllProjectors();
-
-        foreach ($projectorsStates as $projectorState) {
-            $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
-
-            if ($projector && $projectorState->status() === ProjectorStatus::Outdated) {
-                $projectorState->active();
-                $this->projectorStore->saveProjectorState($projectorState);
-            }
-
-            if (!$projector && $projectorState->status() !== ProjectorStatus::Outdated) {
-                $projectorState->outdated();
-                $this->projectorStore->saveProjectorState($projectorState);
-            }
-        }
 
         foreach ($this->projectorRepository->projectors() as $projector) {
             if ($projectorsStates->has($projector->projectorId())) {
