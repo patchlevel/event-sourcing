@@ -8,13 +8,13 @@ use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorState;
 
 interface Projectionist
 {
-    public function boot(): void;
+    public function boot(ProjectorCriteria $criteria = new ProjectorCriteria()): void;
 
-    public function run(?int $limit = null): void;
+    public function run(ProjectorCriteria $criteria = new ProjectorCriteria(), ?int $limit = null): void;
 
-    public function teardown(): void;
+    public function teardown(ProjectorCriteria $criteria = new ProjectorCriteria()): void;
 
-    public function destroy(): void;
+    public function remove(ProjectorCriteria $criteria = new ProjectorCriteria()): void;
 
     /**
      * @return list<ProjectorState>

@@ -14,26 +14,20 @@ use function iterator_to_array;
 
 final class DefaultProjectionist implements Projectionist
 {
-    /** @var array<string, Projector>|null */
-    private ?array $projectorHashmap = null;
-
-    /**
-     * @param iterable<Projector> $projectors
-     */
     public function __construct(
         private readonly StreamableStore $streamableMessageStore,
         private readonly ProjectorStore $projectorStore,
-        private readonly iterable $projectors,
+        private readonly ProjectorRepository $projectorRepository,
         private readonly ProjectorResolver $resolver = new MetadataProjectorResolver()
     ) {
     }
 
-    public function boot(): void
+    public function boot(ProjectorCriteria $criteria = new ProjectorCriteria()): void
     {
         $projectorStates = $this->projectorStates()->filterByProjectorStatus(ProjectorStatus::Booting);
 
         foreach ($projectorStates as $projectorState) {
-            $projector = $this->findProjector($projectorState->id());
+            $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
             if (!$projector) {
                 continue; // throw an exception
@@ -53,7 +47,7 @@ final class DefaultProjectionist implements Projectionist
 
         foreach ($stream as $message) {
             foreach ($projectorStates as $projectorState) {
-                $projector = $this->findProjector($projectorState->id());
+                $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
                 if (!$projector) {
                     continue; // throw an exception
@@ -73,7 +67,7 @@ final class DefaultProjectionist implements Projectionist
         $this->projectorStore->saveProjectorState(...iterator_to_array($projectorStates));
     }
 
-    public function run(?int $limit = null): void
+    public function run(ProjectorCriteria $criteria = new ProjectorCriteria(), ?int $limit = null): void
     {
         $projectorStates = $this->projectorStates()->filterByProjectorStatus(ProjectorStatus::Active);
         $position = $projectorStates->minProjectorPosition();
@@ -87,7 +81,7 @@ final class DefaultProjectionist implements Projectionist
                     continue;
                 }
 
-                $projector = $this->findProjector($projectorState->id());
+                $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
                 if (!$projector) {
                     $projectorState->outdated();
@@ -112,12 +106,12 @@ final class DefaultProjectionist implements Projectionist
         }
     }
 
-    public function teardown(): void
+    public function teardown(ProjectorCriteria $criteria = new ProjectorCriteria()): void
     {
         $projectorStates = $this->projectorStates()->filterByProjectorStatus(ProjectorStatus::Outdated);
 
         foreach ($projectorStates as $projectorState) {
-            $projector = $this->findProjector($projectorState->id());
+            $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
             if (!$projector) {
                 continue; // hmm........................
@@ -135,12 +129,12 @@ final class DefaultProjectionist implements Projectionist
         }
     }
 
-    public function destroy(): void
+    public function remove(ProjectorCriteria $criteria = new ProjectorCriteria()): void
     {
         $projectorStates = $this->projectorStates();
 
         foreach ($projectorStates as $projectorState) {
-            $projector = $this->findProjector($projectorState->id());
+            $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
             if ($projector) {
                 $dropMethod = $this->resolver->resolveDropMethod($projector);
@@ -158,7 +152,7 @@ final class DefaultProjectionist implements Projectionist
     {
         $projectorsStates = $this->projectorStore->getStateFromAllProjectors();
 
-        foreach ($this->projectors as $projector) {
+        foreach ($this->projectorRepository->projectors() as $projector) {
             if ($projectorsStates->has($projector->projectorId())) {
                 continue;
             }
@@ -167,19 +161,6 @@ final class DefaultProjectionist implements Projectionist
         }
 
         return $projectorsStates;
-    }
-
-    private function findProjector(ProjectorId $id): ?Projector
-    {
-        if ($this->projectorHashmap === null) {
-            $this->projectorHashmap = [];
-
-            foreach ($this->projectors as $projector) {
-                $this->projectorHashmap[$projector->projectorId()->toString()] = $projector;
-            }
-        }
-
-        return $this->projectorHashmap[$id->toString()] ?? null;
     }
 
     /**

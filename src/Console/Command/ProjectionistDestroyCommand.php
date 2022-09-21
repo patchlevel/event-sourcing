@@ -24,7 +24,7 @@ final class ProjectionistDestroyCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->projectionist->destroy();
+        $this->projectionist->remove();
 
         return 0;
     }

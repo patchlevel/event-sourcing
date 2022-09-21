@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\DefaultProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -61,7 +62,9 @@ final class ProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $store,
             $store,
-            [new ProfileProjection($this->connection)],
+            new DefaultProjectorRepository(
+                [new ProfileProjection($this->connection)]
+            ),
         );
 
         $projectionist->boot();
@@ -74,6 +77,6 @@ final class ProjectionistTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $projectionist->destroy();
+        $projectionist->remove();
     }
 }
