@@ -36,9 +36,19 @@ final class ProjectorState
         $this->position++;
     }
 
+    public function isNew(): bool
+    {
+        return $this->status === ProjectorStatus::New;
+    }
+
     public function booting(): void
     {
         $this->status = ProjectorStatus::Booting;
+    }
+
+    public function isBooting(): bool
+    {
+        return $this->status === ProjectorStatus::Booting;
     }
 
     public function active(): void
@@ -46,13 +56,28 @@ final class ProjectorState
         $this->status = ProjectorStatus::Active;
     }
 
+    public function isActive(): bool
+    {
+        return $this->status === ProjectorStatus::Active;
+    }
+
     public function outdated(): void
     {
         $this->status = ProjectorStatus::Outdated;
     }
 
+    public function isOutdated(): bool
+    {
+        return $this->status === ProjectorStatus::Outdated;
+    }
+
     public function error(): void
     {
         $this->status = ProjectorStatus::Error;
+    }
+
+    public function isError(): bool
+    {
+        return $this->status === ProjectorStatus::Error;
     }
 }

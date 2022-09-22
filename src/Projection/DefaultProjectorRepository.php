@@ -13,7 +13,7 @@ final class DefaultProjectorRepository implements ProjectorRepository
      * @param iterable<Projector> $projectors
      */
     public function __construct(
-        private readonly iterable $projectors,
+        private readonly iterable $projectors = [],
     ) {
     }
 
