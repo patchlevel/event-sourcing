@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.24.0@06dd975cb55d36af80f242561738f16c5f58264f">
+<files psalm-version="4.27.0@faf106e717c37b8c81721845dba9de3d8deed8ff">
+  <file src="src/Clock/FrozenClock.php">
+    <PossiblyFalsePropertyAssignmentValue occurrences="1">
+      <code>$this-&gt;frozenDateTime-&gt;modify(sprintf('+%s seconds', $seconds))</code>
+    </PossiblyFalsePropertyAssignmentValue>
+  </file>
   <file src="src/Console/Command/OutboxConsumeCommand.php">
     <ArgumentTypeCoercion occurrences="1">
       <code>$sleep</code>
