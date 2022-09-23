@@ -87,6 +87,7 @@ nav:
     - Outbox: outbox.md
     - Pipeline: pipeline.md
     - Message Decorator: message_decorator.md
+    - Split Stream: split_stream.md
     - Time / Clock: clock.md
   - Other / Tools:
     - UUID: uuid.md
