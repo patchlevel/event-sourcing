@@ -21,6 +21,9 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Aggregate\BankAccount;
+use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
+use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BankAccountCreated;
+use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\MonthPassed;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Projection\BankAccountProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use PHPUnit\Framework\TestCase;
@@ -107,6 +110,9 @@ final class IntegrationTest extends TestCase
         self::assertSame('John', $bankAccount->name());
         self::assertSame(600, $bankAccount->balance());
         self::assertSame(3, count($bankAccount->appliedEvents));
+        self::assertInstanceOf(BankAccountCreated::class, $bankAccount->appliedEvents[0]);
+        self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[1]);
+        self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[2]);
 
         $bankAccount->beginNewMonth();
         $bankAccount->addBalance(200);
@@ -139,6 +145,8 @@ final class IntegrationTest extends TestCase
         self::assertSame('John', $bankAccount->name());
         self::assertSame(800, $bankAccount->balance());
         self::assertSame(2, count($bankAccount->appliedEvents));
+        self::assertInstanceOf(MonthPassed::class, $bankAccount->appliedEvents[0]);
+        self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[1]);
     }
 
     public function testMultiTableSuccessful(): void
@@ -203,6 +211,9 @@ final class IntegrationTest extends TestCase
         self::assertSame('John', $bankAccount->name());
         self::assertSame(600, $bankAccount->balance());
         self::assertSame(3, count($bankAccount->appliedEvents));
+        self::assertInstanceOf(BankAccountCreated::class, $bankAccount->appliedEvents[0]);
+        self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[1]);
+        self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[2]);
 
         $bankAccount->beginNewMonth();
         $bankAccount->addBalance(200);
@@ -235,5 +246,7 @@ final class IntegrationTest extends TestCase
         self::assertSame('John', $bankAccount->name());
         self::assertSame(800, $bankAccount->balance());
         self::assertSame(2, count($bankAccount->appliedEvents));
+        self::assertInstanceOf(MonthPassed::class, $bankAccount->appliedEvents[0]);
+        self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[1]);
     }
 }
