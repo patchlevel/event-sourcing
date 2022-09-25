@@ -11,9 +11,10 @@ really long event stream.
 ## Flagging an event to split the stream
 
 To use this feature you need to add the `SplitStreamDecorator`. You will also need events which will trigger this
-action. For that you can use the `#[SplitStream]` attribute. As soon this event is saved all passed events gets marked
-as archived and will not be loaded anymore for building the aggregate. This means that all needed data has to be present
-in these events which should trigger the event split.
+action. For that you can use the `#[SplitStream]` attribute. We decided that we are not literallty splitting the stream, 
+instead we are marking all past events as archived as soon as this event is saved. Then the past events will not be 
+loaded anymore for building the aggregate. This means that all needed data has to be present in these events which 
+should trigger the event split.
 
 ```php
 #[Event('bank_account.month_passed')]
