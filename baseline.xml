@@ -26,6 +26,9 @@
     </MoreSpecificReturnType>
   </file>
   <file src="src/Repository/DefaultRepository.php">
+    <ArgumentTypeCoercion occurrences="1">
+      <code>$messages[0]-&gt;playhead() - 1</code>
+    </ArgumentTypeCoercion>
     <MixedArgument occurrences="1">
       <code>++$playhead</code>
     </MixedArgument>

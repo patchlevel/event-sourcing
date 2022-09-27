@@ -223,7 +223,6 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         $properties = [];
 
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
-            $reflectionProperty->setAccessible(true);
             $fieldName = $reflectionProperty->getName();
 
             $attributeReflectionList = $reflectionProperty->getAttributes(NormalizedName::class);

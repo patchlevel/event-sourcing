@@ -21,7 +21,7 @@ use function is_array;
 use function is_int;
 use function is_string;
 
-abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
+abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, SplitEventstreamStore
 {
     private const OUTBOX_TABLE = 'outbox';
 
@@ -169,12 +169,15 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
         return $normalizedRecordedOn;
     }
 
+    /**
+     * @return positive-int
+     */
     protected static function normalizePlayhead(string|int $playhead, AbstractPlatform $platform): int
     {
         $normalizedPlayhead = Type::getType(Types::INTEGER)->convertToPHPValue($playhead, $platform);
 
-        if (!is_int($normalizedPlayhead)) {
-            throw new InvalidType('playhead', 'int');
+        if (!is_int($normalizedPlayhead) || $normalizedPlayhead <= 0) {
+            throw new InvalidType('playhead', 'positive-int');
         }
 
         return $normalizedPlayhead;

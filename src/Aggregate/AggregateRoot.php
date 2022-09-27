@@ -75,11 +75,13 @@ abstract class AggregateRoot
     }
 
     /**
-     * @param list<object> $events
+     * @param list<object>   $events
+     * @param 0|positive-int $startPlayhead
      */
-    final public static function createFromEvents(array $events): static
+    final public static function createFromEvents(array $events, int $startPlayhead = 0): static
     {
         $self = new static();
+        $self->playhead = $startPlayhead;
         $self->catchUp($events);
 
         return $self;

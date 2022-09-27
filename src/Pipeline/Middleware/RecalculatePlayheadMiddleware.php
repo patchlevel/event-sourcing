@@ -11,7 +11,7 @@ use function array_key_exists;
 
 final class RecalculatePlayheadMiddleware implements Middleware
 {
-    /** @var array<class-string<AggregateRoot>, array<string, int>> */
+    /** @var array<class-string<AggregateRoot>, array<string, positive-int>> */
     private array $index = [];
 
     /**
@@ -32,6 +32,8 @@ final class RecalculatePlayheadMiddleware implements Middleware
 
     /**
      * @param class-string<AggregateRoot> $aggregateClass
+     *
+     * @return positive-int
      */
     private function nextPlayhead(string $aggregateClass, string $aggregateId): int
     {
@@ -40,10 +42,10 @@ final class RecalculatePlayheadMiddleware implements Middleware
         }
 
         if (!array_key_exists($aggregateId, $this->index[$aggregateClass])) {
-            $this->index[$aggregateClass][$aggregateId] = 0;
+            $this->index[$aggregateClass][$aggregateId] = 1;
+        } else {
+            $this->index[$aggregateClass][$aggregateId]++;
         }
-
-        $this->index[$aggregateClass][$aggregateId]++;
 
         return $this->index[$aggregateClass][$aggregateId];
     }

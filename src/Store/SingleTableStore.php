@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use function array_map;
 use function is_int;
 use function is_string;
+use function sprintf;
 
 final class SingleTableStore extends DoctrineStore implements PipelineStore
 {
@@ -45,7 +46,10 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->storeTableName)
-            ->where('aggregate = :aggregate AND aggregate_id = :id AND playhead > :playhead')
+            ->where('aggregate = :aggregate')
+            ->andWhere('aggregate_id = :id')
+            ->andWhere('playhead > :playhead')
+            ->andWhere('archived = :archived')
             ->getSQL();
 
         /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: string}> $result */
@@ -55,6 +59,10 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                 'aggregate' => $shortName,
                 'id' => $id,
                 'playhead' => $fromPlayhead,
+                'archived' => false,
+            ],
+            [
+                'archived' => Types::BOOLEAN,
             ]
         );
 
@@ -78,6 +86,29 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
     /**
      * @param class-string<AggregateRoot> $aggregate
      */
+    public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
+    {
+        $aggregateName = $this->aggregateRootRegistry->aggregateName($aggregate);
+
+        $statement = $this->connection->prepare(sprintf(
+            'UPDATE %s 
+            SET archived = true
+            WHERE aggregate = :aggregate
+            AND aggregate_id = :aggregate_id
+            AND playhead < :playhead
+            AND archived = false',
+            $this->storeTableName
+        ));
+        $statement->bindValue('aggregate', $aggregateName);
+        $statement->bindValue('aggregate_id', $id);
+        $statement->bindValue('playhead', $untilPlayhead);
+
+        $statement->executeQuery();
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $aggregate
+     */
     public function has(string $aggregate, string $id): bool
     {
         $shortName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -85,7 +116,8 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
             ->from($this->storeTableName)
-            ->where('aggregate = :aggregate AND aggregate_id = :id')
+            ->where('aggregate = :aggregate')
+            ->andWhere('aggregate_id = :id')
             ->setMaxResults(1)
             ->getSQL();
 
@@ -109,9 +141,7 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
                 foreach ($messages as $message) {
-                    $event = $message->event();
-
-                    $data = $this->serializer->serialize($event);
+                    $data = $this->serializer->serialize($message->event());
 
                     $connection->insert(
                         $this->storeTableName,
@@ -122,11 +152,15 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
                             'event' => $data->name,
                             'payload' => $data->payload,
                             'recorded_on' => $message->recordedOn(),
+                            'new_stream_start' => $message->newStreamStart(),
+                            'archived' => $message->archived(),
                             'custom_headers' => $message->customHeaders(),
                         ],
                         [
                             'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
                             'custom_headers' => Types::JSON,
+                            'new_stream_start' => Types::BOOLEAN,
+                            'archived' => Types::BOOLEAN,
                         ]
                     );
                 }
@@ -210,11 +244,16 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
+        $table->addColumn('new_stream_start', Types::BOOLEAN)
+            ->setNotnull(true);
+        $table->addColumn('archived', Types::BOOLEAN)
+            ->setNotnull(true);
         $table->addColumn('custom_headers', Types::JSON)
             ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
+        $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
 
         $this->addOutboxSchema($schema);
 

@@ -42,7 +42,7 @@ final class DefaultRepositoryManager implements RepositoryManager
         $this->store = $store;
         $this->eventBus = $eventBus;
         $this->snapshotStore = $snapshotStore;
-        $this->messageDecorator = $messageDecorator ??  new RecordedOnDecorator(new SystemClock());
+        $this->messageDecorator = $messageDecorator ?? new RecordedOnDecorator(new SystemClock());
         $this->logger = $logger ?? new NullLogger();
     }
 
