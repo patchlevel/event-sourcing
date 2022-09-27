@@ -95,7 +95,7 @@ final class DoctrineSchemaDirector implements DryRunSchemaDirector
     {
         $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
 
-        $this->schemaConfigurator->configureSchema($schema);
+        $this->schemaConfigurator->configureSchema($schema, $this->connection);
 
         return $schema;
     }

@@ -225,8 +225,12 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore, Sch
         return (int)$result;
     }
 
-    public function configureSchema(Schema $schema): void
+    public function configureSchema(Schema $schema, Connection $connection): void
     {
+        if ($this->connection !== $connection) {
+            return;
+        }
+
         $table = $schema->createTable($this->storeTableName);
 
         $table->addColumn('id', Types::BIGINT)

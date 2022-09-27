@@ -165,7 +165,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
         $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
 
         if ($this instanceof SchemaConfigurator) {
-            $this->configureSchema($schema);
+            $this->configureSchema($schema, $this->connection);
         }
 
         return $schema;

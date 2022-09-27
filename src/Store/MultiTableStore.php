@@ -255,8 +255,12 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore, Sche
         return (int)$result;
     }
 
-    public function configureSchema(Schema $schema): void
+    public function configureSchema(Schema $schema, Connection $connection): void
     {
+        if ($this->connection !== $connection) {
+            return;
+        }
+
         $this->addMetaTableToSchema($schema);
 
         foreach ($this->aggregateRootRegistry->aggregateNames() as $tableName) {
