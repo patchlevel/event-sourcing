@@ -8,6 +8,9 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\Provider\SchemaProvider;
 use Patchlevel\EventSourcing\Store\DoctrineStore;
 
+/**
+ * @deprecated use DoctrineMigrationSchemaProvider
+ */
 final class MigrationSchemaProvider implements SchemaProvider
 {
     public function __construct(

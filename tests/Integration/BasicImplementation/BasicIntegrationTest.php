@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegist
 use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
@@ -73,9 +73,13 @@ final class BasicIntegrationTest extends TestCase
         );
         $repository = $manager->get(Profile::class);
 
-        // create tables
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store
+        );
+
+        $schemaDirector->create();
         $profileProjection->create();
-        (new DoctrineSchemaManager())->create($store);
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
@@ -132,9 +136,13 @@ final class BasicIntegrationTest extends TestCase
         );
         $repository = $manager->get(Profile::class);
 
-        // create tables
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store
+        );
+
+        $schemaDirector->create();
         $profileProjection->create();
-        (new DoctrineSchemaManager())->create($store);
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
@@ -190,9 +198,13 @@ final class BasicIntegrationTest extends TestCase
         );
         $repository = $manager->get(Profile::class);
 
-        // create tables
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store
+        );
+
+        $schemaDirector->create();
         $profileProjection->create();
-        (new DoctrineSchemaManager())->create($store);
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
@@ -248,9 +260,13 @@ final class BasicIntegrationTest extends TestCase
         );
         $repository = $manager->get(Profile::class);
 
-        // create tables
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store
+        );
+
+        $schemaDirector->create();
         $profileProjection->create();
-        (new DoctrineSchemaManager())->create($store);
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);

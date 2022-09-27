@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -65,9 +65,13 @@ final class WriteEventsBench
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::class);
 
-        // create tables
+        $schemaDirector = new DoctrineSchemaDirector(
+            $connection,
+            $this->store
+        );
+
+        $schemaDirector->create();
         $profileProjection->create();
-        (new DoctrineSchemaManager())->create($this->store);
 
         $this->profile = Profile::create(ProfileId::fromString('1'), 'Peter');
         $this->repository->save($this->profile);

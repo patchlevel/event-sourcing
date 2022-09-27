@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
 use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -61,9 +62,13 @@ final class OutboxTest extends TestCase
         $outboxEventBus = new OutboxEventBus($store);
         $repository = new DefaultRepository($store, $outboxEventBus, Profile::class);
 
-        // create tables
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store
+        );
+
+        $schemaDirector->create();
         $profileProjection->create();
-        (new DoctrineSchemaManager())->create($store);
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
