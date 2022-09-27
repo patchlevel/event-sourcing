@@ -21,9 +21,15 @@ We have added a `schema provider` for doctrine migrations
 so that you just have to plug the whole thing together.
 
 ```php
-use Patchlevel\EventSourcing\Schema\MigrationSchemaProvider;
+use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
-$schemaProvider = new MigrationSchemaProvider($store);
+$schemaDirector = new DoctrineSchemaDirector(
+    $store,
+    $connection
+);
+
+$schemaProvider = new DoctrineMigrationSchemaProvider($schemaDirector);
 ```
 
 ## CLI example
