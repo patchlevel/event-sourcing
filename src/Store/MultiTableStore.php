@@ -11,6 +11,7 @@ use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
@@ -20,7 +21,7 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class MultiTableStore extends DoctrineStore implements PipelineStore
+final class MultiTableStore extends DoctrineStore implements PipelineStore, SchemaConfigurator
 {
     private string $metadataTableName;
 
@@ -254,10 +255,8 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         return (int)$result;
     }
 
-    public function schema(): Schema
+    public function configureSchema(Schema $schema): void
     {
-        $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
-
         $this->addMetaTableToSchema($schema);
 
         foreach ($this->aggregateRootRegistry->aggregateNames() as $tableName) {
@@ -265,8 +264,6 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         }
 
         $this->addOutboxSchema($schema);
-
-        return $schema;
     }
 
     private function addMetaTableToSchema(Schema $schema): void

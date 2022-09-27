@@ -10,11 +10,9 @@ use Patchlevel\EventSourcing\Store\DoctrineStore;
 
 final class MigrationSchemaProvider implements SchemaProvider
 {
-    private DoctrineStore $doctrineStore;
-
-    public function __construct(DoctrineStore $doctrineStore)
-    {
-        $this->doctrineStore = $doctrineStore;
+    public function __construct(
+        private readonly DoctrineStore $doctrineStore
+    ) {
     }
 
     public function createSchema(): Schema

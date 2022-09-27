@@ -6,6 +6,9 @@ namespace Patchlevel\EventSourcing\Schema;
 
 use Patchlevel\EventSourcing\Store\Store;
 
+/**
+ * @deprecated use DryRunSchemaDirector
+ */
 interface DryRunSchemaManager extends SchemaManager
 {
     /**

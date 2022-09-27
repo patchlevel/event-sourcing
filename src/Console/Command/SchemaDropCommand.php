@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaManager;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -22,7 +23,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class SchemaDropCommand extends Command
 {
     private Store $store;
-    private SchemaManager $schemaManager;
+    private SchemaManager|SchemaDirector $schemaManager;
 
     public function __construct(Store $store, SchemaManager $schemaManager)
     {
