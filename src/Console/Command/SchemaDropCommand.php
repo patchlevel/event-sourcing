@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaManager;
@@ -46,8 +47,8 @@ final class SchemaDropCommand extends Command
         $dryRun = InputHelper::bool($input->getOption('dry-run'));
 
         if ($dryRun) {
-            if (!$this->schemaDirector instanceof DryRunSchemaManager) {
-                $console->error('SchemaManager dont support dry-run');
+            if (!$this->schemaDirector instanceof DryRunSchemaManager && !$this->schemaDirector instanceof DryRunSchemaDirector) {
+                $console->error('SchemaDirector dont support dry-run');
 
                 return 1;
             }

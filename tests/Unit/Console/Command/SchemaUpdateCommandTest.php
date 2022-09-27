@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\SchemaUpdateCommand;
-use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
-use Patchlevel\EventSourcing\Schema\SchemaManager;
+use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Store\Store;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -22,7 +22,7 @@ final class SchemaUpdateCommandTest extends TestCase
     {
         $store = $this->prophesize(Store::class)->reveal();
 
-        $schemaManager = $this->prophesize(SchemaManager::class);
+        $schemaManager = $this->prophesize(SchemaDirector::class);
         $schemaManager->update($store)->shouldBeCalled();
 
         $command = new SchemaUpdateCommand(
@@ -46,7 +46,7 @@ final class SchemaUpdateCommandTest extends TestCase
     {
         $store = $this->prophesize(Store::class)->reveal();
 
-        $schemaManager = $this->prophesize(SchemaManager::class);
+        $schemaManager = $this->prophesize(SchemaDirector::class);
         $schemaManager->update($store)->shouldNotBeCalled();
 
         $command = new SchemaUpdateCommand(
@@ -73,7 +73,7 @@ final class SchemaUpdateCommandTest extends TestCase
     {
         $store = $this->prophesize(Store::class)->reveal();
 
-        $schemaManager = $this->prophesize(DryRunSchemaManager::class);
+        $schemaManager = $this->prophesize(DryRunSchemaDirector::class);
         $schemaManager->dryRunUpdate($store)->willReturn([
             'update table 1;',
             'update table 2;',
@@ -103,7 +103,7 @@ final class SchemaUpdateCommandTest extends TestCase
     {
         $store = $this->prophesize(Store::class)->reveal();
 
-        $schemaManager = $this->prophesize(SchemaManager::class);
+        $schemaManager = $this->prophesize(SchemaDirector::class);
 
         $command = new SchemaUpdateCommand(
             $store,
@@ -120,6 +120,6 @@ final class SchemaUpdateCommandTest extends TestCase
 
         $content = $output->fetch();
 
-        self::assertStringContainsString('[ERROR] SchemaManager dont support dry-run', $content);
+        self::assertStringContainsString('[ERROR] SchemaDirector dont support dry-run', $content);
     }
 }

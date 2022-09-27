@@ -10,12 +10,12 @@ use Doctrine\Migrations\Provider\SchemaProvider;
 final class DoctrineMigrationSchemaProvider implements SchemaProvider
 {
     public function __construct(
-        private readonly DoctrineSchemaDirector $doctrineSchemaDirector
+        private readonly DoctrineSchemaProvider $doctrineSchemaProvider
     ) {
     }
 
     public function createSchema(): Schema
     {
-        return $this->doctrineSchemaDirector->schema();
+        return $this->doctrineSchemaProvider->schema();
     }
 }

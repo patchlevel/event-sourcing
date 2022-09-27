@@ -119,29 +119,6 @@
       <code>$store</code>
     </MissingConstructor>
   </file>
-  <file src="tests/Unit/Console/Command/SchemaCreateCommandTest.php">
-    <DeprecatedClass occurrences="3">
-      <code>$this-&gt;prophesize(DryRunSchemaManager::class)</code>
-      <code>$this-&gt;prophesize(SchemaManager::class)</code>
-      <code>$this-&gt;prophesize(SchemaManager::class)</code>
-    </DeprecatedClass>
-  </file>
-  <file src="tests/Unit/Console/Command/SchemaDropCommandTest.php">
-    <DeprecatedClass occurrences="4">
-      <code>$this-&gt;prophesize(DryRunSchemaManager::class)</code>
-      <code>$this-&gt;prophesize(SchemaManager::class)</code>
-      <code>$this-&gt;prophesize(SchemaManager::class)</code>
-      <code>$this-&gt;prophesize(SchemaManager::class)</code>
-    </DeprecatedClass>
-  </file>
-  <file src="tests/Unit/Console/Command/SchemaUpdateCommandTest.php">
-    <DeprecatedClass occurrences="4">
-      <code>$this-&gt;prophesize(DryRunSchemaManager::class)</code>
-      <code>$this-&gt;prophesize(SchemaManager::class)</code>
-      <code>$this-&gt;prophesize(SchemaManager::class)</code>
-      <code>$this-&gt;prophesize(SchemaManager::class)</code>
-    </DeprecatedClass>
-  </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion occurrences="1">
       <code>$value</code>
@@ -151,6 +128,12 @@
     <MissingParamType occurrences="1">
       <code>$event</code>
     </MissingParamType>
+  </file>
+  <file src="tests/Unit/Schema/DoctrineSchemaDirectorTest.php">
+    <InternalMethod occurrences="2">
+      <code>new Comparator()</code>
+      <code>new Comparator()</code>
+    </InternalMethod>
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaManagerTest.php">
     <DeprecatedClass occurrences="18">

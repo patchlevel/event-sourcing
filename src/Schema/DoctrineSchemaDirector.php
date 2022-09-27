@@ -10,7 +10,7 @@ use Doctrine\DBAL\Schema\Schema;
 use function array_values;
 use function sprintf;
 
-final class DoctrineSchemaDirector implements DryRunSchemaDirector
+final class DoctrineSchemaDirector implements DryRunSchemaDirector, DoctrineSchemaProvider
 {
     public function __construct(
         private readonly Connection $connection,
@@ -20,11 +20,10 @@ final class DoctrineSchemaDirector implements DryRunSchemaDirector
 
     public function create(): void
     {
-        $connection = $this->connection;
         $queries = $this->dryRunCreate();
 
         foreach ($queries as $sql) {
-            $connection->executeStatement($sql);
+            $this->connection->executeStatement($sql);
         }
     }
 
