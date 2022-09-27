@@ -23,14 +23,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class SchemaCreateCommand extends Command
 {
     private Store $store;
-    private SchemaManager|SchemaDirector $schemaManager;
+    private SchemaManager|SchemaDirector $schemaDirector;
 
-    public function __construct(Store $store, SchemaManager|SchemaDirector $schemaManager)
+    public function __construct(Store $store, SchemaManager|SchemaDirector $schemaDirector)
     {
         parent::__construct();
 
         $this->store = $store;
-        $this->schemaManager = $schemaManager;
+        $this->schemaDirector = $schemaDirector;
     }
 
     protected function configure(): void
@@ -46,13 +46,13 @@ final class SchemaCreateCommand extends Command
         $dryRun = InputHelper::bool($input->getOption('dry-run'));
 
         if ($dryRun) {
-            if (!$this->schemaManager instanceof DryRunSchemaManager) {
+            if (!$this->schemaDirector instanceof DryRunSchemaManager) {
                 $console->error('SchemaManager dont support dry-run');
 
                 return 1;
             }
 
-            $actions = $this->schemaManager->dryRunCreate($this->store);
+            $actions = $this->schemaDirector->dryRunCreate($this->store);
 
             foreach ($actions as $action) {
                 $output->writeln($action);
@@ -61,7 +61,7 @@ final class SchemaCreateCommand extends Command
             return 0;
         }
 
-        $this->schemaManager->create($this->store);
+        $this->schemaDirector->create($this->store);
 
         $console->success('schema created');
 

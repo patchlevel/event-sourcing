@@ -13,19 +13,19 @@
   <file src="src/Console/Command/SchemaCreateCommand.php">
     <DeprecatedClass occurrences="2">
       <code>SchemaManager|SchemaDirector</code>
-      <code>SchemaManager|SchemaDirector $schemaManager</code>
+      <code>SchemaManager|SchemaDirector $schemaDirector</code>
     </DeprecatedClass>
   </file>
   <file src="src/Console/Command/SchemaDropCommand.php">
     <DeprecatedClass occurrences="2">
-      <code>SchemaManager</code>
       <code>SchemaManager|SchemaDirector</code>
+      <code>SchemaManager|SchemaDirector $schemaDirector</code>
     </DeprecatedClass>
   </file>
   <file src="src/Console/Command/SchemaUpdateCommand.php">
     <DeprecatedClass occurrences="2">
-      <code>SchemaManager</code>
       <code>SchemaManager|SchemaDirector</code>
+      <code>SchemaManager|SchemaDirector $schemaDirector</code>
     </DeprecatedClass>
   </file>
   <file src="src/Console/DoctrineHelper.php">

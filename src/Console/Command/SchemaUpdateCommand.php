@@ -23,14 +23,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class SchemaUpdateCommand extends Command
 {
     private Store $store;
-    private SchemaManager|SchemaDirector $schemaManager;
+    private SchemaManager|SchemaDirector $schemaDirector;
 
-    public function __construct(Store $store, SchemaManager $schemaManager)
+    public function __construct(Store $store, SchemaManager|SchemaDirector $schemaDirector)
     {
         parent::__construct();
 
         $this->store = $store;
-        $this->schemaManager = $schemaManager;
+        $this->schemaDirector = $schemaDirector;
     }
 
     protected function configure(): void
@@ -48,13 +48,13 @@ final class SchemaUpdateCommand extends Command
         $dryRun = InputHelper::bool($input->getOption('dry-run'));
 
         if ($dryRun) {
-            if (!$this->schemaManager instanceof DryRunSchemaManager) {
+            if (!$this->schemaDirector instanceof DryRunSchemaManager) {
                 $console->error('SchemaManager dont support dry-run');
 
                 return 1;
             }
 
-            $actions = $this->schemaManager->dryRunUpdate($this->store);
+            $actions = $this->schemaDirector->dryRunUpdate($this->store);
 
             foreach ($actions as $action) {
                 $output->writeln($action);
@@ -71,7 +71,7 @@ final class SchemaUpdateCommand extends Command
             return 1;
         }
 
-        $this->schemaManager->update($this->store);
+        $this->schemaDirector->update($this->store);
 
         $console->success('schema updated');
 
