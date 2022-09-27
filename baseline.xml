@@ -10,6 +10,24 @@
       <code>$sleep</code>
     </ArgumentTypeCoercion>
   </file>
+  <file src="src/Console/Command/SchemaCreateCommand.php">
+    <DeprecatedClass occurrences="2">
+      <code>SchemaManager|SchemaDirector</code>
+      <code>SchemaManager|SchemaDirector $schemaManager</code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Console/Command/SchemaDropCommand.php">
+    <DeprecatedClass occurrences="2">
+      <code>SchemaManager</code>
+      <code>SchemaManager|SchemaDirector</code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Console/Command/SchemaUpdateCommand.php">
+    <DeprecatedClass occurrences="2">
+      <code>SchemaManager</code>
+      <code>SchemaManager|SchemaDirector</code>
+    </DeprecatedClass>
+  </file>
   <file src="src/Console/DoctrineHelper.php">
     <ClassNotFinal occurrences="1">
       <code>class DoctrineHelper</code>
@@ -38,6 +56,29 @@
     <MixedOperand occurrences="1">
       <code>$playhead</code>
     </MixedOperand>
+  </file>
+  <file src="src/Schema/DoctrineSchemaManager.php">
+    <DeprecatedClass occurrences="6">
+      <code>new StoreNotSupported($store, DoctrineStore::class)</code>
+      <code>new StoreNotSupported($store, DoctrineStore::class)</code>
+      <code>new StoreNotSupported($store, DoctrineStore::class)</code>
+      <code>new StoreNotSupported($store, DoctrineStore::class)</code>
+      <code>new StoreNotSupported($store, DoctrineStore::class)</code>
+      <code>new StoreNotSupported($store, DoctrineStore::class)</code>
+    </DeprecatedClass>
+    <DeprecatedInterface occurrences="1">
+      <code>DoctrineSchemaManager</code>
+    </DeprecatedInterface>
+    <DeprecatedMethod occurrences="3">
+      <code>schema</code>
+      <code>schema</code>
+      <code>schema</code>
+    </DeprecatedMethod>
+  </file>
+  <file src="src/Schema/MigrationSchemaProvider.php">
+    <DeprecatedMethod occurrences="1">
+      <code>schema</code>
+    </DeprecatedMethod>
   </file>
   <file src="src/Snapshot/DefaultSnapshotStore.php">
     <MixedArgument occurrences="1">
@@ -78,6 +119,29 @@
       <code>$store</code>
     </MissingConstructor>
   </file>
+  <file src="tests/Unit/Console/Command/SchemaCreateCommandTest.php">
+    <DeprecatedClass occurrences="3">
+      <code>$this-&gt;prophesize(DryRunSchemaManager::class)</code>
+      <code>$this-&gt;prophesize(SchemaManager::class)</code>
+      <code>$this-&gt;prophesize(SchemaManager::class)</code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Console/Command/SchemaDropCommandTest.php">
+    <DeprecatedClass occurrences="4">
+      <code>$this-&gt;prophesize(DryRunSchemaManager::class)</code>
+      <code>$this-&gt;prophesize(SchemaManager::class)</code>
+      <code>$this-&gt;prophesize(SchemaManager::class)</code>
+      <code>$this-&gt;prophesize(SchemaManager::class)</code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Console/Command/SchemaUpdateCommandTest.php">
+    <DeprecatedClass occurrences="4">
+      <code>$this-&gt;prophesize(DryRunSchemaManager::class)</code>
+      <code>$this-&gt;prophesize(SchemaManager::class)</code>
+      <code>$this-&gt;prophesize(SchemaManager::class)</code>
+      <code>$this-&gt;prophesize(SchemaManager::class)</code>
+    </DeprecatedClass>
+  </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion occurrences="1">
       <code>$value</code>
@@ -87,5 +151,32 @@
     <MissingParamType occurrences="1">
       <code>$event</code>
     </MissingParamType>
+  </file>
+  <file src="tests/Unit/Schema/DoctrineSchemaManagerTest.php">
+    <DeprecatedClass occurrences="18">
+      <code>StoreNotSupported::class</code>
+      <code>StoreNotSupported::class</code>
+      <code>StoreNotSupported::class</code>
+      <code>StoreNotSupported::class</code>
+      <code>StoreNotSupported::class</code>
+      <code>StoreNotSupported::class</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+      <code>new DoctrineSchemaManager()</code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Schema/MigrationSchemaProviderTest.php">
+    <DeprecatedClass occurrences="1">
+      <code>new MigrationSchemaProvider($store-&gt;reveal())</code>
+    </DeprecatedClass>
   </file>
 </files>
