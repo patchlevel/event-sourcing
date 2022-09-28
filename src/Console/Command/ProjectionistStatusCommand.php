@@ -14,7 +14,7 @@ use function array_map;
 
 #[AsCommand(
     'event-sourcing:projectionist:status',
-    'TODO'
+    'View the current status of the projectors'
 )]
 final class ProjectionistStatusCommand extends ProjectionistCommand
 {

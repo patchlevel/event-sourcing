@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:projectionist:teardown',
-    'TODO'
+    'Shut down and delete the outdated projections'
 )]
 final class ProjectionistTeardownCommand extends ProjectionistCommand
 {

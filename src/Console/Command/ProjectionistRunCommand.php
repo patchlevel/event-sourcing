@@ -21,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[AsCommand(
     'event-sourcing:projectionist:run',
-    'TODO'
+    'Run the active projectors'
 )]
 final class ProjectionistRunCommand extends ProjectionistCommand
 {
