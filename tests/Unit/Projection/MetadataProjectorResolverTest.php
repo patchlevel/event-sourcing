@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Patchlevel\EventSourcing\Attribute\Create;
@@ -48,7 +50,8 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveHandleMethod(): void
     {
-        $projection = new class implements Projection {};
+        $projection = new class implements Projection {
+        };
 
         $message = new Message(
             new ProfileVisited(
@@ -86,7 +89,8 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveCreateMethod(): void
     {
-        $projection = new class implements Projection {};
+        $projection = new class implements Projection {
+        };
 
         $resolver = new MetadataProjectorResolver();
         $result = $resolver->resolveCreateMethod($projection);
@@ -118,7 +122,8 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveDropMethod(): void
     {
-        $projection = new class implements Projection {};
+        $projection = new class implements Projection {
+        };
 
         $resolver = new MetadataProjectorResolver();
         $result = $resolver->resolveDropMethod($projection);

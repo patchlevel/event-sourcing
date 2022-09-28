@@ -10,8 +10,10 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\DefaultProjectorRepository;
+use Patchlevel\EventSourcing\Projection\ProjectorStore\DatabaseStore;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
@@ -45,6 +47,8 @@ final class ProjectionistTest extends TestCase
             'eventstore'
         );
 
+        $projectorStore = new DatabaseStore($this->connection);
+
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
@@ -53,15 +57,22 @@ final class ProjectionistTest extends TestCase
 
         $repository = $manager->get(Profile::class);
 
-        // create tables
-        (new DoctrineSchemaManager())->create($store);
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainSchemaConfigurator([
+                $store,
+                $projectorStore,
+            ])
+        );
+
+        $schemaDirector->create();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
         $projectionist = new DefaultProjectionist(
             $store,
-            $store,
+            $projectorStore,
             new DefaultProjectorRepository(
                 [new ProfileProjection($this->connection)]
             ),

@@ -260,6 +260,5 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
         $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
 
         $this->addOutboxSchema($schema);
-        $this->addProjectorSchema($schema);
     }
 }

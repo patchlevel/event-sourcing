@@ -268,7 +268,6 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
         }
 
         $this->addOutboxSchema($schema);
-        $this->addProjectorSchema($schema);
     }
 
     private function addMetaTableToSchema(Schema $schema): void

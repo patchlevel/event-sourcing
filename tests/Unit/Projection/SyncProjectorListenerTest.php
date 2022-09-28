@@ -24,7 +24,7 @@ final class SyncProjectorListenerTest extends TestCase
     public function testMethodHandle(): void
     {
         $projector = new class implements Projector {
-            public Message $message;
+            public ?Message $message = null;
 
             public function projectorId(): ProjectorId
             {

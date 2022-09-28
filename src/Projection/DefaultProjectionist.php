@@ -89,10 +89,12 @@ final class DefaultProjectionist implements Projectionist
         foreach ($projectorStates as $projectorState) {
             $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
-            if (!$projector) {
-                $projectorState->outdated();
-                $this->projectorStore->saveProjectorState($projectorState);
+            if ($projector) {
+                continue;
             }
+
+            $projectorState->outdated();
+            $this->projectorStore->saveProjectorState($projectorState);
         }
 
         foreach ($stream as $message) {
@@ -106,7 +108,7 @@ final class DefaultProjectionist implements Projectionist
 
             $currentPosition++;
 
-            $logger?->info(sprintf('position: ', $currentPosition));
+            $logger?->info(sprintf('position: %s', $currentPosition));
         }
     }
 

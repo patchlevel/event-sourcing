@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Patchlevel\EventSourcing\Projection\DefaultProjectorRepository;
@@ -8,7 +10,7 @@ use Patchlevel\EventSourcing\Projection\ProjectorId;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Projection\DefaultProjectorRepository */
-class DefaultProjectorRepositoryTest extends TestCase
+final class DefaultProjectorRepositoryTest extends TestCase
 {
     public function testGetAllProjectorsIsEmpty(): void
     {

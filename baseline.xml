@@ -141,6 +141,16 @@
       <code>Projection</code>
     </DeprecatedClass>
   </file>
+  <file src="src/Projection/ProjectorStore/ProjectorStateCollection.php">
+    <ImpureFunctionCall occurrences="1">
+      <code>array_filter</code>
+    </ImpureFunctionCall>
+    <ImpureMethodCall occurrences="3">
+      <code>toString</code>
+      <code>toString</code>
+      <code>toString</code>
+    </ImpureMethodCall>
+  </file>
   <file src="src/Repository/DefaultRepository.php">
     <ArgumentTypeCoercion occurrences="1">
       <code>$messages[0]-&gt;playhead() - 1</code>
@@ -266,11 +276,6 @@
       <code>ProfileProjection</code>
     </DeprecatedInterface>
   </file>
-  <file src="tests/Integration/Projectionist/ProjectionistTest.php">
-    <DeprecatedClass occurrences="1">
-      <code>new DoctrineSchemaManager()</code>
-    </DeprecatedClass>
-  </file>
   <file src="tests/Unit/Console/Command/ProjectionCreateCommandTest.php">
     <DeprecatedClass occurrences="2">
       <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
@@ -348,6 +353,12 @@
       <code>$this-&gt;prophesize(PipelineStore::class)</code>
     </DeprecatedClass>
   </file>
+  <file src="tests/Unit/Projection/DefaultProjectorRepositoryTest.php">
+    <DeprecatedInterface occurrences="2">
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
+    </DeprecatedInterface>
+  </file>
   <file src="tests/Unit/Projection/MetadataAwareProjectionHandlerTest.php">
     <DeprecatedClass occurrences="5">
       <code>new MetadataAwareProjectionHandler([$projection])</code>
@@ -363,11 +374,27 @@
       <code>class implements Projection {</code>
     </DeprecatedInterface>
   </file>
+  <file src="tests/Unit/Projection/MetadataProjectorResolverTest.php">
+    <DeprecatedInterface occurrences="6">
+      <code>class implements Projection {</code>
+      <code>class implements Projection {</code>
+      <code>class implements Projection {</code>
+      <code>class implements Projection {</code>
+      <code>class implements Projection {</code>
+      <code>class implements Projection {</code>
+    </DeprecatedInterface>
+  </file>
   <file src="tests/Unit/Projection/ProjectionListenerTest.php">
     <DeprecatedClass occurrences="2">
       <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
       <code>new ProjectionListener($projectionRepository-&gt;reveal())</code>
     </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Projection/SyncProjectorListenerTest.php">
+    <DeprecatedInterface occurrences="2">
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
+    </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaDirectorTest.php">
     <InternalMethod occurrences="2">
