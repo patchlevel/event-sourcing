@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
-use RuntimeException;
-
-use function count;
-use function explode;
 use function sprintf;
 
 /**
@@ -39,16 +35,5 @@ final class ProjectorId
     public function equals(self $other): bool
     {
         return $this->name === $other->name && $this->version === $other->version;
-    }
-
-    public static function fromString(string $value): self
-    {
-        $parts = explode('-', $value); // todo regex!
-
-        if (count($parts) !== 2) {
-            throw new RuntimeException();
-        }
-
-        return new self($parts[0], (int)$parts[1]);
     }
 }

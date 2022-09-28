@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateCollection;
 use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStore;
 use Patchlevel\EventSourcing\Store\StreamableStore;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Throwable;
 
 use function sprintf;
@@ -37,7 +36,7 @@ final class DefaultProjectionist implements Projectionist
             $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
             if (!$projector) {
-                throw new RuntimeException();
+                throw new ProjectorNotFound($projectorState->id());
             }
 
             $projectorState->booting();
@@ -129,7 +128,7 @@ final class DefaultProjectionist implements Projectionist
             $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
             if (!$projector) {
-                $logger?->warning('WARNING!!!'); // todo
+                $logger?->warning(sprintf('projector witt the id "%s" not found', $projectorState->id()->toString()));
                 continue;
             }
 
@@ -188,7 +187,7 @@ final class DefaultProjectionist implements Projectionist
         $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
         if (!$projector) {
-            throw new RuntimeException();
+            throw new ProjectorNotFound($projectorState->id());
         }
 
         $handleMethod = $this->resolver->resolveHandleMethod($projector, $message);
