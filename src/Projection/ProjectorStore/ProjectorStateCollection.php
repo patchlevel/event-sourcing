@@ -33,6 +33,10 @@ final class ProjectorStateCollection implements Countable, IteratorAggregate
         $result = [];
 
         foreach ($projectorStates as $projectorState) {
+            if (array_key_exists($projectorState->id()->toString(), $result)) {
+                throw new DuplicateProjectorId($projectorState->id());
+            }
+
             $result[$projectorState->id()->toString()] = $projectorState;
         }
 
@@ -42,7 +46,7 @@ final class ProjectorStateCollection implements Countable, IteratorAggregate
     public function get(ProjectorId $projectorId): ProjectorState
     {
         if (!$this->has($projectorId)) {
-            throw new ProjectorStateNotFound();
+            throw new ProjectorStateNotFound($projectorId);
         }
 
         return $this->projectorStates[$projectorId->toString()];
@@ -53,29 +57,33 @@ final class ProjectorStateCollection implements Countable, IteratorAggregate
         return array_key_exists($projectorId->toString(), $this->projectorStates);
     }
 
-    public function add(ProjectorState $information): self
+    public function add(ProjectorState $state): self
     {
+        if ($this->has($state->id())) {
+            throw new DuplicateProjectorId($state->id());
+        }
+
         return new self(
             [
                 ...array_values($this->projectorStates),
-                $information,
+                $state,
             ]
         );
     }
 
     public function minProjectorPosition(): int
     {
-        $min = 0;
+        $min = null;
 
         foreach ($this->projectorStates as $projectorState) {
-            if ($projectorState->position() >= $min) {
+            if ($min !== null && $projectorState->position() >= $min) {
                 continue;
             }
 
             $min = $projectorState->position();
         }
 
-        return $min;
+        return $min ?: 0;
     }
 
     public function filterByProjectorStatus(ProjectorStatus $status): self
@@ -93,9 +101,9 @@ final class ProjectorStateCollection implements Countable, IteratorAggregate
         $projectors = array_filter(
             $this->projectorStates,
             static function (ProjectorState $projectorState) use ($criteria): bool {
-                if ($criteria->names !== null) {
-                    foreach ($criteria->names as $name) {
-                        if ($projectorState->id()->name() === $name) {
+                if ($criteria->ids !== null) {
+                    foreach ($criteria->ids as $id) {
+                        if ($projectorState->id()->equals($id)) {
                             return true;
                         }
                     }

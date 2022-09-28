@@ -21,4 +21,31 @@ class ProjectorIdTest extends TestCase
         self::assertSame(1, $projectorId->version());
         self::assertSame('test-1', $projectorId->toString());
     }
+
+    public function testEquals(): void
+    {
+        $a = new ProjectorId(
+            'test',
+            1
+        );
+
+        $b = new ProjectorId(
+            'test',
+            1
+        );
+
+        $c = new ProjectorId(
+            'foo',
+            1
+        );
+
+        $d = new ProjectorId(
+            'test',
+            2
+        );
+
+        self::assertTrue($a->equals($b));
+        self::assertFalse($a->equals($c));
+        self::assertFalse($a->equals($d));
+    }
 }
