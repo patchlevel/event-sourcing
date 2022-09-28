@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateNotFound;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateCollection */
-class ProjectorStateCollectionTest extends TestCase
+final class ProjectorStateCollectionTest extends TestCase
 {
     public function testCreate(): void
     {
@@ -52,6 +52,7 @@ class ProjectorStateCollectionTest extends TestCase
         $this->expectException(ProjectorStateNotFound::class);
 
         $collection = new ProjectorStateCollection();
+        /** @psalm-suppress UnusedMethodCall */
         $collection->get(new ProjectorId('test', 1));
     }
 
@@ -77,6 +78,7 @@ class ProjectorStateCollectionTest extends TestCase
 
         $id = new ProjectorId('test', 1);
 
+        /** @psalm-suppress UnusedMethodCall */
         (new ProjectorStateCollection())
             ->add(new ProjectorState($id))
             ->add(new ProjectorState($id));

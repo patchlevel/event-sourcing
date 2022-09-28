@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Projection\ProjectorId;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Projection\ProjectorCriteria */
-class ProjectorCriteriaTest extends TestCase
+final class ProjectorCriteriaTest extends TestCase
 {
     public function testProjectorId(): void
     {

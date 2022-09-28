@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Projection\ProjectorId;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Projection\ProjectorId */
-class ProjectorIdTest extends TestCase
+final class ProjectorIdTest extends TestCase
 {
     public function testProjectorId(): void
     {

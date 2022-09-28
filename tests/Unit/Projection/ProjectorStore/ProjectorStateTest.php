@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorState;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorState */
-class ProjectorStateTest extends TestCase
+final class ProjectorStateTest extends TestCase
 {
     public function testCreate(): void
     {

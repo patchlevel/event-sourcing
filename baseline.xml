@@ -145,11 +145,6 @@
     <ImpureFunctionCall occurrences="1">
       <code>array_filter</code>
     </ImpureFunctionCall>
-    <ImpureMethodCall occurrences="3">
-      <code>toString</code>
-      <code>toString</code>
-      <code>toString</code>
-    </ImpureMethodCall>
   </file>
   <file src="src/Repository/DefaultRepository.php">
     <ArgumentTypeCoercion occurrences="1">

@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateNotFound;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Projection\ProjectorStore\InMemoryStore */
-class InMemoryStoreTest extends TestCase
+final class InMemoryStoreTest extends TestCase
 {
     public function testSave(): void
     {

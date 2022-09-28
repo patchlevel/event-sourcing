@@ -10,6 +10,9 @@ use function count;
 use function explode;
 use function sprintf;
 
+/**
+ * @psalm-immutable
+ */
 final class ProjectorId
 {
     public function __construct(
