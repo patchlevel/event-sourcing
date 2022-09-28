@@ -134,32 +134,38 @@ $store->transactional(function () use ($command, $bankAccountRepository) {
 
 ## Schema Manager
 
-With the help of the `SchemaManager`, the database structure can be created, updated and deleted.
+With the help of the `SchemaDirector`, the database structure can be created, updated and deleted.
 
 !!! tip
 
     You can also use doctrine [migration](migration.md) to create and keep your schema in sync.
 
+### Create SchemaDirector
+
+```php
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+
+$schemaDirector = new DoctrineSchemaDirector(
+    $store,
+    $connection
+);
+
+```
+
 ### Create schema
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
-
-(new SchemaManager())->create($store);
+$schemaDirector->create();
 ```
 
 ### Update schema
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
-
-(new SchemaManager())->update($store);
+$schemaDirector->update();
 ```
 
 ### Drop schema
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
-
-(new SchemaManager())->drop($store);
+$schemaDirector->drop();
 ```

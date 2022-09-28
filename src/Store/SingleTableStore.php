@@ -11,6 +11,7 @@ use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
@@ -19,7 +20,7 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class SingleTableStore extends DoctrineStore implements PipelineStore
+final class SingleTableStore extends DoctrineStore implements PipelineStore, SchemaConfigurator
 {
     private string $storeTableName;
 
@@ -224,9 +225,12 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         return (int)$result;
     }
 
-    public function schema(): Schema
+    public function configureSchema(Schema $schema, Connection $connection): void
     {
-        $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
+        if ($this->connection !== $connection) {
+            return;
+        }
+
         $table = $schema->createTable($this->storeTableName);
 
         $table->addColumn('id', Types::BIGINT)
@@ -256,7 +260,5 @@ final class SingleTableStore extends DoctrineStore implements PipelineStore
         $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
 
         $this->addOutboxSchema($schema);
-
-        return $schema;
     }
 }

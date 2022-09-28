@@ -13,6 +13,7 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
@@ -156,7 +157,19 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
         return (int)$result;
     }
 
-    abstract public function schema(): Schema;
+    /**
+     * @deprecated use DoctrineSchemaDirector
+     */
+    public function schema(): Schema
+    {
+        $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
+
+        if ($this instanceof SchemaConfigurator) {
+            $this->configureSchema($schema, $this->connection);
+        }
+
+        return $schema;
+    }
 
     protected static function normalizeRecordedOn(string $recordedOn, AbstractPlatform $platform): DateTimeImmutable
     {

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\SchemaDropCommand;
-use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
-use Patchlevel\EventSourcing\Schema\SchemaManager;
+use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Store\Store;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -22,7 +22,7 @@ final class SchemaDropCommandTest extends TestCase
     {
         $store = $this->prophesize(Store::class)->reveal();
 
-        $schemaManager = $this->prophesize(SchemaManager::class);
+        $schemaManager = $this->prophesize(SchemaDirector::class);
         $schemaManager->drop($store)->shouldBeCalled();
 
         $command = new SchemaDropCommand(
@@ -46,7 +46,7 @@ final class SchemaDropCommandTest extends TestCase
     {
         $store = $this->prophesize(Store::class)->reveal();
 
-        $schemaManager = $this->prophesize(SchemaManager::class);
+        $schemaManager = $this->prophesize(SchemaDirector::class);
         $schemaManager->drop($store)->shouldNotBeCalled();
 
         $command = new SchemaDropCommand(
@@ -73,7 +73,7 @@ final class SchemaDropCommandTest extends TestCase
     {
         $store = $this->prophesize(Store::class)->reveal();
 
-        $schemaManager = $this->prophesize(DryRunSchemaManager::class);
+        $schemaManager = $this->prophesize(DryRunSchemaDirector::class);
         $schemaManager->dryRunDrop($store)->willReturn([
             'drop table 1;',
             'drop table 2;',
@@ -104,7 +104,7 @@ final class SchemaDropCommandTest extends TestCase
     {
         $store = $this->prophesize(Store::class)->reveal();
 
-        $schemaManager = $this->prophesize(SchemaManager::class);
+        $schemaManager = $this->prophesize(SchemaDirector::class);
 
         $command = new SchemaDropCommand(
             $store,
@@ -121,6 +121,6 @@ final class SchemaDropCommandTest extends TestCase
 
         $content = $output->fetch();
 
-        self::assertStringContainsString('[ERROR] SchemaManager dont support dry-run', $content);
+        self::assertStringContainsString('[ERROR] SchemaDirector dont support dry-run', $content);
     }
 }

@@ -314,9 +314,14 @@ So that we can actually write the data to a database,
 we need the associated schema and databases.
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
-(new DoctrineSchemaManager())->create($store);
+$schemaDirector = new DoctrineSchemaDirector(
+    $store,
+    $connection
+);
+
+$schemaDirector->create();
 $projectionHandler->create();
 ```
 

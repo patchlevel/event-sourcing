@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
@@ -59,8 +59,12 @@ final class LoadEventsWithSnapshotsBench
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::class, $this->snapshotStore);
 
-        // create tables
-        (new DoctrineSchemaManager())->create($this->store);
+        $schemaDirector = new DoctrineSchemaDirector(
+            $connection,
+            $this->store
+        );
+
+        $schemaDirector->create();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'Peter');
 

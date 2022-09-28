@@ -6,7 +6,9 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaManager;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -22,14 +24,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class SchemaDropCommand extends Command
 {
     private Store $store;
-    private SchemaManager $schemaManager;
+    private SchemaManager|SchemaDirector $schemaDirector;
 
-    public function __construct(Store $store, SchemaManager $schemaManager)
+    public function __construct(Store $store, SchemaManager|SchemaDirector $schemaDirector)
     {
         parent::__construct();
 
         $this->store = $store;
-        $this->schemaManager = $schemaManager;
+        $this->schemaDirector = $schemaDirector;
     }
 
     protected function configure(): void
@@ -45,13 +47,13 @@ final class SchemaDropCommand extends Command
         $dryRun = InputHelper::bool($input->getOption('dry-run'));
 
         if ($dryRun) {
-            if (!$this->schemaManager instanceof DryRunSchemaManager) {
-                $console->error('SchemaManager dont support dry-run');
+            if (!$this->schemaDirector instanceof DryRunSchemaManager && !$this->schemaDirector instanceof DryRunSchemaDirector) {
+                $console->error('SchemaDirector dont support dry-run');
 
                 return 1;
             }
 
-            $actions = $this->schemaManager->dryRunDrop($this->store);
+            $actions = $this->schemaDirector->dryRunDrop($this->store);
 
             foreach ($actions as $action) {
                 $output->writeln($action);
@@ -68,7 +70,7 @@ final class SchemaDropCommand extends Command
             return 1;
         }
 
-        $this->schemaManager->drop($this->store);
+        $this->schemaDirector->drop($this->store);
 
         $console->success('schema deleted');
 

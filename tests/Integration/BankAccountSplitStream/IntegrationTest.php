@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\ProjectionListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -74,9 +74,13 @@ final class IntegrationTest extends TestCase
         );
         $repository = $manager->get(BankAccount::class);
 
-        // create tables
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store
+        );
+
+        $schemaDirector->create();
         $bankAccountProjection->create();
-        (new DoctrineSchemaManager())->create($store);
 
         $bankAccount = BankAccount::create(AccountId::fromString('1'), 'John');
         $bankAccount->addBalance(100);
@@ -175,9 +179,13 @@ final class IntegrationTest extends TestCase
         );
         $repository = $manager->get(BankAccount::class);
 
-        // create tables
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store
+        );
+
+        $schemaDirector->create();
         $bankAccountProjection->create();
-        (new DoctrineSchemaManager())->create($store);
 
         $bankAccount = BankAccount::create(AccountId::fromString('1'), 'John');
         $bankAccount->addBalance(100);

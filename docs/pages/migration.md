@@ -21,9 +21,15 @@ We have added a `schema provider` for doctrine migrations
 so that you just have to plug the whole thing together.
 
 ```php
-use Patchlevel\EventSourcing\Schema\MigrationSchemaProvider;
+use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
-$schemaProvider = new MigrationSchemaProvider($store);
+$schemaDirector = new DoctrineSchemaDirector(
+    $store,
+    $connection
+);
+
+$schemaProvider = new DoctrineMigrationSchemaProvider($schemaDirector);
 ```
 
 ## CLI example
@@ -37,6 +43,8 @@ use Doctrine\Migrations\Configuration\Migration\PhpFile;
 use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
 use Doctrine\Migrations\Tools\Console\Command;
 use Symfony\Component\Console\Application;
+use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
 $connection = DriverManager::getConnection([
     'url' => 'mysql://user:secret@localhost/app'
@@ -49,11 +57,14 @@ $dependencyFactory = DependencyFactory::fromConnection(
     new ExistingConnection($connection)
 );
 
-$store = /* define your doctrine store */;
+$schemaDirector = new DoctrineSchemaDirector(
+    $store,
+    $connection
+);
 
 $dependencyFactory->setService(
     SchemaProvider::class, 
-    new MigrationSchemaProvider($store)
+    new DoctrineMigrationSchemaProvider($schemaDirector)
 );
 
 $cli = new Application('Event-Sourcing CLI');

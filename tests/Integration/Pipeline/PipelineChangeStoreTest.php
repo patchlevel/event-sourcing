@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\MultiTableStore;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -57,7 +57,12 @@ final class PipelineChangeStoreTest extends TestCase
             'eventstore'
         );
 
-        (new DoctrineSchemaManager())->create($oldStore);
+        $oldSchemaDirector = new DoctrineSchemaDirector(
+            $this->connectionOld,
+            $oldStore
+        );
+
+        $oldSchemaDirector->create();
 
         $newStore = new SingleTableStore(
             $this->connectionNew,
@@ -66,7 +71,12 @@ final class PipelineChangeStoreTest extends TestCase
             'eventstore'
         );
 
-        (new DoctrineSchemaManager())->create($newStore);
+        $newSchemaDirector = new DoctrineSchemaDirector(
+            $this->connectionNew,
+            $newStore
+        );
+
+        $newSchemaDirector->create();
 
         $oldRepository = new DefaultRepository($oldStore, new DefaultEventBus(), Profile::class);
         $newRepository = new DefaultRepository($newStore, new DefaultEventBus(), Profile::class);
