@@ -97,6 +97,8 @@ final class DefaultProjectionist implements Projectionist
             $this->projectorStore->saveProjectorState($projectorState);
         }
 
+        $messageCounter = 0;
+
         foreach ($stream as $message) {
             foreach ($projectorStates->filterByProjectorStatus(ProjectorStatus::Active) as $projectorState) {
                 if ($projectorState->position() > $currentPosition) {
@@ -109,6 +111,11 @@ final class DefaultProjectionist implements Projectionist
             $currentPosition++;
 
             $logger?->info(sprintf('position: %s', $currentPosition));
+
+            $messageCounter++;
+            if ($messageCounter >= $limit) {
+                return;
+            }
         }
     }
 

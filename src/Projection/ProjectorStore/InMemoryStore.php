@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection\ProjectorStore;
 
 use Patchlevel\EventSourcing\Projection\ProjectorId;
-use RuntimeException;
 
 use function array_key_exists;
 use function array_values;
@@ -21,7 +20,7 @@ final class InMemoryStore implements ProjectorStore
             return $this->store[$projectorId->toString()];
         }
 
-        throw new RuntimeException(); // todo
+        throw new ProjectorStateNotFound($projectorId);
     }
 
     public function getStateFromAllProjectors(): ProjectorStateCollection

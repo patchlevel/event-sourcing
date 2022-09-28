@@ -36,7 +36,7 @@ final class DatabaseStore implements ProjectorStore, SchemaConfigurator
         ]);
 
         if ($result === false) {
-            throw new ProjectorStateNotFound();
+            throw new ProjectorStateNotFound($projectorId);
         }
 
         return new ProjectorState(
