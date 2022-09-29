@@ -141,11 +141,6 @@
       <code>Projection</code>
     </DeprecatedClass>
   </file>
-  <file src="src/Projection/ProjectorStore/ProjectorStateCollection.php">
-    <ImpureFunctionCall occurrences="1">
-      <code>array_filter</code>
-    </ImpureFunctionCall>
-  </file>
   <file src="src/Repository/DefaultRepository.php">
     <ArgumentTypeCoercion occurrences="1">
       <code>$messages[0]-&gt;playhead() - 1</code>

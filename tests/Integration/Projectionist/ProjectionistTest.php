@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\DefaultProjectorRepository;
-use Patchlevel\EventSourcing\Projection\ProjectorStore\DatabaseStore;
+use Patchlevel\EventSourcing\Projection\ProjectorStore\DoctrineStore;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -47,7 +47,7 @@ final class ProjectionistTest extends TestCase
             'eventstore'
         );
 
-        $projectorStore = new DatabaseStore($this->connection);
+        $projectorStore = new DoctrineStore($this->connection);
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),

@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 
 use function array_map;
 
-final class DatabaseStore implements ProjectorStore, SchemaConfigurator
+final class DoctrineStore implements ProjectorStore, SchemaConfigurator
 {
     public function __construct(
         private readonly Connection $connection,
