@@ -128,7 +128,7 @@ final class DefaultProjectionist implements Projectionist
             $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
             if (!$projector) {
-                $logger?->warning(sprintf('projector witt the id "%s" not found', $projectorState->id()->toString()));
+                $logger?->warning(sprintf('projector with the id "%s" not found', $projectorState->id()->toString()));
                 continue;
             }
 
