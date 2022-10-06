@@ -65,7 +65,7 @@ final class ProjectionistRunCommand extends ProjectionistCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $runLimit = InputHelper::nullableInt($input->getOption('run-limit'));
-        $messageLimit = InputHelper::int($input->getOption('message-limit'));
+        $messageLimit = InputHelper::nullableInt($input->getOption('message-limit'));
         $memoryLimit = InputHelper::nullableString($input->getOption('memory-limit'));
         $timeLimit = InputHelper::nullableInt($input->getOption('time-limit'));
         $sleep = InputHelper::int($input->getOption('sleep'));
@@ -85,7 +85,9 @@ final class ProjectionistRunCommand extends ProjectionistCommand
         }
 
         if ($memoryLimit) {
-            $eventDispatcher->addSubscriber(new StopWorkerOnMemoryLimitListener(Bytes::parseFromString($memoryLimit), $logger));
+            $eventDispatcher->addSubscriber(
+                new StopWorkerOnMemoryLimitListener(Bytes::parseFromString($memoryLimit), $logger)
+            );
         }
 
         if ($timeLimit) {
@@ -96,9 +98,13 @@ final class ProjectionistRunCommand extends ProjectionistCommand
             $eventDispatcher->addSubscriber(new StopWorkerOnTimeLimitListener($timeLimit, $logger));
         }
 
+        if ($messageLimit !== null && $messageLimit <= 0) {
+            throw new InvalidArgumentGiven($messageLimit, 'null|positive-int');
+        }
+
         $worker = new DefaultWorker(
-            function () use ($criteria, $messageLimit, $logger): void {
-                $this->projectionist->run($criteria, $messageLimit, $logger);
+            function () use ($criteria, $messageLimit): void {
+                $this->projectionist->run($criteria, $messageLimit);
             },
             $eventDispatcher,
             $logger

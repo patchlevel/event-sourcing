@@ -21,13 +21,12 @@ final class DefaultProjectionist implements Projectionist
         private readonly ProjectorStore $projectorStore,
         private readonly ProjectorRepository $projectorRepository,
         private readonly ProjectorResolver $resolver = new MetadataProjectorResolver(),
+        private readonly ?LoggerInterface $logger = null
     ) {
     }
 
-    public function boot(
-        ProjectorCriteria $criteria = new ProjectorCriteria(),
-        ?LoggerInterface $logger = null
-    ): void {
+    public function boot(ProjectorCriteria $criteria = new ProjectorCriteria()): void
+    {
         $projectorStates = $this->projectorStates()
             ->filterByProjectorStatus(ProjectorStatus::New)
             ->filterByCriteria($criteria);
@@ -50,10 +49,10 @@ final class DefaultProjectionist implements Projectionist
 
             try {
                 $createMethod();
-                $logger?->info(sprintf('%s created', $projectorState->id()->toString()));
+                $this->logger?->info(sprintf('%s created', $projectorState->id()->toString()));
             } catch (Throwable $e) {
-                $logger?->error(sprintf('%s create error', $projectorState->id()->toString()));
-                $logger?->error($e->getMessage());
+                $this->logger?->error(sprintf('%s create error', $projectorState->id()->toString()));
+                $this->logger?->error($e->getMessage());
                 $projectorState->error();
                 $this->projectorStore->saveProjectorState($projectorState);
             }
@@ -63,21 +62,18 @@ final class DefaultProjectionist implements Projectionist
 
         foreach ($stream as $message) {
             foreach ($projectorStates->filterByProjectorStatus(ProjectorStatus::Booting) as $projectorState) {
-                $this->handleMessage($message, $projectorState, $logger);
+                $this->handleMessage($message, $projectorState);
             }
         }
 
-        foreach ($projectorStates as $projectorState) {
+        foreach ($projectorStates->filterByProjectorStatus(ProjectorStatus::Booting) as $projectorState) {
             $projectorState->active();
             $this->projectorStore->saveProjectorState($projectorState);
         }
     }
 
-    public function run(
-        ProjectorCriteria $criteria = new ProjectorCriteria(),
-        ?int $limit = null,
-        ?LoggerInterface $logger = null
-    ): void {
+    public function run(ProjectorCriteria $criteria = new ProjectorCriteria(), ?int $limit = null): void
+    {
         $projectorStates = $this->projectorStates()
             ->filterByProjectorStatus(ProjectorStatus::Active)
             ->filterByCriteria($criteria);
@@ -109,7 +105,7 @@ final class DefaultProjectionist implements Projectionist
 
             $currentPosition++;
 
-            $logger?->info(sprintf('position: %s', $currentPosition));
+            $this->logger?->info(sprintf('position: %s', $currentPosition));
 
             $messageCounter++;
             if ($messageCounter >= $limit) {
@@ -118,17 +114,17 @@ final class DefaultProjectionist implements Projectionist
         }
     }
 
-    public function teardown(
-        ProjectorCriteria $criteria = new ProjectorCriteria(),
-        ?LoggerInterface $logger = null
-    ): void {
+    public function teardown(ProjectorCriteria $criteria = new ProjectorCriteria()): void
+    {
         $projectorStates = $this->projectorStates()->filterByProjectorStatus(ProjectorStatus::Outdated);
 
         foreach ($projectorStates as $projectorState) {
             $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
             if (!$projector) {
-                $logger?->warning(sprintf('projector with the id "%s" not found', $projectorState->id()->toString()));
+                $this->logger?->warning(
+                    sprintf('projector with the id "%s" not found', $projectorState->id()->toString())
+                );
                 continue;
             }
 
@@ -137,13 +133,10 @@ final class DefaultProjectionist implements Projectionist
             if ($dropMethod) {
                 try {
                     $dropMethod();
-                    $logger?->info(sprintf('%s dropped', $projectorState->id()->toString()));
+                    $this->logger?->info(sprintf('%s dropped', $projectorState->id()->toString()));
                 } catch (Throwable $e) {
-                    $logger?->error(sprintf('%s drop error', $projectorState->id()->toString()));
-                    $logger?->error($e->getMessage());
-                    $projectorState->error();
-                    $this->projectorStore->saveProjectorState($projectorState);
-
+                    $this->logger?->error(sprintf('%s drop error', $projectorState->id()->toString()));
+                    $this->logger?->error($e->getMessage());
                     continue;
                 }
             }
@@ -152,10 +145,8 @@ final class DefaultProjectionist implements Projectionist
         }
     }
 
-    public function remove(
-        ProjectorCriteria $criteria = new ProjectorCriteria(),
-        ?LoggerInterface $logger = null
-    ): void {
+    public function remove(ProjectorCriteria $criteria = new ProjectorCriteria()): void
+    {
         $projectorStates = $this->projectorStates();
 
         foreach ($projectorStates as $projectorState) {
@@ -167,10 +158,10 @@ final class DefaultProjectionist implements Projectionist
                 if ($dropMethod) {
                     try {
                         $dropMethod();
-                        $logger?->info(sprintf('%s dropped', $projectorState->id()->toString()));
+                        $this->logger?->info(sprintf('%s dropped', $projectorState->id()->toString()));
                     } catch (Throwable $e) {
-                        $logger?->warning(sprintf('%s drop error, skipped', $projectorState->id()->toString()));
-                        $logger?->error($e->getMessage());
+                        $this->logger?->warning(sprintf('%s drop error, skipped', $projectorState->id()->toString()));
+                        $this->logger?->error($e->getMessage());
                     }
                 }
             }
@@ -179,11 +170,8 @@ final class DefaultProjectionist implements Projectionist
         }
     }
 
-    private function handleMessage(
-        Message $message,
-        ProjectorState $projectorState,
-        ?LoggerInterface $logger = null
-    ): void {
+    private function handleMessage(Message $message, ProjectorState $projectorState): void
+    {
         $projector = $this->projectorRepository->findByProjectorId($projectorState->id());
 
         if (!$projector) {
@@ -196,8 +184,8 @@ final class DefaultProjectionist implements Projectionist
             try {
                 $handleMethod($message);
             } catch (Throwable $e) {
-                $logger?->error(sprintf('%s message error', $projectorState->id()->toString()));
-                $logger?->error($e->getMessage());
+                $this->logger?->error(sprintf('%s message error', $projectorState->id()->toString()));
+                $this->logger?->error($e->getMessage());
                 $projectorState->error();
                 $this->projectorStore->saveProjectorState($projectorState);
 

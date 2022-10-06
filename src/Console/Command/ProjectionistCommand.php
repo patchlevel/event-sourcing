@@ -11,7 +11,7 @@ use Symfony\Component\Console\Command\Command;
 abstract class ProjectionistCommand extends Command
 {
     public function __construct(
-        protected readonly Projectionist $projectionist
+        protected readonly Projectionist $projectionist,
     ) {
         parent::__construct();
     }
