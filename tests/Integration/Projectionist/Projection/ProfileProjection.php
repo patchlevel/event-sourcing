@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection;
+namespace Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
@@ -12,9 +12,10 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector;
 use Patchlevel\EventSourcing\Projection\ProjectorId;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
 use function assert;
+use function sprintf;
 
 final class ProfileProjection implements Projector
 {
@@ -25,15 +26,10 @@ final class ProfileProjection implements Projector
         $this->connection = $connection;
     }
 
-    public function projectorId(): ProjectorId
-    {
-        return new ProjectorId('profile', 1);
-    }
-
     #[Create]
     public function create(): void
     {
-        $table = new Table('projection_profile');
+        $table = new Table($this->tableName());
         $table->addColumn('id', 'string');
         $table->addColumn('name', 'string');
         $table->setPrimaryKey(['id']);
@@ -44,7 +40,7 @@ final class ProfileProjection implements Projector
     #[Drop]
     public function drop(): void
     {
-        $this->connection->createSchemaManager()->dropTable('projection_profile');
+        $this->connection->createSchemaManager()->dropTable($this->tableName());
     }
 
     #[Handle(ProfileCreated::class)]
@@ -55,11 +51,25 @@ final class ProfileProjection implements Projector
         assert($profileCreated instanceof ProfileCreated);
 
         $this->connection->executeStatement(
-            'INSERT INTO projection_profile (id, name) VALUES(:id, :name);',
+            'INSERT INTO ' . $this->tableName() . ' (id, name) VALUES(:id, :name);',
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
             ]
         );
+    }
+
+    private function tableName(): string
+    {
+        return sprintf(
+            'projection_%s_%s',
+            $this->projectorId()->name(),
+            $this->projectorId()->version()
+        );
+    }
+
+    public function projectorId(): ProjectorId
+    {
+        return new ProjectorId('profile', 1);
     }
 }

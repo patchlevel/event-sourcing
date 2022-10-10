@@ -8,14 +8,17 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 
-use function array_key_exists;
-
+/**
+ * @deprecated use MetadataProjectorResolver
+ */
 final class MetadataAwareProjectionHandler implements ProjectionHandler
 {
     /** @var iterable<Projection> */
     private iterable $projections;
 
-    private ProjectionMetadataFactory $metadataFactor;
+    private ProjectionMetadataFactory $metadataFactory;
+
+    private ProjectorResolver $resolver;
 
     /**
      * @param iterable<Projection> $projections
@@ -23,51 +26,46 @@ final class MetadataAwareProjectionHandler implements ProjectionHandler
     public function __construct(iterable $projections, ?ProjectionMetadataFactory $metadataFactory = null)
     {
         $this->projections = $projections;
-        $this->metadataFactor = $metadataFactory ?? new AttributeProjectionMetadataFactory();
+        $this->metadataFactory = $metadataFactory ?? new AttributeProjectionMetadataFactory();
+        $this->resolver = new MetadataProjectorResolver($this->metadataFactory);
     }
 
     public function handle(Message $message): void
     {
-        $event = $message->event();
-
         foreach ($this->projections as $projection) {
-            $metadata = $this->metadataFactor->metadata($projection::class);
+            $handleMethod = $this->resolver->resolveHandleMethod($projection, $message);
 
-            if (!array_key_exists($event::class, $metadata->handleMethods)) {
+            if (!$handleMethod) {
                 continue;
             }
 
-            $handleMethod = $metadata->handleMethods[$event::class];
-
-            $projection->$handleMethod($message);
+            $handleMethod($message);
         }
     }
 
     public function create(): void
     {
         foreach ($this->projections as $projection) {
-            $metadata = $this->metadataFactor->metadata($projection::class);
-            $method = $metadata->createMethod;
+            $createMethod = $this->resolver->resolveCreateMethod($projection);
 
-            if (!$method) {
+            if (!$createMethod) {
                 continue;
             }
 
-            $projection->$method();
+            $createMethod();
         }
     }
 
     public function drop(): void
     {
         foreach ($this->projections as $projection) {
-            $metadata = $this->metadataFactor->metadata($projection::class);
-            $method = $metadata->dropMethod;
+            $dropMethod = $this->resolver->resolveDropMethod($projection);
 
-            if (!$method) {
+            if (!$dropMethod) {
                 continue;
             }
 
-            $projection->$method();
+            $dropMethod();
         }
     }
 
@@ -81,6 +79,6 @@ final class MetadataAwareProjectionHandler implements ProjectionHandler
 
     public function metadataFactory(): ProjectionMetadataFactory
     {
-        return $this->metadataFactor;
+        return $this->metadataFactory;
     }
 }

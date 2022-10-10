@@ -21,7 +21,7 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class MultiTableStore extends DoctrineStore implements PipelineStore, SchemaConfigurator
+final class MultiTableStore extends DoctrineStore implements StreamableStore, SchemaConfigurator
 {
     private string $metadataTableName;
 

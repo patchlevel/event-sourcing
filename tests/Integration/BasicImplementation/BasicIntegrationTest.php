@@ -12,8 +12,8 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
-use Patchlevel\EventSourcing\Projection\ProjectionListener;
+use Patchlevel\EventSourcing\Projection\DefaultProjectorRepository;
+use Patchlevel\EventSourcing\Projection\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -49,12 +49,12 @@ final class BasicIntegrationTest extends TestCase
     public function testSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new MetadataAwareProjectionHandler(
+        $projectorRepository = new DefaultProjectorRepository(
             [$profileProjection]
         );
 
         $eventStream = new DefaultEventBus();
-        $eventStream->addListener(new ProjectionListener($projectionRepository));
+        $eventStream->addListener(new SyncProjectorListener($projectorRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
         $store = new SingleTableStore(
@@ -111,12 +111,12 @@ final class BasicIntegrationTest extends TestCase
     public function testWithSymfonySuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new MetadataAwareProjectionHandler(
+        $projectorRepository = new DefaultProjectorRepository(
             [$profileProjection]
         );
 
         $eventStream = SymfonyEventBus::create([
-            new ProjectionListener($projectionRepository),
+            new SyncProjectorListener($projectorRepository),
             new SendEmailProcessor(),
         ]);
 
@@ -175,12 +175,12 @@ final class BasicIntegrationTest extends TestCase
     public function testMultiTableSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new MetadataAwareProjectionHandler(
+        $projectorRepository = new DefaultProjectorRepository(
             [$profileProjection]
         );
 
         $eventStream = new DefaultEventBus();
-        $eventStream->addListener(new ProjectionListener($projectionRepository));
+        $eventStream->addListener(new SyncProjectorListener($projectorRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
         $store = new MultiTableStore(
@@ -236,12 +236,12 @@ final class BasicIntegrationTest extends TestCase
     public function testSnapshot(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new MetadataAwareProjectionHandler(
+        $projectorRepository = new DefaultProjectorRepository(
             [$profileProjection]
         );
 
         $eventStream = new DefaultEventBus();
-        $eventStream->addListener(new ProjectionListener($projectionRepository));
+        $eventStream->addListener(new SyncProjectorListener($projectorRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
         $store = new SingleTableStore(

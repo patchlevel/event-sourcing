@@ -11,6 +11,11 @@ parameters:
 			path: src/Console/Worker/DefaultWorker.php
 
 		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\DefaultProjectorRepository\\:\\:projectors\\(\\) should return array\\<int, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\> but returns array\\<int\\|string, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\>\\.$#"
+			count: 1
+			path: src/Projection/DefaultProjectorRepository.php
+
+		-
 			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\EventSourcing\\\\Serializer\\\\Hydrator\\\\AggregateRootHydrator\\:\\:hydrate\\(\\) expects array\\<string, mixed\\>, mixed given\\.$#"
 			count: 1
 			path: src/Snapshot/DefaultSnapshotStore.php

@@ -7,8 +7,7 @@ namespace Patchlevel\EventSourcing\Store;
 use Generator;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-/** @deprecated use StreamableStore */
-interface PipelineStore extends Store
+interface StreamableStore extends PipelineStore
 {
     /**
      * @return Generator<Message>

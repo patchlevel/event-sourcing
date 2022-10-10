@@ -212,7 +212,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
 
     protected function addOutboxSchema(Schema $schema): void
     {
-        $table = $schema->createTable('outbox');
+        $table = $schema->createTable(self::OUTBOX_TABLE);
 
         $table->addColumn('aggregate', Types::STRING)
             ->setNotnull(true);
