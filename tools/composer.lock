@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "azjezz/psl",
-            "version": "1.9.3",
+            "version": "2.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/azjezz/psl.git",
-                "reference": "5c20649db277565d6a40a66edfc2bbf8dc7f19e0"
+                "reference": "c34e6c2c5560007eafb158bf9f6040c4054c09ab"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/azjezz/psl/zipball/5c20649db277565d6a40a66edfc2bbf8dc7f19e0",
-                "reference": "5c20649db277565d6a40a66edfc2bbf8dc7f19e0",
+                "url": "https://api.github.com/repos/azjezz/psl/zipball/c34e6c2c5560007eafb158bf9f6040c4054c09ab",
+                "reference": "c34e6c2c5560007eafb158bf9f6040c4054c09ab",
                 "shasum": ""
             },
             "require": {
@@ -26,16 +26,24 @@
                 "ext-json": "*",
                 "ext-mbstring": "*",
                 "ext-sodium": "*",
-                "php": "~8.0.0 || ~8.1.0"
+                "php": "~8.1.0 || ~8.2.0",
+                "revolt/event-loop": "^0.2.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.4.0",
+                "php-coveralls/php-coveralls": "^2.5.2",
+                "php-standard-library/psalm-plugin": "^2.0.2",
+                "phpbench/phpbench": "^1.2.3",
+                "phpunit/phpunit": "^9.5.16",
+                "roave/infection-static-analysis-plugin": "^1.23.0",
+                "squizlabs/php_codesniffer": "^3.6.2",
+                "vimeo/psalm": "^4.21.0"
             },
             "suggest": {
                 "php-standard-library/psalm-plugin": "Psalm integration"
             },
             "type": "library",
             "extra": {
-                "psalm": {
-                    "pluginClass": "Psl\\Integration\\Psalm\\Plugin"
-                },
                 "thanks": {
                     "name": "hhvm/hsl",
                     "url": "https://github.com/hhvm/hsl"
@@ -46,8 +54,7 @@
                     "src/bootstrap.php"
                 ],
                 "psr-4": {
-                    "Psl\\": "src/Psl",
-                    "Psl\\Integration\\": "integration"
+                    "Psl\\": "src/Psl"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -63,7 +70,7 @@
             "description": "PHP Standard Library",
             "support": {
                 "issues": "https://github.com/azjezz/psl/issues",
-                "source": "https://github.com/azjezz/psl/tree/1.9.3"
+                "source": "https://github.com/azjezz/psl/tree/2.0.4"
             },
             "funding": [
                 {
@@ -71,7 +78,7 @@
                     "type": "open_collective"
                 }
             ],
-            "time": "2021-12-10T10:34:36+00:00"
+            "time": "2022-10-10T18:40:50+00:00"
         },
         {
             "name": "beberlei/assert",
@@ -1005,21 +1012,21 @@
         },
         {
             "name": "ocramius/package-versions",
-            "version": "2.5.1",
+            "version": "2.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Ocramius/PackageVersions.git",
-                "reference": "6707caff2e84a2368f29fdf2cb28a6b5a9e3ab53"
+                "reference": "9f4dc8c2af37c373b4cbbdce0427ed6c081872f1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Ocramius/PackageVersions/zipball/6707caff2e84a2368f29fdf2cb28a6b5a9e3ab53",
-                "reference": "6707caff2e84a2368f29fdf2cb28a6b5a9e3ab53",
+                "url": "https://api.github.com/repos/Ocramius/PackageVersions/zipball/9f4dc8c2af37c373b4cbbdce0427ed6c081872f1",
+                "reference": "9f4dc8c2af37c373b4cbbdce0427ed6c081872f1",
                 "shasum": ""
             },
             "require": {
                 "composer-runtime-api": "^2.2.0",
-                "php": "~8.0.0 || ~8.1.0"
+                "php": "~8.0.0 || ~8.1.0 || ~8.2.0"
             },
             "replace": {
                 "composer/package-versions-deprecated": "*"
@@ -1028,9 +1035,9 @@
                 "composer/composer": "^2.2.0",
                 "doctrine/coding-standard": "^9.0.0",
                 "ext-zip": "^1.15.0",
-                "phpunit/phpunit": "^9.5.9",
-                "roave/infection-static-analysis-plugin": "^1.10.0",
-                "vimeo/psalm": "^4.10.0"
+                "phpunit/phpunit": "^9.5.10",
+                "roave/infection-static-analysis-plugin": "^1.13.0",
+                "vimeo/psalm": "^4.15.0"
             },
             "type": "library",
             "autoload": {
@@ -1051,7 +1058,7 @@
             "description": "Provides efficient querying for installed package versions (no runtime IO)",
             "support": {
                 "issues": "https://github.com/Ocramius/PackageVersions/issues",
-                "source": "https://github.com/Ocramius/PackageVersions/tree/2.5.1"
+                "source": "https://github.com/Ocramius/PackageVersions/tree/2.6.0"
             },
             "funding": [
                 {
@@ -1063,7 +1070,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-03-05T18:04:57+00:00"
+            "time": "2022-10-10T14:46:02+00:00"
         },
         {
             "name": "psr/container",
@@ -1245,41 +1252,114 @@
             "time": "2022-02-11T10:27:51+00:00"
         },
         {
-            "name": "roave/backward-compatibility-check",
-            "version": "7.1.0",
+            "name": "revolt/event-loop",
+            "version": "v0.2.5",
             "source": {
                 "type": "git",
-                "url": "https://github.com/Roave/BackwardCompatibilityCheck.git",
-                "reference": "10abd71ae2b1ffe79b216312c4dd01455eee4eb5"
+                "url": "https://github.com/revoltphp/event-loop.git",
+                "reference": "4e7455506d9ff61f3705b76a20a8f12ad4dc1552"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/BackwardCompatibilityCheck/zipball/10abd71ae2b1ffe79b216312c4dd01455eee4eb5",
-                "reference": "10abd71ae2b1ffe79b216312c4dd01455eee4eb5",
+                "url": "https://api.github.com/repos/revoltphp/event-loop/zipball/4e7455506d9ff61f3705b76a20a8f12ad4dc1552",
+                "reference": "4e7455506d9ff61f3705b76a20a8f12ad4dc1552",
                 "shasum": ""
             },
             "require": {
-                "azjezz/psl": "^1.9.3",
-                "composer/composer": "^2.4.1",
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "ext-json": "*",
+                "jetbrains/phpstorm-stubs": "^2019.3",
+                "phpunit/phpunit": "^9",
+                "psalm/phar": "^4.7"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Revolt\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Aaron Piotrowski",
+                    "email": "aaron@trowski.com"
+                },
+                {
+                    "name": "Cees-Jan Kiewiet",
+                    "email": "ceesjank@gmail.com"
+                },
+                {
+                    "name": "Christian Lück",
+                    "email": "christian@clue.engineering"
+                },
+                {
+                    "name": "Niklas Keller",
+                    "email": "me@kelunik.com"
+                }
+            ],
+            "description": "Rock-solid event loop for concurrent PHP applications.",
+            "keywords": [
+                "async",
+                "asynchronous",
+                "concurrency",
+                "event",
+                "event-loop",
+                "non-blocking",
+                "scheduler"
+            ],
+            "support": {
+                "issues": "https://github.com/revoltphp/event-loop/issues",
+                "source": "https://github.com/revoltphp/event-loop/tree/v0.2.5"
+            },
+            "time": "2022-08-01T03:01:07+00:00"
+        },
+        {
+            "name": "roave/backward-compatibility-check",
+            "version": "7.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Roave/BackwardCompatibilityCheck.git",
+                "reference": "f21e629c40a5f292d0c709e2498f96566d1a0818"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Roave/BackwardCompatibilityCheck/zipball/f21e629c40a5f292d0c709e2498f96566d1a0818",
+                "reference": "f21e629c40a5f292d0c709e2498f96566d1a0818",
+                "shasum": ""
+            },
+            "require": {
+                "azjezz/psl": "^2.0.4",
+                "composer/composer": "^2.4.2",
                 "ext-json": "*",
                 "nikolaposa/version": "^4.1.0",
                 "ocramius/package-versions": "^2.5.1",
-                "php": "~8.0.0 || ~8.1.0",
-                "roave/better-reflection": "^5.9.0",
-                "symfony/console": "^6.0.12"
+                "php": "~8.1.0 || ~8.2.0",
+                "roave/better-reflection": "^6.2.0",
+                "symfony/console": "^6.0.13"
             },
             "conflict": {
+                "revolt/event-loop": "<0.2.5",
                 "symfony/process": "<5.3.7"
             },
             "require-dev": {
                 "doctrine/coding-standard": "^10.0.0",
-                "php-standard-library/psalm-plugin": "^1.1.5",
-                "phpunit/phpunit": "^9.5.23",
+                "php-standard-library/psalm-plugin": "^2.0.2",
+                "phpunit/phpunit": "^9.5.25",
                 "psalm/plugin-phpunit": "^0.17.0",
-                "roave/infection-static-analysis-plugin": "^1.21",
+                "roave/infection-static-analysis-plugin": "^1.23",
                 "roave/security-advisories": "dev-master",
                 "squizlabs/php_codesniffer": "^3.7.1",
-                "vimeo/psalm": "^4.26.0"
+                "vimeo/psalm": "^4.28.0"
             },
             "bin": [
                 "bin/roave-backward-compatibility-check"
@@ -1307,22 +1387,22 @@
             "description": "Tool to compare two revisions of a public API to check for BC breaks",
             "support": {
                 "issues": "https://github.com/Roave/BackwardCompatibilityCheck/issues",
-                "source": "https://github.com/Roave/BackwardCompatibilityCheck/tree/7.1.0"
+                "source": "https://github.com/Roave/BackwardCompatibilityCheck/tree/7.2.0"
             },
-            "time": "2022-08-29T08:47:16+00:00"
+            "time": "2022-10-10T19:58:35+00:00"
         },
         {
             "name": "roave/better-reflection",
-            "version": "5.11.1",
+            "version": "6.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/BetterReflection.git",
-                "reference": "84cdf580747c3d55238be28d5681e24e7d11e065"
+                "reference": "55b947fe0b929ec6ec4d40d6b4a37b7e6bf2496b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/BetterReflection/zipball/84cdf580747c3d55238be28d5681e24e7d11e065",
-                "reference": "84cdf580747c3d55238be28d5681e24e7d11e065",
+                "url": "https://api.github.com/repos/Roave/BetterReflection/zipball/55b947fe0b929ec6ec4d40d6b4a37b7e6bf2496b",
+                "reference": "55b947fe0b929ec6ec4d40d6b4a37b7e6bf2496b",
                 "shasum": ""
             },
             "require": {
@@ -1337,9 +1417,9 @@
             },
             "require-dev": {
                 "doctrine/coding-standard": "^10.0.0",
-                "phpstan/phpstan": "^1.8.5",
+                "phpstan/phpstan": "^1.8.8",
                 "phpstan/phpstan-phpunit": "^1.1.1",
-                "phpunit/phpunit": "^9.5.24",
+                "phpunit/phpunit": "^9.5.25",
                 "roave/infection-static-analysis-plugin": "^1.23.0",
                 "vimeo/psalm": "^4.27"
             },
@@ -1381,32 +1461,32 @@
             "description": "Better Reflection - an improved code reflection API",
             "support": {
                 "issues": "https://github.com/Roave/BetterReflection/issues",
-                "source": "https://github.com/Roave/BetterReflection/tree/5.11.1"
+                "source": "https://github.com/Roave/BetterReflection/tree/6.2.0"
             },
-            "time": "2022-09-29T16:28:39+00:00"
+            "time": "2022-10-08T10:54:38+00:00"
         },
         {
             "name": "roave/signature",
-            "version": "1.6.0",
+            "version": "1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/Signature.git",
-                "reference": "ed898589a3088217e6aa4f4a77d7b2b8f5e91a8a"
+                "reference": "2ab4eadcb9f9d449f673a97b67797403b35eca94"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/Signature/zipball/ed898589a3088217e6aa4f4a77d7b2b8f5e91a8a",
-                "reference": "ed898589a3088217e6aa4f4a77d7b2b8f5e91a8a",
+                "url": "https://api.github.com/repos/Roave/Signature/zipball/2ab4eadcb9f9d449f673a97b67797403b35eca94",
+                "reference": "2ab4eadcb9f9d449f673a97b67797403b35eca94",
                 "shasum": ""
             },
             "require": {
-                "php": "7.4.*|8.0.*|8.1.*|8.2.*"
+                "php": "8.0.*|8.1.*|8.2.*"
             },
             "require-dev": {
                 "doctrine/coding-standard": "^10.0.0",
-                "infection/infection": "^0.26.6",
-                "phpunit/phpunit": "^9.5.9",
-                "vimeo/psalm": "^4.27.0"
+                "infection/infection": "^0.26.15",
+                "phpunit/phpunit": "^9.5.25",
+                "vimeo/psalm": "^4.28.0"
             },
             "type": "library",
             "autoload": {
@@ -1421,9 +1501,9 @@
             "description": "Sign and verify stuff",
             "support": {
                 "issues": "https://github.com/Roave/Signature/issues",
-                "source": "https://github.com/Roave/Signature/tree/1.6.0"
+                "source": "https://github.com/Roave/Signature/tree/1.7.0"
             },
-            "time": "2022-09-06T11:01:18+00:00"
+            "time": "2022-10-10T08:44:53+00:00"
         },
         {
             "name": "seld/jsonlint",
