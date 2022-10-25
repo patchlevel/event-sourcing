@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\EventBus;
 
+use function array_merge;
 use function array_shift;
 
 final class DefaultEventBus implements EventBus
@@ -27,7 +28,7 @@ final class DefaultEventBus implements EventBus
 
     public function dispatch(Message ...$messages): void
     {
-        $this->queue += $messages;
+        $this->queue = array_merge($this->queue, $messages);
 
         if ($this->processing) {
             return;
