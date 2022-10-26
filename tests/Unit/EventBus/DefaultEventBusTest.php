@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\NameChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -156,6 +157,74 @@ class DefaultEventBusTest extends TestCase
         $eventBus->addListener($listenerB);
 
         $eventBus->dispatch($messageA);
+
+        self::assertNotNull($listenerA->time);
+        self::assertNotNull($listenerB->time);
+
+        self::assertTrue($listenerA->time < $listenerB->time);
+    }
+
+    public function testMultipleMessagesAddingNewEventInListener(): void
+    {
+        $messageA = new Message(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de')
+            )
+        );
+
+        $messageB = new Message(
+            new ProfileVisited(
+                ProfileId::fromString('1'),
+            )
+        );
+
+        $eventBus = new DefaultEventBus();
+
+        $listenerA = new class ($eventBus) implements Listener {
+            public ?float $time = null;
+            private DefaultEventBus $bus;
+
+            public function __construct(DefaultEventBus $bus)
+            {
+                $this->bus = $bus;
+            }
+
+            public function __invoke(Message $message): void
+            {
+                if (!$message->event() instanceof ProfileCreated) {
+                    return;
+                }
+
+                $messageB = new Message(
+                    new NameChanged(
+                        'name'
+                    )
+                );
+
+                $this->bus->dispatch($messageB);
+
+                $this->time = microtime(true);
+            }
+        };
+
+        $listenerB = new class implements Listener {
+            public ?float $time = null;
+
+            public function __invoke(Message $message): void
+            {
+                if (!$message->event() instanceof NameChanged) {
+                    return;
+                }
+
+                $this->time = microtime(true);
+            }
+        };
+
+        $eventBus->addListener($listenerA);
+        $eventBus->addListener($listenerB);
+
+        $eventBus->dispatch($messageA, $messageB);
 
         self::assertNotNull($listenerA->time);
         self::assertNotNull($listenerB->time);
