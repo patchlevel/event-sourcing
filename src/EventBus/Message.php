@@ -222,9 +222,6 @@ final class Message
      */
     public function headers(): array
     {
-        /**
-         * @var Headers
-         */
         $headers = $this->customHeaders;
 
         if ($this->aggregateClass !== null) {

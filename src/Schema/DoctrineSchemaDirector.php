@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Schema;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 
-use function array_values;
 use function sprintf;
 
 final class DoctrineSchemaDirector implements DryRunSchemaDirector, DoctrineSchemaProvider
@@ -57,7 +56,7 @@ final class DoctrineSchemaDirector implements DryRunSchemaDirector, DoctrineSche
         $comparator = $schemaManager->createComparator();
         $diff = $comparator->compareSchemas($fromSchema, $toSchema);
 
-        return array_values($diff->toSql($this->connection->getDatabasePlatform()));
+        return $diff->toSql($this->connection->getDatabasePlatform());
     }
 
     public function drop(): void
