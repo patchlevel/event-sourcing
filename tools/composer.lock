@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "02aa32960e04b57ad6138bfb90e3f4b4",
+    "content-hash": "71d84ae4d56ec0829f6254bc0c37713a",
     "packages": [
         {
             "name": "azjezz/psl",
-            "version": "2.0.4",
+            "version": "2.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/azjezz/psl.git",
-                "reference": "c34e6c2c5560007eafb158bf9f6040c4054c09ab"
+                "reference": "57a72ac6326c5ef5080306f4f97c27c6491f6547"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/azjezz/psl/zipball/c34e6c2c5560007eafb158bf9f6040c4054c09ab",
-                "reference": "c34e6c2c5560007eafb158bf9f6040c4054c09ab",
+                "url": "https://api.github.com/repos/azjezz/psl/zipball/57a72ac6326c5ef5080306f4f97c27c6491f6547",
+                "reference": "57a72ac6326c5ef5080306f4f97c27c6491f6547",
                 "shasum": ""
             },
             "require": {
@@ -27,7 +27,7 @@
                 "ext-mbstring": "*",
                 "ext-sodium": "*",
                 "php": "~8.1.0 || ~8.2.0",
-                "revolt/event-loop": "^0.2.0"
+                "revolt/event-loop": "^1.0.0"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.4.0",
@@ -70,7 +70,7 @@
             "description": "PHP Standard Library",
             "support": {
                 "issues": "https://github.com/azjezz/psl/issues",
-                "source": "https://github.com/azjezz/psl/tree/2.0.4"
+                "source": "https://github.com/azjezz/psl/tree/2.1.0"
             },
             "funding": [
                 {
@@ -78,7 +78,7 @@
                     "type": "open_collective"
                 }
             ],
-            "time": "2022-10-10T18:40:50+00:00"
+            "time": "2022-11-04T08:19:29+00:00"
         },
         {
             "name": "beberlei/assert",
@@ -298,16 +298,16 @@
         },
         {
             "name": "composer/composer",
-            "version": "2.4.3",
+            "version": "2.4.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/composer.git",
-                "reference": "b34c0e9a93f2cd688c62ce4dfcc69e13b6ce7aa4"
+                "reference": "e8d9087229bcdbc5867594d3098091412f1130cf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/composer/zipball/b34c0e9a93f2cd688c62ce4dfcc69e13b6ce7aa4",
-                "reference": "b34c0e9a93f2cd688c62ce4dfcc69e13b6ce7aa4",
+                "url": "https://api.github.com/repos/composer/composer/zipball/e8d9087229bcdbc5867594d3098091412f1130cf",
+                "reference": "e8d9087229bcdbc5867594d3098091412f1130cf",
                 "shasum": ""
             },
             "require": {
@@ -390,7 +390,7 @@
             "support": {
                 "irc": "ircs://irc.libera.chat:6697/composer",
                 "issues": "https://github.com/composer/composer/issues",
-                "source": "https://github.com/composer/composer/tree/2.4.3"
+                "source": "https://github.com/composer/composer/tree/2.4.4"
             },
             "funding": [
                 {
@@ -406,7 +406,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-10-14T14:56:41+00:00"
+            "time": "2022-10-27T12:39:29+00:00"
         },
         {
             "name": "composer/metadata-minifier",
@@ -479,16 +479,16 @@
         },
         {
             "name": "composer/pcre",
-            "version": "3.0.0",
+            "version": "3.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/pcre.git",
-                "reference": "e300eb6c535192decd27a85bc72a9290f0d6b3bd"
+                "reference": "4482b6409ca6bfc2af043a5711cd21ac3e7a8dfb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/pcre/zipball/e300eb6c535192decd27a85bc72a9290f0d6b3bd",
-                "reference": "e300eb6c535192decd27a85bc72a9290f0d6b3bd",
+                "url": "https://api.github.com/repos/composer/pcre/zipball/4482b6409ca6bfc2af043a5711cd21ac3e7a8dfb",
+                "reference": "4482b6409ca6bfc2af043a5711cd21ac3e7a8dfb",
                 "shasum": ""
             },
             "require": {
@@ -530,7 +530,7 @@
             ],
             "support": {
                 "issues": "https://github.com/composer/pcre/issues",
-                "source": "https://github.com/composer/pcre/tree/3.0.0"
+                "source": "https://github.com/composer/pcre/tree/3.0.2"
             },
             "funding": [
                 {
@@ -546,7 +546,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-02-25T20:21:48+00:00"
+            "time": "2022-11-03T20:24:16+00:00"
         },
         {
             "name": "composer/semver",
@@ -1012,32 +1012,32 @@
         },
         {
             "name": "ocramius/package-versions",
-            "version": "2.6.0",
+            "version": "2.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Ocramius/PackageVersions.git",
-                "reference": "9f4dc8c2af37c373b4cbbdce0427ed6c081872f1"
+                "reference": "065921ed7cb2a6861443d91138d0a4378316af8d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Ocramius/PackageVersions/zipball/9f4dc8c2af37c373b4cbbdce0427ed6c081872f1",
-                "reference": "9f4dc8c2af37c373b4cbbdce0427ed6c081872f1",
+                "url": "https://api.github.com/repos/Ocramius/PackageVersions/zipball/065921ed7cb2a6861443d91138d0a4378316af8d",
+                "reference": "065921ed7cb2a6861443d91138d0a4378316af8d",
                 "shasum": ""
             },
             "require": {
                 "composer-runtime-api": "^2.2.0",
-                "php": "~8.0.0 || ~8.1.0 || ~8.2.0"
+                "php": "~8.1.0 || ~8.2.0"
             },
             "replace": {
                 "composer/package-versions-deprecated": "*"
             },
             "require-dev": {
-                "composer/composer": "^2.2.0",
-                "doctrine/coding-standard": "^9.0.0",
+                "composer/composer": "^2.4.4",
+                "doctrine/coding-standard": "^10.0.0",
                 "ext-zip": "^1.15.0",
-                "phpunit/phpunit": "^9.5.10",
-                "roave/infection-static-analysis-plugin": "^1.13.0",
-                "vimeo/psalm": "^4.15.0"
+                "phpunit/phpunit": "^9.5.26",
+                "roave/infection-static-analysis-plugin": "^1.25.0",
+                "vimeo/psalm": "^4.29.0"
             },
             "type": "library",
             "autoload": {
@@ -1058,7 +1058,7 @@
             "description": "Provides efficient querying for installed package versions (no runtime IO)",
             "support": {
                 "issues": "https://github.com/Ocramius/PackageVersions/issues",
-                "source": "https://github.com/Ocramius/PackageVersions/tree/2.6.0"
+                "source": "https://github.com/Ocramius/PackageVersions/tree/2.7.0"
             },
             "funding": [
                 {
@@ -1070,7 +1070,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-10-10T14:46:02+00:00"
+            "time": "2022-10-31T12:51:46+00:00"
         },
         {
             "name": "psr/container",
@@ -1253,16 +1253,16 @@
         },
         {
             "name": "revolt/event-loop",
-            "version": "v0.2.5",
+            "version": "v1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/revoltphp/event-loop.git",
-                "reference": "4e7455506d9ff61f3705b76a20a8f12ad4dc1552"
+                "reference": "81dd825a0a7fa7a39cae25ef731bb944f3e18295"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/revoltphp/event-loop/zipball/4e7455506d9ff61f3705b76a20a8f12ad4dc1552",
-                "reference": "4e7455506d9ff61f3705b76a20a8f12ad4dc1552",
+                "url": "https://api.github.com/repos/revoltphp/event-loop/zipball/81dd825a0a7fa7a39cae25ef731bb944f3e18295",
+                "reference": "81dd825a0a7fa7a39cae25ef731bb944f3e18295",
                 "shasum": ""
             },
             "require": {
@@ -1319,33 +1319,33 @@
             ],
             "support": {
                 "issues": "https://github.com/revoltphp/event-loop/issues",
-                "source": "https://github.com/revoltphp/event-loop/tree/v0.2.5"
+                "source": "https://github.com/revoltphp/event-loop/tree/v1.0.0"
             },
-            "time": "2022-08-01T03:01:07+00:00"
+            "time": "2022-11-02T21:46:22+00:00"
         },
         {
             "name": "roave/backward-compatibility-check",
-            "version": "7.3.0",
+            "version": "7.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/BackwardCompatibilityCheck.git",
-                "reference": "e164a07ced41637b33b2deffa0a98056fbef16f5"
+                "reference": "670a5cdaa2d60bc07658a5605f57c2154a1ece76"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/BackwardCompatibilityCheck/zipball/e164a07ced41637b33b2deffa0a98056fbef16f5",
-                "reference": "e164a07ced41637b33b2deffa0a98056fbef16f5",
+                "url": "https://api.github.com/repos/Roave/BackwardCompatibilityCheck/zipball/670a5cdaa2d60bc07658a5605f57c2154a1ece76",
+                "reference": "670a5cdaa2d60bc07658a5605f57c2154a1ece76",
                 "shasum": ""
             },
             "require": {
                 "azjezz/psl": "^2.0.4",
-                "composer/composer": "^2.4.2",
+                "composer/composer": "^2.4.4",
                 "ext-json": "*",
                 "nikolaposa/version": "^4.1.0",
-                "ocramius/package-versions": "^2.5.1",
+                "ocramius/package-versions": "^2.7.0",
                 "php": "~8.1.0 || ~8.2.0",
-                "roave/better-reflection": "^6.2.0",
-                "symfony/console": "^6.1.5"
+                "roave/better-reflection": "^6.3.0",
+                "symfony/console": "^6.1.7"
             },
             "conflict": {
                 "revolt/event-loop": "<0.2.5",
@@ -1354,9 +1354,9 @@
             "require-dev": {
                 "doctrine/coding-standard": "^10.0.0",
                 "php-standard-library/psalm-plugin": "^2.0.2",
-                "phpunit/phpunit": "^9.5.25",
+                "phpunit/phpunit": "^9.5.26",
                 "psalm/plugin-phpunit": "^0.17.0",
-                "roave/infection-static-analysis-plugin": "^1.23",
+                "roave/infection-static-analysis-plugin": "^1.25",
                 "roave/security-advisories": "dev-master",
                 "squizlabs/php_codesniffer": "^3.7.1",
                 "vimeo/psalm": "^4.29.0"
@@ -1387,22 +1387,22 @@
             "description": "Tool to compare two revisions of a public API to check for BC breaks",
             "support": {
                 "issues": "https://github.com/Roave/BackwardCompatibilityCheck/issues",
-                "source": "https://github.com/Roave/BackwardCompatibilityCheck/tree/7.3.0"
+                "source": "https://github.com/Roave/BackwardCompatibilityCheck/tree/7.4.0"
             },
-            "time": "2022-10-12T21:30:36+00:00"
+            "time": "2022-10-31T21:48:04+00:00"
         },
         {
             "name": "roave/better-reflection",
-            "version": "6.3.0",
+            "version": "6.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/BetterReflection.git",
-                "reference": "54bd4ad78eb76d98e0544fc9860937f865467ef8"
+                "reference": "6afe50d6465a41ff8f386b1660f88a86ae3bc9ae"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/BetterReflection/zipball/54bd4ad78eb76d98e0544fc9860937f865467ef8",
-                "reference": "54bd4ad78eb76d98e0544fc9860937f865467ef8",
+                "url": "https://api.github.com/repos/Roave/BetterReflection/zipball/6afe50d6465a41ff8f386b1660f88a86ae3bc9ae",
+                "reference": "6afe50d6465a41ff8f386b1660f88a86ae3bc9ae",
                 "shasum": ""
             },
             "require": {
@@ -1417,10 +1417,10 @@
             },
             "require-dev": {
                 "doctrine/coding-standard": "^10.0.0",
-                "phpstan/phpstan": "^1.8.9",
-                "phpstan/phpstan-phpunit": "^1.1.1",
+                "phpstan/phpstan": "^1.8.10",
+                "phpstan/phpstan-phpunit": "^1.2.2",
                 "phpunit/phpunit": "^9.5.25",
-                "roave/infection-static-analysis-plugin": "^1.23.0",
+                "roave/infection-static-analysis-plugin": "^1.25.0",
                 "vimeo/psalm": "^4.29"
             },
             "suggest": {
@@ -1461,9 +1461,9 @@
             "description": "Better Reflection - an improved code reflection API",
             "support": {
                 "issues": "https://github.com/Roave/BetterReflection/issues",
-                "source": "https://github.com/Roave/BetterReflection/tree/6.3.0"
+                "source": "https://github.com/Roave/BetterReflection/tree/6.4.0"
             },
-            "time": "2022-10-14T23:59:07+00:00"
+            "time": "2022-10-31T22:45:03+00:00"
         },
         {
             "name": "roave/signature",
@@ -1680,16 +1680,16 @@
         },
         {
             "name": "symfony/console",
-            "version": "v6.1.6",
+            "version": "v6.1.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "7fa3b9cf17363468795e539231a5c91b02b608fc"
+                "reference": "a1282bd0c096e0bdb8800b104177e2ce404d8815"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/7fa3b9cf17363468795e539231a5c91b02b608fc",
-                "reference": "7fa3b9cf17363468795e539231a5c91b02b608fc",
+                "url": "https://api.github.com/repos/symfony/console/zipball/a1282bd0c096e0bdb8800b104177e2ce404d8815",
+                "reference": "a1282bd0c096e0bdb8800b104177e2ce404d8815",
                 "shasum": ""
             },
             "require": {
@@ -1756,7 +1756,7 @@
                 "terminal"
             ],
             "support": {
-                "source": "https://github.com/symfony/console/tree/v6.1.6"
+                "source": "https://github.com/symfony/console/tree/v6.1.7"
             },
             "funding": [
                 {
@@ -1772,7 +1772,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-10-07T08:04:03+00:00"
+            "time": "2022-10-26T21:42:49+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -2608,16 +2608,16 @@
         },
         {
             "name": "symfony/string",
-            "version": "v6.1.6",
+            "version": "v6.1.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/string.git",
-                "reference": "7e7e0ff180d4c5a6636eaad57b65092014b61864"
+                "reference": "823f143370880efcbdfa2dbca946b3358c4707e5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/string/zipball/7e7e0ff180d4c5a6636eaad57b65092014b61864",
-                "reference": "7e7e0ff180d4c5a6636eaad57b65092014b61864",
+                "url": "https://api.github.com/repos/symfony/string/zipball/823f143370880efcbdfa2dbca946b3358c4707e5",
+                "reference": "823f143370880efcbdfa2dbca946b3358c4707e5",
                 "shasum": ""
             },
             "require": {
@@ -2673,7 +2673,7 @@
                 "utf8"
             ],
             "support": {
-                "source": "https://github.com/symfony/string/tree/v6.1.6"
+                "source": "https://github.com/symfony/string/tree/v6.1.7"
             },
             "funding": [
                 {
@@ -2702,5 +2702,5 @@
         "php": "~8.1.0"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.2.0"
 }
