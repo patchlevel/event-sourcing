@@ -35,10 +35,7 @@ final class DoctrineSchemaManager implements DryRunSchemaManager
             throw new StoreNotSupported($store, DoctrineStore::class);
         }
 
-        $connection = $store->connection();
-        $schema = $store->schema();
-
-        return array_values($schema->toSql($connection->getDatabasePlatform()));
+        return array_values($store->schema()->toSql($store->connection()->getDatabasePlatform()));
     }
 
     public function update(Store $store): void

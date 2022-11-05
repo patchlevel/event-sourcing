@@ -14,5 +14,10 @@ interface TransactionStore
 
     public function transactionRollback(): void;
 
+    /**
+     * @param Closure():ClosureReturn $function
+     *
+     * @template ClosureReturn
+     */
     public function transactional(Closure $function): void;
 }

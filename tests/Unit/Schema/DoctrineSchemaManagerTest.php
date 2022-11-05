@@ -106,7 +106,8 @@ final class DoctrineSchemaManagerTest extends TestCase
         $platform->supportsSequences()->willReturn(false);
         $platform->supportsForeignKeyConstraints()->willReturn(false);
 
-        $platform->getCreateTableSQL($table, AbstractPlatform::CREATE_INDEXES)->willReturn(['CREATE TABLE foo;']);
+        $platform->getDropTablesSQL([])->shouldBeCalledOnce()->willReturn([]);
+        $platform->getCreateTablesSQL(['foo' => $table])->shouldBeCalledOnce()->willReturn(['CREATE TABLE foo;']);
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
 
@@ -151,6 +152,14 @@ final class DoctrineSchemaManagerTest extends TestCase
         $toSchema->getNamespaces()->willReturn([]);
         $toSchema->getTables()->willReturn([]);
         $toSchema->getSequences()->willReturn([]);
+
+        $platform->supportsSchemas()->willReturn(false);
+        $platform->supportsForeignKeyConstraints()->willReturn(false);
+        $platform->supportsSequences()->willReturn(false);
+        $platform->supportsForeignKeyConstraints()->willReturn(false);
+
+        $platform->getDropTablesSQL([])->shouldBeCalledOnce()->willReturn([]);
+        $platform->getCreateTablesSQL([])->shouldBeCalledOnce()->willReturn([]);
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
 
