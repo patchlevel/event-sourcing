@@ -13,6 +13,7 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
@@ -21,7 +22,7 @@ use function is_array;
 use function is_int;
 use function is_string;
 
-abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
+abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, SplitEventstreamStore
 {
     private const OUTBOX_TABLE = 'outbox';
 
@@ -47,6 +48,11 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
         $this->connection->rollBack();
     }
 
+    /**
+     * @param Closure():ClosureReturn $function
+     *
+     * @template ClosureReturn
+     */
     public function transactional(Closure $function): void
     {
         $this->connection->transactional($function);
@@ -151,7 +157,19 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
         return (int)$result;
     }
 
-    abstract public function schema(): Schema;
+    /**
+     * @deprecated use DoctrineSchemaDirector
+     */
+    public function schema(): Schema
+    {
+        $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
+
+        if ($this instanceof SchemaConfigurator) {
+            $this->configureSchema($schema, $this->connection);
+        }
+
+        return $schema;
+    }
 
     protected static function normalizeRecordedOn(string $recordedOn, AbstractPlatform $platform): DateTimeImmutable
     {
@@ -164,12 +182,15 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
         return $normalizedRecordedOn;
     }
 
+    /**
+     * @return positive-int
+     */
     protected static function normalizePlayhead(string|int $playhead, AbstractPlatform $platform): int
     {
         $normalizedPlayhead = Type::getType(Types::INTEGER)->convertToPHPValue($playhead, $platform);
 
-        if (!is_int($normalizedPlayhead)) {
-            throw new InvalidType('playhead', 'int');
+        if (!is_int($normalizedPlayhead) || $normalizedPlayhead <= 0) {
+            throw new InvalidType('playhead', 'positive-int');
         }
 
         return $normalizedPlayhead;
@@ -191,7 +212,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore
 
     protected function addOutboxSchema(Schema $schema): void
     {
-        $table = $schema->createTable('outbox');
+        $table = $schema->createTable(self::OUTBOX_TABLE);
 
         $table->addColumn('aggregate', Types::STRING)
             ->setNotnull(true);

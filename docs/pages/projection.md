@@ -8,8 +8,9 @@ and everything can always be reproduced from the events.
 The target of a projection can be anything.
 Either a file, a relational database, a no-sql database like mongodb or an elasticsearch.
 
-## Define Projection
+## Define Projector
 
+To create a projection you need a projector.
 In this example we always create a new data set in a relational database when a profile is created:
 
 ```php
@@ -18,15 +19,24 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projector;
+use Patchlevel\EventSourcing\Projection\ProjectorId;
 
-final class ProfileProjection implements Projection
+final class ProfileProjection implements Projector
 {
     private Connection $connection;
 
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
+    }
+    
+    public function projectorId(): ProjectorId 
+    {
+        return new ProjectorId(
+            name: 'profile', 
+            version: 1
+        );
     }
 
     #[Create]
@@ -59,7 +69,7 @@ final class ProfileProjection implements Projection
 
 !!! danger
 
-    You should not execute any actions with projections, 
+    You should not execute any actions with projectors, 
     otherwise these will be executed again if you rebuild the projection!
 
 !!! tip
@@ -67,18 +77,18 @@ final class ProfileProjection implements Projection
     If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
     to make the event method return the correct type.
 
-Projections have a `create` and a `drop` method that is executed when the projection is created or deleted.
+Projectors have a `create` and a `drop` method that is executed when the projection is created or deleted.
 In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
 
-In order for the projection to know which method is responsible for which event,
+In order for the projector to know which method is responsible for which event,
 the methods must be given the `Handle` attribute with the respective event class name.
 
 As soon as the event has been dispatched, the appropriate methods are then executed.
-Several projections can also listen to the same event.
+Several projectors can also listen to the same event.
 
-## Register projections
+## Register projector
 
-So that the projections are known and also executed, you have to add them to the `ProjectionHandler`.
+So that the projectors are known and also executed, you have to add them to the `ProjectionHandler`.
 Then add this to the event bus using the `ProjectionListener`.
 
 ```php

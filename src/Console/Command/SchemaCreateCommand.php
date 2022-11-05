@@ -6,28 +6,32 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaManager;
 use Patchlevel\EventSourcing\Store\Store;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[AsCommand(
+    'event-sourcing:schema:create',
+    'create eventstore schema'
+)]
 final class SchemaCreateCommand extends Command
 {
-    protected static $defaultName = 'event-sourcing:schema:create';
-    protected static $defaultDescription = 'create eventstore schema';
-
     private Store $store;
-    private SchemaManager $schemaManager;
+    private SchemaManager|SchemaDirector $schemaDirector;
 
-    public function __construct(Store $store, SchemaManager $schemaManager)
+    public function __construct(Store $store, SchemaManager|SchemaDirector $schemaDirector)
     {
         parent::__construct();
 
         $this->store = $store;
-        $this->schemaManager = $schemaManager;
+        $this->schemaDirector = $schemaDirector;
     }
 
     protected function configure(): void
@@ -43,13 +47,13 @@ final class SchemaCreateCommand extends Command
         $dryRun = InputHelper::bool($input->getOption('dry-run'));
 
         if ($dryRun) {
-            if (!$this->schemaManager instanceof DryRunSchemaManager) {
-                $console->error('SchemaManager dont support dry-run');
+            if (!$this->schemaDirector instanceof DryRunSchemaManager && !$this->schemaDirector instanceof DryRunSchemaDirector) {
+                $console->error('SchemaDirector dont support dry-run');
 
                 return 1;
             }
 
-            $actions = $this->schemaManager->dryRunCreate($this->store);
+            $actions = $this->schemaDirector->dryRunCreate($this->store);
 
             foreach ($actions as $action) {
                 $output->writeln($action);
@@ -58,7 +62,7 @@ final class SchemaCreateCommand extends Command
             return 0;
         }
 
-        $this->schemaManager->create($this->store);
+        $this->schemaDirector->create($this->store);
 
         $console->success('schema created');
 

@@ -13,7 +13,10 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
+use Patchlevel\EventSourcing\Store\SplitEventstreamStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\TransactionStore;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -55,7 +58,7 @@ final class DefaultRepository implements Repository
         $this->eventBus = $eventBus;
         $this->aggregateClass = $aggregateClass;
         $this->snapshotStore = $snapshotStore;
-        $this->messageDecorator = $messageDecorator ??  new RecordedOnDecorator(new SystemClock());
+        $this->messageDecorator = $messageDecorator ?? new RecordedOnDecorator(new SystemClock());
         $this->logger = $logger ?? new NullLogger();
         $this->metadata = $aggregateClass::metadata();
     }
@@ -80,6 +83,14 @@ final class DefaultRepository implements Repository
                         $id
                     )
                 );
+            } catch (SnapshotVersionInvalid) {
+                $this->logger->debug(
+                    sprintf(
+                        'snapshot for aggregate "%s" with the id "%s" is invalid',
+                        $aggregateClass,
+                        $id
+                    )
+                );
             }
         }
 
@@ -93,7 +104,8 @@ final class DefaultRepository implements Repository
             array_map(
                 static fn (Message $message) => $message->event(),
                 $messages
-            )
+            ),
+            $messages[0]->playhead() - 1
         );
 
         if ($this->snapshotStore && $this->metadata->snapshotStore) {
@@ -124,6 +136,15 @@ final class DefaultRepository implements Repository
         $messageDecorator = $this->messageDecorator;
         $playhead = $aggregate->playhead() - count($events);
 
+        if ($playhead < 0) {
+            throw new PlayheadMismatch(
+                $aggregate::class,
+                $aggregate->aggregateRootId(),
+                $aggregate->playhead(),
+                count($events)
+            );
+        }
+
         $messages = array_map(
             static function (object $event) use ($aggregate, &$playhead, $messageDecorator) {
                 $message = Message::create($event)
@@ -135,6 +156,30 @@ final class DefaultRepository implements Repository
             },
             $events
         );
+
+        if ($this->store instanceof TransactionStore) {
+            $this->store->transactional(function () use ($messages): void {
+                $this->store->save(...$messages);
+
+                if ($this->store instanceof SplitEventstreamStore) {
+                    foreach ($messages as $message) {
+                        if (!$message->newStreamStart()) {
+                            continue;
+                        }
+
+                        $this->store->archiveMessages(
+                            $message->aggregateClass(),
+                            $message->aggregateId(),
+                            $message->playhead()
+                        );
+                    }
+                }
+
+                $this->eventBus->dispatch(...$messages);
+            });
+
+            return;
+        }
 
         $this->store->save(...$messages);
         $this->eventBus->dispatch(...$messages);

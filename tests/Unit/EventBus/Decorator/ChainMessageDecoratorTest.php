@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator */
-class ChainMessageDecoratorTest extends TestCase
+final class ChainMessageDecoratorTest extends TestCase
 {
     use ProphecyTrait;
 

@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\ProfileId;
 
 use function is_string;
 
-class ProfileIdNormalizer implements Normalizer
+final class ProfileIdNormalizer implements Normalizer
 {
     public function normalize(mixed $value): string
     {

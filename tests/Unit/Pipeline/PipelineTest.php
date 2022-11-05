@@ -18,7 +18,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Pipeline */
-class PipelineTest extends TestCase
+final class PipelineTest extends TestCase
 {
     public function testPipeline(): void
     {

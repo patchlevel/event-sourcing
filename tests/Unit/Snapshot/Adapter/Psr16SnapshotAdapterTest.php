@@ -11,7 +11,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\SimpleCache\CacheInterface;
 
 /** @covers  \Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter */
-class Psr16SnapshotAdapterTest extends TestCase
+final class Psr16SnapshotAdapterTest extends TestCase
 {
     use ProphecyTrait;
 

@@ -15,7 +15,7 @@ final class Profile extends AggregateRoot
 {
     private ProfileId $id;
     private Email $email;
-    private int $visited = 0;
+    private int $visits = 0;
 
     public function id(): ProfileId
     {
@@ -29,7 +29,7 @@ final class Profile extends AggregateRoot
 
     public function visited(): int
     {
-        return $this->visited;
+        return $this->visits;
     }
 
     public static function createProfile(ProfileId $id, Email $email): self
@@ -59,6 +59,11 @@ final class Profile extends AggregateRoot
         $this->recordThat(new ProfileVisited($profileId));
     }
 
+    public function splitIt(): void
+    {
+        $this->recordThat(new SplittingEvent($this->email, $this->visits));
+    }
+
     #[Apply(ProfileCreated::class)]
     #[Apply(ProfileVisited::class)]
     protected function applyProfileCreated(ProfileCreated|ProfileVisited $event): void
@@ -70,12 +75,19 @@ final class Profile extends AggregateRoot
             return;
         }
 
-        $this->visited++;
+        $this->visits++;
     }
 
     #[Apply(NameChanged::class)]
     protected function applyNameChanged(NameChanged|ProfileVisited $event): void
     {
+    }
+
+    #[Apply(SplittingEvent::class)]
+    protected function applySplittingEvent(SplittingEvent $event): void
+    {
+        $this->email = $event->email;
+        $this->visits = $event->visits;
     }
 
     public function aggregateRootId(): string

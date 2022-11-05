@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\InvalidArgument;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-class DateTimeZoneNormalizerTest extends TestCase
+final class DateTimeZoneNormalizerTest extends TestCase
 {
     use ProphecyTrait;
 

@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\EmailNormalizer;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
-class AttributeEventMetadataFactoryTest extends TestCase
+final class AttributeEventMetadataFactoryTest extends TestCase
 {
     public function testEmptyEvent(): void
     {

@@ -20,37 +20,38 @@
   ],
   "require": {
     "php": "~8.1.0",
-    "doctrine/dbal": "^3.2.0",
+    "doctrine/dbal": "^3.4.2",
     "psr/cache": "^2.0.0|^3.0.0",
     "psr/log": "^2.0.0|^3.0.0",
     "psr/simple-cache": "^2.0.0|^3.0.0",
+    "symfony/console": "^5.4.1|^6.0.1",
+    "symfony/event-dispatcher": "^4.4.34|^5.4.0|^6.0.1",
     "symfony/finder": "^4.4.34|^5.4.0|^6.0.1"
   },
   "require-dev": {
     "ext-pdo_sqlite": "~8.1.0",
+    "cspray/phinal": "^1.0",
     "doctrine/migrations": "^3.3.2",
-    "infection/infection": "^0.26.0",
-    "patchlevel/coding-standard": "^1.1.1",
+    "doctrine/orm": "^2.0.0",
+    "infection/infection": "^0.26.13",
+    "patchlevel/coding-standard": "^1.2.0",
     "patchlevel/event-sourcing-psalm-plugin": "^2.0.0",
-    "phpbench/phpbench": "^1.2.3",
+    "phpbench/phpbench": "^1.2.6",
     "phpspec/prophecy-phpunit": "^2.0.1",
-    "phpstan/phpstan": "^1.4.3",
-    "phpunit/phpunit": "^9.5.10",
-    "psalm/plugin-phpunit": "^0.17.0",
-    "roave/infection-static-analysis-plugin": "^1.14.0",
-    "symfony/console": "^4.4.34|^5.4.1|^6.0.1",
+    "phpstan/phpstan": "^1.8.2",
+    "phpunit/phpunit": "^9.5.23",
+    "psalm/plugin-phpunit": "^0.18.0",
+    "roave/infection-static-analysis-plugin": "^1.22.0",
     "symfony/messenger": "^4.4.34|^5.4.0|^6.0.1",
     "symfony/var-dumper": "^5.4.1|^6.0.1",
-    "vimeo/psalm": "^4.22.0"
+    "vimeo/psalm": "^4.26.0"
   },
   "suggest": {
     "doctrine/migrations": "for schema migration support",
-    "symfony/messenger": "for an advanced event bus",
-    "symfony/console": "to use the cli commands"
+    "symfony/messenger": "for an advanced event bus"
   },
   "conflict": {
     "doctrine/migrations": "<3.3",
-    "symfony/console": "<4.4",
     "symfony/messenger": "<4.4"
   },
   "config": {

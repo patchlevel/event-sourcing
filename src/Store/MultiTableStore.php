@@ -11,6 +11,7 @@ use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
@@ -18,8 +19,9 @@ use Traversable;
 use function array_map;
 use function is_int;
 use function is_string;
+use function sprintf;
 
-final class MultiTableStore extends DoctrineStore implements PipelineStore
+final class MultiTableStore extends DoctrineStore implements StreamableStore, SchemaConfigurator
 {
     private string $metadataTableName;
 
@@ -46,7 +48,9 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($tableName)
-            ->where('aggregate_id = :id AND playhead > :playhead')
+            ->where('aggregate_id = :id')
+            ->andWhere('playhead > :playhead')
+            ->andWhere('archived = :archived')
             ->getSQL();
 
         /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: string}> $result */
@@ -55,6 +59,10 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             [
                 'id' => $id,
                 'playhead' => $fromPlayhead,
+                'archived' => false,
+            ],
+            [
+                'archived' => Types::BOOLEAN,
             ]
         );
 
@@ -73,6 +81,27 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             },
             $result
         );
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $aggregate
+     */
+    public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
+    {
+        $tableName = $this->aggregateRootRegistry->aggregateName($aggregate);
+
+        $statement = $this->connection->prepare(sprintf(
+            'UPDATE %s 
+            SET archived = true
+            WHERE aggregate_id = :aggregate_id
+            AND playhead < :playhead
+            AND archived = false',
+            $tableName
+        ));
+        $statement->bindValue('aggregate_id', $id);
+        $statement->bindValue('playhead', $untilPlayhead);
+
+        $statement->executeQuery();
     }
 
     /**
@@ -107,8 +136,8 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             function (Connection $connection) use ($messages): void {
                 foreach ($messages as $message) {
                     $event = $message->event();
-                    $aggregateName = $this->aggregateRootRegistry->aggregateName($message->aggregateClass());
 
+                    $aggregateName = $this->aggregateRootRegistry->aggregateName($message->aggregateClass());
                     $connection->insert(
                         $this->metadataTableName,
                         [
@@ -119,7 +148,6 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                     );
 
                     $data = $this->serializer->serialize($event);
-
                     $connection->insert(
                         $aggregateName,
                         [
@@ -129,11 +157,15 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
                             'event' => $data->name,
                             'payload' => $data->payload,
                             'recorded_on' => $message->recordedOn(),
+                            'new_stream_start' => $message->newStreamStart(),
+                            'archived' => $message->archived(),
                             'custom_headers' => $message->customHeaders(),
                         ],
                         [
                             'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
                             'custom_headers' => Types::JSON,
+                            'new_stream_start' => Types::BOOLEAN,
+                            'archived' => Types::BOOLEAN,
                         ]
                     );
                 }
@@ -223,9 +255,11 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         return (int)$result;
     }
 
-    public function schema(): Schema
+    public function configureSchema(Schema $schema, Connection $connection): void
     {
-        $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
+        if ($this->connection !== $connection) {
+            return;
+        }
 
         $this->addMetaTableToSchema($schema);
 
@@ -234,8 +268,6 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
         }
 
         $this->addOutboxSchema($schema);
-
-        return $schema;
     }
 
     private function addMetaTableToSchema(Schema $schema): void
@@ -272,10 +304,15 @@ final class MultiTableStore extends DoctrineStore implements PipelineStore
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
+        $table->addColumn('new_stream_start', Types::BOOLEAN)
+            ->setNotnull(true);
+        $table->addColumn('archived', Types::BOOLEAN)
+            ->setNotnull(true);
         $table->addColumn('custom_headers', Types::JSON)
             ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate_id', 'playhead']);
+        $table->addIndex(['aggregate_id', 'playhead', 'archived']);
     }
 }

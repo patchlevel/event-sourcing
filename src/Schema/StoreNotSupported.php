@@ -9,6 +9,9 @@ use RuntimeException;
 
 use function sprintf;
 
+/**
+ * @deprecated
+ */
 final class StoreNotSupported extends RuntimeException
 {
     /**

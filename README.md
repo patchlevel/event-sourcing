@@ -33,3 +33,16 @@ composer require patchlevel/event-sourcing
 
 * [Symfony](https://github.com/patchlevel/event-sourcing-bundle)
 * [Psalm](https://github.com/patchlevel/event-sourcing-psalm-plugin)
+
+## Supported databases
+
+We officially only support the databases and versions listed in the table, as these are tested in the CI.
+Since the package is based on doctrine dbal, other databases such as OracleDB and MSSQL may also work.
+But we can only really support the databases if we can also automatically ensure that they don't break due to changes.
+
+| Database    | Version                               |
+|-------------|---------------------------------------|
+| PostgresSQL | 10.22, 11.17, 12.12, 13.8, 14.5, 15.0 |
+| MariaDB     | 10.3, 10.6, 10.9                      |
+| MySQL       | 5.7, 8.0                              |
+| SQLite      | 3.x                                   |

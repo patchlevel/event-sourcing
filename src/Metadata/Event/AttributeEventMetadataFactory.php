@@ -7,9 +7,11 @@ namespace Patchlevel\EventSourcing\Metadata\Event;
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\NormalizedName;
+use Patchlevel\EventSourcing\Attribute\SplitStream;
 use ReflectionClass;
 
 use function array_key_exists;
+use function count;
 
 final class AttributeEventMetadataFactory implements EventMetadataFactory
 {
@@ -36,11 +38,28 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
         $eventAttribute = $attributeReflectionList[0]->newInstance();
         $eventName = $eventAttribute->name();
 
+        $this->eventMetadata[$event] = new EventMetadata(
+            $eventName,
+            $this->getPropertyMetadataList($reflectionClass),
+            $this->splitStream($reflectionClass),
+        );
+
+        return $this->eventMetadata[$event];
+    }
+
+    private function splitStream(ReflectionClass $reflectionClass): bool
+    {
+        return count($reflectionClass->getAttributes(SplitStream::class)) !== 0;
+    }
+
+    /**
+     * @return array<string, EventPropertyMetadata>
+     */
+    private function getPropertyMetadataList(ReflectionClass $reflectionClass): array
+    {
         $properties = [];
 
         foreach ($reflectionClass->getProperties() as $property) {
-            $property->setAccessible(true);
-
             $reflection = $property;
             $fieldName = $property->getName();
 
@@ -67,11 +86,6 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
             );
         }
 
-        $this->eventMetadata[$event] = new EventMetadata(
-            $eventName,
-            $properties
-        );
-
-        return $this->eventMetadata[$event];
+        return $properties;
     }
 }

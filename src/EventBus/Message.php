@@ -13,7 +13,7 @@ use function array_keys;
 /**
  * @template-covariant T of object
  * @psalm-immutable
- * @psalm-type Headers = array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:int, recordedOn?: DateTimeImmutable}
+ * @psalm-type Headers = array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:positive-int, recordedOn?: DateTimeImmutable, newStreamStart?: bool, archived?: bool}
  */
 final class Message
 {
@@ -21,12 +21,17 @@ final class Message
     public const HEADER_AGGREGATE_ID = 'aggregateId';
     public const HEADER_PLAYHEAD = 'playhead';
     public const HEADER_RECORDED_ON = 'recordedOn';
+    public const HEADER_ARCHIVED = 'archived';
+    public const HEADER_NEW_STREAM_START = 'newStreamStart';
 
     /** @var class-string<AggregateRoot>|null */
     private ?string $aggregateClass = null;
     private ?string $aggregateId = null;
+    /** @var positive-int|null  */
     private ?int $playhead = null;
     private ?DateTimeImmutable $recordedOn = null;
+    private bool $newStreamStart = false;
+    private bool $archived = false;
 
     /** @var array<string, mixed> */
     private array $customHeaders = [];
@@ -106,6 +111,9 @@ final class Message
         return $message;
     }
 
+    /**
+     * @return positive-int
+     */
     public function playhead(): int
     {
         $value = $this->playhead;
@@ -117,6 +125,9 @@ final class Message
         return $value;
     }
 
+    /**
+     * @param positive-int $value
+     */
     public function withPlayhead(int $value): self
     {
         $message = clone $this;
@@ -140,6 +151,32 @@ final class Message
     {
         $message = clone $this;
         $message->recordedOn = $value;
+
+        return $message;
+    }
+
+    public function newStreamStart(): bool
+    {
+        return $this->newStreamStart;
+    }
+
+    public function withNewStreamStart(bool $value): self
+    {
+        $message = clone $this;
+        $message->newStreamStart = $value;
+
+        return $message;
+    }
+
+    public function archived(): bool
+    {
+        return $this->archived;
+    }
+
+    public function withArchived(bool $value): self
+    {
+        $message = clone $this;
+        $message->archived = $value;
 
         return $message;
     }
@@ -206,6 +243,9 @@ final class Message
             $headers[self::HEADER_RECORDED_ON] = $this->recordedOn;
         }
 
+        $headers[self::HEADER_NEW_STREAM_START] = $this->newStreamStart;
+        $headers[self::HEADER_ARCHIVED] = $this->archived;
+
         return $headers;
     }
 
@@ -232,11 +272,21 @@ final class Message
             $message = $message->withRecordedOn($headers[self::HEADER_RECORDED_ON]);
         }
 
+        if (array_key_exists(self::HEADER_NEW_STREAM_START, $headers)) {
+            $message = $message->withNewStreamStart($headers[self::HEADER_NEW_STREAM_START]);
+        }
+
+        if (array_key_exists(self::HEADER_ARCHIVED, $headers)) {
+            $message = $message->withArchived($headers[self::HEADER_ARCHIVED]);
+        }
+
         unset(
             $headers[self::HEADER_AGGREGATE_CLASS],
             $headers[self::HEADER_AGGREGATE_ID],
             $headers[self::HEADER_PLAYHEAD],
             $headers[self::HEADER_RECORDED_ON],
+            $headers[self::HEADER_NEW_STREAM_START],
+            $headers[self::HEADER_ARCHIVED],
         );
 
         return $message->withCustomHeaders($headers);

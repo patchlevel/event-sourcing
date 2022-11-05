@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Attribute\Event;
 
 #[Event('simple')]
-class SimpleEvent
+final class SimpleEvent
 {
     public ?string $name = null;
 }

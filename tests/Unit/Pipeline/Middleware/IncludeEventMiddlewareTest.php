@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware */
-class IncludeEventMiddlewareTest extends TestCase
+final class IncludeEventMiddlewareTest extends TestCase
 {
     public function testFilterEvent(): void
     {

@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 use Patchlevel\EventSourcing\Store\PipelineStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -22,11 +23,12 @@ use Throwable;
 use function is_string;
 use function sprintf;
 
+#[AsCommand(
+    'event-sourcing:projection:rebuild',
+    'rebuild projection'
+)]
 final class ProjectionRebuildCommand extends ProjectionCommand
 {
-    protected static $defaultName = 'event-sourcing:projection:rebuild';
-    protected static $defaultDescription = 'rebuild projection';
-
     private Store $store;
 
     public function __construct(Store $store, ProjectionHandler $projectionHandler)

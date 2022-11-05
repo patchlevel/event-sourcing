@@ -12,7 +12,7 @@ use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 
 /** @covers \Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter */
-class Psr6SnapshotAdapterTest extends TestCase
+final class Psr6SnapshotAdapterTest extends TestCase
 {
     use ProphecyTrait;
 

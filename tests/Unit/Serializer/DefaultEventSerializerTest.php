@@ -18,7 +18,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
-class DefaultEventSerializerTest extends TestCase
+final class DefaultEventSerializerTest extends TestCase
 {
     private DefaultEventSerializer $serializer;
 

@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 
 use function is_string;
 
-class ProfileIdNormalizer implements Normalizer
+final class ProfileIdNormalizer implements Normalizer
 {
     public function normalize(mixed $value): string
     {

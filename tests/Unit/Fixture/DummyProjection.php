@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message as EventMessage;
 use Patchlevel\EventSourcing\Projection\Projection;
 
-class DummyProjection implements Projection
+final class DummyProjection implements Projection
 {
     public ?EventMessage $handledMessage = null;
     public bool $createCalled = false;

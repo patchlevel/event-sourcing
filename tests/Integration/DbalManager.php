@@ -15,7 +15,7 @@ use function in_array;
 use function is_string;
 use function str_replace;
 
-class DbalManager
+final class DbalManager
 {
     public const DEFAULT_DB_NAME = 'eventstore';
 

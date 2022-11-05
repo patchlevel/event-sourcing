@@ -6,9 +6,19 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Parameter \\#1 \\$params of static method Doctrine\\\\DBAL\\\\DriverManager\\:\\:getConnection\\(\\) expects array\\{charset\\?\\: string, dbname\\?\\: string, default_dbname\\?\\: string, driver\\?\\: 'ibm_db2'\\|'mysqli'\\|'oci8'\\|'pdo_mysql'\\|'pdo_oci'\\|'pdo_pgsql'\\|'pdo_sqlite'\\|'pdo_sqlsrv'\\|'sqlsrv', driverClass\\?\\: class\\-string\\<Doctrine\\\\DBAL\\\\Driver\\>, driverOptions\\?\\: array, host\\?\\: string, keepSlave\\?\\: bool, \\.\\.\\.\\}, array\\<'charset'\\|'default_dbname'\\|'defaultTableOptions'\\|'driver'\\|'driverClass'\\|'driverOptions'\\|'host'\\|'keepReplica'\\|'keepSlave'\\|'master'\\|'memory'\\|'password'\\|'pdo'\\|'platform'\\|'port'\\|'primary'\\|'replica'\\|'serverVersion'\\|'sharding'\\|'slaves'\\|'unix_socket'\\|'user'\\|'wrapperClass', array\\|bool\\|Doctrine\\\\DBAL\\\\Platforms\\\\AbstractPlatform\\|int\\|PDO\\|string\\> given\\.$#"
+			message: "#^If condition is always false\\.$#"
 			count: 1
-			path: src/Console/DoctrineHelper.php
+			path: src/Console/Worker/DefaultWorker.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\DefaultProjectorRepository\\:\\:projectors\\(\\) should return array\\<int, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\> but returns array\\<int\\|string, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\>\\.$#"
+			count: 1
+			path: src/Projection/DefaultProjectorRepository.php
+
+		-
+			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\EventSourcing\\\\Serializer\\\\Hydrator\\\\AggregateRootHydrator\\:\\:hydrate\\(\\) expects array\\<string, mixed\\>, mixed given\\.$#"
+			count: 1
+			path: src/Snapshot/DefaultSnapshotStore.php
 
 		-
 			message: "#^While loop condition is always true\\.$#"

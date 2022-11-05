@@ -10,6 +10,9 @@ use Patchlevel\EventSourcing\Store\Store;
 use function array_values;
 use function sprintf;
 
+/**
+ * @deprecated use DoctrineSchemaDirector
+ */
 final class DoctrineSchemaManager implements DryRunSchemaManager
 {
     public function create(Store $store): void
@@ -35,10 +38,7 @@ final class DoctrineSchemaManager implements DryRunSchemaManager
             throw new StoreNotSupported($store, DoctrineStore::class);
         }
 
-        $connection = $store->connection();
-        $schema = $store->schema();
-
-        return array_values($schema->toSql($connection->getDatabasePlatform()));
+        return $store->schema()->toSql($store->connection()->getDatabasePlatform());
     }
 
     public function update(Store $store): void

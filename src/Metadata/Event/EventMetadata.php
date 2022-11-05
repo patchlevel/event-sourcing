@@ -9,7 +9,8 @@ final class EventMetadata
     public function __construct(
         public readonly string $name,
         /** @var array<string, EventPropertyMetadata> */
-        public readonly array $properties = []
+        public readonly array $properties = [],
+        public readonly bool $splitStream = false,
     ) {
     }
 }

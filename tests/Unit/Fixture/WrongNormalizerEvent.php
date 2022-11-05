@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\Normalize;
 
 #[Event('wrong_normalizer')]
-class WrongNormalizerEvent
+final class WrongNormalizerEvent
 {
     public function __construct(
         #[Normalize(new EmailNormalizer())]

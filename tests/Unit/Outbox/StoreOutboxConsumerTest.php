@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer */
-class StoreOutboxConsumerTest extends TestCase
+final class StoreOutboxConsumerTest extends TestCase
 {
     use ProphecyTrait;
 

@@ -17,7 +17,7 @@ use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 /** @covers \Patchlevel\EventSourcing\EventBus\SymfonyEventBus */
-class SymfonyEventBusTest extends TestCase
+final class SymfonyEventBusTest extends TestCase
 {
     use ProphecyTrait;
 

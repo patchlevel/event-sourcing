@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use PHPUnit\Framework\TestCase;
 
-class AggregateRootRegistryTest extends TestCase
+final class AggregateRootRegistryTest extends TestCase
 {
     public function testEmpty(): void
     {

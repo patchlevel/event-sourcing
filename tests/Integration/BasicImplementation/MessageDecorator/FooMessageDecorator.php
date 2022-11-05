@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Message
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-class FooMessageDecorator implements MessageDecorator
+final class FooMessageDecorator implements MessageDecorator
 {
     public function __invoke(Message $message): Message
     {

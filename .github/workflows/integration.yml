@@ -37,9 +37,12 @@ jobs:
                 operating-system:
                     - "ubuntu-latest"
                 postgres-version:
-                  - "9.4"
-                  - "13"
-                  - "14"
+                  - "10.22-alpine"
+                  - "11.17-alpine"
+                  - "12.12"
+                  - "13.8"
+                  - "14.5"
+                  - "15.0"
 
         env:
             DB_URL: 'postgresql://postgres:postgres@localhost:5432/eventstore?charset=utf8'
@@ -56,7 +59,7 @@ jobs:
                   ini-values: memory_limit=-1
                   extensions: pdo_sqlite
 
-            - uses: ramsey/composer-install@2.1.0
+            - uses: ramsey/composer-install@2.2.0
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
@@ -89,9 +92,9 @@ jobs:
           operating-system:
             - "ubuntu-latest"
           mariadb-version:
-            - "10.0"
-            - "10.2"
-            - "10.5"
+            - "10.3"
+            - "10.6"
+            - "10.9"
 
       env:
         DB_URL: 'mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
@@ -108,7 +111,7 @@ jobs:
             ini-values: memory_limit=-1
             extensions: pdo_mysql
 
-        - uses: ramsey/composer-install@2.1.0
+        - uses: ramsey/composer-install@2.2.0
           with:
             dependency-versions: ${{ matrix.dependencies }}
 
@@ -160,7 +163,7 @@ jobs:
             ini-values: memory_limit=-1
             extensions: pdo_mysql
 
-        - uses: ramsey/composer-install@2.1.0
+        - uses: ramsey/composer-install@2.2.0
           with:
             dependency-versions: ${{ matrix.dependencies }}
 
@@ -193,7 +196,7 @@ jobs:
             ini-values: memory_limit=-1
             extensions: pdo_sqlite
 
-        - uses: ramsey/composer-install@2.1.0
+        - uses: ramsey/composer-install@2.2.0
           with:
             dependency-versions: ${{ matrix.dependencies }}
 

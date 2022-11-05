@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware */
-class ReplaceEventMiddlewareTest extends TestCase
+final class ReplaceEventMiddlewareTest extends TestCase
 {
     public function testReplace(): void
     {

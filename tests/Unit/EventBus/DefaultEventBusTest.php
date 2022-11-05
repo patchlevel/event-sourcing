@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 use function microtime;
 
 /** @covers \Patchlevel\EventSourcing\EventBus\DefaultEventBus */
-class DefaultEventBusTest extends TestCase
+final class DefaultEventBusTest extends TestCase
 {
     public function testDispatchEvent(): void
     {

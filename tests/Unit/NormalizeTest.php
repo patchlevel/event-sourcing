@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Attribute\Normalize */
-class NormalizeTest extends TestCase
+final class NormalizeTest extends TestCase
 {
     use ProphecyTrait;
 
