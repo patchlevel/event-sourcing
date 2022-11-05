@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Schema;
 use Patchlevel\EventSourcing\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Store\Store;
 
-use function array_values;
 use function sprintf;
 
 /**
@@ -73,7 +72,7 @@ final class DoctrineSchemaManager implements DryRunSchemaManager
         $comparator = $schemaManager->createComparator();
         $diff = $comparator->compareSchemas($fromSchema, $toSchema);
 
-        return array_values($diff->toSql($connection->getDatabasePlatform()));
+        return $diff->toSql($connection->getDatabasePlatform());
     }
 
     public function drop(Store $store): void
