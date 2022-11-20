@@ -29,10 +29,11 @@ final class PhpNativeMessageSerializer implements MessageSerializer
     public function serialize(Message $message): string
     {
         $event = $message->event();
+        $serializedEvent = $this->serializer->serialize($event);
 
         $data = [
-            'event' => $event::class,
-            'payload' => $this->serializer->serialize($event),
+            'event' => $serializedEvent->name,
+            'payload' => $serializedEvent->payload,
             'headers' => $message->headers(),
         ];
 
@@ -42,7 +43,10 @@ final class PhpNativeMessageSerializer implements MessageSerializer
     public function deserialize(string $content): Message
     {
         /** @var array{event: class-string, payload: string, headers: Headers} $data */
-        $data = unserialize(base64_decode($content), ['allowed_classes' => [DateTimeImmutable::class]]);
+        $data = unserialize(
+            base64_decode($content),
+            ['allowed_classes' => [DateTimeImmutable::class]]
+        );
 
         return Message::createWithHeaders(
             $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload'])),
