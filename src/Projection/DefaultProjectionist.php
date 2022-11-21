@@ -28,7 +28,7 @@ final class DefaultProjectionist implements Projectionist
     public function boot(ProjectorCriteria $criteria = new ProjectorCriteria()): void
     {
         $projectorStates = $this->projectorStates()
-            ->filterByProjectorStatus(ProjectorStatus::Now)
+            ->filterByProjectorStatus(ProjectorStatus::New)
             ->filterByCriteria($criteria);
 
         foreach ($projectorStates as $projectorState) {
@@ -206,7 +206,7 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            $projectorsStates = $projectorsStates->add(new ProjectorState($projector->projectorId()));
+            $projectorsStates = $projectorsStates->add(new ProjectorState($projector->projectorId(), ProjectorStatus::New));
         }
 
         return $projectorsStates;

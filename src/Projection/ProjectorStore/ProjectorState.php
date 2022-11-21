@@ -11,7 +11,7 @@ final class ProjectorState
 {
     public function __construct(
         private readonly ProjectorId $id,
-        private ProjectorStatus $status = ProjectorStatus::Now,
+        private ProjectorStatus $status,
         private int $position = 0
     ) {
     }
@@ -38,7 +38,7 @@ final class ProjectorState
 
     public function isNew(): bool
     {
-        return $this->status === ProjectorStatus::Now;
+        return $this->status === ProjectorStatus::New;
     }
 
     public function booting(): void
