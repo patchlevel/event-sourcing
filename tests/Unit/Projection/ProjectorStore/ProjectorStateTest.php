@@ -21,7 +21,7 @@ final class ProjectorStateTest extends TestCase
         );
 
         self::assertSame($id, $state->id());
-        self::assertEquals(ProjectorStatus::New, $state->status());
+        self::assertEquals(ProjectorStatus::Now, $state->status());
         self::assertEquals(0, $state->position());
         self::assertTrue($state->isNew());
         self::assertFalse($state->isBooting());

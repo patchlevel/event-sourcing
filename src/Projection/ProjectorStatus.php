@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Projection;
 
 enum ProjectorStatus: string
 {
-    case New = 'new';
+    case Now = 'new';
     case Booting = 'booting';
     case Active = 'active';
     case Outdated = 'outdated';
