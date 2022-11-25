@@ -17,14 +17,7 @@ final class SyncProjectorListener implements Listener
 
     public function __invoke(Message $message): void
     {
-        foreach ($this->projectorRepository->projectors() as $projector) {
-            $handleMethod = $this->projectorResolver->resolveHandleMethod($projector, $message);
-
-            if (!$handleMethod) {
-                continue;
-            }
-
-            $handleMethod($message);
-        }
+        (new ProjectorHelper($this->projectorResolver))
+            ->handleMessage($message, ...$this->projectorRepository->projectors());
     }
 }
