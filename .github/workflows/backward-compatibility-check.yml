@@ -44,4 +44,4 @@ jobs:
           working-directory: 'tools'
 
       - name: "Check for BC breaks"
-        run: "tools/vendor/bin/roave-backward-compatibility-check --format=github-actions --install-development-dependencies --from=origin/${{ github.base_ref }}"
+        run: "tools/vendor/bin/roave-backward-compatibility-check --format=github-actions --install-development-dependencies"
