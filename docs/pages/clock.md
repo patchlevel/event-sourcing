@@ -5,7 +5,7 @@ purposes. We are using this clock to create the `recorded_on` datetime for the e
 
 !!! note
 
-    The `Clock` interface will be PSR-20 compatible as soon at it is published. For more information see [here](https://github.com/php-fig/fig-standards/blob/master/proposed/clock.md).
+    The `Clock` interface is PSR-20 compatible. For more information see [here](https://github.com/php-fig/fig-standards/blob/master/proposed/clock.md).
 
 ## SystemClock
 
