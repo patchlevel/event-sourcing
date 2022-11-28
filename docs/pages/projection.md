@@ -24,11 +24,9 @@ use Patchlevel\EventSourcing\Projection\ProjectorId;
 
 final class ProfileProjection implements Projector
 {
-    private Connection $connection;
-
-    public function __construct(Connection $connection)
-    {
-        $this->connection = $connection;
+    public function __construct(
+        private readonly Connection $connection
+    ) {
     }
     
     public function projectorId(): ProjectorId 
@@ -67,6 +65,21 @@ final class ProfileProjection implements Projector
 }
 ```
 
+Each projector needs an `projectorId` composed of a unique name and a version number.
+With the help of this information, a projection can be clearly identified. More on that later.
+
+Projectors can also have one `create` and `drop` method that is executed when the projection is created or deleted.
+In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
+To do this, you must add either the `Create` or `Drop` attribute to the method. The method name itself doesn't matter.
+
+Otherwise, a projector can have any number of handle methods that are called for certain defined events.
+In order to say which method is responsible for which event, you need the `Handle` attribute.
+As the first parameter, you must pass the event class to which the reaction should then take place.
+The method itself must expect a `Message`, which then contains the event. The method name itself doesn't matter.
+
+As soon as the event has been dispatched, the appropriate methods are then executed.
+Several projectors can also listen to the same event.
+
 !!! danger
 
     You should not execute any actions with projectors, 
@@ -77,68 +90,75 @@ final class ProfileProjection implements Projector
     If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
     to make the event method return the correct type.
 
-Projectors have a `create` and a `drop` method that is executed when the projection is created or deleted.
-In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
+## Projector Repository
 
-In order for the projector to know which method is responsible for which event,
-the methods must be given the `Handle` attribute with the respective event class name.
-
-As soon as the event has been dispatched, the appropriate methods are then executed.
-Several projectors can also listen to the same event.
-
-## Register projector
-
-So that the projectors are known and also executed, you have to add them to the `ProjectionHandler`.
-Then add this to the event bus using the `ProjectionListener`.
+The projector repository can hold and make available all projectors.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
-use Patchlevel\EventSourcing\Projection\ProjectionListener;
+use Patchlevel\EventSourcing\Projection\DefaultProjectorRepository;
 
-$profileProjection = new ProfileProjection($connection);
-$messageProjection = new MessageProjection($connection);
-
-$projectionHandler = new MetadataAwareProjectionHandler([
-    $profileProjection,
-    $messageProjection,
+$projectorRepository = new DefaultProjectorRepository([
+    new ProfileProjection($connection)
 ]);
+```
 
-$eventBus->addListener(new ProjectionListener($projectionHandler));
+## Setup Projection
+
+A projection schama or database usually has to be created beforehand.
+And with a rebuild, the projection has to be deleted.
+The Projector Helper can help with this:
+
+### Create Projection Schema
+
+With this you can prepare the projection:
+
+```php
+use Patchlevel\EventSourcing\Projection\ProjectorHelper;
+
+(new ProjectorHelper())->createProjection(new ProfileProjection($connection));
+(new ProjectorHelper())->createProjection(...$projectionRepository->projectors());
+```
+
+### Drop Projection Schema
+
+The projection can also be removed again:
+
+```php
+use Patchlevel\EventSourcing\Projection\ProjectorHelper;
+
+(new ProjectorHelper())->dropProjection(new ProfileProjection($connection));
+(new ProjectorHelper())->dropProjection(...$projectionRepository->projectors());
+```
+
+## Handle Message
+
+The helper also offers methods to process messages:
+
+```php
+use Patchlevel\EventSourcing\Projection\ProjectorHelper;
+
+(new ProjectorHelper())->handleMessage($message, new ProfileProjection($connection));
+(new ProjectorHelper())->handleMessage($message, ...$projectionRepository->projectors());
+```
+
+## Sync Projector Listener
+
+The simplest configuration is to run the projectors synchronously.
+Says that you listen to the event bus and update the projections directly.
+Here you can use the `SyncProjectorListener`.
+
+```php
+use Patchlevel\EventSourcing\Projection\SyncProjectorListener
+
+$eventBus->addListener(
+    new SyncProjectorListener($projectorRepository)
+);
 ```
 
 !!! note
 
     You can find out more about the event bus [here](./event_bus.md).
 
-## Setup Projection
+!!! note
 
-A projection schama or database usually has to be created beforehand.
-And with a rebuild, the projection has to be deleted.
-To make this possible, projections have two methods `create` and `drop` that can be defined and executed.
-
-### Create Projection Schema
-
-Or for all projections in the `MetadataAwareProjectionHandler`:
-
-```php
-$projectionRepository = new MetadataAwareProjectionHandler([
-    $profileProjection,
-    $messageProjection,
-]);
-
-$projectionRepository->create();
-```
-
-### Drop Projection Schema
-
-Or for all projections in the `MetadataAwareProjectionHandler`:
-
-```php
-$projectionRepository = new MetadataAwareProjectionHandler([
-    $profileProjection,
-    $messageProjection,
-]);
-
-$projectionRepository->drop();
-```
+    In order to exploit the full potential, the [projectionist](./projectionist.md) should be used in production.

@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFact
 use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 
 /**
- * @deprecated use MetadataProjectorResolver
+ * @deprecated use ProjectorHelper
  */
 final class MetadataAwareProjectionHandler implements ProjectionHandler
 {
