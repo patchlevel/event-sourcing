@@ -16,7 +16,7 @@ final class ProjectionistRemoveCommand extends ProjectionistCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $criteria = $this->projectorCriteria();
+        $criteria = $this->projectorCriteria($input);
         $this->projectionist->remove($criteria);
 
         return 0;

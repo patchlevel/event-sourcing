@@ -150,6 +150,11 @@
       <code>Projection</code>
     </DeprecatedClass>
   </file>
+  <file src="src/Projection/ProjectorStore/ProjectorStateCollection.php">
+    <ImpureFunctionCall occurrences="1">
+      <code>array_filter</code>
+    </ImpureFunctionCall>
+  </file>
   <file src="src/Repository/DefaultRepository.php">
     <ArgumentTypeCoercion occurrences="1">
       <code>$messages[0]-&gt;playhead() - 1</code>
@@ -363,7 +368,13 @@
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Projection/DefaultProjectionistTest.php">
-    <DeprecatedInterface occurrences="9">
+    <DeprecatedInterface occurrences="15">
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
@@ -413,10 +424,7 @@
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Projection/ProjectorHelperTest.php">
-    <DeprecatedInterface occurrences="7">
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
+    <DeprecatedInterface occurrences="4">
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>

@@ -86,20 +86,27 @@ final class ProjectorStateCollection implements Countable, IteratorAggregate
         return $min ?: 0;
     }
 
-    public function filterByProjectorStatus(ProjectorStatus $status): self
+    /**
+     * @param callable(ProjectorState $state):bool $callable
+     */
+    public function filter(callable $callable): self
     {
         $projectors = array_filter(
             $this->projectorStates,
-            static fn (ProjectorState $projectorState) => $projectorState->status() === $status
+            $callable
         );
 
         return new self(array_values($projectors));
     }
 
+    public function filterByProjectorStatus(ProjectorStatus $status): self
+    {
+        return $this->filter(static fn (ProjectorState $projectorState) => $projectorState->status() === $status);
+    }
+
     public function filterByCriteria(ProjectorCriteria $criteria): self
     {
-        $projectors = array_filter(
-            $this->projectorStates,
+        return $this->filter(
             static function (ProjectorState $projectorState) use ($criteria): bool {
                 if ($criteria->ids !== null) {
                     foreach ($criteria->ids as $id) {
@@ -114,8 +121,6 @@ final class ProjectorStateCollection implements Countable, IteratorAggregate
                 return true;
             }
         );
-
-        return new self(array_values($projectors));
     }
 
     public function count(): int

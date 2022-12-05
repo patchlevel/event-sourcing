@@ -36,6 +36,14 @@ final class ProfileProjection implements Projector
             version: 1
         );
     }
+    
+    /**
+     * @return list<array{id: string, name: string}>
+     */
+    public function getProfiles(): array 
+    {
+        return $this->connection->fetchAllAssociative('SELECT id, name FROM projection_profile;');
+    }
 
     #[Create]
     public function create(): void
@@ -67,6 +75,11 @@ final class ProfileProjection implements Projector
 
 Each projector needs an `projectorId` composed of a unique name and a version number.
 With the help of this information, a projection can be clearly identified. More on that later.
+
+!!! note
+
+    In the synchronous variant, the projector Id is not used. 
+    This only really comes into play with the [Projectionist](./projectionist.md).
 
 Projectors can also have one `create` and `drop` method that is executed when the projection is created or deleted.
 In some cases it may be that no schema has to be created for the projection, as the target does it automatically.

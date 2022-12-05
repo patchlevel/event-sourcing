@@ -47,3 +47,7 @@ benchmark: vendor                                                               
 
 .PHONY: dev
 dev: static test                                                                ## run dev tools
+
+.PHONY: docs
+docs:                                                                           ## run mkdocs
+	cd docs && mkdocs serve

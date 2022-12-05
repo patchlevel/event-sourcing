@@ -16,7 +16,7 @@ final class ProjectionistBootCommand extends ProjectionistCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $criteria = $this->projectorCriteria();
+        $criteria = $this->projectorCriteria($input);
         $this->projectionist->boot($criteria);
 
         return 0;

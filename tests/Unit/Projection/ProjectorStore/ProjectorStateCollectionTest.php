@@ -114,6 +114,30 @@ final class ProjectorStateCollectionTest extends TestCase
         self::assertSame(0, $collection->minProjectorPosition());
     }
 
+    public function testFilter(): void
+    {
+        $fooId = new ProjectorId('foo', 1);
+        $barId = new ProjectorId('bar', 1);
+
+        $collection = new ProjectorStateCollection([
+            new ProjectorState(
+                $fooId,
+                ProjectorStatus::Booting,
+            ),
+            new ProjectorState(
+                $barId,
+                ProjectorStatus::Active,
+            ),
+        ]);
+
+        $newCollection = $collection->filter(static fn (ProjectorState $state) => $state->isActive());
+
+        self::assertNotSame($collection, $newCollection);
+        self::assertFalse($newCollection->has($fooId));
+        self::assertTrue($newCollection->has($barId));
+        self::assertSame(1, $newCollection->count());
+    }
+
     public function testFilterByProjectStatus(): void
     {
         $fooId = new ProjectorId('foo', 1);

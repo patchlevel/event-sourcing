@@ -157,15 +157,29 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projector;
+use Patchlevel\EventSourcing\Projection\ProjectorId;
 
-final class HotelProjection implements Projection
+final class HotelProjection implements Projector
 {
     private Connection $db;
 
     public function __construct(Connection $db)
     {
         $this->db = $db;
+    }
+    
+    public function projectorId(): ProjectorId 
+    {
+        return new ProjectorId('hotel');
+    }
+    
+    /**
+     * @return list<array{id: string, name: string, guests: int}>
+     */
+    public function getHotels(): array 
+    {
+        return $this->db->fetchAllAssociative('SELECT id, name, guests FROM hotel;')
     }
 
     #[Handle(HotelCreated::class)]
@@ -253,8 +267,8 @@ final class SendCheckInEmailListener implements Listener
 }
 ```
 
-!!! note 
-    
+!!! note
+
     You can find out more about processor [here](processor.md).
 
 ## Configuration
@@ -265,7 +279,7 @@ After we have defined everything, we still have to plug the whole thing together
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
-use Patchlevel\EventSourcing\Projection\ProjectionListener;
+use Patchlevel\EventSourcing\Projection\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -277,12 +291,13 @@ $connection = DriverManager::getConnection([
 $mailer = /* your own mailer */;
 
 $hotelProjection = new HotelProjection($connection);
-$projectionHandler = new MetadataAwareProjectionHandler([
+
+$projectorRepository = new ProjectorRepository([
     $hotelProjection,
 ]);
 
 $eventBus = new DefaultEventBus();
-$eventBus->addListener(new ProjectionListener($projectionHandler));
+$eventBus->addListener(new SyncProjectorListener($projectorRepository));
 $eventBus->addListener(new SendCheckInEmailListener($mailer));
 
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
@@ -291,8 +306,7 @@ $aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/D
 $store = new SingleTableStore(
     $connection,
     $serializer,
-    $aggregateRegistry,
-    'eventstore'
+    $aggregateRegistry
 );
 
 $repositoryManager = new DefaultRepositoryManager(
@@ -301,7 +315,7 @@ $repositoryManager = new DefaultRepositoryManager(
     $eventBus
 );
 
-$repository = $repositoryManager->get(Hotel::class);
+$hotelRepository = $repositoryManager->get(Hotel::class);
 ```
 
 !!! note
@@ -315,6 +329,7 @@ we need the associated schema and databases.
 
 ```php
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Projector\ProjectorHelper;
 
 $schemaDirector = new DoctrineSchemaDirector(
     $store,
@@ -322,7 +337,7 @@ $schemaDirector = new DoctrineSchemaDirector(
 );
 
 $schemaDirector->create();
-$projectionHandler->create();
+(new ProjectorHelper())->createProjection(...$projectorRepository->projectors());
 ```
 
 !!! note
@@ -334,16 +349,18 @@ $projectionHandler->create();
 We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
 
 ```php
-$hotel = Hotel::create('1', 'HOTEL');
-$hotel->checkIn('David');
-$hotel->checkIn('Daniel');
-$hotel->checkOut('David');
+$hotel1 = Hotel::create('1', 'HOTEL');
+$hotel1->checkIn('David');
+$hotel1->checkIn('Daniel');
+$hotel1->checkOut('David');
 
-$hotelRepository->save($hotel);
+$hotelRepository->save($hotel1);
 
 $hotel2 = $hotelRepository->load('2');
 $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
+
+$hotels = $hotelProjection->getHotels();
 ```
 
 !!! note
