@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\Projection;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
+use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 
 /**
  * @deprecated use ProjectorHelper

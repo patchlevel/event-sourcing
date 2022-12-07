@@ -152,13 +152,7 @@ So that we can see all the hotels on our website and also see how many guests ar
 we need a projection for it.
 
 ```php
-use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector;
-use Patchlevel\EventSourcing\Projection\ProjectorId;
+use Doctrine\DBAL\Connection;use Patchlevel\EventSourcing\Attribute\Create;use Patchlevel\EventSourcing\Attribute\Drop;use Patchlevel\EventSourcing\Attribute\Handle;use Patchlevel\EventSourcing\EventBus\Message;use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 final class HotelProjection implements Projector
 {
@@ -167,11 +161,6 @@ final class HotelProjection implements Projector
     public function __construct(Connection $db)
     {
         $this->db = $db;
-    }
-    
-    public function projectorId(): ProjectorId 
-    {
-        return new ProjectorId('hotel');
     }
     
     /**
@@ -278,8 +267,7 @@ After we have defined everything, we still have to plug the whole thing together
 ```php
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
-use Patchlevel\EventSourcing\Projection\SyncProjectorListener;
+use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;

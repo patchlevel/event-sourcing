@@ -10,8 +10,8 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector;
-use Patchlevel\EventSourcing\Projection\ProjectorId;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
 use function assert;
@@ -25,9 +25,9 @@ final class ProfileProjection implements Projector
         $this->connection = $connection;
     }
 
-    public function projectorId(): ProjectorId
+    public function projectionId(): ProjectionId
     {
-        return new ProjectorId('profile', 1);
+        return new ProjectionId('profile', 1);
     }
 
     #[Create]

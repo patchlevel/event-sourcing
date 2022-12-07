@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
-use Patchlevel\EventSourcing\Projection\Projectionist;
-use Patchlevel\EventSourcing\Projection\ProjectorCriteria;
-use Patchlevel\EventSourcing\Projection\ProjectorId;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
+use Patchlevel\EventSourcing\Projection\Projectionist\Projectionist;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -32,21 +32,21 @@ abstract class ProjectionistCommand extends Command
                 'id',
                 null,
                 InputOption::VALUE_IS_ARRAY,
-                'The maximum number of runs this command should execute'
+                'filter by projection id'
             );
     }
 
-    protected function projectorCriteria(InputInterface $input): ProjectorCriteria
+    protected function projectorCriteria(InputInterface $input): ProjectionCriteria
     {
-        return new ProjectorCriteria(
-            $this->projectorIdFilter($input)
+        return new ProjectionCriteria(
+            $this->projectionIdFilter($input)
         );
     }
 
     /**
-     * @return list<ProjectorId>|null
+     * @return list<ProjectionId>|null
      */
-    private function projectorIdFilter(InputInterface $input): ?array
+    private function projectionIdFilter(InputInterface $input): ?array
     {
         $ids = $input->getOption('id');
 
@@ -60,12 +60,12 @@ abstract class ProjectionistCommand extends Command
 
         return array_values(
             array_map(
-                static function (mixed $id) use ($ids): ProjectorId {
+                static function (mixed $id) use ($ids): ProjectionId {
                     if (!is_string($id)) {
                         throw new InvalidArgumentGiven($ids, 'list<string>');
                     }
 
-                    return new ProjectorId($id);
+                    return ProjectionId::fromString($id);
                 },
                 $ids
             )

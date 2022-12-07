@@ -10,14 +10,14 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector;
-use Patchlevel\EventSourcing\Projection\ProjectorId;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
+use Patchlevel\EventSourcing\Projection\Projector\StatefulProjector;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
 use function assert;
 use function sprintf;
 
-final class ProfileProjection implements Projector
+final class ProfileProjection implements StatefulProjector
 {
     private Connection $connection;
 
@@ -63,13 +63,13 @@ final class ProfileProjection implements Projector
     {
         return sprintf(
             'projection_%s_%s',
-            $this->projectorId()->name(),
-            $this->projectorId()->version()
+            $this->projectionId()->name(),
+            $this->projectionId()->version()
         );
     }
 
-    public function projectorId(): ProjectorId
+    public function projectionId(): ProjectionId
     {
-        return new ProjectorId('profile', 1);
+        return new ProjectionId('profile', 1);
     }
 }

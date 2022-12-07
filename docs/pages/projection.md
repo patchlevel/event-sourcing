@@ -8,33 +8,19 @@ and everything can always be reproduced from the events.
 The target of a projection can be anything.
 Either a file, a relational database, a no-sql database like mongodb or an elasticsearch.
 
-## Define Projector
+## Projector
 
 To create a projection you need a projector.
 In this example we always create a new data set in a relational database when a profile is created:
 
 ```php
-use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector;
-use Patchlevel\EventSourcing\Projection\ProjectorId;
+use Doctrine\DBAL\Connection;use Patchlevel\EventSourcing\Attribute\Create;use Patchlevel\EventSourcing\Attribute\Drop;use Patchlevel\EventSourcing\Attribute\Handle;use Patchlevel\EventSourcing\EventBus\Message;use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 final class ProfileProjection implements Projector
 {
     public function __construct(
         private readonly Connection $connection
     ) {
-    }
-    
-    public function projectorId(): ProjectorId 
-    {
-        return new ProjectorId(
-            name: 'profile', 
-            version: 1
-        );
     }
     
     /**
@@ -73,14 +59,6 @@ final class ProfileProjection implements Projector
 }
 ```
 
-Each projector needs an `projectorId` composed of a unique name and a version number.
-With the help of this information, a projection can be clearly identified. More on that later.
-
-!!! note
-
-    In the synchronous variant, the projector Id is not used. 
-    This only really comes into play with the [Projectionist](./projectionist.md).
-
 Projectors can also have one `create` and `drop` method that is executed when the projection is created or deleted.
 In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
 To do this, you must add either the `Create` or `Drop` attribute to the method. The method name itself doesn't matter.
@@ -108,7 +86,7 @@ Several projectors can also listen to the same event.
 The projector repository can hold and make available all projectors.
 
 ```php
-use Patchlevel\EventSourcing\Projection\DefaultProjectorRepository;
+use Patchlevel\EventSourcing\Projection\Projector\DefaultProjectorRepository;
 
 $projectorRepository = new DefaultProjectorRepository([
     new ProfileProjection($connection)
@@ -126,7 +104,7 @@ The Projector Helper can help with this:
 With this you can prepare the projection:
 
 ```php
-use Patchlevel\EventSourcing\Projection\ProjectorHelper;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
 
 (new ProjectorHelper())->createProjection(new ProfileProjection($connection));
 (new ProjectorHelper())->createProjection(...$projectionRepository->projectors());
@@ -137,7 +115,7 @@ use Patchlevel\EventSourcing\Projection\ProjectorHelper;
 The projection can also be removed again:
 
 ```php
-use Patchlevel\EventSourcing\Projection\ProjectorHelper;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
 
 (new ProjectorHelper())->dropProjection(new ProfileProjection($connection));
 (new ProjectorHelper())->dropProjection(...$projectionRepository->projectors());
@@ -148,7 +126,7 @@ use Patchlevel\EventSourcing\Projection\ProjectorHelper;
 The helper also offers methods to process messages:
 
 ```php
-use Patchlevel\EventSourcing\Projection\ProjectorHelper;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
 
 (new ProjectorHelper())->handleMessage($message, new ProfileProjection($connection));
 (new ProjectorHelper())->handleMessage($message, ...$projectionRepository->projectors());
@@ -161,7 +139,7 @@ Says that you listen to the event bus and update the projections directly.
 Here you can use the `SyncProjectorListener`.
 
 ```php
-use Patchlevel\EventSourcing\Projection\SyncProjectorListener
+use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 
 $eventBus->addListener(
     new SyncProjectorListener($projectorRepository)

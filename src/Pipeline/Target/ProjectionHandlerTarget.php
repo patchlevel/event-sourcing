@@ -7,6 +7,9 @@ namespace Patchlevel\EventSourcing\Pipeline\Target;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 
+/**
+ * @deprecated ProjectorRepositoryTarget
+ */
 final class ProjectionHandlerTarget implements Target
 {
     private ProjectionHandler $projectionHandler;

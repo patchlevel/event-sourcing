@@ -6,6 +6,9 @@ namespace Patchlevel\EventSourcing\Repository;
 
 use function sprintf;
 
+/**
+ * @deprecated
+ */
 final class InvalidAggregateClass extends RepositoryException
 {
     public static function notAggregateRoot(string $aggregateClass): self
