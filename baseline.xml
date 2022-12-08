@@ -131,11 +131,6 @@
       <code>MetadataAwareProjectionHandler</code>
     </DeprecatedInterface>
   </file>
-  <file src="src/Projection/Projection/ProjectionCollection.php">
-    <ImpureFunctionCall occurrences="1">
-      <code>array_filter</code>
-    </ImpureFunctionCall>
-  </file>
   <file src="src/Projection/ProjectionListener.php">
     <DeprecatedClass occurrences="2">
       <code>ProjectionHandler</code>

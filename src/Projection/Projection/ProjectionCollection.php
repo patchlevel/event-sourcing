@@ -15,7 +15,6 @@ use function count;
 
 /**
  * @implements IteratorAggregate<int, Projection>
- * @psalm-immutable
  */
 final class ProjectionCollection implements Countable, IteratorAggregate
 {
