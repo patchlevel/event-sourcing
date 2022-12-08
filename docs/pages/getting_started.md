@@ -152,7 +152,12 @@ So that we can see all the hotels on our website and also see how many guests ar
 we need a projection for it.
 
 ```php
-use Doctrine\DBAL\Connection;use Patchlevel\EventSourcing\Attribute\Create;use Patchlevel\EventSourcing\Attribute\Drop;use Patchlevel\EventSourcing\Attribute\Handle;use Patchlevel\EventSourcing\EventBus\Message;use Patchlevel\EventSourcing\Projection\Projector\Projector;
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Create;
+use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 final class HotelProjection implements Projector
 {
