@@ -12,16 +12,16 @@ use PHPUnit\Framework\TestCase;
 /** @covers \Patchlevel\EventSourcing\Projection\Projection\ProjectionId */
 final class ProjectionIdTest extends TestCase
 {
-    public function testProjectorId(): void
+    public function testProjectionId(): void
     {
-        $projectorId = new ProjectionId(
+        $projectionId = new ProjectionId(
             'test',
             1
         );
 
-        self::assertSame('test', $projectorId->name());
-        self::assertSame(1, $projectorId->version());
-        self::assertSame('test-1', $projectorId->toString());
+        self::assertSame('test', $projectionId->name());
+        self::assertSame(1, $projectionId->version());
+        self::assertSame('test-1', $projectionId->toString());
     }
 
     public function testEquals(): void
@@ -56,11 +56,11 @@ final class ProjectionIdTest extends TestCase
      */
     public function testValidFromString(string $string, string $name, int $version): void
     {
-        $projectorId = ProjectionId::fromString($string);
+        $projectionId = ProjectionId::fromString($string);
 
-        self::assertSame($name, $projectorId->name());
-        self::assertSame($version, $projectorId->version());
-        self::assertSame($string, $projectorId->toString());
+        self::assertSame($name, $projectionId->name());
+        self::assertSame($version, $projectionId->version());
+        self::assertSame($string, $projectionId->toString());
     }
 
     /**

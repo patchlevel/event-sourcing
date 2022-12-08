@@ -77,28 +77,28 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
     {
         $this->connection->transactional(
             function (Connection $connection) use ($projections): void {
-                foreach ($projections as $projectorState) {
+                foreach ($projections as $projection) {
                     try {
-                        $this->get($projectorState->id());
+                        $this->get($projection->id());
                         $connection->update(
                             $this->projectionTable,
                             [
-                                'position' => $projectorState->position(),
-                                'status' => $projectorState->status()->value,
+                                'position' => $projection->position(),
+                                'status' => $projection->status()->value,
                             ],
                             [
-                                'name' => $projectorState->id()->name(),
-                                'version' => $projectorState->id()->version(),
+                                'name' => $projection->id()->name(),
+                                'version' => $projection->id()->version(),
                             ]
                         );
                     } catch (ProjectionNotFound) {
                         $connection->insert(
                             $this->projectionTable,
                             [
-                                'name' => $projectorState->id()->name(),
-                                'version' => $projectorState->id()->version(),
-                                'position' => $projectorState->position(),
-                                'status' => $projectorState->status()->value,
+                                'name' => $projection->id()->name(),
+                                'version' => $projection->id()->version(),
+                                'position' => $projection->position(),
+                                'status' => $projection->status()->value,
                             ]
                         );
                     }

@@ -18,14 +18,11 @@ final class InMemoryStoreTest extends TestCase
         $store = new InMemoryStore();
 
         $id = new ProjectionId('test', 1);
+        $projection = new Projection($id);
 
-        $state = new Projection(
-            $id
-        );
+        $store->save($projection);
 
-        $store->save($state);
-
-        self::assertEquals($state, $store->get($id));
+        self::assertEquals($projection, $store->get($id));
 
         $collection = $store->all();
 
@@ -45,12 +42,9 @@ final class InMemoryStoreTest extends TestCase
         $store = new InMemoryStore();
 
         $id = new ProjectionId('test', 1);
+        $projection = new Projection($id);
 
-        $state = new Projection(
-            $id
-        );
-
-        $store->save($state);
+        $store->save($projection);
 
         $collection = $store->all();
 

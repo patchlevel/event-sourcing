@@ -19,15 +19,11 @@ final class ProjectionCollectionTest extends TestCase
     public function testCreate(): void
     {
         $id = new ProjectionId('test', 1);
-
-        $state = new Projection(
-            $id
-        );
-
-        $collection = new ProjectionCollection([$state]);
+        $projection = new Projection($id);
+        $collection = new ProjectionCollection([$projection]);
 
         self::assertTrue($collection->has($id));
-        self::assertSame($state, $collection->get($id));
+        self::assertSame($projection, $collection->get($id));
         self::assertSame(1, $collection->count());
     }
 
@@ -38,12 +34,8 @@ final class ProjectionCollectionTest extends TestCase
         $id = new ProjectionId('test', 1);
 
         new ProjectionCollection([
-            new Projection(
-                $id
-            ),
-            new Projection(
-                $id
-            ),
+            new Projection($id),
+            new Projection($id),
         ]);
     }
 
@@ -59,17 +51,14 @@ final class ProjectionCollectionTest extends TestCase
     public function testAdd(): void
     {
         $id = new ProjectionId('test', 1);
-
-        $state = new Projection(
-            $id
-        );
+        $projection = new Projection($id);
 
         $collection = new ProjectionCollection();
-        $newCollection = $collection->add($state);
+        $newCollection = $collection->add($projection);
 
         self::assertNotSame($collection, $newCollection);
         self::assertTrue($newCollection->has($id));
-        self::assertSame($state, $newCollection->get($id));
+        self::assertSame($projection, $newCollection->get($id));
     }
 
     public function testAddWithDuplicatedId(): void
@@ -84,7 +73,7 @@ final class ProjectionCollectionTest extends TestCase
             ->add(new Projection($id));
     }
 
-    public function testMinProjectorPosition(): void
+    public function testMinProjectionPosition(): void
     {
         $collection = new ProjectionCollection([
             new Projection(
@@ -107,7 +96,7 @@ final class ProjectionCollectionTest extends TestCase
         self::assertSame(5, $collection->minProjectionPosition());
     }
 
-    public function testMinProjectorPositionWithEmptyCollection(): void
+    public function testMinProjectionPositionWithEmptyCollection(): void
     {
         $collection = new ProjectionCollection();
 
@@ -130,7 +119,7 @@ final class ProjectionCollectionTest extends TestCase
             ),
         ]);
 
-        $newCollection = $collection->filter(static fn (Projection $state) => $state->isActive());
+        $newCollection = $collection->filter(static fn (Projection $projection) => $projection->isActive());
 
         self::assertNotSame($collection, $newCollection);
         self::assertFalse($newCollection->has($fooId));

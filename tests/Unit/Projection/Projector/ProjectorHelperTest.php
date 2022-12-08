@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -24,11 +23,6 @@ final class ProjectorHelperTest extends TestCase
     {
         $projector = new class implements Projector {
             public static ?Message $handledMessage = null;
-
-            public function projectionId(): ProjectionId
-            {
-                return new ProjectionId('test', 1);
-            }
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
@@ -57,11 +51,6 @@ final class ProjectorHelperTest extends TestCase
         $projector = new class implements Projector {
             public static ?Message $handledMessage = null;
 
-            public function projectionId(): ProjectionId
-            {
-                return new ProjectionId('test', 1);
-            }
-
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
             {
@@ -88,11 +77,6 @@ final class ProjectorHelperTest extends TestCase
         $projector = new class implements Projector {
             public static bool $called = false;
 
-            public function projectionId(): ProjectionId
-            {
-                return new ProjectionId('test', 1);
-            }
-
             #[Create]
             public function method(): void
             {
@@ -110,11 +94,6 @@ final class ProjectorHelperTest extends TestCase
     {
         $projector = new class implements Projector {
             public static bool $called = false;
-
-            public function projectionId(): ProjectionId
-            {
-                return new ProjectionId('test', 1);
-            }
 
             #[Drop]
             public function method(): void

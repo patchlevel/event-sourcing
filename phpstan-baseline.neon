@@ -16,9 +16,9 @@ parameters:
 			path: src/EventBus/Message.php
 
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\DefaultProjectorRepository\\:\\:projectors\\(\\) should return array\\<int, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\Projector\\> but returns array\\<int\\|string, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\Projector\\>\\.$#"
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\InMemoryProjectorRepository\\:\\:projectors\\(\\) should return array\\<int, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\Projector\\> but returns array\\<int\\|string, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\Projector\\>\\.$#"
 			count: 1
-			path: src/Projection/Projector/DefaultProjectorRepository.php
+			path: src/Projection/Projector/InMemoryProjectorRepository.php
 
 		-
 			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\EventSourcing\\\\Serializer\\\\Hydrator\\\\AggregateRootHydrator\\:\\:hydrate\\(\\) expects array\\<string, mixed\\>, mixed given\\.$#"

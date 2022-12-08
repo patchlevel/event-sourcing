@@ -21,7 +21,7 @@ final class ProjectionistStatusCommand extends ProjectionistCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new OutputStyle($input, $output);
-        $states = $this->projectionist->projections();
+        $projections = $this->projectionist->projections();
 
         $io->table(
             [
@@ -31,13 +31,13 @@ final class ProjectionistStatusCommand extends ProjectionistCommand
                 'status',
             ],
             array_map(
-                static fn (Projection $state) => [
-                    $state->id()->name(),
-                    $state->id()->version(),
-                    $state->position(),
-                    $state->status()->value,
+                static fn (Projection $projection) => [
+                    $projection->id()->name(),
+                    $projection->id()->version(),
+                    $projection->position(),
+                    $projection->status()->value,
                 ],
-                [...$states]
+                [...$projections]
             )
         );
 

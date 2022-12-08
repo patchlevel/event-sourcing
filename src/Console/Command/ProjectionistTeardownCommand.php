@@ -16,7 +16,7 @@ final class ProjectionistTeardownCommand extends ProjectionistCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $criteria = $this->projectorCriteria($input);
+        $criteria = $this->projectionCriteria($input);
         $this->projectionist->teardown($criteria);
 
         return 0;

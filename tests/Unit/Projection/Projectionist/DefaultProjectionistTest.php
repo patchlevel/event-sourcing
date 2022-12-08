@@ -13,9 +13,9 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\StatefulProjector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
-use Patchlevel\EventSourcing\Projection\Projector\StatefulProjector;
 use Patchlevel\EventSourcing\Store\StreamableStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -46,7 +46,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionStore->all()->willReturn($projectionCollection)->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([])->shouldBeCalledOnce();
+        $projectorRepository->projectors()->willReturn([])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
 
@@ -84,10 +84,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(
-            2
-        );
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
 
@@ -105,7 +102,7 @@ final class DefaultProjectionistTest extends TestCase
             new Projection($projector->projectionId(), ProjectionStatus::Booting),
             new Projection($projector->projectionId(), ProjectionStatus::Booting, 1),
             new Projection($projector->projectionId(), ProjectionStatus::Active, 1),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
     }
 
     public function testBootWithMethods(): void
@@ -142,10 +139,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(
-            2
-        );
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveCreateMethod($projector)->willReturn($projector->create(...));
@@ -165,7 +159,7 @@ final class DefaultProjectionistTest extends TestCase
             new Projection($projector->projectionId(), ProjectionStatus::Booting),
             new Projection($projector->projectionId(), ProjectionStatus::Booting, 1),
             new Projection($projector->projectionId(), ProjectionStatus::Active, 1),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
 
         self::assertTrue($projector->created);
         self::assertSame($message, $projector->message);
@@ -205,10 +199,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(
-            2
-        );
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveCreateMethod($projector)->willReturn($projector->create(...));
@@ -227,7 +218,7 @@ final class DefaultProjectionistTest extends TestCase
         self::assertEquals([
             new Projection($projector->projectionId(), ProjectionStatus::Booting),
             new Projection($projector->projectionId(), ProjectionStatus::Booting, 1),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
 
         self::assertTrue($projector->created);
         self::assertSame($message, $projector->message);
@@ -264,10 +255,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(
-            1
-        );
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveCreateMethod($projector)->willReturn($projector->create(...));
@@ -285,7 +273,7 @@ final class DefaultProjectionistTest extends TestCase
         self::assertEquals([
             new Projection($projector->projectionId(), ProjectionStatus::Booting),
             new Projection($projector->projectionId(), ProjectionStatus::Error),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
     }
 
     public function testRunning(): void
@@ -316,10 +304,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(
-            2
-        );
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveHandleMethod($projector, $message)->willReturn($projector->handle(...));
@@ -336,7 +321,7 @@ final class DefaultProjectionistTest extends TestCase
 
         self::assertEquals([
             new Projection($projector->projectionId(), ProjectionStatus::Active, 1),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
 
         self::assertSame($message, $projector->message);
     }
@@ -371,10 +356,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(
-            2
-        );
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveHandleMethod($projector, $message1)->willReturn($projector->handle(...));
@@ -391,7 +373,7 @@ final class DefaultProjectionistTest extends TestCase
 
         self::assertEquals([
             new Projection($projector->projectionId(), ProjectionStatus::Active, 1),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
 
         self::assertSame($message1, $projector->message);
     }
@@ -441,15 +423,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector1, $projector2])->shouldBeCalledOnce();
-
-        $projectorRepository->findByProjectionId($projector1->projectionId())->willReturn($projector1)->shouldBeCalledTimes(
-            2
-        );
-
-        $projectorRepository->findByProjectionId($projector2->projectionId())->willReturn($projector2)->shouldBeCalledTimes(
-            1
-        );
+        $projectorRepository->projectors()->willReturn([$projector1, $projector2])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveHandleMethod($projector1, $message)->willReturn($projector1->handle(...));
@@ -466,7 +440,7 @@ final class DefaultProjectionistTest extends TestCase
 
         self::assertEquals([
             new Projection($projector1->projectionId(), ProjectionStatus::Active, 1),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
 
         self::assertSame($message, $projector1->message);
         self::assertNull($projector2->message);
@@ -498,10 +472,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(
-            2
-        );
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveHandleMethod($projector, $message)->willReturn($projector->handle(...));
@@ -518,7 +489,7 @@ final class DefaultProjectionistTest extends TestCase
 
         self::assertEquals([
             new Projection($projector->projectionId(), ProjectionStatus::Error, 0),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
     }
 
     public function testRunningMarkOutdated(): void
@@ -535,8 +506,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projectorId)->willReturn(null)->shouldBeCalledTimes(1);
+        $projectorRepository->projectors()->willReturn([])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
 
@@ -552,7 +522,7 @@ final class DefaultProjectionistTest extends TestCase
 
         self::assertEquals([
             new Projection($projectorId, ProjectionStatus::Outdated, 0),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
     }
 
     public function testTeardownWithProjector(): void
@@ -577,8 +547,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(StreamableStore::class);
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(1);
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveDropMethod($projector)->willReturn($projector->drop(...));
@@ -593,8 +562,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->teardown();
 
-        self::assertEquals([], $projectionStore->savedStates);
-        self::assertEquals([$projector->projectionId()], $projectionStore->removedIds);
+        self::assertEquals([], $projectionStore->savedProjections);
+        self::assertEquals([$projector->projectionId()], $projectionStore->removedProjectionIds);
         self::assertTrue($projector->dropped);
     }
 
@@ -620,8 +589,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(StreamableStore::class);
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(1);
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveDropMethod($projector)->willReturn($projector->drop(...));
@@ -636,8 +604,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->teardown();
 
-        self::assertEquals([], $projectionStore->savedStates);
-        self::assertEquals([], $projectionStore->removedIds);
+        self::assertEquals([], $projectionStore->savedProjections);
+        self::assertEquals([], $projectionStore->removedProjectionIds);
     }
 
     public function testTeardownWithoutProjector(): void
@@ -649,8 +617,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(StreamableStore::class);
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projectorId)->willReturn(null)->shouldBeCalledTimes(1);
+        $projectorRepository->projectors()->willReturn([])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
 
@@ -664,8 +631,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->teardown();
 
-        self::assertEquals([], $projectionStore->savedStates);
-        self::assertEquals([], $projectionStore->removedIds);
+        self::assertEquals([], $projectionStore->savedProjections);
+        self::assertEquals([], $projectionStore->removedProjectionIds);
     }
 
     public function testRemoveWithProjector(): void
@@ -689,8 +656,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(StreamableStore::class);
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(1);
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveDropMethod($projector)->willReturn($projector->drop(...));
@@ -705,8 +671,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->remove();
 
-        self::assertEquals([], $projectionStore->savedStates);
-        self::assertEquals([$projector->projectionId()], $projectionStore->removedIds);
+        self::assertEquals([], $projectionStore->savedProjections);
+        self::assertEquals([$projector->projectionId()], $projectionStore->removedProjectionIds);
         self::assertTrue($projector->dropped);
     }
 
@@ -724,8 +690,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(StreamableStore::class);
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(1);
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveDropMethod($projector)->willReturn(null);
@@ -740,8 +705,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->remove();
 
-        self::assertEquals([], $projectionStore->savedStates);
-        self::assertEquals([$projector->projectionId()], $projectionStore->removedIds);
+        self::assertEquals([], $projectionStore->savedProjections);
+        self::assertEquals([$projector->projectionId()], $projectionStore->removedProjectionIds);
     }
 
     public function testRemoveWithProjectorAndError(): void
@@ -765,8 +730,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(StreamableStore::class);
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projector->projectionId())->willReturn($projector)->shouldBeCalledTimes(1);
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveDropMethod($projector)->willReturn($projector->drop(...));
@@ -781,8 +745,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->remove();
 
-        self::assertEquals([], $projectionStore->savedStates);
-        self::assertEquals([$projector->projectionId()], $projectionStore->removedIds);
+        self::assertEquals([], $projectionStore->savedProjections);
+        self::assertEquals([$projector->projectionId()], $projectionStore->removedProjectionIds);
     }
 
     public function testRemoveWithoutProjector(): void
@@ -794,8 +758,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(StreamableStore::class);
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([])->shouldBeCalledOnce();
-        $projectorRepository->findByProjectionId($projectorId)->willReturn(null)->shouldBeCalledTimes(1);
+        $projectorRepository->projectors()->willReturn([])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
 
@@ -809,8 +772,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->remove();
 
-        self::assertEquals([], $projectionStore->savedStates);
-        self::assertEquals([$projectorId], $projectionStore->removedIds);
+        self::assertEquals([], $projectionStore->savedProjections);
+        self::assertEquals([$projectorId], $projectionStore->removedProjectionIds);
     }
 
     public function testReactivate(): void
@@ -827,7 +790,7 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(StreamableStore::class);
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
-        $projectorRepository->statefulProjectors()->willReturn([$projector])->shouldBeCalledOnce();
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
 
@@ -843,6 +806,6 @@ final class DefaultProjectionistTest extends TestCase
 
         self::assertEquals([
             new Projection($projector->projectionId(), ProjectionStatus::Active, 0),
-        ], $projectionStore->savedStates);
+        ], $projectionStore->savedProjections);
     }
 }

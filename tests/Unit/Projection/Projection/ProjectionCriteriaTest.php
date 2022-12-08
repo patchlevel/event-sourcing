@@ -11,14 +11,11 @@ use PHPUnit\Framework\TestCase;
 /** @covers \Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria */
 final class ProjectionCriteriaTest extends TestCase
 {
-    public function testProjectorId(): void
+    public function testProjectionId(): void
     {
         $id = new ProjectionId('test', 1);
+        $criteria = new ProjectionCriteria([$id]);
 
-        $projectorId = new ProjectionCriteria(
-            [$id],
-        );
-
-        self::assertEquals([$id], $projectorId->ids);
+        self::assertEquals([$id], $criteria->ids);
     }
 }

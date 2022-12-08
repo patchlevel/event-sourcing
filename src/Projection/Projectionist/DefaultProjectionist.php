@@ -23,6 +23,9 @@ use function sprintf;
 
 final class DefaultProjectionist implements Projectionist
 {
+    /** @var array<string, StatefulProjector>|null */
+    private ?array $projectors = null;
+
     public function __construct(
         private readonly StreamableStore $streamableMessageStore,
         private readonly ProjectionStore $projectorStore,
@@ -40,6 +43,10 @@ final class DefaultProjectionist implements Projectionist
 
         foreach ($projections->filterByProjectionStatus(ProjectionStatus::New) as $projection) {
             $projector = $this->projector($projection->id());
+
+            if (!$projector) {
+                throw new ProjectorNotFound($projection->id());
+            }
 
             $projection->booting();
             $this->projectorStore->save($projection);
@@ -97,7 +104,7 @@ final class DefaultProjectionist implements Projectionist
         $stream = $this->streamableMessageStore->stream($currentPosition);
 
         foreach ($projections as $projection) {
-            $projector = $this->projectorRepository->findByProjectionId($projection->id());
+            $projector = $this->projector($projection->id());
 
             if ($projector) {
                 continue;
@@ -137,7 +144,7 @@ final class DefaultProjectionist implements Projectionist
             ->filterByCriteria($criteria);
 
         foreach ($projections as $projection) {
-            $projector = $this->projectorRepository->findByProjectionId($projection->id());
+            $projector = $this->projector($projection->id());
 
             if (!$projector) {
                 $this->logger?->warning(
@@ -173,7 +180,7 @@ final class DefaultProjectionist implements Projectionist
         $projections = $this->projections()->filterByCriteria($criteria);
 
         foreach ($projections as $projection) {
-            $projector = $this->projectorRepository->findByProjectionId($projection->id());
+            $projector = $this->projector($projection->id());
 
             if (!$projector) {
                 $this->projectorStore->remove($projection->id());
@@ -225,22 +232,27 @@ final class DefaultProjectionist implements Projectionist
 
     public function projections(): ProjectionCollection
     {
-        $projectorsStates = $this->projectorStore->all();
+        $projections = $this->projectorStore->all();
 
-        foreach ($this->projectorRepository->statefulProjectors() as $projector) {
-            if ($projectorsStates->has($projector->projectionId())) {
+        foreach ($this->projectors() as $projector) {
+            if ($projections->has($projector->projectionId())) {
                 continue;
             }
 
-            $projectorsStates = $projectorsStates->add(new Projection($projector->projectionId()));
+            $projections = $projections->add(new Projection($projector->projectionId()));
         }
 
-        return $projectorsStates;
+        return $projections;
     }
 
     private function handleMessage(Message $message, Projection $projection): void
     {
         $projector = $this->projector($projection->id());
+
+        if (!$projector) {
+            throw new ProjectorNotFound($projection->id());
+        }
+
         $handleMethod = $this->resolver->resolveHandleMethod($projector, $message);
 
         if ($handleMethod) {
@@ -262,14 +274,34 @@ final class DefaultProjectionist implements Projectionist
         $this->projectorStore->save($projection);
     }
 
-    private function projector(ProjectionId $projectorId): Projector
+    private function projector(ProjectionId $projectorId): ?Projector
     {
-        $projector = $this->projectorRepository->findByProjectionId($projectorId);
+        $projectors = $this->projectors();
 
-        if (!$projector) {
-            throw new ProjectorNotFound($projectorId);
+        return $projectors[$projectorId->toString()] ?? null;
+    }
+
+    /**
+     * @return array<string, StatefulProjector>
+     */
+    private function projectors(): array
+    {
+        if ($this->projectors === null) {
+            $this->projectors = [];
+
+            foreach ($this->projectorRepository->projectors() as $projector) {
+                if (!$projector instanceof StatefulProjector) {
+                    $this->logger?->debug(
+                        sprintf('projector "%s" is not stateful', $projector::class)
+                    );
+
+                    continue;
+                }
+
+                $this->projectors[$projector->projectionId()->toString()] = $projector;
+            }
         }
 
-        return $projector;
+        return $this->projectors;
     }
 }

@@ -16,7 +16,7 @@ final class ProjectionistReactivateCommand extends ProjectionistCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $criteria = $this->projectorCriteria($input);
+        $criteria = $this->projectionCriteria($input);
         $this->projectionist->reactivate($criteria);
 
         return 0;

@@ -14,7 +14,12 @@ To create a projection you need a projector.
 In this example we always create a new data set in a relational database when a profile is created:
 
 ```php
-use Doctrine\DBAL\Connection;use Patchlevel\EventSourcing\Attribute\Create;use Patchlevel\EventSourcing\Attribute\Drop;use Patchlevel\EventSourcing\Attribute\Handle;use Patchlevel\EventSourcing\EventBus\Message;use Patchlevel\EventSourcing\Projection\Projector\Projector;
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Create;
+use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 final class ProfileProjection implements Projector
 {
@@ -86,9 +91,9 @@ Several projectors can also listen to the same event.
 The projector repository can hold and make available all projectors.
 
 ```php
-use Patchlevel\EventSourcing\Projection\Projector\DefaultProjectorRepository;
+use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 
-$projectorRepository = new DefaultProjectorRepository([
+$projectorRepository = new InMemoryProjectorRepository([
     new ProfileProjection($connection)
 ]);
 ```

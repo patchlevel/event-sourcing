@@ -15,93 +15,90 @@ final class ProjectionTest extends TestCase
     public function testCreate(): void
     {
         $id = new ProjectionId('test', 1);
+        $projection = new Projection($id);
 
-        $state = new Projection(
-            $id
-        );
-
-        self::assertSame($id, $state->id());
-        self::assertEquals(ProjectionStatus::New, $state->status());
-        self::assertEquals(0, $state->position());
-        self::assertTrue($state->isNew());
-        self::assertFalse($state->isBooting());
-        self::assertFalse($state->isActive());
-        self::assertFalse($state->isError());
-        self::assertFalse($state->isOutdated());
+        self::assertSame($id, $projection->id());
+        self::assertEquals(ProjectionStatus::New, $projection->status());
+        self::assertEquals(0, $projection->position());
+        self::assertTrue($projection->isNew());
+        self::assertFalse($projection->isBooting());
+        self::assertFalse($projection->isActive());
+        self::assertFalse($projection->isError());
+        self::assertFalse($projection->isOutdated());
     }
 
     public function testBooting(): void
     {
-        $state = new Projection(
+        $projection = new Projection(
             new ProjectionId('test', 1)
         );
 
-        $state->booting();
+        $projection->booting();
 
-        self::assertEquals(ProjectionStatus::Booting, $state->status());
-        self::assertFalse($state->isNew());
-        self::assertTrue($state->isBooting());
-        self::assertFalse($state->isActive());
-        self::assertFalse($state->isError());
-        self::assertFalse($state->isOutdated());
+        self::assertEquals(ProjectionStatus::Booting, $projection->status());
+        self::assertFalse($projection->isNew());
+        self::assertTrue($projection->isBooting());
+        self::assertFalse($projection->isActive());
+        self::assertFalse($projection->isError());
+        self::assertFalse($projection->isOutdated());
     }
 
     public function testActive(): void
     {
-        $state = new Projection(
+        $projection = new Projection(
             new ProjectionId('test', 1)
         );
 
-        $state->active();
+        $projection->active();
 
-        self::assertEquals(ProjectionStatus::Active, $state->status());
-        self::assertFalse($state->isNew());
-        self::assertFalse($state->isBooting());
-        self::assertTrue($state->isActive());
-        self::assertFalse($state->isError());
-        self::assertFalse($state->isOutdated());
+        self::assertEquals(ProjectionStatus::Active, $projection->status());
+        self::assertFalse($projection->isNew());
+        self::assertFalse($projection->isBooting());
+        self::assertTrue($projection->isActive());
+        self::assertFalse($projection->isError());
+        self::assertFalse($projection->isOutdated());
     }
 
     public function testError(): void
     {
-        $state = new Projection(
+        $projection = new Projection(
             new ProjectionId('test', 1)
         );
 
-        $state->error();
+        $projection->error();
 
-        self::assertEquals(ProjectionStatus::Error, $state->status());
-        self::assertFalse($state->isNew());
-        self::assertFalse($state->isBooting());
-        self::assertFalse($state->isActive());
-        self::assertTrue($state->isError());
-        self::assertFalse($state->isOutdated());
+        self::assertEquals(ProjectionStatus::Error, $projection->status());
+        self::assertFalse($projection->isNew());
+        self::assertFalse($projection->isBooting());
+        self::assertFalse($projection->isActive());
+        self::assertTrue($projection->isError());
+        self::assertFalse($projection->isOutdated());
     }
 
     public function testOutdated(): void
     {
-        $state = new Projection(
+        $projection = new Projection(
             new ProjectionId('test', 1)
         );
 
-        $state->outdated();
+        $projection->outdated();
 
-        self::assertEquals(ProjectionStatus::Outdated, $state->status());
-        self::assertFalse($state->isNew());
-        self::assertFalse($state->isBooting());
-        self::assertFalse($state->isActive());
-        self::assertFalse($state->isError());
-        self::assertTrue($state->isOutdated());
+        self::assertEquals(ProjectionStatus::Outdated, $projection->status());
+        self::assertFalse($projection->isNew());
+        self::assertFalse($projection->isBooting());
+        self::assertFalse($projection->isActive());
+        self::assertFalse($projection->isError());
+        self::assertTrue($projection->isOutdated());
     }
 
     public function testIncrementPosition(): void
     {
-        $state = new Projection(
+        $projection = new Projection(
             new ProjectionId('test', 1)
         );
 
-        $state->incrementPosition();
+        $projection->incrementPosition();
 
-        self::assertEquals(1, $state->position());
+        self::assertEquals(1, $projection->position());
     }
 }

@@ -8,8 +8,8 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -21,7 +21,7 @@ final class MetadataProjectorResolverTest extends TestCase
 {
     public function testResolveHandleMethod(): void
     {
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
             public static ?Message $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]
@@ -50,7 +50,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveHandleMethod(): void
     {
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
         };
 
         $message = new Message(
@@ -67,7 +67,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testResolveCreateMethod(): void
     {
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
             public static bool $called = false;
 
             #[Create]
@@ -89,7 +89,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveCreateMethod(): void
     {
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
         };
 
         $resolver = new MetadataProjectorResolver();
@@ -100,7 +100,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testResolveDropMethod(): void
     {
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
             public static bool $called = false;
 
             #[Drop]
@@ -122,7 +122,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveDropMethod(): void
     {
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
         };
 
         $resolver = new MetadataProjectorResolver();

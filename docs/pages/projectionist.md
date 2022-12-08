@@ -25,8 +25,8 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\StatefulProjector;
 use Patchlevel\EventSourcing\Projection\ProjectionId;
+use Patchlevel\EventSourcing\Projectionist\StatefulProjector;
 
 final class ProfileProjection implements StatefulProjector
 {

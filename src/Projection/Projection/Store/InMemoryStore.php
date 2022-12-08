@@ -15,12 +15,12 @@ use function array_values;
 final class InMemoryStore implements ProjectionStore
 {
     /** @var array<string, Projection> */
-    private array $store = [];
+    private array $projections = [];
 
     public function get(ProjectionId $projectionId): Projection
     {
-        if (array_key_exists($projectionId->toString(), $this->store)) {
-            return $this->store[$projectionId->toString()];
+        if (array_key_exists($projectionId->toString(), $this->projections)) {
+            return $this->projections[$projectionId->toString()];
         }
 
         throw new ProjectionNotFound($projectionId);
@@ -28,20 +28,20 @@ final class InMemoryStore implements ProjectionStore
 
     public function all(): ProjectionCollection
     {
-        return new ProjectionCollection(array_values($this->store));
+        return new ProjectionCollection(array_values($this->projections));
     }
 
     public function save(Projection ...$projections): void
     {
-        foreach ($projections as $state) {
-            $this->store[$state->id()->toString()] = $state;
+        foreach ($projections as $projection) {
+            $this->projections[$projection->id()->toString()] = $projection;
         }
     }
 
     public function remove(ProjectionId ...$projectionIds): void
     {
         foreach ($projectionIds as $projectionId) {
-            unset($this->store[$projectionId->toString()]);
+            unset($this->projections[$projectionId->toString()]);
         }
     }
 }
