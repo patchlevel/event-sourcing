@@ -11,13 +11,13 @@ use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projectionist\StatefulProjector;
+use Patchlevel\EventSourcing\Projection\Projectionist\VersionedProjector;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
 use function assert;
 use function sprintf;
 
-final class ProfileProjection implements StatefulProjector
+final class ProfileProjection implements VersionedProjector
 {
     private Connection $connection;
 
@@ -63,12 +63,12 @@ final class ProfileProjection implements StatefulProjector
     {
         return sprintf(
             'projection_%s_%s',
-            $this->projectionId()->name(),
-            $this->projectionId()->version()
+            $this->targetProjection()->name(),
+            $this->targetProjection()->version()
         );
     }
 
-    public function projectionId(): ProjectionId
+    public function targetProjection(): ProjectionId
     {
         return new ProjectionId('profile', 1);
     }

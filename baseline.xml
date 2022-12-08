@@ -397,21 +397,21 @@
   </file>
   <file src="tests/Unit/Projection/Projectionist/DefaultProjectionistTest.php">
     <DeprecatedInterface occurrences="15">
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
-      <code>class implements StatefulProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
     </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Projection/Projector/InMemoryProjectorRepositoryTest.php">

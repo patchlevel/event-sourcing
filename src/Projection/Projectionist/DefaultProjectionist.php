@@ -23,7 +23,7 @@ use function sprintf;
 
 final class DefaultProjectionist implements Projectionist
 {
-    /** @var array<string, StatefulProjector>|null */
+    /** @var array<string, VersionedProjector>|null */
     private ?array $projectors = null;
 
     public function __construct(
@@ -235,11 +235,11 @@ final class DefaultProjectionist implements Projectionist
         $projections = $this->projectorStore->all();
 
         foreach ($this->projectors() as $projector) {
-            if ($projections->has($projector->projectionId())) {
+            if ($projections->has($projector->targetProjection())) {
                 continue;
             }
 
-            $projections = $projections->add(new Projection($projector->projectionId()));
+            $projections = $projections->add(new Projection($projector->targetProjection()));
         }
 
         return $projections;
@@ -282,7 +282,7 @@ final class DefaultProjectionist implements Projectionist
     }
 
     /**
-     * @return array<string, StatefulProjector>
+     * @return array<string, VersionedProjector>
      */
     private function projectors(): array
     {
@@ -290,7 +290,7 @@ final class DefaultProjectionist implements Projectionist
             $this->projectors = [];
 
             foreach ($this->projectorRepository->projectors() as $projector) {
-                if (!$projector instanceof StatefulProjector) {
+                if (!$projector instanceof VersionedProjector) {
                     $this->logger?->debug(
                         sprintf('projector "%s" is not stateful', $projector::class)
                     );
@@ -298,7 +298,7 @@ final class DefaultProjectionist implements Projectionist
                     continue;
                 }
 
-                $this->projectors[$projector->projectionId()->toString()] = $projector;
+                $this->projectors[$projector->targetProjection()->toString()] = $projector;
             }
         }
 
