@@ -34,7 +34,7 @@ abstract class ProjectionistCommand extends Command
             ->addOption(
                 'id',
                 null,
-                InputOption::VALUE_IS_ARRAY,
+                InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
                 'filter by projection id'
             );
     }
