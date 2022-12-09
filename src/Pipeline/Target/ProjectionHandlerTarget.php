@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 
 /**
- * @deprecated ProjectorRepositoryTarget
+ * @deprecated use ProjectorRepositoryTarget instead
  */
 final class ProjectionHandlerTarget implements Target
 {
