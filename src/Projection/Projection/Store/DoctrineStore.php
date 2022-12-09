@@ -43,7 +43,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         }
 
         return new Projection(
-            new ProjectionId($result['name'], $result['version']),
+            $projectionId,
             ProjectionStatus::from($result['status']),
             $result['position']
         );
@@ -79,8 +79,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             function (Connection $connection) use ($projections): void {
                 foreach ($projections as $projection) {
                     try {
-                        $this->get($projection->id());
-                        $connection->update(
+                        $effectedRows = (int)$connection->update(
                             $this->projectionTable,
                             [
                                 'position' => $projection->position(),
@@ -91,6 +90,10 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'version' => $projection->id()->version(),
                             ]
                         );
+
+                        if ($effectedRows === 0) {
+                            $this->get($projection->id()); // check if projection exists, otherwise throw ProjectionNotFound
+                        }
                     } catch (ProjectionNotFound) {
                         $connection->insert(
                             $this->projectionTable,

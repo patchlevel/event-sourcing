@@ -130,6 +130,8 @@ stateDiagram-v2
     Active --> Error
     Error --> Active
     Error --> New
+    Outdated --> Active
+    Outdated --> New
 ```
 
 ### New
@@ -158,6 +160,14 @@ This happens when either the projector has been deleted
 or the projection id of a projector has changed.
 In the last case there is a new projection.
 
+An outdated projection does not automatically become active again when the projection id exists again. 
+This happens, for example, when an old version was deployed again during a rollback.
+
+There are two options here:
+
+* Reactivate the projection.
+* Remove the projection and rebuild it from scratch.
+
 ### Error
 
 If an error occurs in a projector, then the target projection is set to Error. 
@@ -165,7 +175,7 @@ This projection will then no longer run until the projection is activated again.
 There are two options here:
 
 * Reactivate the projection.
-* Remove the projection and rebuild it.
+* Remove the projection and rebuild it from scratch.
 
 ## Setup
 

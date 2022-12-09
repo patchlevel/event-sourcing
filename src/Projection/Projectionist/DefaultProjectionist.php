@@ -28,9 +28,9 @@ final class DefaultProjectionist implements Projectionist
 
     public function __construct(
         private readonly StreamableStore $streamableMessageStore,
-        private readonly ProjectionStore $projectorStore,
+        private readonly ProjectionStore $projectionStore,
         private readonly ProjectorRepository $projectorRepository,
-        private readonly ProjectorResolver $resolver = new MetadataProjectorResolver(),
+        private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
         private readonly ?LoggerInterface $logger = null
     ) {
     }
@@ -49,9 +49,9 @@ final class DefaultProjectionist implements Projectionist
             }
 
             $projection->booting();
-            $this->projectorStore->save($projection);
+            $this->projectionStore->save($projection);
 
-            $createMethod = $this->resolver->resolveCreateMethod($projector);
+            $createMethod = $this->projectorResolver->resolveCreateMethod($projector);
 
             if (!$createMethod) {
                 continue;
@@ -64,7 +64,7 @@ final class DefaultProjectionist implements Projectionist
                 $this->logger?->error(sprintf('preparing error in "%s"', $projection->id()->toString()));
                 $this->logger?->error($e->getMessage());
                 $projection->error();
-                $this->projectorStore->save($projection);
+                $this->projectionStore->save($projection);
             }
         }
 
@@ -90,7 +90,7 @@ final class DefaultProjectionist implements Projectionist
 
         foreach ($projections->filterByProjectionStatus(ProjectionStatus::Booting) as $projection) {
             $projection->active();
-            $this->projectorStore->save($projection);
+            $this->projectionStore->save($projection);
         }
     }
 
@@ -100,9 +100,6 @@ final class DefaultProjectionist implements Projectionist
             ->filterByProjectionStatus(ProjectionStatus::Active)
             ->filterByCriteria($criteria);
 
-        $currentPosition = $projections->getLowestProjectionPosition();
-        $stream = $this->streamableMessageStore->stream($currentPosition);
-
         foreach ($projections as $projection) {
             $projector = $this->projector($projection->id());
 
@@ -111,8 +108,13 @@ final class DefaultProjectionist implements Projectionist
             }
 
             $projection->outdated();
-            $this->projectorStore->save($projection);
+            $this->projectionStore->save($projection);
         }
+
+        $projections = $projections->filterByProjectionStatus(ProjectionStatus::Active);
+
+        $currentPosition = $projections->getLowestProjectionPosition();
+        $stream = $this->streamableMessageStore->stream($currentPosition);
 
         $messageCounter = 0;
 
@@ -154,7 +156,7 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            $dropMethod = $this->resolver->resolveDropMethod($projector);
+            $dropMethod = $this->projectorResolver->resolveDropMethod($projector);
 
             if ($dropMethod) {
                 try {
@@ -171,7 +173,7 @@ final class DefaultProjectionist implements Projectionist
                 }
             }
 
-            $this->projectorStore->remove($projection->id());
+            $this->projectionStore->remove($projection->id());
         }
     }
 
@@ -183,15 +185,15 @@ final class DefaultProjectionist implements Projectionist
             $projector = $this->projector($projection->id());
 
             if (!$projector) {
-                $this->projectorStore->remove($projection->id());
+                $this->projectionStore->remove($projection->id());
 
                 continue;
             }
 
-            $dropMethod = $this->resolver->resolveDropMethod($projector);
+            $dropMethod = $this->projectorResolver->resolveDropMethod($projector);
 
             if (!$dropMethod) {
-                $this->projectorStore->remove($projection->id());
+                $this->projectionStore->remove($projection->id());
 
                 continue;
             }
@@ -211,7 +213,7 @@ final class DefaultProjectionist implements Projectionist
                 $this->logger?->error($e->getMessage());
             }
 
-            $this->projectorStore->remove($projection->id());
+            $this->projectionStore->remove($projection->id());
         }
     }
 
@@ -224,7 +226,7 @@ final class DefaultProjectionist implements Projectionist
 
         foreach ($projections as $projection) {
             $projection->active();
-            $this->projectorStore->save($projection);
+            $this->projectionStore->save($projection);
 
             $this->logger?->info(sprintf('projector "%s" is reactivated', $projection->id()->toString()));
         }
@@ -232,7 +234,7 @@ final class DefaultProjectionist implements Projectionist
 
     public function projections(): ProjectionCollection
     {
-        $projections = $this->projectorStore->all();
+        $projections = $this->projectionStore->all();
 
         foreach ($this->projectors() as $projector) {
             if ($projections->has($projector->targetProjection())) {
@@ -253,7 +255,7 @@ final class DefaultProjectionist implements Projectionist
             throw new ProjectorNotFound($projection->id());
         }
 
-        $handleMethod = $this->resolver->resolveHandleMethod($projector, $message);
+        $handleMethod = $this->projectorResolver->resolveHandleMethod($projector, $message);
 
         if ($handleMethod) {
             try {
@@ -264,14 +266,14 @@ final class DefaultProjectionist implements Projectionist
                 );
                 $this->logger?->error($e->getMessage());
                 $projection->error();
-                $this->projectorStore->save($projection);
+                $this->projectionStore->save($projection);
 
                 return;
             }
         }
 
         $projection->incrementPosition();
-        $this->projectorStore->save($projection);
+        $this->projectionStore->save($projection);
     }
 
     private function projector(ProjectionId $projectorId): ?Projector
