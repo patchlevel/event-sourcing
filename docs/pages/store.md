@@ -132,7 +132,7 @@ $store->transactional(function () use ($command, $bankAccountRepository) {
     or that the listeners are not executed if the transaction fails, 
     you can use the [outbox](outbox.md) pattern for it.
 
-## Schema Manager
+## Schema
 
 With the help of the `SchemaDirector`, the database structure can be created, updated and deleted.
 
@@ -146,10 +146,9 @@ With the help of the `SchemaDirector`, the database structure can be created, up
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
 $schemaDirector = new DoctrineSchemaDirector(
-    $store,
-    $connection
+    $connection,
+    $store
 );
-
 ```
 
 ### Create schema

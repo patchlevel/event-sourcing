@@ -4,59 +4,61 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
-use Patchlevel\EventSourcing\Projection\ProjectorId;
-use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorState;
-use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateCollection;
-use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStateNotFound;
-use Patchlevel\EventSourcing\Projection\ProjectorStore\ProjectorStore;
+use Patchlevel\EventSourcing\Projection\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
+use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 
 use function array_key_exists;
 use function array_values;
 
-final class DummyStore implements ProjectorStore
+final class DummyStore implements ProjectionStore
 {
-    /** @var array<string, ProjectorState> */
-    private array $store = [];
-    /** @var list<ProjectorState> */
-    public array $savedStates = [];
-    /** @var list<ProjectorId> */
-    public array $removedIds = [];
+    /** @var array<string, Projection> */
+    private array $projections = [];
+    /** @var list<Projection> */
+    public array $savedProjections = [];
+    /** @var list<ProjectionId> */
+    public array $removedProjectionIds = [];
 
     /**
-     * @param list<ProjectorState> $store
+     * @param list<Projection> $projections
      */
-    public function __construct(array $store = [])
+    public function __construct(array $projections = [])
     {
-        foreach ($store as $state) {
-            $this->store[$state->id()->toString()] = $state;
+        foreach ($projections as $projection) {
+            $this->projections[$projection->id()->toString()] = $projection;
         }
     }
 
-    public function getProjectorState(ProjectorId $projectorId): ProjectorState
+    public function get(ProjectionId $projectionId): Projection
     {
-        if (array_key_exists($projectorId->toString(), $this->store)) {
-            return $this->store[$projectorId->toString()];
+        if (array_key_exists($projectionId->toString(), $this->projections)) {
+            return $this->projections[$projectionId->toString()];
         }
 
-        throw new ProjectorStateNotFound($projectorId);
+        throw new ProjectionNotFound($projectionId);
     }
 
-    public function getStateFromAllProjectors(): ProjectorStateCollection
+    public function all(): ProjectionCollection
     {
-        return new ProjectorStateCollection(array_values($this->store));
+        return new ProjectionCollection(array_values($this->projections));
     }
 
-    public function saveProjectorState(ProjectorState ...$projectorStates): void
+    public function save(Projection ...$projections): void
     {
-        foreach ($projectorStates as $state) {
-            $this->store[$state->id()->toString()] = $state;
-            $this->savedStates[] = clone $state;
+        foreach ($projections as $projection) {
+            $this->projections[$projection->id()->toString()] = $projection;
+            $this->savedProjections[] = clone $projection;
         }
     }
 
-    public function removeProjectorState(ProjectorId $projectorId): void
+    public function remove(ProjectionId ...$projectionIds): void
     {
-        $this->removedIds[] = $projectorId;
-        unset($this->store[$projectorId->toString()]);
+        foreach ($projectionIds as $projectionId) {
+            $this->removedProjectionIds[] = $projectionId;
+            unset($this->projections[$projectionId->toString()]);
+        }
     }
 }

@@ -9,6 +9,9 @@ use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
 use Patchlevel\EventSourcing\Projection\Projection;
 
+/**
+ * @deprecated use ProjectorTarget instead
+ */
 final class ProjectionTarget implements Target
 {
     private MetadataAwareProjectionHandler $projectionHandler;

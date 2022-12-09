@@ -37,6 +37,21 @@ The creation, deletion and rebuilding of the projections is also possible via th
 
     The [pipeline](./pipeline.md) will be used to rebuild the projection.
 
+## Projectionist commands
+
+To manage your projectors there are the following cli commands.
+
+* ProjectionistBootCommand: `event-sourcing:projectionist:boot`
+* ProjectionistReactiveCommand: `event-sourcing:projectionist:reactive`
+* ProjectionistRemoveCommand: `event-sourcing:projectionist:remove`
+* ProjectionistRunCommand: `event-sourcing:projectionist:run`
+* ProjectionistStatusCommand: `event-sourcing:projectionist:status`
+* ProjectionistTeardownCommand: `event-sourcing:projectionist:teardown`
+
+!!! note
+
+    You can find out more about projectionist [here](projectionist.md).
+
 ## Outbox commands
 
 Interacting with the outbox store is also possible via the cli.

@@ -10,10 +10,10 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 
-final class ProfileProjection implements Projection
+final class ProfileProjection implements Projector
 {
     private Connection $connection;
 

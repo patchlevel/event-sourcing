@@ -12,8 +12,8 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Projection\DefaultProjectorRepository;
-use Patchlevel\EventSourcing\Projection\SyncProjectorListener;
+use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
+use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -49,7 +49,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectorRepository = new DefaultProjectorRepository(
+        $projectorRepository = new InMemoryProjectorRepository(
             [$profileProjection]
         );
 
@@ -111,7 +111,7 @@ final class BasicIntegrationTest extends TestCase
     public function testWithSymfonySuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectorRepository = new DefaultProjectorRepository(
+        $projectorRepository = new InMemoryProjectorRepository(
             [$profileProjection]
         );
 
@@ -175,7 +175,7 @@ final class BasicIntegrationTest extends TestCase
     public function testMultiTableSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectorRepository = new DefaultProjectorRepository(
+        $projectorRepository = new InMemoryProjectorRepository(
             [$profileProjection]
         );
 
@@ -236,7 +236,7 @@ final class BasicIntegrationTest extends TestCase
     public function testSnapshot(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectorRepository = new DefaultProjectorRepository(
+        $projectorRepository = new InMemoryProjectorRepository(
             [$profileProjection]
         );
 

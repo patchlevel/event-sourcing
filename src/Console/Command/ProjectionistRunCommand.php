@@ -27,6 +27,8 @@ final class ProjectionistRunCommand extends ProjectionistCommand
 {
     protected function configure(): void
     {
+        parent::configure();
+
         $this
             ->addOption(
                 'run-limit',
@@ -69,7 +71,7 @@ final class ProjectionistRunCommand extends ProjectionistCommand
         $memoryLimit = InputHelper::nullableString($input->getOption('memory-limit'));
         $timeLimit = InputHelper::nullableInt($input->getOption('time-limit'));
         $sleep = InputHelper::int($input->getOption('sleep'));
-        $criteria = $this->projectorCriteria();
+        $criteria = $this->projectionCriteria($input);
 
         $logger = new ConsoleLogger($output);
 

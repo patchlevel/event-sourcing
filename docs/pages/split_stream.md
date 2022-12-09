@@ -31,11 +31,11 @@ final class MonthPassed
 }
 ```
 
-!!! note
-
-    This archive flag only impacts the Store::load method which is used the build the aggregate from the stream.
-
 !!! warning
 
     The event needs all data which is relevant the aggregate to be used since all past event will not be loaded! Keep 
     this in mind if you want to use this feature.
+
+!!! note
+
+    This archive flag only impacts the Store::load method which is used the build the aggregate from the stream.

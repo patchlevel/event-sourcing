@@ -24,8 +24,9 @@
     </DeprecatedClass>
   </file>
   <file src="src/Console/Command/ProjectionRebuildCommand.php">
-    <DeprecatedClass occurrences="1">
+    <DeprecatedClass occurrences="2">
       <code>ProjectionHandler</code>
+      <code>new ProjectionHandlerTarget($projectionHandler)</code>
     </DeprecatedClass>
   </file>
   <file src="src/Console/Command/ProjectionistRunCommand.php">
@@ -130,20 +131,20 @@
       <code>MetadataAwareProjectionHandler</code>
     </DeprecatedInterface>
   </file>
-  <file src="src/Projection/MetadataProjectorResolver.php">
-    <DeprecatedClass occurrences="3">
-      <code>Projection</code>
-      <code>Projection</code>
-      <code>Projection</code>
-    </DeprecatedClass>
-  </file>
   <file src="src/Projection/ProjectionListener.php">
     <DeprecatedClass occurrences="2">
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
     </DeprecatedClass>
   </file>
-  <file src="src/Projection/ProjectorResolver.php">
+  <file src="src/Projection/Projector/MetadataProjectorResolver.php">
+    <DeprecatedClass occurrences="3">
+      <code>Projection</code>
+      <code>Projection</code>
+      <code>Projection</code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Projection/Projector/ProjectorResolver.php">
     <DeprecatedClass occurrences="3">
       <code>Projection</code>
       <code>Projection</code>
@@ -264,6 +265,10 @@
     <DeprecatedInterface occurrences="1">
       <code>BankAccountProjection</code>
     </DeprecatedInterface>
+    <MixedMethodCall occurrences="2">
+      <code>toString</code>
+      <code>toString</code>
+    </MixedMethodCall>
   </file>
   <file src="tests/Integration/BasicImplementation/Projection/ProfileProjection.php">
     <DeprecatedInterface occurrences="1">
@@ -279,6 +284,9 @@
     <DeprecatedInterface occurrences="1">
       <code>ProfileProjection</code>
     </DeprecatedInterface>
+    <MixedMethodCall occurrences="1">
+      <code>toString</code>
+    </MixedMethodCall>
   </file>
   <file src="tests/Integration/Projectionist/Projection/ProfileProjection.php">
     <DeprecatedInterface occurrences="1">
@@ -348,11 +356,15 @@
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Pipeline/Target/ProjectionHandlerTargetTest.php">
-    <DeprecatedClass occurrences="1">
+    <DeprecatedClass occurrences="2">
       <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
+      <code>new ProjectionHandlerTarget($projectionHandler-&gt;reveal())</code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Pipeline/Target/ProjectionTargetTest.php">
+    <DeprecatedClass occurrences="1">
+      <code>new ProjectionTarget($projection)</code>
+    </DeprecatedClass>
     <DeprecatedInterface occurrences="1">
       <code>class implements Projection {</code>
     </DeprecatedInterface>
@@ -361,25 +373,6 @@
     <DeprecatedClass occurrences="1">
       <code>$this-&gt;prophesize(PipelineStore::class)</code>
     </DeprecatedClass>
-  </file>
-  <file src="tests/Unit/Projection/DefaultProjectionistTest.php">
-    <DeprecatedInterface occurrences="9">
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-    </DeprecatedInterface>
-  </file>
-  <file src="tests/Unit/Projection/DefaultProjectorRepositoryTest.php">
-    <DeprecatedInterface occurrences="2">
-      <code>class implements Projector {</code>
-      <code>class implements Projector {</code>
-    </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Projection/MetadataAwareProjectionHandlerTest.php">
     <DeprecatedClass occurrences="5">
@@ -396,25 +389,38 @@
       <code>class implements Projection {</code>
     </DeprecatedInterface>
   </file>
-  <file src="tests/Unit/Projection/MetadataProjectorResolverTest.php">
-    <DeprecatedInterface occurrences="6">
-      <code>class implements Projection {</code>
-      <code>class implements Projection {</code>
-      <code>class implements Projection {</code>
-      <code>class implements Projection {</code>
-      <code>class implements Projection {</code>
-      <code>class implements Projection {</code>
-    </DeprecatedInterface>
-  </file>
   <file src="tests/Unit/Projection/ProjectionListenerTest.php">
     <DeprecatedClass occurrences="2">
       <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
       <code>new ProjectionListener($projectionRepository-&gt;reveal())</code>
     </DeprecatedClass>
   </file>
-  <file src="tests/Unit/Projection/ProjectorHelperTest.php">
-    <DeprecatedInterface occurrences="7">
+  <file src="tests/Unit/Projection/Projectionist/DefaultProjectionistTest.php">
+    <DeprecatedInterface occurrences="15">
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+      <code>class implements VersionedProjector {</code>
+    </DeprecatedInterface>
+  </file>
+  <file src="tests/Unit/Projection/Projector/InMemoryProjectorRepositoryTest.php">
+    <DeprecatedInterface occurrences="1">
       <code>class implements Projector {</code>
+    </DeprecatedInterface>
+  </file>
+  <file src="tests/Unit/Projection/Projector/MetadataProjectorResolverTest.php">
+    <DeprecatedInterface occurrences="6">
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
@@ -423,7 +429,15 @@
       <code>class implements Projector {</code>
     </DeprecatedInterface>
   </file>
-  <file src="tests/Unit/Projection/SyncProjectorListenerTest.php">
+  <file src="tests/Unit/Projection/Projector/ProjectorHelperTest.php">
+    <DeprecatedInterface occurrences="4">
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
+      <code>class implements Projector {</code>
+    </DeprecatedInterface>
+  </file>
+  <file src="tests/Unit/Projection/Projector/SyncProjectorListenerTest.php">
     <DeprecatedInterface occurrences="2">
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>

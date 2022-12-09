@@ -9,8 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector;
-use Patchlevel\EventSourcing\Projection\ProjectorId;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 
 use function assert;
@@ -22,11 +21,6 @@ final class ProfileProjector implements Projector
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-    }
-
-    public function projectorId(): ProjectorId
-    {
-        return new ProjectorId('profile', 1);
     }
 
     #[Create]

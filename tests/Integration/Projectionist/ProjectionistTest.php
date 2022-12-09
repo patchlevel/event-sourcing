@@ -8,9 +8,9 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Projection\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\DefaultProjectorRepository;
-use Patchlevel\EventSourcing\Projection\ProjectorStore\DoctrineStore;
+use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
+use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -47,7 +47,7 @@ final class ProjectionistTest extends TestCase
             'eventstore'
         );
 
-        $projectorStore = new DoctrineStore($this->connection);
+        $projectionStore = new DoctrineStore($this->connection);
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -61,7 +61,7 @@ final class ProjectionistTest extends TestCase
             $this->connection,
             new ChainSchemaConfigurator([
                 $store,
-                $projectorStore,
+                $projectionStore,
             ])
         );
 
@@ -72,8 +72,8 @@ final class ProjectionistTest extends TestCase
 
         $projectionist = new DefaultProjectionist(
             $store,
-            $projectorStore,
-            new DefaultProjectorRepository(
+            $projectionStore,
+            new InMemoryProjectorRepository(
                 [new ProfileProjection($this->connection)]
             ),
         );
