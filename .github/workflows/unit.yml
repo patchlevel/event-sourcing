@@ -22,15 +22,16 @@ jobs:
                     - "highest"
                 php-version:
                     - "8.1"
+                    - "8.2"
                 operating-system:
                     - "ubuntu-latest"
                     - "windows-latest"
                 include:
                     - dependencies: "locked"
-                      php-version: "8.1"
+                      php-version: "8.2"
                       operating-system: "ubuntu-latest"
                     - dependencies: "locked"
-                      php-version: "8.1"
+                      php-version: "8.2"
                       operating-system: "windows-latest"
 
         steps:
