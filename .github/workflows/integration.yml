@@ -33,7 +33,7 @@ jobs:
                 dependencies:
                     - "locked"
                 php-version:
-                    - "8.1"
+                    - "8.2"
                 operating-system:
                     - "ubuntu-latest"
                 postgres-version:
@@ -88,7 +88,7 @@ jobs:
           dependencies:
             - "locked"
           php-version:
-            - "8.1"
+            - "8.2"
           operating-system:
             - "ubuntu-latest"
           mariadb-version:
@@ -141,7 +141,7 @@ jobs:
           dependencies:
             - "locked"
           php-version:
-            - "8.1"
+            - "8.2"
           operating-system:
             - "ubuntu-latest"
           mysql-version:
@@ -180,7 +180,7 @@ jobs:
           dependencies:
             - "locked"
           php-version:
-            - "8.1"
+            - "8.2"
           operating-system:
             - "ubuntu-latest"
 
