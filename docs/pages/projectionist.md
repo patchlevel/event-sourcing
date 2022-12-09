@@ -123,15 +123,17 @@ This cycle is tracked by the projectionist.
 
 ``` mermaid
 stateDiagram-v2
+    direction LR
+    [*] --> New
     New --> Booting
     Booting --> Active
     Booting --> Error
     Active --> Outdated
     Active --> Error
     Error --> Active
-    Error --> New
+    Error --> [*]
     Outdated --> Active
-    Outdated --> New
+    Outdated --> [*]
 ```
 
 ### New
