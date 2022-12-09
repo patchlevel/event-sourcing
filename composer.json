@@ -30,7 +30,7 @@
     "symfony/finder": "^4.4.34|^5.4.0|^6.0.1"
   },
   "require-dev": {
-    "ext-pdo_sqlite": "~8.1.0",
+    "ext-pdo_sqlite": "~8.1.0 || ~8.2.0",
     "cspray/phinal": "^1.0",
     "doctrine/migrations": "^3.3.2",
     "doctrine/orm": "^2.0.0",
