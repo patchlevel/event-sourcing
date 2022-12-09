@@ -67,7 +67,7 @@ final class ProjectionCollection implements Countable, IteratorAggregate
         );
     }
 
-    public function minProjectionPosition(): int
+    public function getLowestProjectionPosition(): int
     {
         $min = null;
 

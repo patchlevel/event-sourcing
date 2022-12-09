@@ -68,7 +68,7 @@ final class DefaultProjectionist implements Projectionist
             }
         }
 
-        $currentPosition = $projections->minProjectionPosition();
+        $currentPosition = $projections->getLowestProjectionPosition();
         $stream = $this->streamableMessageStore->stream($currentPosition);
 
         $messageCounter = 0;
@@ -100,7 +100,7 @@ final class DefaultProjectionist implements Projectionist
             ->filterByProjectionStatus(ProjectionStatus::Active)
             ->filterByCriteria($criteria);
 
-        $currentPosition = $projections->minProjectionPosition();
+        $currentPosition = $projections->getLowestProjectionPosition();
         $stream = $this->streamableMessageStore->stream($currentPosition);
 
         foreach ($projections as $projection) {

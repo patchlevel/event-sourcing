@@ -73,7 +73,7 @@ final class ProjectionCollectionTest extends TestCase
             ->add(new Projection($id));
     }
 
-    public function testMinProjectionPosition(): void
+    public function testLowestProjectionPosition(): void
     {
         $collection = new ProjectionCollection([
             new Projection(
@@ -93,14 +93,14 @@ final class ProjectionCollectionTest extends TestCase
             ),
         ]);
 
-        self::assertSame(5, $collection->minProjectionPosition());
+        self::assertSame(5, $collection->getLowestProjectionPosition());
     }
 
-    public function testMinProjectionPositionWithEmptyCollection(): void
+    public function testLowestProjectionPositionWithEmptyCollection(): void
     {
         $collection = new ProjectionCollection();
 
-        self::assertSame(0, $collection->minProjectionPosition());
+        self::assertSame(0, $collection->getLowestProjectionPosition());
     }
 
     public function testFilter(): void
