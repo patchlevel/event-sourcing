@@ -68,6 +68,14 @@ final class DefaultProjectionist implements Projectionist
             }
         }
 
+        $projections = $projections->filterByProjectionStatus(ProjectionStatus::Booting);
+
+        if ($projections->count() === 0) {
+            $this->logger?->info('no projections to process');
+
+            return;
+        }
+
         $currentPosition = $projections->getLowestProjectionPosition();
         $stream = $this->streamableMessageStore->stream($currentPosition);
 
@@ -112,6 +120,12 @@ final class DefaultProjectionist implements Projectionist
         }
 
         $projections = $projections->filterByProjectionStatus(ProjectionStatus::Active);
+
+        if ($projections->count() === 0) {
+            $this->logger?->info('no projections to process');
+
+            return;
+        }
 
         $currentPosition = $projections->getLowestProjectionPosition();
         $stream = $this->streamableMessageStore->stream($currentPosition);
