@@ -33,14 +33,9 @@ final class DefaultProjectionistTest extends TestCase
     public function testNothingToBoot(): void
     {
         $projectionCollection = new ProjectionCollection();
-        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
-
-        $generatorFactory = static function () use ($message): Generator {
-            yield $message;
-        };
 
         $streamableStore = $this->prophesize(StreamableStore::class);
-        $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
+        $streamableStore->stream(0)->shouldNotBeCalled();
 
         $projectionStore = $this->prophesize(ProjectionStore::class);
         $projectionStore->all()->willReturn($projectionCollection)->shouldBeCalledOnce();
@@ -245,14 +240,8 @@ final class DefaultProjectionistTest extends TestCase
             new Projection($projector->targetProjection()),
         ]);
 
-        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
-
-        $generatorFactory = static function () use ($message): Generator {
-            yield $message;
-        };
-
         $streamableStore = $this->prophesize(StreamableStore::class);
-        $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
+        $streamableStore->stream(0)->shouldNotBeCalled();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
@@ -498,12 +487,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionStore = new DummyStore([new Projection($projectorId, ProjectionStatus::Active)]);
 
-        $generatorFactory = static function (): Generator {
-            yield from [];
-        };
-
         $streamableStore = $this->prophesize(StreamableStore::class);
-        $streamableStore->stream(0)->willReturn($generatorFactory())->shouldBeCalledOnce();
+        $streamableStore->stream(0)->shouldNotBeCalled();
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
         $projectorRepository->projectors()->willReturn([])->shouldBeCalledOnce();
@@ -523,6 +508,45 @@ final class DefaultProjectionistTest extends TestCase
         self::assertEquals([
             new Projection($projectorId, ProjectionStatus::Outdated, 0),
         ], $projectionStore->savedProjections);
+    }
+
+    public function testRunningWithoutActiveProjectors(): void
+    {
+        $projector = new class implements VersionedProjector {
+            public ?Message $message = null;
+
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('test', 1);
+            }
+
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $projectionStore = new DummyStore([new Projection($projector->targetProjection(), ProjectionStatus::Booting)]);
+
+        $streamableStore = $this->prophesize(StreamableStore::class);
+        $streamableStore->stream(0)->shouldNotBeCalled();
+
+        $projectorRepository = $this->prophesize(ProjectorRepository::class);
+        $projectorRepository->projectors()->willReturn([])->shouldBeCalledOnce();
+
+        $projectorResolver = $this->prophesize(ProjectorResolver::class);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            $projectorRepository->reveal(),
+            $projectorResolver->reveal(),
+            new NullLogger()
+        );
+
+        $projectionist->run();
+
+        self::assertEquals([], $projectionStore->savedProjections);
     }
 
     public function testTeardownWithProjector(): void
