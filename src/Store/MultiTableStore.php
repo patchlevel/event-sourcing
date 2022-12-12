@@ -16,6 +16,7 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
 
+use function array_key_exists;
 use function array_map;
 use function is_int;
 use function is_string;
@@ -175,28 +176,6 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
 
     public function stream(int $fromIndex = 0): Generator
     {
-        $queries = [];
-
-        foreach ($this->aggregateRootRegistry->aggregateNames() as $aggregate) {
-            $sql = $this->connection->createQueryBuilder()
-                ->select('*')
-                ->from($aggregate)
-                ->where('id > :index')
-                ->orderBy('id')
-                ->getSQL();
-
-            /**
-             * @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}> $query
-             */
-            $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
-
-            if (!$query instanceof Generator) {
-                throw new WrongQueryResult();
-            }
-
-            $queries[$aggregate] = $query;
-        }
-
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->metadataTableName)
@@ -211,26 +190,48 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
 
         $platform = $this->connection->getDatabasePlatform();
 
+        $queries = [];
+
         foreach ($metaQuery as $metaData) {
-            $name = $metaData['aggregate'];
+            $aggregateName = $metaData['aggregate'];
 
-            /** @var array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}|null $eventData */
-            $eventData = $queries[$name]->current();
+            if (!array_key_exists($aggregateName, $queries)) {
+                $sql = $this->connection->createQueryBuilder()
+                    ->select('*')
+                    ->from($aggregateName)
+                    ->where('id > :index')
+                    ->orderBy('id')
+                    ->getSQL();
 
-            if ($eventData === null) {
-                throw CorruptedMetadata::fromMissingEntry($metaData['id']);
+                /**
+                 * @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}> $query
+                 */
+                $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
+
+                if (!$query instanceof Generator) {
+                    throw new WrongQueryResult();
+                }
+
+                $queries[$aggregateName] = $query;
             }
 
-            $queries[$name]->next();
+            /** @var array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}|null $eventData */
+            $eventData = $queries[$aggregateName]->current();
+
+            if ($eventData === null) {
+                throw CorruptedMetadata::fromMissingEntry($metaData['aggregate_id']);
+            }
+
+            $queries[$aggregateName]->next();
 
             if ($eventData['id'] !== $metaData['id']) {
-                throw CorruptedMetadata::fromEntryMismatch($metaData['id'], $eventData['id']);
+                throw CorruptedMetadata::fromEntryMismatch($metaData['aggregate_id'], $eventData['aggregate_id']);
             }
 
             $event = $this->serializer->deserialize(new SerializedEvent($eventData['event'], $eventData['payload']));
 
             yield Message::create($event)
-                ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($name))
+                ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($aggregateName))
                 ->withAggregateId($eventData['aggregate_id'])
                 ->withPlayhead(self::normalizePlayhead($eventData['playhead'], $platform))
                 ->withRecordedOn(self::normalizeRecordedOn($eventData['recorded_on'], $platform))
