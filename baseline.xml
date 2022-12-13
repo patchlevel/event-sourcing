@@ -443,6 +443,17 @@
       <code>class implements VersionedProjector {</code>
     </DeprecatedInterface>
   </file>
+  <file src="tests/Unit/Projection/Projectionist/RunProjectionistEventBusWrapperTest.php">
+    <UnevaluatedCode occurrences="9">
+      <code>$eventBus-&gt;dispatch(...$messages);</code>
+      <code>$parentEventBus = $this-&gt;prophesize(EventBus::class);</code>
+      <code>$parentEventBus-&gt;dispatch(...$messages)-&gt;shouldBeCalledOnce();</code>
+      <code>$parentEventBus-&gt;reveal();</code>
+      <code>$projectionist = $this-&gt;prophesize(Projectionist::class);</code>
+      <code>$projectionist-&gt;reveal();</code>
+      <code>$projectionist-&gt;run()-&gt;shouldBeCalledOnce();</code>
+    </UnevaluatedCode>
+  </file>
   <file src="tests/Unit/Projection/Projector/InMemoryProjectorRepositoryTest.php">
     <DeprecatedInterface occurrences="1">
       <code>class implements Projector {</code>
