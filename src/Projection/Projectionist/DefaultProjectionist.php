@@ -51,9 +51,13 @@ final class DefaultProjectionist implements Projectionist
             $projection->booting();
             $this->projectionStore->save($projection);
 
+            $this->logger?->info(sprintf('projection "%s" has been set to booting', $projection->id()->toString()));
+
             $createMethod = $this->projectorResolver->resolveCreateMethod($projector);
 
             if (!$createMethod) {
+                $this->logger?->info(sprintf('projector for "%s" has no create method', $projection->id()->toString()));
+
                 continue;
             }
 
@@ -71,12 +75,15 @@ final class DefaultProjectionist implements Projectionist
         $projections = $projections->filterByProjectionStatus(ProjectionStatus::Booting);
 
         if ($projections->count() === 0) {
-            $this->logger?->info('no projections to process');
+            $this->logger?->info('no projections to process, finish');
 
             return;
         }
 
         $currentPosition = $projections->getLowestProjectionPosition();
+
+        $this->logger?->debug(sprintf('event stream is processed from position %s', $currentPosition));
+
         $stream = $this->streamableMessageStore->stream($currentPosition);
 
         $messageCounter = 0;
@@ -87,19 +94,27 @@ final class DefaultProjectionist implements Projectionist
             }
 
             $currentPosition++;
-
-            $this->logger?->info(sprintf('current cursor position: %s', $currentPosition));
-
             $messageCounter++;
+
+            $this->logger?->info(sprintf('current event stream position: %s', $currentPosition));
+
             if ($limit !== null && $messageCounter >= $limit) {
+                $this->logger?->info('message limit reached, finish');
+
                 return;
             }
         }
 
+        $this->logger?->info('end of stream has been reached');
+
         foreach ($projections->filterByProjectionStatus(ProjectionStatus::Booting) as $projection) {
             $projection->active();
             $this->projectionStore->save($projection);
+
+            $this->logger?->info(sprintf('projection "%s" has been set to active', $projection->id()->toString()));
         }
+
+        $this->logger?->info('finish');
     }
 
     public function run(ProjectionCriteria $criteria = new ProjectionCriteria(), ?int $limit = null): void
@@ -117,17 +132,22 @@ final class DefaultProjectionist implements Projectionist
 
             $projection->outdated();
             $this->projectionStore->save($projection);
+
+            $this->logger?->info(sprintf('projection "%s" has been marked as outdated', $projection->id()->toString()));
         }
 
         $projections = $projections->filterByProjectionStatus(ProjectionStatus::Active);
 
         if ($projections->count() === 0) {
-            $this->logger?->info('no projections to process');
+            $this->logger?->info('no projections to process, finish');
 
             return;
         }
 
         $currentPosition = $projections->getLowestProjectionPosition();
+
+        $this->logger?->debug(sprintf('event stream is processed from position %s', $currentPosition));
+
         $stream = $this->streamableMessageStore->stream($currentPosition);
 
         $messageCounter = 0;
@@ -135,6 +155,14 @@ final class DefaultProjectionist implements Projectionist
         foreach ($stream as $message) {
             foreach ($projections->filterByProjectionStatus(ProjectionStatus::Active) as $projection) {
                 if ($projection->position() > $currentPosition) {
+                    $this->logger?->debug(
+                        sprintf(
+                            'projection "%s" is farther than the current position (%s) and will be skipped',
+                            $projection->id()->toString(),
+                            $projection->position()
+                        )
+                    );
+
                     continue;
                 }
 
@@ -142,14 +170,18 @@ final class DefaultProjectionist implements Projectionist
             }
 
             $currentPosition++;
-
-            $this->logger?->info(sprintf('current cursor position: %s', $currentPosition));
-
             $messageCounter++;
+
+            $this->logger?->info(sprintf('current event stream position: %s', $currentPosition));
+
             if ($limit !== null && $messageCounter >= $limit) {
+                $this->logger?->info('message limit reached, finish');
+
                 return;
             }
         }
+
+        $this->logger?->debug('end of stream has been reached, finish');
     }
 
     public function teardown(ProjectionCriteria $criteria = new ProjectionCriteria()): void
@@ -164,7 +196,7 @@ final class DefaultProjectionist implements Projectionist
 
             if (!$projector) {
                 $this->logger?->warning(
-                    sprintf('projector with the id "%s" not found', $projection->id()->toString())
+                    sprintf('projector with the id "%s" not found, skipped', $projection->id()->toString())
                 );
 
                 continue;
@@ -175,9 +207,6 @@ final class DefaultProjectionist implements Projectionist
             if ($dropMethod) {
                 try {
                     $dropMethod();
-                    $this->logger?->info(
-                        sprintf('projection for "%s" removed', $projection->id()->toString())
-                    );
                 } catch (Throwable $e) {
                     $this->logger?->error(
                         sprintf('projection for "%s" could not be removed, skipped', $projection->id()->toString())
@@ -188,6 +217,10 @@ final class DefaultProjectionist implements Projectionist
             }
 
             $this->projectionStore->remove($projection->id());
+
+            $this->logger?->info(
+                sprintf('projection for "%s" removed', $projection->id()->toString())
+            );
         }
     }
 
@@ -201,6 +234,10 @@ final class DefaultProjectionist implements Projectionist
             if (!$projector) {
                 $this->projectionStore->remove($projection->id());
 
+                $this->logger?->info(
+                    sprintf('projection for "%s" removed without a suitable projector', $projection->id()->toString())
+                );
+
                 continue;
             }
 
@@ -209,18 +246,19 @@ final class DefaultProjectionist implements Projectionist
             if (!$dropMethod) {
                 $this->projectionStore->remove($projection->id());
 
+                $this->logger?->info(
+                    sprintf('projection for "%s" removed', $projection->id()->toString())
+                );
+
                 continue;
             }
 
             try {
                 $dropMethod();
-                $this->logger?->info(
-                    sprintf('projection for "%s" removed', $projection->id()->toString())
-                );
             } catch (Throwable $e) {
                 $this->logger?->error(
                     sprintf(
-                        'projection for "%s" could not be removed, state was removed',
+                        'projection "%s" drop method could not be executed:',
                         $projection->id()->toString()
                     )
                 );
@@ -228,6 +266,10 @@ final class DefaultProjectionist implements Projectionist
             }
 
             $this->projectionStore->remove($projection->id());
+
+            $this->logger?->info(
+                sprintf('projection for "%s" removed', $projection->id()->toString())
+            );
         }
     }
 
@@ -274,6 +316,14 @@ final class DefaultProjectionist implements Projectionist
         if ($handleMethod) {
             try {
                 $handleMethod($message);
+
+                $this->logger?->debug(
+                    sprintf(
+                        'projector "%s" processed the event "%s"',
+                        $projection->id()->toString(),
+                        $message->event()::class
+                    )
+                );
             } catch (Throwable $e) {
                 $this->logger?->error(
                     sprintf('projector "%s" could not process the message', $projection->id()->toString())
