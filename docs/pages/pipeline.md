@@ -263,6 +263,35 @@ $middleware = new FilterEventMiddleware(function (AggregateChanged $event) {
 
     After this middleware, the playhead must be recalculated!
 
+### Exclude Archived Events
+
+With this middleware you can exclude archived events.
+
+```php
+use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeArchivedEventMiddleware;
+
+$middleware = new ExcludeArchivedEventMiddleware();
+```
+
+!!! warning
+
+    After this middleware, the playhead must be recalculated!
+
+### Only Archived Events
+
+
+With this middleware you can only allow archived events.
+
+```php
+use Patchlevel\EventSourcing\Pipeline\Middleware\OnlyArchivedEventMiddleware;
+
+$middleware = new OnlyArchivedEventMiddleware();
+```
+
+!!! warning
+
+    After this middleware, the playhead must be recalculated!
+
 ### Replace
 
 If you want to replace an event, you can use the `ReplaceEventMiddleware`.
