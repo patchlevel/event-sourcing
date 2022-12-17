@@ -198,6 +198,11 @@
       <code>schema</code>
     </DeprecatedMethod>
   </file>
+  <file src="src/Serializer/Upcast/Upcast.php">
+    <MixedAssignment occurrences="1">
+      <code>$payload[$key]</code>
+    </MixedAssignment>
+  </file>
   <file src="src/Snapshot/DefaultSnapshotStore.php">
     <MixedArgument occurrences="1">
       <code>$data['payload']</code>
