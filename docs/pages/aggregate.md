@@ -509,7 +509,7 @@ final class NameChanged
 
 !!! note
 
-    You can find out more about event normalizer [here](./events.md#normalizer).
+    You can find out more about normalizer [here](./normalizer.md).
 
 There are also cases where business rules have to be defined depending on the aggregate state.
 Sometimes also from states, which were changed in the same method.
