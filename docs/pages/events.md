@@ -66,7 +66,6 @@ so that the library knows how to write this data to the database and load it aga
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
 #[Event('profile.name_changed')]
@@ -74,7 +73,7 @@ final class NameChanged
 {
     public function __construct(
         public readonly string $name,
-        #[Normalize(new DateTimeImmutableNormalizer())]
+        #[DateTimeImmutableNormalizer]
         public readonly DateTimeImmutable $changedAt
     ) {}
 }

@@ -11,10 +11,13 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\NormalizedName;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
+use ReflectionProperty;
 use ReflectionUnionType;
 
 use function array_key_exists;
@@ -232,22 +235,35 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 $fieldName = $attribute->name();
             }
 
-            $attributeReflectionList = $reflectionProperty->getAttributes(Normalize::class);
-
-            $normalizer = null;
-
-            if ($attributeReflectionList !== []) {
-                $attribute = $attributeReflectionList[0]->newInstance();
-                $normalizer = $attribute->normalizer();
-            }
-
             $properties[$reflectionProperty->getName()] = new AggregateRootPropertyMetadata(
                 $fieldName,
                 $reflectionProperty,
-                $normalizer
+                $this->getNormalizer($reflectionProperty)
             );
         }
 
         return $properties;
+    }
+
+    private function getNormalizer(ReflectionProperty $reflectionProperty): ?Normalizer
+    {
+        $attributeReflectionList = $reflectionProperty->getAttributes(
+            Normalizer::class,
+            ReflectionAttribute::IS_INSTANCEOF
+        );
+
+        if ($attributeReflectionList !== []) {
+            return $attributeReflectionList[0]->newInstance();
+        }
+
+        $attributeReflectionList = $reflectionProperty->getAttributes(Normalize::class);
+
+        if ($attributeReflectionList !== []) {
+            $attribute = $attributeReflectionList[0]->newInstance();
+
+            return $attribute->normalizer();
+        }
+
+        return null;
     }
 }

@@ -8,6 +8,9 @@ use Attribute;
 use Patchlevel\EventSourcing\Serializer\Normalizer\ArrayNormalizer;
 use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 
+/**
+ * @deprecated use the specific normalizer as attribute
+ */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class Normalize
 {

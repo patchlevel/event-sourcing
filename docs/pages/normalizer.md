@@ -7,15 +7,14 @@ how to write this data to the database and load it again.
 
 ## Usage
 
-You have to set the normalizer to the properties using the normalize attribute.
+You have to set the normalizer to the properties using the specific normalizer class.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
-    #[Normalize(new DateTimeImmutableNormalizer())]
+    #[DateTimeImmutableNormalizer]
     public DateTimeImmutable $date;
 }
 ```
@@ -23,13 +22,12 @@ final class DTO
 The whole thing also works with property promotion.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
     public function __construct(
-        #[Normalize(new DateTimeImmutableNormalizer())]
+        #[DateTimeImmutableNormalizer]
         public readonly DateTimeImmutable $date
     ) {}
 }
@@ -42,7 +40,6 @@ The whole thing is then loaded again from the DB and denormalized in the propert
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
 #[Event('hotel.create')]
@@ -50,7 +47,7 @@ final class CreateHotel
 {
     public function __construct(
         public readonly string $name,
-        #[Normalize(new DateTimeImmutableNormalizer())]
+        #[DateTimeImmutableNormalizer]
         public readonly DateTimeImmutable $createAt
     ) {}
 }
@@ -64,7 +61,6 @@ Here you can determine how the aggregate is saved in the snapshot store at the e
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
@@ -73,7 +69,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 final class Hotel extends AggregateRoot
 {
     private string $name,
-    #[Normalize(new DateTimeImmutableNormalizer())]
+    #[DateTimeImmutableNormalizer]
     private DateTimeImmutable $createAt
 
     // ...
@@ -96,13 +92,12 @@ In order to use the `ArrayNormaliser`, you still have to specify which normalise
 objects. Internally, it basically does an `array_map` and then runs the specified normalizer on each element.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\ArrayNormalizer;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
-    #[Normalize(new ArrayNormalizer(new DateTimeImmutableNormalizer()))]
+    #[ArrayNormalizer(new DateTimeImmutableNormalizer())]
     public array $dates;
 }
 ```
@@ -111,32 +106,17 @@ final class DTO
 
     The keys from the arrays are taken over here.
 
-To save yourself this nesting, you can set the flag `list` on the `Normalize` attribute.
-In the background, your defined normalizer is then wrapped with the `ArrayNormalizer`.
-
-```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
-
-final class DTO 
-{
-    #[Normalize(new DateTimeImmutableNormalizer(), list: true)]
-    public array $dates;
-}
-```
-
 ### DateTimeImmutable
 
 With the `DateTimeImmutable` Normalizer, as the name suggests,
 you can convert DateTimeImmutable objects to a String and back again.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
-    #[Normalize(new DateTimeImmutableNormalizer())]
+    #[DateTimeImmutableNormalizer]
     public DateTimeImmutable $date;
 }
 ```
@@ -145,12 +125,11 @@ You can also define the format. Either describe it yourself as a string or use o
 The default is `DateTimeImmutable::ATOM`.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
-    #[Normalize(new DateTimeImmutableNormalizer(format: DateTimeImmutable::RFC3339_EXTENDED))]
+    #[DateTimeImmutableNormalizer(format: DateTimeImmutable::RFC3339_EXTENDED)]
     public DateTimeImmutable $date;
 }
 ```
@@ -164,12 +143,11 @@ final class DTO
 The `DateTime` Normalizer works exactly like the DateTimeNormalizer. Only for DateTime objects.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeNormalizer;
 
 final class DTO 
 {
-    #[Normalize(new DateTimeNormalizer())]
+    #[DateTimeNormalizer]
     public DateTime $date;
 }
 ```
@@ -177,12 +155,11 @@ final class DTO
 You can also specify the format here. The default is `DateTime::ATOM`.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeNormalizer;
 
 final class DTO 
 {
-    #[Normalize(new DateTimeNormalizer(format: DateTime::RFC3339_EXTENDED))]
+    #[DateTimeNormalizer(format: DateTime::RFC3339_EXTENDED)]
     public DateTime $date;
 }
 ```
@@ -201,11 +178,10 @@ final class DTO
 To normalize a `DateTimeZone` one can use the `DateTimeZoneNormalizer`.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeZoneNormalizer;
 
 final class DTO {
-    #[Normalize(new DateTimeZoneNormalizer())]
+    #[DateTimeZoneNormalizer]
     public DateTimeZone $timeZone;
 }
 ```
@@ -216,11 +192,10 @@ Backed enums can also be normalized.
 For this, the enum FQCN must also be pass so that the `EnumNormalizer` knows which enum it is.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Serializer\Normalizer\EnumNormalizer;
 
 final class DTO {
-    #[Normalize(new EnumNormalizer(Status::class))]
+    #[EnumNormalizer(Status::class)]
     public Status $status;
 }
 ```
@@ -256,11 +231,12 @@ final class Name
 For this we now need a custom normalizer.
 This normalizer must implement the `Normalizer` interface.
 You also need to implement a `normalize` and `denormalize` method.
-The important thing is that the result of Normalize is serializable.
+Finally, you have to allow the normalizer to be used as an attribute.
 
 ```php
 use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 
+#[Attribute(Attribute::TARGET_PROPERTY)]
 class NameNormalizer implements Normalizer
 {
     public function normalize(mixed $value): string
@@ -287,14 +263,16 @@ class NameNormalizer implements Normalizer
 }
 ```
 
-Now we can also use the normalizer directly by passing it to the Normalize attribute.
+!!! warning
+
+    The important thing is that the result of Normalize is serializable!
+
+Now we can also use the normalizer directly.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Normalize;
-
 final class DTO
 {
-    #[Normalize(new NameNormalizer())]
+    #[NameNormalizer]
     public Name $name
 }
 ```
@@ -302,7 +280,6 @@ final class DTO
 !!! tip
 
     Every normalizer, including the custom normalizer, can be used both for the events and for the snapshots.
-
 
 ## Normalized Name
 

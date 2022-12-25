@@ -76,6 +76,18 @@
       <code>Headers</code>
     </MoreSpecificReturnType>
   </file>
+  <file src="src/Metadata/AggregateRoot/AttributeAggregateRootMetadataFactory.php">
+    <DeprecatedClass occurrences="2">
+      <code>$attributeReflectionList[0]-&gt;newInstance()</code>
+      <code>Normalize::class</code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Metadata/Event/AttributeEventMetadataFactory.php">
+    <DeprecatedClass occurrences="2">
+      <code>$attributeReflectionList[0]-&gt;newInstance()</code>
+      <code>Normalize::class</code>
+    </DeprecatedClass>
+  </file>
   <file src="src/Metadata/Projection/AttributeProjectionMetadataFactory.php">
     <DeprecatedClass occurrences="3">
       <code>array</code>
@@ -298,6 +310,12 @@
       <code>ProfileProjection</code>
     </DeprecatedInterface>
   </file>
+  <file src="tests/Unit/Attribute/NormalizeTest.php">
+    <DeprecatedClass occurrences="2">
+      <code>new Normalize($normalizer)</code>
+      <code>new Normalize($normalizer, true)</code>
+    </DeprecatedClass>
+  </file>
   <file src="tests/Unit/Console/Command/ProjectionCreateCommandTest.php">
     <DeprecatedClass occurrences="2">
       <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
@@ -342,6 +360,11 @@
     <MissingParamType occurrences="1">
       <code>$event</code>
     </MissingParamType>
+  </file>
+  <file src="tests/Unit/Metadata/Event/AttributeEventMetadataFactoryTest.php">
+    <DeprecatedClass occurrences="1">
+      <code>Normalize(new EmailNormalizer())</code>
+    </DeprecatedClass>
   </file>
   <file src="tests/Unit/Metadata/Projection/AttributeProjectionMetadataFactoryTest.php">
     <DeprecatedInterface occurrences="5">

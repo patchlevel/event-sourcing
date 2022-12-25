@@ -7,21 +7,21 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+use Patchlevel\EventSourcing\Serializer\Normalizer\ArrayNormalizer;
 
 #[Aggregate('profile_with_snapshot')]
 #[Snapshot('memory', batch: 2, version: '1')]
 #[SuppressMissingApply([ProfileVisited::class])]
 final class ProfileWithSnapshot extends AggregateRoot
 {
-    #[Normalize(new ProfileIdNormalizer())]
+    #[ProfileIdNormalizer]
     private ProfileId $id;
-    #[Normalize(new EmailNormalizer())]
+    #[EmailNormalizer]
     private Email $email;
     /** @var array<Message> */
-    #[Normalize(new MessageNormalizer(), list: true)]
+    #[ArrayNormalizer(new MessageNormalizer())]
     private array $messages;
 
     public function id(): ProfileId
