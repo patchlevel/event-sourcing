@@ -498,7 +498,7 @@ use Patchlevel\EventSourcing\Attribute\Normalize;
 final class NameChanged
 {
     public function __construct(
-        #[Normalize(NameNormalizer::class)]
+        #[Normalize(new NameNormalizer())]
         public readonly Name $name
     ) {}
 }
