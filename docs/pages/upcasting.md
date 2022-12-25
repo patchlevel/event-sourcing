@@ -24,10 +24,7 @@ final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
             return $upcast;
         }
         
-        $payload = $upcast->payload;
-        $payload['email'] = strtolower($payload['email']);
-        
-         return new Upcast($upcast->eventName, $payload)
+        return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']);
     }
 }
 ```
@@ -55,7 +52,9 @@ final class LegacyEventNameUpaster implements Upcaster
     
     public function __invoke(Upcast $upcast): Upcast
     {
-        return new Upcast($this->eventRegistry->eventName($upcast->eventName), $upcast->payload);
+        return $upcast->replaceEventName(
+            $this->eventRegistry->eventName($upcast->eventName)
+        );
     }
 }
 ```
