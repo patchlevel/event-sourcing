@@ -71,7 +71,7 @@ $message->customHeaders(); // ['application-id' => 'app']
 
 ### Default event bus
 
-The library also delivers a light-weight event bus. This can only register listener and dispatch events.
+The library also delivers a light-weight event bus. This can only register listener/subscriber and dispatch events.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
@@ -157,9 +157,25 @@ $listener = new class implements Listener
 
 !!! warning
 
-    If you only want to listen to certain messages, then you have to check it in the `__invoke` method.
+    If you only want to listen to certain messages, 
+    then you have to check it in the `__invoke` method or use the subscriber.
 
-!!! note
+## Subscriber
 
-    Basically, listeners can be categorized according to their tasks. 
-    We have a [processor](./processor.md) and [projections](./projection.md).
+A `Subscriber` is a listener, except that it has implemented the invoke method itself. 
+Instead, you can define your own and multiple methods and listen for specific events with the attribute `Handle`.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\EventBus\Message;
+
+$listener = new class extends Subscriber 
+{
+    #[Handle(ProfileCreated::class)]
+    public function onProfileCreated(Message $message): void
+    {
+        echo 'Welcome!';
+    }
+}
+```
