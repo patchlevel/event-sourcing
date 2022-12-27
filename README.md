@@ -12,11 +12,10 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * Everything is included in the package for event sourcing
 * Based on [doctrine dbal](https://github.com/doctrine/dbal) and their ecosystem
 * Developer experience oriented and fully typed
-* [Snapshots](https://patchlevel.github.io/event-sourcing-docs/latest/snapshots/) system to quickly rebuild the aggregates
+* [Snapshots](https://patchlevel.github.io/event-sourcing-docs/latest/snapshots/) and [Split-Stream](https://patchlevel.github.io/event-sourcing-docs/latest/split_stream/) system to quickly rebuild the aggregates
 * [Pipeline](https://patchlevel.github.io/event-sourcing-docs/latest/pipeline/) to build new [projections](https://patchlevel.github.io/event-sourcing-docs/latest/projection/) or to migrate events
 * [Projectionist](https://patchlevel.github.io/event-sourcing-docs/latest/projectionist/) for managed, versioned and asynchronous projections
 * [Scheme management](https://patchlevel.github.io/event-sourcing-docs/latest/store/) and [doctrine migration](https://patchlevel.github.io/event-sourcing-docs/latest/migration/) support
-* [Splitting the eventstream](https://patchlevel.github.io/event-sourcing-docs/latest/split_stream/) 
 * Dev [tools](https://patchlevel.github.io/event-sourcing-docs/latest/watch_server/) such as a realtime event watcher
 * Built in [cli commands](https://patchlevel.github.io/event-sourcing-docs/latest/cli/) with [symfony](https://symfony.com/)
 
