@@ -144,7 +144,7 @@ This listener is then called for all saved events / messages.
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-$listener = new class implements Listener 
+final class WelcomeListener implements Listener 
 {
     public function __invoke(Message $message): void
     {
@@ -170,7 +170,7 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-$listener = new class extends Subscriber 
+final class WelcomeSubscriber extends Subscriber 
 {
     #[Handle(ProfileCreated::class)]
     public function onProfileCreated(Message $message): void
