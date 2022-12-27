@@ -71,7 +71,7 @@ $message->customHeaders(); // ['application-id' => 'app']
 
 ### Default event bus
 
-The library also delivers a light-weight event bus. This can only register listener/subscriber and dispatch events.
+The library also delivers a light-weight event bus for which you can register listeners/subscribers and dispatch events.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
