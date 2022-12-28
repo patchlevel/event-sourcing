@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Container\Factory;
 
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
@@ -13,5 +15,12 @@ final class AggregateRootRegistryFactory extends Factory
         $config = $this->retrieveConfig($container, 'aggregate');
 
         return (new AttributeAggregateRootRegistryFactory())->create($config['paths']);
+    }
+
+    protected function defaultConfig(): array
+    {
+        return [
+            'paths' => [],
+        ];
     }
 }

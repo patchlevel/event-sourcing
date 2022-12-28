@@ -261,47 +261,78 @@ final class SendCheckInEmailProcessor extends Subscriber
 
 After we have defined everything, we still have to plug the whole thing together:
 
-```php
-use Doctrine\DBAL\DriverManager;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
-use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\SingleTableStore;
+=== "Container"
 
-$connection = DriverManager::getConnection([
-    'url' => 'mysql://user:secret@localhost/app'
-]);
+    ```php
+    use Patchlevel\EventSourcing\Container\ConfigBuilder;
+    use Patchlevel\EventSourcing\Container\DefaultContainer;
+    use Psr\Container\ContainerInterface;
+    
+    $config = (new ConfigBuilder())
+        ->singleTable()
+        ->databaseUrl('mysql://user:secret@localhost/app')
+        ->addAggregatePath('src/Domain/Hotel')
+        ->addEventPath('src/Domain/Hotel/Event')
+        ->addProjector(HotelProjection::class)
+        ->addProcessor(SendCheckInEmailProcessor::class)
+        ->build();
+        
+    $container = new DefaultContainer(
+        $config,
+        [
+            HotelProjection::class => fn(DefaultContainer $container) 
+                => new HotelProjection($container->connection()),
+            SendCheckInEmailProcessor::class => fn(DefaultContainer $container) 
+                => new SendCheckInEmailProcessor($container->get('mailer')),
+        ]
+    );
+    
+    $hotelRepository = $container->repository(Hotel::class);
+    ```
 
-$mailer = /* your own mailer */;
+=== "Manuel"
 
-$hotelProjection = new HotelProjection($connection);
-
-$projectorRepository = new ProjectorRepository([
-    $hotelProjection,
-]);
-
-$eventBus = new DefaultEventBus();
-$eventBus->addListener(new SyncProjectorListener($projectorRepository));
-$eventBus->addListener(new SendCheckInEmailProcessor($mailer));
-
-$serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
-$aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
-
-$store = new SingleTableStore(
-    $connection,
-    $serializer,
-    $aggregateRegistry
-);
-
-$repositoryManager = new DefaultRepositoryManager(
-    $aggregateRegistry,
-    $store,
-    $eventBus
-);
-
-$hotelRepository = $repositoryManager->get(Hotel::class);
-```
+    ```php
+    use Doctrine\DBAL\DriverManager;
+    use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+    use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
+    use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+    use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+    use Patchlevel\EventSourcing\Store\SingleTableStore;
+    
+    $connection = DriverManager::getConnection([
+        'url' => 'mysql://user:secret@localhost/app'
+    ]);
+    
+    $mailer = /* your own mailer */;
+    
+    $hotelProjection = new HotelProjection($connection);
+    
+    $projectorRepository = new ProjectorRepository([
+        $hotelProjection,
+    ]);
+    
+    $eventBus = new DefaultEventBus();
+    $eventBus->addListener(new SyncProjectorListener($projectorRepository));
+    $eventBus->addListener(new SendCheckInEmailProcessor($mailer));
+    
+    $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
+    $aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
+    
+    $store = new SingleTableStore(
+        $connection,
+        $serializer,
+        $aggregateRegistry
+    );
+    
+    $repositoryManager = new DefaultRepositoryManager(
+        $aggregateRegistry,
+        $store,
+        $eventBus
+    );
+    
+    $hotelRepository = $repositoryManager->get(Hotel::class);
+    ```
 
 !!! note
 
@@ -312,18 +343,31 @@ $hotelRepository = $repositoryManager->get(Hotel::class);
 So that we can actually write the data to a database,
 we need the associated schema and databases.
 
-```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
-use Patchlevel\EventSourcing\Projector\ProjectorHelper;
+=== "Container"
 
-$schemaDirector = new DoctrineSchemaDirector(
-    $store,
-    $connection
-);
+    ```php
+    use Patchlevel\EventSourcing\Projector\ProjectorHelper;
+    
+    $container->schemaDirector()->create();
+    (new ProjectorHelper())->createProjection(
+        ...$container->projectorRepository()->projectors()
+    );
+    ```
 
-$schemaDirector->create();
-(new ProjectorHelper())->createProjection(...$projectorRepository->projectors());
-```
+=== "Manuel"
+
+    ```php
+    use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+    use Patchlevel\EventSourcing\Projector\ProjectorHelper;
+    
+    $schemaDirector = new DoctrineSchemaDirector(
+        $store,
+        $connection
+    );
+    
+    $schemaDirector->create();
+    (new ProjectorHelper())->createProjection(...$projectorRepository->projectors());
+    ```
 
 !!! note
 

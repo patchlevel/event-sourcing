@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Container\Factory;
 
 use Patchlevel\EventSourcing\Store\MultiTableStore;
@@ -15,12 +17,20 @@ final class StoreFactory extends Factory
 
         if ($config['type'] === 'single') {
             return new SingleTableStore(
-                $container->get('')
-                $this->get($container, 'connection'),
-                $this->get($container, 'serializer'),
-                $this->get(
+                $this->retrieveDependency(
                     $container,
-                    'aggregate',
+                    ConnectionFactory::SERVICE_NAME,
+                    new ConnectionFactory()
+                ),
+                $this->retrieveDependency(
+                    $container,
+                    'event_sourcing.event_serializer',
+                    new EventSerializerFactory()
+                ),
+                $this->retrieveDependency(
+                    $container,
+                    'event_sourcing.aggregate_root_factory',
+                    new AggregateRootRegistryFactory()
                 ),
                 $config['table_name']
             );
@@ -29,31 +39,28 @@ final class StoreFactory extends Factory
         return new MultiTableStore(
             $this->retrieveDependency(
                 $container,
-                $configKey,
-                'connection',
-                ConnectionFactory::class
+                ConnectionFactory::class,
+                new ConnectionFactory()
             ),
             $this->retrieveDependency(
                 $container,
-                $configKey,
-                'serializer',
-                SerializerFactory::class
+                'event_sourcing.event_serializer',
+                new EventSerializerFactory()
             ),
             $this->retrieveDependency(
                 $container,
-                $configKey,
-                'aggregate',
-                AggregateRootRegistryFactory::class
+                'event_sourcing.aggregate_root_factory',
+                new AggregateRootRegistryFactory()
             ),
             $config['table_name']
         );
     }
 
-    protected function defaultConfig(string $configKey): array
+    protected function defaultConfig(): array
     {
         return [
             'type' => 'multi',
-            'table_name' => 'eventstore'
+            'table_name' => 'eventstore',
         ];
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Container\Factory;
 
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
@@ -7,29 +9,23 @@ use Psr\Container\ContainerInterface;
 
 final class RepositoryManagerFactory extends Factory
 {
-    protected function createWithConfig(ContainerInterface $container, string $configKey): DefaultRepositoryManager
+    protected function createWithConfig(ContainerInterface $container): DefaultRepositoryManager
     {
         return new DefaultRepositoryManager(
-            $container->get('aggregate_root_registry'),
-            $container->get('aggregate_root_registry'),
-            $container->get('aggregate_root_registry'),
             $this->retrieveDependency(
                 $container,
-                $configKey,
-                'aggregate_root_registry',
-                AggregateRootRegistryFactory::class
+                'event_sourcing.aggregate_root_registry',
+                new AggregateRootRegistryFactory()
             ),
             $this->retrieveDependency(
                 $container,
-                $configKey,
-                'store',
-                StoreFactory::class
+                'event_sourcing.store',
+                new StoreFactory()
             ),
             $this->retrieveDependency(
                 $container,
-                $configKey,
-                'event_bus',
-                EventBusFactory::class
+                'event_sourcing.event_bus',
+                new EventBusFactory()
             ),
         );
     }

@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Container\Factory;
 
 use Psr\Container\ContainerInterface;
+use RuntimeException;
+
+use function array_replace_recursive;
+use function is_array;
 
 abstract class Factory
 {
-    private const PACKAGE_NAME = 'event_sourcing';
-
     final public function __construct()
     {
     }
@@ -32,22 +36,34 @@ abstract class Factory
         $applicationConfig = $container->has('config') ? $container->get('config') : [];
 
         if (!is_array($applicationConfig)) {
-            throw new \RuntimeException('wrong config');
+            throw new RuntimeException('wrong config');
         }
 
-        $sectionConfig = $applicationConfig[self::PACKAGE_NAME][$section] ?? [];
+        $sectionConfig = $applicationConfig['event_sourcing'][$section] ?? [];
 
         if (!is_array($sectionConfig)) {
-            throw new \RuntimeException('wrong config');
+            throw new RuntimeException('wrong config');
         }
 
         return array_replace_recursive($this->defaultConfig(), $sectionConfig);
     }
 
-    protected function get(ContainerInterface $container, string $name): mixed
-    {
-        $key = sprintf('%s.%s', self::PACKAGE_NAME, $name);
+    /**
+     * @param string|class-string<T> $service
+     *
+     * @return object|T
+     *
+     * @template T of object
+     */
+    protected function retrieveDependency(
+        ContainerInterface $container,
+        string $service,
+        Factory $factory,
+    ): object {
+        if ($container->has($service)) {
+            return $container->get($service);
+        }
 
-        return $container->get($key);
+        return (new $factory())($container);
     }
 }
