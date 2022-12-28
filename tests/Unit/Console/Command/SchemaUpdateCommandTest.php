@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use Patchlevel\EventSourcing\Console\Command\SchemaUpdateCommand;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
-use Patchlevel\EventSourcing\Store\Store;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -20,13 +19,10 @@ final class SchemaUpdateCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->update($store)->shouldBeCalled();
+        $schemaManager->update()->shouldBeCalled();
 
         $command = new SchemaUpdateCommand(
-            $store,
             $schemaManager->reveal()
         );
 
@@ -44,13 +40,10 @@ final class SchemaUpdateCommandTest extends TestCase
 
     public function testMissingForce(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->update($store)->shouldNotBeCalled();
+        $schemaManager->update()->shouldNotBeCalled();
 
         $command = new SchemaUpdateCommand(
-            $store,
             $schemaManager->reveal()
         );
 
@@ -71,17 +64,14 @@ final class SchemaUpdateCommandTest extends TestCase
 
     public function testDryRun(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(DryRunSchemaDirector::class);
-        $schemaManager->dryRunUpdate($store)->willReturn([
+        $schemaManager->dryRunUpdate()->willReturn([
             'update table 1;',
             'update table 2;',
             'update table 3;',
         ]);
 
         $command = new SchemaUpdateCommand(
-            $store,
             $schemaManager->reveal()
         );
 
@@ -101,12 +91,9 @@ final class SchemaUpdateCommandTest extends TestCase
 
     public function testDryRunNotSupported(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(SchemaDirector::class);
 
         $command = new SchemaUpdateCommand(
-            $store,
             $schemaManager->reveal()
         );
 

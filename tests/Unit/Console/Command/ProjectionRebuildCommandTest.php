@@ -8,10 +8,8 @@ use Closure;
 use Generator;
 use Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
-use Patchlevel\EventSourcing\Projection\ProjectionHandler;
-use Patchlevel\EventSourcing\Store\PipelineStore;
-use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
+use Patchlevel\EventSourcing\Store\StreamableStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Dummy2Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyProjection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -63,16 +61,16 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $store = $this->prophesize(PipelineStore::class);
+        $projectionA = new DummyProjection();
+        $repository = new InMemoryProjectorRepository([$projectionA]);
+
+        $store = $this->prophesize(StreamableStore::class);
         $store->count(Argument::is(0))->willReturn(5);
         $store->stream(Argument::is(0))->willReturn(($this->messages)());
 
-        $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->handle(Argument::type(Message::class))->shouldBeCalledTimes(5);
-
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $repository->reveal()
+            $repository
         );
 
         $input = new ArrayInput([]);
@@ -84,23 +82,26 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $content = $output->fetch();
 
+        self::assertInstanceOf(Message::class, $projectionA->handledMessage);
+        self::assertInstanceOf(ProfileCreated::class, $projectionA->handledMessage->event());
+
         self::assertStringContainsString('[WARNING] rebuild projections', $content);
         self::assertStringContainsString('[OK] finish', $content);
     }
 
     public function testSpecificProjection(): void
     {
-        $store = $this->prophesize(PipelineStore::class);
+        $store = $this->prophesize(StreamableStore::class);
         $store->count(Argument::is(0))->willReturn(5);
         $store->stream(Argument::is(0))->willReturn(($this->messages)());
 
         $projectionA = new DummyProjection();
         $projectionB = new Dummy2Projection();
-        $handler = new MetadataAwareProjectionHandler([$projectionA, $projectionB]);
+        $repository = new InMemoryProjectorRepository([$projectionA, $projectionB]);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $handler
+            $repository
         );
 
         $input = new ArrayInput(['--projection' => $projectionA::class]);
@@ -120,18 +121,17 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function testRecreate(): void
     {
-        $store = $this->prophesize(PipelineStore::class);
+        $projectionA = new DummyProjection();
+
+        $store = $this->prophesize(StreamableStore::class);
         $store->count(Argument::is(0))->willReturn(5);
         $store->stream(Argument::is(0))->willReturn(($this->messages)());
 
-        $repository = $this->prophesize(ProjectionHandler::class);
-        $repository->drop(null)->shouldBeCalled();
-        $repository->create(null)->shouldBeCalled();
-        $repository->handle(Argument::type(Message::class))->shouldBeCalledTimes(5);
+        $repository = new InMemoryProjectorRepository([$projectionA]);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $repository->reveal()
+            $repository
         );
 
         $input = new ArrayInput(['--recreate' => true]);
@@ -143,6 +143,9 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $content = $output->fetch();
 
+        self::assertTrue($projectionA->createCalled);
+        self::assertTrue($projectionA->dropCalled);
+
         self::assertStringContainsString('[OK] projection schema deleted', $content);
         self::assertStringContainsString('[OK] projection schema created', $content);
         self::assertStringContainsString('[WARNING] rebuild projections', $content);
@@ -151,17 +154,17 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function testRecreateWithSpecificProjection(): void
     {
-        $store = $this->prophesize(PipelineStore::class);
+        $store = $this->prophesize(StreamableStore::class);
         $store->count(Argument::is(0))->willReturn(5);
         $store->stream(Argument::is(0))->willReturn(($this->messages)());
 
         $projectionA = new DummyProjection();
         $projectionB = new Dummy2Projection();
-        $handler = new MetadataAwareProjectionHandler([$projectionA, $projectionB]);
+        $repository = new InMemoryProjectorRepository([$projectionA, $projectionB]);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $handler
+            $repository
         );
 
         $input = new ArrayInput(['--recreate' => true, '--projection' => DummyProjection::class]);
@@ -183,27 +186,5 @@ final class ProjectionRebuildCommandTest extends TestCase
         self::assertStringContainsString('[OK] projection schema created', $content);
         self::assertStringContainsString('[WARNING] rebuild projections', $content);
         self::assertStringContainsString('[OK] finish', $content);
-    }
-
-    public function testStoreNotSupported(): void
-    {
-        $store = $this->prophesize(Store::class);
-        $repository = $this->prophesize(ProjectionHandler::class);
-
-        $command = new ProjectionRebuildCommand(
-            $store->reveal(),
-            $repository->reveal()
-        );
-
-        $input = new ArrayInput([]);
-        $output = new BufferedOutput();
-
-        $exitCode = $command->run($input, $output);
-
-        self::assertSame(1, $exitCode);
-
-        $content = $output->fetch();
-
-        self::assertStringContainsString('[ERROR] store is not supported', $content);
     }
 }

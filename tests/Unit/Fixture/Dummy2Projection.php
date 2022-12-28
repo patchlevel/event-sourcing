@@ -8,9 +8,9 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message as EventMessage;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
-final class Dummy2Projection implements Projection
+final class Dummy2Projection implements Projector
 {
     public ?EventMessage $handledMessage = null;
     public bool $createCalled = false;

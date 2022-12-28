@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use Patchlevel\EventSourcing\Console\Command\SchemaDropCommand;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
-use Patchlevel\EventSourcing\Store\Store;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -20,13 +19,10 @@ final class SchemaDropCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->drop($store)->shouldBeCalled();
+        $schemaManager->drop()->shouldBeCalled();
 
         $command = new SchemaDropCommand(
-            $store,
             $schemaManager->reveal()
         );
 
@@ -44,13 +40,10 @@ final class SchemaDropCommandTest extends TestCase
 
     public function testMissingForce(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->drop($store)->shouldNotBeCalled();
+        $schemaManager->drop()->shouldNotBeCalled();
 
         $command = new SchemaDropCommand(
-            $store,
             $schemaManager->reveal()
         );
 
@@ -71,17 +64,14 @@ final class SchemaDropCommandTest extends TestCase
 
     public function testDryRun(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(DryRunSchemaDirector::class);
-        $schemaManager->dryRunDrop($store)->willReturn([
+        $schemaManager->dryRunDrop()->willReturn([
             'drop table 1;',
             'drop table 2;',
             'drop table 3;',
         ]);
 
         $command = new SchemaDropCommand(
-            $store,
             $schemaManager->reveal()
         );
 
@@ -102,12 +92,9 @@ final class SchemaDropCommandTest extends TestCase
 
     public function testDryRunNotSupported(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(SchemaDirector::class);
 
         $command = new SchemaDropCommand(
-            $store,
             $schemaManager->reveal()
         );
 

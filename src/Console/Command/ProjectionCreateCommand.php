@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -16,6 +20,17 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class ProjectionCreateCommand extends ProjectionCommand
 {
+    private readonly ProjectorResolver $projectorResolver;
+
+    public function __construct(
+        ProjectorRepository $projectorRepository,
+        ProjectorResolver $projectorResolver = new MetadataProjectorResolver()
+    ) {
+        parent::__construct($projectorRepository);
+
+        $this->projectorResolver = $projectorResolver;
+    }
+
     protected function configure(): void
     {
         $this
@@ -26,7 +41,11 @@ final class ProjectionCreateCommand extends ProjectionCommand
     {
         $console = new OutputStyle($input, $output);
 
-        $this->projectionHandler($input->getOption('projection'))->create();
+        (new ProjectorHelper($this->projectorResolver))->createProjection(
+            ...$this->projectors(
+                $input->getOption('projection')
+            )
+        );
 
         $console->success('projection created');
 

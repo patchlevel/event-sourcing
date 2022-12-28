@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projection\DuplicateCreateMethod;
 use Patchlevel\EventSourcing\Metadata\Projection\DuplicateDropMethod;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
@@ -19,7 +19,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
 {
     public function testEmptyProjection(): void
     {
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
         };
 
         $metadataFactory = new AttributeProjectionMetadataFactory();
@@ -32,7 +32,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
 
     public function testStandardProjection(): void
     {
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
             #[Handle(ProfileVisited::class)]
             public function handle(): void
             {
@@ -63,7 +63,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
 
     public function testMultipleHandlerOnOneMethod(): void
     {
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
             #[Handle(ProfileVisited::class)]
             #[Handle(ProfileCreated::class)]
             public function handle(): void
@@ -87,7 +87,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
     {
         $this->expectException(DuplicateCreateMethod::class);
 
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
             #[Create]
             public function create1(): void
             {
@@ -107,7 +107,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
     {
         $this->expectException(DuplicateDropMethod::class);
 
-        $projection = new class implements Projection {
+        $projection = new class implements Projector {
             #[Drop]
             public function drop1(): void
             {

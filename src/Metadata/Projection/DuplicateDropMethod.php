@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Projection;
 
 use Patchlevel\EventSourcing\Metadata\MetadataException;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 use function sprintf;
 
 final class DuplicateDropMethod extends MetadataException
 {
     /**
-     * @param class-string<Projection> $projection
+     * @param class-string<Projector> $projection
      */
     public function __construct(string $projection, string $fistMethod, string $secondMethod)
     {
