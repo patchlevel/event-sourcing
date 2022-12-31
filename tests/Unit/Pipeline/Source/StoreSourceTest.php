@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Source;
 use Generator;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Store\PipelineStore;
+use Patchlevel\EventSourcing\Store\StreamableStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -29,7 +29,7 @@ final class StoreSourceTest extends TestCase
             yield $message;
         };
 
-        $pipelineStore = $this->prophesize(PipelineStore::class);
+        $pipelineStore = $this->prophesize(StreamableStore::class);
         $pipelineStore->stream(0)->willReturn($generatorFactory());
 
         $source = new StoreSource($pipelineStore->reveal());
@@ -53,7 +53,7 @@ final class StoreSourceTest extends TestCase
             yield $message;
         };
 
-        $pipelineStore = $this->prophesize(PipelineStore::class);
+        $pipelineStore = $this->prophesize(StreamableStore::class);
         $pipelineStore->stream(1)->willReturn($generatorFactory());
 
         $source = new StoreSource($pipelineStore->reveal(), 1);
@@ -69,7 +69,7 @@ final class StoreSourceTest extends TestCase
 
     public function testCount(): void
     {
-        $pipelineStore = $this->prophesize(PipelineStore::class);
+        $pipelineStore = $this->prophesize(StreamableStore::class);
         $pipelineStore->count(0)->willReturn(1);
 
         $source = new StoreSource($pipelineStore->reveal());
@@ -79,7 +79,7 @@ final class StoreSourceTest extends TestCase
 
     public function testCountWithFromIndex(): void
     {
-        $pipelineStore = $this->prophesize(PipelineStore::class);
+        $pipelineStore = $this->prophesize(StreamableStore::class);
         $pipelineStore->count(1)->willReturn(0);
 
         $source = new StoreSource($pipelineStore->reveal(), 1);

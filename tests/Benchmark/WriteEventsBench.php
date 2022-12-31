@@ -9,8 +9,8 @@ use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
-use Patchlevel\EventSourcing\Projection\ProjectionListener;
+use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
+use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -48,12 +48,12 @@ final class WriteEventsBench
         ]);
 
         $profileProjection = new ProfileProjector($connection);
-        $projectionRepository = new MetadataAwareProjectionHandler(
+        $projectionRepository = new InMemoryProjectorRepository(
             [$profileProjection]
         );
 
         $this->bus = new DefaultEventBus();
-        $this->bus->addListener(new ProjectionListener($projectionRepository));
+        $this->bus->addListener(new SyncProjectorListener($projectionRepository));
         $this->bus->addListener(new SendEmailProcessor());
 
         $this->store = new SingleTableStore(

@@ -7,10 +7,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
-use Patchlevel\EventSourcing\Schema\DryRunSchemaManager;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
-use Patchlevel\EventSourcing\Schema\SchemaManager;
-use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -23,14 +20,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class SchemaUpdateCommand extends Command
 {
-    private Store $store;
-    private SchemaManager|SchemaDirector $schemaDirector;
+    private SchemaDirector $schemaDirector;
 
-    public function __construct(Store $store, SchemaManager|SchemaDirector $schemaDirector)
+    public function __construct(SchemaDirector $schemaDirector)
     {
         parent::__construct();
 
-        $this->store = $store;
         $this->schemaDirector = $schemaDirector;
     }
 
@@ -49,13 +44,13 @@ final class SchemaUpdateCommand extends Command
         $dryRun = InputHelper::bool($input->getOption('dry-run'));
 
         if ($dryRun) {
-            if (!$this->schemaDirector instanceof DryRunSchemaManager && !$this->schemaDirector instanceof DryRunSchemaDirector) {
+            if (!$this->schemaDirector instanceof DryRunSchemaDirector) {
                 $console->error('SchemaDirector dont support dry-run');
 
                 return 1;
             }
 
-            $actions = $this->schemaDirector->dryRunUpdate($this->store);
+            $actions = $this->schemaDirector->dryRunUpdate();
 
             foreach ($actions as $action) {
                 $output->writeln($action);
@@ -72,7 +67,7 @@ final class SchemaUpdateCommand extends Command
             return 1;
         }
 
-        $this->schemaDirector->update($this->store);
+        $this->schemaDirector->update();
 
         $console->success('schema updated');
 

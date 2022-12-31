@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use Patchlevel\EventSourcing\Console\Command\SchemaCreateCommand;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
-use Patchlevel\EventSourcing\Store\Store;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -20,13 +19,10 @@ final class SchemaCreateCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->create($store)->shouldBeCalled();
+        $schemaManager->create()->shouldBeCalled();
 
         $command = new SchemaCreateCommand(
-            $store,
             $schemaManager->reveal()
         );
 
@@ -44,17 +40,14 @@ final class SchemaCreateCommandTest extends TestCase
 
     public function testDryRun(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(DryRunSchemaDirector::class);
-        $schemaManager->dryRunCreate($store)->willReturn([
+        $schemaManager->dryRunCreate()->willReturn([
             'create table 1;',
             'create table 2;',
             'create table 3;',
         ]);
 
         $command = new SchemaCreateCommand(
-            $store,
             $schemaManager->reveal()
         );
 
@@ -75,12 +68,9 @@ final class SchemaCreateCommandTest extends TestCase
 
     public function testDryRunNotSupported(): void
     {
-        $store = $this->prophesize(Store::class)->reveal();
-
         $schemaManager = $this->prophesize(SchemaDirector::class);
 
         $command = new SchemaCreateCommand(
-            $store,
             $schemaManager->reveal()
         );
 

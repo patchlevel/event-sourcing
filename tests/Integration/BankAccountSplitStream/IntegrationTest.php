@@ -13,8 +13,8 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
-use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
-use Patchlevel\EventSourcing\Projection\ProjectionListener;
+use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
+use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -50,10 +50,10 @@ final class IntegrationTest extends TestCase
     public function testSingleTableSuccessful(): void
     {
         $bankAccountProjection = new BankAccountProjection($this->connection);
-        $projectionRepository = new MetadataAwareProjectionHandler([$bankAccountProjection]);
+        $projectionRepository = new InMemoryProjectorRepository([$bankAccountProjection]);
 
         $eventStream = new DefaultEventBus();
-        $eventStream->addListener(new ProjectionListener($projectionRepository));
+        $eventStream->addListener(new SyncProjectorListener($projectionRepository));
 
         $store = new SingleTableStore(
             $this->connection,
@@ -156,10 +156,10 @@ final class IntegrationTest extends TestCase
     public function testMultiTableSuccessful(): void
     {
         $bankAccountProjection = new BankAccountProjection($this->connection);
-        $projectionRepository = new MetadataAwareProjectionHandler([$bankAccountProjection]);
+        $projectionRepository = new InMemoryProjectorRepository([$bankAccountProjection]);
 
         $eventStream = new DefaultEventBus();
-        $eventStream->addListener(new ProjectionListener($projectionRepository));
+        $eventStream->addListener(new SyncProjectorListener($projectionRepository));
 
         $store = new MultiTableStore(
             $this->connection,

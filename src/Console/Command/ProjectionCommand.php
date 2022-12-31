@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
-use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
-use Patchlevel\EventSourcing\Projection\Projection;
-use Patchlevel\EventSourcing\Projection\ProjectionHandler;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Symfony\Component\Console\Command\Command;
 
 use function array_filter;
@@ -17,35 +15,39 @@ use function in_array;
 use function is_array;
 use function is_string;
 use function is_subclass_of;
-use function sprintf;
 
 abstract class ProjectionCommand extends Command
 {
-    private ProjectionHandler $projectionHandler;
+    private readonly ProjectorRepository $projectorRepository;
 
-    public function __construct(ProjectionHandler $projectionHandler)
+    public function __construct(ProjectorRepository $projectorRepository)
     {
         parent::__construct();
 
-        $this->projectionHandler = $projectionHandler;
+        $this->projectorRepository = $projectorRepository;
     }
 
-    protected function projectionHandler(mixed $projectionOption): ProjectionHandler
+    /**
+     * @return list<Projector>
+     */
+    protected function projectors(mixed $projectionOption): array
     {
         $normalizedProjectionOption = $this->normalizeProjectionOption($projectionOption);
 
         if (!$normalizedProjectionOption) {
-            return $this->projectionHandler;
+            return $this->projectorRepository->projectors();
         }
 
-        return $this->filterProjectionInProjectionHandler(
-            $this->projectionHandler,
-            $normalizedProjectionOption
+        return array_values(
+            array_filter(
+                [...$this->projectorRepository->projectors()],
+                static fn (Projector $projection): bool => in_array($projection::class, $normalizedProjectionOption)
+            )
         );
     }
 
     /**
-     * @return non-empty-array<class-string<Projection>>|null
+     * @return non-empty-array<class-string<Projector>>|null
      */
     private function normalizeProjectionOption(mixed $option): ?array
     {
@@ -54,14 +56,14 @@ abstract class ProjectionCommand extends Command
         }
 
         if (!is_array($option)) {
-            throw new InvalidArgumentGiven($option, 'class-string<' . Projection::class . '>[]');
+            throw new InvalidArgumentGiven($option, 'class-string<' . Projector::class . '>[]');
         }
 
         $result = [];
 
         foreach ($option as $entry) {
-            if (!is_string($entry) || !is_subclass_of($entry, Projection::class)) {
-                throw new InvalidArgumentGiven($entry, 'class-string<' . Projection::class . '>');
+            if (!is_string($entry) || !is_subclass_of($entry, Projector::class)) {
+                throw new InvalidArgumentGiven($entry, 'class-string<' . Projector::class . '>');
             }
 
             $result[] = $entry;
@@ -72,35 +74,5 @@ abstract class ProjectionCommand extends Command
         }
 
         return $result;
-    }
-
-    /**
-     * @param non-empty-array<class-string<Projection>> $onlyProjections
-     */
-    private function filterProjectionInProjectionHandler(
-        ProjectionHandler $projectionHandler,
-        array $onlyProjections
-    ): MetadataAwareProjectionHandler {
-        if (!$projectionHandler instanceof MetadataAwareProjectionHandler) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'Filtering projections is only supported with "%s", but "%s" was used.',
-                    MetadataAwareProjectionHandler::class,
-                    $projectionHandler::class
-                )
-            );
-        }
-
-        $projections = array_values(
-            array_filter(
-                [...$projectionHandler->projections()],
-                static fn (Projection $projection): bool => in_array($projection::class, $onlyProjections)
-            )
-        );
-
-        return new MetadataAwareProjectionHandler(
-            $projections,
-            $projectionHandler->metadataFactory()
-        );
     }
 }

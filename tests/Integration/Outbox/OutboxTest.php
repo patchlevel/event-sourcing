@@ -9,8 +9,8 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
-use Patchlevel\EventSourcing\Projection\MetadataAwareProjectionHandler;
-use Patchlevel\EventSourcing\Projection\ProjectionListener;
+use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
+use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -43,7 +43,7 @@ final class OutboxTest extends TestCase
     public function testSuccessful(): void
     {
         $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new MetadataAwareProjectionHandler(
+        $projectionRepository = new InMemoryProjectorRepository(
             [$profileProjection]
         );
 
@@ -55,7 +55,7 @@ final class OutboxTest extends TestCase
         );
 
         $realEventBus = new DefaultEventBus();
-        $realEventBus->addListener(new ProjectionListener($projectionRepository));
+        $realEventBus->addListener(new SyncProjectorListener($projectionRepository));
         $realEventBus->addListener(new SendEmailProcessor());
 
         $outboxEventBus = new OutboxEventBus($store);

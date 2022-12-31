@@ -7,18 +7,18 @@ namespace Patchlevel\EventSourcing\Metadata\Projection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use ReflectionClass;
 
 use function array_key_exists;
 
 final class AttributeProjectionMetadataFactory implements ProjectionMetadataFactory
 {
-    /** @var array<class-string<Projection>, ProjectionMetadata> */
+    /** @var array<class-string<Projector>, ProjectionMetadata> */
     private array $projectionMetadata = [];
 
     /**
-     * @param class-string<Projection> $projection
+     * @param class-string<Projector> $projection
      */
     public function metadata(string $projection): ProjectionMetadata
     {

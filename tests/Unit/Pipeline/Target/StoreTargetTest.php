@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
-use Patchlevel\EventSourcing\Store\PipelineStore;
+use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -24,7 +24,7 @@ final class StoreTargetTest extends TestCase
             new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
         );
 
-        $pipelineStore = $this->prophesize(PipelineStore::class);
+        $pipelineStore = $this->prophesize(Store::class);
         $pipelineStore->save($message)->shouldBeCalled();
 
         $storeTarget = new StoreTarget($pipelineStore->reveal());
