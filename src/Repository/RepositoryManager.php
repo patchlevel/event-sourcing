@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
 
 interface RepositoryManager
 {
@@ -13,7 +13,7 @@ interface RepositoryManager
      *
      * @return Repository<T>
      *
-     * @template T of AggregateRoot
+     * @template T of AggregateRootInterface
      */
     public function get(string $aggregateClass): Repository;
 }

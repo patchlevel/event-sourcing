@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Metadata\ClassFinder;
 use ReflectionClass;
@@ -31,7 +31,7 @@ final class AttributeAggregateRootRegistryFactory implements AggregateRootRegist
                 continue;
             }
 
-            if (!is_subclass_of($class, AggregateRoot::class)) {
+            if (!is_subclass_of($class, AggregateRootInterface::class)) {
                 throw new NoAggregateRoot($class);
             }
 

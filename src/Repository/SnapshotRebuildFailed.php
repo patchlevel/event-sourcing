@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
 use Throwable;
 
 use function sprintf;
 
 final class SnapshotRebuildFailed extends RepositoryException
 {
-    /** @var class-string<AggregateRoot> */
+    /** @var class-string<AggregateRootInterface> */
     private string $aggregateClass;
     private string $aggregateId;
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<AggregateRootInterface> $aggregateClass
      */
     public function __construct(string $aggregateClass, string $aggregateId, Throwable $previous)
     {
@@ -35,7 +35,7 @@ final class SnapshotRebuildFailed extends RepositoryException
     }
 
     /**
-     * @return class-string<AggregateRoot>
+     * @return class-string<AggregateRootInterface>
      */
     public function aggregateClass(): string
     {

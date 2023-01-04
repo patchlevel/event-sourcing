@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\NormalizedName;
@@ -26,11 +26,11 @@ use function class_exists;
 
 final class AttributeAggregateRootMetadataFactory implements AggregateRootMetadataFactory
 {
-    /** @var array<class-string<AggregateRoot>, AggregateRootMetadata> */
+    /** @var array<class-string<AggregateRootInterface>, AggregateRootMetadata> */
     private array $aggregateMetadata = [];
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
+     * @param class-string<AggregateRootInterface> $aggregate
      */
     public function metadata(string $aggregate): AggregateRootMetadata
     {
@@ -114,7 +114,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
+     * @param class-string<AggregateRootInterface> $aggregate
      *
      * @return array<class-string, string>
      */

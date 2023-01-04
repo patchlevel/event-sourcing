@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Snapshot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Serializer\Hydrator\AggregateRootHydrator;
 use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataAggregateRootHydrator;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
@@ -20,16 +22,22 @@ final class DefaultSnapshotStore implements SnapshotStore
 
     private AggregateRootHydrator $hydrator;
 
+    private AggregateRootMetadataFactory $metadataFactory;
+
     /**
      * @param array<string, SnapshotAdapter> $snapshotAdapters
      */
-    public function __construct(array $snapshotAdapters, ?AggregateRootHydrator $hydrator = null)
-    {
+    public function __construct(
+        array $snapshotAdapters,
+        ?AggregateRootHydrator $hydrator = null,
+        ?AggregateRootMetadataFactory $metadataFactory = null
+    ) {
         $this->snapshotAdapters = $snapshotAdapters;
         $this->hydrator = $hydrator ?? new MetadataAggregateRootHydrator();
+        $this->metadataFactory = $metadataFactory ?? new AggregateRootMetadataAwareMetadataFactory();
     }
 
-    public function save(AggregateRoot $aggregateRoot): void
+    public function save(AggregateRootInterface $aggregateRoot): void
     {
         $aggregateClass = $aggregateRoot::class;
         $key = $this->key($aggregateClass, $aggregateRoot->aggregateRootId());
@@ -51,9 +59,9 @@ final class DefaultSnapshotStore implements SnapshotStore
      *
      * @throws SnapshotNotFound
      *
-     * @template T of AggregateRoot
+     * @template T of AggregateRootInterface
      */
-    public function load(string $aggregateClass, string $id): AggregateRoot
+    public function load(string $aggregateClass, string $id): AggregateRootInterface
     {
         $adapter = $this->adapter($aggregateClass);
         $key = $this->key($aggregateClass, $id);
@@ -79,11 +87,11 @@ final class DefaultSnapshotStore implements SnapshotStore
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<AggregateRootInterface> $aggregateClass
      */
     public function adapter(string $aggregateClass): SnapshotAdapter
     {
-        $adapterName = $aggregateClass::metadata()->snapshotStore;
+        $adapterName = $this->metadataFactory->metadata($aggregateClass)->snapshotStore;
 
         if (!$adapterName) {
             throw new SnapshotNotConfigured($aggregateClass);
@@ -97,20 +105,20 @@ final class DefaultSnapshotStore implements SnapshotStore
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<AggregateRootInterface> $aggregateClass
      */
     private function key(string $aggregateClass, string $aggregateId): string
     {
-        $aggregateName = $aggregateClass::metadata()->name;
+        $aggregateName = $this->metadataFactory->metadata($aggregateClass)->name;
 
         return sprintf('%s-%s', $aggregateName, $aggregateId);
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string<AggregateRootInterface> $aggregateClass
      */
     private function version(string $aggregateClass): ?string
     {
-        return $aggregateClass::metadata()->snapshotVersion;
+        return $this->metadataFactory->metadata($aggregateClass)->snapshotVersion;
     }
 }

@@ -9,7 +9,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Generator;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
@@ -34,7 +34,7 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
+     * @param class-string<AggregateRootInterface> $aggregate
      *
      * @return list<Message>
      */
@@ -81,7 +81,7 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
+     * @param class-string<AggregateRootInterface> $aggregate
      */
     public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
     {
@@ -102,7 +102,7 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
     }
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
+     * @param class-string<AggregateRootInterface> $aggregate
      */
     public function has(string $aggregate, string $id): bool
     {

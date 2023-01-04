@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="5.6.0@e784128902dfe01d489c4123d69918a9f3c1eac5">
+  <file src="src/Aggregate/AggregateRootBehaviour.php">
+    <UnsafeInstantiation>
+      <code>new static()</code>
+    </UnsafeInstantiation>
+  </file>
   <file src="src/Clock/FrozenClock.php">
     <PossiblyFalsePropertyAssignmentValue>
       <code>$this-&gt;frozenDateTime-&gt;modify(sprintf('+%s seconds', $seconds))</code>
@@ -52,6 +57,14 @@
     <MixedOperand>
       <code>$playhead</code>
     </MixedOperand>
+  </file>
+  <file src="src/Serializer/Hydrator/MetadataAggregateRootHydrator.php">
+    <InvalidReturnStatement>
+      <code>$aggregateRoot</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code>T</code>
+    </InvalidReturnType>
   </file>
   <file src="src/Serializer/Upcast/Upcast.php">
     <MixedAssignment>
@@ -112,11 +125,5 @@
     <MissingParamType>
       <code>$event</code>
     </MissingParamType>
-  </file>
-  <file src="tests/Unit/Schema/DoctrineSchemaDirectorTest.php">
-    <InternalMethod>
-      <code>new Comparator()</code>
-      <code>new Comparator()</code>
-    </InternalMethod>
   </file>
 </files>

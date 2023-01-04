@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Snapshot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
 use Throwable;
 
 use function sprintf;
@@ -12,7 +12,7 @@ use function sprintf;
 final class SnapshotNotFound extends SnapshotException
 {
     /**
-     * @param class-string<AggregateRoot> $aggregate
+     * @param class-string<AggregateRootInterface> $aggregate
      */
     public function __construct(string $aggregate, string $id, ?Throwable $previous = null)
     {

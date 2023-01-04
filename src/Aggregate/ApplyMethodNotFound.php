@@ -9,8 +9,8 @@ use function sprintf;
 final class ApplyMethodNotFound extends AggregateException
 {
     /**
-     * @param class-string<AggregateRoot> $aggregate
-     * @param class-string                $event
+     * @param class-string<AggregateRootInterface> $aggregate
+     * @param class-string                         $event
      */
     public function __construct(string $aggregate, string $event)
     {

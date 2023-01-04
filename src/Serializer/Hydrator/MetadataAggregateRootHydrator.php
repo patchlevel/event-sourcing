@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Serializer\Hydrator;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
 use ReflectionClass;
 use ReflectionProperty;
+use RuntimeException;
 use Throwable;
 use TypeError;
 
 use function array_key_exists;
 use function assert;
+use function is_a;
 use function is_int;
 
 final class MetadataAggregateRootHydrator implements AggregateRootHydrator
@@ -29,10 +32,14 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
      *
      * @return T
      *
-     * @template T of AggregateRoot
+     * @template T of AggregateRootInterface
      */
-    public function hydrate(string $class, array $data): AggregateRoot
+    public function hydrate(string $class, array $data): AggregateRootInterface
     {
+        if (!is_a($class, AggregateRoot::class, true)) {
+            throw new RuntimeException();
+        }
+
         $metadata = $class::metadata();
         $aggregateRoot = $this->newInstance($class);
 
@@ -77,8 +84,12 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
     /**
      * @return array<string, mixed>
      */
-    public function extract(AggregateRoot $aggregateRoot): array
+    public function extract(AggregateRootInterface $aggregateRoot): array
     {
+        if (!$aggregateRoot instanceof AggregateRoot) {
+            throw new RuntimeException();
+        }
+
         $metadata = $aggregateRoot::metadata();
 
         $data = [];

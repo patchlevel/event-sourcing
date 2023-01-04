@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Snapshot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
 
 final class Snapshot
 {
-    /** @var class-string<AggregateRoot> */
+    /** @var class-string<AggregateRootInterface> */
     private readonly string $aggregate;
     private readonly string $id;
     private readonly int $playhead;
@@ -16,8 +16,8 @@ final class Snapshot
     private readonly array $payload;
 
     /**
-     * @param class-string<AggregateRoot> $aggregate
-     * @param array<string, mixed>        $payload
+     * @param class-string<AggregateRootInterface> $aggregate
+     * @param array<string, mixed>                 $payload
      */
     public function __construct(string $aggregate, string $id, int $playhead, array $payload)
     {
@@ -28,7 +28,7 @@ final class Snapshot
     }
 
     /**
-     * @return class-string<AggregateRoot>
+     * @return class-string<AggregateRootInterface>
      */
     public function aggregate(): string
     {
