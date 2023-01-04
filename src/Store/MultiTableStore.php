@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+use Closure;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
@@ -22,19 +23,14 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class MultiTableStore extends DoctrineStore implements StreamableStore, SchemaConfigurator
+final class MultiTableStore implements StreamableStore, SchemaConfigurator, Store, ArchivableStore
 {
-    private string $metadataTableName;
-
     public function __construct(
-        Connection $connection,
-        EventSerializer $serializer,
-        AggregateRootRegistry $aggregateRootRegistry,
-        string $metadataTableName = 'eventstore_metadata',
+        private readonly Connection $connection,
+        private readonly EventSerializer $serializer,
+        private readonly AggregateRootRegistry $aggregateRootRegistry,
+        private readonly string $metadataTableName = 'eventstore_metadata',
     ) {
-        parent::__construct($connection, $serializer, $aggregateRootRegistry);
-
-        $this->metadataTableName = $metadataTableName;
     }
 
     /**
@@ -76,9 +72,9 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
                 return Message::create($event)
                     ->withAggregateClass($aggregate)
                     ->withAggregateId($data['aggregate_id'])
-                    ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
-                    ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
-                    ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
+                    ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
+                    ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
+                    ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
             $result
         );
@@ -233,9 +229,9 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
             yield Message::create($event)
                 ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($aggregateName))
                 ->withAggregateId($eventData['aggregate_id'])
-                ->withPlayhead(self::normalizePlayhead($eventData['playhead'], $platform))
-                ->withRecordedOn(self::normalizeRecordedOn($eventData['recorded_on'], $platform))
-                ->withCustomHeaders(self::normalizeCustomHeaders($eventData['custom_headers'], $platform));
+                ->withPlayhead(DoctrineHelper::normalizePlayhead($eventData['playhead'], $platform))
+                ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($eventData['recorded_on'], $platform))
+                ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($eventData['custom_headers'], $platform));
         }
     }
 
@@ -256,6 +252,16 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
         return (int)$result;
     }
 
+    /**
+     * @param Closure():ClosureReturn $function
+     *
+     * @template ClosureReturn
+     */
+    public function transactional(Closure $function): void
+    {
+        $this->connection->transactional($function);
+    }
+
     public function configureSchema(Schema $schema, Connection $connection): void
     {
         if ($this->connection !== $connection) {
@@ -267,8 +273,6 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
         foreach ($this->aggregateRootRegistry->aggregateNames() as $tableName) {
             $this->addAggregateTableToSchema($schema, $tableName);
         }
-
-        $this->addOutboxSchema($schema);
     }
 
     private function addMetaTableToSchema(Schema $schema): void

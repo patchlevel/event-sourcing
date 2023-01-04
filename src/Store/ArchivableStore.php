@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Store;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
-interface SplitEventstreamStore extends TransactionStore
+interface ArchivableStore
 {
     /**
      * @param class-string<AggregateRoot> $aggregate

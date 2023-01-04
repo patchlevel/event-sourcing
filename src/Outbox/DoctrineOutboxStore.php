@@ -2,65 +2,31 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Store;
+namespace Patchlevel\EventSourcing\Outbox;
 
-use Closure;
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\DoctrineHelper;
+use Patchlevel\EventSourcing\Store\WrongQueryResult;
 
 use function array_map;
-use function is_array;
 use function is_int;
 use function is_string;
 
-abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, SplitEventstreamStore
+final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
 {
-    private const OUTBOX_TABLE = 'outbox';
-
     public function __construct(
-        protected Connection $connection,
-        protected EventSerializer $serializer,
-        protected AggregateRootRegistry $aggregateRootRegistry
+        private readonly Connection $connection,
+        private readonly EventSerializer $serializer,
+        private readonly AggregateRootRegistry $aggregateRootRegistry,
+        private readonly string $outboxTable = 'outbox'
     ) {
-    }
-
-    public function transactionBegin(): void
-    {
-        $this->connection->beginTransaction();
-    }
-
-    public function transactionCommit(): void
-    {
-        $this->connection->commit();
-    }
-
-    public function transactionRollback(): void
-    {
-        $this->connection->rollBack();
-    }
-
-    /**
-     * @param Closure():ClosureReturn $function
-     *
-     * @template ClosureReturn
-     */
-    public function transactional(Closure $function): void
-    {
-        $this->connection->transactional($function);
-    }
-
-    public function connection(): Connection
-    {
-        return $this->connection;
     }
 
     public function saveOutboxMessage(Message ...$messages): void
@@ -73,7 +39,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
                     $data = $this->serializer->serialize($event);
 
                     $connection->insert(
-                        self::OUTBOX_TABLE,
+                        $this->outboxTable,
                         [
                             'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
                             'aggregate_id' => $message->aggregateId(),
@@ -100,7 +66,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from(self::OUTBOX_TABLE)
+            ->from($this->outboxTable)
             ->setMaxResults($limit)
             ->getSQL();
 
@@ -115,9 +81,9 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
                 return Message::create($event)
                     ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($data['aggregate']))
                     ->withAggregateId($data['aggregate_id'])
-                    ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
-                    ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
-                    ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
+                    ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
+                    ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
+                    ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
             $result
         );
@@ -129,7 +95,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
             function (Connection $connection) use ($messages): void {
                 foreach ($messages as $message) {
                     $connection->delete(
-                        self::OUTBOX_TABLE,
+                        $this->outboxTable,
                         [
                             'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
                             'aggregate_id' => $message->aggregateId(),
@@ -145,7 +111,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
-            ->from(self::OUTBOX_TABLE)
+            ->from($this->outboxTable)
             ->getSQL();
 
         $result = $this->connection->fetchOne($sql);
@@ -157,62 +123,9 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
         return (int)$result;
     }
 
-    /**
-     * @deprecated use DoctrineSchemaDirector
-     */
-    public function schema(): Schema
+    public function configureSchema(Schema $schema, Connection $connection): void
     {
-        $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
-
-        if ($this instanceof SchemaConfigurator) {
-            $this->configureSchema($schema, $this->connection);
-        }
-
-        return $schema;
-    }
-
-    protected static function normalizeRecordedOn(string $recordedOn, AbstractPlatform $platform): DateTimeImmutable
-    {
-        $normalizedRecordedOn = Type::getType(Types::DATETIMETZ_IMMUTABLE)->convertToPHPValue($recordedOn, $platform);
-
-        if (!$normalizedRecordedOn instanceof DateTimeImmutable) {
-            throw new InvalidType('recorded_on', DateTimeImmutable::class);
-        }
-
-        return $normalizedRecordedOn;
-    }
-
-    /**
-     * @return positive-int
-     */
-    protected static function normalizePlayhead(string|int $playhead, AbstractPlatform $platform): int
-    {
-        $normalizedPlayhead = Type::getType(Types::INTEGER)->convertToPHPValue($playhead, $platform);
-
-        if (!is_int($normalizedPlayhead) || $normalizedPlayhead <= 0) {
-            throw new InvalidType('playhead', 'positive-int');
-        }
-
-        return $normalizedPlayhead;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    protected static function normalizeCustomHeaders(string $customHeaders, AbstractPlatform $platform): array
-    {
-        $normalizedCustomHeaders = Type::getType(Types::JSON)->convertToPHPValue($customHeaders, $platform);
-
-        if (!is_array($normalizedCustomHeaders)) {
-            throw new InvalidType('custom_headers', 'array');
-        }
-
-        return $normalizedCustomHeaders;
-    }
-
-    protected function addOutboxSchema(Schema $schema): void
-    {
-        $table = $schema->createTable(self::OUTBOX_TABLE);
+        $table = $schema->createTable($this->outboxTable);
 
         $table->addColumn('aggregate', Types::STRING)
             ->setNotnull(true);

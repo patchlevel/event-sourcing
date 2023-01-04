@@ -7,8 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Console\Command\DatabaseDropCommand;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
-use Patchlevel\EventSourcing\Store\DoctrineStore;
-use Patchlevel\EventSourcing\Store\Store;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
@@ -20,28 +18,6 @@ final class DatabaseDropCommandTest extends TestCase
 {
     use ProphecyTrait;
 
-    public function testStoreNotSupported(): void
-    {
-        $store = $this->prophesize(Store::class);
-        $helper = $this->prophesize(DoctrineHelper::class);
-
-        $command = new DatabaseDropCommand(
-            $store->reveal(),
-            $helper->reveal()
-        );
-
-        $input = new ArrayInput([]);
-        $output = new BufferedOutput();
-
-        $exitCode = $command->run($input, $output);
-
-        self::assertSame(1, $exitCode);
-
-        $content = $output->fetch();
-
-        self::assertStringContainsString('[ERROR] Store is not supported!', $content);
-    }
-
     public function testMissingForce(): void
     {
         $connection = $this->prophesize(Connection::class);
@@ -50,11 +26,8 @@ final class DatabaseDropCommandTest extends TestCase
         $helper->copyConnectionWithoutDatabase($connection)->willReturn($connection);
         $helper->databaseName($connection)->willReturn('test');
 
-        $store = $this->prophesize(DoctrineStore::class);
-        $store->connection()->willReturn($connection);
-
         $command = new DatabaseDropCommand(
-            $store->reveal(),
+            $connection->reveal(),
             $helper->reveal()
         );
 
@@ -80,11 +53,8 @@ final class DatabaseDropCommandTest extends TestCase
         $helper->databaseName($connection)->willReturn('test');
         $helper->dropDatabase($connection, 'test')->shouldBeCalled();
 
-        $store = $this->prophesize(DoctrineStore::class);
-        $store->connection()->willReturn($connection);
-
         $command = new DatabaseDropCommand(
-            $store->reveal(),
+            $connection->reveal(),
             $helper->reveal()
         );
 
@@ -109,11 +79,8 @@ final class DatabaseDropCommandTest extends TestCase
         $helper->databaseName($connection)->willReturn('test');
         $helper->hasDatabase($connection, 'test')->willReturn(false);
 
-        $store = $this->prophesize(DoctrineStore::class);
-        $store->connection()->willReturn($connection);
-
         $command = new DatabaseDropCommand(
-            $store->reveal(),
+            $connection->reveal(),
             $helper->reveal()
         );
 
@@ -139,11 +106,8 @@ final class DatabaseDropCommandTest extends TestCase
         $helper->databaseName($connection)->willReturn('test');
         $helper->dropDatabase($connection, 'test')->willThrow(new RuntimeException('error'));
 
-        $store = $this->prophesize(DoctrineStore::class);
-        $store->connection()->willReturn($connection);
-
         $command = new DatabaseDropCommand(
-            $store->reveal(),
+            $connection->reveal(),
             $helper->reveal()
         );
 

@@ -7,11 +7,13 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Outbox;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
+use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -47,23 +49,36 @@ final class OutboxTest extends TestCase
             [$profileProjection]
         );
 
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
+        $registry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
+
         $store = new SingleTableStore(
             $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
+            $serializer,
+            $registry,
             'eventstore'
+        );
+
+        $outboxStore = new DoctrineOutboxStore(
+            $this->connection,
+            $serializer,
+            $registry,
+            'outbox'
         );
 
         $realEventBus = new DefaultEventBus();
         $realEventBus->addListener(new SyncProjectorListener($projectionRepository));
         $realEventBus->addListener(new SendEmailProcessor());
 
-        $outboxEventBus = new OutboxEventBus($store);
+        $outboxEventBus = new OutboxEventBus($outboxStore);
         $repository = new DefaultRepository($store, $outboxEventBus, Profile::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            $store
+            new ChainSchemaConfigurator([
+                $store,
+                $outboxStore,
+            ])
         );
 
         $schemaDirector->create();
@@ -72,9 +87,9 @@ final class OutboxTest extends TestCase
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
-        self::assertSame(1, $store->countOutboxMessages());
+        self::assertSame(1, $outboxStore->countOutboxMessages());
 
-        $messages = $store->retrieveOutboxMessages();
+        $messages = $outboxStore->retrieveOutboxMessages();
 
         self::assertCount(1, $messages);
 
@@ -88,11 +103,11 @@ final class OutboxTest extends TestCase
             $message->event()
         );
 
-        $consumer = new StoreOutboxConsumer($store, $realEventBus);
+        $consumer = new StoreOutboxConsumer($outboxStore, $realEventBus);
         $consumer->consume();
 
-        self::assertSame(0, $store->countOutboxMessages());
-        self::assertCount(0, $store->retrieveOutboxMessages());
+        self::assertSame(0, $outboxStore->countOutboxMessages());
+        self::assertCount(0, $outboxStore->retrieveOutboxMessages());
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
 

@@ -14,9 +14,8 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
-use Patchlevel\EventSourcing\Store\SplitEventstreamStore;
+use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\TransactionStore;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -157,32 +156,11 @@ final class DefaultRepository implements Repository
             $events
         );
 
-        if ($this->store instanceof TransactionStore) {
-            $this->store->transactional(function () use ($messages): void {
-                $this->store->save(...$messages);
-
-                if ($this->store instanceof SplitEventstreamStore) {
-                    foreach ($messages as $message) {
-                        if (!$message->newStreamStart()) {
-                            continue;
-                        }
-
-                        $this->store->archiveMessages(
-                            $message->aggregateClass(),
-                            $message->aggregateId(),
-                            $message->playhead()
-                        );
-                    }
-                }
-
-                $this->eventBus->dispatch(...$messages);
-            });
-
-            return;
-        }
-
-        $this->store->save(...$messages);
-        $this->eventBus->dispatch(...$messages);
+        $this->store->transactional(function () use ($messages): void {
+            $this->store->save(...$messages);
+            $this->archive(...$messages);
+            $this->eventBus->dispatch(...$messages);
+        });
     }
 
     /**
@@ -238,6 +216,25 @@ final class DefaultRepository implements Repository
     {
         if (!$aggregate instanceof $this->aggregateClass) {
             throw new WrongAggregate($aggregate::class, $this->aggregateClass);
+        }
+    }
+
+    private function archive(Message ...$messages): void
+    {
+        if (!$this->store instanceof ArchivableStore) {
+            return;
+        }
+
+        foreach ($messages as $message) {
+            if (!$message->newStreamStart()) {
+                continue;
+            }
+
+            $this->store->archiveMessages(
+                $message->aggregateClass(),
+                $message->aggregateId(),
+                $message->playhead()
+            );
         }
     }
 }

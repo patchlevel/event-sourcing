@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Outbox;
 
 use Patchlevel\EventSourcing\EventBus\EventBus;
-use Patchlevel\EventSourcing\Store\OutboxStore;
 
 final class StoreOutboxConsumer implements OutboxConsumer
 {
-    public function __construct(private OutboxStore $outboxStore, private EventBus $eventBus)
-    {
+    public function __construct(
+        private readonly OutboxStore $outboxStore,
+        private readonly EventBus $eventBus
+    ) {
     }
 
     public function consume(?int $limit = null): void
