@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Event;
 
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\NormalizedName;
 use Patchlevel\EventSourcing\Attribute\SplitStream;
 use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
@@ -92,14 +91,6 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
 
         if ($attributeReflectionList !== []) {
             return $attributeReflectionList[0]->newInstance();
-        }
-
-        $attributeReflectionList = $reflectionProperty->getAttributes(Normalize::class);
-
-        if ($attributeReflectionList !== []) {
-            $attribute = $attributeReflectionList[0]->newInstance();
-
-            return $attribute->normalizer();
         }
 
         return null;
