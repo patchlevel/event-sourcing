@@ -6,12 +6,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Normalize;
 
 #[Aggregate('wrong_normalizer')]
 final class WrongNormalizerAggregate extends AggregateRoot
 {
-    #[Normalize(new EmailNormalizer())]
+    #[EmailNormalizer]
     public bool $email = true;
 
     public function aggregateRootId(): string

@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Outbox\Aggregate;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Normalizer\ProfileIdNormalizer;
@@ -17,7 +16,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\ProfileId;
 #[Snapshot('default', 100)]
 final class Profile extends AggregateRoot
 {
-    #[Normalize(new ProfileIdNormalizer())]
+    #[ProfileIdNormalizer]
     private ProfileId $id;
     private string $name;
 

@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
@@ -18,7 +17,7 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 #[Snapshot('default')]
 final class Profile extends AggregateRoot
 {
-    #[Normalize(new ProfileIdNormalizer())]
+    #[ProfileIdNormalizer]
     private ProfileId $id;
     private string $name;
 

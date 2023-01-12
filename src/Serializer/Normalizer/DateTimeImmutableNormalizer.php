@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 
+use Attribute;
 use DateTimeImmutable;
 
 use function is_string;
 
+#[Attribute(Attribute::TARGET_PROPERTY)]
 final class DateTimeImmutableNormalizer implements Normalizer
 {
     public function __construct(
