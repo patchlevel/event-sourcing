@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 
+use Attribute;
 use BackedEnum;
 use ValueError;
 
 use function is_int;
 use function is_string;
 
+#[Attribute(Attribute::TARGET_PROPERTY)]
 final class EnumNormalizer implements Normalizer
 {
     public function __construct(

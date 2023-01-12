@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 
+use Attribute;
+
 use function array_map;
 use function is_array;
 
+#[Attribute(Attribute::TARGET_PROPERTY)]
 final class ArrayNormalizer implements Normalizer
 {
     public function __construct(private readonly Normalizer $normalizer)

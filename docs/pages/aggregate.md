@@ -492,13 +492,12 @@ since we only expected a string before but now passed a `Name` value object.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Attribute\Normalize;
 
 #[Event('profile.name_changed')]
 final class NameChanged
 {
     public function __construct(
-        #[Normalize(new NameNormalizer())]
+        #[NameNormalizer]
         public readonly Name $name
     ) {}
 }

@@ -8,7 +8,10 @@ use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\Normalize;
 use Patchlevel\EventSourcing\Attribute\NormalizedName;
 use Patchlevel\EventSourcing\Attribute\SplitStream;
+use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
+use ReflectionAttribute;
 use ReflectionClass;
+use ReflectionProperty;
 
 use function array_key_exists;
 use function count;
@@ -70,22 +73,35 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
                 $fieldName = $attribute->name();
             }
 
-            $attributeReflectionList = $property->getAttributes(Normalize::class);
-
-            $normalizer = null;
-
-            if ($attributeReflectionList !== []) {
-                $attribute = $attributeReflectionList[0]->newInstance();
-                $normalizer = $attribute->normalizer();
-            }
-
             $properties[$property->getName()] = new EventPropertyMetadata(
                 $fieldName,
                 $reflection,
-                $normalizer
+                $this->getNormalizer($property)
             );
         }
 
         return $properties;
+    }
+
+    private function getNormalizer(ReflectionProperty $reflectionProperty): ?Normalizer
+    {
+        $attributeReflectionList = $reflectionProperty->getAttributes(
+            Normalizer::class,
+            ReflectionAttribute::IS_INSTANCEOF
+        );
+
+        if ($attributeReflectionList !== []) {
+            return $attributeReflectionList[0]->newInstance();
+        }
+
+        $attributeReflectionList = $reflectionProperty->getAttributes(Normalize::class);
+
+        if ($attributeReflectionList !== []) {
+            $attribute = $attributeReflectionList[0]->newInstance();
+
+            return $attribute->normalizer();
+        }
+
+        return null;
     }
 }

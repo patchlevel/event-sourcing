@@ -39,6 +39,18 @@
       <code>Headers</code>
     </MoreSpecificReturnType>
   </file>
+  <file src="src/Metadata/AggregateRoot/AttributeAggregateRootMetadataFactory.php">
+    <DeprecatedClass occurrences="2">
+      <code>$attributeReflectionList[0]-&gt;newInstance()</code>
+      <code>Normalize::class</code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Metadata/Event/AttributeEventMetadataFactory.php">
+    <DeprecatedClass occurrences="2">
+      <code>$attributeReflectionList[0]-&gt;newInstance()</code>
+      <code>Normalize::class</code>
+    </DeprecatedClass>
+  </file>
   <file src="src/Repository/DefaultRepository.php">
     <ArgumentTypeCoercion occurrences="1">
       <code>$messages[0]-&gt;playhead() - 1</code>
@@ -115,24 +127,11 @@
       <code>toString</code>
     </MixedMethodCall>
   </file>
-  <file src="tests/Unit/Console/Command/ProjectionDropCommandTest.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$repository-&gt;reveal()</code>
-    </ArgumentTypeCoercion>
-    <MixedArgument occurrences="1">
-      <code>ProjectionHandler::class</code>
-    </MixedArgument>
-    <UndefinedClass occurrences="1">
-      <code>ProjectionHandler</code>
-    </UndefinedClass>
-  </file>
-  <file src="tests/Unit/Console/Command/ProjectionRebuildCommandTest.php">
-    <InvalidArgument occurrences="4">
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-      <code>$store-&gt;reveal()</code>
-    </InvalidArgument>
+  <file src="tests/Unit/Attribute/NormalizeTest.php">
+    <DeprecatedClass occurrences="2">
+      <code>new Normalize($normalizer)</code>
+      <code>new Normalize($normalizer, true)</code>
+    </DeprecatedClass>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion occurrences="1">
@@ -143,6 +142,11 @@
     <MissingParamType occurrences="1">
       <code>$event</code>
     </MissingParamType>
+  </file>
+  <file src="tests/Unit/Metadata/Event/AttributeEventMetadataFactoryTest.php">
+    <DeprecatedClass occurrences="1">
+      <code>Normalize(new EmailNormalizer())</code>
+    </DeprecatedClass>
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaDirectorTest.php">
     <InternalMethod occurrences="2">

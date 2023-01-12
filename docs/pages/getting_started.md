@@ -161,11 +161,9 @@ use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 final class HotelProjection implements Projector
 {
-    private Connection $db;
-
-    public function __construct(Connection $db)
-    {
-        $this->db = $db;
+    public function __construct(
+        private readonly Connection $db
+    ) {
     }
     
     /**
@@ -232,30 +230,24 @@ final class HotelProjection implements Projector
 In our example we also want to send an email to the head office as soon as a guest is checked in.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Subscriber;
 
-final class SendCheckInEmailListener implements Listener
+final class SendCheckInEmailProcessor extends Subscriber
 {
-    private Mailer $mailer;
-
-    private function __construct(Mailer $mailer) 
-    {
-        $this->mailer = $mailer;
+    public function __construct(
+        private readonly Mailer $mailer
+    ) {
     }
 
-    public function __invoke(Message $message): void
+    #[Handle(GuestIsCheckedIn::class)]
+    public function onGuestIsCheckedIn(Message $message): void
     {
-        $event = $message->event();
-    
-        if (!$event instanceof GuestIsCheckedIn) {
-            return;
-        }
-
         $this->mailer->send(
             'hq@patchlevel.de',
             'Guest is checked in',
-            sprintf('A new guest named "%s" is checked in', $event->guestName)
+            sprintf('A new guest named "%s" is checked in', $message->event()->guestName)
         );
     }
 }
@@ -291,7 +283,7 @@ $projectorRepository = new ProjectorRepository([
 
 $eventBus = new DefaultEventBus();
 $eventBus->addListener(new SyncProjectorListener($projectorRepository));
-$eventBus->addListener(new SendCheckInEmailListener($mailer));
+$eventBus->addListener(new SendCheckInEmailProcessor($mailer));
 
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);

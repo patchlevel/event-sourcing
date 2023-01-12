@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Normalizer;
 
+use Attribute;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
 use function is_string;
 
+#[Attribute(Attribute::TARGET_PROPERTY)]
 final class ProfileIdNormalizer implements Normalizer
 {
     public function normalize(mixed $value): string

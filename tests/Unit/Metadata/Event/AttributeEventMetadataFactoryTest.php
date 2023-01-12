@@ -90,6 +90,30 @@ final class AttributeEventMetadataFactoryTest extends TestCase
     {
         $event = new #[Event('profile_created')] class (Email::fromString('info@patchlevel.de')) {
             public function __construct(
+                #[EmailNormalizer]
+                public Email $email
+            ) {
+            }
+        };
+
+        $metadataFactory = new AttributeEventMetadataFactory();
+        $metadata = $metadataFactory->metadata($event::class);
+
+        self::assertSame('profile_created', $metadata->name);
+        self::assertCount(1, $metadata->properties);
+        self::assertArrayHasKey('email', $metadata->properties);
+
+        $propertyMetadata = $metadata->properties['email'];
+
+        self::assertSame('email', $propertyMetadata->fieldName);
+        self::assertInstanceOf(EmailNormalizer::class, $propertyMetadata->normalizer);
+        self::assertInstanceOf(ReflectionProperty::class, $propertyMetadata->reflection);
+    }
+
+    public function testEventWithLegacyNormalizer(): void
+    {
+        $event = new #[Event('profile_created')] class (Email::fromString('info@patchlevel.de')) {
+            public function __construct(
                 #[Normalize(new EmailNormalizer())]
                 public Email $email
             ) {
