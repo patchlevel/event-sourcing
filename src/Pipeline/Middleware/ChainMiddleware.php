@@ -43,6 +43,6 @@ final class ChainMiddleware implements Middleware
             $result += $middleware($message);
         }
 
-        return $result;
+        return array_values($result);
     }
 }

@@ -1,191 +1,187 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.30.0@d0bc6e25d89f649e4f36a534f330f8bb4643dd69">
+<files psalm-version="5.6.0@e784128902dfe01d489c4123d69918a9f3c1eac5">
   <file src="src/Clock/FrozenClock.php">
-    <PossiblyFalsePropertyAssignmentValue occurrences="1">
+    <PossiblyFalsePropertyAssignmentValue>
       <code>$this-&gt;frozenDateTime-&gt;modify(sprintf('+%s seconds', $seconds))</code>
     </PossiblyFalsePropertyAssignmentValue>
   </file>
-  <file src="src/Console/Command/OutboxConsumeCommand.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$sleep</code>
-    </ArgumentTypeCoercion>
-  </file>
   <file src="src/Console/Command/ProjectionCommand.php">
-    <DeprecatedClass occurrences="10">
+    <DeprecatedClass>
       <code>MetadataAwareProjectionHandler</code>
       <code>MetadataAwareProjectionHandler::class</code>
-      <code>Projection</code>
+      <code>new MetadataAwareProjectionHandler(
+            $projections,
+            $projectionHandler-&gt;metadataFactory()
+        )</code>
+    </DeprecatedClass>
+    <DeprecatedInterface>
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
       <code>non-empty-array&lt;class-string&lt;Projection&gt;&gt;</code>
       <code>non-empty-array&lt;class-string&lt;Projection&gt;&gt;|null</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Console/Command/ProjectionRebuildCommand.php">
-    <DeprecatedClass occurrences="2">
-      <code>ProjectionHandler</code>
+    <DeprecatedClass>
       <code>new ProjectionHandlerTarget($projectionHandler)</code>
     </DeprecatedClass>
-  </file>
-  <file src="src/Console/Command/ProjectionistRunCommand.php">
-    <ArgumentTypeCoercion occurrences="2">
-      <code>$messageLimit</code>
-      <code>$sleep</code>
-    </ArgumentTypeCoercion>
+    <DeprecatedInterface>
+      <code>ProjectionHandler</code>
+    </DeprecatedInterface>
   </file>
   <file src="src/Console/Command/SchemaCreateCommand.php">
-    <DeprecatedClass occurrences="2">
+    <DeprecatedInterface>
       <code>SchemaManager|SchemaDirector</code>
       <code>SchemaManager|SchemaDirector $schemaDirector</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Console/Command/SchemaDropCommand.php">
-    <DeprecatedClass occurrences="2">
+    <DeprecatedInterface>
       <code>SchemaManager|SchemaDirector</code>
       <code>SchemaManager|SchemaDirector $schemaDirector</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Console/Command/SchemaUpdateCommand.php">
-    <DeprecatedClass occurrences="2">
+    <DeprecatedInterface>
       <code>SchemaManager|SchemaDirector</code>
       <code>SchemaManager|SchemaDirector $schemaDirector</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Console/DoctrineHelper.php">
-    <ClassNotFinal occurrences="1">
+    <ClassNotFinal>
       <code>class DoctrineHelper</code>
     </ClassNotFinal>
   </file>
   <file src="src/Console/Worker/DefaultWorker.php">
-    <TypeDoesNotContainType occurrences="1">
+    <TypeDoesNotContainType>
+      <code>$this-&gt;shouldStop</code>
       <code>$this-&gt;shouldStop</code>
     </TypeDoesNotContainType>
   </file>
   <file src="src/Console/Worker/Listener/StopWorkerOnSigtermSignalListener.php">
-    <MoreSpecificReturnType occurrences="1">
+    <MoreSpecificReturnType>
       <code>array&lt;class-string, string&gt;</code>
     </MoreSpecificReturnType>
   </file>
   <file src="src/EventBus/Message.php">
-    <LessSpecificReturnStatement occurrences="1">
+    <InvalidReturnStatement>
       <code>$headers</code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType occurrences="1">
+    </InvalidReturnStatement>
+    <InvalidReturnType>
       <code>Headers</code>
-    </MoreSpecificReturnType>
+    </InvalidReturnType>
   </file>
   <file src="src/Metadata/AggregateRoot/AttributeAggregateRootMetadataFactory.php">
-    <DeprecatedClass occurrences="2">
-      <code>$attributeReflectionList[0]-&gt;newInstance()</code>
+    <DeprecatedClass>
       <code>Normalize::class</code>
     </DeprecatedClass>
   </file>
   <file src="src/Metadata/Event/AttributeEventMetadataFactory.php">
-    <DeprecatedClass occurrences="2">
-      <code>$attributeReflectionList[0]-&gt;newInstance()</code>
+    <DeprecatedClass>
       <code>Normalize::class</code>
     </DeprecatedClass>
   </file>
   <file src="src/Metadata/Projection/AttributeProjectionMetadataFactory.php">
-    <DeprecatedClass occurrences="3">
+    <DeprecatedInterface>
       <code>array</code>
       <code>class-string&lt;Projection&gt;</code>
       <code>private array $projectionMetadata = [];</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Metadata/Projection/DuplicateCreateMethod.php">
-    <DeprecatedClass occurrences="1">
+    <DeprecatedInterface>
       <code>class-string&lt;Projection&gt;</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Metadata/Projection/DuplicateDropMethod.php">
-    <DeprecatedClass occurrences="1">
+    <DeprecatedInterface>
       <code>class-string&lt;Projection&gt;</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Metadata/Projection/DuplicateHandleMethod.php">
-    <DeprecatedClass occurrences="1">
+    <DeprecatedInterface>
       <code>class-string&lt;Projection&gt;</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Metadata/Projection/ProjectionMetadataFactory.php">
-    <DeprecatedClass occurrences="1">
+    <DeprecatedInterface>
       <code>class-string&lt;Projection&gt;</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Pipeline/Source/StoreSource.php">
-    <DeprecatedClass occurrences="2">
+    <DeprecatedInterface>
       <code>PipelineStore</code>
       <code>PipelineStore</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Pipeline/Target/ProjectionHandlerTarget.php">
-    <DeprecatedClass occurrences="2">
+    <DeprecatedInterface>
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Pipeline/Target/ProjectionTarget.php">
-    <DeprecatedClass occurrences="3">
+    <DeprecatedClass>
       <code>MetadataAwareProjectionHandler</code>
-      <code>Projection</code>
+      <code>new MetadataAwareProjectionHandler(
+            [$projection],
+            $projectionMetadataFactory
+        )</code>
     </DeprecatedClass>
+    <DeprecatedInterface>
+      <code>Projection</code>
+    </DeprecatedInterface>
   </file>
   <file src="src/Projection/MetadataAwareProjectionHandler.php">
-    <DeprecatedClass occurrences="3">
+    <DeprecatedInterface>
+      <code>MetadataAwareProjectionHandler</code>
       <code>iterable</code>
       <code>iterable&lt;Projection&gt;</code>
       <code>iterable&lt;Projection&gt;</code>
-    </DeprecatedClass>
-    <DeprecatedInterface occurrences="1">
-      <code>MetadataAwareProjectionHandler</code>
     </DeprecatedInterface>
   </file>
   <file src="src/Projection/ProjectionListener.php">
-    <DeprecatedClass occurrences="2">
+    <DeprecatedInterface>
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Projection/Projector/MetadataProjectorResolver.php">
-    <DeprecatedClass occurrences="3">
+    <DeprecatedInterface>
       <code>Projection</code>
       <code>Projection</code>
       <code>Projection</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Projection/Projector/ProjectorResolver.php">
-    <DeprecatedClass occurrences="3">
+    <DeprecatedInterface>
       <code>Projection</code>
       <code>Projection</code>
       <code>Projection</code>
-    </DeprecatedClass>
+    </DeprecatedInterface>
   </file>
   <file src="src/Repository/DefaultRepository.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$messages[0]-&gt;playhead() - 1</code>
-    </ArgumentTypeCoercion>
-    <MixedArgument occurrences="1">
+    <MixedArgument>
       <code>++$playhead</code>
     </MixedArgument>
-    <MixedAssignment occurrences="1">
+    <MixedAssignment>
       <code>$playhead</code>
     </MixedAssignment>
-    <MixedOperand occurrences="1">
+    <MixedOperand>
       <code>$playhead</code>
     </MixedOperand>
   </file>
   <file src="src/Schema/DoctrineSchemaDirector.php">
-    <DeprecatedMethod occurrences="3">
+    <DeprecatedMethod>
       <code>createSchema</code>
       <code>createSchema</code>
       <code>toSql</code>
     </DeprecatedMethod>
   </file>
   <file src="src/Schema/DoctrineSchemaManager.php">
-    <DeprecatedClass occurrences="6">
+    <DeprecatedClass>
       <code>new StoreNotSupported($store, DoctrineStore::class)</code>
       <code>new StoreNotSupported($store, DoctrineStore::class)</code>
       <code>new StoreNotSupported($store, DoctrineStore::class)</code>
@@ -193,10 +189,11 @@
       <code>new StoreNotSupported($store, DoctrineStore::class)</code>
       <code>new StoreNotSupported($store, DoctrineStore::class)</code>
     </DeprecatedClass>
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
+      <code>DoctrineSchemaManager</code>
       <code>DoctrineSchemaManager</code>
     </DeprecatedInterface>
-    <DeprecatedMethod occurrences="6">
+    <DeprecatedMethod>
       <code>createSchema</code>
       <code>createSchema</code>
       <code>schema</code>
@@ -206,53 +203,50 @@
     </DeprecatedMethod>
   </file>
   <file src="src/Schema/MigrationSchemaProvider.php">
-    <DeprecatedMethod occurrences="1">
+    <DeprecatedMethod>
       <code>schema</code>
     </DeprecatedMethod>
   </file>
   <file src="src/Serializer/Upcast/Upcast.php">
-    <MixedAssignment occurrences="1">
+    <MixedAssignment>
       <code>$payload[$key]</code>
     </MixedAssignment>
   </file>
   <file src="src/Snapshot/DefaultSnapshotStore.php">
-    <MixedArgument occurrences="1">
+    <MixedArgument>
       <code>$data['payload']</code>
     </MixedArgument>
   </file>
   <file src="src/Store/DoctrineStore.php">
-    <MixedReturnTypeCoercion occurrences="2">
+    <MixedReturnTypeCoercion>
       <code>$normalizedCustomHeaders</code>
       <code>array&lt;string, mixed&gt;</code>
     </MixedReturnTypeCoercion>
   </file>
   <file src="src/Store/MultiTableStore.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>MultiTableStore</code>
     </DeprecatedInterface>
-    <UnnecessaryVarAnnotation occurrences="1">
-      <code>array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}|null</code>
-    </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Store/SingleTableStore.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>SingleTableStore</code>
     </DeprecatedInterface>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Projection/ProfileProjector.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>ProfileProjector</code>
     </DeprecatedInterface>
   </file>
   <file src="tests/Benchmark/LoadEventsBench.php">
-    <MissingConstructor occurrences="3">
+    <MissingConstructor>
       <code>$bus</code>
       <code>$repository</code>
       <code>$store</code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/LoadEventsWithSnapshotsBench.php">
-    <MissingConstructor occurrences="4">
+    <MissingConstructor>
       <code>$bus</code>
       <code>$repository</code>
       <code>$snapshotStore</code>
@@ -260,10 +254,13 @@
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/WriteEventsBench.php">
-    <DeprecatedClass occurrences="2">
+    <DeprecatedClass>
+      <code>new MetadataAwareProjectionHandler(
+            [$profileProjection]
+        )</code>
       <code>new ProjectionListener($projectionRepository)</code>
     </DeprecatedClass>
-    <MissingConstructor occurrences="4">
+    <MissingConstructor>
       <code>$bus</code>
       <code>$profile</code>
       <code>$repository</code>
@@ -271,7 +268,7 @@
     </MissingConstructor>
   </file>
   <file src="tests/Integration/BankAccountSplitStream/IntegrationTest.php">
-    <DeprecatedClass occurrences="4">
+    <DeprecatedClass>
       <code>new MetadataAwareProjectionHandler([$bankAccountProjection])</code>
       <code>new MetadataAwareProjectionHandler([$bankAccountProjection])</code>
       <code>new ProjectionListener($projectionRepository)</code>
@@ -279,95 +276,89 @@
     </DeprecatedClass>
   </file>
   <file src="tests/Integration/BankAccountSplitStream/Projection/BankAccountProjection.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>BankAccountProjection</code>
     </DeprecatedInterface>
-    <MixedMethodCall occurrences="2">
+    <MixedMethodCall>
       <code>toString</code>
       <code>toString</code>
     </MixedMethodCall>
   </file>
   <file src="tests/Integration/BasicImplementation/Projection/ProfileProjection.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>ProfileProjection</code>
     </DeprecatedInterface>
   </file>
   <file src="tests/Integration/Outbox/OutboxTest.php">
-    <DeprecatedClass occurrences="2">
+    <DeprecatedClass>
+      <code>new MetadataAwareProjectionHandler(
+            [$profileProjection]
+        )</code>
       <code>new ProjectionListener($projectionRepository)</code>
     </DeprecatedClass>
   </file>
   <file src="tests/Integration/Outbox/Projection/ProfileProjection.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>ProfileProjection</code>
     </DeprecatedInterface>
-    <MixedMethodCall occurrences="1">
+    <MixedMethodCall>
       <code>toString</code>
     </MixedMethodCall>
   </file>
   <file src="tests/Integration/Projectionist/Projection/ProfileProjection.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>ProfileProjection</code>
     </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Attribute/NormalizeTest.php">
-    <DeprecatedClass occurrences="2">
+    <DeprecatedClass>
       <code>new Normalize($normalizer)</code>
       <code>new Normalize($normalizer, true)</code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Console/Command/ProjectionCreateCommandTest.php">
-    <DeprecatedClass occurrences="2">
-      <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
+    <DeprecatedClass>
       <code>new MetadataAwareProjectionHandler([$projectionA, $projectionB])</code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Console/Command/ProjectionDropCommandTest.php">
-    <DeprecatedClass occurrences="2">
-      <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
+    <DeprecatedClass>
       <code>new MetadataAwareProjectionHandler([$projectionA, $projectionB])</code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Console/Command/ProjectionRebuildCommandTest.php">
-    <DeprecatedClass occurrences="9">
-      <code>$this-&gt;prophesize(PipelineStore::class)</code>
-      <code>$this-&gt;prophesize(PipelineStore::class)</code>
-      <code>$this-&gt;prophesize(PipelineStore::class)</code>
-      <code>$this-&gt;prophesize(PipelineStore::class)</code>
-      <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
-      <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
-      <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
+    <DeprecatedClass>
       <code>new MetadataAwareProjectionHandler([$projectionA, $projectionB])</code>
       <code>new MetadataAwareProjectionHandler([$projectionA, $projectionB])</code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Fixture/Dummy2Projection.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>Dummy2Projection</code>
     </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Fixture/DummyProjection.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>DummyProjection</code>
     </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
-    <MixedArgumentTypeCoercion occurrences="1">
+    <MixedArgumentTypeCoercion>
       <code>$value</code>
     </MixedArgumentTypeCoercion>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
-    <MissingParamType occurrences="1">
+    <MissingParamType>
       <code>$event</code>
     </MissingParamType>
   </file>
   <file src="tests/Unit/Metadata/Event/AttributeEventMetadataFactoryTest.php">
-    <DeprecatedClass occurrences="1">
+    <DeprecatedClass>
       <code>Normalize(new EmailNormalizer())</code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Metadata/Projection/AttributeProjectionMetadataFactoryTest.php">
-    <DeprecatedInterface occurrences="5">
+    <DeprecatedInterface>
       <code>class implements Projection {</code>
       <code>class implements Projection {</code>
       <code>class implements Projection {</code>
@@ -375,42 +366,28 @@
       <code>class implements Projection {</code>
     </DeprecatedInterface>
   </file>
-  <file src="tests/Unit/Pipeline/Source/StoreSourceTest.php">
-    <DeprecatedClass occurrences="4">
-      <code>$this-&gt;prophesize(PipelineStore::class)</code>
-      <code>$this-&gt;prophesize(PipelineStore::class)</code>
-      <code>$this-&gt;prophesize(PipelineStore::class)</code>
-      <code>$this-&gt;prophesize(PipelineStore::class)</code>
-    </DeprecatedClass>
-  </file>
   <file src="tests/Unit/Pipeline/Target/ProjectionHandlerTargetTest.php">
-    <DeprecatedClass occurrences="2">
-      <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
+    <DeprecatedClass>
       <code>new ProjectionHandlerTarget($projectionHandler-&gt;reveal())</code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Pipeline/Target/ProjectionTargetTest.php">
-    <DeprecatedClass occurrences="1">
+    <DeprecatedClass>
       <code>new ProjectionTarget($projection)</code>
     </DeprecatedClass>
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>class implements Projection {</code>
     </DeprecatedInterface>
   </file>
-  <file src="tests/Unit/Pipeline/Target/StoreTargetTest.php">
-    <DeprecatedClass occurrences="1">
-      <code>$this-&gt;prophesize(PipelineStore::class)</code>
-    </DeprecatedClass>
-  </file>
   <file src="tests/Unit/Projection/MetadataAwareProjectionHandlerTest.php">
-    <DeprecatedClass occurrences="5">
+    <DeprecatedClass>
       <code>new MetadataAwareProjectionHandler([$projection])</code>
       <code>new MetadataAwareProjectionHandler([$projection])</code>
       <code>new MetadataAwareProjectionHandler([$projection])</code>
       <code>new MetadataAwareProjectionHandler([$projection])</code>
       <code>new MetadataAwareProjectionHandler([])</code>
     </DeprecatedClass>
-    <DeprecatedInterface occurrences="4">
+    <DeprecatedInterface>
       <code>class implements Projection {</code>
       <code>class implements Projection {</code>
       <code>class implements Projection {</code>
@@ -418,13 +395,12 @@
     </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Projection/ProjectionListenerTest.php">
-    <DeprecatedClass occurrences="2">
-      <code>$this-&gt;prophesize(ProjectionHandler::class)</code>
+    <DeprecatedClass>
       <code>new ProjectionListener($projectionRepository-&gt;reveal())</code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Projection/Projectionist/DefaultProjectionistTest.php">
-    <DeprecatedInterface occurrences="16">
+    <DeprecatedInterface>
       <code>class implements VersionedProjector {</code>
       <code>class implements VersionedProjector {</code>
       <code>class implements VersionedProjector {</code>
@@ -455,12 +431,12 @@
     </UnevaluatedCode>
   </file>
   <file src="tests/Unit/Projection/Projector/InMemoryProjectorRepositoryTest.php">
-    <DeprecatedInterface occurrences="1">
+    <DeprecatedInterface>
       <code>class implements Projector {</code>
     </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Projection/Projector/MetadataProjectorResolverTest.php">
-    <DeprecatedInterface occurrences="6">
+    <DeprecatedInterface>
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
@@ -470,7 +446,7 @@
     </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Projection/Projector/ProjectorHelperTest.php">
-    <DeprecatedInterface occurrences="4">
+    <DeprecatedInterface>
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
@@ -478,19 +454,19 @@
     </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Projection/Projector/SyncProjectorListenerTest.php">
-    <DeprecatedInterface occurrences="2">
+    <DeprecatedInterface>
       <code>class implements Projector {</code>
       <code>class implements Projector {</code>
     </DeprecatedInterface>
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaDirectorTest.php">
-    <InternalMethod occurrences="2">
+    <InternalMethod>
       <code>new Comparator()</code>
       <code>new Comparator()</code>
     </InternalMethod>
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaManagerTest.php">
-    <DeprecatedClass occurrences="18">
+    <DeprecatedClass>
       <code>StoreNotSupported::class</code>
       <code>StoreNotSupported::class</code>
       <code>StoreNotSupported::class</code>
@@ -512,7 +488,7 @@
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Schema/MigrationSchemaProviderTest.php">
-    <DeprecatedClass occurrences="1">
+    <DeprecatedClass>
       <code>new MigrationSchemaProvider($store-&gt;reveal())</code>
     </DeprecatedClass>
   </file>
