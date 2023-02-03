@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Projectionist;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\Lock\DoctrineDbalStoreSchemaAdapter;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
@@ -21,6 +22,8 @@ use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProjection;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\DoctrineDbalStore;
 
 /**
  * @coversNothing
@@ -103,6 +106,7 @@ final class ProjectionistTest extends TestCase
             'eventstore'
         );
 
+        $lockStore = new DoctrineDbalStore($this->connection);
         $projectionStore = new DoctrineStore($this->connection);
 
         $projectionist = new DefaultProjectionist(
@@ -118,7 +122,8 @@ final class ProjectionistTest extends TestCase
             $store,
             new RunProjectionistEventBusWrapper(
                 new DefaultEventBus(),
-                $projectionist
+                $projectionist,
+                new LockFactory($lockStore)
             ),
         );
 
@@ -129,9 +134,11 @@ final class ProjectionistTest extends TestCase
             new ChainSchemaConfigurator([
                 $store,
                 $projectionStore,
+                new DoctrineDbalStoreSchemaAdapter($lockStore),
             ])
         );
 
+        $schemaDirector->drop();
         $schemaDirector->create();
         $projectionist->boot();
 
