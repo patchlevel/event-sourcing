@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+use Closure;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
@@ -20,19 +21,14 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class SingleTableStore extends DoctrineStore implements StreamableStore, SchemaConfigurator
+final class SingleTableStore implements StreamableStore, SchemaConfigurator, Store, ArchivableStore
 {
-    private string $storeTableName;
-
     public function __construct(
-        Connection $connection,
-        EventSerializer $serializer,
-        AggregateRootRegistry $aggregateRootRegistry,
-        string $storeTableName = 'eventstore',
+        private readonly Connection $connection,
+        private readonly EventSerializer $serializer,
+        private readonly AggregateRootRegistry $aggregateRootRegistry,
+        private readonly string $storeTableName = 'eventstore',
     ) {
-        parent::__construct($connection, $serializer, $aggregateRootRegistry);
-
-        $this->storeTableName = $storeTableName;
     }
 
     /**
@@ -76,9 +72,9 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
                 return Message::create($event)
                     ->withAggregateClass($aggregate)
                     ->withAggregateId($data['aggregate_id'])
-                    ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
-                    ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
-                    ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
+                    ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
+                    ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
+                    ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
             $result
         );
@@ -202,9 +198,9 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
             yield Message::create($event)
                 ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($data['aggregate']))
                 ->withAggregateId($data['aggregate_id'])
-                ->withPlayhead(self::normalizePlayhead($data['playhead'], $platform))
-                ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
-                ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
+                ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
+                ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
+                ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
         }
     }
 
@@ -223,6 +219,16 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
         }
 
         return (int)$result;
+    }
+
+    /**
+     * @param Closure():ClosureReturn $function
+     *
+     * @template ClosureReturn
+     */
+    public function transactional(Closure $function): void
+    {
+        $this->connection->transactional($function);
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void
@@ -258,7 +264,5 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
         $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
-
-        $this->addOutboxSchema($schema);
     }
 }

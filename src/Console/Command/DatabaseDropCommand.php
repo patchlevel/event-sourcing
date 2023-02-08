@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
-use Patchlevel\EventSourcing\Store\DoctrineStore;
-use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -24,14 +23,14 @@ use function sprintf;
 )]
 final class DatabaseDropCommand extends Command
 {
-    private Store $store;
+    private Connection $connection;
     private DoctrineHelper $helper;
 
-    public function __construct(Store $store, DoctrineHelper $helper)
+    public function __construct(Connection $connection, DoctrineHelper $helper)
     {
         parent::__construct();
 
-        $this->store = $store;
+        $this->connection = $connection;
         $this->helper = $helper;
     }
 
@@ -45,17 +44,9 @@ final class DatabaseDropCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $console = new OutputStyle($input, $output);
-        $store = $this->store;
 
-        if (!$store instanceof DoctrineStore) {
-            $console->error('Store is not supported!');
-
-            return 1;
-        }
-
-        $connection = $store->connection();
-        $databaseName = $this->helper->databaseName($connection);
-        $tempConnection = $this->helper->copyConnectionWithoutDatabase($connection);
+        $databaseName = $this->helper->databaseName($this->connection);
+        $tempConnection = $this->helper->copyConnectionWithoutDatabase($this->connection);
 
         $force = InputHelper::bool($input->getOption('force'));
 

@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Outbox;
 
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Outbox\OutboxStore;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
-use Patchlevel\EventSourcing\Store\OutboxStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;

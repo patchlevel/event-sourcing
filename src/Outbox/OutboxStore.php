@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Store;
+namespace Patchlevel\EventSourcing\Outbox;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 
-interface OutboxStore extends TransactionStore
+interface OutboxStore
 {
     public function saveOutboxMessage(Message ...$messages): void;
 

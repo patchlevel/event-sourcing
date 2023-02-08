@@ -26,7 +26,6 @@ use Prophecy\PhpUnit\ProphecyTrait;
 
 /**
  * @covers \Patchlevel\EventSourcing\Store\MultiTableStore
- * @covers \Patchlevel\EventSourcing\Store\DoctrineStore
  */
 final class MultiTableStoreTest extends TestCase
 {
@@ -119,57 +118,6 @@ final class MultiTableStoreTest extends TestCase
         self::assertSame('1', $message->aggregateId());
         self::assertSame(1, $message->playhead());
         self::assertEquals(new DateTimeImmutable('2021-02-17 10:00:00'), $message->recordedOn());
-    }
-
-    public function testTransactionBegin(): void
-    {
-        $connection = $this->prophesize(Connection::class);
-        $connection->beginTransaction()->shouldBeCalled();
-
-        $serializer = $this->prophesize(EventSerializer::class);
-
-        $store = new MultiTableStore(
-            $connection->reveal(),
-            $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
-        );
-
-        $store->transactionBegin();
-    }
-
-    public function testTransactionCommit(): void
-    {
-        $connection = $this->prophesize(Connection::class);
-        $connection->commit()->shouldBeCalled();
-
-        $serializer = $this->prophesize(EventSerializer::class);
-
-        $store = new MultiTableStore(
-            $connection->reveal(),
-            $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
-        );
-
-        $store->transactionCommit();
-    }
-
-    public function testTransactionRollback(): void
-    {
-        $connection = $this->prophesize(Connection::class);
-        $connection->rollBack()->shouldBeCalled();
-
-        $serializer = $this->prophesize(EventSerializer::class);
-
-        $store = new MultiTableStore(
-            $connection->reveal(),
-            $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
-        );
-
-        $store->transactionRollback();
     }
 
     public function testTransactional(): void

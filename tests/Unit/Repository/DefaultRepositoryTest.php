@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
-use Patchlevel\EventSourcing\Store\SplitEventstreamStore;
+use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -58,6 +58,13 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->playhead() === 2;
             })
         )->shouldBeCalled();
+
+        $store->transactional(Argument::any())->will(
+            /**
+             * @param array{0: callable} $args
+             */
+            static fn (array $args): mixed => $args[0]()
+        );
 
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
@@ -118,6 +125,13 @@ final class DefaultRepositoryTest extends TestCase
             })
         )->shouldBeCalled();
 
+        $store->transactional(Argument::any())->will(
+            /**
+             * @param array{0: callable} $args
+             */
+            static fn (array $args): mixed => $args[0]()
+        );
+
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
@@ -171,6 +185,13 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->playhead() === 2;
             })
         )->shouldBeCalled();
+
+        $store->transactional(Argument::any())->will(
+            /**
+             * @param array{0: callable} $args
+             */
+            static fn (array $args): mixed => $args[0]()
+        );
 
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
@@ -268,7 +289,7 @@ final class DefaultRepositoryTest extends TestCase
     public function testSaveAggregateWithSplitStream(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->willImplement(SplitEventstreamStore::class);
+        $store->willImplement(ArchivableStore::class);
         $store->save(
             Argument::that(static function (Message $message) {
                 if ($message->aggregateClass() !== Profile::class) {

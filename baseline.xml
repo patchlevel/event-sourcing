@@ -70,7 +70,7 @@
       <code>$data['payload']</code>
     </MixedArgument>
   </file>
-  <file src="src/Store/DoctrineStore.php">
+  <file src="src/Store/DoctrineHelper.php">
     <MixedReturnTypeCoercion occurrences="2">
       <code>$normalizedCustomHeaders</code>
       <code>array&lt;string, mixed&gt;</code>
