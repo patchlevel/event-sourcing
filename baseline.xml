@@ -22,6 +22,12 @@
       <code>non-empty-array&lt;class-string&lt;Projection&gt;&gt;</code>
       <code>non-empty-array&lt;class-string&lt;Projection&gt;&gt;|null</code>
     </DeprecatedInterface>
+    <InvalidOperand>
+      <code>$projectionHandler-&gt;projections()</code>
+    </InvalidOperand>
+    <RedundantFunctionCall>
+      <code>array_values</code>
+    </RedundantFunctionCall>
   </file>
   <file src="src/Console/Command/ProjectionRebuildCommand.php">
     <DeprecatedClass>
@@ -142,11 +148,24 @@
       <code>iterable&lt;Projection&gt;</code>
     </DeprecatedInterface>
   </file>
+  <file src="src/Projection/Projection/ProjectionCollection.php">
+    <InvalidReturnStatement>
+      <code>new ArrayIterator(array_values($this-&gt;projections))</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code>ArrayIterator&lt;int, Projection&gt;</code>
+    </InvalidReturnType>
+  </file>
   <file src="src/Projection/ProjectionListener.php">
     <DeprecatedInterface>
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
     </DeprecatedInterface>
+  </file>
+  <file src="src/Projection/Projector/InMemoryProjectorRepository.php">
+    <InvalidOperand>
+      <code>$this-&gt;projectors</code>
+    </InvalidOperand>
   </file>
   <file src="src/Projection/Projector/MetadataProjectorResolver.php">
     <DeprecatedInterface>
@@ -418,17 +437,6 @@
       <code>class implements VersionedProjector {</code>
       <code>class implements VersionedProjector {</code>
     </DeprecatedInterface>
-  </file>
-  <file src="tests/Unit/Projection/Projectionist/RunProjectionistEventBusWrapperTest.php">
-    <UnevaluatedCode occurrences="9">
-      <code>$eventBus-&gt;dispatch(...$messages);</code>
-      <code>$parentEventBus = $this-&gt;prophesize(EventBus::class);</code>
-      <code>$parentEventBus-&gt;dispatch(...$messages)-&gt;shouldBeCalledOnce();</code>
-      <code>$parentEventBus-&gt;reveal();</code>
-      <code>$projectionist = $this-&gt;prophesize(Projectionist::class);</code>
-      <code>$projectionist-&gt;reveal();</code>
-      <code>$projectionist-&gt;run()-&gt;shouldBeCalledOnce();</code>
-    </UnevaluatedCode>
   </file>
   <file src="tests/Unit/Projection/Projector/InMemoryProjectorRepositoryTest.php">
     <DeprecatedInterface>

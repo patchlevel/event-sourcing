@@ -6,6 +6,8 @@ namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 
+use function array_values;
+
 final class ChainMiddleware implements Middleware
 {
     /**
