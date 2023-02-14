@@ -1,95 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.30.0@d0bc6e25d89f649e4f36a534f330f8bb4643dd69">
+<files psalm-version="5.6.0@e784128902dfe01d489c4123d69918a9f3c1eac5">
   <file src="src/Clock/FrozenClock.php">
-    <PossiblyFalsePropertyAssignmentValue occurrences="1">
+    <PossiblyFalsePropertyAssignmentValue>
       <code>$this-&gt;frozenDateTime-&gt;modify(sprintf('+%s seconds', $seconds))</code>
     </PossiblyFalsePropertyAssignmentValue>
   </file>
-  <file src="src/Console/Command/OutboxConsumeCommand.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$sleep</code>
-    </ArgumentTypeCoercion>
-  </file>
-  <file src="src/Console/Command/ProjectionistRunCommand.php">
-    <ArgumentTypeCoercion occurrences="2">
-      <code>$messageLimit</code>
-      <code>$sleep</code>
-    </ArgumentTypeCoercion>
-  </file>
   <file src="src/Console/DoctrineHelper.php">
-    <ClassNotFinal occurrences="1">
+    <ClassNotFinal>
       <code>class DoctrineHelper</code>
     </ClassNotFinal>
   </file>
   <file src="src/Console/Worker/DefaultWorker.php">
-    <TypeDoesNotContainType occurrences="1">
+    <TypeDoesNotContainType>
+      <code>$this-&gt;shouldStop</code>
       <code>$this-&gt;shouldStop</code>
     </TypeDoesNotContainType>
   </file>
   <file src="src/Console/Worker/Listener/StopWorkerOnSigtermSignalListener.php">
-    <MoreSpecificReturnType occurrences="1">
+    <MoreSpecificReturnType>
       <code>array&lt;class-string, string&gt;</code>
     </MoreSpecificReturnType>
   </file>
   <file src="src/EventBus/Message.php">
-    <LessSpecificReturnStatement occurrences="1">
+    <InvalidReturnStatement>
       <code>$headers</code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType occurrences="1">
+    </InvalidReturnStatement>
+    <InvalidReturnType>
       <code>Headers</code>
-    </MoreSpecificReturnType>
+    </InvalidReturnType>
+  </file>
+  <file src="src/Projection/Projection/ProjectionCollection.php">
+    <InvalidReturnStatement>
+      <code>new ArrayIterator(array_values($this-&gt;projections))</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code>ArrayIterator&lt;int, Projection&gt;</code>
+    </InvalidReturnType>
+  </file>
+  <file src="src/Projection/Projector/InMemoryProjectorRepository.php">
+    <InvalidOperand>
+      <code>$this-&gt;projectors</code>
+    </InvalidOperand>
   </file>
   <file src="src/Repository/DefaultRepository.php">
-    <ArgumentTypeCoercion occurrences="1">
-      <code>$messages[0]-&gt;playhead() - 1</code>
-    </ArgumentTypeCoercion>
-    <MixedArgument occurrences="1">
+    <MixedArgument>
       <code>++$playhead</code>
     </MixedArgument>
-    <MixedAssignment occurrences="1">
+    <MixedAssignment>
       <code>$playhead</code>
     </MixedAssignment>
-    <MixedOperand occurrences="1">
+    <MixedOperand>
       <code>$playhead</code>
     </MixedOperand>
   </file>
   <file src="src/Schema/DoctrineSchemaDirector.php">
-    <DeprecatedMethod occurrences="3">
+    <DeprecatedMethod>
       <code>createSchema</code>
       <code>createSchema</code>
       <code>toSql</code>
     </DeprecatedMethod>
   </file>
   <file src="src/Serializer/Upcast/Upcast.php">
-    <MixedAssignment occurrences="1">
+    <MixedAssignment>
       <code>$payload[$key]</code>
     </MixedAssignment>
   </file>
   <file src="src/Snapshot/DefaultSnapshotStore.php">
-    <MixedArgument occurrences="1">
+    <MixedArgument>
       <code>$data['payload']</code>
     </MixedArgument>
   </file>
   <file src="src/Store/DoctrineHelper.php">
-    <MixedReturnTypeCoercion occurrences="2">
+    <MixedReturnTypeCoercion>
       <code>$normalizedCustomHeaders</code>
       <code>array&lt;string, mixed&gt;</code>
     </MixedReturnTypeCoercion>
   </file>
-  <file src="src/Store/MultiTableStore.php">
-    <UnnecessaryVarAnnotation occurrences="1">
-      <code>array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}|null</code>
-    </UnnecessaryVarAnnotation>
-  </file>
   <file src="tests/Benchmark/LoadEventsBench.php">
-    <MissingConstructor occurrences="3">
+    <MissingConstructor>
       <code>$bus</code>
       <code>$repository</code>
       <code>$store</code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/LoadEventsWithSnapshotsBench.php">
-    <MissingConstructor occurrences="4">
+    <MissingConstructor>
       <code>$bus</code>
       <code>$repository</code>
       <code>$snapshotStore</code>
@@ -97,7 +92,7 @@
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/WriteEventsBench.php">
-    <MissingConstructor occurrences="4">
+    <MissingConstructor>
       <code>$bus</code>
       <code>$profile</code>
       <code>$repository</code>
@@ -105,28 +100,28 @@
     </MissingConstructor>
   </file>
   <file src="tests/Integration/BankAccountSplitStream/Projection/BankAccountProjection.php">
-    <MixedMethodCall occurrences="2">
+    <MixedMethodCall>
       <code>toString</code>
       <code>toString</code>
     </MixedMethodCall>
   </file>
   <file src="tests/Integration/Outbox/Projection/ProfileProjection.php">
-    <MixedMethodCall occurrences="1">
+    <MixedMethodCall>
       <code>toString</code>
     </MixedMethodCall>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
-    <MixedArgumentTypeCoercion occurrences="1">
+    <MixedArgumentTypeCoercion>
       <code>$value</code>
     </MixedArgumentTypeCoercion>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
-    <MissingParamType occurrences="1">
+    <MissingParamType>
       <code>$event</code>
     </MissingParamType>
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaDirectorTest.php">
-    <InternalMethod occurrences="2">
+    <InternalMethod>
       <code>new Comparator()</code>
       <code>new Comparator()</code>
     </InternalMethod>
