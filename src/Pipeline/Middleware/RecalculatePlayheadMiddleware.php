@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 
 use function array_key_exists;
 
 final class RecalculatePlayheadMiddleware implements Middleware
 {
-    /** @var array<class-string<AggregateRootInterface>, array<string, positive-int>> */
+    /** @var array<class-string<AggregateRoot>, array<string, positive-int>> */
     private array $index = [];
 
     /**
@@ -31,7 +31,7 @@ final class RecalculatePlayheadMiddleware implements Middleware
     }
 
     /**
-     * @param class-string<AggregateRootInterface> $aggregateClass
+     * @param class-string<AggregateRoot> $aggregateClass
      *
      * @return positive-int
      */

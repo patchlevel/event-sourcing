@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
@@ -30,7 +30,7 @@ final class DefaultRepositoryManager implements RepositoryManager
     private LoggerInterface $logger;
     private AggregateRootMetadataFactory $metadataFactory;
 
-    /** @var array<class-string<AggregateRootInterface>, Repository> */
+    /** @var array<class-string<AggregateRoot>, Repository> */
     private array $instances = [];
 
     public function __construct(
@@ -56,7 +56,7 @@ final class DefaultRepositoryManager implements RepositoryManager
      *
      * @return Repository<T>
      *
-     * @template T of AggregateRootInterface
+     * @template T of AggregateRoot
      */
     public function get(string $aggregateClass): Repository
     {

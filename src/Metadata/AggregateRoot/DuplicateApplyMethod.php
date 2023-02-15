@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Metadata\MetadataException;
 
 use function sprintf;
@@ -12,8 +12,8 @@ use function sprintf;
 final class DuplicateApplyMethod extends MetadataException
 {
     /**
-     * @param class-string<AggregateRootInterface> $aggregate
-     * @param class-string                         $event
+     * @param class-string<AggregateRoot> $aggregate
+     * @param class-string                $event
      */
     public function __construct(string $aggregate, string $event, string $fistMethod, string $secondMethod)
     {

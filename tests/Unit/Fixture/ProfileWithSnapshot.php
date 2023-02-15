@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\ArrayNormalizer;
 #[Aggregate('profile_with_snapshot')]
 #[Snapshot('memory', batch: 2, version: '1')]
 #[SuppressMissingApply([ProfileVisited::class])]
-final class ProfileWithSnapshot extends AggregateRoot
+final class ProfileWithSnapshot extends BasicAggregateRoot
 {
     #[ProfileIdNormalizer]
     private ProfileId $id;

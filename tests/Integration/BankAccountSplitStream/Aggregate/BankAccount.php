@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Aggregate;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\AccountId;
@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\Mon
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Normalizer\AccountIdNormalizer;
 
 #[Aggregate('profile')]
-final class BankAccount extends AggregateRoot
+final class BankAccount extends BasicAggregateRoot
 {
     #[AccountIdNormalizer]
     private AccountId $id;

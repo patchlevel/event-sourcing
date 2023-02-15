@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootMetadataAware;
 use RuntimeException;
 
@@ -13,7 +13,7 @@ use function is_a;
 final class AggregateRootMetadataAwareMetadataFactory implements AggregateRootMetadataFactory
 {
     /**
-     * @param class-string<AggregateRootInterface> $aggregate
+     * @param class-string<AggregateRoot> $aggregate
      */
     public function metadata(string $aggregate): AggregateRootMetadata
     {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Snapshot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Serializer\Hydrator\AggregateRootHydrator;
@@ -37,7 +37,7 @@ final class DefaultSnapshotStore implements SnapshotStore
         $this->metadataFactory = $metadataFactory ?? new AggregateRootMetadataAwareMetadataFactory();
     }
 
-    public function save(AggregateRootInterface $aggregateRoot): void
+    public function save(AggregateRoot $aggregateRoot): void
     {
         $aggregateClass = $aggregateRoot::class;
         $key = $this->key($aggregateClass, $aggregateRoot->aggregateRootId());
@@ -59,9 +59,9 @@ final class DefaultSnapshotStore implements SnapshotStore
      *
      * @throws SnapshotNotFound
      *
-     * @template T of AggregateRootInterface
+     * @template T of AggregateRoot
      */
-    public function load(string $aggregateClass, string $id): AggregateRootInterface
+    public function load(string $aggregateClass, string $id): AggregateRoot
     {
         $adapter = $this->adapter($aggregateClass);
         $key = $this->key($aggregateClass, $id);
@@ -87,7 +87,7 @@ final class DefaultSnapshotStore implements SnapshotStore
     }
 
     /**
-     * @param class-string<AggregateRootInterface> $aggregateClass
+     * @param class-string<AggregateRoot> $aggregateClass
      */
     public function adapter(string $aggregateClass): SnapshotAdapter
     {
@@ -105,7 +105,7 @@ final class DefaultSnapshotStore implements SnapshotStore
     }
 
     /**
-     * @param class-string<AggregateRootInterface> $aggregateClass
+     * @param class-string<AggregateRoot> $aggregateClass
      */
     private function key(string $aggregateClass, string $aggregateId): string
     {
@@ -115,7 +115,7 @@ final class DefaultSnapshotStore implements SnapshotStore
     }
 
     /**
-     * @param class-string<AggregateRootInterface> $aggregateClass
+     * @param class-string<AggregateRoot> $aggregateClass
      */
     private function version(string $aggregateClass): ?string
     {

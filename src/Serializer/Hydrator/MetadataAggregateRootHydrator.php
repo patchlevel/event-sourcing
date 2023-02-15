@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Serializer\Hydrator;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use ReflectionClass;
 use ReflectionProperty;
 use RuntimeException;
@@ -32,11 +32,11 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
      *
      * @return T
      *
-     * @template T of AggregateRootInterface
+     * @template T of AggregateRoot
      */
-    public function hydrate(string $class, array $data): AggregateRootInterface
+    public function hydrate(string $class, array $data): AggregateRoot
     {
-        if (!is_a($class, AggregateRoot::class, true)) {
+        if (!is_a($class, BasicAggregateRoot::class, true)) {
             throw new RuntimeException();
         }
 
@@ -84,9 +84,9 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
     /**
      * @return array<string, mixed>
      */
-    public function extract(AggregateRootInterface $aggregateRoot): array
+    public function extract(AggregateRoot $aggregateRoot): array
     {
-        if (!$aggregateRoot instanceof AggregateRoot) {
+        if (!$aggregateRoot instanceof BasicAggregateRoot) {
             throw new RuntimeException();
         }
 
@@ -126,9 +126,9 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
      *
      * @return T
      *
-     * @template T of AggregateRoot
+     * @template T of BasicAggregateRoot
      */
-    private function newInstance(string $class): AggregateRoot
+    private function newInstance(string $class): BasicAggregateRoot
     {
         if (!array_key_exists($class, $this->reflectionClassCache)) {
             $this->reflectionClassCache[$class] = new ReflectionClass($class);
@@ -141,10 +141,10 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
         return $object;
     }
 
-    private function setPlayhead(AggregateRoot $aggregateRoot, int $playhead): void
+    private function setPlayhead(BasicAggregateRoot $aggregateRoot, int $playhead): void
     {
         if ($this->playheadReflection === null) {
-            $this->playheadReflection = new ReflectionProperty(AggregateRoot::class, 'playhead');
+            $this->playheadReflection = new ReflectionProperty(BasicAggregateRoot::class, 'playhead');
         }
 
         $this->playheadReflection->setValue($aggregateRoot, $playhead);

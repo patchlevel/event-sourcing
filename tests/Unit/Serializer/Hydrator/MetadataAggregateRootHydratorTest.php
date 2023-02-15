@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Serializer\Hydrator\TypeMismatch;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\WrongNormalizerAggregate;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\WrongNormalizerBasicAggregate;
 use PHPUnit\Framework\TestCase;
 
 final class MetadataAggregateRootHydratorTest extends TestCase
@@ -85,7 +85,7 @@ final class MetadataAggregateRootHydratorTest extends TestCase
         $this->expectException(NormalizationFailure::class);
 
         $this->hydrator->extract(
-            WrongNormalizerAggregate::createFromEvents([])
+            WrongNormalizerBasicAggregate::createFromEvents([])
         );
     }
 }

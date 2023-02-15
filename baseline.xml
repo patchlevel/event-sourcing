@@ -82,6 +82,12 @@
       <code>array&lt;string, mixed&gt;</code>
     </MixedReturnTypeCoercion>
   </file>
+  <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+      <code>$name</code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="tests/Benchmark/LoadEventsBench.php">
     <MissingConstructor>
       <code>$bus</code>
@@ -105,25 +111,76 @@
       <code>$store</code>
     </MissingConstructor>
   </file>
+  <file src="tests/Integration/BankAccountSplitStream/Aggregate/BankAccount.php">
+    <PropertyNotSetInConstructor>
+      <code>$balanceInCents</code>
+      <code>$id</code>
+      <code>$name</code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="tests/Integration/BankAccountSplitStream/Projection/BankAccountProjection.php">
     <MixedMethodCall>
       <code>toString</code>
       <code>toString</code>
     </MixedMethodCall>
   </file>
+  <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+      <code>$name</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Integration/Outbox/Aggregate/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+      <code>$name</code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="tests/Integration/Outbox/Projection/ProfileProjection.php">
     <MixedMethodCall>
       <code>toString</code>
     </MixedMethodCall>
+  </file>
+  <file src="tests/Integration/Pipeline/Aggregate/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+      <code>$privacy</code>
+      <code>$visited</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Integration/Projectionist/Aggregate/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+      <code>$name</code>
+    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion>
       <code>$value</code>
     </MixedArgumentTypeCoercion>
   </file>
+  <file src="tests/Unit/Fixture/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code>$email</code>
+      <code>$id</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Unit/Fixture/ProfileInvalid.php">
+    <PropertyNotSetInConstructor>
+      <code>$email</code>
+      <code>$id</code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
       <code>$event</code>
     </MissingParamType>
+  </file>
+  <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
+    <PropertyNotSetInConstructor>
+      <code>$email</code>
+      <code>$id</code>
+      <code>$messages</code>
+    </PropertyNotSetInConstructor>
   </file>
 </files>

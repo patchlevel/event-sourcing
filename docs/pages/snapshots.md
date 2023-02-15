@@ -52,13 +52,13 @@ Next we need to tell the Aggregate to take a snapshot of it. We do this using th
 There we also specify where it should be saved.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     // ...
 }
@@ -71,13 +71,13 @@ To ensure this, the same system is used as for the events.
 You can define normalizers to bring the properties into the correct format.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     public string $id;
     public string $name,
@@ -109,13 +109,13 @@ Instead, we can also create a snapshot after `N` events.
 The remaining events that are not in the snapshot are then loaded from store.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 
 #[Aggregate('profile')]
 #[Snapshot('default', batch: 1000)]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     // ...
 }
@@ -131,13 +131,13 @@ the snapshot is discarded and the aggregate is rebuilt from scratch.
 The new aggregate is then saved again as a snapshot.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 
 #[Aggregate('profile')]
 #[Snapshot('default', version: '2')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     // ...
 }

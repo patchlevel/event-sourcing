@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_flip;
 use function array_key_exists;
 
 final class AggregateRootRegistry
 {
-    /** @var array<string, class-string<AggregateRootInterface>> */
+    /** @var array<string, class-string<AggregateRoot>> */
     private array $nameToClassMap;
 
-    /** @var array<class-string<AggregateRootInterface>, string> */
+    /** @var array<class-string<AggregateRoot>, string> */
     private array $classToNameMap;
 
     /**
-     * @param array<string, class-string<AggregateRootInterface>> $aggregateNameToClassMap
+     * @param array<string, class-string<AggregateRoot>> $aggregateNameToClassMap
      */
     public function __construct(array $aggregateNameToClassMap)
     {
@@ -27,7 +27,7 @@ final class AggregateRootRegistry
     }
 
     /**
-     * @param class-string<AggregateRootInterface> $aggregateClass
+     * @param class-string<AggregateRoot> $aggregateClass
      */
     public function aggregateName(string $aggregateClass): string
     {
@@ -39,7 +39,7 @@ final class AggregateRootRegistry
     }
 
     /**
-     * @return class-string<AggregateRootInterface>
+     * @return class-string<AggregateRoot>
      */
     public function aggregateClass(string $aggregateName): string
     {
@@ -61,7 +61,7 @@ final class AggregateRootRegistry
     }
 
     /**
-     * @return array<string, class-string<AggregateRootInterface>>
+     * @return array<string, class-string<AggregateRoot>>
      */
     public function aggregateClasses(): array
     {
@@ -69,7 +69,7 @@ final class AggregateRootRegistry
     }
 
     /**
-     * @return array<class-string<AggregateRootInterface>, string>
+     * @return array<class-string<AggregateRoot>, string>
      */
     public function aggregateNames(): array
     {

@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 use Closure;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 
 interface Store
 {
     /**
-     * @param class-string<AggregateRootInterface> $aggregate
+     * @param class-string<AggregateRoot> $aggregate
      *
      * @return list<Message>
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array;
 
     /**
-     * @param class-string<AggregateRootInterface> $aggregate
+     * @param class-string<AggregateRoot> $aggregate
      */
     public function has(string $aggregate, string $id): bool;
 

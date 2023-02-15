@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\Projectionist\Aggregate;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Normalizer\ProfileI
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\ProfileId;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     #[ProfileIdNormalizer]
     private ProfileId $id;

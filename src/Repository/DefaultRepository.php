@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootMetadataAware;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
@@ -29,7 +29,7 @@ use function is_a;
 use function sprintf;
 
 /**
- * @template T of AggregateRootInterface
+ * @template T of AggregateRoot
  * @implements Repository<T>
  */
 final class DefaultRepository implements Repository
@@ -80,7 +80,7 @@ final class DefaultRepository implements Repository
     /**
      * @return T
      */
-    public function load(string $id): AggregateRootInterface
+    public function load(string $id): AggregateRoot
     {
         $aggregateClass = $this->aggregateClass;
 
@@ -137,7 +137,7 @@ final class DefaultRepository implements Repository
     /**
      * @param T $aggregate
      */
-    public function save(AggregateRootInterface $aggregate): void
+    public function save(AggregateRoot $aggregate): void
     {
         $this->assertRightAggregate($aggregate);
 
@@ -183,7 +183,7 @@ final class DefaultRepository implements Repository
      *
      * @return T
      */
-    private function loadFromSnapshot(string $aggregateClass, string $id): AggregateRootInterface
+    private function loadFromSnapshot(string $aggregateClass, string $id): AggregateRoot
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 
@@ -214,7 +214,7 @@ final class DefaultRepository implements Repository
      * @param T             $aggregate
      * @param list<Message> $messages
      */
-    private function saveSnapshot(AggregateRootInterface $aggregate, array $messages): void
+    private function saveSnapshot(AggregateRoot $aggregate, array $messages): void
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 
@@ -227,7 +227,7 @@ final class DefaultRepository implements Repository
         $this->snapshotStore->save($aggregate);
     }
 
-    private function assertRightAggregate(AggregateRootInterface $aggregate): void
+    private function assertRightAggregate(AggregateRoot $aggregate): void
     {
         if (!$aggregate instanceof $this->aggregateClass) {
             throw new WrongAggregate($aggregate::class, $this->aggregateClass);

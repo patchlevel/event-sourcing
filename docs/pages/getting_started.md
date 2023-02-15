@@ -59,12 +59,12 @@ These events are thrown here and the state of the hotel is also changed.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('hotel')]
-final class Hotel extends AggregateRoot
+final class Hotel extends BasicAggregateRoot
 {
     private string $id;
     private string $name;

@@ -59,14 +59,14 @@ For the aggregates it is very similar to the events. However, the normalizer is 
 Here you can determine how the aggregate is saved in the snapshot store at the end.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
 #[Aggregate('hotel')]
 #[Snapshot('default')]
-final class Hotel extends AggregateRoot
+final class Hotel extends BasicAggregateRoot
 {
     private string $name,
     #[DateTimeImmutableNormalizer]

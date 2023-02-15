@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\EventBus;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootInterface;
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_key_exists;
 use function array_keys;
@@ -13,7 +13,7 @@ use function array_keys;
 /**
  * @template-covariant T of object
  * @psalm-immutable
- * @psalm-type Headers = array{aggregateClass?: class-string<AggregateRootInterface>, aggregateId?:string, playhead?:positive-int, recordedOn?: DateTimeImmutable, newStreamStart?: bool, archived?: bool}
+ * @psalm-type Headers = array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:positive-int, recordedOn?: DateTimeImmutable, newStreamStart?: bool, archived?: bool}
  */
 final class Message
 {
@@ -24,7 +24,7 @@ final class Message
     public const HEADER_ARCHIVED = 'archived';
     public const HEADER_NEW_STREAM_START = 'newStreamStart';
 
-    /** @var class-string<AggregateRootInterface>|null */
+    /** @var class-string<AggregateRoot>|null */
     private ?string $aggregateClass = null;
     private ?string $aggregateId = null;
     /** @var positive-int|null  */
@@ -68,7 +68,7 @@ final class Message
     }
 
     /**
-     * @return class-string<AggregateRootInterface>
+     * @return class-string<AggregateRoot>
      */
     public function aggregateClass(): string
     {
@@ -82,7 +82,7 @@ final class Message
     }
 
     /**
-     * @param class-string<AggregateRootInterface> $value
+     * @param class-string<AggregateRoot> $value
      */
     public function withAggregateClass(string $value): self
     {
