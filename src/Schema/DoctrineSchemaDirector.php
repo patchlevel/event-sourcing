@@ -50,13 +50,13 @@ final class DoctrineSchemaDirector implements DryRunSchemaDirector, DoctrineSche
     {
         $schemaManager = $this->connection->createSchemaManager();
 
-        $fromSchema = $schemaManager->createSchema();
+        $fromSchema = $schemaManager->introspectSchema();
         $toSchema = $this->schema();
 
         $comparator = $schemaManager->createComparator();
         $diff = $comparator->compareSchemas($fromSchema, $toSchema);
 
-        return $diff->toSql($this->connection->getDatabasePlatform());
+        return $this->connection->getDatabasePlatform()->getAlterSchemaSQL($diff);
     }
 
     public function drop(): void
@@ -73,7 +73,7 @@ final class DoctrineSchemaDirector implements DryRunSchemaDirector, DoctrineSche
      */
     public function dryRunDrop(): array
     {
-        $currentSchema = $this->connection->createSchemaManager()->createSchema();
+        $currentSchema = $this->connection->createSchemaManager()->introspectSchema();
         $schema = $this->schema();
 
         $queries = [];

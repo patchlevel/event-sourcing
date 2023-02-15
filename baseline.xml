@@ -53,13 +53,6 @@
       <code>$playhead</code>
     </MixedOperand>
   </file>
-  <file src="src/Schema/DoctrineSchemaDirector.php">
-    <DeprecatedMethod>
-      <code>createSchema</code>
-      <code>createSchema</code>
-      <code>toSql</code>
-    </DeprecatedMethod>
-  </file>
   <file src="src/Serializer/Upcast/Upcast.php">
     <MixedAssignment>
       <code>$payload[$key]</code>
