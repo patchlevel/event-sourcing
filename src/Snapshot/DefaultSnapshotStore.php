@@ -7,9 +7,10 @@ namespace Patchlevel\EventSourcing\Snapshot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
-use Patchlevel\EventSourcing\Serializer\Hydrator\AggregateRootHydrator;
-use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataAggregateRootHydrator;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
+use Patchlevel\Hydrator\Hydrator\Hydrator;
+use Patchlevel\Hydrator\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\Metadata\AttributeMetadataFactory;
 use Throwable;
 
 use function array_key_exists;
@@ -20,7 +21,7 @@ final class DefaultSnapshotStore implements SnapshotStore
     /** @var array<string, SnapshotAdapter> */
     private array $snapshotAdapters;
 
-    private AggregateRootHydrator $hydrator;
+    private Hydrator $hydrator;
 
     private AggregateRootMetadataFactory $metadataFactory;
 
@@ -29,11 +30,11 @@ final class DefaultSnapshotStore implements SnapshotStore
      */
     public function __construct(
         array $snapshotAdapters,
-        ?AggregateRootHydrator $hydrator = null,
+        ?Hydrator $hydrator = null,
         ?AggregateRootMetadataFactory $metadataFactory = null
     ) {
         $this->snapshotAdapters = $snapshotAdapters;
-        $this->hydrator = $hydrator ?? new MetadataAggregateRootHydrator();
+        $this->hydrator = $hydrator ?? new MetadataHydrator(new AttributeMetadataFactory());
         $this->metadataFactory = $metadataFactory ?? new AggregateRootMetadataAwareMetadataFactory();
     }
 

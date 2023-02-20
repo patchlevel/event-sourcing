@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Outbox\Normalizer;
 
 use Attribute;
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\ProfileId;
+use Patchlevel\Hydrator\Normalizer\Normalizer;
 
 use function is_string;
 

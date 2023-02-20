@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use Patchlevel\Hydrator\Attribute\Ignore;
+use Patchlevel\Hydrator\Attribute\NormalizedName;
+
 use function end;
 use function explode;
 use function method_exists;
@@ -11,8 +14,10 @@ use function method_exists;
 trait AggregateRootBehaviour
 {
     /** @var list<object> */
+    #[Ignore]
     private array $uncommittedEvents = [];
 
+    #[NormalizedName('_playhead')]
     private int $playhead = 0;
 
     final protected function __construct()

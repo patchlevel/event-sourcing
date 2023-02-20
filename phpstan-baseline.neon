@@ -16,7 +16,7 @@ parameters:
 			path: src/Projection/Projector/InMemoryProjectorRepository.php
 
 		-
-			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\EventSourcing\\\\Serializer\\\\Hydrator\\\\AggregateRootHydrator\\:\\:hydrate\\(\\) expects array\\<string, mixed\\>, mixed given\\.$#"
+			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\Hydrator\\\\Hydrator\\\\Hydrator\\:\\:hydrate\\(\\) expects array\\<string, mixed\\>, mixed given\\.$#"
 			count: 1
 			path: src/Snapshot/DefaultSnapshotStore.php
 

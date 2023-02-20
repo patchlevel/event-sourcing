@@ -7,16 +7,12 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\NormalizedName;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
-use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
-use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
-use ReflectionProperty;
 use ReflectionUnionType;
 
 use function array_key_exists;
@@ -44,12 +40,10 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflector);
         $applyMethods = $this->findApplyMethods($reflector, $aggregate);
         $snapshot = $this->findSnapshot($reflector);
-        $properties = $this->getPropertyMetadataList($reflector);
 
         $metadata = new AggregateRootMetadata(
             $aggregateName,
             $applyMethods,
-            $properties,
             $suppressEvents,
             $suppressAll,
             $snapshot?->name(),
@@ -215,46 +209,5 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         }
 
         return $result;
-    }
-
-    /**
-     * @return array<string, AggregateRootPropertyMetadata>
-     */
-    private function getPropertyMetadataList(ReflectionClass $reflectionClass): array
-    {
-        $properties = [];
-
-        foreach ($reflectionClass->getProperties() as $reflectionProperty) {
-            $fieldName = $reflectionProperty->getName();
-
-            $attributeReflectionList = $reflectionProperty->getAttributes(NormalizedName::class);
-
-            if ($attributeReflectionList !== []) {
-                $attribute = $attributeReflectionList[0]->newInstance();
-                $fieldName = $attribute->name();
-            }
-
-            $properties[$reflectionProperty->getName()] = new AggregateRootPropertyMetadata(
-                $fieldName,
-                $reflectionProperty,
-                $this->getNormalizer($reflectionProperty)
-            );
-        }
-
-        return $properties;
-    }
-
-    private function getNormalizer(ReflectionProperty $reflectionProperty): ?Normalizer
-    {
-        $attributeReflectionList = $reflectionProperty->getAttributes(
-            Normalizer::class,
-            ReflectionAttribute::IS_INSTANCEOF
-        );
-
-        if ($attributeReflectionList !== []) {
-            return $attributeReflectionList[0]->newInstance();
-        }
-
-        return null;
     }
 }

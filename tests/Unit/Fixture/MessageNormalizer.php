@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Attribute;
-use Patchlevel\EventSourcing\Serializer\Normalizer\InvalidArgument;
-use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
+use Patchlevel\Hydrator\Normalizer\InvalidArgument;
+use Patchlevel\Hydrator\Normalizer\Normalizer;
 
 use function is_array;
 

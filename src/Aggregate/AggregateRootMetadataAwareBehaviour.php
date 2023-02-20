@@ -7,9 +7,11 @@ namespace Patchlevel\EventSourcing\Aggregate;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory;
+use Patchlevel\Hydrator\Attribute\Ignore;
 
 trait AggregateRootMetadataAwareBehaviour
 {
+    #[Ignore]
     private static ?AggregateRootMetadataFactory $metadataFactory = null;
 
     public static function metadata(): AggregateRootMetadata

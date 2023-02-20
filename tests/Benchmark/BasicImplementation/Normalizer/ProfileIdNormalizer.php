@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Normalize
 
 use Attribute;
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
+use Patchlevel\Hydrator\Normalizer\Normalizer;
 
 use function is_string;
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.6.0@e784128902dfe01d489c4123d69918a9f3c1eac5">
+<files psalm-version="5.7.1@8e0fd880141f236847ab49a06f94f788d41a4292">
   <file src="src/Aggregate/AggregateRootBehaviour.php">
     <UnsafeInstantiation>
       <code>new static()</code>
@@ -7,7 +7,7 @@
   </file>
   <file src="src/Clock/FrozenClock.php">
     <PossiblyFalsePropertyAssignmentValue>
-      <code>$this-&gt;frozenDateTime-&gt;modify(sprintf('+%s seconds', $seconds))</code>
+      <code><![CDATA[$this->frozenDateTime->modify(sprintf('+%s seconds', $seconds))]]></code>
     </PossiblyFalsePropertyAssignmentValue>
   </file>
   <file src="src/Console/DoctrineHelper.php">
@@ -17,13 +17,13 @@
   </file>
   <file src="src/Console/Worker/DefaultWorker.php">
     <TypeDoesNotContainType>
-      <code>$this-&gt;shouldStop</code>
-      <code>$this-&gt;shouldStop</code>
+      <code><![CDATA[$this->shouldStop]]></code>
+      <code><![CDATA[$this->shouldStop]]></code>
     </TypeDoesNotContainType>
   </file>
   <file src="src/Console/Worker/Listener/StopWorkerOnSigtermSignalListener.php">
     <MoreSpecificReturnType>
-      <code>array&lt;class-string, string&gt;</code>
+      <code><![CDATA[array<class-string, string>]]></code>
     </MoreSpecificReturnType>
   </file>
   <file src="src/EventBus/Message.php">
@@ -36,15 +36,15 @@
   </file>
   <file src="src/Projection/Projection/ProjectionCollection.php">
     <InvalidReturnStatement>
-      <code>new ArrayIterator(array_values($this-&gt;projections))</code>
+      <code><![CDATA[new ArrayIterator(array_values($this->projections))]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
-      <code>ArrayIterator&lt;int, Projection&gt;</code>
+      <code><![CDATA[ArrayIterator<int, Projection>]]></code>
     </InvalidReturnType>
   </file>
   <file src="src/Projection/Projector/InMemoryProjectorRepository.php">
     <InvalidOperand>
-      <code>$this-&gt;projectors</code>
+      <code><![CDATA[$this->projectors]]></code>
     </InvalidOperand>
   </file>
   <file src="src/Repository/DefaultRepository.php">
@@ -58,14 +58,6 @@
       <code>$playhead</code>
     </MixedOperand>
   </file>
-  <file src="src/Serializer/Hydrator/MetadataAggregateRootHydrator.php">
-    <InvalidReturnStatement>
-      <code>$aggregateRoot</code>
-    </InvalidReturnStatement>
-    <InvalidReturnType>
-      <code>T</code>
-    </InvalidReturnType>
-  </file>
   <file src="src/Serializer/Upcast/Upcast.php">
     <MixedAssignment>
       <code>$payload[$key]</code>
@@ -73,13 +65,13 @@
   </file>
   <file src="src/Snapshot/DefaultSnapshotStore.php">
     <MixedArgument>
-      <code>$data['payload']</code>
+      <code><![CDATA[$data['payload']]]></code>
     </MixedArgument>
   </file>
   <file src="src/Store/DoctrineHelper.php">
     <MixedReturnTypeCoercion>
       <code>$normalizedCustomHeaders</code>
-      <code>array&lt;string, mixed&gt;</code>
+      <code><![CDATA[array<string, mixed>]]></code>
     </MixedReturnTypeCoercion>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
