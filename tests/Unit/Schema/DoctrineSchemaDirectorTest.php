@@ -9,6 +9,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SchemaDiff;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use PHPUnit\Framework\TestCase;
@@ -73,29 +74,26 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
     public function testUpdate(): void
     {
+        $diff = $this->prophesize(SchemaDiff::class);
+
         $fromSchema = $this->prophesize(Schema::class);
-        $fromSchema->getNamespaces()->willReturn([]);
-        $fromSchema->getTables()->willReturn([]);
-        $fromSchema->getSequences()->willReturn([]);
+
+        $comperator = $this->prophesize(Comparator::class);
+        $comperator->compareSchemas($fromSchema->reveal(), Argument::type(Schema::class))->willReturn($diff);
 
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
+        $schemaManager->createComparator()->willReturn($comperator->reveal());
+        $schemaManager->introspectSchema()->willReturn($fromSchema->reveal());
         $schemaManager->createSchemaConfig()->willReturn();
-        $schemaManager->createComparator()->willReturn(new Comparator());
-        $schemaManager->createSchema()->willReturn($fromSchema->reveal());
 
         $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getCreateTablesSQL(Argument::any(), Argument::any())->willReturn(['this is sql!']);
-        $platform->supportsSchemas()->willReturn(false);
-        $platform->supportsForeignKeyConstraints()->willReturn(false);
-        $platform->supportsSequences()->willReturn(false);
-        $platform->supportsForeignKeyConstraints()->willReturn(false);
-
-        $platform->getDropTablesSQL([])->shouldBeCalledOnce()->willReturn([]);
-        $platform->getCreateTablesSQL([])->shouldBeCalledOnce()->willReturn([]);
+        $platform->getAlterSchemaSQL($diff->reveal())->willReturn(['x', 'y']);
 
         $connection = $this->prophesize(Connection::class);
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
         $connection->getDatabasePlatform()->willReturn($platform->reveal());
+        $connection->executeStatement('x')->shouldBeCalledOnce();
+        $connection->executeStatement('y')->shouldBeCalledOnce();
 
         $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
         $schemaConfigurator->configureSchema(Argument::type(Schema::class), $connection->reveal())->shouldBeCalledOnce();
@@ -110,25 +108,20 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
     public function testDryRunUpdate(): void
     {
+        $diff = $this->prophesize(SchemaDiff::class);
+
         $fromSchema = $this->prophesize(Schema::class);
-        $fromSchema->getNamespaces()->willReturn([]);
-        $fromSchema->getTables()->willReturn([]);
-        $fromSchema->getSequences()->willReturn([]);
+
+        $comperator = $this->prophesize(Comparator::class);
+        $comperator->compareSchemas($fromSchema->reveal(), Argument::type(Schema::class))->willReturn($diff);
 
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
+        $schemaManager->createComparator()->willReturn($comperator->reveal());
+        $schemaManager->introspectSchema()->willReturn($fromSchema->reveal());
         $schemaManager->createSchemaConfig()->willReturn();
-        $schemaManager->createComparator()->willReturn(new Comparator());
-        $schemaManager->createSchema()->willReturn($fromSchema->reveal());
 
         $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getCreateTablesSQL(Argument::any(), Argument::any())->willReturn(['this is sql!']);
-        $platform->supportsSchemas()->willReturn(false);
-        $platform->supportsForeignKeyConstraints()->willReturn(false);
-        $platform->supportsSequences()->willReturn(false);
-        $platform->supportsForeignKeyConstraints()->willReturn(false);
-
-        $platform->getDropTablesSQL([])->shouldBeCalledOnce()->willReturn([]);
-        $platform->getCreateTablesSQL([])->shouldBeCalledOnce()->willReturn([]);
+        $platform->getAlterSchemaSQL($diff->reveal())->willReturn(['x', 'y']);
 
         $connection = $this->prophesize(Connection::class);
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
@@ -144,7 +137,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
         $sqlStatements = $doctrineSchemaManager->dryRunUpdate();
 
-        self::assertSame([], $sqlStatements);
+        self::assertSame(['x', 'y'], $sqlStatements);
     }
 
     public function testDrop(): void
@@ -157,7 +150,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $currentSchema->hasTable('foo')->willReturn(true);
         $currentSchema->hasTable('bar')->willReturn(false);
 
-        $schemaManager->createSchema()->willReturn($currentSchema->reveal());
+        $schemaManager->introspectSchema()->willReturn($currentSchema->reveal());
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
 
         $connection->executeStatement('DROP TABLE foo;')->shouldBeCalled();
@@ -189,7 +182,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $currentSchema->hasTable('foo')->willReturn(true);
         $currentSchema->hasTable('bar')->willReturn(false);
 
-        $schemaManager->createSchema()->willReturn($currentSchema->reveal());
+        $schemaManager->introspectSchema()->willReturn($currentSchema->reveal());
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
 
         $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
