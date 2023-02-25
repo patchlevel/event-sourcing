@@ -10,8 +10,8 @@ use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
-use Patchlevel\Hydrator\Hydrator\Hydrator;
-use Patchlevel\Hydrator\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\Hydrator;
+use Patchlevel\Hydrator\MetadataHydrator;
 
 final class DefaultEventSerializer implements EventSerializer
 {

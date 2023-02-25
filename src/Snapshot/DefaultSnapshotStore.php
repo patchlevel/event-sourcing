@@ -8,9 +8,9 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
-use Patchlevel\Hydrator\Hydrator\Hydrator;
-use Patchlevel\Hydrator\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\Hydrator;
 use Patchlevel\Hydrator\Metadata\AttributeMetadataFactory;
+use Patchlevel\Hydrator\MetadataHydrator;
 use Throwable;
 
 use function array_key_exists;

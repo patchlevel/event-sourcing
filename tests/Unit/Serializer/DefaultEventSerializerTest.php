@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
-use Patchlevel\Hydrator\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\MetadataHydrator;
 use PHPUnit\Framework\TestCase;
 
 final class DefaultEventSerializerTest extends TestCase
