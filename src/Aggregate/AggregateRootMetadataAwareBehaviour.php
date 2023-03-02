@@ -16,10 +16,6 @@ trait AggregateRootMetadataAwareBehaviour
 
     public static function metadata(): AggregateRootMetadata
     {
-        if (static::class === self::class) {
-            throw new MetadataNotPossible();
-        }
-
         if (!self::$metadataFactory) {
             self::$metadataFactory = new AttributeAggregateRootMetadataFactory();
         }

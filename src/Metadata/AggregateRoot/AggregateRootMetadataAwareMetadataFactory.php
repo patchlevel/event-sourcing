@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootMetadataAware;
-use RuntimeException;
 
 use function is_a;
 
@@ -18,7 +17,7 @@ final class AggregateRootMetadataAwareMetadataFactory implements AggregateRootMe
     public function metadata(string $aggregate): AggregateRootMetadata
     {
         if (!is_a($aggregate, AggregateRootMetadataAware::class, true)) {
-            throw new RuntimeException();
+            throw new AggregateWithoutMetadataAware($aggregate);
         }
 
         return $aggregate::metadata();

@@ -13,7 +13,7 @@ trait AggregateRootAttributeBehaviour
 
     protected function apply(object $event): void
     {
-        $metadata = self::metadata();
+        $metadata = static::metadata();
 
         if (!array_key_exists($event::class, $metadata->applyMethods)) {
             if (!$metadata->suppressAll && !array_key_exists($event::class, $metadata->suppressEvents)) {
