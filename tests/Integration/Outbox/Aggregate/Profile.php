@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\Outbox\Aggregate;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\ProfileId;
 
 #[Aggregate('profile')]
 #[Snapshot('default', 100)]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     #[ProfileIdNormalizer]
     private ProfileId $id;

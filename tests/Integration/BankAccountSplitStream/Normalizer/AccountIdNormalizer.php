@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Norm
 
 use Attribute;
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\AccountId;
+use Patchlevel\Hydrator\Normalizer\Normalizer;
 
 use function is_string;
 

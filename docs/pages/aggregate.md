@@ -16,11 +16,11 @@ otherwise it will not be recognized as an aggregate.
 There you also have to give the aggregate a name.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
 
@@ -107,12 +107,12 @@ final class ProfileRegistered
 After we have defined the event, we have to adapt the creation of the profile:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
     private string $name;
@@ -183,12 +183,12 @@ After we have defined the event, we can define a new public method called `chang
 This method then creates the event `NameChanged` and records it:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
     private string $name;
@@ -237,7 +237,7 @@ where we change the name depending on the value in the event.
 When using it, it can look like this:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Repository\Repository;
 
 final class ChangeNameHandler
@@ -280,12 +280,12 @@ In this specific case only the `NameChanged` changed event.
 You can also define several apply attributes with different events using the same method.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
     private string $name;
@@ -313,14 +313,14 @@ So that you are not forced to write an apply method for it,
 you can suppress the missing apply exceptions these events with the `SuppressMissingApply` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[Aggregate('profile')]
 #[SuppressMissingApply([NameChanged::class])]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
     private string $name;
@@ -341,14 +341,14 @@ final class Profile extends AggregateRoot
 You can also completely deactivate the exceptions for missing apply methods.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[Aggregate('profile')]
 #[SuppressMissingApply(SuppressMissingApply::ALL)]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
     private string $name;
@@ -381,12 +381,12 @@ and were then also saved in the database.
 In the next example we want to make sure that **the name is at least 3 characters long**:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
     private string $name;
@@ -449,12 +449,12 @@ final class Name
 We can now use the value object `Name` in our aggregate:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
     private Name $name;
@@ -520,14 +520,14 @@ With this event we could [notify](./processor.md) external systems
 or fill a [projection](./projection.md) with fully booked hotels.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
 #[Aggregate('hotel')]
 #[SuppressMissingApply([FullyBooked::class])]
-final class Hotel extends AggregateRoot
+final class Hotel extends BasicAggregateRoot
 {
     private const SIZE = 5;
 
@@ -565,12 +565,12 @@ But that often doesn't seem to be possible, e.g. if you want to save a createAt 
 But you can pass this information by yourself.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
     private Name $name;
@@ -591,13 +591,13 @@ final class Profile extends AggregateRoot
 But if you still want to make sure that the time is "now" and not in the past or future, you can pass a clock.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Clock\Clock;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private string $id;
     private Name $name;

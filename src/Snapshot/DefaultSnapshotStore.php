@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Snapshot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Serializer\Hydrator\AggregateRootHydrator;
-use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataAggregateRootHydrator;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
+use Patchlevel\Hydrator\Hydrator;
+use Patchlevel\Hydrator\Metadata\AttributeMetadataFactory;
+use Patchlevel\Hydrator\MetadataHydrator;
 use Throwable;
 
 use function array_key_exists;
@@ -18,15 +21,21 @@ final class DefaultSnapshotStore implements SnapshotStore
     /** @var array<string, SnapshotAdapter> */
     private array $snapshotAdapters;
 
-    private AggregateRootHydrator $hydrator;
+    private Hydrator $hydrator;
+
+    private AggregateRootMetadataFactory $metadataFactory;
 
     /**
      * @param array<string, SnapshotAdapter> $snapshotAdapters
      */
-    public function __construct(array $snapshotAdapters, ?AggregateRootHydrator $hydrator = null)
-    {
+    public function __construct(
+        array $snapshotAdapters,
+        ?Hydrator $hydrator = null,
+        ?AggregateRootMetadataFactory $metadataFactory = null
+    ) {
         $this->snapshotAdapters = $snapshotAdapters;
-        $this->hydrator = $hydrator ?? new MetadataAggregateRootHydrator();
+        $this->hydrator = $hydrator ?? new MetadataHydrator(new AttributeMetadataFactory());
+        $this->metadataFactory = $metadataFactory ?? new AggregateRootMetadataAwareMetadataFactory();
     }
 
     public function save(AggregateRoot $aggregateRoot): void
@@ -83,7 +92,7 @@ final class DefaultSnapshotStore implements SnapshotStore
      */
     public function adapter(string $aggregateClass): SnapshotAdapter
     {
-        $adapterName = $aggregateClass::metadata()->snapshotStore;
+        $adapterName = $this->metadataFactory->metadata($aggregateClass)->snapshotStore;
 
         if (!$adapterName) {
             throw new SnapshotNotConfigured($aggregateClass);
@@ -101,7 +110,7 @@ final class DefaultSnapshotStore implements SnapshotStore
      */
     private function key(string $aggregateClass, string $aggregateId): string
     {
-        $aggregateName = $aggregateClass::metadata()->name;
+        $aggregateName = $this->metadataFactory->metadata($aggregateClass)->name;
 
         return sprintf('%s-%s', $aggregateName, $aggregateId);
     }
@@ -111,6 +120,6 @@ final class DefaultSnapshotStore implements SnapshotStore
      */
     private function version(string $aggregateClass): ?string
     {
-        return $aggregateClass::metadata()->snapshotVersion;
+        return $this->metadataFactory->metadata($aggregateClass)->snapshotVersion;
     }
 }

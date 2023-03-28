@@ -8,14 +8,14 @@ A UUID can be generated for the `aggregateId`. There are two popular libraries t
 The `aggregate` does not care how the id is generated, since only an aggregate-wide unique string is expected here.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private UuidInterface $id;
     private string $name;
@@ -83,14 +83,14 @@ class ProfileId
 ```
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 use Ramsey\Uuid\UuidInterface;
 
 #[Aggregate('profile')]
-final class Profile extends AggregateRoot
+final class Profile extends BasicAggregateRoot
 {
     private ProfileId $id;
     private string $name;

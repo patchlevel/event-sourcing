@@ -4,26 +4,25 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer;
 
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
-use Patchlevel\EventSourcing\Serializer\Hydrator\EventHydrator;
-use Patchlevel\EventSourcing\Serializer\Hydrator\MetadataEventHydrator;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+use Patchlevel\Hydrator\Hydrator;
+use Patchlevel\Hydrator\MetadataHydrator;
 
 final class DefaultEventSerializer implements EventSerializer
 {
     private EventRegistry $eventRegistry;
-    private EventHydrator $hydrator;
+    private Hydrator $hydrator;
     private Encoder $encoder;
     private ?Upcaster $upcaster;
 
     public function __construct(
         EventRegistry $eventRegistry,
-        EventHydrator $hydrator,
+        Hydrator $hydrator,
         Encoder $encoder,
         ?Upcaster $upcaster = null
     ) {
@@ -73,7 +72,7 @@ final class DefaultEventSerializer implements EventSerializer
     {
         return new self(
             (new AttributeEventRegistryFactory())->create($paths),
-            new MetadataEventHydrator(new AttributeEventMetadataFactory()),
+            new MetadataHydrator(),
             new JsonEncoder(),
             $upcaster
         );

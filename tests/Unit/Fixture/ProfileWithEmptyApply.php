@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate(ProfileWithEmptyApply::class)]
-final class ProfileWithEmptyApply extends AggregateRoot
+final class ProfileWithEmptyApply extends BasicAggregateRoot
 {
     #[Apply]
     protected function applyProfileCreated(ProfileCreated|ProfileVisited $event): void

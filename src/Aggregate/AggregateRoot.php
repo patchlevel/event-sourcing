@@ -4,109 +4,25 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory;
-
-use function array_key_exists;
-
-abstract class AggregateRoot
+interface AggregateRoot
 {
-    private static ?AggregateRootMetadataFactory $metadataFactory = null;
-
-    /** @var list<object> */
-    private array $uncommittedEvents = [];
-
-    private int $playhead = 0;
-
-    final protected function __construct()
-    {
-    }
-
-    abstract public function aggregateRootId(): string;
-
-    protected function apply(object $event): void
-    {
-        $metadata = self::metadata();
-
-        if (!array_key_exists($event::class, $metadata->applyMethods)) {
-            if (!$metadata->suppressAll && !array_key_exists($event::class, $metadata->suppressEvents)) {
-                throw new ApplyMethodNotFound($this::class, $event::class);
-            }
-
-            return;
-        }
-
-        $method = $metadata->applyMethods[$event::class];
-        $this->$method($event);
-    }
-
-    final protected function recordThat(object $event): void
-    {
-        $this->playhead++;
-
-        $this->apply($event);
-
-        $this->uncommittedEvents[] = $event;
-    }
+    public function aggregateRootId(): string;
 
     /**
-     * @internal
-     *
      * @param list<object> $events
      */
-    final public function catchUp(array $events): void
-    {
-        foreach ($events as $event) {
-            $this->playhead++;
-            $this->apply($event);
-        }
-    }
+    public function catchUp(array $events): void;
 
     /**
      * @return list<object>
      */
-    final public function releaseEvents(): array
-    {
-        $events = $this->uncommittedEvents;
-        $this->uncommittedEvents = [];
-
-        return $events;
-    }
+    public function releaseEvents(): array;
 
     /**
      * @param list<object>   $events
      * @param 0|positive-int $startPlayhead
      */
-    final public static function createFromEvents(array $events, int $startPlayhead = 0): static
-    {
-        $self = new static();
-        $self->playhead = $startPlayhead;
-        $self->catchUp($events);
+    public static function createFromEvents(array $events, int $startPlayhead = 0): static;
 
-        return $self;
-    }
-
-    final public function playhead(): int
-    {
-        return $this->playhead;
-    }
-
-    final public static function metadata(): AggregateRootMetadata
-    {
-        if (static::class === self::class) {
-            throw new MetadataNotPossible();
-        }
-
-        if (!self::$metadataFactory) {
-            self::$metadataFactory = new AttributeAggregateRootMetadataFactory();
-        }
-
-        return self::$metadataFactory->metadata(static::class);
-    }
-
-    final public static function setMetadataFactory(AggregateRootMetadataFactory $metadataFactory): void
-    {
-        self::$metadataFactory = $metadataFactory;
-    }
+    public function playhead(): int;
 }

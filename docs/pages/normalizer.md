@@ -10,7 +10,7 @@ how to write this data to the database and load it again.
 You have to set the normalizer to the properties using the specific normalizer class.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
@@ -22,7 +22,7 @@ final class DTO
 The whole thing also works with property promotion.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
@@ -59,14 +59,14 @@ For the aggregates it is very similar to the events. However, the normalizer is 
 Here you can determine how the aggregate is saved in the snapshot store at the end.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
 #[Aggregate('hotel')]
 #[Snapshot('default')]
-final class Hotel extends AggregateRoot
+final class Hotel extends BasicAggregateRoot
 {
     private string $name,
     #[DateTimeImmutableNormalizer]
@@ -92,8 +92,8 @@ In order to use the `ArrayNormaliser`, you still have to specify which normalise
 objects. Internally, it basically does an `array_map` and then runs the specified normalizer on each element.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\ArrayNormalizer;
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\ArrayNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
@@ -112,7 +112,7 @@ With the `DateTimeImmutable` Normalizer, as the name suggests,
 you can convert DateTimeImmutable objects to a String and back again.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
@@ -125,7 +125,7 @@ You can also define the format. Either describe it yourself as a string or use o
 The default is `DateTimeImmutable::ATOM`.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 final class DTO 
 {
@@ -143,7 +143,7 @@ final class DTO
 The `DateTime` Normalizer works exactly like the DateTimeNormalizer. Only for DateTime objects.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeNormalizer;
 
 final class DTO 
 {
@@ -155,7 +155,7 @@ final class DTO
 You can also specify the format here. The default is `DateTime::ATOM`.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeNormalizer;
 
 final class DTO 
 {
@@ -178,7 +178,7 @@ final class DTO
 To normalize a `DateTimeZone` one can use the `DateTimeZoneNormalizer`.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeZoneNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeZoneNormalizer;
 
 final class DTO {
     #[DateTimeZoneNormalizer]
@@ -192,7 +192,7 @@ Backed enums can also be normalized.
 For this, the enum FQCN must also be pass so that the `EnumNormalizer` knows which enum it is.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\EnumNormalizer;
+use Patchlevel\Hydrator\Normalizer\EnumNormalizer;
 
 final class DTO {
     #[EnumNormalizer(Status::class)]
@@ -234,7 +234,7 @@ You also need to implement a `normalize` and `denormalize` method.
 Finally, you have to allow the normalizer to be used as an attribute.
 
 ```php
-use Patchlevel\EventSourcing\Serializer\Normalizer\Normalizer;
+use Patchlevel\Hydrator\Normalizer\Normalizer;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class NameNormalizer implements Normalizer
@@ -287,8 +287,7 @@ By default, the property name is used to name the field in the normalized result
 This can be customized with the `NormalizedName` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Attribute\NormalizedName;
+use Patchlevel\Hydrator\Attribute\NormalizedName;
 
 final class DTO
 {

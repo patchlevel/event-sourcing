@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 
 #[Aggregate('wrong_normalizer')]
-final class WrongNormalizerAggregate extends AggregateRoot
+final class WrongNormalizerBasicAggregate extends BasicAggregateRoot
 {
     #[EmailNormalizer]
     public bool $email = true;

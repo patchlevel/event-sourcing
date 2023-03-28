@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\MetadataNotPossible;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateApplyMethod;
@@ -19,7 +19,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileInvalid;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSuppressAll;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRoot */
+/** @covers \Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot */
 final class AggregateRootTest extends TestCase
 {
     public function testApplyMethod(): void
@@ -160,6 +160,6 @@ final class AggregateRootTest extends TestCase
     {
         $this->expectException(MetadataNotPossible::class);
 
-        AggregateRoot::metadata();
+        BasicAggregateRoot::metadata();
     }
 }

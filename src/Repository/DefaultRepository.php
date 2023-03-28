@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootMetadataAware;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
@@ -18,11 +19,13 @@ use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use Throwable;
 
 use function array_map;
 use function assert;
 use function count;
+use function is_a;
 use function sprintf;
 
 /**
@@ -51,7 +54,8 @@ final class DefaultRepository implements Repository
         string $aggregateClass,
         ?SnapshotStore $snapshotStore = null,
         ?MessageDecorator $messageDecorator = null,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
+        ?AggregateRootMetadata $metadata = null,
     ) {
         $this->store = $store;
         $this->eventBus = $eventBus;
@@ -59,6 +63,17 @@ final class DefaultRepository implements Repository
         $this->snapshotStore = $snapshotStore;
         $this->messageDecorator = $messageDecorator ?? new RecordedOnDecorator(new SystemClock());
         $this->logger = $logger ?? new NullLogger();
+
+        if ($metadata) {
+            $this->metadata = $metadata;
+
+            return;
+        }
+
+        if (!is_a($aggregateClass, AggregateRootMetadataAware::class, true)) {
+            throw new RuntimeException();
+        }
+
         $this->metadata = $aggregateClass::metadata();
     }
 
