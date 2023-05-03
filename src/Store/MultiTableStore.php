@@ -306,9 +306,11 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
         $table->addColumn('new_stream_start', Types::BOOLEAN)
-            ->setNotnull(true);
+            ->setNotnull(true)
+            ->setDefault(false);
         $table->addColumn('archived', Types::BOOLEAN)
-            ->setNotnull(true);
+            ->setNotnull(true)
+            ->setDefault(false);
         $table->addColumn('custom_headers', Types::JSON)
             ->setNotnull(true);
 
