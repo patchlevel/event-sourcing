@@ -5,7 +5,7 @@ mkdocs-material==8.2.3
 
 # Markdown extensions
 Pygments==2.12.0
-pymdown-extensions==9.4
+pymdown-extensions==10.0
 
 # MkDocs plugins
 mkdocs-material-extensions==1.0.3
