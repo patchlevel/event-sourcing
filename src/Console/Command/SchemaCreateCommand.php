@@ -16,17 +16,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:schema:create',
-    'create eventstore schema'
+    'create eventstore schema',
 )]
 final class SchemaCreateCommand extends Command
 {
-    private SchemaDirector $schemaDirector;
-
-    public function __construct(SchemaDirector $schemaDirector)
-    {
+    public function __construct(
+        private SchemaDirector $schemaDirector,
+    ) {
         parent::__construct();
-
-        $this->schemaDirector = $schemaDirector;
     }
 
     protected function configure(): void

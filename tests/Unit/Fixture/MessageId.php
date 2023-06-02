@@ -6,11 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 final class MessageId
 {
-    private string $id;
-
-    private function __construct(string $id)
-    {
-        $this->id = $id;
+    private function __construct(
+        private string $id,
+    ) {
     }
 
     public static function fromString(string $id): self

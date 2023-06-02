@@ -8,14 +8,10 @@ interface AggregateRoot
 {
     public function aggregateRootId(): string;
 
-    /**
-     * @param list<object> $events
-     */
+    /** @param list<object> $events */
     public function catchUp(array $events): void;
 
-    /**
-     * @return list<object>
-     */
+    /** @return list<object> */
     public function releaseEvents(): array;
 
     /**

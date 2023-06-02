@@ -10,16 +10,12 @@ use InvalidArgumentException;
 
 use function in_array;
 
-/**
- * @final
- */
+/** @final */
 class DoctrineHelper
 {
     public function databaseName(Connection $connection): string
     {
-        /**
-         * @psalm-suppress InternalMethod
-         */
+        /** @psalm-suppress InternalMethod */
         $params = $connection->getParams();
 
         if (isset($params['path'])) {
@@ -31,23 +27,17 @@ class DoctrineHelper
         }
 
         throw new InvalidArgumentException(
-            "Connection does not contain a 'path' or 'dbname' parameter and cannot be created."
+            "Connection does not contain a 'path' or 'dbname' parameter and cannot be created.",
         );
     }
 
-    /**
-     * @codeCoverageIgnore
-     */
+    /** @codeCoverageIgnore */
     public function copyConnectionWithoutDatabase(Connection $connection): Connection
     {
-        /**
-         * @psalm-suppress InternalMethod
-         */
+        /** @psalm-suppress InternalMethod */
         $params = $connection->getParams();
 
-        /**
-         * @psalm-suppress InvalidArrayOffset
-         */
+        /** @psalm-suppress InvalidArrayOffset */
         unset($params['dbname'], $params['path'], $params['url']);
 
         return DriverManager::getConnection($params);
@@ -61,14 +51,14 @@ class DoctrineHelper
     public function createDatabase(Connection $connection, string $databaseName): void
     {
         $connection->createSchemaManager()->createDatabase(
-            $connection->getDatabasePlatform()->quoteSingleIdentifier($databaseName)
+            $connection->getDatabasePlatform()->quoteSingleIdentifier($databaseName),
         );
     }
 
     public function dropDatabase(Connection $connection, string $databaseName): void
     {
         $connection->createSchemaManager()->dropDatabase(
-            $connection->getDatabasePlatform()->quoteSingleIdentifier($databaseName)
+            $connection->getDatabasePlatform()->quoteSingleIdentifier($databaseName),
         );
     }
 }

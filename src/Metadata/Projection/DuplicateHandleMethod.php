@@ -23,8 +23,8 @@ final class DuplicateHandleMethod extends MetadataException
                 $fistMethod,
                 $secondMethod,
                 $projection,
-                $event
-            )
+                $event,
+            ),
         );
     }
 }

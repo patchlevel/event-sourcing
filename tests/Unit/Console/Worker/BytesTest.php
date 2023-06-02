@@ -25,9 +25,7 @@ final class BytesTest extends TestCase
         Bytes::parseFromString('-5GB');
     }
 
-    /**
-     * @dataProvider validParseDataProvider
-     */
+    /** @dataProvider validParseDataProvider */
     public function testValidParse(string $string, int $expectedBytes): void
     {
         $bytes = Bytes::parseFromString($string);
@@ -35,9 +33,7 @@ final class BytesTest extends TestCase
         self::assertSame($expectedBytes, $bytes->value());
     }
 
-    /**
-     * @return Generator<array-key, array{string, int}>
-     */
+    /** @return Generator<array-key, array{string, int}> */
     public function validParseDataProvider(): Generator
     {
         yield ['50', 50];

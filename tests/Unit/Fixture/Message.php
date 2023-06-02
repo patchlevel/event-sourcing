@@ -10,15 +10,11 @@ use const DATE_ATOM;
 
 final class Message
 {
-    private MessageId $messageId;
-    private string $text;
-    private DateTimeImmutable $createdAt;
-
-    private function __construct(MessageId $messageId, string $text, DateTimeImmutable $createdAt)
-    {
-        $this->messageId = $messageId;
-        $this->text = $text;
-        $this->createdAt = $createdAt;
+    private function __construct(
+        private MessageId $messageId,
+        private string $text,
+        private DateTimeImmutable $createdAt,
+    ) {
     }
 
     public function id(): MessageId
@@ -36,9 +32,7 @@ final class Message
         return $this->createdAt;
     }
 
-    /**
-     * @return array{id: string, text: string, createdAt: string}
-     */
+    /** @return array{id: string, text: string, createdAt: string} */
     public function toArray(): array
     {
         return [
@@ -53,9 +47,7 @@ final class Message
         return new self($messageId, $text, new DateTimeImmutable());
     }
 
-    /**
-     * @param array{id: string, text: string, createdAt: string} $data
-     */
+    /** @param array{id: string, text: string, createdAt: string} $data */
     public static function fromArray(array $data): self
     {
         return new self(MessageId::fromString($data['id']), $data['text'], new DateTimeImmutable($data['createdAt']));

@@ -28,22 +28,16 @@ use function sprintf;
 
 #[AsCommand(
     'event-sourcing:projection:rebuild',
-    'rebuild projection'
+    'rebuild projection',
 )]
 final class ProjectionRebuildCommand extends ProjectionCommand
 {
-    private StreamableStore $store;
-    private ProjectorResolver $projectorResolver;
-
     public function __construct(
-        StreamableStore $store,
+        private StreamableStore $store,
         ProjectorRepository $projectorRepository,
-        ProjectorResolver $projectorResolver = new MetadataProjectorResolver()
+        private ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
     ) {
         parent::__construct($projectorRepository);
-
-        $this->store = $store;
-        $this->projectorResolver = $projectorResolver;
     }
 
     protected function configure(): void
@@ -54,13 +48,13 @@ final class ProjectionRebuildCommand extends ProjectionCommand
                 'until',
                 'u',
                 InputOption::VALUE_REQUIRED,
-                'create the projection up to a point in time [2017-02-02 12:00]'
+                'create the projection up to a point in time [2017-02-02 12:00]',
             )
             ->addOption(
                 'projection',
                 'p',
                 InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
-                'run only for specific projections [FQCN]'
+                'run only for specific projections [FQCN]',
             );
     }
 
@@ -72,13 +66,13 @@ final class ProjectionRebuildCommand extends ProjectionCommand
 
         if (InputHelper::bool($input->getOption('recreate'))) {
             (new ProjectorHelper($this->projectorResolver))->dropProjection(
-                ...$projectors
+                ...$projectors,
             );
 
             $console->success('projection schema deleted');
 
             (new ProjectorHelper($this->projectorResolver))->createProjection(
-                ...$projectors
+                ...$projectors,
             );
 
             $console->success('projection schema created');
@@ -104,9 +98,9 @@ final class ProjectionRebuildCommand extends ProjectionCommand
             new StoreSource($this->store),
             new ProjectorRepositoryTarget(
                 new InMemoryProjectorRepository($projectors),
-                $this->projectorResolver
+                $this->projectorResolver,
             ),
-            $middlewares
+            $middlewares,
         );
 
         $console->warning('rebuild projections');

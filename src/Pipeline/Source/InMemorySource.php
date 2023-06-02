@@ -11,20 +11,13 @@ use function count;
 
 final class InMemorySource implements Source
 {
-    /** @var list<Message> */
-    private array $messages;
-
-    /**
-     * @param list<Message> $messages
-     */
-    public function __construct(array $messages)
-    {
-        $this->messages = $messages;
+    /** @param list<Message> $messages */
+    public function __construct(
+        private array $messages,
+    ) {
     }
 
-    /**
-     * @return Generator<Message>
-     */
+    /** @return Generator<Message> */
     public function load(): Generator
     {
         foreach ($this->messages as $event) {

@@ -34,33 +34,20 @@ use function sprintf;
  */
 final class DefaultRepository implements Repository
 {
-    private Store $store;
-    private EventBus $eventBus;
-
-    /** @var class-string<T> */
-    private string $aggregateClass;
-
-    private ?SnapshotStore $snapshotStore;
     private LoggerInterface $logger;
     private AggregateRootMetadata $metadata;
     private MessageDecorator $messageDecorator;
 
-    /**
-     * @param class-string<T> $aggregateClass
-     */
+    /** @param class-string<T> $aggregateClass */
     public function __construct(
-        Store $store,
-        EventBus $eventBus,
-        string $aggregateClass,
-        ?SnapshotStore $snapshotStore = null,
-        ?MessageDecorator $messageDecorator = null,
-        ?LoggerInterface $logger = null,
-        ?AggregateRootMetadata $metadata = null,
+        private Store $store,
+        private EventBus $eventBus,
+        private string $aggregateClass,
+        private SnapshotStore|null $snapshotStore = null,
+        MessageDecorator|null $messageDecorator = null,
+        LoggerInterface|null $logger = null,
+        AggregateRootMetadata|null $metadata = null,
     ) {
-        $this->store = $store;
-        $this->eventBus = $eventBus;
-        $this->aggregateClass = $aggregateClass;
-        $this->snapshotStore = $snapshotStore;
         $this->messageDecorator = $messageDecorator ?? new RecordedOnDecorator(new SystemClock());
         $this->logger = $logger ?? new NullLogger();
 
@@ -77,9 +64,7 @@ final class DefaultRepository implements Repository
         $this->metadata = $aggregateClass::metadata();
     }
 
-    /**
-     * @return T
-     */
+    /** @return T */
     public function load(string $id): AggregateRoot
     {
         $aggregateClass = $this->aggregateClass;
@@ -94,16 +79,16 @@ final class DefaultRepository implements Repository
                     sprintf(
                         'snapshot for aggregate "%s" with the id "%s" not found',
                         $aggregateClass,
-                        $id
-                    )
+                        $id,
+                    ),
                 );
             } catch (SnapshotVersionInvalid) {
                 $this->logger->debug(
                     sprintf(
                         'snapshot for aggregate "%s" with the id "%s" is invalid',
                         $aggregateClass,
-                        $id
-                    )
+                        $id,
+                    ),
                 );
             }
         }
@@ -117,9 +102,9 @@ final class DefaultRepository implements Repository
         $aggregate = $aggregateClass::createFromEvents(
             array_map(
                 static fn (Message $message) => $message->event(),
-                $messages
+                $messages,
             ),
-            $messages[0]->playhead() - 1
+            $messages[0]->playhead() - 1,
         );
 
         if ($this->snapshotStore && $this->metadata->snapshotStore) {
@@ -134,9 +119,7 @@ final class DefaultRepository implements Repository
         return $this->store->has($this->aggregateClass, $id);
     }
 
-    /**
-     * @param T $aggregate
-     */
+    /** @param T $aggregate */
     public function save(AggregateRoot $aggregate): void
     {
         $this->assertRightAggregate($aggregate);
@@ -155,7 +138,7 @@ final class DefaultRepository implements Repository
                 $aggregate::class,
                 $aggregate->aggregateRootId(),
                 $aggregate->playhead(),
-                count($events)
+                count($events),
             );
         }
 
@@ -168,7 +151,7 @@ final class DefaultRepository implements Repository
 
                 return $messageDecorator($message);
             },
-            $events
+            $events,
         );
 
         $this->store->transactional(function () use ($messages): void {
@@ -196,7 +179,7 @@ final class DefaultRepository implements Repository
 
         $events = array_map(
             static fn (Message $message) => $message->event(),
-            $messages
+            $messages,
         );
 
         try {
@@ -248,7 +231,7 @@ final class DefaultRepository implements Repository
             $this->store->archiveMessages(
                 $message->aggregateClass(),
                 $message->aggregateId(),
-                $message->playhead()
+                $message->playhead(),
             );
         }
     }

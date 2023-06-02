@@ -6,5 +6,5 @@ namespace Patchlevel\EventSourcing\Outbox;
 
 interface OutboxConsumer
 {
-    public function consume(?int $limit = null): void;
+    public function consume(int|null $limit = null): void;
 }

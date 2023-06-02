@@ -9,8 +9,9 @@ use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 
 final class SplitStreamDecorator implements MessageDecorator
 {
-    public function __construct(private readonly EventMetadataFactory $eventMetadataFactory)
-    {
+    public function __construct(
+        private readonly EventMetadataFactory $eventMetadataFactory,
+    ) {
     }
 
     public function __invoke(Message $message): Message

@@ -9,5 +9,5 @@ use Patchlevel\EventSourcing\Attribute\Event;
 #[Event('simple')]
 final class SimpleEvent
 {
-    public ?string $name = null;
+    public string|null $name = null;
 }

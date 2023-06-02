@@ -10,7 +10,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:projectionist:teardown',
-    'Shut down and delete the outdated projections'
+    'Shut down and delete the outdated projections',
 )]
 final class ProjectionistTeardownCommand extends ProjectionistCommand
 {

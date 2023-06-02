@@ -25,9 +25,7 @@ final class DoctrineHelper
         return $normalizedRecordedOn;
     }
 
-    /**
-     * @return positive-int
-     */
+    /** @return positive-int */
     public static function normalizePlayhead(string|int $playhead, AbstractPlatform $platform): int
     {
         $normalizedPlayhead = Type::getType(Types::INTEGER)->convertToPHPValue($playhead, $platform);
@@ -39,9 +37,7 @@ final class DoctrineHelper
         return $normalizedPlayhead;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public static function normalizeCustomHeaders(string $customHeaders, AbstractPlatform $platform): array
     {
         $normalizedCustomHeaders = Type::getType(Types::JSON)->convertToPHPValue($customHeaders, $platform);

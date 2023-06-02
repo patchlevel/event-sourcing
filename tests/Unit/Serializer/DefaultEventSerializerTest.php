@@ -30,12 +30,12 @@ final class DefaultEventSerializerTest extends TestCase
     {
         $event = new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('info@patchlevel.de')
+            Email::fromString('info@patchlevel.de'),
         );
 
         self::assertEquals(
             new SerializedEvent('profile_created', '{"profileId":"1","email":"info@patchlevel.de"}'),
-            $this->serializer->serialize($event)
+            $this->serializer->serialize($event),
         );
     }
 
@@ -43,14 +43,14 @@ final class DefaultEventSerializerTest extends TestCase
     {
         $expected = new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('info@patchlevel.de')
+            Email::fromString('info@patchlevel.de'),
         );
 
         $event = $this->serializer->deserialize(
             new SerializedEvent(
                 'profile_created',
-                '{"profileId":"1","email":"info@patchlevel.de"}'
-            )
+                '{"profileId":"1","email":"info@patchlevel.de"}',
+            ),
         );
 
         self::assertEquals($expected, $event);
@@ -73,19 +73,19 @@ final class DefaultEventSerializerTest extends TestCase
             (new AttributeEventRegistryFactory())->create([__DIR__ . '/../Fixture']),
             new MetadataHydrator(),
             new JsonEncoder(),
-            $upcaster
+            $upcaster,
         );
 
         $expected = new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('info@patchlevel.de')
+            Email::fromString('info@patchlevel.de'),
         );
 
         $event = $serializer->deserialize(
             new SerializedEvent(
                 'profile_created_old',
-                '{"profileId":"1"}'
-            )
+                '{"profileId":"1"}',
+            ),
         );
 
         self::assertEquals($expected, $event);
@@ -119,19 +119,19 @@ final class DefaultEventSerializerTest extends TestCase
             (new AttributeEventRegistryFactory())->create([__DIR__ . '/../Fixture']),
             new MetadataHydrator(),
             new JsonEncoder(),
-            new UpcasterChain([$upcasterOne, $upcasterTwo])
+            new UpcasterChain([$upcasterOne, $upcasterTwo]),
         );
 
         $expected = new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('info@patchlevel.de')
+            Email::fromString('info@patchlevel.de'),
         );
 
         $event = $serializer->deserialize(
             new SerializedEvent(
                 'profile_created_very_old',
-                '{"id":"1"}'
-            )
+                '{"id":"1"}',
+            ),
         );
 
         self::assertEquals($expected, $event);

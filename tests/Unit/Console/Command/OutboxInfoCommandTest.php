@@ -42,7 +42,7 @@ final class OutboxInfoCommandTest extends TestCase
             new SerializedEvent(
                 'profile.visited',
                 '{"visitorId": "1"}',
-            )
+            ),
         );
 
         $command = new OutboxInfoCommand(
@@ -80,7 +80,7 @@ final class OutboxInfoCommandTest extends TestCase
             new SerializedEvent(
                 'profile.visited',
                 '{"visitorId": "1"}',
-            )
+            ),
         );
 
         $command = new OutboxInfoCommand(

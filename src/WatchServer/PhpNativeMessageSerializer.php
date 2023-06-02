@@ -14,16 +14,12 @@ use function base64_encode;
 use function serialize;
 use function unserialize;
 
-/**
- * @psalm-import-type Headers from Message
- */
+/** @psalm-import-type Headers from Message */
 final class PhpNativeMessageSerializer implements MessageSerializer
 {
-    private EventSerializer $serializer;
-
-    public function __construct(EventSerializer $serializer)
-    {
-        $this->serializer = $serializer;
+    public function __construct(
+        private EventSerializer $serializer,
+    ) {
     }
 
     public function serialize(Message $message): string
@@ -45,7 +41,7 @@ final class PhpNativeMessageSerializer implements MessageSerializer
         /** @var array{event: class-string, payload: string, headers: Headers} $data */
         $data = unserialize(
             base64_decode($content),
-            ['allowed_classes' => [DateTimeImmutable::class]]
+            ['allowed_classes' => [DateTimeImmutable::class]],
         );
 
         return Message::createWithHeaders(

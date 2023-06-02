@@ -9,21 +9,14 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 final class Apply
 {
-    /** @var class-string|null */
-    private ?string $eventClass;
-
-    /**
-     * @param class-string|null $eventClass
-     */
-    public function __construct(?string $eventClass = null)
-    {
-        $this->eventClass = $eventClass;
+    /** @param class-string|null $eventClass */
+    public function __construct(
+        private string|null $eventClass = null,
+    ) {
     }
 
-    /**
-     * @return class-string|null
-     */
-    public function eventClass(): ?string
+    /** @return class-string|null */
+    public function eventClass(): string|null
     {
         return $this->eventClass;
     }

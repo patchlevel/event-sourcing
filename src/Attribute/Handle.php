@@ -9,20 +9,13 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 final class Handle
 {
-    /** @var class-string */
-    private string $eventClass;
-
-    /**
-     * @param class-string $eventClass
-     */
-    public function __construct(string $eventClass)
-    {
-        $this->eventClass = $eventClass;
+    /** @param class-string $eventClass */
+    public function __construct(
+        private string $eventClass,
+    ) {
     }
 
-    /**
-     * @return class-string
-     */
+    /** @return class-string */
     public function eventClass(): string
     {
         return $this->eventClass;

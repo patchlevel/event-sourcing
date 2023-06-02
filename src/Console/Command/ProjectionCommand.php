@@ -18,18 +18,13 @@ use function is_subclass_of;
 
 abstract class ProjectionCommand extends Command
 {
-    private readonly ProjectorRepository $projectorRepository;
-
-    public function __construct(ProjectorRepository $projectorRepository)
-    {
+    public function __construct(
+        private readonly ProjectorRepository $projectorRepository,
+    ) {
         parent::__construct();
-
-        $this->projectorRepository = $projectorRepository;
     }
 
-    /**
-     * @return list<Projector>
-     */
+    /** @return list<Projector> */
     protected function projectors(mixed $projectionOption): array
     {
         $normalizedProjectionOption = $this->normalizeProjectionOption($projectionOption);
@@ -42,14 +37,12 @@ abstract class ProjectionCommand extends Command
             array_filter(
                 [...$this->projectorRepository->projectors()],
                 static fn (Projector $projection): bool => in_array($projection::class, $normalizedProjectionOption)
-            )
+            ),
         );
     }
 
-    /**
-     * @return non-empty-array<class-string<Projector>>|null
-     */
-    private function normalizeProjectionOption(mixed $option): ?array
+    /** @return non-empty-array<class-string<Projector>>|null */
+    private function normalizeProjectionOption(mixed $option): array|null
     {
         if (is_string($option)) {
             $option = [$option];

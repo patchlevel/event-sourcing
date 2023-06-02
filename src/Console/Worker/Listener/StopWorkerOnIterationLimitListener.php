@@ -13,12 +13,10 @@ final class StopWorkerOnIterationLimitListener implements EventSubscriberInterfa
 {
     private int $iteration = 0;
 
-    /**
-     * @param positive-int $maximumNumberOfIteration
-     */
+    /** @param positive-int $maximumNumberOfIteration */
     public function __construct(
         private readonly int $maximumNumberOfIteration,
-        private readonly ?LoggerInterface $logger = null
+        private readonly LoggerInterface|null $logger = null,
     ) {
     }
 
@@ -39,13 +37,11 @@ final class StopWorkerOnIterationLimitListener implements EventSubscriberInterfa
 
         $this->logger?->info(
             'Worker stopped due to maximum iteration of {count}',
-            ['count' => $this->maximumNumberOfIteration]
+            ['count' => $this->maximumNumberOfIteration],
         );
     }
 
-    /**
-     * @return array<class-string, string>
-     */
+    /** @return array<class-string, string> */
     public static function getSubscribedEvents(): array
     {
         return [

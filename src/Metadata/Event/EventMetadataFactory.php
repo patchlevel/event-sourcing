@@ -6,8 +6,6 @@ namespace Patchlevel\EventSourcing\Metadata\Event;
 
 interface EventMetadataFactory
 {
-    /**
-     * @param class-string $event
-     */
+    /** @param class-string $event */
     public function metadata(string $event): EventMetadata;
 }

@@ -14,7 +14,7 @@ final class DuplicateEmptyApplyAttribute extends MetadataException
     {
         parent::__construct(sprintf(
             'The method [%s] has multiple apply attributes given without an event name which is not allowed.',
-            $methodName
+            $methodName,
         ));
     }
 }

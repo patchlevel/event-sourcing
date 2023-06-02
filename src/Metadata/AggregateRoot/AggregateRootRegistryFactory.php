@@ -6,8 +6,6 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 interface AggregateRootRegistryFactory
 {
-    /**
-     * @param list<string> $paths
-     */
+    /** @param list<string> $paths */
     public function create(array $paths): AggregateRootRegistry;
 }

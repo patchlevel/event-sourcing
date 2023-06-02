@@ -20,7 +20,7 @@ final class DebugCommandTest extends TestCase
     {
         $command = new DebugCommand(
             new AggregateRootRegistry(['profile' => Profile::class]),
-            new EventRegistry(['profile.created' => ProfileCreated::class])
+            new EventRegistry(['profile.created' => ProfileCreated::class]),
         );
 
         $input = new ArrayInput([]);

@@ -22,7 +22,7 @@ final class DefaultEventBusTest extends TestCase
     public function testDispatchEvent(): void
     {
         $listener = new class implements Listener {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function __invoke(Message $message): void
             {
@@ -33,8 +33,8 @@ final class DefaultEventBusTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $eventBus = new DefaultEventBus([$listener]);
@@ -58,15 +58,15 @@ final class DefaultEventBusTest extends TestCase
         $message1 = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $message2 = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $eventBus = new DefaultEventBus([$listener]);
@@ -80,7 +80,7 @@ final class DefaultEventBusTest extends TestCase
     public function testDynamicListener(): void
     {
         $listener = new class implements Listener {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function __invoke(Message $message): void
             {
@@ -91,8 +91,8 @@ final class DefaultEventBusTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $eventBus = new DefaultEventBus();
@@ -107,19 +107,18 @@ final class DefaultEventBusTest extends TestCase
         $messageA = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $eventBus = new DefaultEventBus();
 
         $listenerA = new class ($eventBus) implements Listener {
-            public ?float $time = null;
-            private DefaultEventBus $bus;
+            public float|null $time = null;
 
-            public function __construct(DefaultEventBus $bus)
-            {
-                $this->bus = $bus;
+            public function __construct(
+                private DefaultEventBus $bus,
+            ) {
             }
 
             public function __invoke(Message $message): void
@@ -131,7 +130,7 @@ final class DefaultEventBusTest extends TestCase
                 $messageB = new Message(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
-                    )
+                    ),
                 );
 
                 $this->bus->dispatch($messageB);
@@ -141,7 +140,7 @@ final class DefaultEventBusTest extends TestCase
         };
 
         $listenerB = new class implements Listener {
-            public ?float $time = null;
+            public float|null $time = null;
 
             public function __invoke(Message $message): void
             {
@@ -169,25 +168,23 @@ final class DefaultEventBusTest extends TestCase
         $messageA = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $messageB = new Message(
             new ProfileVisited(
                 ProfileId::fromString('1'),
-            )
+            ),
         );
 
         $eventBus = new DefaultEventBus();
 
         $listenerA = new class ($eventBus) implements Listener {
-            public ?float $time = null;
-            private DefaultEventBus $bus;
+            public float|null $time = null;
 
-            public function __construct(DefaultEventBus $bus)
+            public function __construct(private DefaultEventBus $bus)
             {
-                $this->bus = $bus;
             }
 
             public function __invoke(Message $message): void
@@ -198,8 +195,8 @@ final class DefaultEventBusTest extends TestCase
 
                 $messageB = new Message(
                     new NameChanged(
-                        'name'
-                    )
+                        'name',
+                    ),
                 );
 
                 $this->bus->dispatch($messageB);
@@ -209,7 +206,7 @@ final class DefaultEventBusTest extends TestCase
         };
 
         $listenerB = new class implements Listener {
-            public ?float $time = null;
+            public float|null $time = null;
 
             public function __invoke(Message $message): void
             {

@@ -12,7 +12,7 @@ use Patchlevel\Hydrator\Attribute\Ignore;
 trait AggregateRootMetadataAwareBehaviour
 {
     #[Ignore]
-    private static ?AggregateRootMetadataFactory $metadataFactory = null;
+    private static AggregateRootMetadataFactory|null $metadataFactory = null;
 
     public static function metadata(): AggregateRootMetadata
     {

@@ -23,8 +23,8 @@ final class DuplicateApplyMethod extends MetadataException
                 $fistMethod,
                 $secondMethod,
                 $aggregate,
-                $event
-            )
+                $event,
+            ),
         );
     }
 }

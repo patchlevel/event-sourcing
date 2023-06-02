@@ -15,11 +15,9 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 
 final class ProfileProjection implements Projector
 {
-    private Connection $connection;
-
-    public function __construct(Connection $connection)
-    {
-        $this->connection = $connection;
+    public function __construct(
+        private Connection $connection,
+    ) {
     }
 
     #[Create]
@@ -49,7 +47,7 @@ final class ProfileProjection implements Projector
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
-            ]
+            ],
         );
     }
 }

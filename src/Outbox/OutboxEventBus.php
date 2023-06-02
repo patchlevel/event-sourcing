@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 final class OutboxEventBus implements EventBus
 {
     public function __construct(
-        private readonly OutboxStore $store
+        private readonly OutboxStore $store,
     ) {
     }
 

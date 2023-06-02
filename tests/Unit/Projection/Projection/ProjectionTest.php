@@ -30,7 +30,7 @@ final class ProjectionTest extends TestCase
     public function testBooting(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1)
+            new ProjectionId('test', 1),
         );
 
         $projection->booting();
@@ -46,7 +46,7 @@ final class ProjectionTest extends TestCase
     public function testActive(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1)
+            new ProjectionId('test', 1),
         );
 
         $projection->active();
@@ -62,7 +62,7 @@ final class ProjectionTest extends TestCase
     public function testError(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1)
+            new ProjectionId('test', 1),
         );
 
         $projection->error();
@@ -78,7 +78,7 @@ final class ProjectionTest extends TestCase
     public function testOutdated(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1)
+            new ProjectionId('test', 1),
         );
 
         $projection->outdated();
@@ -94,7 +94,7 @@ final class ProjectionTest extends TestCase
     public function testIncrementPosition(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1)
+            new ProjectionId('test', 1),
         );
 
         $projection->incrementPosition();

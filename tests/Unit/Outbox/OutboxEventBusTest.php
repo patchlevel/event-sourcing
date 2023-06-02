@@ -23,8 +23,8 @@ final class OutboxEventBusTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $store = $this->prophesize(OutboxStore::class);
@@ -39,15 +39,15 @@ final class OutboxEventBusTest extends TestCase
         $message1 = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $message2 = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $store = $this->prophesize(OutboxStore::class);

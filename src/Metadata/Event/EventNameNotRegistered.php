@@ -15,7 +15,7 @@ final class EventNameNotRegistered extends MetadataException
         parent::__construct(
             sprintf(
                 'Event name "%s" is not registered',
-                $evenName
+                $evenName,
             ),
         );
     }

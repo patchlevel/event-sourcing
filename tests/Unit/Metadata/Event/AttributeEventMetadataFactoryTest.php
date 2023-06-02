@@ -24,7 +24,8 @@ final class AttributeEventMetadataFactoryTest extends TestCase
 
     public function testEvent(): void
     {
-        $event = new #[Event('profile_created')] class {
+        $event = new #[Event('profile_created')]
+        class {
         };
 
         $metadataFactory = new AttributeEventMetadataFactory();

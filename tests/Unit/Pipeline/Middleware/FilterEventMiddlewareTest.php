@@ -24,8 +24,8 @@ final class FilterEventMiddlewareTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )
+                Email::fromString('hallo@patchlevel.de'),
+            ),
         );
 
         $result = $middleware($message);
@@ -41,8 +41,8 @@ final class FilterEventMiddlewareTest extends TestCase
 
         $message = new Message(
             new ProfileVisited(
-                ProfileId::fromString('1')
-            )
+                ProfileId::fromString('1'),
+            ),
         );
 
         $result = $middleware($message);

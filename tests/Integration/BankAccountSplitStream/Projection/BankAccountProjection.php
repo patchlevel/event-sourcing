@@ -16,11 +16,9 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\Ban
 
 final class BankAccountProjection implements Projector
 {
-    private Connection $connection;
-
-    public function __construct(Connection $connection)
-    {
-        $this->connection = $connection;
+    public function __construct(
+        private Connection $connection,
+    ) {
     }
 
     #[Create]
@@ -51,7 +49,7 @@ final class BankAccountProjection implements Projector
             [
                 'id' => $event->accountId->toString(),
                 'name' => $event->name,
-            ]
+            ],
         );
     }
 
@@ -65,7 +63,7 @@ final class BankAccountProjection implements Projector
             [
                 'id' => $event->accountId->toString(),
                 'balance' => $event->balanceInCents,
-            ]
+            ],
         );
     }
 }

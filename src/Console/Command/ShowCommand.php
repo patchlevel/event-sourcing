@@ -23,21 +23,16 @@ use function sprintf;
 
 #[AsCommand(
     'event-sourcing:show',
-    'show events from one aggregate'
+    'show events from one aggregate',
 )]
 final class ShowCommand extends Command
 {
-    private Store $store;
-    private EventSerializer $serializer;
-    private AggregateRootRegistry $aggregateRootRegistry;
-
-    public function __construct(Store $store, EventSerializer $serializer, AggregateRootRegistry $aggregateRootRegistry)
-    {
+    public function __construct(
+        private Store $store,
+        private EventSerializer $serializer,
+        private AggregateRootRegistry $aggregateRootRegistry,
+    ) {
         parent::__construct();
-
-        $this->store = $store;
-        $this->serializer = $serializer;
-        $this->aggregateRootRegistry = $aggregateRootRegistry;
     }
 
     protected function configure(): void
@@ -56,7 +51,7 @@ final class ShowCommand extends Command
             $question = new ChoiceQuestion(
                 'Choose the aggregate',
                 array_values($this->aggregateRootRegistry->aggregateNames()),
-                null
+                null,
             );
 
             $aggregate = InputHelper::string($console->askQuestion($question));

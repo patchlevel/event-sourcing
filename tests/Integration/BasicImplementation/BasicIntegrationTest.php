@@ -28,9 +28,7 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\Pr
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversNothing
- */
+/** @coversNothing */
 final class BasicIntegrationTest extends TestCase
 {
     private Connection $connection;
@@ -50,7 +48,7 @@ final class BasicIntegrationTest extends TestCase
     {
         $profileProjection = new ProfileProjection($this->connection);
         $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection]
+            [$profileProjection],
         );
 
         $eventStream = new DefaultEventBus();
@@ -61,7 +59,7 @@ final class BasicIntegrationTest extends TestCase
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
-            'eventstore'
+            'eventstore',
         );
 
         $manager = new DefaultRepositoryManager(
@@ -69,13 +67,13 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()]),
         );
         $repository = $manager->get(Profile::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            $store
+            $store,
         );
 
         $schemaDirector->create();
@@ -96,7 +94,7 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())]),
         );
         $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');
@@ -112,7 +110,7 @@ final class BasicIntegrationTest extends TestCase
     {
         $profileProjection = new ProfileProjection($this->connection);
         $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection]
+            [$profileProjection],
         );
 
         $eventStream = SymfonyEventBus::create([
@@ -124,7 +122,7 @@ final class BasicIntegrationTest extends TestCase
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
-            'eventstore'
+            'eventstore',
         );
 
         $manager = new DefaultRepositoryManager(
@@ -132,13 +130,13 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())]),
         );
         $repository = $manager->get(Profile::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            $store
+            $store,
         );
 
         $schemaDirector->create();
@@ -159,7 +157,7 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()]),
         );
         $repository = $manager->get(Profile::class);
 
@@ -176,7 +174,7 @@ final class BasicIntegrationTest extends TestCase
     {
         $profileProjection = new ProfileProjection($this->connection);
         $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection]
+            [$profileProjection],
         );
 
         $eventStream = new DefaultEventBus();
@@ -194,13 +192,13 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()]),
         );
         $repository = $manager->get(Profile::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            $store
+            $store,
         );
 
         $schemaDirector->create();
@@ -221,7 +219,7 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())]),
         );
         $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');
@@ -237,7 +235,7 @@ final class BasicIntegrationTest extends TestCase
     {
         $profileProjection = new ProfileProjection($this->connection);
         $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection]
+            [$profileProjection],
         );
 
         $eventStream = new DefaultEventBus();
@@ -248,7 +246,7 @@ final class BasicIntegrationTest extends TestCase
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
-            'eventstore'
+            'eventstore',
         );
 
         $manager = new DefaultRepositoryManager(
@@ -256,13 +254,13 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()])
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()]),
         );
         $repository = $manager->get(Profile::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            $store
+            $store,
         );
 
         $schemaDirector->create();
@@ -283,7 +281,7 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())])
+            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())]),
         );
         $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');

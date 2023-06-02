@@ -10,7 +10,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:projectionist:reactivate',
-    'Reactivate failed projections'
+    'Reactivate failed projections',
 )]
 final class ProjectionistReactivateCommand extends ProjectionistCommand
 {

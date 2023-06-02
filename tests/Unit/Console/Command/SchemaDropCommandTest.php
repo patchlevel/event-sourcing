@@ -23,7 +23,7 @@ final class SchemaDropCommandTest extends TestCase
         $schemaManager->drop()->shouldBeCalled();
 
         $command = new SchemaDropCommand(
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput(['--force' => true]);
@@ -44,7 +44,7 @@ final class SchemaDropCommandTest extends TestCase
         $schemaManager->drop()->shouldNotBeCalled();
 
         $command = new SchemaDropCommand(
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput([]);
@@ -58,7 +58,7 @@ final class SchemaDropCommandTest extends TestCase
 
         self::assertStringContainsString(
             '[ERROR] Please run the operation with --force to execute. All data will be lost!',
-            $content
+            $content,
         );
     }
 
@@ -72,7 +72,7 @@ final class SchemaDropCommandTest extends TestCase
         ]);
 
         $command = new SchemaDropCommand(
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput(['--dry-run' => true]);
@@ -95,7 +95,7 @@ final class SchemaDropCommandTest extends TestCase
         $schemaManager = $this->prophesize(SchemaDirector::class);
 
         $command = new SchemaDropCommand(
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput(['--dry-run' => true]);

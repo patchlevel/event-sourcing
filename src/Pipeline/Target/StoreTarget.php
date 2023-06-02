@@ -9,11 +9,9 @@ use Patchlevel\EventSourcing\Store\Store;
 
 final class StoreTarget implements Target
 {
-    private Store $store;
-
-    public function __construct(Store $store)
-    {
-        $this->store = $store;
+    public function __construct(
+        private Store $store,
+    ) {
     }
 
     public function save(Message $message): void

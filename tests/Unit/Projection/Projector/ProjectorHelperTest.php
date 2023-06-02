@@ -22,7 +22,7 @@ final class ProjectorHelperTest extends TestCase
     public function testHandle(): void
     {
         $projector = new class implements Projector {
-            public static ?Message $handledMessage = null;
+            public static Message|null $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
@@ -33,11 +33,11 @@ final class ProjectorHelperTest extends TestCase
 
         $event = new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('profile@test.com')
+            Email::fromString('profile@test.com'),
         );
 
         $message = new Message(
-            $event
+            $event,
         );
 
         $helper = new ProjectorHelper();
@@ -49,7 +49,7 @@ final class ProjectorHelperTest extends TestCase
     public function testHandleNotSupportedEvent(): void
     {
         $projector = new class implements Projector {
-            public static ?Message $handledMessage = null;
+            public static Message|null $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
@@ -59,11 +59,11 @@ final class ProjectorHelperTest extends TestCase
         };
 
         $event = new ProfileVisited(
-            ProfileId::fromString('1')
+            ProfileId::fromString('1'),
         );
 
         $message = new Message(
-            $event
+            $event,
         );
 
         $helper = new ProjectorHelper();

@@ -11,19 +11,17 @@ use function sprintf;
 
 final class SnapshotNotFound extends SnapshotException
 {
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
-    public function __construct(string $aggregate, string $id, ?Throwable $previous = null)
+    /** @param class-string<AggregateRoot> $aggregate */
+    public function __construct(string $aggregate, string $id, Throwable|null $previous = null)
     {
         parent::__construct(
             sprintf(
                 'snapshot for aggregate "%s" with the id "%s" not found',
                 $aggregate,
-                $id
+                $id,
             ),
             0,
-            $previous
+            $previous,
         );
     }
 }

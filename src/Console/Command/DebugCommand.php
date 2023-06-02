@@ -19,13 +19,13 @@ use function array_values;
 #[AsCommand(
     'event-sourcing:debug',
     'show event sourcing debug information',
-    ['debug:event-sourcing']
+    ['debug:event-sourcing'],
 )]
 final class DebugCommand extends Command
 {
     public function __construct(
         private readonly AggregateRootRegistry $aggregateRootRegistry,
-        private readonly EventRegistry $eventRegistry
+        private readonly EventRegistry $eventRegistry,
     ) {
         parent::__construct();
     }
@@ -48,7 +48,7 @@ final class DebugCommand extends Command
 
         $console->table(
             ['name', 'class'],
-            array_map(null, array_keys($aggregates), array_values($aggregates))
+            array_map(null, array_keys($aggregates), array_values($aggregates)),
         );
     }
 
@@ -60,7 +60,7 @@ final class DebugCommand extends Command
 
         $console->table(
             ['name', 'class'],
-            array_map(null, array_keys($events), array_values($events))
+            array_map(null, array_keys($events), array_values($events)),
         );
     }
 }

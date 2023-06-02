@@ -16,7 +16,7 @@ final class ProjectionIdTest extends TestCase
     {
         $projectionId = new ProjectionId(
             'test',
-            1
+            1,
         );
 
         self::assertSame('test', $projectionId->name());
@@ -28,22 +28,22 @@ final class ProjectionIdTest extends TestCase
     {
         $a = new ProjectionId(
             'test',
-            1
+            1,
         );
 
         $b = new ProjectionId(
             'test',
-            1
+            1,
         );
 
         $c = new ProjectionId(
             'foo',
-            1
+            1,
         );
 
         $d = new ProjectionId(
             'test',
-            2
+            2,
         );
 
         self::assertTrue($a->equals($b));
@@ -51,9 +51,7 @@ final class ProjectionIdTest extends TestCase
         self::assertFalse($a->equals($d));
     }
 
-    /**
-     * @dataProvider validFromStringProvider
-     */
+    /** @dataProvider validFromStringProvider */
     public function testValidFromString(string $string, string $name, int $version): void
     {
         $projectionId = ProjectionId::fromString($string);
@@ -63,9 +61,7 @@ final class ProjectionIdTest extends TestCase
         self::assertSame($string, $projectionId->toString());
     }
 
-    /**
-     * @return Generator<array-key, array{string, string, int}>
-     */
+    /** @return Generator<array-key, array{string, string, int}> */
     public function validFromStringProvider(): Generator
     {
         yield ['hotel-1', 'hotel', 1];
@@ -73,9 +69,7 @@ final class ProjectionIdTest extends TestCase
         yield ['hotel-bar--1', 'hotel-bar-', 1];
     }
 
-    /**
-     * @dataProvider invalidFromStringProvider
-     */
+    /** @dataProvider invalidFromStringProvider */
     public function testInvalidFromString(string $string): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -83,9 +77,7 @@ final class ProjectionIdTest extends TestCase
         ProjectionId::fromString($string);
     }
 
-    /**
-     * @return Generator<array-key, array{string}>
-     */
+    /** @return Generator<array-key, array{string}> */
     public function invalidFromStringProvider(): Generator
     {
         yield ['hotel'];

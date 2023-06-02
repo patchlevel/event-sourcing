@@ -28,7 +28,7 @@ final class DatabaseDropCommandTest extends TestCase
 
         $command = new DatabaseDropCommand(
             $connection->reveal(),
-            $helper->reveal()
+            $helper->reveal(),
         );
 
         $input = new ArrayInput([]);
@@ -55,7 +55,7 @@ final class DatabaseDropCommandTest extends TestCase
 
         $command = new DatabaseDropCommand(
             $connection->reveal(),
-            $helper->reveal()
+            $helper->reveal(),
         );
 
         $input = new ArrayInput(['--force' => true]);
@@ -81,7 +81,7 @@ final class DatabaseDropCommandTest extends TestCase
 
         $command = new DatabaseDropCommand(
             $connection->reveal(),
-            $helper->reveal()
+            $helper->reveal(),
         );
 
         $input = new ArrayInput(['--force' => true, '--if-exists' => true]);
@@ -108,7 +108,7 @@ final class DatabaseDropCommandTest extends TestCase
 
         $command = new DatabaseDropCommand(
             $connection->reveal(),
-            $helper->reveal()
+            $helper->reveal(),
         );
 
         $input = new ArrayInput(['--force' => true]);

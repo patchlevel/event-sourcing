@@ -10,7 +10,7 @@ use Doctrine\Migrations\Provider\SchemaProvider;
 final class DoctrineMigrationSchemaProvider implements SchemaProvider
 {
     public function __construct(
-        private readonly DoctrineSchemaProvider $doctrineSchemaProvider
+        private readonly DoctrineSchemaProvider $doctrineSchemaProvider,
     ) {
     }
 

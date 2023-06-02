@@ -11,19 +11,17 @@ use function sprintf;
 
 final class InvalidArgumentGiven extends InvalidArgumentException
 {
-    private mixed $value;
-
-    public function __construct(mixed $value, string $need)
-    {
+    public function __construct(
+        private mixed $value,
+        string $need,
+    ) {
         parent::__construct(
             sprintf(
                 'Invalid argument given: need type "%s" got "%s"',
                 $need,
-                gettype($value)
-            )
+                gettype($value),
+            ),
         );
-
-        $this->value = $value;
     }
 
     public function value(): mixed

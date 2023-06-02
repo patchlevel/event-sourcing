@@ -10,11 +10,11 @@ final class StoreOutboxConsumer implements OutboxConsumer
 {
     public function __construct(
         private readonly OutboxStore $outboxStore,
-        private readonly EventBus $eventBus
+        private readonly EventBus $eventBus,
     ) {
     }
 
-    public function consume(?int $limit = null): void
+    public function consume(int|null $limit = null): void
     {
         $messages = $this->outboxStore->retrieveOutboxMessages($limit);
 

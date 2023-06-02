@@ -10,7 +10,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:projectionist:boot',
-    'Prepare new projections and catch up with the event store'
+    'Prepare new projections and catch up with the event store',
 )]
 final class ProjectionistBootCommand extends ProjectionistCommand
 {

@@ -48,14 +48,14 @@ final class LoadEventsBench
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
-            'eventstore'
+            'eventstore',
         );
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,
-            $this->store
+            $this->store,
         );
 
         $schemaDirector->create();

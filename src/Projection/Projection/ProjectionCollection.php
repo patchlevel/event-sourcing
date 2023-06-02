@@ -13,17 +13,13 @@ use function array_key_exists;
 use function array_values;
 use function count;
 
-/**
- * @implements IteratorAggregate<int, Projection>
- */
+/** @implements IteratorAggregate<int, Projection> */
 final class ProjectionCollection implements Countable, IteratorAggregate
 {
     /** @var array<string, Projection> */
     private readonly array $projections;
 
-    /**
-     * @param list<Projection> $projections
-     */
+    /** @param list<Projection> $projections */
     public function __construct(array $projections = [])
     {
         $result = [];
@@ -63,7 +59,7 @@ final class ProjectionCollection implements Countable, IteratorAggregate
             [
                 ...array_values($this->projections),
                 $projection,
-            ]
+            ],
         );
     }
 
@@ -82,14 +78,12 @@ final class ProjectionCollection implements Countable, IteratorAggregate
         return $min ?: 0;
     }
 
-    /**
-     * @param callable(Projection $projection):bool $callable
-     */
+    /** @param callable(Projection $projection):bool $callable */
     public function filter(callable $callable): self
     {
         $projections = array_filter(
             $this->projections,
-            $callable
+            $callable,
         );
 
         return new self(array_values($projections));
@@ -115,7 +109,7 @@ final class ProjectionCollection implements Countable, IteratorAggregate
                 }
 
                 return true;
-            }
+            },
         );
     }
 
@@ -124,9 +118,7 @@ final class ProjectionCollection implements Countable, IteratorAggregate
         return count($this->projections);
     }
 
-    /**
-     * @return ArrayIterator<int, Projection>
-     */
+    /** @return ArrayIterator<int, Projection> */
     public function getIterator(): ArrayIterator
     {
         return new ArrayIterator(array_values($this->projections));

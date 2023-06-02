@@ -13,11 +13,9 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
 
 final class SymfonyEventBus implements EventBus
 {
-    private MessageBusInterface $bus;
-
-    public function __construct(MessageBusInterface $bus)
-    {
-        $this->bus = $bus;
+    public function __construct(
+        private MessageBusInterface $bus,
+    ) {
     }
 
     public function dispatch(Message ...$messages): void
@@ -30,15 +28,13 @@ final class SymfonyEventBus implements EventBus
         }
     }
 
-    /**
-     * @param list<Listener> $listeners
-     */
+    /** @param list<Listener> $listeners */
     public static function create(array $listeners = []): static
     {
         $bus = new MessageBus([
             new HandleMessageMiddleware(
                 new HandlersLocator([Message::class => $listeners]),
-                true
+                true,
             ),
         ]);
 

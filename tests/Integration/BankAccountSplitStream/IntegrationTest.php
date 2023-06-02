@@ -30,9 +30,7 @@ use PHPUnit\Framework\TestCase;
 
 use function count;
 
-/**
- * @coversNothing
- */
+/** @coversNothing */
 final class IntegrationTest extends TestCase
 {
     private Connection $connection;
@@ -59,7 +57,7 @@ final class IntegrationTest extends TestCase
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
-            'eventstore'
+            'eventstore',
         );
 
         $manager = new DefaultRepositoryManager(
@@ -70,13 +68,13 @@ final class IntegrationTest extends TestCase
             new ChainMessageDecorator([
                 new RecordedOnDecorator(new SystemClock()),
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
-            ])
+            ]),
         );
         $repository = $manager->get(BankAccount::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            $store
+            $store,
         );
 
         $schemaDirector->create();
@@ -103,7 +101,7 @@ final class IntegrationTest extends TestCase
             new ChainMessageDecorator([
                 new RecordedOnDecorator(new SystemClock()),
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
-            ])
+            ]),
         );
         $repository = $manager->get(BankAccount::class);
         $bankAccount = $repository->load('1');
@@ -138,7 +136,7 @@ final class IntegrationTest extends TestCase
             new ChainMessageDecorator([
                 new RecordedOnDecorator(new SystemClock()),
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
-            ])
+            ]),
         );
         $repository = $manager->get(BankAccount::class);
         $bankAccount = $repository->load('1');
@@ -175,13 +173,13 @@ final class IntegrationTest extends TestCase
             new ChainMessageDecorator([
                 new RecordedOnDecorator(new SystemClock()),
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
-            ])
+            ]),
         );
         $repository = $manager->get(BankAccount::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            $store
+            $store,
         );
 
         $schemaDirector->create();
@@ -208,7 +206,7 @@ final class IntegrationTest extends TestCase
             new ChainMessageDecorator([
                 new RecordedOnDecorator(new SystemClock()),
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
-            ])
+            ]),
         );
         $repository = $manager->get(BankAccount::class);
         $bankAccount = $repository->load('1');
@@ -243,7 +241,7 @@ final class IntegrationTest extends TestCase
             new ChainMessageDecorator([
                 new RecordedOnDecorator(new SystemClock()),
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
-            ])
+            ]),
         );
         $repository = $manager->get(BankAccount::class);
         $bankAccount = $repository->load('1');

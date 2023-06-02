@@ -17,9 +17,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
     /** @var array<class-string<Projector>, ProjectionMetadata> */
     private array $projectionMetadata = [];
 
-    /**
-     * @param class-string<Projector> $projection
-     */
+    /** @param class-string<Projector> $projection */
     public function metadata(string $projection): ProjectionMetadata
     {
         if (array_key_exists($projection, $this->projectionMetadata)) {
@@ -45,7 +43,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
                         $projection,
                         $eventClass,
                         $handleMethods[$eventClass],
-                        $method->getName()
+                        $method->getName(),
                     );
                 }
 
@@ -57,7 +55,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
                     throw new DuplicateCreateMethod(
                         $projection,
                         $createMethod,
-                        $method->getName()
+                        $method->getName(),
                     );
                 }
 
@@ -72,7 +70,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
                 throw new DuplicateDropMethod(
                     $projection,
                     $dropMethod,
-                    $method->getName()
+                    $method->getName(),
                 );
             }
 
@@ -82,7 +80,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
         $metadata = new ProjectionMetadata(
             $handleMethods,
             $createMethod,
-            $dropMethod
+            $dropMethod,
         );
 
         $this->projectionMetadata[$projection] = $metadata;
