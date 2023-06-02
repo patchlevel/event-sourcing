@@ -8,8 +8,9 @@ use Psr\Cache\CacheItemPoolInterface;
 
 final class Psr6SnapshotAdapter implements SnapshotAdapter
 {
-    public function __construct(private CacheItemPoolInterface $cache)
-    {
+    public function __construct(
+        private CacheItemPoolInterface $cache,
+    ) {
     }
 
     /** @param array<string, mixed> $data */

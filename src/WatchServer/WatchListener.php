@@ -9,8 +9,9 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 final class WatchListener implements Listener
 {
-    public function __construct(private WatchServerClient $client)
-    {
+    public function __construct(
+        private WatchServerClient $client,
+    ) {
     }
 
     public function __invoke(Message $message): void

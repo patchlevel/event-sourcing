@@ -20,8 +20,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class SchemaDropCommand extends Command
 {
-    public function __construct(private SchemaDirector $schemaDirector)
-    {
+    public function __construct(
+        private SchemaDirector $schemaDirector,
+    ) {
         parent::__construct();
     }
 

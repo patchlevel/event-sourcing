@@ -9,8 +9,9 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 final class UntilEventMiddleware implements Middleware
 {
-    public function __construct(private DateTimeImmutable $until)
-    {
+    public function __construct(
+        private DateTimeImmutable $until,
+    ) {
     }
 
     /** @return list<Message> */

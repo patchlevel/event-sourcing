@@ -17,8 +17,9 @@ use function unserialize;
 /** @psalm-import-type Headers from Message */
 final class PhpNativeMessageSerializer implements MessageSerializer
 {
-    public function __construct(private EventSerializer $serializer)
-    {
+    public function __construct(
+        private EventSerializer $serializer,
+    ) {
     }
 
     public function serialize(Message $message): string

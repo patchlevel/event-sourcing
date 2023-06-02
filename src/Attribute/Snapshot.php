@@ -9,8 +9,11 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS)]
 final class Snapshot
 {
-    public function __construct(private string $name, private int|null $batch = null, private string|null $version = null)
-    {
+    public function __construct(
+        private string $name,
+        private int|null $batch = null,
+        private string|null $version = null,
+    ) {
     }
 
     public function name(): string

@@ -10,8 +10,9 @@ use Attribute;
 final class Handle
 {
     /** @param class-string $eventClass */
-    public function __construct(private string $eventClass)
-    {
+    public function __construct(
+        private string $eventClass,
+    ) {
     }
 
     /** @return class-string */

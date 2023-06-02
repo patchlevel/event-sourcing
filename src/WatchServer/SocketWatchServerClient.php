@@ -26,8 +26,10 @@ final class SocketWatchServerClient implements WatchServerClient
     private $socket;
 
     /** @param string $host The server host */
-    public function __construct(string $host, private MessageSerializer $serializer)
-    {
+    public function __construct(
+        string $host,
+        private MessageSerializer $serializer,
+    ) {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
         }

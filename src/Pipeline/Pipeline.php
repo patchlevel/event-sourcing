@@ -15,8 +15,11 @@ final class Pipeline
     private ChainMiddleware $middlewares;
 
     /** @param list<Middleware> $middlewares */
-    public function __construct(private Source $source, private Target $target, array $middlewares = [])
-    {
+    public function __construct(
+        private Source $source,
+        private Target $target,
+        array $middlewares = [],
+    ) {
         $this->middlewares = new ChainMiddleware($middlewares);
     }
 

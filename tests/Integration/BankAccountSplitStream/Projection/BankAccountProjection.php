@@ -16,8 +16,9 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\Ban
 
 final class BankAccountProjection implements Projector
 {
-    public function __construct(private Connection $connection)
-    {
+    public function __construct(
+        private Connection $connection,
+    ) {
     }
 
     #[Create]

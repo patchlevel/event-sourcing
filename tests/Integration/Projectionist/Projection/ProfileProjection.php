@@ -19,8 +19,9 @@ use function sprintf;
 
 final class ProfileProjection implements VersionedProjector
 {
-    public function __construct(private Connection $connection)
-    {
+    public function __construct(
+        private Connection $connection,
+    ) {
     }
 
     #[Create]

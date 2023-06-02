@@ -9,8 +9,9 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS)]
 final class Event
 {
-    public function __construct(private string $name)
-    {
+    public function __construct(
+        private string $name,
+    ) {
     }
 
     public function name(): string

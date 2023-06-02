@@ -20,8 +20,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class OutboxInfoCommand extends Command
 {
-    public function __construct(private OutboxStore $store, private EventSerializer $serializer)
-    {
+    public function __construct(
+        private OutboxStore $store,
+        private EventSerializer $serializer,
+    ) {
         parent::__construct();
     }
 

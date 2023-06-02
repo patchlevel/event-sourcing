@@ -16,8 +16,9 @@ use function assert;
 
 final class ProfileProjector implements Projector
 {
-    public function __construct(private Connection $connection)
-    {
+    public function __construct(
+        private Connection $connection,
+    ) {
     }
 
     #[Create]

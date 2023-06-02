@@ -27,8 +27,11 @@ use function sprintf;
 )]
 final class ShowCommand extends Command
 {
-    public function __construct(private Store $store, private EventSerializer $serializer, private AggregateRootRegistry $aggregateRootRegistry)
-    {
+    public function __construct(
+        private Store $store,
+        private EventSerializer $serializer,
+        private AggregateRootRegistry $aggregateRootRegistry,
+    ) {
         parent::__construct();
     }
 

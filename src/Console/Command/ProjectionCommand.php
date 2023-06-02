@@ -18,8 +18,9 @@ use function is_subclass_of;
 
 abstract class ProjectionCommand extends Command
 {
-    public function __construct(private readonly ProjectorRepository $projectorRepository)
-    {
+    public function __construct(
+        private readonly ProjectorRepository $projectorRepository,
+    ) {
         parent::__construct();
     }
 

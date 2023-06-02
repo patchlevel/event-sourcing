@@ -8,8 +8,9 @@ use Psr\SimpleCache\CacheInterface;
 
 final class Psr16SnapshotAdapter implements SnapshotAdapter
 {
-    public function __construct(private CacheInterface $cache)
-    {
+    public function __construct(
+        private CacheInterface $cache,
+    ) {
     }
 
     /** @param array<string, mixed> $data */

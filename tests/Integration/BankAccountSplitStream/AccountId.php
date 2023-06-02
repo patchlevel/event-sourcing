@@ -6,8 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream;
 
 final class AccountId
 {
-    private function __construct(private string $id)
-    {
+    private function __construct(
+        private string $id,
+    ) {
     }
 
     public static function fromString(string $id): self

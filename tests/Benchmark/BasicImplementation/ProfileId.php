@@ -6,8 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation;
 
 final class ProfileId
 {
-    private function __construct(private string $id)
-    {
+    private function __construct(
+        private string $id,
+    ) {
     }
 
     public static function fromString(string $id): self

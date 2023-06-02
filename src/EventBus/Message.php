@@ -37,8 +37,9 @@ final class Message
     private array $customHeaders = [];
 
     /** @param T $event */
-    public function __construct(private readonly object $event)
-    {
+    public function __construct(
+        private readonly object $event,
+    ) {
     }
 
     /**

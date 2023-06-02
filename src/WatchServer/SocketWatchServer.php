@@ -27,8 +27,11 @@ final class SocketWatchServer implements WatchServer
 
     private LoggerInterface $logger;
 
-    public function __construct(string $host, private MessageSerializer $serializer, LoggerInterface|null $logger = null)
-    {
+    public function __construct(
+        string $host,
+        private MessageSerializer $serializer,
+        LoggerInterface|null $logger = null,
+    ) {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
         }

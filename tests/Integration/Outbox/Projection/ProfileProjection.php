@@ -15,8 +15,9 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 
 final class ProfileProjection implements Projector
 {
-    public function __construct(private Connection $connection)
-    {
+    public function __construct(
+        private Connection $connection,
+    ) {
     }
 
     #[Create]

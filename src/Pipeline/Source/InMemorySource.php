@@ -12,8 +12,9 @@ use function count;
 final class InMemorySource implements Source
 {
     /** @param list<Message> $messages */
-    public function __construct(private array $messages)
-    {
+    public function __construct(
+        private array $messages,
+    ) {
     }
 
     /** @return Generator<Message> */

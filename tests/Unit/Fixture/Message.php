@@ -10,8 +10,11 @@ use const DATE_ATOM;
 
 final class Message
 {
-    private function __construct(private MessageId $messageId, private string $text, private DateTimeImmutable $createdAt)
-    {
+    private function __construct(
+        private MessageId $messageId,
+        private string $text,
+        private DateTimeImmutable $createdAt,
+    ) {
     }
 
     public function id(): MessageId

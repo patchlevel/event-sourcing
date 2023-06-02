@@ -23,8 +23,10 @@ use function sprintf;
 )]
 final class DatabaseCreateCommand extends Command
 {
-    public function __construct(private Connection $connection, private DoctrineHelper $helper)
-    {
+    public function __construct(
+        private Connection $connection,
+        private DoctrineHelper $helper,
+    ) {
         parent::__construct();
     }
 

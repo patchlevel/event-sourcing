@@ -116,8 +116,9 @@ final class DefaultEventBusTest extends TestCase
         $listenerA = new class ($eventBus) implements Listener {
             public float|null $time = null;
 
-            public function __construct(private DefaultEventBus $bus)
-            {
+            public function __construct(
+                private DefaultEventBus $bus,
+            ) {
             }
 
             public function __invoke(Message $message): void

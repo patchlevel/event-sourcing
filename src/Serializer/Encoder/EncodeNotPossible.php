@@ -10,8 +10,10 @@ use Throwable;
 final class EncodeNotPossible extends SerializeException
 {
     /** @param array<string, mixed> $data */
-    public function __construct(private array $data, Throwable|null $previous = null)
-    {
+    public function __construct(
+        private array $data,
+        Throwable|null $previous = null,
+    ) {
         parent::__construct(
             'serialization is not possible',
             0,

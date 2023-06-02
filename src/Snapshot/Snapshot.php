@@ -12,8 +12,12 @@ final class Snapshot
      * @param class-string<AggregateRoot> $aggregate
      * @param array<string, mixed>        $payload
      */
-    public function __construct(private readonly string $aggregate, private readonly string $id, private readonly int $playhead, private readonly array $payload)
-    {
+    public function __construct(
+        private readonly string $aggregate,
+        private readonly string $id,
+        private readonly int $playhead,
+        private readonly array $payload,
+    ) {
     }
 
     /** @return class-string<AggregateRoot> */

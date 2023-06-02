@@ -10,8 +10,10 @@ use Patchlevel\EventSourcing\Store\StreamableStore;
 
 final class StoreSource implements Source
 {
-    public function __construct(private StreamableStore $store, private int $fromIndex = 0)
-    {
+    public function __construct(
+        private StreamableStore $store,
+        private int $fromIndex = 0,
+    ) {
     }
 
     /** @return Generator<Message> */

@@ -9,8 +9,9 @@ use Patchlevel\EventSourcing\EventBus\Message;
 final class ExcludeEventMiddleware implements Middleware
 {
     /** @param list<class-string> $classes */
-    public function __construct(private array $classes)
-    {
+    public function __construct(
+        private array $classes,
+    ) {
     }
 
     /** @return list<Message> */

@@ -10,8 +10,9 @@ use Attribute;
 final class Apply
 {
     /** @param class-string|null $eventClass */
-    public function __construct(private string|null $eventClass = null)
-    {
+    public function __construct(
+        private string|null $eventClass = null,
+    ) {
     }
 
     /** @return class-string|null */

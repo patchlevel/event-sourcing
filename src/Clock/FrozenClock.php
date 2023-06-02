@@ -10,8 +10,9 @@ use function sprintf;
 
 final class FrozenClock implements Clock
 {
-    public function __construct(private DateTimeImmutable $frozenDateTime)
-    {
+    public function __construct(
+        private DateTimeImmutable $frozenDateTime,
+    ) {
     }
 
     public function now(): DateTimeImmutable
