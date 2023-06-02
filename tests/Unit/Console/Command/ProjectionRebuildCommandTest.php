@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
-use Closure;
-use Generator;
 use Patchlevel\EventSourcing\Console\Command\ProjectionRebuildCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
-use Patchlevel\EventSourcing\Store\StreamableStore;
+use Patchlevel\EventSourcing\Store\ArrayStream;
+use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\Stream;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Dummy2Projection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyProjection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -29,32 +30,30 @@ final class ProjectionRebuildCommandTest extends TestCase
 {
     use ProphecyTrait;
 
-    private Closure $messages;
+    private Stream $stream;
+    private Criteria $criteria;
 
     public function setUp(): void
     {
-        /** @return Generator<Message> */
-        $this->messages = static function (): Generator {
-            yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
-            );
+        $this->stream = new ArrayStream([
+            new Message(
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+            ),
+            new Message(
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+            ),
+            new Message(
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+            ),
+            new Message(
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+            ),
+            new Message(
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+            ),
+        ]);
 
-            yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
-            );
-
-            yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
-            );
-
-            yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
-            );
-
-            yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
-            );
-        };
+        $this->criteria = (new CriteriaBuilder())->fromIndex(0)->build();
     }
 
     public function testSuccessful(): void
@@ -62,9 +61,9 @@ final class ProjectionRebuildCommandTest extends TestCase
         $projectionA = new DummyProjection();
         $repository = new InMemoryProjectorRepository([$projectionA]);
 
-        $store = $this->prophesize(StreamableStore::class);
-        $store->count(Argument::is(0))->willReturn(5);
-        $store->stream(Argument::is(0))->willReturn(($this->messages)());
+        $store = $this->prophesize(Store::class);
+        $store->count($this->criteria)->willReturn(5);
+        $store->load($this->criteria)->willReturn($this->stream);
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
@@ -89,9 +88,9 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function testSpecificProjection(): void
     {
-        $store = $this->prophesize(StreamableStore::class);
-        $store->count(Argument::is(0))->willReturn(5);
-        $store->stream(Argument::is(0))->willReturn(($this->messages)());
+        $store = $this->prophesize(Store::class);
+        $store->count($this->criteria)->willReturn(5);
+        $store->load($this->criteria)->willReturn($this->stream);
 
         $projectionA = new DummyProjection();
         $projectionB = new Dummy2Projection();
@@ -121,9 +120,9 @@ final class ProjectionRebuildCommandTest extends TestCase
     {
         $projectionA = new DummyProjection();
 
-        $store = $this->prophesize(StreamableStore::class);
-        $store->count(Argument::is(0))->willReturn(5);
-        $store->stream(Argument::is(0))->willReturn(($this->messages)());
+        $store = $this->prophesize(Store::class);
+        $store->count($this->criteria)->willReturn(5);
+        $store->load($this->criteria)->willReturn($this->stream);
 
         $repository = new InMemoryProjectorRepository([$projectionA]);
 
@@ -152,9 +151,9 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function testRecreateWithSpecificProjection(): void
     {
-        $store = $this->prophesize(StreamableStore::class);
-        $store->count(Argument::is(0))->willReturn(5);
-        $store->stream(Argument::is(0))->willReturn(($this->messages)());
+        $store = $this->prophesize(Store::class);
+        $store->count($this->criteria)->willReturn(5);
+        $store->load($this->criteria)->willReturn($this->stream);
 
         $projectionA = new DummyProjection();
         $projectionB = new Dummy2Projection();

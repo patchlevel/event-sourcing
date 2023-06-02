@@ -12,6 +12,8 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\ArrayStream;
+use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -33,13 +35,15 @@ final class ShowCommandTest extends TestCase
         $event = new ProfileVisited(ProfileId::fromString('1'));
 
         $store = $this->prophesize(Store::class);
-        $store->load(Profile::class, '1')->willReturn([
-            Message::create($event)
-                ->withAggregateClass(Profile::class)
-                ->withAggregateId('1')
-                ->withPlayhead(1)
-                ->withRecordedOn(new DateTimeImmutable()),
-        ]);
+        $store->load(new Criteria(Profile::class, '1'))->willReturn(
+            new ArrayStream([
+                Message::create($event)
+                    ->withAggregateClass(Profile::class)
+                    ->withAggregateId('1')
+                    ->withPlayhead(1)
+                    ->withRecordedOn(new DateTimeImmutable()),
+            ])
+        );
 
         $serializer = $this->prophesize(EventSerializer::class);
         $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
@@ -145,7 +149,7 @@ final class ShowCommandTest extends TestCase
     public function testNotFound(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->load(Profile::class, 'test')->willReturn([]);
+        $store->load(new Criteria(Profile::class, 'test'))->willReturn(new ArrayStream());
 
         $serializer = $this->prophesize(EventSerializer::class);
 
@@ -207,13 +211,15 @@ final class ShowCommandTest extends TestCase
         $event = new ProfileVisited(ProfileId::fromString('1'));
 
         $store = $this->prophesize(Store::class);
-        $store->load(Profile::class, '1')->willReturn([
-            Message::create($event)
-                ->withAggregateClass(Profile::class)
-                ->withAggregateId('1')
-                ->withPlayhead(1)
-                ->withRecordedOn(new DateTimeImmutable()),
-        ]);
+        $store->load(new Criteria(Profile::class, '1'))->willReturn(
+            new ArrayStream([
+                Message::create($event)
+                    ->withAggregateClass(Profile::class)
+                    ->withAggregateId('1')
+                    ->withPlayhead(1)
+                    ->withRecordedOn(new DateTimeImmutable()),
+            ])
+        );
 
         $serializer = $this->prophesize(EventSerializer::class);
         $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(

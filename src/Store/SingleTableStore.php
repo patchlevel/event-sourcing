@@ -6,22 +6,20 @@ namespace Patchlevel\EventSourcing\Store;
 
 use Closure;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
-use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
-use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
-use function array_map;
 use function is_int;
 use function is_string;
 use function sprintf;
 
-final class SingleTableStore implements StreamableStore, SchemaConfigurator, Store, ArchivableStore
+final class SingleTableStore implements Store, ArchivableStore, SchemaConfigurator
 {
     public function __construct(
         private readonly Connection $connection,
@@ -31,102 +29,77 @@ final class SingleTableStore implements StreamableStore, SchemaConfigurator, Sto
     ) {
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     *
-     * @return list<Message>
-     */
-    public function load(string $aggregate, string $id, int $fromPlayhead = 0): array
+    public function load(?Criteria $criteria = null): SingleTableStoreStream
     {
-        $shortName = $this->aggregateRootRegistry->aggregateName($aggregate);
-
-        $sql = $this->connection->createQueryBuilder()
+        $builder = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->storeTableName)
-            ->where('aggregate = :aggregate')
-            ->andWhere('aggregate_id = :id')
-            ->andWhere('playhead > :playhead')
-            ->andWhere('archived = :archived')
-            ->getSQL();
+            ->orderBy('id');
 
-        /** @var list<array{aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: string}> $result */
-        $result = $this->connection->fetchAllAssociative(
-            $sql,
-            [
-                'aggregate' => $shortName,
-                'id' => $id,
-                'playhead' => $fromPlayhead,
-                'archived' => false,
-            ],
-            [
-                'archived' => Types::BOOLEAN,
-            ],
-        );
+        $this->addWhere($builder, $criteria ?? new Criteria());
 
-        $platform = $this->connection->getDatabasePlatform();
-
-        return array_map(
-            function (array $data) use ($platform, $aggregate) {
-                $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
-
-                return Message::create($event)
-                    ->withAggregateClass($aggregate)
-                    ->withAggregateId($data['aggregate_id'])
-                    ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
-                    ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
-                    ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
-            },
-            $result,
+        return new SingleTableStoreStream(
+            $this->connection->executeQuery(
+                $builder->getSQL(),
+                $builder->getParameters(),
+                $builder->getParameterTypes()
+            ),
+            $this->serializer,
+            $this->aggregateRootRegistry,
+            $this->connection->getDatabasePlatform()
         );
     }
 
-    /** @param class-string<AggregateRoot> $aggregate */
-    public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
+    public function count(?Criteria $criteria = null): int
     {
-        $aggregateName = $this->aggregateRootRegistry->aggregateName($aggregate);
-
-        $statement = $this->connection->prepare(sprintf(
-            'UPDATE %s 
-            SET archived = true
-            WHERE aggregate = :aggregate
-            AND aggregate_id = :aggregate_id
-            AND playhead < :playhead
-            AND archived = false',
-            $this->storeTableName,
-        ));
-        $statement->bindValue('aggregate', $aggregateName);
-        $statement->bindValue('aggregate_id', $id);
-        $statement->bindValue('playhead', $untilPlayhead);
-
-        $statement->executeQuery();
-    }
-
-    /** @param class-string<AggregateRoot> $aggregate */
-    public function has(string $aggregate, string $id): bool
-    {
-        $shortName = $this->aggregateRootRegistry->aggregateName($aggregate);
-
-        $sql = $this->connection->createQueryBuilder()
+        $builder = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
-            ->from($this->storeTableName)
-            ->where('aggregate = :aggregate')
-            ->andWhere('aggregate_id = :id')
-            ->setMaxResults(1)
-            ->getSQL();
+            ->from($this->storeTableName);
+
+        $this->addWhere($builder, $criteria ?? new Criteria());
 
         $result = $this->connection->fetchOne(
-            $sql,
-            [
-                'aggregate' => $shortName,
-                'id' => $id,
-            ],
+            $builder->getSQL(),
+            $builder->getParameters(),
+            $builder->getParameterTypes()
         );
 
         if (!is_int($result) && !is_string($result)) {
             throw new WrongQueryResult();
         }
 
-        return ((int)$result) > 0;
+        return (int)$result;
+    }
+
+    private function addWhere(QueryBuilder $builder, Criteria $criteria): void
+    {
+        if ($criteria->aggregateClass !== null) {
+            $shortName = $this->aggregateRootRegistry->aggregateName($criteria->aggregateClass);
+            $builder->andWhere('aggregate = :aggregate');
+            $builder->setParameter('aggregate', $shortName);
+        }
+
+        if ($criteria->aggregateId !== null) {
+            $builder->andWhere('aggregate_id = :id');
+            $builder->setParameter('id', $criteria->aggregateId);
+        }
+
+        if ($criteria->fromPlayhead !== null) {
+            $builder->andWhere('playhead > :playhead');
+            $builder->setParameter('playhead', $criteria->fromPlayhead, Types::INTEGER);
+        }
+
+        if ($criteria->archived !== null) {
+            $builder->andWhere('archived = :archived');
+            $builder->setParameter('archived', $criteria->archived, Types::BOOLEAN);
+        }
+
+        if ($criteria->fromIndex === null) {
+            return;
+        }
+
+        $builder->andWhere('id > :index');
+        $builder->setParameter('index', $criteria->fromIndex, Types::INTEGER);
     }
 
     public function save(Message ...$messages): void
@@ -161,60 +134,6 @@ final class SingleTableStore implements StreamableStore, SchemaConfigurator, Sto
         );
     }
 
-    /** @return Generator<Message> */
-    public function stream(int $fromIndex = 0): Generator
-    {
-        $sql = $this->connection->createQueryBuilder()
-            ->select('*')
-            ->from($this->storeTableName)
-            ->where('id > :index')
-            ->orderBy('id')
-            ->getSQL();
-
-        /**
-         * @var array<array{
-         *     id: string,
-         *     aggregate_id: string,
-         *     aggregate: string,
-         *     playhead: string,
-         *     event: string,
-         *     payload: string,
-         *     recorded_on: string,
-         *     custom_headers: string
-         * }> $result
-         */
-        $result = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
-        $platform = $this->connection->getDatabasePlatform();
-
-        foreach ($result as $data) {
-            $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
-
-            yield Message::create($event)
-                ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($data['aggregate']))
-                ->withAggregateId($data['aggregate_id'])
-                ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
-                ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
-                ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
-        }
-    }
-
-    public function count(int $fromIndex = 0): int
-    {
-        $sql = $this->connection->createQueryBuilder()
-            ->select('COUNT(*)')
-            ->from($this->storeTableName)
-            ->where('id > :index')
-            ->getSQL();
-
-        $result = $this->connection->fetchOne($sql, ['index' => $fromIndex]);
-
-        if (!is_int($result) && !is_string($result)) {
-            throw new WrongQueryResult();
-        }
-
-        return (int)$result;
-    }
-
     /**
      * @param Closure():ClosureReturn $function
      *
@@ -223,6 +142,29 @@ final class SingleTableStore implements StreamableStore, SchemaConfigurator, Sto
     public function transactional(Closure $function): void
     {
         $this->connection->transactional($function);
+    }
+
+    /**
+     * @param class-string<AggregateRoot> $aggregate
+     */
+    public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
+    {
+        $aggregateName = $this->aggregateRootRegistry->aggregateName($aggregate);
+
+        $statement = $this->connection->prepare(sprintf(
+            'UPDATE %s 
+            SET archived = true
+            WHERE aggregate = :aggregate
+            AND aggregate_id = :aggregate_id
+            AND playhead < :playhead
+            AND archived = false',
+            $this->storeTableName
+        ));
+        $statement->bindValue('aggregate', $aggregateName);
+        $statement->bindValue('aggregate_id', $id);
+        $statement->bindValue('playhead', $untilPlayhead);
+
+        $statement->executeQuery();
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void

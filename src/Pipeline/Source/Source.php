@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Source;
 
-use Generator;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Traversable;
 
 interface Source
 {
-    /** @return Generator<Message> */
-    public function load(): Generator;
+    /**
+     * @return Traversable<Message>
+     */
+    public function load(): Traversable;
 
     public function count(): int;
 }

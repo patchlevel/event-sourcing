@@ -4,25 +4,27 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Source;
 
-use Generator;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Traversable;
 
 use function count;
 
 final class InMemorySource implements Source
 {
-    /** @param list<Message> $messages */
+    /**
+     * @param iterable<Message> $messages
+     */
     public function __construct(
-        private array $messages,
+        private readonly iterable $messages
     ) {
     }
 
-    /** @return Generator<Message> */
-    public function load(): Generator
+    /**
+     * @return Traversable<Message>
+     */
+    public function load(): Traversable
     {
-        foreach ($this->messages as $event) {
-            yield $event;
-        }
+        yield from $this->messages;
     }
 
     public function count(): int

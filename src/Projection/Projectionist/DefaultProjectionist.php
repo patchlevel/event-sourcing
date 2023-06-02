@@ -15,7 +15,8 @@ use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
-use Patchlevel\EventSourcing\Store\StreamableStore;
+use Patchlevel\EventSourcing\Store\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -27,7 +28,7 @@ final class DefaultProjectionist implements Projectionist
     private array|null $projectors = null;
 
     public function __construct(
-        private readonly StreamableStore $streamableMessageStore,
+        private readonly Store $streamableMessageStore,
         private readonly ProjectionStore $projectionStore,
         private readonly ProjectorRepository $projectorRepository,
         private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
@@ -84,7 +85,8 @@ final class DefaultProjectionist implements Projectionist
 
         $this->logger?->debug(sprintf('event stream is processed from position %s', $currentPosition));
 
-        $stream = $this->streamableMessageStore->stream($currentPosition);
+        $criteria = (new CriteriaBuilder())->fromIndex($currentPosition)->build();
+        $stream = $this->streamableMessageStore->load($criteria);
 
         $messageCounter = 0;
 
@@ -148,7 +150,8 @@ final class DefaultProjectionist implements Projectionist
 
         $this->logger?->debug(sprintf('event stream is processed from position %s', $currentPosition));
 
-        $stream = $this->streamableMessageStore->stream($currentPosition);
+        $criteria = (new CriteriaBuilder())->fromIndex($currentPosition)->build();
+        $stream = $this->streamableMessageStore->load($criteria);
 
         $messageCounter = 0;
 

@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -46,6 +47,7 @@ final class SingleTableStoreTest extends TestCase
                 'archived' => Types::BOOLEAN,
             ],
         )->willReturn([]);
+
         $connection->createQueryBuilder()->willReturn($queryBuilder);
         $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
 
@@ -58,7 +60,8 @@ final class SingleTableStoreTest extends TestCase
             'eventstore',
         );
 
-        $events = $singleTableStore->load(Profile::class, '1');
+        $stream = $singleTableStore->load(new Criteria(Profile::class, '1'));
+
         self::assertCount(0, $events);
     }
 
@@ -109,11 +112,10 @@ final class SingleTableStoreTest extends TestCase
             'eventstore',
         );
 
-        $messages = $singleTableStore->load(Profile::class, '1');
-        self::assertCount(1, $messages);
+        $messages = $singleTableStore->load(new Criteria(Profile::class, '1'));
+        $message = $messages->current();
 
-        $message = $messages[0];
-
+        self::assertInstanceOf(Message::class, $message);
         self::assertInstanceOf(ProfileCreated::class, $message->event());
         self::assertSame('1', $message->aggregateId());
         self::assertSame(1, $message->playhead());
