@@ -12,10 +12,6 @@
     <file>tests</file>
 
     <rule ref="PatchlevelCodingStandard">
-        <exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification"/>
-        <exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingAnyTypeHint">
-            <exclude-pattern>src/Console/Command</exclude-pattern>
-        </exclude>
         <exclude name="Generic.Files.LineLength.TooLong"/>
     </rule>
 </ruleset>
