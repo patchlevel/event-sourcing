@@ -14,7 +14,8 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
 
-final class SingleTableStoreStream implements Stream, IteratorAggregate
+/** @implements IteratorAggregate<Message> */
+final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
 {
     /** @var Generator<Message> */
     private readonly Generator $generator;
@@ -51,12 +52,14 @@ final class SingleTableStoreStream implements Stream, IteratorAggregate
         yield from $this->generator;
     }
 
+    /** @return Generator<Message> */
     private function buildGenerator(
         Result $result,
         EventSerializer $serializer,
         AggregateRootRegistry $aggregateRootRegistry,
         AbstractPlatform $platform,
     ): Generator {
+        /** @var array{aggregate: string, aggregate_id: string, playhead: int|string, event: string, payload: string, recorded_on: string, custom_headers: string} $data */
         foreach ($result->iterateAssociative() as $data) {
             $this->position++;
 

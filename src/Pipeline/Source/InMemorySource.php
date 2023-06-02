@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Source;
 
 use Patchlevel\EventSourcing\EventBus\Message;
-use Traversable;
 
 use function count;
+use function is_array;
+use function iterator_to_array;
 
 final class InMemorySource implements Source
 {
@@ -17,14 +18,18 @@ final class InMemorySource implements Source
     ) {
     }
 
-    /** @return Traversable<Message> */
-    public function load(): Traversable
+    /** @return iterable<Message> */
+    public function load(): iterable
     {
         yield from $this->messages;
     }
 
     public function count(): int
     {
-        return count($this->messages);
+        if (is_array($this->messages)) {
+            return count($this->messages);
+        }
+
+        return count(iterator_to_array($this->messages));
     }
 }

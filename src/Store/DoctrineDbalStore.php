@@ -19,7 +19,7 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class SingleTableStore implements Store, ArchivableStore, SchemaConfigurator
+final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigurator
 {
     public function __construct(
         private readonly Connection $connection,
@@ -29,7 +29,7 @@ final class SingleTableStore implements Store, ArchivableStore, SchemaConfigurat
     ) {
     }
 
-    public function load(Criteria|null $criteria = null): SingleTableStoreStream
+    public function load(Criteria|null $criteria = null): DoctrineDbalStoreStream
     {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
@@ -38,7 +38,7 @@ final class SingleTableStore implements Store, ArchivableStore, SchemaConfigurat
 
         $this->addWhere($builder, $criteria ?? new Criteria());
 
-        return new SingleTableStoreStream(
+        return new DoctrineDbalStoreStream(
             $this->connection->executeQuery(
                 $builder->getSQL(),
                 $builder->getParameters(),

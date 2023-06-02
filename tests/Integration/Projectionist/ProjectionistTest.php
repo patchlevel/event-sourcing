@@ -17,13 +17,13 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProjection;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\Lock\Store\DoctrineDbalStore;
+use Symfony\Component\Lock\Store\DoctrineDbalStore as LockStore;
 
 /** @coversNothing */
 final class ProjectionistTest extends TestCase
@@ -42,7 +42,7 @@ final class ProjectionistTest extends TestCase
 
     public function testAsync(): void
     {
-        $store = new SingleTableStore(
+        $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
@@ -97,14 +97,14 @@ final class ProjectionistTest extends TestCase
     {
         $aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
 
-        $store = new SingleTableStore(
+        $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             $aggregateRegistry,
             'eventstore',
         );
 
-        $lockStore = new DoctrineDbalStore($this->connection);
+        $lockStore = new LockStore($this->connection);
         $projectionStore = new DoctrineStore($this->connection);
 
         $projectionist = new DefaultProjectionist(

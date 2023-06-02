@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Store;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Traversable;
 
-/** @implements Traversable<Message> */
+/** @extends Traversable<Message> */
 interface Stream extends Traversable
 {
     public function close(): void;

@@ -19,7 +19,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
-use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
@@ -54,7 +54,7 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListener(new SyncProjectorListener($projectorRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
-        $store = new SingleTableStore(
+        $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
@@ -117,7 +117,7 @@ final class BasicIntegrationTest extends TestCase
             new SendEmailProcessor(),
         ]);
 
-        $store = new SingleTableStore(
+        $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
@@ -180,7 +180,7 @@ final class BasicIntegrationTest extends TestCase
         $eventStream->addListener(new SyncProjectorListener($projectorRepository));
         $eventStream->addListener(new SendEmailProcessor());
 
-        $store = new SingleTableStore(
+        $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),

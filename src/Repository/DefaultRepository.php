@@ -138,20 +138,21 @@ final class DefaultRepository implements Repository
         $this->assertRightAggregate($aggregate);
 
         $events = $aggregate->releaseEvents();
+        $eventCount = count($events);
 
-        if (count($events) === 0) {
+        if ($eventCount === 0) {
             return;
         }
 
         $messageDecorator = $this->messageDecorator;
-        $playhead = $aggregate->playhead() - count($events);
+        $playhead = $aggregate->playhead() - $eventCount;
 
         if ($playhead < 0) {
             throw new PlayheadMismatch(
                 $aggregate::class,
                 $aggregate->aggregateRootId(),
                 $aggregate->playhead(),
-                count($events),
+                $eventCount,
             );
         }
 

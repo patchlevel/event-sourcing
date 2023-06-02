@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+
 final class CriteriaBuilder
 {
+    /** @var class-string<AggregateRoot>|null */
     private string|null $aggregateClass = null;
     private string|null $aggregateId = null;
     private int|null $limit = null;
@@ -13,6 +16,7 @@ final class CriteriaBuilder
     private int|null $fromPlayhead = null;
     private bool|null $archived = null;
 
+    /** @param class-string<AggregateRoot>|null $aggregateClass */
     public function aggregateClass(string|null $aggregateClass): self
     {
         $this->aggregateClass = $aggregateClass;

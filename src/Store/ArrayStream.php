@@ -11,16 +11,17 @@ use IteratorAggregate;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Traversable;
 
+/** @implements IteratorAggregate<Message> */
 final class ArrayStream implements Stream, IteratorAggregate
 {
-    /** @param Iterator<Message> $iterator */
+    /** @var Iterator<Message> $iterator */
     private readonly Iterator $iterator;
     private int $position;
 
     /** @param list<Message> $messages */
     public function __construct(array $messages = [])
     {
-        $this->iterator = $messages === [] ? new ArrayIterator() : $this->createTraversable($messages);
+        $this->iterator = $messages === [] ? new ArrayIterator() : $this->createGenerator($messages);
         $this->position = 0;
     }
 
@@ -28,6 +29,7 @@ final class ArrayStream implements Stream, IteratorAggregate
     {
     }
 
+    /** @return Traversable<Message> */
     public function getIterator(): Traversable
     {
         yield from $this->iterator;
@@ -44,11 +46,11 @@ final class ArrayStream implements Stream, IteratorAggregate
     }
 
     /**
-     * @param iterable<Message> $messages
+     * @param list<Message> $messages
      *
      * @return Generator<Message>
      */
-    private function createTraversable(array $messages): Generator
+    private function createGenerator(array $messages): Generator
     {
         foreach ($messages as $message) {
             $this->position++;

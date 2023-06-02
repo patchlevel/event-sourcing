@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Criteria;
-use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -25,8 +25,8 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Store\SingleTableStore */
-final class SingleTableStoreTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Store\DoctrineDbalStore */
+final class DoctrineDbalStoreTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -35,7 +35,7 @@ final class SingleTableStoreTest extends TestCase
         $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
 
         $connection = $this->prophesize(Connection::class);
-        $connection->fetchAllAssociative(
+        $connection->executeQuery(
             'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)',
             [
                 'aggregate' => 'profile',
@@ -46,14 +46,14 @@ final class SingleTableStoreTest extends TestCase
             [
                 'archived' => Types::BOOLEAN,
             ],
-        )->willReturn([]);
+        )->willReturn($this->prophesize(Statement::class)->reveal());
 
         $connection->createQueryBuilder()->willReturn($queryBuilder);
         $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
 
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $singleTableStore = new SingleTableStore(
+        $singleTableStore = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -62,7 +62,7 @@ final class SingleTableStoreTest extends TestCase
 
         $stream = $singleTableStore->load(new Criteria(Profile::class, '1'));
 
-        self::assertCount(0, $events);
+        self::assertCount(0, $stream);
     }
 
     public function testLoadWithOneEvent(): void
@@ -105,7 +105,7 @@ final class SingleTableStoreTest extends TestCase
             new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'),
         )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
-        $singleTableStore = new SingleTableStore(
+        $singleTableStore = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -132,7 +132,7 @@ final class SingleTableStoreTest extends TestCase
 
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $store = new SingleTableStore(
+        $store = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -191,7 +191,7 @@ final class SingleTableStoreTest extends TestCase
             static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
         );
 
-        $singleTableStore = new SingleTableStore(
+        $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -220,7 +220,7 @@ final class SingleTableStoreTest extends TestCase
             AND archived = false',
         )->shouldBeCalledOnce()->willReturn($statement->reveal());
 
-        $singleTableStore = new SingleTableStore(
+        $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
