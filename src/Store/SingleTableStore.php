@@ -29,7 +29,7 @@ final class SingleTableStore implements Store, ArchivableStore, SchemaConfigurat
     ) {
     }
 
-    public function load(?Criteria $criteria = null): SingleTableStoreStream
+    public function load(Criteria|null $criteria = null): SingleTableStoreStream
     {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
@@ -42,15 +42,15 @@ final class SingleTableStore implements Store, ArchivableStore, SchemaConfigurat
             $this->connection->executeQuery(
                 $builder->getSQL(),
                 $builder->getParameters(),
-                $builder->getParameterTypes()
+                $builder->getParameterTypes(),
             ),
             $this->serializer,
             $this->aggregateRootRegistry,
-            $this->connection->getDatabasePlatform()
+            $this->connection->getDatabasePlatform(),
         );
     }
 
-    public function count(?Criteria $criteria = null): int
+    public function count(Criteria|null $criteria = null): int
     {
         $builder = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
@@ -61,7 +61,7 @@ final class SingleTableStore implements Store, ArchivableStore, SchemaConfigurat
         $result = $this->connection->fetchOne(
             $builder->getSQL(),
             $builder->getParameters(),
-            $builder->getParameterTypes()
+            $builder->getParameterTypes(),
         );
 
         if (!is_int($result) && !is_string($result)) {
@@ -144,9 +144,7 @@ final class SingleTableStore implements Store, ArchivableStore, SchemaConfigurat
         $this->connection->transactional($function);
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
     {
         $aggregateName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -158,7 +156,7 @@ final class SingleTableStore implements Store, ArchivableStore, SchemaConfigurat
             AND aggregate_id = :aggregate_id
             AND playhead < :playhead
             AND archived = false',
-            $this->storeTableName
+            $this->storeTableName,
         ));
         $statement->bindValue('aggregate', $aggregateName);
         $statement->bindValue('aggregate_id', $id);

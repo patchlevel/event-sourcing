@@ -169,7 +169,6 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame(1, SendEmailMock::count());
     }
 
-
     public function testSnapshot(): void
     {
         $profileProjection = new ProfileProjection($this->connection);

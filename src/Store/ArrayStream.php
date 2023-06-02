@@ -17,9 +17,7 @@ final class ArrayStream implements Stream, IteratorAggregate
     private readonly Iterator $iterator;
     private int $position;
 
-    /**
-     * @param list<Message> $messages
-     */
+    /** @param list<Message> $messages */
     public function __construct(array $messages = [])
     {
         $this->iterator = $messages === [] ? new ArrayIterator() : $this->createTraversable($messages);
@@ -28,7 +26,6 @@ final class ArrayStream implements Stream, IteratorAggregate
 
     public function close(): void
     {
-
     }
 
     public function getIterator(): Traversable
@@ -41,7 +38,7 @@ final class ArrayStream implements Stream, IteratorAggregate
         return $this->position;
     }
 
-    public function current(): ?Message
+    public function current(): Message|null
     {
         return $this->iterator->current() ?: null;
     }

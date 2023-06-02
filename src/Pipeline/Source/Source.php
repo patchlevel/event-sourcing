@@ -9,9 +9,7 @@ use Traversable;
 
 interface Source
 {
-    /**
-     * @return Traversable<Message>
-     */
+    /** @return Traversable<Message> */
     public function load(): Traversable;
 
     public function count(): int;

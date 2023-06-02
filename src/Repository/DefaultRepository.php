@@ -112,7 +112,7 @@ final class DefaultRepository implements Repository
 
         $aggregate = $aggregateClass::createFromEvents(
             $this->unpack($stream),
-            $firstMessage->playhead() - 1
+            $firstMessage->playhead() - 1,
         );
 
         if ($this->snapshotStore && $this->metadata->snapshotStore) {
@@ -208,9 +208,7 @@ final class DefaultRepository implements Repository
         return $aggregate;
     }
 
-    /**
-     * @param T $aggregate
-     */
+    /** @param T $aggregate */
     private function saveSnapshot(AggregateRoot $aggregate, Stream $stream): void
     {
         assert($this->snapshotStore instanceof SnapshotStore);
@@ -250,9 +248,7 @@ final class DefaultRepository implements Repository
         }
     }
 
-    /**
-     * @return Traversable<object>
-     */
+    /** @return Traversable<object> */
     private function unpack(Stream $stream): Traversable
     {
         foreach ($stream as $message) {

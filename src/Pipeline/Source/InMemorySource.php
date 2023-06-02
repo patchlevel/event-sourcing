@@ -11,17 +11,13 @@ use function count;
 
 final class InMemorySource implements Source
 {
-    /**
-     * @param iterable<Message> $messages
-     */
+    /** @param iterable<Message> $messages */
     public function __construct(
-        private readonly iterable $messages
+        private readonly iterable $messages,
     ) {
     }
 
-    /**
-     * @return Traversable<Message>
-     */
+    /** @return Traversable<Message> */
     public function load(): Traversable
     {
         yield from $this->messages;

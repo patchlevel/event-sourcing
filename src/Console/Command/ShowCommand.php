@@ -70,7 +70,7 @@ final class ShowCommand extends Command
         }
 
         $stream = $this->store->load(
-            new Criteria($this->aggregateRootRegistry->aggregateClass($aggregate), $id)
+            new Criteria($this->aggregateRootRegistry->aggregateClass($aggregate), $id),
         );
 
         $hasMessage = false;

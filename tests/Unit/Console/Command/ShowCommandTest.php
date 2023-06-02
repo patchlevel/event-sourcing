@@ -42,7 +42,7 @@ final class ShowCommandTest extends TestCase
                     ->withAggregateId('1')
                     ->withPlayhead(1)
                     ->withRecordedOn(new DateTimeImmutable()),
-            ])
+            ]),
         );
 
         $serializer = $this->prophesize(EventSerializer::class);
@@ -218,7 +218,7 @@ final class ShowCommandTest extends TestCase
                     ->withAggregateId('1')
                     ->withPlayhead(1)
                     ->withRecordedOn(new DateTimeImmutable()),
-            ])
+            ]),
         );
 
         $serializer = $this->prophesize(EventSerializer::class);

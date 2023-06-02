@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\SingleTableStore;
@@ -16,9 +15,7 @@ use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversNothing
- */
+/** @coversNothing */
 final class StoreTest extends TestCase
 {
     private Connection $connection;
@@ -32,12 +29,12 @@ final class StoreTest extends TestCase
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             new AggregateRootRegistry([]),
-            'eventstore'
+            'eventstore',
         );
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            $this->store
+            $this->store,
         );
 
         $schemaDirector->create();

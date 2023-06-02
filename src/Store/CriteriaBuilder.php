@@ -6,49 +6,49 @@ namespace Patchlevel\EventSourcing\Store;
 
 final class CriteriaBuilder
 {
-    private ?string $aggregateClass = null;
-    private ?string $aggregateId = null;
-    private ?int $limit = null;
-    private ?int $fromIndex = null;
-    private ?int $fromPlayhead = null;
-    private ?bool $archived = null;
+    private string|null $aggregateClass = null;
+    private string|null $aggregateId = null;
+    private int|null $limit = null;
+    private int|null $fromIndex = null;
+    private int|null $fromPlayhead = null;
+    private bool|null $archived = null;
 
-    public function aggregateClass(?string $aggregateClass): self
+    public function aggregateClass(string|null $aggregateClass): self
     {
         $this->aggregateClass = $aggregateClass;
 
         return $this;
     }
 
-    public function aggregateId(?string $aggregateId): self
+    public function aggregateId(string|null $aggregateId): self
     {
         $this->aggregateId = $aggregateId;
 
         return $this;
     }
 
-    public function limit(?int $limit): self
+    public function limit(int|null $limit): self
     {
         $this->limit = $limit;
 
         return $this;
     }
 
-    public function fromIndex(?int $fromIndex): self
+    public function fromIndex(int|null $fromIndex): self
     {
         $this->fromIndex = $fromIndex;
 
         return $this;
     }
 
-    public function fromPlayhead(?int $fromPlayhead): self
+    public function fromPlayhead(int|null $fromPlayhead): self
     {
         $this->fromPlayhead = $fromPlayhead;
 
         return $this;
     }
 
-    public function archived(?bool $archived): self
+    public function archived(bool|null $archived): self
     {
         $this->archived = $archived;
 

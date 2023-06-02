@@ -37,19 +37,19 @@ final class ProjectionRebuildCommandTest extends TestCase
     {
         $this->stream = new ArrayStream([
             new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             ),
             new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             ),
             new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             ),
             new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             ),
             new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             ),
         ]);
 

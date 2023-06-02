@@ -12,9 +12,9 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/**
- * @covers \Patchlevel\EventSourcing\Store\ArrayStream
- */
+use function iterator_to_array;
+
+/** @covers \Patchlevel\EventSourcing\Store\ArrayStream */
 final class ArrayStreamTest extends TestCase
 {
     use ProphecyTrait;
@@ -36,8 +36,8 @@ final class ArrayStreamTest extends TestCase
         $message = Message::create(
             new ProfileCreated(
                 ProfileId::fromString('foo'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $messages = [$message];
@@ -61,20 +61,20 @@ final class ArrayStreamTest extends TestCase
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('foo'),
-                    Email::fromString('info@patchlevel.de')
-                )
+                    Email::fromString('info@patchlevel.de'),
+                ),
             ),
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('foo'),
-                    Email::fromString('info@patchlevel.de')
-                )
+                    Email::fromString('info@patchlevel.de'),
+                ),
             ),
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('foo'),
-                    Email::fromString('info@patchlevel.de')
-                )
+                    Email::fromString('info@patchlevel.de'),
+                ),
             ),
         ];
 

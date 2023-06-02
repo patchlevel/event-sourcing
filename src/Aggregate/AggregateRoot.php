@@ -15,8 +15,8 @@ interface AggregateRoot
     public function releaseEvents(): array;
 
     /**
-     * @param iterable<object>   $events
-     * @param 0|positive-int $startPlayhead
+     * @param iterable<object> $events
+     * @param 0|positive-int   $startPlayhead
      */
     public static function createFromEvents(iterable $events, int $startPlayhead = 0): static;
 

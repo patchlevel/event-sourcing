@@ -9,9 +9,9 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 interface Store
 {
-    public function load(?Criteria $criteria = null): Stream;
+    public function load(Criteria|null $criteria = null): Stream;
 
-    public function count(?Criteria $criteria = null): int;
+    public function count(Criteria|null $criteria = null): int;
 
     public function save(Message ...$messages): void;
 

@@ -14,7 +14,7 @@ final class ProfileCreated
     public function __construct(
         #[ProfileIdNormalizer]
         public ProfileId $profileId,
-        public string $name
+        public string $name,
     ) {
     }
 }

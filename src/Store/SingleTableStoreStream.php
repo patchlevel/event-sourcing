@@ -16,20 +16,17 @@ use Traversable;
 
 final class SingleTableStoreStream implements Stream, IteratorAggregate
 {
-    private readonly Result $result;
-
     /** @var Generator<Message> */
     private readonly Generator $generator;
 
     private int $position;
 
     public function __construct(
-        Result $result,
+        private readonly Result $result,
         EventSerializer $serializer,
         AggregateRootRegistry $aggregateRootRegistry,
-        AbstractPlatform $platform
+        AbstractPlatform $platform,
     ) {
-        $this->result = $result;
         $this->generator = $this->buildGenerator($result, $serializer, $aggregateRootRegistry, $platform);
         $this->position = 0;
     }
@@ -39,7 +36,7 @@ final class SingleTableStoreStream implements Stream, IteratorAggregate
         $this->result->free();
     }
 
-    public function current(): ?Message
+    public function current(): Message|null
     {
         return $this->generator->current() ?: null;
     }
@@ -58,7 +55,7 @@ final class SingleTableStoreStream implements Stream, IteratorAggregate
         Result $result,
         EventSerializer $serializer,
         AggregateRootRegistry $aggregateRootRegistry,
-        AbstractPlatform $platform
+        AbstractPlatform $platform,
     ): Generator {
         foreach ($result->iterateAssociative() as $data) {
             $this->position++;

@@ -12,18 +12,13 @@ use Traversable;
 
 final class StoreSource implements Source
 {
-    private Store $store;
-    private int $fromIndex;
-
-    public function __construct(Store $store, int $fromIndex = 0)
-    {
-        $this->store = $store;
-        $this->fromIndex = $fromIndex;
+    public function __construct(
+        private Store $store,
+        private int $fromIndex = 0,
+    ) {
     }
 
-    /**
-     * @return Traversable<Message>
-     */
+    /** @return Traversable<Message> */
     public function load(): Traversable
     {
         return $this->store->load($this->criteria());
