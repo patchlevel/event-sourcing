@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:projectionist:remove',
-    'Delete a projection and remove it from the store'
+    'Delete a projection and remove it from the store',
 )]
 final class ProjectionistRemoveCommand extends ProjectionistCommand
 {

@@ -17,18 +17,14 @@ final class AggregateRootRegistry
     /** @var array<class-string<AggregateRoot>, string> */
     private array $classToNameMap;
 
-    /**
-     * @param array<string, class-string<AggregateRoot>> $aggregateNameToClassMap
-     */
+    /** @param array<string, class-string<AggregateRoot>> $aggregateNameToClassMap */
     public function __construct(array $aggregateNameToClassMap)
     {
         $this->nameToClassMap = $aggregateNameToClassMap;
         $this->classToNameMap = array_flip($aggregateNameToClassMap);
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregateClass
-     */
+    /** @param class-string<AggregateRoot> $aggregateClass */
     public function aggregateName(string $aggregateClass): string
     {
         if (!array_key_exists($aggregateClass, $this->classToNameMap)) {
@@ -38,9 +34,7 @@ final class AggregateRootRegistry
         return $this->classToNameMap[$aggregateClass];
     }
 
-    /**
-     * @return class-string<AggregateRoot>
-     */
+    /** @return class-string<AggregateRoot> */
     public function aggregateClass(string $aggregateName): string
     {
         if (!array_key_exists($aggregateName, $this->nameToClassMap)) {
@@ -60,17 +54,13 @@ final class AggregateRootRegistry
         return array_key_exists($aggregateName, $this->nameToClassMap);
     }
 
-    /**
-     * @return array<string, class-string<AggregateRoot>>
-     */
+    /** @return array<string, class-string<AggregateRoot>> */
     public function aggregateClasses(): array
     {
         return $this->nameToClassMap;
     }
 
-    /**
-     * @return array<class-string<AggregateRoot>, string>
-     */
+    /** @return array<class-string<AggregateRoot>, string> */
     public function aggregateNames(): array
     {
         return $this->classToNameMap;

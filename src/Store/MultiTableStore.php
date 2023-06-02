@@ -60,7 +60,7 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
             ],
             [
                 'archived' => Types::BOOLEAN,
-            ]
+            ],
         );
 
         $platform = $this->connection->getDatabasePlatform();
@@ -76,13 +76,11 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
                     ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
                     ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
-            $result
+            $result,
         );
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
     {
         $tableName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -93,7 +91,7 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
             WHERE aggregate_id = :aggregate_id
             AND playhead < :playhead
             AND archived = false',
-            $tableName
+            $tableName,
         ));
         $statement->bindValue('aggregate_id', $id);
         $statement->bindValue('playhead', $untilPlayhead);
@@ -101,9 +99,7 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
         $statement->executeQuery();
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function has(string $aggregate, string $id): bool
     {
         $tableName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -117,7 +113,7 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
 
         $result = $this->connection->fetchOne(
             $sql,
-            ['id' => $id]
+            ['id' => $id],
         );
 
         if (!is_int($result) && !is_string($result)) {
@@ -163,10 +159,10 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
                             'custom_headers' => Types::JSON,
                             'new_stream_start' => Types::BOOLEAN,
                             'archived' => Types::BOOLEAN,
-                        ]
+                        ],
                     );
                 }
-            }
+            },
         );
     }
 
@@ -179,9 +175,7 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
             ->orderBy('id')
             ->getSQL();
 
-        /**
-         * @var Traversable<array{id: string, aggregate_id: string, playhead: string, aggregate: string}> $metaQuery
-         */
+        /** @var Traversable<array{id: string, aggregate_id: string, playhead: string, aggregate: string}> $metaQuery */
         $metaQuery = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
         $platform = $this->connection->getDatabasePlatform();
@@ -199,9 +193,7 @@ final class MultiTableStore implements StreamableStore, SchemaConfigurator, Stor
                     ->orderBy('id')
                     ->getSQL();
 
-                /**
-                 * @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}> $query
-                 */
+                /** @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}> $query */
                 $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
                 if (!$query instanceof Generator) {

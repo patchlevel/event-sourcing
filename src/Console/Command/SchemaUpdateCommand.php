@@ -16,17 +16,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:schema:update',
-    'update eventstore schema'
+    'update eventstore schema',
 )]
 final class SchemaUpdateCommand extends Command
 {
-    private SchemaDirector $schemaDirector;
-
-    public function __construct(SchemaDirector $schemaDirector)
+    public function __construct(private SchemaDirector $schemaDirector)
     {
         parent::__construct();
-
-        $this->schemaDirector = $schemaDirector;
     }
 
     protected function configure(): void

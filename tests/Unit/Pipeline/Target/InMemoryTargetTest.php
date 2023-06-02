@@ -19,7 +19,7 @@ final class InMemoryTargetTest extends TestCase
         $inMemoryTarget = new InMemoryTarget();
 
         $message = new Message(
-            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
         );
         $inMemoryTarget->save($message);
 

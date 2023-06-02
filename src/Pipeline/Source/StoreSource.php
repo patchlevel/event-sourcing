@@ -10,18 +10,11 @@ use Patchlevel\EventSourcing\Store\StreamableStore;
 
 final class StoreSource implements Source
 {
-    private StreamableStore $store;
-    private int $fromIndex;
-
-    public function __construct(StreamableStore $store, int $fromIndex = 0)
+    public function __construct(private StreamableStore $store, private int $fromIndex = 0)
     {
-        $this->store = $store;
-        $this->fromIndex = $fromIndex;
     }
 
-    /**
-     * @return Generator<Message>
-     */
+    /** @return Generator<Message> */
     public function load(): Generator
     {
         return $this->store->stream($this->fromIndex);

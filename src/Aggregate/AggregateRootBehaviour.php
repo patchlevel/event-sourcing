@@ -44,9 +44,7 @@ trait AggregateRootBehaviour
         $this->uncommittedEvents[] = $event;
     }
 
-    /**
-     * @param list<object> $events
-     */
+    /** @param list<object> $events */
     public function catchUp(array $events): void
     {
         foreach ($events as $event) {
@@ -55,9 +53,7 @@ trait AggregateRootBehaviour
         }
     }
 
-    /**
-     * @return list<object>
-     */
+    /** @return list<object> */
     public function releaseEvents(): array
     {
         $events = $this->uncommittedEvents;

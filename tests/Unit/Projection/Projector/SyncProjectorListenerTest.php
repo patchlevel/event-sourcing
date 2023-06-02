@@ -23,7 +23,7 @@ final class SyncProjectorListenerTest extends TestCase
     public function testMethodHandle(): void
     {
         $projector = new class implements Projector {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function handleProfileCreated(Message $message): void
             {
@@ -34,8 +34,8 @@ final class SyncProjectorListenerTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('foo@bar.com')
-            )
+                Email::fromString('foo@bar.com'),
+            ),
         );
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
@@ -46,7 +46,7 @@ final class SyncProjectorListenerTest extends TestCase
 
         $projectionListener = new SyncProjectorListener(
             $projectorRepository->reveal(),
-            $resolver->reveal()
+            $resolver->reveal(),
         );
 
         $projectionListener($message);
@@ -57,7 +57,7 @@ final class SyncProjectorListenerTest extends TestCase
     public function testNoMethod(): void
     {
         $projector = new class implements Projector {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function handleProfileCreated(Message $message): void
             {
@@ -68,8 +68,8 @@ final class SyncProjectorListenerTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('foo@bar.com')
-            )
+                Email::fromString('foo@bar.com'),
+            ),
         );
 
         $projectorRepository = $this->prophesize(ProjectorRepository::class);
@@ -80,7 +80,7 @@ final class SyncProjectorListenerTest extends TestCase
 
         $projectionListener = new SyncProjectorListener(
             $projectorRepository->reveal(),
-            $resolver->reveal()
+            $resolver->reveal(),
         );
 
         $projectionListener($message);

@@ -26,9 +26,7 @@ final class DoctrineSchemaDirector implements DryRunSchemaDirector, DoctrineSche
         }
     }
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function dryRunCreate(): array
     {
         return $this->schema()->toSql($this->connection->getDatabasePlatform());
@@ -43,9 +41,7 @@ final class DoctrineSchemaDirector implements DryRunSchemaDirector, DoctrineSche
         }
     }
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function dryRunUpdate(): array
     {
         $schemaManager = $this->connection->createSchemaManager();
@@ -68,9 +64,7 @@ final class DoctrineSchemaDirector implements DryRunSchemaDirector, DoctrineSche
         }
     }
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function dryRunDrop(): array
     {
         $currentSchema = $this->connection->createSchemaManager()->introspectSchema();

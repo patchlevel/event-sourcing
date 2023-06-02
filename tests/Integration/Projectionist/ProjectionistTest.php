@@ -25,9 +25,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\DoctrineDbalStore;
 
-/**
- * @coversNothing
- */
+/** @coversNothing */
 final class ProjectionistTest extends TestCase
 {
     private Connection $connection;
@@ -48,7 +46,7 @@ final class ProjectionistTest extends TestCase
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
-            'eventstore'
+            'eventstore',
         );
 
         $projectionStore = new DoctrineStore($this->connection);
@@ -66,7 +64,7 @@ final class ProjectionistTest extends TestCase
             new ChainSchemaConfigurator([
                 $store,
                 $projectionStore,
-            ])
+            ]),
         );
 
         $schemaDirector->create();
@@ -78,7 +76,7 @@ final class ProjectionistTest extends TestCase
             $store,
             $projectionStore,
             new InMemoryProjectorRepository(
-                [new ProfileProjection($this->connection)]
+                [new ProfileProjection($this->connection)],
             ),
         );
 
@@ -103,7 +101,7 @@ final class ProjectionistTest extends TestCase
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             $aggregateRegistry,
-            'eventstore'
+            'eventstore',
         );
 
         $lockStore = new DoctrineDbalStore($this->connection);
@@ -113,7 +111,7 @@ final class ProjectionistTest extends TestCase
             $store,
             $projectionStore,
             new InMemoryProjectorRepository(
-                [new ProfileProjection($this->connection)]
+                [new ProfileProjection($this->connection)],
             ),
         );
 
@@ -123,7 +121,7 @@ final class ProjectionistTest extends TestCase
             new RunProjectionistEventBusWrapper(
                 new DefaultEventBus(),
                 $projectionist,
-                new LockFactory($lockStore)
+                new LockFactory($lockStore),
             ),
         );
 
@@ -135,7 +133,7 @@ final class ProjectionistTest extends TestCase
                 $store,
                 $projectionStore,
                 new DoctrineDbalStoreSchemaAdapter($lockStore),
-            ])
+            ]),
         );
 
         $schemaDirector->drop();

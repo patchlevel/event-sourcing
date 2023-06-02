@@ -31,7 +31,7 @@ final class OutputStyleTest extends TestCase
 
         $event = new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('foo@bar.com')
+            Email::fromString('foo@bar.com'),
         );
 
         $serializer = $this->prophesize(EventSerializer::class);

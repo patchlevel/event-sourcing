@@ -23,8 +23,8 @@ final class ChainMessageDecoratorTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $decorator1 = $this->prophesize(MessageDecorator::class);

@@ -60,7 +60,7 @@ final class SingleTableStore implements StreamableStore, SchemaConfigurator, Sto
             ],
             [
                 'archived' => Types::BOOLEAN,
-            ]
+            ],
         );
 
         $platform = $this->connection->getDatabasePlatform();
@@ -76,13 +76,11 @@ final class SingleTableStore implements StreamableStore, SchemaConfigurator, Sto
                     ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
                     ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
-            $result
+            $result,
         );
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
     {
         $aggregateName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -94,7 +92,7 @@ final class SingleTableStore implements StreamableStore, SchemaConfigurator, Sto
             AND aggregate_id = :aggregate_id
             AND playhead < :playhead
             AND archived = false',
-            $this->storeTableName
+            $this->storeTableName,
         ));
         $statement->bindValue('aggregate', $aggregateName);
         $statement->bindValue('aggregate_id', $id);
@@ -103,9 +101,7 @@ final class SingleTableStore implements StreamableStore, SchemaConfigurator, Sto
         $statement->executeQuery();
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function has(string $aggregate, string $id): bool
     {
         $shortName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -123,7 +119,7 @@ final class SingleTableStore implements StreamableStore, SchemaConfigurator, Sto
             [
                 'aggregate' => $shortName,
                 'id' => $id,
-            ]
+            ],
         );
 
         if (!is_int($result) && !is_string($result)) {
@@ -158,16 +154,14 @@ final class SingleTableStore implements StreamableStore, SchemaConfigurator, Sto
                             'custom_headers' => Types::JSON,
                             'new_stream_start' => Types::BOOLEAN,
                             'archived' => Types::BOOLEAN,
-                        ]
+                        ],
                     );
                 }
-            }
+            },
         );
     }
 
-    /**
-     * @return Generator<Message>
-     */
+    /** @return Generator<Message> */
     public function stream(int $fromIndex = 0): Generator
     {
         $sql = $this->connection->createQueryBuilder()

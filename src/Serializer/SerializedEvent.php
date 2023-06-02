@@ -8,7 +8,7 @@ final class SerializedEvent
 {
     public function __construct(
         public readonly string $name,
-        public readonly string $payload
+        public readonly string $payload,
     ) {
     }
 }

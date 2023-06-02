@@ -25,9 +25,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\OldVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\PrivacyAdded;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversNothing
- */
+/** @coversNothing */
 final class PipelineChangeStoreTest extends TestCase
 {
     private Connection $connectionOld;
@@ -54,12 +52,12 @@ final class PipelineChangeStoreTest extends TestCase
             $this->connectionOld,
             $serializer,
             $aggregateRootRegistry,
-            'eventstore'
+            'eventstore',
         );
 
         $oldSchemaDirector = new DoctrineSchemaDirector(
             $this->connectionOld,
-            $oldStore
+            $oldStore,
         );
 
         $oldSchemaDirector->create();
@@ -68,12 +66,12 @@ final class PipelineChangeStoreTest extends TestCase
             $this->connectionNew,
             $serializer,
             $aggregateRootRegistry,
-            'eventstore'
+            'eventstore',
         );
 
         $newSchemaDirector = new DoctrineSchemaDirector(
             $this->connectionNew,
-            $newStore
+            $newStore,
         );
 
         $newSchemaDirector->create();
@@ -103,7 +101,7 @@ final class PipelineChangeStoreTest extends TestCase
                     return new NewVisited($oldVisited->profileId);
                 }),
                 new RecalculatePlayheadMiddleware(),
-            ]
+            ],
         );
 
         self::assertSame(4, $pipeline->count());

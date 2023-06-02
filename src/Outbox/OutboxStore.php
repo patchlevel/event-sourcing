@@ -10,10 +10,8 @@ interface OutboxStore
 {
     public function saveOutboxMessage(Message ...$messages): void;
 
-    /**
-     * @return list<Message>
-     */
-    public function retrieveOutboxMessages(?int $limit = null): array;
+    /** @return list<Message> */
+    public function retrieveOutboxMessages(int|null $limit = null): array;
 
     public function markOutboxMessageConsumed(Message ...$messages): void;
 

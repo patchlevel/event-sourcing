@@ -27,14 +27,14 @@ final class DefaultSnapshotStoreTest extends TestCase
             [
                 'version' => '1',
                 'payload' => ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2],
-            ]
+            ],
         )->shouldBeCalled();
 
         $store = new DefaultSnapshotStore(['memory' => $adapter->reveal()]);
 
         $aggregate = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('info@patchlevel.de')
+            Email::fromString('info@patchlevel.de'),
         );
 
         $aggregate->visitProfile(ProfileId::fromString('2'));
@@ -46,12 +46,12 @@ final class DefaultSnapshotStoreTest extends TestCase
     {
         $adapter = $this->prophesize(SnapshotAdapter::class);
         $adapter->load(
-            'profile_with_snapshot-1'
+            'profile_with_snapshot-1',
         )->willReturn(
             [
                 'version' => '1',
                 'payload' => ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2],
-            ]
+            ],
         );
 
         $store = new DefaultSnapshotStore(['memory' => $adapter->reveal()]);
@@ -69,7 +69,7 @@ final class DefaultSnapshotStoreTest extends TestCase
 
         $adapter = $this->prophesize(SnapshotAdapter::class);
         $adapter->load(
-            'profile_with_snapshot-1'
+            'profile_with_snapshot-1',
         )->willReturn(['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2]);
 
         $store = new DefaultSnapshotStore(['memory' => $adapter->reveal()]);
@@ -83,12 +83,12 @@ final class DefaultSnapshotStoreTest extends TestCase
 
         $adapter = $this->prophesize(SnapshotAdapter::class);
         $adapter->load(
-            'profile_with_snapshot-1'
+            'profile_with_snapshot-1',
         )->willReturn(
             [
                 'version' => '2',
                 'payload' => ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2],
-            ]
+            ],
         );
 
         $store = new DefaultSnapshotStore(['memory' => $adapter->reveal()]);

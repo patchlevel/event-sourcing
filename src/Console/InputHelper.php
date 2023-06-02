@@ -11,7 +11,7 @@ use function is_string;
 
 final class InputHelper
 {
-    public static function nullableString(mixed $value): ?string
+    public static function nullableString(mixed $value): string|null
     {
         if ($value === null) {
             return null;
@@ -46,7 +46,7 @@ final class InputHelper
         return (int)$value;
     }
 
-    public static function nullableInt(mixed $value): ?int
+    public static function nullableInt(mixed $value): int|null
     {
         if ($value === null) {
             return null;

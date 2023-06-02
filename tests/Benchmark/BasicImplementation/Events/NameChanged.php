@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 final class NameChanged
 {
     public function __construct(
-        public string $name
+        public string $name,
     ) {
     }
 }

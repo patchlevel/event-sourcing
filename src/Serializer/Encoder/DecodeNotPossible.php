@@ -11,19 +11,15 @@ use function sprintf;
 
 final class DecodeNotPossible extends SerializeException
 {
-    private string $data;
-
-    public function __construct(string $data, ?Throwable $previous = null)
+    public function __construct(private string $data, Throwable|null $previous = null)
     {
-        $this->data = $data;
-
         parent::__construct(
             sprintf(
                 'deserialization of "%s" data is not possible',
-                $data
+                $data,
             ),
             0,
-            $previous
+            $previous,
         );
     }
 

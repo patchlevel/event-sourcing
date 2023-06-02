@@ -30,7 +30,7 @@ final class WatchCommandTest extends TestCase
 
         $command = new WatchCommand(
             $watchServer->reveal(),
-            $serializer->reveal()
+            $serializer->reveal(),
         );
 
         $input = new ArrayInput([]);

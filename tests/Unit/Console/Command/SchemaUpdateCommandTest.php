@@ -23,7 +23,7 @@ final class SchemaUpdateCommandTest extends TestCase
         $schemaManager->update()->shouldBeCalled();
 
         $command = new SchemaUpdateCommand(
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput(['--force' => true]);
@@ -44,7 +44,7 @@ final class SchemaUpdateCommandTest extends TestCase
         $schemaManager->update()->shouldNotBeCalled();
 
         $command = new SchemaUpdateCommand(
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput([]);
@@ -58,7 +58,7 @@ final class SchemaUpdateCommandTest extends TestCase
 
         self::assertStringContainsString(
             '[ERROR] Please run the operation with --force to execute. Database could break!',
-            $content
+            $content,
         );
     }
 
@@ -72,7 +72,7 @@ final class SchemaUpdateCommandTest extends TestCase
         ]);
 
         $command = new SchemaUpdateCommand(
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput(['--dry-run' => true]);
@@ -94,7 +94,7 @@ final class SchemaUpdateCommandTest extends TestCase
         $schemaManager = $this->prophesize(SchemaDirector::class);
 
         $command = new SchemaUpdateCommand(
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput(['--dry-run' => true]);

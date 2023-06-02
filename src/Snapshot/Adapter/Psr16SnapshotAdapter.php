@@ -8,29 +8,20 @@ use Psr\SimpleCache\CacheInterface;
 
 final class Psr16SnapshotAdapter implements SnapshotAdapter
 {
-    private CacheInterface $cache;
-
-    public function __construct(CacheInterface $cache)
+    public function __construct(private CacheInterface $cache)
     {
-        $this->cache = $cache;
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
+    /** @param array<string, mixed> $data */
     public function save(string $key, array $data): void
     {
         $this->cache->set($key, $data);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function load(string $key): array
     {
-        /**
-         * @var ?array<string, mixed> $data
-         */
+        /** @var ?array<string, mixed> $data */
         $data = $this->cache->get($key);
 
         if ($data === null) {

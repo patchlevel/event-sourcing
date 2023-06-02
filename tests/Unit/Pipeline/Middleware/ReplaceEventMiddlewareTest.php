@@ -22,16 +22,16 @@ final class ReplaceEventMiddlewareTest extends TestCase
             ProfileCreated::class,
             static function (ProfileCreated $event) {
                 return new ProfileVisited(
-                    $event->profileId
+                    $event->profileId,
                 );
-            }
+            },
         );
 
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )
+                Email::fromString('hallo@patchlevel.de'),
+            ),
         );
 
         $result = $middleware($message);
@@ -50,16 +50,16 @@ final class ReplaceEventMiddlewareTest extends TestCase
             MessagePublished::class,
             static function (ProfileCreated $event) {
                 return new ProfileVisited(
-                    $event->profileId
+                    $event->profileId,
                 );
-            }
+            },
         );
 
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )
+                Email::fromString('hallo@patchlevel.de'),
+            ),
         );
 
         $result = $middleware($message);

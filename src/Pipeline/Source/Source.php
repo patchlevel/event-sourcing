@@ -9,9 +9,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 interface Source
 {
-    /**
-     * @return Generator<Message>
-     */
+    /** @return Generator<Message> */
     public function load(): Generator;
 
     public function count(): int;

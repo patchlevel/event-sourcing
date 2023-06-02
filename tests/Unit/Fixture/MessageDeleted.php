@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 final class MessageDeleted
 {
     public function __construct(
-        public MessageId $messageId
+        public MessageId $messageId,
     ) {
     }
 }

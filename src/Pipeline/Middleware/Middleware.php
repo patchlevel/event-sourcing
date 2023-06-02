@@ -8,8 +8,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 interface Middleware
 {
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     public function __invoke(Message $message): array;
 }

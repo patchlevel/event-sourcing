@@ -79,17 +79,17 @@ final class ProjectionCollectionTest extends TestCase
             new Projection(
                 new ProjectionId('foo', 1),
                 ProjectionStatus::Active,
-                10
+                10,
             ),
             new Projection(
                 new ProjectionId('bar', 1),
                 ProjectionStatus::Active,
-                5
+                5,
             ),
             new Projection(
                 new ProjectionId('baz', 1),
                 ProjectionStatus::Active,
-                15
+                15,
             ),
         ]);
 

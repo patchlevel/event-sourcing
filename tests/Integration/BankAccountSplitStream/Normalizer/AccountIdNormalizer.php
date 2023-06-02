@@ -23,7 +23,7 @@ final class AccountIdNormalizer implements Normalizer
         return $value->toString();
     }
 
-    public function denormalize(mixed $value): ?AccountId
+    public function denormalize(mixed $value): AccountId|null
     {
         if ($value === null) {
             return null;

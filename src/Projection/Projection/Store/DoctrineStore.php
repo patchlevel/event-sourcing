@@ -20,7 +20,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
 {
     public function __construct(
         private readonly Connection $connection,
-        private readonly string $projectionTable = 'projections'
+        private readonly string $projectionTable = 'projections',
     ) {
     }
 
@@ -45,7 +45,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         return new Projection(
             $projectionId,
             ProjectionStatus::from($result['status']),
-            $result['position']
+            $result['position'],
         );
     }
 
@@ -65,11 +65,11 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                     return new Projection(
                         new ProjectionId($data['name'], $data['version']),
                         ProjectionStatus::from($data['status']),
-                        $data['position']
+                        $data['position'],
                     );
                 },
-                $result
-            )
+                $result,
+            ),
         );
     }
 
@@ -88,7 +88,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                             [
                                 'name' => $projection->id()->name(),
                                 'version' => $projection->id()->version(),
-                            ]
+                            ],
                         );
 
                         if ($effectedRows === 0) {
@@ -102,11 +102,11 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'version' => $projection->id()->version(),
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
-                            ]
+                            ],
                         );
                     }
                 }
-            }
+            },
         );
     }
 
@@ -120,7 +120,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                         'version' => $projectionId->version(),
                     ]);
                 }
-            }
+            },
         );
     }
 

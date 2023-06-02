@@ -21,7 +21,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
 
         $event =  new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
 
         $message = Message::create($event)
@@ -42,7 +42,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
 
         $event =  new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
 
         $message = Message::create($event)

@@ -16,11 +16,8 @@ use function assert;
 
 final class ProfileProjector implements Projector
 {
-    private Connection $connection;
-
-    public function __construct(Connection $connection)
+    public function __construct(private Connection $connection)
     {
-        $this->connection = $connection;
     }
 
     #[Create]
@@ -47,7 +44,7 @@ final class ProfileProjector implements Projector
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
-            ]
+            ],
         );
     }
 }

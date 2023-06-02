@@ -34,9 +34,7 @@ final class ProfileWithSnapshot extends BasicAggregateRoot
         return $this->email;
     }
 
-    /**
-     * @return array<Message>
-     */
+    /** @return array<Message> */
     public function messages(): array
     {
         return $this->messages;
@@ -53,7 +51,7 @@ final class ProfileWithSnapshot extends BasicAggregateRoot
     public function publishMessage(Message $message): void
     {
         $this->recordThat(new MessagePublished(
-            $message
+            $message,
         ));
     }
 

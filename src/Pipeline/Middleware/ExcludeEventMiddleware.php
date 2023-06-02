@@ -8,20 +8,12 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 final class ExcludeEventMiddleware implements Middleware
 {
-    /** @var list<class-string> */
-    private array $classes;
-
-    /**
-     * @param list<class-string> $classes
-     */
-    public function __construct(array $classes)
+    /** @param list<class-string> $classes */
+    public function __construct(private array $classes)
     {
-        $this->classes = $classes;
     }
 
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     public function __invoke(Message $message): array
     {
         foreach ($this->classes as $class) {

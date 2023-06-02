@@ -43,14 +43,14 @@ final class Profile extends BasicAggregateRoot
     public function publishMessage(Message $message): void
     {
         $this->recordThat(new MessagePublished(
-            $message
+            $message,
         ));
     }
 
     public function deleteMessage(MessageId $messageId): void
     {
         $this->recordThat(new MessageDeleted(
-            $messageId
+            $messageId,
         ));
     }
 

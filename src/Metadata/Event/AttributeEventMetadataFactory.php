@@ -16,9 +16,7 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
     /** @var array<class-string, EventMetadata> */
     private array $eventMetadata = [];
 
-    /**
-     * @param class-string $event
-     */
+    /** @param class-string $event */
     public function metadata(string $event): EventMetadata
     {
         if (array_key_exists($event, $this->eventMetadata)) {

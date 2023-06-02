@@ -22,7 +22,7 @@ final class MetadataProjectorResolverTest extends TestCase
     public function testResolveHandleMethod(): void
     {
         $projection = new class implements Projector {
-            public static ?Message $handledMessage = null;
+            public static Message|null $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
@@ -34,8 +34,8 @@ final class MetadataProjectorResolverTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('profile@test.com')
-            )
+                Email::fromString('profile@test.com'),
+            ),
         );
 
         $resolver = new MetadataProjectorResolver();
@@ -55,8 +55,8 @@ final class MetadataProjectorResolverTest extends TestCase
 
         $message = new Message(
             new ProfileVisited(
-                ProfileId::fromString('1')
-            )
+                ProfileId::fromString('1'),
+            ),
         );
 
         $resolver = new MetadataProjectorResolver();

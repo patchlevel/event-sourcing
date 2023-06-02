@@ -23,11 +23,11 @@ final class MessageTest extends TestCase
 
         $event = new ProfileCreated(
             $id,
-            $email
+            $email,
         );
 
         $message = new Message(
-            $event
+            $event,
         );
 
         self::assertEquals($event, $message->event());
@@ -42,7 +42,7 @@ final class MessageTest extends TestCase
 
         $event = new ProfileCreated(
             $id,
-            $email
+            $email,
         );
 
         $message = Message::create($event)
@@ -67,7 +67,7 @@ final class MessageTest extends TestCase
 
         $event = new ProfileCreated(
             $id,
-            $email
+            $email,
         );
 
         $message = Message::create($event)
@@ -94,8 +94,8 @@ final class MessageTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 $id,
-                $email
-            )
+                $email,
+            ),
         );
 
         /** @psalm-suppress UnusedMethodCall */
@@ -111,7 +111,7 @@ final class MessageTest extends TestCase
 
         $event = new ProfileCreated(
             $id,
-            $email
+            $email,
         );
 
         $message = Message::create($event)
@@ -123,7 +123,7 @@ final class MessageTest extends TestCase
 
         self::assertEquals(
             ['custom-field' => 'foo-bar'],
-            $message->customHeaders()
+            $message->customHeaders(),
         );
     }
 }

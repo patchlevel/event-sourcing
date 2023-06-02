@@ -15,7 +15,7 @@ final class PlayheadMismatch extends RepositoryException
             $playhead,
             $eventCount,
             $aggregateClass,
-            $aggregateId
+            $aggregateId,
         ));
     }
 }

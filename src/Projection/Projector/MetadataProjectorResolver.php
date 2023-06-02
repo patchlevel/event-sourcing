@@ -14,11 +14,11 @@ use function array_key_exists;
 final class MetadataProjectorResolver implements ProjectorResolver
 {
     public function __construct(
-        private readonly ProjectionMetadataFactory $metadataFactory = new AttributeProjectionMetadataFactory()
+        private readonly ProjectionMetadataFactory $metadataFactory = new AttributeProjectionMetadataFactory(),
     ) {
     }
 
-    public function resolveCreateMethod(Projector $projector): ?Closure
+    public function resolveCreateMethod(Projector $projector): Closure|null
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
         $method = $metadata->createMethod;
@@ -30,7 +30,7 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$method(...);
     }
 
-    public function resolveDropMethod(Projector $projector): ?Closure
+    public function resolveDropMethod(Projector $projector): Closure|null
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
         $method = $metadata->dropMethod;
@@ -42,7 +42,7 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$method(...);
     }
 
-    public function resolveHandleMethod(Projector $projector, Message $message): ?Closure
+    public function resolveHandleMethod(Projector $projector, Message $message): Closure|null
     {
         $event = $message->event();
         $metadata = $this->metadataFactory->metadata($projector::class);

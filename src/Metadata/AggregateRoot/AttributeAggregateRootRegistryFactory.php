@@ -14,9 +14,7 @@ use function is_subclass_of;
 
 final class AttributeAggregateRootRegistryFactory implements AggregateRootRegistryFactory
 {
-    /**
-     * @param list<string> $paths
-     */
+    /** @param list<string> $paths */
     public function create(array $paths): AggregateRootRegistry
     {
         $classes = (new ClassFinder())->findClassNames($paths);

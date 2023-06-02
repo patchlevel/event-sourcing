@@ -25,17 +25,15 @@ final class SocketWatchServer implements WatchServer
     /** @var resource|null */
     private $socket;
 
-    private MessageSerializer $serializer;
     private LoggerInterface $logger;
 
-    public function __construct(string $host, MessageSerializer $serializer, ?LoggerInterface $logger = null)
+    public function __construct(string $host, private MessageSerializer $serializer, LoggerInterface|null $logger = null)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
         }
 
         $this->host = $host;
-        $this->serializer = $serializer;
         $this->logger = $logger ?? new NullLogger();
         $this->socket = null;
     }
@@ -73,9 +71,7 @@ final class SocketWatchServer implements WatchServer
         return $this->host;
     }
 
-    /**
-     * @return resource
-     */
+    /** @return resource */
     private function socket()
     {
         $this->start();

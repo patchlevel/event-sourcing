@@ -14,9 +14,7 @@ final class RecalculatePlayheadMiddleware implements Middleware
     /** @var array<class-string<AggregateRoot>, array<string, positive-int>> */
     private array $index = [];
 
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     public function __invoke(Message $message): array
     {
         $playhead = $this->nextPlayhead($message->aggregateClass(), $message->aggregateId());

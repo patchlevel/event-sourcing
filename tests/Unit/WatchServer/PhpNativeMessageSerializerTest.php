@@ -22,7 +22,7 @@ final class PhpNativeMessageSerializerTest extends TestCase
     public function testSerialize(): void
     {
         $event = new ProfileVisited(
-            ProfileId::fromString('foo')
+            ProfileId::fromString('foo'),
         );
 
         $message = Message::create($event)
@@ -44,7 +44,7 @@ final class PhpNativeMessageSerializerTest extends TestCase
     public function testDeserialize(): void
     {
         $event = new ProfileVisited(
-            ProfileId::fromString('foo')
+            ProfileId::fromString('foo'),
         );
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -68,7 +68,7 @@ final class PhpNativeMessageSerializerTest extends TestCase
     public function testEquals(): void
     {
         $event = new ProfileVisited(
-            ProfileId::fromString('foo')
+            ProfileId::fromString('foo'),
         );
 
         $message = Message::create($event)

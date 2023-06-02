@@ -24,9 +24,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/**
- * @covers \Patchlevel\EventSourcing\Store\SingleTableStore
- */
+/** @covers \Patchlevel\EventSourcing\Store\SingleTableStore */
 final class SingleTableStoreTest extends TestCase
 {
     use ProphecyTrait;
@@ -46,7 +44,7 @@ final class SingleTableStoreTest extends TestCase
             ],
             [
                 'archived' => Types::BOOLEAN,
-            ]
+            ],
         )->willReturn([]);
         $connection->createQueryBuilder()->willReturn($queryBuilder);
         $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
@@ -57,7 +55,7 @@ final class SingleTableStoreTest extends TestCase
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
 
         $events = $singleTableStore->load(Profile::class, '1');
@@ -79,7 +77,7 @@ final class SingleTableStoreTest extends TestCase
             ],
             [
                 'archived' => Types::BOOLEAN,
-            ]
+            ],
         )->willReturn(
             [
                 [
@@ -90,7 +88,7 @@ final class SingleTableStoreTest extends TestCase
                     'recorded_on' => '2021-02-17 10:00:00',
                     'custom_headers' => '[]',
                 ],
-            ]
+            ],
         );
 
         $connection->createQueryBuilder()->willReturn($queryBuilder);
@@ -108,7 +106,7 @@ final class SingleTableStoreTest extends TestCase
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
 
         $messages = $singleTableStore->load(Profile::class, '1');
@@ -136,7 +134,7 @@ final class SingleTableStoreTest extends TestCase
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
 
         $store->transactional($callback);
@@ -176,7 +174,7 @@ final class SingleTableStoreTest extends TestCase
                 'custom_headers' => 'json',
                 'archived' => Types::BOOLEAN,
                 'new_stream_start' => Types::BOOLEAN,
-            ]
+            ],
         )->shouldBeCalledOnce();
 
         $driver = $this->prophesize(Driver::class);
@@ -187,9 +185,7 @@ final class SingleTableStoreTest extends TestCase
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
-            /**
-             * @param array{0: callable} $args
-             */
+            /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
         );
 
@@ -197,7 +193,7 @@ final class SingleTableStoreTest extends TestCase
             $mockedConnection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
         $singleTableStore->save($message);
     }
@@ -219,14 +215,14 @@ final class SingleTableStoreTest extends TestCase
             WHERE aggregate = :aggregate
             AND aggregate_id = :aggregate_id
             AND playhead < :playhead
-            AND archived = false'
+            AND archived = false',
         )->shouldBeCalledOnce()->willReturn($statement->reveal());
 
         $singleTableStore = new SingleTableStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
         $singleTableStore->archiveMessages(Profile::class, '1', 1);
     }

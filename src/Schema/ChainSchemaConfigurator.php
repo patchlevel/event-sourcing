@@ -9,11 +9,9 @@ use Doctrine\DBAL\Schema\Schema;
 
 final class ChainSchemaConfigurator implements SchemaConfigurator
 {
-    /**
-     * @param iterable<SchemaConfigurator> $schemaConfigurator
-     */
+    /** @param iterable<SchemaConfigurator> $schemaConfigurator */
     public function __construct(
-        private readonly iterable $schemaConfigurator
+        private readonly iterable $schemaConfigurator,
     ) {
     }
 

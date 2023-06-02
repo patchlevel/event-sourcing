@@ -16,9 +16,7 @@ final class InMemoryTarget implements Target
         $this->messages[] = $message;
     }
 
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     public function messages(): array
     {
         return $this->messages;

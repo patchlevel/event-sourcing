@@ -21,7 +21,7 @@ final class StoreTargetTest extends TestCase
     public function testSave(): void
     {
         $message = new Message(
-            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
         );
 
         $pipelineStore = $this->prophesize(Store::class);

@@ -9,16 +9,11 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 final class UntilEventMiddleware implements Middleware
 {
-    private DateTimeImmutable $until;
-
-    public function __construct(DateTimeImmutable $until)
+    public function __construct(private DateTimeImmutable $until)
     {
-        $this->until = $until;
     }
 
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     public function __invoke(Message $message): array
     {
         $recordedOn = $message->recordedOn();

@@ -25,9 +25,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
     /** @var array<class-string<AggregateRoot>, AggregateRootMetadata> */
     private array $aggregateMetadata = [];
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function metadata(string $aggregate): AggregateRootMetadata
     {
         if (array_key_exists($aggregate, $this->aggregateMetadata)) {
@@ -48,7 +46,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $suppressAll,
             $snapshot?->name(),
             $snapshot?->batch(),
-            $snapshot?->version()
+            $snapshot?->version(),
         );
 
         $this->aggregateMetadata[$aggregate] = $metadata;
@@ -56,9 +54,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         return $metadata;
     }
 
-    /**
-     * @return array{array<class-string, true>, bool}
-     */
+    /** @return array{array<class-string, true>, bool} */
     private function findSuppressMissingApply(ReflectionClass $reflector): array
     {
         $suppressEvents = [];
@@ -96,7 +92,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         return $aggregateAttribute->name();
     }
 
-    private function findSnapshot(ReflectionClass $reflector): ?Snapshot
+    private function findSnapshot(ReflectionClass $reflector): Snapshot|null
     {
         $attributeReflectionList = $reflector->getAttributes(Snapshot::class);
 
@@ -159,7 +155,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                         $aggregate,
                         $eventClass,
                         $applyMethods[$eventClass],
-                        $methodName
+                        $methodName,
                     );
                 }
 
@@ -170,9 +166,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         return $applyMethods;
     }
 
-    /**
-     * @return array<class-string>
-     */
+    /** @return array<class-string> */
     private function getEventClassesByPropertyTypes(ReflectionMethod $method): array
     {
         $propertyType = $method->getParameters()[0]->getType();
@@ -194,7 +188,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         if ($propertyType instanceof ReflectionUnionType) {
             $eventClasses = array_map(
                 static fn (ReflectionNamedType $reflectionType) => $reflectionType->getName(),
-                $propertyType->getTypes()
+                $propertyType->getTypes(),
             );
         }
 

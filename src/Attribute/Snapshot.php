@@ -9,15 +9,8 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS)]
 final class Snapshot
 {
-    private string $name;
-    private ?int $batch;
-    private ?string $version;
-
-    public function __construct(string $name, ?int $batch = null, ?string $version = null)
+    public function __construct(private string $name, private int|null $batch = null, private string|null $version = null)
     {
-        $this->name = $name;
-        $this->batch = $batch;
-        $this->version = $version;
     }
 
     public function name(): string
@@ -25,12 +18,12 @@ final class Snapshot
         return $this->name;
     }
 
-    public function batch(): ?int
+    public function batch(): int|null
     {
         return $this->batch;
     }
 
-    public function version(): ?string
+    public function version(): string|null
     {
         return $this->version;
     }

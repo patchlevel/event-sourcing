@@ -14,7 +14,7 @@ final class AdapterNotFound extends SnapshotException
             sprintf(
                 'adapter with the name "%s" not found',
                 $adapterName,
-            )
+            ),
         );
     }
 }

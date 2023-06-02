@@ -4,16 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projection;
 
-/**
- * @psalm-immutable
- */
+/** @psalm-immutable */
 final class ProjectionCriteria
 {
-    /**
-     * @param list<ProjectionId>|null $ids
-     */
+    /** @param list<ProjectionId>|null $ids */
     public function __construct(
-        public readonly ?array $ids = null,
+        public readonly array|null $ids = null,
     ) {
     }
 }

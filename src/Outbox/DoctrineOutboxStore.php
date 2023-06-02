@@ -25,7 +25,7 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
         private readonly Connection $connection,
         private readonly EventSerializer $serializer,
         private readonly AggregateRootRegistry $aggregateRootRegistry,
-        private readonly string $outboxTable = 'outbox'
+        private readonly string $outboxTable = 'outbox',
     ) {
     }
 
@@ -52,17 +52,15 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
                         [
                             'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
                             'custom_headers' => Types::JSON,
-                        ]
+                        ],
                     );
                 }
-            }
+            },
         );
     }
 
-    /**
-     * @return list<Message>
-     */
-    public function retrieveOutboxMessages(?int $limit = null): array
+    /** @return list<Message> */
+    public function retrieveOutboxMessages(int|null $limit = null): array
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
@@ -85,7 +83,7 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
                     ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
                     ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
-            $result
+            $result,
         );
     }
 
@@ -100,10 +98,10 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
                             'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
                             'aggregate_id' => $message->aggregateId(),
                             'playhead' => $message->playhead(),
-                        ]
+                        ],
                     );
                 }
-            }
+            },
         );
     }
 

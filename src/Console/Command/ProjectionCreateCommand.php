@@ -16,19 +16,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:projection:create',
-    'create projection schema'
+    'create projection schema',
 )]
 final class ProjectionCreateCommand extends ProjectionCommand
 {
-    private readonly ProjectorResolver $projectorResolver;
-
     public function __construct(
         ProjectorRepository $projectorRepository,
-        ProjectorResolver $projectorResolver = new MetadataProjectorResolver()
+        private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
     ) {
         parent::__construct($projectorRepository);
-
-        $this->projectorResolver = $projectorResolver;
     }
 
     protected function configure(): void
@@ -43,8 +39,8 @@ final class ProjectionCreateCommand extends ProjectionCommand
 
         (new ProjectorHelper($this->projectorResolver))->createProjection(
             ...$this->projectors(
-                $input->getOption('projection')
-            )
+                $input->getOption('projection'),
+            ),
         );
 
         $console->success('projection created');

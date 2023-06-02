@@ -30,7 +30,7 @@ final class DatabaseCreateCommandTest extends TestCase
 
         $command = new DatabaseCreateCommand(
             $connection->reveal(),
-            $helper->reveal()
+            $helper->reveal(),
         );
 
         $input = new ArrayInput([]);
@@ -56,7 +56,7 @@ final class DatabaseCreateCommandTest extends TestCase
 
         $command = new DatabaseCreateCommand(
             $connection->reveal(),
-            $helper->reveal()
+            $helper->reveal(),
         );
 
         $input = new ArrayInput(['--if-not-exists' => true]);
@@ -83,7 +83,7 @@ final class DatabaseCreateCommandTest extends TestCase
 
         $command = new DatabaseCreateCommand(
             $connection->reveal(),
-            $helper->reveal()
+            $helper->reveal(),
         );
 
         $input = new ArrayInput([]);
