@@ -10,6 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
@@ -109,26 +110,30 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 foreach ($messages as $message) {
                     $data = $this->serializer->serialize($message->event());
 
-                    $connection->insert(
-                        $this->storeTableName,
-                        [
-                            'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
-                            'aggregate_id' => $message->aggregateId(),
-                            'playhead' => $message->playhead(),
-                            'event' => $data->name,
-                            'payload' => $data->payload,
-                            'recorded_on' => $message->recordedOn(),
-                            'new_stream_start' => $message->newStreamStart(),
-                            'archived' => $message->archived(),
-                            'custom_headers' => $message->customHeaders(),
-                        ],
-                        [
-                            'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
-                            'custom_headers' => Types::JSON,
-                            'new_stream_start' => Types::BOOLEAN,
-                            'archived' => Types::BOOLEAN,
-                        ],
-                    );
+                    try {
+                        $connection->insert(
+                            $this->storeTableName,
+                            [
+                                'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
+                                'aggregate_id' => $message->aggregateId(),
+                                'playhead' => $message->playhead(),
+                                'event' => $data->name,
+                                'payload' => $data->payload,
+                                'recorded_on' => $message->recordedOn(),
+                                'new_stream_start' => $message->newStreamStart(),
+                                'archived' => $message->archived(),
+                                'custom_headers' => $message->customHeaders(),
+                            ],
+                            [
+                                'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
+                                'custom_headers' => Types::JSON,
+                                'new_stream_start' => Types::BOOLEAN,
+                                'archived' => Types::BOOLEAN,
+                            ],
+                        );
+                    } catch (HeaderNotFound $e) {
+                        throw new MissingDataForStorage($e->name, $e);
+                    }
                 }
             },
         );

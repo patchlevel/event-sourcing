@@ -44,12 +44,10 @@ final class PipelineChangeStoreTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $this->markTestSkipped();
-
         $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
         $aggregateRootRegistry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
 
-        $oldStore = new MultiTableStore(
+        $oldStore = new DoctrineDbalStore(
             $this->connectionOld,
             $serializer,
             $aggregateRootRegistry,

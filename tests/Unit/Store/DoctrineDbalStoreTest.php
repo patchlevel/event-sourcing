@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
+use ArrayIterator;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Statement;
 use Doctrine\DBAL\Types\Types;
+use EmptyIterator;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -34,19 +37,20 @@ final class DoctrineDbalStoreTest extends TestCase
     {
         $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
 
+        $result = $this->prophesize(Result::class);
+        $result->iterateAssociative()->willReturn(new EmptyIterator());
+
         $connection = $this->prophesize(Connection::class);
         $connection->executeQuery(
-            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)',
+            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
             [
                 'aggregate' => 'profile',
                 'id' => '1',
                 'playhead' => 0,
                 'archived' => false,
             ],
-            [
-                'archived' => Types::BOOLEAN,
-            ],
-        )->willReturn($this->prophesize(Statement::class)->reveal());
+            Argument::type('array'),
+        )->willReturn($result->reveal());
 
         $connection->createQueryBuilder()->willReturn($queryBuilder);
         $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
@@ -60,7 +64,14 @@ final class DoctrineDbalStoreTest extends TestCase
             'eventstore',
         );
 
-        $stream = $singleTableStore->load(new Criteria(Profile::class, '1'));
+        $stream = $singleTableStore->load(
+            (new CriteriaBuilder())
+                ->aggregateClass(Profile::class)
+                ->aggregateId('1')
+                ->fromPlayhead(0)
+                ->archived(false)
+                ->build(),
+        );
 
         self::assertCount(0, $stream);
     }
@@ -69,21 +80,11 @@ final class DoctrineDbalStoreTest extends TestCase
     {
         $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->fetchAllAssociative(
-            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)',
-            [
-                'aggregate' => 'profile',
-                'id' => '1',
-                'playhead' => 0,
-                'archived' => false,
-            ],
-            [
-                'archived' => Types::BOOLEAN,
-            ],
-        )->willReturn(
+        $result = $this->prophesize(Result::class);
+        $result->iterateAssociative()->willReturn(new ArrayIterator(
             [
                 [
+                    'aggregate' => 'profile',
                     'aggregate_id' => '1',
                     'playhead' => '1',
                     'event' => 'profile.created',
@@ -92,7 +93,19 @@ final class DoctrineDbalStoreTest extends TestCase
                     'custom_headers' => '[]',
                 ],
             ],
-        );
+        ));
+
+        $connection = $this->prophesize(Connection::class);
+        $connection->executeQuery(
+            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
+            [
+                'aggregate' => 'profile',
+                'id' => '1',
+                'playhead' => 0,
+                'archived' => false,
+            ],
+            Argument::type('array'),
+        )->willReturn($result->reveal());
 
         $connection->createQueryBuilder()->willReturn($queryBuilder);
 
@@ -112,8 +125,16 @@ final class DoctrineDbalStoreTest extends TestCase
             'eventstore',
         );
 
-        $messages = $singleTableStore->load(new Criteria(Profile::class, '1'));
-        $message = $messages->current();
+        $stream = $singleTableStore->load(
+            (new CriteriaBuilder())
+                ->aggregateClass(Profile::class)
+                ->aggregateId('1')
+                ->fromPlayhead(0)
+                ->archived(false)
+                ->build(),
+        );
+
+        $message = $stream->current();
 
         self::assertInstanceOf(Message::class, $message);
         self::assertInstanceOf(ProfileCreated::class, $message->event());

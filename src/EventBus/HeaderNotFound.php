@@ -8,8 +8,9 @@ use function sprintf;
 
 final class HeaderNotFound extends EventBusException
 {
-    private function __construct(string $name)
-    {
+    private function __construct(
+        public readonly string $name,
+    ) {
         parent::__construct(sprintf('message header "%s" is not defined', $name));
     }
 

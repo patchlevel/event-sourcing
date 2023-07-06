@@ -47,6 +47,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
         return $this->position;
     }
 
+    /** @return Traversable<Message> */
     public function getIterator(): Traversable
     {
         yield from $this->generator;
