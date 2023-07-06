@@ -61,7 +61,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
         AbstractPlatform $platform,
     ): Generator {
         /** @var array{aggregate: string, aggregate_id: string, playhead: int|string, event: string, payload: string, recorded_on: string, custom_headers: string} $data */
-        foreach ($result->fetchAllAssociative() as $data) {
+        foreach ($result->iterateAssociative() as $data) {
             $this->position++;
 
             $event = $serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));

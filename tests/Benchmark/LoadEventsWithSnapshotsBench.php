@@ -77,6 +77,7 @@ final class LoadEventsWithSnapshotsBench
     }
 
     #[Bench\Revs(10)]
+    #[Bench\Iterations(2)]
     public function benchLoadEvents(): void
     {
         $this->repository->load('1');

@@ -85,10 +85,11 @@ final class WriteEventsBench
         $this->repository->save($this->profile);
     }
 
-    #[Bench\Revs(5)]
+    #[Bench\Revs(10)]
+    #[Bench\Iterations(2)]
     public function benchSaveAfterThousandEvents(): void
     {
-        for ($i = 0; $i < 10_000; $i++) {
+        for ($i = 0; $i < 1_000; $i++) {
             $this->profile->changeName('Peter');
         }
 

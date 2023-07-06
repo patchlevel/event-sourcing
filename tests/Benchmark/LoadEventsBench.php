@@ -62,14 +62,15 @@ final class LoadEventsBench
 
         $profile = Profile::create(ProfileId::fromString('1'), 'Peter');
 
-        for ($i = 0; $i < 100_000; $i++) {
+        for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName('Peter');
         }
 
         $this->repository->save($profile);
     }
 
-    #[Bench\Revs(5)]
+    #[Bench\Revs(10)]
+    #[Bench\Iterations(2)]
     public function benchLoadEvents(): void
     {
         $this->repository->load('1');
