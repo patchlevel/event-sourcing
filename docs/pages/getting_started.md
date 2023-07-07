@@ -267,7 +267,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 
 $connection = DriverManager::getConnection([
     'url' => 'mysql://user:secret@localhost/app'
@@ -288,7 +288,7 @@ $eventBus->addListener(new SendCheckInEmailProcessor($mailer));
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
 
-$store = new SingleTableStore(
+$store = new DoctrineDbalStore(
     $connection,
     $serializer,
     $aggregateRegistry

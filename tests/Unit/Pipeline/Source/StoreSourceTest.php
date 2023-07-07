@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Source;
 
-use Generator;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Store\StreamableStore;
+use Patchlevel\EventSourcing\Store\ArrayStream;
+use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -25,22 +27,14 @@ final class StoreSourceTest extends TestCase
             new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
         );
 
-        $generatorFactory = static function () use ($message): Generator {
-            yield $message;
-        };
+        $stream = new ArrayStream([$message]);
 
-        $pipelineStore = $this->prophesize(StreamableStore::class);
-        $pipelineStore->stream(0)->willReturn($generatorFactory());
+        $pipelineStore = $this->prophesize(Store::class);
+        $pipelineStore->load($this->criteria())->willReturn($stream);
 
         $source = new StoreSource($pipelineStore->reveal());
 
-        $generator = $source->load();
-
-        self::assertSame($message, $generator->current());
-
-        $generator->next();
-
-        self::assertSame(null, $generator->current());
+        self::assertSame($stream, $source->load());
     }
 
     public function testLoadWithFromIndex(): void
@@ -49,28 +43,20 @@ final class StoreSourceTest extends TestCase
             new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
         );
 
-        $generatorFactory = static function () use ($message): Generator {
-            yield $message;
-        };
+        $stream = new ArrayStream([$message]);
 
-        $pipelineStore = $this->prophesize(StreamableStore::class);
-        $pipelineStore->stream(1)->willReturn($generatorFactory());
+        $pipelineStore = $this->prophesize(Store::class);
+        $pipelineStore->load($this->criteria(1))->willReturn($stream);
 
         $source = new StoreSource($pipelineStore->reveal(), 1);
 
-        $generator = $source->load();
-
-        self::assertSame($message, $generator->current());
-
-        $generator->next();
-
-        self::assertSame(null, $generator->current());
+        self::assertSame($stream, $source->load());
     }
 
     public function testCount(): void
     {
-        $pipelineStore = $this->prophesize(StreamableStore::class);
-        $pipelineStore->count(0)->willReturn(1);
+        $pipelineStore = $this->prophesize(Store::class);
+        $pipelineStore->count($this->criteria())->willReturn(1);
 
         $source = new StoreSource($pipelineStore->reveal());
 
@@ -79,11 +65,16 @@ final class StoreSourceTest extends TestCase
 
     public function testCountWithFromIndex(): void
     {
-        $pipelineStore = $this->prophesize(StreamableStore::class);
-        $pipelineStore->count(1)->willReturn(0);
+        $pipelineStore = $this->prophesize(Store::class);
+        $pipelineStore->count($this->criteria(1))->willReturn(0);
 
         $source = new StoreSource($pipelineStore->reveal(), 1);
 
         self::assertSame(0, $source->count());
+    }
+
+    private function criteria(int $fromIndex = 0): Criteria
+    {
+        return (new CriteriaBuilder())->fromIndex($fromIndex)->build();
     }
 }

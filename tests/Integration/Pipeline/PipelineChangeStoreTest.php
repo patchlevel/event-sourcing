@@ -16,8 +16,7 @@ use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\MultiTableStore;
-use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
@@ -48,7 +47,7 @@ final class PipelineChangeStoreTest extends TestCase
         $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
         $aggregateRootRegistry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
 
-        $oldStore = new MultiTableStore(
+        $oldStore = new DoctrineDbalStore(
             $this->connectionOld,
             $serializer,
             $aggregateRootRegistry,
@@ -62,7 +61,7 @@ final class PipelineChangeStoreTest extends TestCase
 
         $oldSchemaDirector->create();
 
-        $newStore = new SingleTableStore(
+        $newStore = new DoctrineDbalStore(
             $this->connectionNew,
             $serializer,
             $aggregateRootRegistry,

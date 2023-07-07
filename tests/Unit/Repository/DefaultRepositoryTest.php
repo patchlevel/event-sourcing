@@ -15,6 +15,8 @@ use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\ArchivableStore;
+use Patchlevel\EventSourcing\Store\ArrayStream;
+use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -60,7 +62,7 @@ final class DefaultRepositoryTest extends TestCase
         )->shouldBeCalled();
 
         $store->transactional(Argument::any())->will(
-            /** @param array{0: callable} $args */
+        /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]()
         );
 
@@ -124,7 +126,7 @@ final class DefaultRepositoryTest extends TestCase
         )->shouldBeCalled();
 
         $store->transactional(Argument::any())->will(
-            /** @param array{0: callable} $args */
+        /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]()
         );
 
@@ -183,7 +185,7 @@ final class DefaultRepositoryTest extends TestCase
         )->shouldBeCalled();
 
         $store->transactional(Argument::any())->will(
-            /** @param array{0: callable} $args */
+        /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]()
         );
 
@@ -321,7 +323,7 @@ final class DefaultRepositoryTest extends TestCase
         )->shouldBeCalled();
         $store->archiveMessages(Profile::class, '1', 3)->shouldBeCalledOnce();
         $store->transactional(Argument::any())->will(
-            /** @param array{0: callable} $args */
+        /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]()
         );
 
@@ -383,17 +385,17 @@ final class DefaultRepositoryTest extends TestCase
     public function testLoadAggregate(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->load(
+        $store->load(new Criteria(
             Profile::class,
             '1',
-        )->willReturn([
+        ))->willReturn(new ArrayStream([
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de'),
                 ),
             )->withPlayhead(1),
-        ]);
+        ]));
 
         $eventBus = $this->prophesize(EventBus::class);
 
@@ -414,17 +416,27 @@ final class DefaultRepositoryTest extends TestCase
     public function testLoadAggregateTwice(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->load(
+        $store->load(new Criteria(
             Profile::class,
             '1',
-        )->willReturn([
-            Message::create(
-                new ProfileCreated(
-                    ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de'),
-                ),
-            )->withPlayhead(1),
-        ]);
+        ))->willReturn(
+            new ArrayStream([
+                Message::create(
+                    new ProfileCreated(
+                        ProfileId::fromString('1'),
+                        Email::fromString('hallo@patchlevel.de'),
+                    ),
+                )->withPlayhead(1),
+            ]),
+            new ArrayStream([
+                Message::create(
+                    new ProfileCreated(
+                        ProfileId::fromString('1'),
+                        Email::fromString('hallo@patchlevel.de'),
+                    ),
+                )->withPlayhead(1),
+            ]),
+        );
 
         $eventBus = $this->prophesize(EventBus::class);
 
@@ -446,10 +458,10 @@ final class DefaultRepositoryTest extends TestCase
         $this->expectException(AggregateNotFound::class);
 
         $store = $this->prophesize(Store::class);
-        $store->load(
+        $store->load(new Criteria(
             Profile::class,
             '1',
-        )->willReturn([]);
+        ))->willReturn(new ArrayStream());
 
         $eventBus = $this->prophesize(EventBus::class);
 
@@ -465,10 +477,10 @@ final class DefaultRepositoryTest extends TestCase
     public function testHasAggregate(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->has(
+        $store->count(new Criteria(
             Profile::class,
             '1',
-        )->willReturn(true);
+        ))->willReturn(1);
 
         $eventBus = $this->prophesize(EventBus::class);
 
@@ -484,10 +496,10 @@ final class DefaultRepositoryTest extends TestCase
     public function testNotHasAggregate(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->has(
+        $store->count(new Criteria(
             Profile::class,
             '1',
-        )->willReturn(false);
+        ))->willReturn(0);
 
         $eventBus = $this->prophesize(EventBus::class);
 
@@ -508,11 +520,13 @@ final class DefaultRepositoryTest extends TestCase
         );
 
         $store = $this->prophesize(Store::class);
-        $store->load(
+        $store->load(new Criteria(
             ProfileWithSnapshot::class,
             '1',
+            null,
+            null,
             1,
-        )->willReturn([]);
+        ))->willReturn(new ArrayStream());
 
         $eventBus = $this->prophesize(EventBus::class);
 
@@ -541,10 +555,12 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->load(
-            ProfileWithSnapshot::class,
-            '1',
+            new Criteria(
+                ProfileWithSnapshot::class,
+                '1',
+            ),
         )->willReturn(
-            [
+            new ArrayStream([
                 Message::create(
                     new ProfileCreated(
                         ProfileId::fromString('1'),
@@ -561,7 +577,7 @@ final class DefaultRepositoryTest extends TestCase
                         ProfileId::fromString('1'),
                     ),
                 )->withPlayhead(3),
-            ],
+            ]),
         );
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -598,10 +614,14 @@ final class DefaultRepositoryTest extends TestCase
 
         $store = $this->prophesize(Store::class);
         $store->load(
-            ProfileWithSnapshot::class,
-            '1',
-            1,
-        )->willReturn([
+            new Criteria(
+                ProfileWithSnapshot::class,
+                '1',
+                null,
+                null,
+                1,
+            ),
+        )->willReturn(new ArrayStream([
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
@@ -617,7 +637,7 @@ final class DefaultRepositoryTest extends TestCase
                     ProfileId::fromString('1'),
                 ),
             )->withPlayhead(3),
-        ]);
+        ]));
 
         $eventBus = $this->prophesize(EventBus::class);
 
@@ -647,14 +667,15 @@ final class DefaultRepositoryTest extends TestCase
     public function testLoadAggregateWithoutSnapshot(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->load(ProfileWithSnapshot::class, '1')->willReturn([
-            Message::create(
-                new ProfileCreated(
-                    ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de'),
-                ),
-            )->withPlayhead(1),
-        ]);
+        $store->load(new Criteria(ProfileWithSnapshot::class, '1'))
+            ->willReturn(new ArrayStream([
+                Message::create(
+                    new ProfileCreated(
+                        ProfileId::fromString('1'),
+                        Email::fromString('hallo@patchlevel.de'),
+                    ),
+                )->withPlayhead(1),
+            ]));
 
         $eventBus = $this->prophesize(EventBus::class);
 

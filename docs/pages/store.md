@@ -36,9 +36,9 @@ and, last but not least, the table name.
 ```php
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 
-$store = new SingleTableStore(
+$store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths(['src/Event']),
     new AggregateRootRegistry([

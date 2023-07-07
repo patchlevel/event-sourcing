@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
-use Patchlevel\EventSourcing\Store\StreamableStore;
+use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -33,7 +33,7 @@ use function sprintf;
 final class ProjectionRebuildCommand extends ProjectionCommand
 {
     public function __construct(
-        private StreamableStore $store,
+        private Store $store,
         ProjectorRepository $projectorRepository,
         private ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
     ) {

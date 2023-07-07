@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.7.1@8e0fd880141f236847ab49a06f94f788d41a4292">
+<files psalm-version="5.13.1@086b94371304750d1c673315321a55d15fc59015">
   <file src="src/Aggregate/AggregateRootBehaviour.php">
     <UnsafeInstantiation>
       <code>new static()</code>
@@ -146,6 +146,12 @@
       <code>$name</code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="tests/Integration/Store/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+      <code>$name</code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion>
       <code>$value</code>
@@ -174,5 +180,18 @@
       <code>$id</code>
       <code>$messages</code>
     </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Unit/Pipeline/Source/InMemorySourceTest.php">
+    <InvalidMethodCall>
+      <code>current</code>
+      <code>current</code>
+      <code>next</code>
+    </InvalidMethodCall>
+  </file>
+  <file src="tests/Unit/Store/ArrayStreamTest.php">
+    <DocblockTypeContradiction>
+      <code>assertSame</code>
+      <code>assertSame</code>
+    </DocblockTypeContradiction>
   </file>
 </files>

@@ -16,11 +16,14 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
 use Patchlevel\EventSourcing\Store\ArchivableStore;
+use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\Stream;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 use Throwable;
+use Traversable;
 
 use function array_map;
 use function assert;
@@ -93,22 +96,27 @@ final class DefaultRepository implements Repository
             }
         }
 
-        $messages = $this->store->load($aggregateClass, $id);
+        $criteria = (new CriteriaBuilder())
+            ->aggregateClass($aggregateClass)
+            ->aggregateId($id)
+            ->archived(false)
+            ->build();
 
-        if (count($messages) === 0) {
+        $stream = $this->store->load($criteria);
+
+        $firstMessage = $stream->current();
+
+        if ($firstMessage === null) {
             throw new AggregateNotFound($aggregateClass, $id);
         }
 
         $aggregate = $aggregateClass::createFromEvents(
-            array_map(
-                static fn (Message $message) => $message->event(),
-                $messages,
-            ),
-            $messages[0]->playhead() - 1,
+            $this->unpack($stream),
+            $firstMessage->playhead() - 1,
         );
 
         if ($this->snapshotStore && $this->metadata->snapshotStore) {
-            $this->saveSnapshot($aggregate, $messages);
+            $this->saveSnapshot($aggregate, $stream);
         }
 
         return $aggregate;
@@ -116,7 +124,12 @@ final class DefaultRepository implements Repository
 
     public function has(string $id): bool
     {
-        return $this->store->has($this->aggregateClass, $id);
+        $criteria = (new CriteriaBuilder())
+            ->aggregateClass($this->aggregateClass)
+            ->aggregateId($id)
+            ->build();
+
+        return $this->store->count($criteria) > 0;
     }
 
     /** @param T $aggregate */
@@ -125,20 +138,21 @@ final class DefaultRepository implements Repository
         $this->assertRightAggregate($aggregate);
 
         $events = $aggregate->releaseEvents();
+        $eventCount = count($events);
 
-        if (count($events) === 0) {
+        if ($eventCount === 0) {
             return;
         }
 
         $messageDecorator = $this->messageDecorator;
-        $playhead = $aggregate->playhead() - count($events);
+        $playhead = $aggregate->playhead() - $eventCount;
 
         if ($playhead < 0) {
             throw new PlayheadMismatch(
                 $aggregate::class,
                 $aggregate->aggregateRootId(),
                 $aggregate->playhead(),
-                count($events),
+                $eventCount,
             );
         }
 
@@ -171,39 +185,38 @@ final class DefaultRepository implements Repository
         assert($this->snapshotStore instanceof SnapshotStore);
 
         $aggregate = $this->snapshotStore->load($aggregateClass, $id);
-        $messages = $this->store->load($aggregateClass, $id, $aggregate->playhead());
 
-        if ($messages === []) {
+        $criteria = (new CriteriaBuilder())
+            ->aggregateClass($this->aggregateClass)
+            ->aggregateId($id)
+            ->fromPlayhead($aggregate->playhead())
+            ->build();
+
+        $stream = $this->store->load($criteria);
+
+        if ($stream->current() === null) {
             return $aggregate;
         }
 
-        $events = array_map(
-            static fn (Message $message) => $message->event(),
-            $messages,
-        );
-
         try {
-            $aggregate->catchUp($events);
+            $aggregate->catchUp($this->unpack($stream));
         } catch (Throwable $exception) {
             throw new SnapshotRebuildFailed($aggregateClass, $id, $exception);
         }
 
-        $this->saveSnapshot($aggregate, $messages);
+        $this->saveSnapshot($aggregate, $stream);
 
         return $aggregate;
     }
 
-    /**
-     * @param T             $aggregate
-     * @param list<Message> $messages
-     */
-    private function saveSnapshot(AggregateRoot $aggregate, array $messages): void
+    /** @param T $aggregate */
+    private function saveSnapshot(AggregateRoot $aggregate, Stream $stream): void
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 
         $batchSize = $this->metadata->snapshotBatch ?: 1;
 
-        if (count($messages) < $batchSize) {
+        if ($stream->position() < $batchSize) {
             return;
         }
 
@@ -233,6 +246,14 @@ final class DefaultRepository implements Repository
                 $message->aggregateId(),
                 $message->playhead(),
             );
+        }
+    }
+
+    /** @return Traversable<object> */
+    private function unpack(Stream $stream): Traversable
+    {
+        foreach ($stream as $message) {
+            yield $message->event();
         }
     }
 }

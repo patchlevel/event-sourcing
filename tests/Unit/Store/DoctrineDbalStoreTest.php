@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
+use ArrayIterator;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Statement;
 use Doctrine\DBAL\Types\Types;
+use EmptyIterator;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
-use Patchlevel\EventSourcing\Store\MultiTableStore;
+use Patchlevel\EventSourcing\Store\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -24,8 +28,8 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Store\MultiTableStore */
-final class MultiTableStoreTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Store\DoctrineDbalStore */
+final class DoctrineDbalStoreTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -33,52 +37,54 @@ final class MultiTableStoreTest extends TestCase
     {
         $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
 
+        $result = $this->prophesize(Result::class);
+        $result->iterateAssociative()->willReturn(new EmptyIterator());
+
         $connection = $this->prophesize(Connection::class);
-        $connection->fetchAllAssociative(
-            'SELECT * FROM profile WHERE (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)',
+        $connection->executeQuery(
+            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
             [
+                'aggregate' => 'profile',
                 'id' => '1',
                 'playhead' => 0,
                 'archived' => false,
             ],
-            [
-                'archived' => Types::BOOLEAN,
-            ],
-        )->willReturn([]);
+            Argument::type('array'),
+        )->willReturn($result->reveal());
+
         $connection->createQueryBuilder()->willReturn($queryBuilder);
         $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
 
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $singleTableStore = new MultiTableStore(
+        $singleTableStore = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
-        $events = $singleTableStore->load(Profile::class, '1');
-        self::assertCount(0, $events);
+        $stream = $singleTableStore->load(
+            (new CriteriaBuilder())
+                ->aggregateClass(Profile::class)
+                ->aggregateId('1')
+                ->fromPlayhead(0)
+                ->archived(false)
+                ->build(),
+        );
+
+        self::assertCount(0, $stream);
     }
 
     public function testLoadWithOneEvent(): void
     {
         $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->fetchAllAssociative(
-            'SELECT * FROM profile WHERE (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)',
-            [
-                'id' => '1',
-                'playhead' => 0,
-                'archived' => false,
-            ],
-            [
-                'archived' => Types::BOOLEAN,
-            ],
-        )->willReturn(
+        $result = $this->prophesize(Result::class);
+        $result->iterateAssociative()->willReturn(new ArrayIterator(
             [
                 [
+                    'aggregate' => 'profile',
                     'aggregate_id' => '1',
                     'playhead' => '1',
                     'event' => 'profile.created',
@@ -87,7 +93,19 @@ final class MultiTableStoreTest extends TestCase
                     'custom_headers' => '[]',
                 ],
             ],
-        );
+        ));
+
+        $connection = $this->prophesize(Connection::class);
+        $connection->executeQuery(
+            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
+            [
+                'aggregate' => 'profile',
+                'id' => '1',
+                'playhead' => 0,
+                'archived' => false,
+            ],
+            Argument::type('array'),
+        )->willReturn($result->reveal());
 
         $connection->createQueryBuilder()->willReturn($queryBuilder);
 
@@ -100,18 +118,25 @@ final class MultiTableStoreTest extends TestCase
             new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'),
         )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
-        $singleTableStore = new MultiTableStore(
+        $singleTableStore = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
-        $messages = $singleTableStore->load(Profile::class, '1');
-        self::assertCount(1, $messages);
+        $stream = $singleTableStore->load(
+            (new CriteriaBuilder())
+                ->aggregateClass(Profile::class)
+                ->aggregateId('1')
+                ->fromPlayhead(0)
+                ->archived(false)
+                ->build(),
+        );
 
-        $message = $messages[0];
+        $message = $stream->current();
 
+        self::assertInstanceOf(Message::class, $message);
         self::assertInstanceOf(ProfileCreated::class, $message->event());
         self::assertSame('1', $message->aggregateId());
         self::assertSame(1, $message->playhead());
@@ -128,7 +153,7 @@ final class MultiTableStoreTest extends TestCase
 
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $store = new MultiTableStore(
+        $store = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -155,20 +180,9 @@ final class MultiTableStoreTest extends TestCase
         $innerMockedConnection->getDatabasePlatform()->willReturn($platform->reveal());
 
         $innerMockedConnection->insert(
-            'eventstore_metadata',
+            'eventstore',
             [
                 'aggregate' => 'profile',
-                'aggregate_id' => '1',
-                'playhead' => 1,
-            ],
-        )->shouldBeCalledOnce();
-
-        $innerMockedConnection->lastInsertId()->shouldBeCalledOnce()->willReturn('2');
-
-        $innerMockedConnection->insert(
-            'profile',
-            [
-                'id' => '2',
                 'aggregate_id' => '1',
                 'playhead' => 1,
                 'event' => 'profile_created',
@@ -198,13 +212,13 @@ final class MultiTableStoreTest extends TestCase
             static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
         );
 
-        $multiTableStore = new MultiTableStore(
+        $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore_metadata',
+            'eventstore',
         );
-        $multiTableStore->save($message);
+        $singleTableStore->save($message);
     }
 
     public function testArchiveMessages(): void
@@ -212,25 +226,27 @@ final class MultiTableStoreTest extends TestCase
         $serializer = $this->prophesize(EventSerializer::class);
 
         $statement = $this->prophesize(Statement::class);
+        $statement->bindValue('aggregate', 'profile')->shouldBeCalledOnce();
         $statement->bindValue('aggregate_id', '1')->shouldBeCalledOnce();
         $statement->bindValue('playhead', 1)->shouldBeCalledOnce();
         $statement->executeQuery()->shouldBeCalledOnce();
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->prepare(
-            'UPDATE profile 
+            'UPDATE eventstore 
             SET archived = true
-            WHERE aggregate_id = :aggregate_id
+            WHERE aggregate = :aggregate
+            AND aggregate_id = :aggregate_id
             AND playhead < :playhead
             AND archived = false',
         )->shouldBeCalledOnce()->willReturn($statement->reveal());
 
-        $multiTableStore = new MultiTableStore(
+        $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore_metadata',
+            'eventstore',
         );
-        $multiTableStore->archiveMessages(Profile::class, '1', 1);
+        $singleTableStore->archiveMessages(Profile::class, '1', 1);
     }
 }

@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\SingleTableStore;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
@@ -50,7 +50,7 @@ final class OutboxTest extends TestCase
         $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
         $registry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
 
-        $store = new SingleTableStore(
+        $store = new DoctrineDbalStore(
             $this->connection,
             $serializer,
             $registry,

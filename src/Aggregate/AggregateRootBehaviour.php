@@ -44,8 +44,8 @@ trait AggregateRootBehaviour
         $this->uncommittedEvents[] = $event;
     }
 
-    /** @param list<object> $events */
-    public function catchUp(array $events): void
+    /** @param iterable<object> $events */
+    public function catchUp(iterable $events): void
     {
         foreach ($events as $event) {
             $this->playhead++;
@@ -63,10 +63,10 @@ trait AggregateRootBehaviour
     }
 
     /**
-     * @param list<object>   $events
-     * @param 0|positive-int $startPlayhead
+     * @param iterable<object> $events
+     * @param 0|positive-int   $startPlayhead
      */
-    public static function createFromEvents(array $events, int $startPlayhead = 0): static
+    public static function createFromEvents(iterable $events, int $startPlayhead = 0): static
     {
         $self = new static();
         $self->playhead = $startPlayhead;

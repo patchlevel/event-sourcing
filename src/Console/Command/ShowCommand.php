@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -18,7 +19,6 @@ use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Question\Question;
 
 use function array_values;
-use function count;
 use function sprintf;
 
 #[AsCommand(
@@ -69,18 +69,22 @@ final class ShowCommand extends Command
             return 1;
         }
 
-        $messages = $this->store->load($this->aggregateRootRegistry->aggregateClass($aggregate), $id);
+        $stream = $this->store->load(
+            new Criteria($this->aggregateRootRegistry->aggregateClass($aggregate), $id),
+        );
 
-        if (count($messages) === 0) {
-            $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
-
-            return 1;
-        }
-
-        foreach ($messages as $message) {
+        $hasMessage = false;
+        foreach ($stream as $message) {
+            $hasMessage = true;
             $console->message($this->serializer, $message);
         }
 
-        return 0;
+        if ($hasMessage) {
+            return 0;
+        }
+
+        $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
+
+        return 1;
     }
 }
