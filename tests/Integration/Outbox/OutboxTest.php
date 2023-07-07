@@ -69,7 +69,7 @@ final class OutboxTest extends TestCase
         $realEventBus->addListener(new SendEmailProcessor());
 
         $outboxEventBus = new OutboxEventBus($outboxStore);
-        $repository = new DefaultRepository($store, $outboxEventBus, Profile::class);
+        $repository = new DefaultRepository($store, $outboxEventBus, Profile::metadata());
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,

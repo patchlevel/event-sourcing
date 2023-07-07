@@ -11,7 +11,13 @@ use function is_a;
 
 final class AggregateRootMetadataAwareMetadataFactory implements AggregateRootMetadataFactory
 {
-    /** @param class-string<AggregateRoot> $aggregate */
+    /**
+     * @param class-string<T> $aggregate
+     *
+     * @return AggregateRootMetadata<T>
+     *
+     * @template T of AggregateRoot
+     */
     public function metadata(string $aggregate): AggregateRootMetadata
     {
         if (!is_a($aggregate, AggregateRootMetadataAware::class, true)) {

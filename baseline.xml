@@ -34,6 +34,22 @@
       <code>Headers</code>
     </InvalidReturnType>
   </file>
+  <file src="src/Metadata/AggregateRoot/AggregateRootMetadataAwareMetadataFactory.php">
+    <InvalidReturnStatement>
+      <code>$aggregate::metadata()</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[AggregateRootMetadata<T>]]></code>
+    </InvalidReturnType>
+  </file>
+  <file src="src/Metadata/AggregateRoot/AttributeAggregateRootMetadataFactory.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->aggregateMetadata[$aggregate]]]></code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[AggregateRootMetadata<T>]]></code>
+    </InvalidReturnType>
+  </file>
   <file src="src/Projection/Projection/ProjectionCollection.php">
     <InvalidReturnStatement>
       <code><![CDATA[new ArrayIterator(array_values($this->projections))]]></code>

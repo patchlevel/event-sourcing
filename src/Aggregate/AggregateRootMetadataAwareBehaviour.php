@@ -14,6 +14,7 @@ trait AggregateRootMetadataAwareBehaviour
     #[Ignore]
     private static AggregateRootMetadataFactory|null $metadataFactory = null;
 
+    /** @return AggregateRootMetadata<self> */
     public static function metadata(): AggregateRootMetadata
     {
         if (!self::$metadataFactory) {

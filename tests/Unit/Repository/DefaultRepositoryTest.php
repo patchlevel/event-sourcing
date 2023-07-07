@@ -95,7 +95,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
         );
 
         $aggregate = Profile::createProfile(
@@ -148,7 +148,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
         );
 
         $aggregate = Profile::createProfile(
@@ -218,7 +218,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
             null,
             $decorator,
         );
@@ -243,7 +243,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
         );
 
         $aggregate = ProfileWithSnapshot::createProfile(
@@ -270,7 +270,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
         );
 
         $aggregate = Profile::createProfile(
@@ -367,7 +367,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
             null,
             new SplitStreamDecorator(new AttributeEventMetadataFactory()),
         );
@@ -402,7 +402,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
         );
 
         $aggregate = $repository->load('1');
@@ -443,7 +443,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
         );
 
         $aggregate1 = $repository->load('1');
@@ -468,7 +468,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
         );
 
         $repository->load('1');
@@ -487,7 +487,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
         );
 
         self::assertTrue($repository->has('1'));
@@ -506,7 +506,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            Profile::class,
+            Profile::metadata(),
         );
 
         self::assertFalse($repository->has('1'));
@@ -539,7 +539,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            ProfileWithSnapshot::class,
+            ProfileWithSnapshot::metadata(),
             $snapshotStore->reveal(),
         );
 
@@ -593,7 +593,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            ProfileWithSnapshot::class,
+            ProfileWithSnapshot::metadata(),
             $snapshotStore->reveal(),
         );
 
@@ -652,7 +652,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            ProfileWithSnapshot::class,
+            ProfileWithSnapshot::metadata(),
             $snapshotStore->reveal(),
         );
 
@@ -686,7 +686,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
-            ProfileWithSnapshot::class,
+            ProfileWithSnapshot::metadata(),
             $snapshotStore->reveal(),
         );
 

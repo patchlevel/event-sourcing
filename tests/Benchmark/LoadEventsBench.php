@@ -51,7 +51,7 @@ final class LoadEventsBench
             'eventstore',
         );
 
-        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::class);
+        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata());
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,

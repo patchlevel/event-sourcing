@@ -12,6 +12,7 @@ abstract class BasicAggregateRoot implements AggregateRoot, AggregateRootMetadat
         metadata as getMetadata;
     }
 
+    /** @return AggregateRootMetadata<self> */
     public static function metadata(): AggregateRootMetadata
     {
         if (static::class === self::class) {

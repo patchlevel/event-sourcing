@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\Snapshot;
+use Patchlevel\EventSourcing\Attribute\Snapshot as AttributeSnapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;
 use ReflectionIntersectionType;
@@ -25,7 +25,13 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
     /** @var array<class-string<AggregateRoot>, AggregateRootMetadata> */
     private array $aggregateMetadata = [];
 
-    /** @param class-string<AggregateRoot> $aggregate */
+    /**
+     * @param class-string<T> $aggregate
+     *
+     * @return AggregateRootMetadata<T>
+     *
+     * @template T of AggregateRoot
+     */
     public function metadata(string $aggregate): AggregateRootMetadata
     {
         if (array_key_exists($aggregate, $this->aggregateMetadata)) {
@@ -40,13 +46,12 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         $snapshot = $this->findSnapshot($reflector);
 
         $metadata = new AggregateRootMetadata(
+            $aggregate,
             $aggregateName,
             $applyMethods,
             $suppressEvents,
             $suppressAll,
-            $snapshot?->name(),
-            $snapshot?->batch(),
-            $snapshot?->version(),
+            $snapshot,
         );
 
         $this->aggregateMetadata[$aggregate] = $metadata;
@@ -94,13 +99,19 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
 
     private function findSnapshot(ReflectionClass $reflector): Snapshot|null
     {
-        $attributeReflectionList = $reflector->getAttributes(Snapshot::class);
+        $attributeReflectionList = $reflector->getAttributes(AttributeSnapshot::class);
 
         if (!$attributeReflectionList) {
             return null;
         }
 
-        return $attributeReflectionList[0]->newInstance();
+        $attribute = $attributeReflectionList[0]->newInstance();
+
+        return new Snapshot(
+            $attribute->name(),
+            $attribute->batch(),
+            $attribute->version(),
+        );
     }
 
     /**

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootMetadataAware;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
@@ -21,14 +20,12 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 use Throwable;
 use Traversable;
 
 use function array_map;
 use function assert;
 use function count;
-use function is_a;
 use function sprintf;
 
 /**
@@ -38,50 +35,34 @@ use function sprintf;
 final class DefaultRepository implements Repository
 {
     private LoggerInterface $logger;
-    private AggregateRootMetadata $metadata;
     private MessageDecorator $messageDecorator;
 
-    /** @param class-string<T> $aggregateClass */
+    /** @param AggregateRootMetadata<T> $metadata */
     public function __construct(
         private Store $store,
         private EventBus $eventBus,
-        private string $aggregateClass,
+        private readonly AggregateRootMetadata $metadata,
         private SnapshotStore|null $snapshotStore = null,
         MessageDecorator|null $messageDecorator = null,
         LoggerInterface|null $logger = null,
-        AggregateRootMetadata|null $metadata = null,
     ) {
         $this->messageDecorator = $messageDecorator ?? new RecordedOnDecorator(new SystemClock());
         $this->logger = $logger ?? new NullLogger();
-
-        if ($metadata) {
-            $this->metadata = $metadata;
-
-            return;
-        }
-
-        if (!is_a($aggregateClass, AggregateRootMetadataAware::class, true)) {
-            throw new RuntimeException();
-        }
-
-        $this->metadata = $aggregateClass::metadata();
     }
 
     /** @return T */
     public function load(string $id): AggregateRoot
     {
-        $aggregateClass = $this->aggregateClass;
-
-        if ($this->snapshotStore && $this->metadata->snapshotStore) {
+        if ($this->snapshotStore && $this->metadata->snapshot) {
             try {
-                return $this->loadFromSnapshot($aggregateClass, $id);
+                return $this->loadFromSnapshot($this->metadata->className, $id);
             } catch (SnapshotRebuildFailed $exception) {
                 $this->logger->error($exception->getMessage());
             } catch (SnapshotNotFound) {
                 $this->logger->debug(
                     sprintf(
                         'snapshot for aggregate "%s" with the id "%s" not found',
-                        $aggregateClass,
+                        $this->metadata->className,
                         $id,
                     ),
                 );
@@ -89,7 +70,7 @@ final class DefaultRepository implements Repository
                 $this->logger->debug(
                     sprintf(
                         'snapshot for aggregate "%s" with the id "%s" is invalid',
-                        $aggregateClass,
+                        $this->metadata->className,
                         $id,
                     ),
                 );
@@ -97,7 +78,7 @@ final class DefaultRepository implements Repository
         }
 
         $criteria = (new CriteriaBuilder())
-            ->aggregateClass($aggregateClass)
+            ->aggregateClass($this->metadata->className)
             ->aggregateId($id)
             ->archived(false)
             ->build();
@@ -107,15 +88,15 @@ final class DefaultRepository implements Repository
         $firstMessage = $stream->current();
 
         if ($firstMessage === null) {
-            throw new AggregateNotFound($aggregateClass, $id);
+            throw new AggregateNotFound($this->metadata->className, $id);
         }
 
-        $aggregate = $aggregateClass::createFromEvents(
+        $aggregate = $this->metadata->className::createFromEvents(
             $this->unpack($stream),
             $firstMessage->playhead() - 1,
         );
 
-        if ($this->snapshotStore && $this->metadata->snapshotStore) {
+        if ($this->snapshotStore && $this->metadata->snapshot) {
             $this->saveSnapshot($aggregate, $stream);
         }
 
@@ -125,7 +106,7 @@ final class DefaultRepository implements Repository
     public function has(string $id): bool
     {
         $criteria = (new CriteriaBuilder())
-            ->aggregateClass($this->aggregateClass)
+            ->aggregateClass($this->metadata->className)
             ->aggregateId($id)
             ->build();
 
@@ -187,7 +168,7 @@ final class DefaultRepository implements Repository
         $aggregate = $this->snapshotStore->load($aggregateClass, $id);
 
         $criteria = (new CriteriaBuilder())
-            ->aggregateClass($this->aggregateClass)
+            ->aggregateClass($this->metadata->className)
             ->aggregateId($id)
             ->fromPlayhead($aggregate->playhead())
             ->build();
@@ -214,7 +195,7 @@ final class DefaultRepository implements Repository
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 
-        $batchSize = $this->metadata->snapshotBatch ?: 1;
+        $batchSize = $this->metadata->snapshot?->batch ?: 1;
 
         if ($stream->position() < $batchSize) {
             return;
@@ -225,8 +206,8 @@ final class DefaultRepository implements Repository
 
     private function assertRightAggregate(AggregateRoot $aggregate): void
     {
-        if (!$aggregate instanceof $this->aggregateClass) {
-            throw new WrongAggregate($aggregate::class, $this->aggregateClass);
+        if (!$aggregate instanceof $this->metadata->className) {
+            throw new WrongAggregate($aggregate::class, $this->metadata->className);
         }
     }
 
