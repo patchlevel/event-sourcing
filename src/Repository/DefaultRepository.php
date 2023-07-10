@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Clock\Clock;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
-use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
@@ -34,8 +34,8 @@ use function sprintf;
  */
 final class DefaultRepository implements Repository
 {
+    private Clock $clock;
     private LoggerInterface $logger;
-    private MessageDecorator $messageDecorator;
 
     /** @param AggregateRootMetadata<T> $metadata */
     public function __construct(
@@ -43,10 +43,11 @@ final class DefaultRepository implements Repository
         private EventBus $eventBus,
         private readonly AggregateRootMetadata $metadata,
         private SnapshotStore|null $snapshotStore = null,
-        MessageDecorator|null $messageDecorator = null,
+        private MessageDecorator|null $messageDecorator = null,
+        Clock|null $clock = null,
         LoggerInterface|null $logger = null,
     ) {
-        $this->messageDecorator = $messageDecorator ?? new RecordedOnDecorator(new SystemClock());
+        $this->clock = $clock ?? new SystemClock();
         $this->logger = $logger ?? new NullLogger();
     }
 
@@ -125,7 +126,6 @@ final class DefaultRepository implements Repository
             return;
         }
 
-        $messageDecorator = $this->messageDecorator;
         $playhead = $aggregate->playhead() - $eventCount;
 
         if ($playhead < 0) {
@@ -137,12 +137,20 @@ final class DefaultRepository implements Repository
             );
         }
 
+        $messageDecorator = $this->messageDecorator;
+        $clock = $this->clock;
+
         $messages = array_map(
-            static function (object $event) use ($aggregate, &$playhead, $messageDecorator) {
+            static function (object $event) use ($aggregate, &$playhead, $messageDecorator, $clock): Message {
                 $message = Message::create($event)
                     ->withAggregateClass($aggregate::class)
                     ->withAggregateId($aggregate->aggregateRootId())
-                    ->withPlayhead(++$playhead);
+                    ->withPlayhead(++$playhead)
+                    ->withRecordedOn($clock->now());
+
+                if (!$messageDecorator instanceof MessageDecorator) {
+                    return $message;
+                }
 
                 return $messageDecorator($message);
             },

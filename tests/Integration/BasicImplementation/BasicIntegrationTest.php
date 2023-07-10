@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Clock\SystemClock;
-use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
-use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
@@ -66,7 +63,7 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()]),
+            new FooMessageDecorator(),
         );
         $repository = $manager->get(Profile::class);
 
@@ -92,8 +89,6 @@ final class BasicIntegrationTest extends TestCase
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             $eventStream,
-            null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())]),
         );
         $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');
@@ -128,8 +123,6 @@ final class BasicIntegrationTest extends TestCase
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             $eventStream,
-            null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())]),
         );
         $repository = $manager->get(Profile::class);
 
@@ -156,7 +149,7 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()]),
+            new FooMessageDecorator(),
         );
         $repository = $manager->get(Profile::class);
 
@@ -192,7 +185,7 @@ final class BasicIntegrationTest extends TestCase
             $store,
             $eventStream,
             new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock()), new FooMessageDecorator()]),
+            new FooMessageDecorator(),
         );
         $repository = $manager->get(Profile::class);
 
@@ -218,8 +211,6 @@ final class BasicIntegrationTest extends TestCase
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             $eventStream,
-            null,
-            new ChainMessageDecorator([new RecordedOnDecorator(new SystemClock())]),
         );
         $repository = $manager->get(Profile::class);
         $profile = $repository->load('1');

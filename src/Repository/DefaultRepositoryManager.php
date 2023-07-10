@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Clock\Clock;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
-use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootClassNotRegistered;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
@@ -22,9 +22,9 @@ use function array_key_exists;
 
 final class DefaultRepositoryManager implements RepositoryManager
 {
-    private MessageDecorator $messageDecorator;
-    private LoggerInterface $logger;
+    private Clock $clock;
     private AggregateRootMetadataFactory $metadataFactory;
+    private LoggerInterface $logger;
 
     /** @var array<class-string<AggregateRoot>, Repository> */
     private array $instances = [];
@@ -34,13 +34,14 @@ final class DefaultRepositoryManager implements RepositoryManager
         private Store $store,
         private EventBus $eventBus,
         private SnapshotStore|null $snapshotStore = null,
-        MessageDecorator|null $messageDecorator = null,
-        LoggerInterface|null $logger = null,
+        private MessageDecorator|null $messageDecorator = null,
+        Clock|null $clock = null,
         AggregateRootMetadataFactory|null $metadataFactory = null,
+        LoggerInterface|null $logger = null,
     ) {
-        $this->messageDecorator = $messageDecorator ?? new RecordedOnDecorator(new SystemClock());
-        $this->logger = $logger ?? new NullLogger();
         $this->metadataFactory = $metadataFactory ?? new AggregateRootMetadataAwareMetadataFactory();
+        $this->clock = $clock ?? new SystemClock();
+        $this->logger = $logger ?? new NullLogger();
     }
 
     /**
@@ -69,6 +70,7 @@ final class DefaultRepositoryManager implements RepositoryManager
             $this->metadataFactory->metadata($aggregateClass),
             $this->snapshotStore,
             $this->messageDecorator,
+            $this->clock,
             $this->logger,
         );
     }

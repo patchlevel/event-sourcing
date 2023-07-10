@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
-use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
@@ -65,7 +63,6 @@ final class IntegrationTest extends TestCase
             $eventStream,
             null,
             new ChainMessageDecorator([
-                new RecordedOnDecorator(new SystemClock()),
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
             ]),
         );
@@ -98,7 +95,6 @@ final class IntegrationTest extends TestCase
             $eventStream,
             null,
             new ChainMessageDecorator([
-                new RecordedOnDecorator(new SystemClock()),
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
             ]),
         );
@@ -133,7 +129,6 @@ final class IntegrationTest extends TestCase
             $eventStream,
             null,
             new ChainMessageDecorator([
-                new RecordedOnDecorator(new SystemClock()),
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
             ]),
         );
