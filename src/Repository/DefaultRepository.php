@@ -22,6 +22,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
 use Traversable;
+use WeakMap;
 
 use function array_map;
 use function assert;
@@ -37,6 +38,9 @@ final class DefaultRepository implements Repository
     private Clock $clock;
     private LoggerInterface $logger;
 
+    /** @var WeakMap<T, bool> */
+    private WeakMap $managed;
+
     /** @param AggregateRootMetadata<T> $metadata */
     public function __construct(
         private Store $store,
@@ -49,6 +53,7 @@ final class DefaultRepository implements Repository
     ) {
         $this->clock = $clock ?? new SystemClock();
         $this->logger = $logger ?? new NullLogger();
+        $this->managed = new WeakMap();
     }
 
     /** @return T */
@@ -101,6 +106,8 @@ final class DefaultRepository implements Repository
             $this->saveSnapshot($aggregate, $stream);
         }
 
+        $this->managed[$aggregate] = true;
+
         return $aggregate;
     }
 
@@ -119,49 +126,61 @@ final class DefaultRepository implements Repository
     {
         $this->assertRightAggregate($aggregate);
 
-        $events = $aggregate->releaseEvents();
-        $eventCount = count($events);
+        try {
+            $events = $aggregate->releaseEvents();
+            $eventCount = count($events);
 
-        if ($eventCount === 0) {
-            return;
-        }
+            $playhead = $aggregate->playhead() - $eventCount;
 
-        $playhead = $aggregate->playhead() - $eventCount;
+            if (($this->managed[$aggregate] ?? false) === false && $playhead !== 0) {
+                throw new AggregateDetached($aggregate::class, $aggregate->aggregateRootId());
+            }
 
-        if ($playhead < 0) {
-            throw new PlayheadMismatch(
-                $aggregate::class,
-                $aggregate->aggregateRootId(),
-                $aggregate->playhead(),
-                $eventCount,
-            );
-        }
+            if ($eventCount === 0) {
+                return;
+            }
 
-        $messageDecorator = $this->messageDecorator;
-        $clock = $this->clock;
+            if ($playhead < 0) {
+                throw new PlayheadMismatch(
+                    $aggregate::class,
+                    $aggregate->aggregateRootId(),
+                    $aggregate->playhead(),
+                    $eventCount,
+                );
+            }
 
-        $messages = array_map(
-            static function (object $event) use ($aggregate, &$playhead, $messageDecorator, $clock): Message {
-                $message = Message::create($event)
-                    ->withAggregateClass($aggregate::class)
-                    ->withAggregateId($aggregate->aggregateRootId())
-                    ->withPlayhead(++$playhead)
-                    ->withRecordedOn($clock->now());
+            $messageDecorator = $this->messageDecorator;
+            $clock = $this->clock;
 
-                if (!$messageDecorator instanceof MessageDecorator) {
+            $messages = array_map(
+                static function (object $event) use ($aggregate, &$playhead, $messageDecorator, $clock) {
+                    $message = Message::create($event)
+                        ->withAggregateClass($aggregate::class)
+                        ->withAggregateId($aggregate->aggregateRootId())
+                        ->withPlayhead(++$playhead)
+                        ->withRecordedOn($clock->now());
+
+                    if ($messageDecorator) {
+                        return $messageDecorator($message);
+                    }
+
                     return $message;
-                }
+                },
+                $events,
+            );
 
-                return $messageDecorator($message);
-            },
-            $events,
-        );
+            $this->store->transactional(function () use ($messages): void {
+                $this->store->save(...$messages);
+                $this->archive(...$messages);
+                $this->eventBus->dispatch(...$messages);
+            });
 
-        $this->store->transactional(function () use ($messages): void {
-            $this->store->save(...$messages);
-            $this->archive(...$messages);
-            $this->eventBus->dispatch(...$messages);
-        });
+            $this->managed[$aggregate] = true;
+        } catch (Throwable $exception) {
+            $this->managed[$aggregate] = false;
+
+            throw $exception;
+        }
     }
 
     /**
@@ -184,6 +203,8 @@ final class DefaultRepository implements Repository
         $stream = $this->store->load($criteria);
 
         if ($stream->current() === null) {
+            $this->managed[$aggregate] = true;
+
             return $aggregate;
         }
 
@@ -194,6 +215,8 @@ final class DefaultRepository implements Repository
         }
 
         $this->saveSnapshot($aggregate, $stream);
+
+        $this->managed[$aggregate] = true;
 
         return $aggregate;
     }

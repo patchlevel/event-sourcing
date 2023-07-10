@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
+use Patchlevel\EventSourcing\Repository\AggregateDetached;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
@@ -27,6 +28,8 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
+use RuntimeException;
+use Throwable;
 
 /** @covers \Patchlevel\EventSourcing\Repository\DefaultRepository */
 final class DefaultRepositoryTest extends TestCase
@@ -121,6 +124,20 @@ final class DefaultRepositoryTest extends TestCase
                     return false;
                 }
 
+                return $message->playhead() === 1;
+            }),
+        )->shouldBeCalled();
+
+        $store->save(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
                 return $message->playhead() === 2;
             }),
         )->shouldBeCalled();
@@ -131,6 +148,20 @@ final class DefaultRepositoryTest extends TestCase
         );
 
         $eventBus = $this->prophesize(EventBus::class);
+        $eventBus->dispatch(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 1;
+            }),
+        )->shouldBeCalled();
+
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
                 if ($message->aggregateClass() !== Profile::class) {
@@ -156,7 +187,7 @@ final class DefaultRepositoryTest extends TestCase
             Email::fromString('hallo@patchlevel.de'),
         );
 
-        $aggregate->releaseEvents(); // clear events
+        $repository->save($aggregate);
 
         $aggregate->visitProfile(ProfileId::fromString('2'));
 
@@ -180,7 +211,7 @@ final class DefaultRepositoryTest extends TestCase
                     return false;
                 }
 
-                return $message->playhead() === 2;
+                return $message->playhead() === 1;
             }),
         )->shouldBeCalled();
 
@@ -204,7 +235,7 @@ final class DefaultRepositoryTest extends TestCase
                     return false;
                 }
 
-                return $message->playhead() === 2;
+                return $message->playhead() === 1;
             }),
         )->shouldBeCalled();
 
@@ -227,10 +258,6 @@ final class DefaultRepositoryTest extends TestCase
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de'),
         );
-
-        $aggregate->releaseEvents(); // clear events
-
-        $aggregate->visitProfile(ProfileId::fromString('2'));
 
         $repository->save($aggregate);
     }
@@ -259,6 +286,97 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testSaveAggregateWithEmptyEventStream(): void
     {
+        $store = $this->prophesize(Store::class);
+        $store->save(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 1;
+            }),
+        )->shouldBeCalledOnce();
+
+        $store->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0]()
+        );
+
+        $eventBus = $this->prophesize(EventBus::class);
+        $eventBus->dispatch(
+            Argument::that(static function (Message $message) {
+                if ($message->aggregateClass() !== Profile::class) {
+                    return false;
+                }
+
+                if ($message->aggregateId() !== '1') {
+                    return false;
+                }
+
+                return $message->playhead() === 1;
+            }),
+        )->shouldBeCalledOnce();
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::metadata(),
+        );
+
+        $aggregate = Profile::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de'),
+        );
+
+        $repository->save($aggregate);
+        $repository->save($aggregate);
+    }
+
+    public function testDetachedExceptionByError(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->save(
+            Argument::type(Message::class),
+        )->willThrow(new RuntimeException());
+
+        $store->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0]()
+        );
+
+        $eventBus = $this->prophesize(EventBus::class);
+        $eventBus->dispatch(Argument::type('object'))->shouldNotBeCalled();
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::metadata(),
+        );
+
+        $aggregate = Profile::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de'),
+        );
+
+        try {
+            $repository->save($aggregate);
+        } catch (Throwable) {
+            // do nothing
+        }
+
+        $this->expectException(AggregateDetached::class);
+
+        $repository->save($aggregate);
+    }
+
+    public function testDetachedExceptionByUnknown(): void
+    {
+        $this->expectException(AggregateDetached::class);
+
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::type(Message::class),
