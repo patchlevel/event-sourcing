@@ -84,7 +84,7 @@ final class DefaultSnapshotStore implements SnapshotStore
     /** @param class-string<AggregateRoot> $aggregateClass */
     public function adapter(string $aggregateClass): SnapshotAdapter
     {
-        $adapterName = $this->metadataFactory->metadata($aggregateClass)->snapshotStore;
+        $adapterName = $this->metadataFactory->metadata($aggregateClass)->snapshot?->store;
 
         if (!$adapterName) {
             throw new SnapshotNotConfigured($aggregateClass);
@@ -108,6 +108,6 @@ final class DefaultSnapshotStore implements SnapshotStore
     /** @param class-string<AggregateRoot> $aggregateClass */
     private function version(string $aggregateClass): string|null
     {
-        return $this->metadataFactory->metadata($aggregateClass)->snapshotVersion;
+        return $this->metadataFactory->metadata($aggregateClass)->snapshot?->version;
     }
 }

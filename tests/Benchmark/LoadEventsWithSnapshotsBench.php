@@ -57,7 +57,7 @@ final class LoadEventsWithSnapshotsBench
 
         $this->snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
 
-        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::class, $this->snapshotStore);
+        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata(), $this->snapshotStore);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,

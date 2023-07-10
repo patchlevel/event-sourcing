@@ -66,11 +66,10 @@ final class DefaultRepositoryManager implements RepositoryManager
         return $this->instances[$aggregateClass] = new DefaultRepository(
             $this->store,
             $this->eventBus,
-            $aggregateClass,
+            $this->metadataFactory->metadata($aggregateClass),
             $this->snapshotStore,
             $this->messageDecorator,
             $this->logger,
-            $this->metadataFactory->metadata($aggregateClass),
         );
     }
 }
