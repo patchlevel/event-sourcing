@@ -47,3 +47,7 @@ But we can only really support the databases if we can also automatically ensure
 | MariaDB     | 10.3, 10.6, 10.10               |
 | MySQL       | 5.7, 8.0                        |
 | SQLite      | 3.x                             |
+
+## Sponsors
+
+[<img src="https://github.com/patchlevel/event-sourcing/assets/470138/d00b7459-23b7-431b-80b4-93cfc1b66216" alt="blackfire" width="200">](https://www.blackfire.io)
