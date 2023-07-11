@@ -73,6 +73,9 @@
     <MixedOperand>
       <code>$playhead</code>
     </MixedOperand>
+    <PropertyTypeCoercion>
+      <code>new WeakMap()</code>
+    </PropertyTypeCoercion>
   </file>
   <file src="src/Serializer/Upcast/Upcast.php">
     <MixedAssignment>
