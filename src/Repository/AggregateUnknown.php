@@ -8,14 +8,14 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function sprintf;
 
-final class AggregateDetached extends RepositoryException
+final class AggregateUnknown extends RepositoryException
 {
     /** @param class-string<AggregateRoot> $aggregateClass */
     public function __construct(string $aggregateClass, string $aggregateId)
     {
         parent::__construct(
             sprintf(
-                'An error occurred while saving the aggregate "%s" with the ID "%s", causing the uncommitted events to be lost. Please reload the aggregate.',
+                'The aggregate %s with the ID "%s" was not loaded from this repository. Please reload the aggregate.',
                 $aggregateClass,
                 $aggregateId,
             ),

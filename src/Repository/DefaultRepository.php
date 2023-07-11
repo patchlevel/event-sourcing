@@ -39,7 +39,7 @@ final class DefaultRepository implements Repository
     private LoggerInterface $logger;
 
     /** @var WeakMap<T, bool> */
-    private WeakMap $managed;
+    private WeakMap $aggregateIsValid;
 
     /** @param AggregateRootMetadata<T> $metadata */
     public function __construct(
@@ -53,7 +53,7 @@ final class DefaultRepository implements Repository
     ) {
         $this->clock = $clock ?? new SystemClock();
         $this->logger = $logger ?? new NullLogger();
-        $this->managed = new WeakMap();
+        $this->aggregateIsValid = new WeakMap();
     }
 
     /** @return T */
@@ -106,7 +106,7 @@ final class DefaultRepository implements Repository
             $this->saveSnapshot($aggregate, $stream);
         }
 
-        $this->managed[$aggregate] = true;
+        $this->aggregateIsValid[$aggregate] = true;
 
         return $aggregate;
     }
@@ -124,20 +124,20 @@ final class DefaultRepository implements Repository
     /** @param T $aggregate */
     public function save(AggregateRoot $aggregate): void
     {
-        $this->assertRightAggregate($aggregate);
+        $this->assertValidAggregate($aggregate);
 
         try {
             $events = $aggregate->releaseEvents();
             $eventCount = count($events);
 
-            $playhead = $aggregate->playhead() - $eventCount;
-
-            if (($this->managed[$aggregate] ?? false) === false && $playhead !== 0) {
-                throw new AggregateDetached($aggregate::class, $aggregate->aggregateRootId());
-            }
-
             if ($eventCount === 0) {
                 return;
+            }
+
+            $playhead = $aggregate->playhead() - $eventCount;
+
+            if (!isset($this->aggregateIsValid[$aggregate]) && $playhead !== 0) {
+                throw new AggregateUnknown($aggregate::class, $aggregate->aggregateRootId());
             }
 
             if ($playhead < 0) {
@@ -175,9 +175,9 @@ final class DefaultRepository implements Repository
                 $this->eventBus->dispatch(...$messages);
             });
 
-            $this->managed[$aggregate] = true;
+            $this->aggregateIsValid[$aggregate] = true;
         } catch (Throwable $exception) {
-            $this->managed[$aggregate] = false;
+            $this->aggregateIsValid[$aggregate] = false;
 
             throw $exception;
         }
@@ -203,7 +203,7 @@ final class DefaultRepository implements Repository
         $stream = $this->store->load($criteria);
 
         if ($stream->current() === null) {
-            $this->managed[$aggregate] = true;
+            $this->aggregateIsValid[$aggregate] = true;
 
             return $aggregate;
         }
@@ -216,7 +216,7 @@ final class DefaultRepository implements Repository
 
         $this->saveSnapshot($aggregate, $stream);
 
-        $this->managed[$aggregate] = true;
+        $this->aggregateIsValid[$aggregate] = true;
 
         return $aggregate;
     }
@@ -235,10 +235,14 @@ final class DefaultRepository implements Repository
         $this->snapshotStore->save($aggregate);
     }
 
-    private function assertRightAggregate(AggregateRoot $aggregate): void
+    private function assertValidAggregate(AggregateRoot $aggregate): void
     {
         if (!$aggregate instanceof $this->metadata->className) {
             throw new WrongAggregate($aggregate::class, $this->metadata->className);
+        }
+
+        if (($this->aggregateIsValid[$aggregate] ?? null) === false) {
+            throw new AggregateDetached($aggregate::class, $aggregate->aggregateRootId());
         }
     }
 

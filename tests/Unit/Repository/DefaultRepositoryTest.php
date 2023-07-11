@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\AggregateDetached;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
+use Patchlevel\EventSourcing\Repository\AggregateUnknown;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
@@ -336,7 +337,7 @@ final class DefaultRepositoryTest extends TestCase
         $repository->save($aggregate);
     }
 
-    public function testDetachedExceptionByError(): void
+    public function testDetachedException(): void
     {
         $store = $this->prophesize(Store::class);
         $store->save(
@@ -373,9 +374,9 @@ final class DefaultRepositoryTest extends TestCase
         $repository->save($aggregate);
     }
 
-    public function testDetachedExceptionByUnknown(): void
+    public function testUnknownException(): void
     {
-        $this->expectException(AggregateDetached::class);
+        $this->expectException(AggregateUnknown::class);
 
         $store = $this->prophesize(Store::class);
         $store->save(
@@ -395,7 +396,10 @@ final class DefaultRepositoryTest extends TestCase
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de'),
         );
+
         $aggregate->releaseEvents();
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
 
         $repository->save($aggregate);
     }
