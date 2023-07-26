@@ -1,4 +1,4 @@
-mkdocs==1.4.3
+mkdocs==1.5.0
 mike==1.1.2
 markdown==3.4.4
 mkdocs-material==9.1.19
