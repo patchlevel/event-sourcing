@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\VersionedProjector;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Patchlevel\EventSourcing\Store\ArrayStream;
@@ -60,7 +60,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootWithoutCreateMethod(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public function targetProjection(): ProjectionId
             {
                 return new ProjectionId('test', 1);
@@ -100,7 +100,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootWithMethods(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public Message|null $message = null;
             public bool $created = false;
 
@@ -156,7 +156,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootWithLimit(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public Message|null $message = null;
             public bool $created = false;
 
@@ -211,7 +211,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootWithCreateError(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public Message|null $message = null;
             public bool $created = false;
 
@@ -251,13 +251,13 @@ final class DefaultProjectionistTest extends TestCase
 
         self::assertEquals([
             new Projection($projector->targetProjection(), ProjectionStatus::Booting),
-            new Projection($projector->targetProjection(), ProjectionStatus::Error),
+            new Projection($projector->targetProjection(), ProjectionStatus::Error, 0, 'ERROR'),
         ], $projectionStore->savedProjections);
     }
 
     public function testRunning(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
@@ -303,7 +303,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningWithLimit(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
@@ -353,7 +353,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningWithSkip(): void
     {
-        $projector1 = new class implements VersionedProjector {
+        $projector1 = new class implements Projector {
             public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
@@ -367,7 +367,7 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projector2 = new class implements VersionedProjector {
+        $projector2 = new class implements Projector {
             public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
@@ -417,7 +417,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningWithError(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public function targetProjection(): ProjectionId
             {
                 return new ProjectionId('test', 1);
@@ -453,7 +453,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->run();
 
         self::assertEquals([
-            new Projection($projector->targetProjection(), ProjectionStatus::Error, 0),
+            new Projection($projector->targetProjection(), ProjectionStatus::Error, 0, 'ERROR'),
         ], $projectionStore->savedProjections);
     }
 
@@ -488,7 +488,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningWithoutActiveProjectors(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
@@ -527,7 +527,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testTeardownWithProjector(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public Message|null $message = null;
             public bool $dropped = false;
 
@@ -569,7 +569,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testTeardownWithProjectorAndError(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public Message|null $message = null;
             public bool $dropped = false;
 
@@ -637,7 +637,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRemoveWithProjector(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public bool $dropped = false;
 
             public function targetProjection(): ProjectionId
@@ -678,7 +678,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRemoveWithoutDropMethod(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public function targetProjection(): ProjectionId
             {
                 return new ProjectionId('test', 1);
@@ -711,7 +711,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRemoveWithProjectorAndError(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public bool $dropped = false;
 
             public function targetProjection(): ProjectionId
@@ -778,7 +778,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testReactivate(): void
     {
-        $projector = new class implements VersionedProjector {
+        $projector = new class implements Projector {
             public function targetProjection(): ProjectionId
             {
                 return new ProjectionId('test', 1);

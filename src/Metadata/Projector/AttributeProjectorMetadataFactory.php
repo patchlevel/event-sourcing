@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Metadata\Projection;
+namespace Patchlevel\EventSourcing\Metadata\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
@@ -12,19 +12,20 @@ use ReflectionClass;
 
 use function array_key_exists;
 
-final class AttributeProjectionMetadataFactory implements ProjectionMetadataFactory
+final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactory
 {
-    /** @var array<class-string<Projector>, ProjectionMetadata> */
-    private array $projectionMetadata = [];
+    /** @var array<class-string<Projector>, ProjectorMetadata> */
+    private array $projectorMetadata = [];
 
-    /** @param class-string<Projector> $projection */
-    public function metadata(string $projection): ProjectionMetadata
+    /** @param class-string<Projector> $projector */
+    public function metadata(string $projector): ProjectorMetadata
     {
-        if (array_key_exists($projection, $this->projectionMetadata)) {
-            return $this->projectionMetadata[$projection];
+        if (array_key_exists($projector, $this->projectorMetadata)) {
+            return $this->projectorMetadata[$projector];
         }
 
-        $reflector = new ReflectionClass($projection);
+        $reflector = new ReflectionClass($projector);
+
         $methods = $reflector->getMethods();
 
         $handleMethods = [];
@@ -40,7 +41,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
 
                 if (array_key_exists($eventClass, $handleMethods)) {
                     throw new DuplicateHandleMethod(
-                        $projection,
+                        $projector,
                         $eventClass,
                         $handleMethods[$eventClass],
                         $method->getName(),
@@ -53,7 +54,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
             if ($method->getAttributes(Create::class)) {
                 if ($createMethod) {
                     throw new DuplicateCreateMethod(
-                        $projection,
+                        $projector,
                         $createMethod,
                         $method->getName(),
                     );
@@ -68,7 +69,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
 
             if ($dropMethod) {
                 throw new DuplicateDropMethod(
-                    $projection,
+                    $projector,
                     $dropMethod,
                     $method->getName(),
                 );
@@ -77,13 +78,13 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
             $dropMethod = $method->getName();
         }
 
-        $metadata = new ProjectionMetadata(
+        $metadata = new ProjectorMetadata(
             $handleMethods,
             $createMethod,
             $dropMethod,
         );
 
-        $this->projectionMetadata[$projection] = $metadata;
+        $this->projectorMetadata[$projector] = $metadata;
 
         return $metadata;
     }

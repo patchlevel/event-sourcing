@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message as EventMessage;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 final class Dummy2Projection implements Projector
@@ -15,6 +16,11 @@ final class Dummy2Projection implements Projector
     public EventMessage|null $handledMessage = null;
     public bool $createCalled = false;
     public bool $dropCalled = false;
+
+    public function targetProjection(): ProjectionId
+    {
+        return new ProjectionId('dummy2', 1);
+    }
 
     #[Handle(ProfileCreated::class)]
     public function handleProfileCreated(EventMessage $message): void

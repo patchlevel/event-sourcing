@@ -2,27 +2,32 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Projection;
+namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
-use Patchlevel\EventSourcing\Metadata\Projection\DuplicateCreateMethod;
-use Patchlevel\EventSourcing\Metadata\Projection\DuplicateDropMethod;
+use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projector\DuplicateCreateMethod;
+use Patchlevel\EventSourcing\Metadata\Projector\DuplicateDropMethod;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
-final class AttributeProjectionMetadataFactoryTest extends TestCase
+final class AttributeProjectorMetadataFactoryTest extends TestCase
 {
     public function testEmptyProjection(): void
     {
         $projection = new class implements Projector {
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('foo', 1);
+            }
         };
 
-        $metadataFactory = new AttributeProjectionMetadataFactory();
+        $metadataFactory = new AttributeProjectorMetadataFactory();
         $metadata = $metadataFactory->metadata($projection::class);
 
         self::assertSame([], $metadata->handleMethods);
@@ -33,6 +38,11 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
     public function testStandardProjection(): void
     {
         $projection = new class implements Projector {
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('foo', 1);
+            }
+
             #[Handle(ProfileVisited::class)]
             public function handle(): void
             {
@@ -49,7 +59,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
             }
         };
 
-        $metadataFactory = new AttributeProjectionMetadataFactory();
+        $metadataFactory = new AttributeProjectorMetadataFactory();
         $metadata = $metadataFactory->metadata($projection::class);
 
         self::assertEquals(
@@ -64,6 +74,11 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
     public function testMultipleHandlerOnOneMethod(): void
     {
         $projection = new class implements Projector {
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('foo', 1);
+            }
+
             #[Handle(ProfileVisited::class)]
             #[Handle(ProfileCreated::class)]
             public function handle(): void
@@ -71,7 +86,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
             }
         };
 
-        $metadataFactory = new AttributeProjectionMetadataFactory();
+        $metadataFactory = new AttributeProjectorMetadataFactory();
         $metadata = $metadataFactory->metadata($projection::class);
 
         self::assertEquals(
@@ -88,6 +103,11 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
         $this->expectException(DuplicateCreateMethod::class);
 
         $projection = new class implements Projector {
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('foo', 1);
+            }
+
             #[Create]
             public function create1(): void
             {
@@ -99,7 +119,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
             }
         };
 
-        $metadataFactory = new AttributeProjectionMetadataFactory();
+        $metadataFactory = new AttributeProjectorMetadataFactory();
         $metadataFactory->metadata($projection::class);
     }
 
@@ -108,6 +128,11 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
         $this->expectException(DuplicateDropMethod::class);
 
         $projection = new class implements Projector {
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('foo', 1);
+            }
+
             #[Drop]
             public function drop1(): void
             {
@@ -119,7 +144,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
             }
         };
 
-        $metadataFactory = new AttributeProjectionMetadataFactory();
+        $metadataFactory = new AttributeProjectorMetadataFactory();
         $metadataFactory->metadata($projection::class);
     }
 }

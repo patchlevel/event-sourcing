@@ -10,6 +10,7 @@ final class Projection
         private readonly ProjectionId $id,
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
+        private string|null $errorMessage = null,
     ) {
     }
 
@@ -28,6 +29,11 @@ final class Projection
         return $this->position;
     }
 
+    public function errorMessage(): string|null
+    {
+        return $this->errorMessage;
+    }
+
     public function incrementPosition(): void
     {
         $this->position++;
@@ -41,6 +47,7 @@ final class Projection
     public function booting(): void
     {
         $this->status = ProjectionStatus::Booting;
+        $this->errorMessage = null;
     }
 
     public function isBooting(): bool
@@ -51,6 +58,7 @@ final class Projection
     public function active(): void
     {
         $this->status = ProjectionStatus::Active;
+        $this->errorMessage = null;
     }
 
     public function isActive(): bool
@@ -68,9 +76,10 @@ final class Projection
         return $this->status === ProjectionStatus::Outdated;
     }
 
-    public function error(): void
+    public function error(string|null $message = null): void
     {
         $this->status = ProjectionStatus::Error;
+        $this->errorMessage = $message;
     }
 
     public function isError(): bool

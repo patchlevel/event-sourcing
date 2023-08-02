@@ -6,15 +6,15 @@ namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use Closure;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\Projection\AttributeProjectionMetadataFactory;
-use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
 
 use function array_key_exists;
 
 final class MetadataProjectorResolver implements ProjectorResolver
 {
     public function __construct(
-        private readonly ProjectionMetadataFactory $metadataFactory = new AttributeProjectionMetadataFactory(),
+        private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory(),
     ) {
     }
 

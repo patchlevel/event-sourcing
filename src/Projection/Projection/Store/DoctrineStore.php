@@ -32,7 +32,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             ->where('name = :name AND version = :version')
             ->getSQL();
 
-        /** @var array{name: string, version: int, position: int, status: string}|false $result */
+        /** @var array{name: string, version: int, position: int, status: string, error_message: string|null}|false $result */
         $result = $this->connection->fetchAssociative($sql, [
             'name' => $projectionId->name(),
             'version' => $projectionId->version(),
@@ -46,6 +46,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             $projectionId,
             ProjectionStatus::from($result['status']),
             $result['position'],
+            $result['error_message'],
         );
     }
 
@@ -56,7 +57,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             ->from($this->projectionTable)
             ->getSQL();
 
-        /** @var list<array{name: string, version: int, position: int, status: string}> $result */
+        /** @var list<array{name: string, version: int, position: int, status: string, error_message: string|null}> $result */
         $result = $this->connection->fetchAllAssociative($sql);
 
         return new ProjectionCollection(
@@ -66,6 +67,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                         new ProjectionId($data['name'], $data['version']),
                         ProjectionStatus::from($data['status']),
                         $data['position'],
+                        $data['error_message'],
                     );
                 },
                 $result,
@@ -84,6 +86,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                             [
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
+                                'error_message' => $projection->errorMessage(),
                             ],
                             [
                                 'name' => $projection->id()->name(),
@@ -102,6 +105,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'version' => $projection->id()->version(),
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
+                                'error_message' => $projection->errorMessage(),
                             ],
                         );
                     }
@@ -136,6 +140,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             ->setNotnull(true);
         $table->addColumn('status', Types::STRING)
             ->setNotnull(true);
+        $table->addColumn('error_message', Types::STRING)
+            ->setNotnull(false);
 
         $table->setPrimaryKey(['name', 'version']);
     }

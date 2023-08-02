@@ -11,13 +11,13 @@ use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projectionist\VersionedProjector;
+use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
 use function assert;
 use function sprintf;
 
-final class ProfileProjection implements VersionedProjector
+final class ProfileProjection implements Projector
 {
     public function __construct(
         private Connection $connection,
