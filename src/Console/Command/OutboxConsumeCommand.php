@@ -68,9 +68,9 @@ final class OutboxConsumeCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $messageLimit = InputHelper::int($input->getOption('message-limit'));
-        $runLimit = InputHelper::nullableInt($input->getOption('run-limit'));
+        $runLimit = InputHelper::nullablePositivInt($input->getOption('run-limit'));
         $memoryLimit = InputHelper::nullableString($input->getOption('memory-limit'));
-        $timeLimit = InputHelper::nullableInt($input->getOption('time-limit'));
+        $timeLimit = InputHelper::nullablePositivInt($input->getOption('time-limit'));
         $sleep = InputHelper::int($input->getOption('sleep'));
 
         $logger = new ConsoleLogger($output);

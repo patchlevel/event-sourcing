@@ -33,23 +33,6 @@ final class OutboxConsumeCommandTest extends TestCase
         self::assertSame(0, $exitCode);
     }
 
-    public function testSuccessfulWithLegacyLimit(): void
-    {
-        $consumer = $this->prophesize(OutboxConsumer::class);
-        $consumer->consume(200)->shouldBeCalled();
-
-        $command = new OutboxConsumeCommand(
-            $consumer->reveal(),
-        );
-
-        $input = new ArrayInput(['--limit' => 200]);
-        $output = new BufferedOutput();
-
-        $exitCode = $command->run($input, $output);
-
-        self::assertSame(0, $exitCode);
-    }
-
     public function testSuccessfulWithAllLimits(): void
     {
         $consumer = $this->prophesize(OutboxConsumer::class);

@@ -60,18 +60,14 @@ final class ProjectionistRunCommand extends ProjectionistCommand
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $runLimit = InputHelper::nullableInt($input->getOption('run-limit'));
-        $messageLimit = InputHelper::nullableInt($input->getOption('message-limit'));
+        $runLimit = InputHelper::nullablePositivInt($input->getOption('run-limit'));
+        $messageLimit = InputHelper::nullablePositivInt($input->getOption('message-limit'));
         $memoryLimit = InputHelper::nullableString($input->getOption('memory-limit'));
-        $timeLimit = InputHelper::nullableInt($input->getOption('time-limit'));
+        $timeLimit = InputHelper::nullablePositivInt($input->getOption('time-limit'));
         $sleep = InputHelper::int($input->getOption('sleep'));
         $criteria = $this->projectionCriteria($input);
 
         $logger = new ConsoleLogger($output);
-
-        if ($messageLimit !== null && $messageLimit <= 0) {
-            throw new InvalidArgumentGiven($messageLimit, 'null|positive-int');
-        }
 
         $worker = DefaultWorker::create(
             function () use ($criteria, $messageLimit): void {
