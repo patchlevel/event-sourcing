@@ -11,12 +11,14 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
+use Patchlevel\EventSourcing\Projection\Projectionist\Event\ProjectorErrorEvent;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Store;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -32,6 +34,7 @@ final class DefaultProjectionist implements Projectionist
         private readonly ProjectionStore $projectionStore,
         private readonly ProjectorRepository $projectorRepository,
         private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
+        private readonly EventDispatcherInterface|null $eventDispatcher = null,
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -87,6 +90,12 @@ final class DefaultProjectionist implements Projectionist
 
                 $projection->error($e->getMessage());
                 $this->projectionStore->save($projection);
+
+                $this->eventDispatcher?->dispatch(new ProjectorErrorEvent(
+                    $projector::class,
+                    $projection->id(),
+                    $e,
+                ));
             }
         }
 
@@ -376,6 +385,12 @@ final class DefaultProjectionist implements Projectionist
 
                 $projection->error($e->getMessage());
                 $this->projectionStore->save($projection);
+
+                $this->eventDispatcher?->dispatch(new ProjectorErrorEvent(
+                    $projector::class,
+                    $projection->id(),
+                    $e,
+                ));
 
                 return;
             }
