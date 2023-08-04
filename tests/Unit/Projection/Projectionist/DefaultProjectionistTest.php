@@ -24,7 +24,6 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\Tests\Unit\Projection\DummyStore;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
-use Psr\Log\NullLogger;
 use RuntimeException;
 
 /** @covers \Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist */
@@ -52,7 +51,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore->reveal(),
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->boot();
@@ -86,7 +84,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->boot();
@@ -139,7 +136,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->boot();
@@ -195,7 +191,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->boot(new ProjectionCriteria(), 1);
@@ -244,7 +239,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->boot();
@@ -289,7 +283,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->run();
@@ -339,7 +332,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->run(new ProjectionCriteria(), 1);
@@ -402,7 +394,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->run();
@@ -447,7 +438,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->run();
@@ -476,7 +466,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->run();
@@ -517,7 +506,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->run();
@@ -557,7 +545,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->teardown();
@@ -599,7 +586,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->teardown();
@@ -626,7 +612,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->teardown();
@@ -666,7 +651,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->remove();
@@ -700,7 +684,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->remove();
@@ -740,7 +723,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->remove();
@@ -767,7 +749,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->remove();
@@ -799,7 +780,6 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger(),
         );
 
         $projectionist->reactivate();
