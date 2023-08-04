@@ -63,6 +63,30 @@ final class InputHelper
         return (int)$value;
     }
 
+    /** @return positive-int|null */
+    public static function nullablePositivInt(mixed $value): int|null
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!is_string($value) && !is_int($value)) {
+            throw new InvalidArgumentGiven($value, 'positiv-int|null');
+        }
+
+        if (!is_numeric($value)) {
+            throw new InvalidArgumentGiven($value, 'positiv-int|null');
+        }
+
+        $value = (int)$value;
+
+        if ($value <= 0) {
+            throw new InvalidArgumentGiven($value, 'positiv-int|null');
+        }
+
+        return $value;
+    }
+
     public static function bool(mixed $value): bool
     {
         if (!is_bool($value)) {
