@@ -11,8 +11,13 @@ use function sprintf;
 
 final class ProjectorNotFound extends RuntimeException
 {
-    public function __construct(ProjectionId $projectorId)
+    public static function forProjectionId(ProjectionId $projectionId): self
     {
-        parent::__construct(sprintf('projector with the projection id "%s" not found', $projectorId->toString()));
+        return new self(
+            sprintf(
+                'projector with the projection id "%s" not found',
+                $projectionId->toString(),
+            ),
+        );
     }
 }

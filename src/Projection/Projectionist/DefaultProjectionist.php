@@ -46,7 +46,7 @@ final class DefaultProjectionist implements Projectionist
             $projector = $this->projector($projection->id());
 
             if (!$projector) {
-                throw new ProjectorNotFound($projection->id());
+                throw ProjectorNotFound::forProjectionId($projection->id());
             }
 
             $projection->booting();
@@ -131,8 +131,7 @@ final class DefaultProjectionist implements Projectionist
             $this->projectionStore->save($projection);
 
             $this->logger?->info(sprintf(
-                'projector "%s" for "%s" has been set to active',
-                $projector::class,
+                'projection "%s" has been set to active',
                 $projection->id()->toString(),
             ));
         }
@@ -311,6 +310,8 @@ final class DefaultProjectionist implements Projectionist
                 $this->logger?->info(
                     sprintf('projector for "%s" not found, skipped', $projection->id()->toString()),
                 );
+
+                continue;
             }
 
             $projection->active();
@@ -346,7 +347,7 @@ final class DefaultProjectionist implements Projectionist
         $projector = $this->projector($projection->id());
 
         if (!$projector) {
-            throw new ProjectorNotFound($projection->id());
+            throw ProjectorNotFound::forProjectionId($projection->id());
         }
 
         $handleMethod = $this->projectorResolver->resolveHandleMethod($projector, $message);
