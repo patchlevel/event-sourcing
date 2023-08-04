@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 
@@ -18,6 +19,11 @@ final class ProfileProjection implements Projector
     public function __construct(
         private Connection $connection,
     ) {
+    }
+
+    public function targetProjection(): ProjectionId
+    {
+        return new ProjectionId('dummy', 1);
     }
 
     #[Create]

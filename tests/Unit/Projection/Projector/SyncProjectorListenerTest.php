@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projector;
 
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
@@ -24,6 +25,11 @@ final class SyncProjectorListenerTest extends TestCase
     {
         $projector = new class implements Projector {
             public Message|null $message = null;
+
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('dummy', 1);
+            }
 
             public function handleProfileCreated(Message $message): void
             {
@@ -58,6 +64,11 @@ final class SyncProjectorListenerTest extends TestCase
     {
         $projector = new class implements Projector {
             public Message|null $message = null;
+
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('dummy', 1);
+            }
 
             public function handleProfileCreated(Message $message): void
             {

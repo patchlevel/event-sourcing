@@ -24,7 +24,7 @@ use function sprintf;
 
 final class DefaultProjectionist implements Projectionist
 {
-    /** @var array<string, VersionedProjector>|null */
+    /** @var array<string, Projector>|null */
     private array|null $projectors = null;
 
     public function __construct(
@@ -46,29 +46,46 @@ final class DefaultProjectionist implements Projectionist
             $projector = $this->projector($projection->id());
 
             if (!$projector) {
-                throw new ProjectorNotFound($projection->id());
+                throw ProjectorNotFound::forProjectionId($projection->id());
             }
 
             $projection->booting();
             $this->projectionStore->save($projection);
 
-            $this->logger?->info(sprintf('projection "%s" has been set to booting', $projection->id()->toString()));
+            $this->logger?->info(sprintf(
+                'projector "%s" for "%s" has been set to booting',
+                $projector::class,
+                $projection->id()->toString(),
+            ));
 
             $createMethod = $this->projectorResolver->resolveCreateMethod($projector);
 
             if (!$createMethod) {
-                $this->logger?->info(sprintf('projector for "%s" has no create method', $projection->id()->toString()));
+                $this->logger?->info(sprintf(
+                    'projector "%s" for "%s" has no create method',
+                    $projector::class,
+                    $projection->id()->toString(),
+                ));
 
                 continue;
             }
 
             try {
                 $createMethod();
-                $this->logger?->info(sprintf('projection for "%s" prepared', $projection->id()->toString()));
+                $this->logger?->info(sprintf(
+                    'projector "%s" for "%s" prepared',
+                    $projector::class,
+                    $projection->id()->toString(),
+                ));
             } catch (Throwable $e) {
-                $this->logger?->error(sprintf('preparing error in "%s"', $projection->id()->toString()));
-                $this->logger?->error($e->getMessage());
-                $projection->error();
+                $this->logger?->error(sprintf(
+                    'preparing error in "%s" for "%s": %s',
+                    $projector::class,
+                    $projection->id()->toString(),
+                    $e->getMessage(),
+                ));
+
+                $projection->error($e->getMessage());
                 $this->projectionStore->save($projection);
             }
         }
@@ -113,7 +130,10 @@ final class DefaultProjectionist implements Projectionist
             $projection->active();
             $this->projectionStore->save($projection);
 
-            $this->logger?->info(sprintf('projection "%s" has been set to active', $projection->id()->toString()));
+            $this->logger?->info(sprintf(
+                'projection "%s" has been set to active',
+                $projection->id()->toString(),
+            ));
         }
 
         $this->logger?->info('finish');
@@ -199,7 +219,7 @@ final class DefaultProjectionist implements Projectionist
 
             if (!$projector) {
                 $this->logger?->warning(
-                    sprintf('projector with the id "%s" not found, skipped', $projection->id()->toString()),
+                    sprintf('projector for "%s" not found, skipped', $projection->id()->toString()),
                 );
 
                 continue;
@@ -238,7 +258,7 @@ final class DefaultProjectionist implements Projectionist
                 $this->projectionStore->remove($projection->id());
 
                 $this->logger?->info(
-                    sprintf('projection for "%s" removed without a suitable projector', $projection->id()->toString()),
+                    sprintf('projection "%s" removed without a suitable projector', $projection->id()->toString()),
                 );
 
                 continue;
@@ -250,7 +270,7 @@ final class DefaultProjectionist implements Projectionist
                 $this->projectionStore->remove($projection->id());
 
                 $this->logger?->info(
-                    sprintf('projection for "%s" removed', $projection->id()->toString()),
+                    sprintf('projection "%s" removed', $projection->id()->toString()),
                 );
 
                 continue;
@@ -261,8 +281,8 @@ final class DefaultProjectionist implements Projectionist
             } catch (Throwable $e) {
                 $this->logger?->error(
                     sprintf(
-                        'projection "%s" drop method could not be executed:',
-                        $projection->id()->toString(),
+                        'projector "%s" drop method could not be executed:',
+                        $projector::class,
                     ),
                 );
                 $this->logger?->error($e->getMessage());
@@ -271,7 +291,7 @@ final class DefaultProjectionist implements Projectionist
             $this->projectionStore->remove($projection->id());
 
             $this->logger?->info(
-                sprintf('projection for "%s" removed', $projection->id()->toString()),
+                sprintf('projection "%s" removed', $projection->id()->toString()),
             );
         }
     }
@@ -284,10 +304,24 @@ final class DefaultProjectionist implements Projectionist
             ->filterByCriteria($criteria);
 
         foreach ($projections as $projection) {
+            $projector = $this->projector($projection->id());
+
+            if (!$projector) {
+                $this->logger?->info(
+                    sprintf('projector for "%s" not found, skipped', $projection->id()->toString()),
+                );
+
+                continue;
+            }
+
             $projection->active();
             $this->projectionStore->save($projection);
 
-            $this->logger?->info(sprintf('projector "%s" is reactivated', $projection->id()->toString()));
+            $this->logger?->info(sprintf(
+                'projector "%s" for "%s" is reactivated',
+                $projector::class,
+                $projection->id()->toString(),
+            ));
         }
     }
 
@@ -296,11 +330,13 @@ final class DefaultProjectionist implements Projectionist
         $projections = $this->projectionStore->all();
 
         foreach ($this->projectors() as $projector) {
-            if ($projections->has($projector->targetProjection())) {
+            $targetProjection = $projector->targetProjection();
+
+            if ($projections->has($targetProjection)) {
                 continue;
             }
 
-            $projections = $projections->add(new Projection($projector->targetProjection()));
+            $projections = $projections->add(new Projection($targetProjection));
         }
 
         return $projections;
@@ -311,7 +347,7 @@ final class DefaultProjectionist implements Projectionist
         $projector = $this->projector($projection->id());
 
         if (!$projector) {
-            throw new ProjectorNotFound($projection->id());
+            throw ProjectorNotFound::forProjectionId($projection->id());
         }
 
         $handleMethod = $this->projectorResolver->resolveHandleMethod($projector, $message);
@@ -322,17 +358,23 @@ final class DefaultProjectionist implements Projectionist
 
                 $this->logger?->debug(
                     sprintf(
-                        'projector "%s" processed the event "%s"',
+                        'projector "%s" for "%s" processed the event "%s"',
+                        $projector::class,
                         $projection->id()->toString(),
                         $message->event()::class,
                     ),
                 );
             } catch (Throwable $e) {
                 $this->logger?->error(
-                    sprintf('projector "%s" could not process the message', $projection->id()->toString()),
+                    sprintf(
+                        'projector "%s" for "%s" could not process the event: %s',
+                        $projector::class,
+                        $projection->id()->toString(),
+                        $e->getMessage(),
+                    ),
                 );
-                $this->logger?->error($e->getMessage());
-                $projection->error();
+
+                $projection->error($e->getMessage());
                 $this->projectionStore->save($projection);
 
                 return;
@@ -350,22 +392,16 @@ final class DefaultProjectionist implements Projectionist
         return $projectors[$projectorId->toString()] ?? null;
     }
 
-    /** @return array<string, VersionedProjector> */
+    /** @return array<string, Projector> */
     private function projectors(): array
     {
         if ($this->projectors === null) {
             $this->projectors = [];
 
             foreach ($this->projectorRepository->projectors() as $projector) {
-                if (!$projector instanceof VersionedProjector) {
-                    $this->logger?->debug(
-                        sprintf('projector "%s" is not stateful', $projector::class),
-                    );
+                $targetProjection = $projector->targetProjection();
 
-                    continue;
-                }
-
-                $this->projectors[$projector->targetProjection()->toString()] = $projector;
+                $this->projectors[$targetProjection->toString()] = $projector;
             }
         }
 

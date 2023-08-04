@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -23,6 +24,11 @@ final class MetadataProjectorResolverTest extends TestCase
     {
         $projection = new class implements Projector {
             public static Message|null $handledMessage = null;
+
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('dummy', 1);
+            }
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
@@ -51,6 +57,10 @@ final class MetadataProjectorResolverTest extends TestCase
     public function testNotResolveHandleMethod(): void
     {
         $projection = new class implements Projector {
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('dummy', 1);
+            }
         };
 
         $message = new Message(
@@ -69,6 +79,11 @@ final class MetadataProjectorResolverTest extends TestCase
     {
         $projection = new class implements Projector {
             public static bool $called = false;
+
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('dummy', 1);
+            }
 
             #[Create]
             public function method(): void
@@ -90,6 +105,10 @@ final class MetadataProjectorResolverTest extends TestCase
     public function testNotResolveCreateMethod(): void
     {
         $projection = new class implements Projector {
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('dummy', 1);
+            }
         };
 
         $resolver = new MetadataProjectorResolver();
@@ -102,6 +121,11 @@ final class MetadataProjectorResolverTest extends TestCase
     {
         $projection = new class implements Projector {
             public static bool $called = false;
+
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('dummy', 1);
+            }
 
             #[Drop]
             public function method(): void
@@ -123,6 +147,10 @@ final class MetadataProjectorResolverTest extends TestCase
     public function testNotResolveDropMethod(): void
     {
         $projection = new class implements Projector {
+            public function targetProjection(): ProjectionId
+            {
+                return new ProjectionId('dummy', 1);
+            }
         };
 
         $resolver = new MetadataProjectorResolver();
