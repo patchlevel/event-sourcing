@@ -146,7 +146,8 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
      */
     public function transactional(Closure $function): void
     {
-        $this->connection->transactional($function);
+        $function();
+        //$this->connection->transactional($function);
     }
 
     /** @param class-string<AggregateRoot> $aggregate */
