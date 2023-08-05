@@ -10,8 +10,10 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegist
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
+use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
+use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
-use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -23,6 +25,8 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Projection\ProfileProjection;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore as LockInMemoryStore;
 
 /** @coversNothing */
 final class OutboxTest extends TestCase
@@ -42,11 +46,6 @@ final class OutboxTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $profileProjection = new ProfileProjection($this->connection);
-        $projectionRepository = new InMemoryProjectorRepository(
-            [$profileProjection],
-        );
-
         $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
         $registry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
 
@@ -65,11 +64,34 @@ final class OutboxTest extends TestCase
         );
 
         $realEventBus = new DefaultEventBus();
-        $realEventBus->addListener(new SyncProjectorListener($projectionRepository));
         $realEventBus->addListener(new SendEmailProcessor());
 
         $outboxEventBus = new OutboxEventBus($outboxStore);
-        $repository = new DefaultRepository($store, $outboxEventBus, Profile::metadata());
+
+        $profileProjection = new ProfileProjection($this->connection);
+        $projectorRepository = new InMemoryProjectorRepository(
+            [$profileProjection],
+        );
+
+        $projectionist = new DefaultProjectionist(
+            $store,
+            new InMemoryStore(),
+            $projectorRepository,
+        );
+
+        $realEventBus = new DefaultEventBus();
+        $realEventBus->addListener(new SendEmailProcessor());
+
+        $eventStream = new ProjectionistEventBusWrapper(
+            $outboxEventBus,
+            $projectionist,
+            new LockFactory(
+                new LockInMemoryStore(),
+            ),
+            true,
+        );
+
+        $repository = new DefaultRepository($store, $eventStream, Profile::metadata());
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
@@ -80,7 +102,6 @@ final class OutboxTest extends TestCase
         );
 
         $schemaDirector->create();
-        $profileProjection->create();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);

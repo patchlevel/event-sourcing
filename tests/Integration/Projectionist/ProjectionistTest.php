@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\RunProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
@@ -118,7 +118,7 @@ final class ProjectionistTest extends TestCase
         $manager = new DefaultRepositoryManager(
             $aggregateRegistry,
             $store,
-            new RunProjectionistEventBusWrapper(
+            new ProjectionistEventBusWrapper(
                 new DefaultEventBus(),
                 $projectionist,
                 new LockFactory($lockStore),

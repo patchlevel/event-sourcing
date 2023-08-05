@@ -7,13 +7,13 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projectionist;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projectionist\Projectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\RunProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Projection\Projectionist\RunProjectionistEventBusWrapper */
+/** @covers \Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper */
 final class RunProjectionistEventBusWrapperTest extends TestCase
 {
     use ProphecyTrait;
@@ -35,7 +35,7 @@ final class RunProjectionistEventBusWrapperTest extends TestCase
         $projectionist->run()->shouldBeCalledOnce();
         $projectionist->reveal();
 
-        $eventBus = new RunProjectionistEventBusWrapper(
+        $eventBus = new ProjectionistEventBusWrapper(
             $parentEventBus->reveal(),
             $projectionist->reveal(),
         );

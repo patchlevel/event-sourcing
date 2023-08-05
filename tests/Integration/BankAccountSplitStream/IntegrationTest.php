@@ -11,8 +11,10 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
+use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
+use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
-use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -24,6 +26,8 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\Mon
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Projection\BankAccountProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore as LockInMemoryStore;
 
 use function count;
 
@@ -42,19 +46,31 @@ final class IntegrationTest extends TestCase
         $this->connection->close();
     }
 
-    public function testSingleTableSuccessful(): void
+    public function testSuccessful(): void
     {
-        $bankAccountProjection = new BankAccountProjection($this->connection);
-        $projectionRepository = new InMemoryProjectorRepository([$bankAccountProjection]);
-
-        $eventStream = new DefaultEventBus();
-        $eventStream->addListener(new SyncProjectorListener($projectionRepository));
-
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore',
+        );
+
+        $bankAccountProjection = new BankAccountProjection($this->connection);
+        $projectionRepository = new InMemoryProjectorRepository([$bankAccountProjection]);
+
+        $projectionist = new DefaultProjectionist(
+            $store,
+            new InMemoryStore(),
+            $projectionRepository,
+        );
+
+        $eventStream = new ProjectionistEventBusWrapper(
+            new DefaultEventBus(),
+            $projectionist,
+            new LockFactory(
+                new LockInMemoryStore(),
+            ),
+            true,
         );
 
         $manager = new DefaultRepositoryManager(
@@ -74,7 +90,6 @@ final class IntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $bankAccountProjection->create();
 
         $bankAccount = BankAccount::create(AccountId::fromString('1'), 'John');
         $bankAccount->addBalance(100);

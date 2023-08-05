@@ -9,8 +9,10 @@ use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
+use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
+use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
-use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -22,6 +24,8 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Processor\SendE
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection\ProfileProjector;
 use PhpBench\Attributes as Bench;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore as LockInMemoryStore;
 
 use function file_exists;
 use function unlink;
@@ -47,20 +51,34 @@ final class WriteEventsBench
             'path' => self::DB_PATH,
         ]);
 
-        $profileProjection = new ProfileProjector($connection);
-        $projectionRepository = new InMemoryProjectorRepository(
-            [$profileProjection],
-        );
-
-        $this->bus = new DefaultEventBus();
-        $this->bus->addListener(new SyncProjectorListener($projectionRepository));
-        $this->bus->addListener(new SendEmailProcessor());
-
         $this->store = new DoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
             'eventstore',
+        );
+
+        $profileProjection = new ProfileProjector($connection);
+        $projectionRepository = new InMemoryProjectorRepository(
+            [$profileProjection],
+        );
+
+        $projectionist = new DefaultProjectionist(
+            $this->store,
+            new InMemoryStore(),
+            $projectionRepository,
+        );
+
+        $innerEventStream = new DefaultEventBus();
+        $innerEventStream->addListener(new SendEmailProcessor());
+
+        $this->bus = new ProjectionistEventBusWrapper(
+            $innerEventStream,
+            $projectionist,
+            new LockFactory(
+                new LockInMemoryStore(),
+            ),
+            true,
         );
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata());

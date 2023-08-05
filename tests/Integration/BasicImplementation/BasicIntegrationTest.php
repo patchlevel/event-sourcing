@@ -9,8 +9,10 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
+use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
+use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
-use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -23,6 +25,8 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\Sen
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore as LockInMemoryStore;
 
 /** @coversNothing */
 final class BasicIntegrationTest extends TestCase
@@ -42,20 +46,34 @@ final class BasicIntegrationTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $profileProjection = new ProfileProjection($this->connection);
-        $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection],
-        );
-
-        $eventStream = new DefaultEventBus();
-        $eventStream->addListener(new SyncProjectorListener($projectorRepository));
-        $eventStream->addListener(new SendEmailProcessor());
-
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore',
+        );
+
+        $profileProjection = new ProfileProjection($this->connection);
+        $projectorRepository = new InMemoryProjectorRepository(
+            [$profileProjection],
+        );
+
+        $projectionist = new DefaultProjectionist(
+            $store,
+            new InMemoryStore(),
+            $projectorRepository,
+        );
+
+        $innerEventStream = new DefaultEventBus();
+        $innerEventStream->addListener(new SendEmailProcessor());
+
+        $eventStream = new ProjectionistEventBusWrapper(
+            $innerEventStream,
+            $projectionist,
+            new LockFactory(
+                new LockInMemoryStore(),
+            ),
+            true,
         );
 
         $manager = new DefaultRepositoryManager(
@@ -73,7 +91,6 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $profileProjection->create();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
@@ -102,16 +119,6 @@ final class BasicIntegrationTest extends TestCase
 
     public function testWithSymfonySuccessful(): void
     {
-        $profileProjection = new ProfileProjection($this->connection);
-        $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection],
-        );
-
-        $eventStream = SymfonyEventBus::create([
-            new SyncProjectorListener($projectorRepository),
-            new SendEmailProcessor(),
-        ]);
-
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
@@ -119,11 +126,36 @@ final class BasicIntegrationTest extends TestCase
             'eventstore',
         );
 
+        $profileProjection = new ProfileProjection($this->connection);
+        $projectorRepository = new InMemoryProjectorRepository(
+            [$profileProjection],
+        );
+
+        $projectionist = new DefaultProjectionist(
+            $store,
+            new InMemoryStore(),
+            $projectorRepository,
+        );
+
+        $innerEventStream = SymfonyEventBus::create([
+            new SendEmailProcessor(),
+        ]);
+
+        $eventStream = new ProjectionistEventBusWrapper(
+            $innerEventStream,
+            $projectionist,
+            new LockFactory(
+                new LockInMemoryStore(),
+            ),
+            true,
+        );
+
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             $eventStream,
         );
+
         $repository = $manager->get(Profile::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
@@ -132,7 +164,6 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $profileProjection->create();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
@@ -164,20 +195,34 @@ final class BasicIntegrationTest extends TestCase
 
     public function testSnapshot(): void
     {
-        $profileProjection = new ProfileProjection($this->connection);
-        $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection],
-        );
-
-        $eventStream = new DefaultEventBus();
-        $eventStream->addListener(new SyncProjectorListener($projectorRepository));
-        $eventStream->addListener(new SendEmailProcessor());
-
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore',
+        );
+
+        $profileProjection = new ProfileProjection($this->connection);
+        $projectorRepository = new InMemoryProjectorRepository(
+            [$profileProjection],
+        );
+
+        $projectionist = new DefaultProjectionist(
+            $store,
+            new InMemoryStore(),
+            $projectorRepository,
+        );
+
+        $innerEventStream = new DefaultEventBus();
+        $innerEventStream->addListener(new SendEmailProcessor());
+
+        $eventStream = new ProjectionistEventBusWrapper(
+            $innerEventStream,
+            $projectionist,
+            new LockFactory(
+                new LockInMemoryStore(),
+            ),
+            true,
         );
 
         $manager = new DefaultRepositoryManager(
@@ -195,7 +240,6 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $profileProjection->create();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
