@@ -4,7 +4,7 @@ markdown==3.4.4
 mkdocs-material==9.1.21
 
 # Markdown extensions
-Pygments==2.15.1
+Pygments==2.16.1
 pymdown-extensions==10.1
 
 # MkDocs plugins
