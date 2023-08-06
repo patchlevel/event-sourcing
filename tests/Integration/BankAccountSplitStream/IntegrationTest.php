@@ -70,7 +70,6 @@ final class IntegrationTest extends TestCase
             new LockFactory(
                 new LockInMemoryStore(),
             ),
-            true,
         );
 
         $manager = new DefaultRepositoryManager(
@@ -90,6 +89,7 @@ final class IntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
+        $projectionist->boot();
 
         $bankAccount = BankAccount::create(AccountId::fromString('1'), 'John');
         $bankAccount->addBalance(100);

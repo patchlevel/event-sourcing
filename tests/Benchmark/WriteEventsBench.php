@@ -78,7 +78,6 @@ final class WriteEventsBench
             new LockFactory(
                 new LockInMemoryStore(),
             ),
-            true,
         );
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata());
@@ -89,7 +88,7 @@ final class WriteEventsBench
         );
 
         $schemaDirector->create();
-        $profileProjection->create();
+        $projectionist->boot();
 
         $this->profile = Profile::create(ProfileId::fromString('1'), 'Peter');
         $this->repository->save($this->profile);

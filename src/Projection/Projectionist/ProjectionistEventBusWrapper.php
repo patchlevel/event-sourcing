@@ -14,7 +14,6 @@ final class ProjectionistEventBusWrapper implements EventBus
         private readonly EventBus $parentEventBus,
         private readonly Projectionist $projectionist,
         private readonly LockFactory $lockFactory,
-        private readonly bool $alwaysBoot = false,
     ) {
     }
 
@@ -22,17 +21,13 @@ final class ProjectionistEventBusWrapper implements EventBus
     {
         $this->parentEventBus->dispatch(...$messages);
 
-        $lock = $this->lockFactory->createLock('projectionist');
+        $lock = $this->lockFactory->createLock('projectionist-run');
 
         if (!$lock->acquire(true)) {
             return;
         }
 
         try {
-            if ($this->alwaysBoot) {
-                $this->projectionist->boot();
-            }
-
             $this->projectionist->run();
         } finally {
             $lock->release();

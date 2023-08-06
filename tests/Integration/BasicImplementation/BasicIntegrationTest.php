@@ -73,7 +73,6 @@ final class BasicIntegrationTest extends TestCase
             new LockFactory(
                 new LockInMemoryStore(),
             ),
-            true,
         );
 
         $manager = new DefaultRepositoryManager(
@@ -91,6 +90,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
+        $projectionist->boot();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
@@ -147,7 +147,6 @@ final class BasicIntegrationTest extends TestCase
             new LockFactory(
                 new LockInMemoryStore(),
             ),
-            true,
         );
 
         $manager = new DefaultRepositoryManager(
@@ -164,6 +163,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
+        $projectionist->boot();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
@@ -222,7 +222,6 @@ final class BasicIntegrationTest extends TestCase
             new LockFactory(
                 new LockInMemoryStore(),
             ),
-            true,
         );
 
         $manager = new DefaultRepositoryManager(
@@ -240,6 +239,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
+        $projectionist->boot();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);

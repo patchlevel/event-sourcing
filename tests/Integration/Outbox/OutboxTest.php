@@ -88,7 +88,6 @@ final class OutboxTest extends TestCase
             new LockFactory(
                 new LockInMemoryStore(),
             ),
-            true,
         );
 
         $repository = new DefaultRepository($store, $eventStream, Profile::metadata());
@@ -102,6 +101,7 @@ final class OutboxTest extends TestCase
         );
 
         $schemaDirector->create();
+        $projectionist->boot();
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
