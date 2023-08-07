@@ -10,7 +10,7 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * [Snapshots](snapshots.md) system to quickly rebuild the aggregates
 * Allow to [Split-Stream](split_stream.md) for big aggregates
 * [Pipeline](pipeline.md) to export,import and migrate events
-* [Projectionist](projectionist.md) to manage versioned projections
+* [Projectionist](projection.md) to manage versioned projections
 * [Upcast](upcasting.md) old events
 * [Scheme management](store.md) and [doctrine migration](migration.md) support
 * Dev [tools](watch_server.md) such as a realtime event watcher
