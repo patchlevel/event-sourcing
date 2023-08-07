@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
@@ -72,7 +72,7 @@ final class WriteEventsBench
         $innerEventStream = new DefaultEventBus();
         $innerEventStream->addListener(new SendEmailProcessor());
 
-        $this->bus = new ProjectionistEventBusWrapper(
+        $this->bus = new SyncProjectionistEventBusWrapper(
             $innerEventStream,
             $projectionist,
             new LockFactory(

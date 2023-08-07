@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
@@ -82,7 +82,7 @@ final class OutboxTest extends TestCase
         $realEventBus = new DefaultEventBus();
         $realEventBus->addListener(new SendEmailProcessor());
 
-        $eventStream = new ProjectionistEventBusWrapper(
+        $eventStream = new SyncProjectionistEventBusWrapper(
             $outboxEventBus,
             $projectionist,
             new LockFactory(

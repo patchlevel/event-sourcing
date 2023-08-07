@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Symfony\Component\Lock\LockFactory;
 
-final class ProjectionistEventBusWrapper implements EventBus
+final class SyncProjectionistEventBusWrapper implements EventBus
 {
     public function __construct(
         private readonly EventBus $parentEventBus,

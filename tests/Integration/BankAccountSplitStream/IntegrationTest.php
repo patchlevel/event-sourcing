@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegist
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -64,7 +64,7 @@ final class IntegrationTest extends TestCase
             $projectionRepository,
         );
 
-        $eventStream = new ProjectionistEventBusWrapper(
+        $eventStream = new SyncProjectionistEventBusWrapper(
             new DefaultEventBus(),
             $projectionist,
             new LockFactory(

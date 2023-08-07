@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -67,7 +67,7 @@ final class BasicIntegrationTest extends TestCase
         $innerEventStream = new DefaultEventBus();
         $innerEventStream->addListener(new SendEmailProcessor());
 
-        $eventStream = new ProjectionistEventBusWrapper(
+        $eventStream = new SyncProjectionistEventBusWrapper(
             $innerEventStream,
             $projectionist,
             new LockFactory(
@@ -141,7 +141,7 @@ final class BasicIntegrationTest extends TestCase
             new SendEmailProcessor(),
         ]);
 
-        $eventStream = new ProjectionistEventBusWrapper(
+        $eventStream = new SyncProjectionistEventBusWrapper(
             $innerEventStream,
             $projectionist,
             new LockFactory(
@@ -216,7 +216,7 @@ final class BasicIntegrationTest extends TestCase
         $innerEventStream = new DefaultEventBus();
         $innerEventStream->addListener(new SendEmailProcessor());
 
-        $eventStream = new ProjectionistEventBusWrapper(
+        $eventStream = new SyncProjectionistEventBusWrapper(
             $innerEventStream,
             $projectionist,
             new LockFactory(
