@@ -8,24 +8,6 @@ will also be persisted in the database and can be retrieved later on.
 
 We offer a few decorators that you can use.
 
-### RecordedOnDecorator
-
-Each message needs a `RecordedOn` time. The `RecordedOnDecorator` is needed so that this is added to the message. 
-This decorator needs a [clock](clock.md) implementation.
-
-```php
-use Patchlevel\EventSourcing\Clock\SystemClock;
-use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
-
-$clock = new SystemClock();
-$decorator = new RecordedOnDecorator($clock);
-```
-
-!!! warning
-
-    A `RecordedOn` time must always be created. 
-    Either this decorator must always be added or an appropriate replacement must be provided.
-
 ### SplitStreamDecorator
 
 In order to use the [split stream](split_stream.md) feature, the `SplitStreamDecorator` must be added.
@@ -57,11 +39,9 @@ To use the message decorator, you have to pass it to the `DefaultRepositoryManag
 
 ```php
 use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
-use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 
 $decorator = new ChainMessageDecorator([
-    new RecordedOnDecorator($clock),
     new SplitStreamDecorator($eventMetadataFactory)  
 ]);
 
@@ -75,12 +55,6 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-
-!!! warning
-
-    We also use the decorator to fill in the `RecordedOn` time. 
-    If you want to add your own decorator or the SplitStreamDecorator, 
-    then you need to make sure to add the `RecordedOnDecorator` as well.
 
 !!! note
 

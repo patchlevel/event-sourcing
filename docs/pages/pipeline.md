@@ -140,28 +140,38 @@ $target = new StoreTarget($store);
     It does not matter whether the previous store was a SingleTable or a MultiTable.
     You can switch back and forth between both store types using the pipeline.
 
-### Projection
+### Projector
 
-A projection can also be used as a target.
+A projector can also be used as a target.
 For example, to set up a new projection or to build a new projection.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectorTarget;
 
-$target = new ProjectionTarget($projection);
+$target = new ProjectorTarget($projector);
 ```
 
-### Projection Handler
+!!! warning
+
+    This is only recommended for exceptional cases. 
+    By default, projections should only be created using the projectionist.
+
+### Projector Repository
 
 If you want to build or create all projections from scratch,
-then you can also use the ProjectionRepositoryTarget.
-In this, the individual projections are iterated and the events are then passed on.
+then you can also use the ProjectorRepositoryTarget.
+In this, the individual projectors are iterated and the events are then passed on.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Target\ProjectionHandlerTarget;
+use Patchlevel\EventSourcing\Pipeline\Target\ProjectorRepositoryTarget;
 
-$target = new ProjectionHandlerTarget($projectionHandler);
+$target = new ProjectorRepositoryTarget($projectorRepository);
 ```
+
+!!! warning
+
+    This is only recommended for exceptional cases. 
+    By default, projections should only be created using the projectionist.
 
 ### In Memory
 
@@ -278,7 +288,6 @@ $middleware = new ExcludeArchivedEventMiddleware();
     After this middleware, the playhead must be recalculated!
 
 ### Only Archived Events
-
 
 With this middleware you can only allow archived events.
 

@@ -94,7 +94,6 @@ final class EventStreamCleanupCommand extends Command
     public function __construct(
         private readonly Store $sourceStore, 
         private readonly Store $targetStore, 
-        private readonly ProjectionHandler $projectionHandler
     ){
     }
 

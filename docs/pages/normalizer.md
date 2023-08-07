@@ -40,7 +40,7 @@ The whole thing is then loaded again from the DB and denormalized in the propert
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 #[Event('hotel.create')]
 final class CreateHotel
@@ -62,7 +62,7 @@ Here you can determine how the aggregate is saved in the snapshot store at the e
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 #[Aggregate('hotel')]
 #[Snapshot('default')]

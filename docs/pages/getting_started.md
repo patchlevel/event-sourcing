@@ -149,7 +149,8 @@ final class Hotel extends BasicAggregateRoot
 ## Define projections
 
 So that we can see all the hotels on our website and also see how many guests are currently visiting the hotels,
-we need a projection for it.
+we need a projection for it. To create a projection we need a projector. 
+Each projector is then responsible for a specific projection and version.
 
 ```php
 use Doctrine\DBAL\Connection;
@@ -157,6 +158,7 @@ use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 final class HotelProjection implements Projector
@@ -164,6 +166,11 @@ final class HotelProjection implements Projector
     public function __construct(
         private readonly Connection $db
     ) {
+    }
+    
+    public function targetProjection(): ProjectionId
+    {
+        return new ProjectionId('hotel', 1);
     }
     
     /**
@@ -264,6 +271,8 @@ After we have defined everything, we still have to plug the whole thing together
 ```php
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
+use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -275,14 +284,7 @@ $connection = DriverManager::getConnection([
 
 $mailer = /* your own mailer */;
 
-$hotelProjection = new HotelProjection($connection);
-
-$projectorRepository = new ProjectorRepository([
-    $hotelProjection,
-]);
-
 $eventBus = new DefaultEventBus();
-$eventBus->addListener(new SyncProjectorListener($projectorRepository));
 $eventBus->addListener(new SendCheckInEmailProcessor($mailer));
 
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
@@ -294,10 +296,27 @@ $store = new DoctrineDbalStore(
     $aggregateRegistry
 );
 
+$hotelProjection = new HotelProjection($connection);
+
+$projectorRepository = new ProjectorRepository([
+    $hotelProjection,
+]);
+
+$projectionStore = new DoctrineStore($connection);
+
+$projectionist = new DefaultProjectionist(
+    $store,
+    $projectionStore,
+    $projectorRepository
+);
+
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRegistry,
     $store,
-    $eventBus
+    SyncProjectionistEventBusWrapper::createWithDefaultLockStrategy(
+        $eventBus,
+        $projectionist
+    )
 );
 
 $hotelRepository = $repositoryManager->get(Hotel::class);
@@ -313,16 +332,19 @@ So that we can actually write the data to a database,
 we need the associated schema and databases.
 
 ```php
+use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
-use Patchlevel\EventSourcing\Projector\ProjectorHelper;
 
 $schemaDirector = new DoctrineSchemaDirector(
-    $store,
-    $connection
+    $connection,
+    new ChainSchemaConfigurator([
+        $store,
+        $projectionStore
+    ])
 );
 
 $schemaDirector->create();
-(new ProjectorHelper())->createProjection(...$projectorRepository->projectors());
+$projectionist->boot();
 ```
 
 !!! note

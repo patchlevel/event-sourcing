@@ -66,7 +66,7 @@ so that the library knows how to write this data to the database and load it aga
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 #[Event('profile.name_changed')]
 final class NameChanged

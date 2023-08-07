@@ -89,7 +89,6 @@ nav:
     - Normalizer: normalizer.md
     - Snapshots: snapshots.md
     - Upcasting: upcasting.md
-    - Projectionist: projectionist.md
     - Outbox: outbox.md
     - Pipeline: pipeline.md
     - Message Decorator: message_decorator.md

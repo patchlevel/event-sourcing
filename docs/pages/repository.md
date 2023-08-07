@@ -86,12 +86,6 @@ $repositoryManager = new DefaultRepositoryManager(
 $repository = $repositoryManager->get(Profile::class);
 ```
 
-!!! warning
-
-    We also use the decorator to fill in the `recordedOn` time. 
-    If you want to add your own decorator, then you need to make sure to add the `RecordedOnDecorator` as well. 
-    You can e.g. solve with the `ChainMessageDecorator`.
-
 !!! note
 
     You can find out more about message decorator [here](message_decorator.md).
