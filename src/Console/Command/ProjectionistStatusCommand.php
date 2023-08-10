@@ -29,6 +29,7 @@ final class ProjectionistStatusCommand extends ProjectionistCommand
                 'version',
                 'position',
                 'status',
+                'error message',
             ],
             array_map(
                 static fn (Projection $projection) => [
@@ -36,6 +37,7 @@ final class ProjectionistStatusCommand extends ProjectionistCommand
                     $projection->id()->version(),
                     $projection->position(),
                     $projection->status()->value,
+                    $projection->errorMessage(),
                 ],
                 [...$projections],
             ),
