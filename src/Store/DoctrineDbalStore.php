@@ -30,14 +30,14 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
     ) {
     }
 
-    public function load(Criteria|null $criteria = null): DoctrineDbalStoreStream
+    public function load(Criteria|null $criteria = null, bool $backwards = false): DoctrineDbalStoreStream
     {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->storeTableName)
-            ->orderBy('id');
+            ->orderBy('id', $backwards ? 'DESC' : 'ASC');
 
-        $this->addWhere($builder, $criteria ?? new Criteria());
+        $this->applyCriteria($builder, $criteria ?? new Criteria());
 
         return new DoctrineDbalStoreStream(
             $this->connection->executeQuery(
@@ -57,7 +57,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
             ->select('COUNT(*)')
             ->from($this->storeTableName);
 
-        $this->addWhere($builder, $criteria ?? new Criteria());
+        $this->applyCriteria($builder, $criteria ?? new Criteria());
 
         $result = $this->connection->fetchOne(
             $builder->getSQL(),
@@ -72,7 +72,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
         return (int)$result;
     }
 
-    private function addWhere(QueryBuilder $builder, Criteria $criteria): void
+    private function applyCriteria(QueryBuilder $builder, Criteria $criteria): void
     {
         if ($criteria->aggregateClass !== null) {
             $shortName = $this->aggregateRootRegistry->aggregateName($criteria->aggregateClass);
