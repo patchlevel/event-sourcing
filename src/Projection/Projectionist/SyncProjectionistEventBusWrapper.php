@@ -12,11 +12,10 @@ use Symfony\Component\Lock\Store\FlockStore;
 final class SyncProjectionistEventBusWrapper implements EventBus
 {
     public function __construct(
-        private readonly EventBus      $parentEventBus,
+        private readonly EventBus $parentEventBus,
         private readonly Projectionist $projectionist,
-        private readonly LockFactory   $lockFactory,
-    )
-    {
+        private readonly LockFactory $lockFactory,
+    ) {
     }
 
     public function dispatch(Message ...$messages): void
@@ -42,8 +41,8 @@ final class SyncProjectionistEventBusWrapper implements EventBus
             $parentEventBus,
             $projectionist,
             new LockFactory(
-                new FlockStore()
-            )
+                new FlockStore(),
+            ),
         );
     }
 }
