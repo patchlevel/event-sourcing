@@ -7,8 +7,9 @@ namespace Patchlevel\EventSourcing\Projection\Projectionist;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\FlockStore;
 
-final class RunProjectionistEventBusWrapper implements EventBus
+final class SyncProjectionistEventBusWrapper implements EventBus
 {
     public function __construct(
         private readonly EventBus $parentEventBus,
@@ -32,5 +33,16 @@ final class RunProjectionistEventBusWrapper implements EventBus
         } finally {
             $lock->release();
         }
+    }
+
+    public static function createWithDefaultLockStrategy(EventBus $parentEventBus, Projectionist $projectionist): self
+    {
+        return new self(
+            $parentEventBus,
+            $projectionist,
+            new LockFactory(
+                new FlockStore(),
+            ),
+        );
     }
 }
