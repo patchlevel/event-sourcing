@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 interface Store
 {
-    public function load(Criteria|null $criteria = null): Stream;
+    public function load(Criteria|null $criteria = null, bool $backwards = false): Stream;
 
     public function count(Criteria|null $criteria = null): int;
 
