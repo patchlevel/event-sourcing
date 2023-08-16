@@ -11,14 +11,12 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
-use Patchlevel\EventSourcing\Projection\Projectionist\Event\ProjectorErrorEvent;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Store;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -34,13 +32,15 @@ final class DefaultProjectionist implements Projectionist
         private readonly ProjectionStore $projectionStore,
         private readonly ProjectorRepository $projectorRepository,
         private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
-        private readonly EventDispatcherInterface|null $eventDispatcher = null,
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
 
-    public function boot(ProjectionCriteria $criteria = new ProjectionCriteria(), int|null $limit = null): void
-    {
+    public function boot(
+        ProjectionCriteria $criteria = new ProjectionCriteria(),
+        int|null $limit = null,
+        bool $throwByError = false,
+    ): void {
         $projections = $this->projections()
             ->filter(static fn (Projection $projection) => $projection->isNew() || $projection->isBooting())
             ->filterByCriteria($criteria);
@@ -91,11 +91,13 @@ final class DefaultProjectionist implements Projectionist
                 $projection->error($e->getMessage());
                 $this->projectionStore->save($projection);
 
-                $this->eventDispatcher?->dispatch(new ProjectorErrorEvent(
-                    $projector::class,
-                    $projection->id(),
-                    $e,
-                ));
+                if ($throwByError) {
+                    throw new ProjectionistError(
+                        $projector::class,
+                        $projection->id(),
+                        $e,
+                    );
+                }
             }
         }
 
@@ -118,7 +120,7 @@ final class DefaultProjectionist implements Projectionist
 
         foreach ($stream as $message) {
             foreach ($projections->filterByProjectionStatus(ProjectionStatus::Booting) as $projection) {
-                $this->handleMessage($message, $projection);
+                $this->handleMessage($message, $projection, $throwByError);
             }
 
             $currentPosition++;
@@ -148,8 +150,11 @@ final class DefaultProjectionist implements Projectionist
         $this->logger?->info('finish');
     }
 
-    public function run(ProjectionCriteria $criteria = new ProjectionCriteria(), int|null $limit = null): void
-    {
+    public function run(
+        ProjectionCriteria $criteria = new ProjectionCriteria(),
+        int|null $limit = null,
+        bool $throwByError = false,
+    ): void {
         $projections = $this->projections()
             ->filterByProjectionStatus(ProjectionStatus::Active)
             ->filterByCriteria($criteria);
@@ -198,7 +203,7 @@ final class DefaultProjectionist implements Projectionist
                     continue;
                 }
 
-                $this->handleMessage($message, $projection);
+                $this->handleMessage($message, $projection, $throwByError);
             }
 
             $currentPosition++;
@@ -351,7 +356,7 @@ final class DefaultProjectionist implements Projectionist
         return $projections;
     }
 
-    private function handleMessage(Message $message, Projection $projection): void
+    private function handleMessage(Message $message, Projection $projection, bool $throwByError): void
     {
         $projector = $this->projector($projection->id());
 
@@ -386,11 +391,13 @@ final class DefaultProjectionist implements Projectionist
                 $projection->error($e->getMessage());
                 $this->projectionStore->save($projection);
 
-                $this->eventDispatcher?->dispatch(new ProjectorErrorEvent(
-                    $projector::class,
-                    $projection->id(),
-                    $e,
-                ));
+                if ($throwByError) {
+                    throw new ProjectionistError(
+                        $projector::class,
+                        $projection->id(),
+                        $e,
+                    );
+                }
 
                 return;
             }

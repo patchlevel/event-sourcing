@@ -6,15 +6,12 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
-use Patchlevel\EventSourcing\Projection\Projectionist\Listener\ThrowErrorListener;
-use Patchlevel\EventSourcing\Projection\Projectionist\Projectionist;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[AsCommand(
     'event-sourcing:projectionist:dev-run',
@@ -22,13 +19,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 )]
 final class ProjectionistDevRunCommand extends ProjectionistCommand
 {
-    public function __construct(
-        Projectionist $projectionist,
-        private readonly EventDispatcherInterface $eventDispatcher,
-    ) {
-        parent::__construct($projectionist);
-    }
-
     protected function configure(): void
     {
         parent::configure();
@@ -79,11 +69,9 @@ final class ProjectionistDevRunCommand extends ProjectionistCommand
 
         $logger = new ConsoleLogger($output);
 
-        $this->eventDispatcher->addSubscriber(new ThrowErrorListener());
-
         $worker = DefaultWorker::create(
             function () use ($criteria, $messageLimit): void {
-                $this->projectionist->run($criteria, $messageLimit);
+                $this->projectionist->run($criteria, $messageLimit, true);
             },
             [
                 'runLimit' => $runLimit,
@@ -98,7 +86,7 @@ final class ProjectionistDevRunCommand extends ProjectionistCommand
         }
 
         $this->projectionist->remove($criteria);
-        $this->projectionist->boot($criteria);
+        $this->projectionist->boot($criteria, null, true);
         $worker->run($sleep);
 
         return 0;
