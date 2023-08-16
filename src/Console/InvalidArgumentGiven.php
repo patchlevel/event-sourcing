@@ -12,7 +12,7 @@ use function sprintf;
 final class InvalidArgumentGiven extends InvalidArgumentException
 {
     public function __construct(
-        private mixed $value,
+        private readonly mixed $value,
         string $need,
     ) {
         parent::__construct(

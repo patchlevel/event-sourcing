@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
-use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
 use Patchlevel\EventSourcing\Outbox\OutboxConsumer;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -68,10 +67,10 @@ final class OutboxConsumeCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $messageLimit = InputHelper::int($input->getOption('message-limit'));
-        $runLimit = InputHelper::nullablePositivInt($input->getOption('run-limit'));
+        $runLimit = InputHelper::nullablePositiveInt($input->getOption('run-limit'));
         $memoryLimit = InputHelper::nullableString($input->getOption('memory-limit'));
-        $timeLimit = InputHelper::nullablePositivInt($input->getOption('time-limit'));
-        $sleep = InputHelper::int($input->getOption('sleep'));
+        $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
+        $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
 
         $logger = new ConsoleLogger($output);
 
@@ -86,10 +85,6 @@ final class OutboxConsumeCommand extends Command
             ],
             $logger,
         );
-
-        if ($sleep < 0) {
-            throw new InvalidArgumentGiven($sleep, '0|positive-int');
-        }
 
         $worker->run($sleep);
 

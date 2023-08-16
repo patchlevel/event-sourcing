@@ -24,8 +24,8 @@ use function sprintf;
 final class DatabaseCreateCommand extends Command
 {
     public function __construct(
-        private Connection $connection,
-        private DoctrineHelper $helper,
+        private readonly Connection $connection,
+        private readonly DoctrineHelper $helper,
     ) {
         parent::__construct();
     }

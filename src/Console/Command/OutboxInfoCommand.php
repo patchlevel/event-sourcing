@@ -21,8 +21,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class OutboxInfoCommand extends Command
 {
     public function __construct(
-        private OutboxStore $store,
-        private EventSerializer $serializer,
+        private readonly OutboxStore $store,
+        private readonly EventSerializer $serializer,
     ) {
         parent::__construct();
     }

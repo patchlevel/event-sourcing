@@ -21,7 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class SchemaUpdateCommand extends Command
 {
     public function __construct(
-        private SchemaDirector $schemaDirector,
+        private readonly SchemaDirector $schemaDirector,
     ) {
         parent::__construct();
     }
