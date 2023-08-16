@@ -6,31 +6,25 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
-use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ChoiceQuestion;
-use Symfony\Component\Console\Question\Question;
 
-use function array_values;
 use function sprintf;
 
 #[AsCommand(
     'event-sourcing:show',
-    'show events from one aggregate',
+    'show events from the event store',
 )]
 final class ShowCommand extends Command
 {
     public function __construct(
         private readonly Store $store,
         private readonly EventSerializer $serializer,
-        private readonly AggregateRootRegistry $aggregateRootRegistry,
     ) {
         parent::__construct();
     }
@@ -38,53 +32,65 @@ final class ShowCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('aggregate', InputArgument::OPTIONAL, 'aggregate name')
-            ->addArgument('id', InputArgument::OPTIONAL, 'aggregate id');
+            ->addOption(
+                'limit',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'How many messages should be displayed',
+                10,
+            )
+            ->addOption(
+                'forward',
+                null,
+                InputOption::VALUE_NONE,
+                'Show messages from the beginning of the stream',
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $limit = InputHelper::positiveIntOrZero($input->getOption('limit'));
+        $forward = InputHelper::bool($input->getOption('forward'));
+
         $console = new OutputStyle($input, $output);
 
-        $aggregate = InputHelper::nullableString($input->getArgument('aggregate'));
-        if ($aggregate === null) {
-            $question = new ChoiceQuestion(
-                'Choose the aggregate',
-                array_values($this->aggregateRootRegistry->aggregateNames()),
-                null,
+        $maxCount = $this->store->count();
+        $stream = $this->store->load(null, !$forward);
+
+        $currentCount = 0;
+
+        do {
+            $i = 0;
+
+            foreach ($stream as $message) {
+                $i++;
+                $currentCount++;
+
+                $console->message($this->serializer, $message);
+
+                if ($i >= $limit) {
+                    break;
+                }
+            }
+
+            if ($currentCount >= $maxCount) {
+                $console->info(
+                    sprintf('No more messages (%d/%d)', $currentCount, $maxCount),
+                );
+
+                break;
+            }
+
+            $continue = $console->confirm(
+                sprintf(
+                    'Show next %d messages? (%d/%d)',
+                    $limit,
+                    $currentCount,
+                    $maxCount,
+                ),
             );
+        } while ($continue);
 
-            $aggregate = InputHelper::string($console->askQuestion($question));
-        }
-
-        $id = InputHelper::nullableString($input->getArgument('id'));
-        if ($id === null) {
-            $question = new Question('Enter the aggregate id');
-            $id = InputHelper::string($console->askQuestion($question));
-        }
-
-        if (!$this->aggregateRootRegistry->hasAggregateName($aggregate)) {
-            $console->error(sprintf('aggregate type "%s" not exists', $aggregate));
-
-            return 1;
-        }
-
-        $stream = $this->store->load(
-            new Criteria($this->aggregateRootRegistry->aggregateClass($aggregate), $id),
-        );
-
-        $hasMessage = false;
-        foreach ($stream as $message) {
-            $hasMessage = true;
-            $console->message($this->serializer, $message);
-        }
-
-        if ($hasMessage) {
-            return 0;
-        }
-
-        $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
-
-        return 1;
+        return 0;
     }
 }

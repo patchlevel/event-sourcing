@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console;
 
-use DateTimeImmutable;
+use DateTimeInterface;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
@@ -31,7 +31,7 @@ final class OutputStyle extends SymfonyStyle
                 $message->aggregateClass(),
                 $message->aggregateId(),
                 $message->playhead(),
-                $message->recordedOn()->format(DateTimeImmutable::ATOM),
+                $message->recordedOn()->format(DateTimeInterface::ATOM),
             ],
         ]);
 
