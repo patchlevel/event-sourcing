@@ -18,7 +18,7 @@ use function is_array;
 use function is_string;
 
 /** @interal */
-abstract class ProjectionistCommand extends Command
+abstract class ProjectionCommand extends Command
 {
     public function __construct(
         protected readonly Projectionist $projectionist,

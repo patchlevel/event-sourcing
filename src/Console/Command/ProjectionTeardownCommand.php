@@ -9,15 +9,15 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    'event-sourcing:projectionist:reactivate',
-    'Reactivate failed projections',
+    'event-sourcing:projection:teardown',
+    'Shut down and delete the outdated projections',
 )]
-final class ProjectionistReactivateCommand extends ProjectionistCommand
+final class ProjectionTeardownCommand extends ProjectionCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $criteria = $this->projectionCriteria($input);
-        $this->projectionist->reactivate($criteria);
+        $this->projectionist->teardown($criteria);
 
         return 0;
     }

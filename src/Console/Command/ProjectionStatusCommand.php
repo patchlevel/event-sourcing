@@ -13,10 +13,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use function array_map;
 
 #[AsCommand(
-    'event-sourcing:projectionist:status',
+    'event-sourcing:projection:status',
     'View the current status of the projections',
 )]
-final class ProjectionistStatusCommand extends ProjectionistCommand
+final class ProjectionStatusCommand extends ProjectionCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {

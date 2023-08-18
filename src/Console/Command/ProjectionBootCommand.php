@@ -11,10 +11,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    'event-sourcing:projectionist:boot',
+    'event-sourcing:projection:boot',
     'Prepare new projections and catch up with the event store',
 )]
-final class ProjectionistBootCommand extends ProjectionistCommand
+final class ProjectionBootCommand extends ProjectionCommand
 {
     public function configure(): void
     {

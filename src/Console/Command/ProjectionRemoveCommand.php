@@ -10,10 +10,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    'event-sourcing:projectionist:remove',
-    'Delete a projection and remove it from the store',
+    'event-sourcing:projection:remove',
+    'Delete all projection and metadata',
 )]
-final class ProjectionistRemoveCommand extends ProjectionistCommand
+final class ProjectionRemoveCommand extends ProjectionCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
