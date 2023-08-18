@@ -22,8 +22,8 @@ use function sprintf;
 final class WatchCommand extends Command
 {
     public function __construct(
-        private WatchServer $server,
-        private EventSerializer $serializer,
+        private readonly WatchServer $server,
+        private readonly EventSerializer $serializer,
     ) {
         parent::__construct();
     }

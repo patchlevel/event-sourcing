@@ -64,24 +64,44 @@ final class InputHelper
     }
 
     /** @return positive-int|null */
-    public static function nullablePositivInt(mixed $value): int|null
+    public static function nullablePositiveInt(mixed $value): int|null
     {
         if ($value === null) {
             return null;
         }
 
         if (!is_string($value) && !is_int($value)) {
-            throw new InvalidArgumentGiven($value, 'positiv-int|null');
+            throw new InvalidArgumentGiven($value, 'positive-int|null');
         }
 
         if (!is_numeric($value)) {
-            throw new InvalidArgumentGiven($value, 'positiv-int|null');
+            throw new InvalidArgumentGiven($value, 'positive-int|null');
         }
 
         $value = (int)$value;
 
         if ($value <= 0) {
-            throw new InvalidArgumentGiven($value, 'positiv-int|null');
+            throw new InvalidArgumentGiven($value, 'positive-int|null');
+        }
+
+        return $value;
+    }
+
+    /** @return positive-int|0 */
+    public static function positiveIntOrZero(mixed $value): int
+    {
+        if (!is_string($value) && !is_int($value)) {
+            throw new InvalidArgumentGiven($value, 'positive-int|0');
+        }
+
+        if (!is_numeric($value)) {
+            throw new InvalidArgumentGiven($value, 'positive-int|0');
+        }
+
+        $value = (int)$value;
+
+        if ($value < 0) {
+            throw new InvalidArgumentGiven($value, 'positive-int|0');
         }
 
         return $value;
