@@ -13,10 +13,10 @@ use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    'event-sourcing:projectionist:run',
-    'Run the active projectors',
+    'event-sourcing:projection:run',
+    'Run the active projections',
 )]
-final class ProjectionistRunCommand extends ProjectionistCommand
+final class ProjectionRunCommand extends ProjectionCommand
 {
     protected function configure(): void
     {

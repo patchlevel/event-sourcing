@@ -12,10 +12,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    'event-sourcing:projectionist:rebuild',
+    'event-sourcing:projection:rebuild',
     'Rebuild projections (remove & boot)',
 )]
-final class ProjectionistRebuildCommand extends ProjectionistCommand
+final class ProjectionRebuildCommand extends ProjectionCommand
 {
     public function configure(): void
     {
