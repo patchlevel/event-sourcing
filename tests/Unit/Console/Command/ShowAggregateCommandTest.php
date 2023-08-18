@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Console\Command\ShowCommand;
+use Patchlevel\EventSourcing\Console\Command\ShowAggregateCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
@@ -25,8 +25,8 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 
-/** @covers \Patchlevel\EventSourcing\Console\Command\ShowCommand */
-final class ShowCommandTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Console\Command\ShowAggregateCommand */
+final class ShowAggregateCommandTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -53,7 +53,7 @@ final class ShowCommandTest extends TestCase
             ),
         );
 
-        $command = new ShowCommand(
+        $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -80,7 +80,7 @@ final class ShowCommandTest extends TestCase
         $store = $this->prophesize(Store::class);
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $command = new ShowCommand(
+        $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -102,7 +102,7 @@ final class ShowCommandTest extends TestCase
         $store = $this->prophesize(Store::class);
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $command = new ShowCommand(
+        $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -124,7 +124,7 @@ final class ShowCommandTest extends TestCase
         $store = $this->prophesize(Store::class);
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $command = new ShowCommand(
+        $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -153,7 +153,7 @@ final class ShowCommandTest extends TestCase
 
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $command = new ShowCommand(
+        $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -178,7 +178,7 @@ final class ShowCommandTest extends TestCase
     public function testInteractiveMissingAggregateShouldRaiseException(): void
     {
         $commandTest = new CommandTester(
-            new ShowCommand(
+            new ShowAggregateCommand(
                 $this->prophesize(Store::class)->reveal(),
                 $this->prophesize(EventSerializer::class)->reveal(),
                 new AggregateRootRegistry(['test' => Profile::class]),
@@ -192,7 +192,7 @@ final class ShowCommandTest extends TestCase
     public function testInteractiveMissingIdShouldRaiseException(): void
     {
         $commandTest = new CommandTester(
-            new ShowCommand(
+            new ShowAggregateCommand(
                 $this->prophesize(Store::class)->reveal(),
                 $this->prophesize(EventSerializer::class)->reveal(),
                 new AggregateRootRegistry(['test' => Profile::class]),
@@ -230,7 +230,7 @@ final class ShowCommandTest extends TestCase
         );
 
         $commandTest = new CommandTester(
-            new ShowCommand(
+            new ShowAggregateCommand(
                 $store->reveal(),
                 $serializer->reveal(),
                 new AggregateRootRegistry(['profile' => Profile::class]),
