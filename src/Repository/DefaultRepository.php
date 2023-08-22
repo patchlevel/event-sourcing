@@ -226,9 +226,16 @@ final class DefaultRepository implements Repository
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 
-        $batchSize = $this->metadata->snapshot?->batch ?: 1;
+        $position = $stream->position();
 
-        if ($stream->position() < $batchSize) {
+        if ($position === null) {
+            return;
+        }
+
+        $batchSize = $this->metadata->snapshot?->batch ?: 1;
+        $count = $position + 1;
+
+        if ($count < $batchSize) {
             return;
         }
 

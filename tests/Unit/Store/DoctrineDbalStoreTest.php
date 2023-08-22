@@ -28,6 +28,8 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+use function iterator_to_array;
+
 /** @covers \Patchlevel\EventSourcing\Store\DoctrineDbalStore */
 final class DoctrineDbalStoreTest extends TestCase
 {
@@ -73,6 +75,9 @@ final class DoctrineDbalStoreTest extends TestCase
                 ->build(),
         );
 
+        self::assertSame(null, $stream->index());
+        self::assertSame(null, $stream->position());
+
         self::assertCount(0, $stream);
     }
 
@@ -84,6 +89,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new ArrayIterator(
             [
                 [
+                    'id' => 1,
                     'aggregate' => 'profile',
                     'aggregate_id' => '1',
                     'playhead' => '1',
@@ -134,13 +140,24 @@ final class DoctrineDbalStoreTest extends TestCase
                 ->build(),
         );
 
+        self::assertSame(1, $stream->index());
+        self::assertSame(0, $stream->position());
+
         $message = $stream->current();
+
+        self::assertSame(1, $stream->index());
+        self::assertSame(0, $stream->position());
 
         self::assertInstanceOf(Message::class, $message);
         self::assertInstanceOf(ProfileCreated::class, $message->event());
         self::assertSame('1', $message->aggregateId());
         self::assertSame(1, $message->playhead());
         self::assertEquals(new DateTimeImmutable('2021-02-17 10:00:00'), $message->recordedOn());
+
+        iterator_to_array($stream);
+
+        self::assertSame(1, $stream->index());
+        self::assertSame(0, $stream->position());
     }
 
     public function testTransactional(): void

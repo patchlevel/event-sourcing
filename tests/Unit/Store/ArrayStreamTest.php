@@ -23,8 +23,9 @@ final class ArrayStreamTest extends TestCase
     {
         $stream = new ArrayStream();
 
-        self::assertSame(0, $stream->position());
+        self::assertSame(null, $stream->position());
         self::assertSame(null, $stream->current());
+        self::assertSame(null, $stream->index());
 
         $array = iterator_to_array($stream);
 
@@ -44,12 +45,14 @@ final class ArrayStreamTest extends TestCase
 
         $stream = new ArrayStream($messages);
 
+        self::assertSame(1, $stream->index());
         self::assertSame(0, $stream->position());
         self::assertSame($message, $stream->current());
 
         $array = iterator_to_array($stream);
 
-        self::assertSame(1, $stream->position());
+        self::assertSame(1, $stream->index());
+        self::assertSame(0, $stream->position());
         self::assertSame(null, $stream->current());
 
         self::assertSame($messages, $array);
@@ -80,10 +83,12 @@ final class ArrayStreamTest extends TestCase
 
         $stream = new ArrayStream($messages);
 
+        self::assertSame(1, $stream->index());
         self::assertSame(0, $stream->position());
 
         iterator_to_array($stream);
 
-        self::assertSame(3, $stream->position());
+        self::assertSame(3, $stream->index());
+        self::assertSame(2, $stream->position());
     }
 }

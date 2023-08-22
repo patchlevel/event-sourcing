@@ -14,5 +14,9 @@ interface Stream extends Traversable
 
     public function current(): Message|null;
 
-    public function position(): int;
+    /** @return positive-int|0|null */
+    public function position(): int|null;
+
+    /** @return positive-int|null */
+    public function index(): int|null;
 }

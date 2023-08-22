@@ -16,13 +16,15 @@ final class ArrayStream implements Stream, IteratorAggregate
 {
     /** @var Iterator<Message> $iterator */
     private readonly Iterator $iterator;
-    private int $position;
 
-    /** @param list<Message> $messages */
+    /** @var positive-int|0|null */
+    private int|null $position;
+
+    /** @param list<Message> $messages The index is based on position. An offset is not supported. */
     public function __construct(array $messages = [])
     {
         $this->iterator = $messages === [] ? new ArrayIterator() : $this->createGenerator($messages);
-        $this->position = 0;
+        $this->position = null;
     }
 
     public function close(): void
@@ -32,12 +34,33 @@ final class ArrayStream implements Stream, IteratorAggregate
     /** @return Traversable<Message> */
     public function getIterator(): Traversable
     {
-        yield from $this->iterator;
+        return $this->iterator;
     }
 
-    public function position(): int
+    /** @return positive-int|0|null */
+    public function position(): int|null
     {
+        if (!$this->position) {
+            $this->iterator->key();
+        }
+
         return $this->position;
+    }
+
+    /**
+     * The index is based on position. An offset is not supported.
+     *
+     * @return positive-int|null
+     */
+    public function index(): int|null
+    {
+        $position = $this->position();
+
+        if ($position === null) {
+            return null;
+        }
+
+        return $position + 1;
     }
 
     public function current(): Message|null
@@ -53,7 +76,11 @@ final class ArrayStream implements Stream, IteratorAggregate
     private function createGenerator(array $messages): Generator
     {
         foreach ($messages as $message) {
-            $this->position++;
+            if ($this->position === null) {
+                $this->position = 0;
+            } else {
+                $this->position++;
+            }
 
             yield $message;
         }
