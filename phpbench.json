@@ -1,5 +1,54 @@
 {
   "$schema":"./vendor/phpbench/phpbench/phpbench.schema.json",
   "runner.bootstrap": "vendor/autoload.php",
-  "runner.file_pattern": "*Bench.php"
+  "runner.file_pattern": "*Bench.php",
+  "report.generators": {
+    "diff": {
+      "generator": "component",
+      "partition": ["benchmark_name"],
+      "components": [
+        {
+          "component": "section",
+          "title": "{{ first(frame[\"benchmark_name\"]) }}",
+          "components": [
+            {
+              "component": "table_aggregate",
+              "partition": ["subject_name", "variant_name"],
+              "groups":
+              {
+                "time (kde mode)":
+                {
+                  "cols": ["time"]
+                },
+                "memory":
+                {
+                  "cols": ["memory"]
+                }
+              },
+              "row":
+              {
+                "subject": "first(partition[\"subject_name\"]) ~ \" (\" ~ first(partition[\"variant_name\"]) ~ \")\"",
+                "time":
+                {
+                  "type": "expand",
+                  "partition": "suite_tag",
+                  "cols":
+                  {
+                    "Tag: {{ key }}": "mode(partition[\"result_time_avg\"]) as time ~ ' (' ~ rstdev(partition['result_time_avg']) ~ ')'"
+                  }
+                },
+                "memory":
+                {
+                  "type": "expand",
+                  "partition": "suite_tag",
+                  "cols":
+                  {
+                    "Tag: {{ key }} ": "mode(partition[\"result_mem_peak\"]) as memory"
+                  }
+                }
+              }
+            }]
+        }]
+    }
+  }
 }
