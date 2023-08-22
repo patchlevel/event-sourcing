@@ -29,6 +29,7 @@ final class EventRegistryTest extends TestCase
         self::assertEquals('profile.created', $registry->eventName(ProfileCreated::class));
         self::assertEquals(ProfileCreated::class, $registry->eventClass('profile.created'));
         self::assertEquals(['profile.created' => ProfileCreated::class], $registry->eventClasses());
+        self::assertEquals([ProfileCreated::class => 'profile.created'], $registry->eventNames());
     }
 
     public function testEventClassNotRegistered(): void
