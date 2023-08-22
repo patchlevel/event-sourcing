@@ -76,9 +76,8 @@ final class LoadEventsWithSnapshotsBench
         $this->snapshotStore->save($profile);
     }
 
-    #[Bench\Revs(10)]
-    #[Bench\Iterations(2)]
-    public function benchLoadEvents(): void
+    #[Bench\Revs(20)]
+    public function benchLoad10000Events(): void
     {
         $this->repository->load('1');
     }
