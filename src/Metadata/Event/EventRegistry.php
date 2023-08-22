@@ -57,4 +57,10 @@ final class EventRegistry
     {
         return $this->nameToClassMap;
     }
+
+    /** @return array<class-string, string> */
+    public function eventNames(): array
+    {
+        return $this->classToNameMap;
+    }
 }
