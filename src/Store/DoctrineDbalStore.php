@@ -30,14 +30,21 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
     ) {
     }
 
-    public function load(Criteria|null $criteria = null, bool $backwards = false): DoctrineDbalStoreStream
-    {
+    public function load(
+        Criteria|null $criteria = null,
+        int|null $limit = null,
+        int|null $offset = null,
+        bool $backwards = false,
+    ): DoctrineDbalStoreStream {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->storeTableName)
             ->orderBy('id', $backwards ? 'DESC' : 'ASC');
 
         $this->applyCriteria($builder, $criteria ?? new Criteria());
+
+        $builder->setMaxResults($limit);
+        $builder->setFirstResult($offset ?? 0);
 
         return new DoctrineDbalStoreStream(
             $this->connection->executeQuery(

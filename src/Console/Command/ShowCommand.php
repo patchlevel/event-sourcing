@@ -55,7 +55,7 @@ final class ShowCommand extends Command
         $console = new OutputStyle($input, $output);
 
         $maxCount = $this->store->count();
-        $stream = $this->store->load(null, !$forward);
+        $stream = $this->store->load(null, null, null, !$forward);
 
         $currentCount = 0;
 

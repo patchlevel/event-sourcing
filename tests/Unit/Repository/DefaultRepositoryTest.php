@@ -646,7 +646,6 @@ final class DefaultRepositoryTest extends TestCase
             ProfileWithSnapshot::class,
             '1',
             null,
-            null,
             1,
         ))->willReturn(new ArrayStream());
 
@@ -739,7 +738,6 @@ final class DefaultRepositoryTest extends TestCase
             new Criteria(
                 ProfileWithSnapshot::class,
                 '1',
-                null,
                 null,
                 1,
             ),

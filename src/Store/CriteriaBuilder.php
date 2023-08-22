@@ -11,7 +11,6 @@ final class CriteriaBuilder
     /** @var class-string<AggregateRoot>|null */
     private string|null $aggregateClass = null;
     private string|null $aggregateId = null;
-    private int|null $limit = null;
     private int|null $fromIndex = null;
     private int|null $fromPlayhead = null;
     private bool|null $archived = null;
@@ -27,13 +26,6 @@ final class CriteriaBuilder
     public function aggregateId(string|null $aggregateId): self
     {
         $this->aggregateId = $aggregateId;
-
-        return $this;
-    }
-
-    public function limit(int|null $limit): self
-    {
-        $this->limit = $limit;
 
         return $this;
     }
@@ -64,7 +56,6 @@ final class CriteriaBuilder
         return new Criteria(
             $this->aggregateClass,
             $this->aggregateId,
-            $this->limit,
             $this->fromIndex,
             $this->fromPlayhead,
             $this->archived,
