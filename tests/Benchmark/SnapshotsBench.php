@@ -26,7 +26,7 @@ use function file_exists;
 use function unlink;
 
 #[Bench\BeforeMethods('setUp')]
-final class LoadEventsWithSnapshotsBench
+final class SnapshotsBench
 {
     private const DB_PATH = __DIR__ . '/BasicImplementation/data/db.sqlite3';
 

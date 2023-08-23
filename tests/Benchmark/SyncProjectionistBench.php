@@ -33,7 +33,7 @@ use function file_exists;
 use function unlink;
 
 #[Bench\BeforeMethods('setUp')]
-final class WriteEventsWithSyncProjectionistBench
+final class SyncProjectionistBench
 {
     private const DB_PATH = __DIR__ . '/BasicImplementation/data/db.sqlite3';
 
