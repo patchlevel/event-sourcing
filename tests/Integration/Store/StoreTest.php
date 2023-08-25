@@ -88,4 +88,21 @@ final class StoreTest extends TestCase
         self::assertEquals('profile.created', $result2['event']);
         self::assertEquals(['profileId' => 'test', 'name' => 'test'], json_decode($result1['payload'], true));
     }
+
+    public function testLoad(): void
+    {
+        $message = Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
+            ->withAggregateClass(Profile::class)
+            ->withAggregateId('test')
+            ->withPlayhead(1)
+            ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'));
+
+        $this->store->save($message);
+
+        $stream = $this->store->load();
+
+        self::assertSame(1, $stream->index());
+        self::assertSame(0, $stream->position());
+        self::assertEquals($message, $stream->current());
+    }
 }
