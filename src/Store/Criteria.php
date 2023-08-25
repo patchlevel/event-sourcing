@@ -12,7 +12,6 @@ final class Criteria
         /** @var class-string<AggregateRoot>|null */
         public readonly string|null $aggregateClass = null,
         public readonly string|null $aggregateId = null,
-        public readonly int|null $limit = null,
         public readonly int|null $fromIndex = null,
         public readonly int|null $fromPlayhead = null,
         public readonly bool|null $archived = null,
