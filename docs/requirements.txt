@@ -1,11 +1,11 @@
 mkdocs==1.5.2
 mike==1.1.2
 markdown==3.4.4
-mkdocs-material==9.2.6
+mkdocs-material==9.2.7
 
 # Markdown extensions
 Pygments==2.16.1
-pymdown-extensions==10.2.1
+pymdown-extensions==10.3
 
 # MkDocs plugins
 mkdocs-material-extensions==1.1.1
