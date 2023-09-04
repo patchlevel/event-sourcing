@@ -30,7 +30,7 @@ jobs:
           extensions: pdo_sqlite
 
       - name: "Checkout base"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
 
@@ -42,7 +42,7 @@ jobs:
         run: "vendor/bin/phpbench run tests/Benchmark --progress=none --report=default --tag=base"
 
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           clean: false
 
