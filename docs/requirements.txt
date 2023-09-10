@@ -1,7 +1,7 @@
 mkdocs==1.5.2
 mike==1.1.2
 markdown==3.4.4
-mkdocs-material==9.2.7
+mkdocs-material==9.2.8
 
 # Markdown extensions
 Pygments==2.16.1
