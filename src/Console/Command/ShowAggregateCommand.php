@@ -79,6 +79,8 @@ final class ShowAggregateCommand extends Command
             $console->message($this->serializer, $message);
         }
 
+        $stream->close();
+
         if ($hasMessage) {
             return 0;
         }

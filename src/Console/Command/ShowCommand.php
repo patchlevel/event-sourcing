@@ -91,6 +91,8 @@ final class ShowCommand extends Command
             );
         } while ($continue);
 
+        $stream->close();
+
         return 0;
     }
 }

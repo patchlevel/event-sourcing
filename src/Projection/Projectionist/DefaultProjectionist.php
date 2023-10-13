@@ -113,26 +113,32 @@ final class DefaultProjectionist implements Projectionist
 
         $this->logger?->debug(sprintf('event stream is processed from position %s', $currentPosition));
 
-        $criteria = (new CriteriaBuilder())->fromIndex($currentPosition)->build();
-        $stream = $this->streamableMessageStore->load($criteria);
+        $stream = null;
 
-        $messageCounter = 0;
+        try {
+            $criteria = (new CriteriaBuilder())->fromIndex($currentPosition)->build();
+            $stream = $this->streamableMessageStore->load($criteria);
 
-        foreach ($stream as $message) {
-            foreach ($projections->filterByProjectionStatus(ProjectionStatus::Booting) as $projection) {
-                $this->handleMessage($message, $projection, $throwByError);
+            $messageCounter = 0;
+
+            foreach ($stream as $message) {
+                foreach ($projections->filterByProjectionStatus(ProjectionStatus::Booting) as $projection) {
+                    $this->handleMessage($message, $projection, $throwByError);
+                }
+
+                $currentPosition++;
+                $messageCounter++;
+
+                $this->logger?->info(sprintf('current event stream position: %s', $currentPosition));
+
+                if ($limit !== null && $messageCounter >= $limit) {
+                    $this->logger?->info('message limit reached, finish');
+
+                    return;
+                }
             }
-
-            $currentPosition++;
-            $messageCounter++;
-
-            $this->logger?->info(sprintf('current event stream position: %s', $currentPosition));
-
-            if ($limit !== null && $messageCounter >= $limit) {
-                $this->logger?->info('message limit reached, finish');
-
-                return;
-            }
+        } finally {
+            $stream?->close();
         }
 
         $this->logger?->info('end of stream has been reached');
@@ -184,38 +190,44 @@ final class DefaultProjectionist implements Projectionist
 
         $this->logger?->debug(sprintf('event stream is processed from position %s', $currentPosition));
 
-        $criteria = (new CriteriaBuilder())->fromIndex($currentPosition)->build();
-        $stream = $this->streamableMessageStore->load($criteria);
+        $stream = null;
 
-        $messageCounter = 0;
+        try {
+            $criteria = (new CriteriaBuilder())->fromIndex($currentPosition)->build();
+            $stream = $this->streamableMessageStore->load($criteria);
 
-        foreach ($stream as $message) {
-            foreach ($projections->filterByProjectionStatus(ProjectionStatus::Active) as $projection) {
-                if ($projection->position() > $currentPosition) {
-                    $this->logger?->debug(
-                        sprintf(
-                            'projection "%s" is farther than the current position (%s) and will be skipped',
-                            $projection->id()->toString(),
-                            $projection->position(),
-                        ),
-                    );
+            $messageCounter = 0;
 
-                    continue;
+            foreach ($stream as $message) {
+                foreach ($projections->filterByProjectionStatus(ProjectionStatus::Active) as $projection) {
+                    if ($projection->position() > $currentPosition) {
+                        $this->logger?->debug(
+                            sprintf(
+                                'projection "%s" is farther than the current position (%s) and will be skipped',
+                                $projection->id()->toString(),
+                                $projection->position(),
+                            ),
+                        );
+
+                        continue;
+                    }
+
+                    $this->handleMessage($message, $projection, $throwByError);
                 }
 
-                $this->handleMessage($message, $projection, $throwByError);
+                $currentPosition++;
+                $messageCounter++;
+
+                $this->logger?->info(sprintf('current event stream position: %s', $currentPosition));
+
+                if ($limit !== null && $messageCounter >= $limit) {
+                    $this->logger?->info('message limit reached, finish');
+
+                    return;
+                }
             }
-
-            $currentPosition++;
-            $messageCounter++;
-
-            $this->logger?->info(sprintf('current event stream position: %s', $currentPosition));
-
-            if ($limit !== null && $messageCounter >= $limit) {
-                $this->logger?->info('message limit reached, finish');
-
-                return;
-            }
+        } finally {
+            $stream?->close();
         }
 
         $this->logger?->debug('end of stream has been reached, finish');
