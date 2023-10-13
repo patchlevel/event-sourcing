@@ -10,6 +10,8 @@ use function assert;
 
 final class Psr6EventRegistryFactory implements EventRegistryFactory
 {
+    private const CACHE_KEY = 'event_registry';
+
     public function __construct(
         private readonly EventRegistryFactory $eventRegistryFactory,
         private readonly CacheItemPoolInterface $cache,
@@ -19,7 +21,7 @@ final class Psr6EventRegistryFactory implements EventRegistryFactory
     /** @param list<string> $paths */
     public function create(array $paths): EventRegistry
     {
-        $item = $this->cache->getItem('events');
+        $item = $this->cache->getItem(self::CACHE_KEY);
 
         if ($item->isHit()) {
             $data = $item->get();

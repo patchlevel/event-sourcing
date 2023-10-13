@@ -10,6 +10,8 @@ use function assert;
 
 final class Psr6AggregateRootRegistryFactory implements AggregateRootRegistryFactory
 {
+    private const CACHE_KEY = 'aggregate_root_registry';
+
     public function __construct(
         private readonly AggregateRootRegistryFactory $aggregateRootRegistryFactory,
         private readonly CacheItemPoolInterface $cache,
@@ -19,7 +21,7 @@ final class Psr6AggregateRootRegistryFactory implements AggregateRootRegistryFac
     /** @param list<string> $paths */
     public function create(array $paths): AggregateRootRegistry
     {
-        $item = $this->cache->getItem('aggregate_roots');
+        $item = $this->cache->getItem(self::CACHE_KEY);
 
         if ($item->isHit()) {
             $data = $item->get();
