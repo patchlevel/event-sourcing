@@ -89,21 +89,27 @@ final class DefaultRepository implements Repository
             ->archived(false)
             ->build();
 
-        $stream = $this->store->load($criteria);
+        $stream = null;
 
-        $firstMessage = $stream->current();
+        try {
+            $stream = $this->store->load($criteria);
 
-        if ($firstMessage === null) {
-            throw new AggregateNotFound($this->metadata->className, $id);
-        }
+            $firstMessage = $stream->current();
 
-        $aggregate = $this->metadata->className::createFromEvents(
-            $this->unpack($stream),
-            $firstMessage->playhead() - 1,
-        );
+            if ($firstMessage === null) {
+                throw new AggregateNotFound($this->metadata->className, $id);
+            }
 
-        if ($this->snapshotStore && $this->metadata->snapshot) {
-            $this->saveSnapshot($aggregate, $stream);
+            $aggregate = $this->metadata->className::createFromEvents(
+                $this->unpack($stream),
+                $firstMessage->playhead() - 1,
+            );
+
+            if ($this->snapshotStore && $this->metadata->snapshot) {
+                $this->saveSnapshot($aggregate, $stream->position());
+            }
+        } finally {
+            $stream?->close();
         }
 
         $this->aggregateIsValid[$aggregate] = true;
@@ -200,21 +206,27 @@ final class DefaultRepository implements Repository
             ->fromPlayhead($aggregate->playhead())
             ->build();
 
-        $stream = $this->store->load($criteria);
-
-        if ($stream->current() === null) {
-            $this->aggregateIsValid[$aggregate] = true;
-
-            return $aggregate;
-        }
+        $stream = null;
 
         try {
-            $aggregate->catchUp($this->unpack($stream));
-        } catch (Throwable $exception) {
-            throw new SnapshotRebuildFailed($aggregateClass, $id, $exception);
-        }
+            $stream = $this->store->load($criteria);
 
-        $this->saveSnapshot($aggregate, $stream);
+            if ($stream->current() === null) {
+                $this->aggregateIsValid[$aggregate] = true;
+
+                return $aggregate;
+            }
+
+            try {
+                $aggregate->catchUp($this->unpack($stream));
+            } catch (Throwable $exception) {
+                throw new SnapshotRebuildFailed($aggregateClass, $id, $exception);
+            }
+
+            $this->saveSnapshot($aggregate, $stream->position());
+        } finally {
+            $stream?->close();
+        }
 
         $this->aggregateIsValid[$aggregate] = true;
 
@@ -222,18 +234,16 @@ final class DefaultRepository implements Repository
     }
 
     /** @param T $aggregate */
-    private function saveSnapshot(AggregateRoot $aggregate, Stream $stream): void
+    private function saveSnapshot(AggregateRoot $aggregate, int|null $streamPosition): void
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 
-        $position = $stream->position();
-
-        if ($position === null) {
+        if ($streamPosition === null) {
             return;
         }
 
         $batchSize = $this->metadata->snapshot?->batch ?: 1;
-        $count = $position + 1;
+        $count = $streamPosition + 1;
 
         if ($count < $batchSize) {
             return;
