@@ -8,4 +8,4 @@ Pygments==2.16.1
 pymdown-extensions==10.3
 
 # MkDocs plugins
-mkdocs-material-extensions==1.2
+mkdocs-material-extensions==1.3
