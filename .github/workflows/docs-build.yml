@@ -39,14 +39,14 @@ jobs:
 
       - name: Normalize current versions
         id: current
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: return context.ref.match(/([0-9]+\.[0-9]+)\.(x|[0-9]+)/i)[1];
           result-encoding: string
 
       - name: Normalize latest versions
         id: latest
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: return "${{steps.latest_release.outputs.release}}".match(/([0-9]+\.[0-9]+)\.[0-9]+/i)[1];
           result-encoding: string

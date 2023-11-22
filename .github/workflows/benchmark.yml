@@ -60,7 +60,7 @@ jobs:
           cat bench.txt >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
 
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v7
         with:
           script: |
             // Get the existing comments.
