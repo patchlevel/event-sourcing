@@ -1,11 +1,9 @@
 # Clock
 
-We have a `Clock` interface which enables you to replace the actual clock implementation in your services for testing
-purposes. We are using this clock to create the `recorded_on` datetime for the events.
-
-!!! note
-
-    The `Clock` interface is PSR-20 compatible. For more information see [here](https://github.com/php-fig/fig-standards/blob/master/proposed/clock.md).
+We are using the clock to get the current datetime. This is needed to create the `recorded_on` datetime for the events.
+We have two implementations of the clock, one for the production and one for the tests.
+But you can also create your own implementation that is PSR-20 compatible.
+For more information see [here](https://github.com/php-fig/fig-standards/blob/master/proposed/clock.md).
 
 ## SystemClock
 
@@ -54,6 +52,17 @@ $frozenDate = $clock->now();
 
 $firstDate == $frozenDate // false
 $secondDate == $frozenDate // true
+```
+
+Or you can use the `sleep` method to simulate a time jump.
+
+```php
+use Patchlevel\EventSourcing\Clock\FrozenClock;
+
+$firstDate = new DateTimeImmutable();
+$clock = new FrozenClock($firstDate);
+
+$clock->sleep(10); // sleep 10 seconds
 ```
 
 !!! note

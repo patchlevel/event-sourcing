@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Clock\Clock;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
@@ -15,6 +14,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -22,7 +22,7 @@ use function array_key_exists;
 
 final class DefaultRepositoryManager implements RepositoryManager
 {
-    private Clock $clock;
+    private ClockInterface $clock;
     private AggregateRootMetadataFactory $metadataFactory;
     private LoggerInterface $logger;
 
@@ -35,7 +35,7 @@ final class DefaultRepositoryManager implements RepositoryManager
         private EventBus $eventBus,
         private SnapshotStore|null $snapshotStore = null,
         private MessageDecorator|null $messageDecorator = null,
-        Clock|null $clock = null,
+        ClockInterface|null $clock = null,
         AggregateRootMetadataFactory|null $metadataFactory = null,
         LoggerInterface|null $logger = null,
     ) {
