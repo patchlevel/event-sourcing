@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: "Install PHP"
-        uses: "shivammathur/setup-php@2.25.5"
+        uses: "shivammathur/setup-php@2.28.0"
         with:
           coverage: "pcov"
           php-version: "${{ matrix.php-version }}"
@@ -30,7 +30,7 @@ jobs:
           extensions: pdo_sqlite
 
       - name: "Checkout base"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
 
@@ -42,7 +42,7 @@ jobs:
         run: "vendor/bin/phpbench run tests/Benchmark --progress=none --report=default --tag=base"
 
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           clean: false
 
@@ -60,7 +60,7 @@ jobs:
           cat bench.txt >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
 
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v7
         with:
           script: |
             // Get the existing comments.
