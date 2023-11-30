@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Clock\Clock;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
@@ -18,6 +17,7 @@ use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
+use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -35,7 +35,7 @@ use function sprintf;
  */
 final class DefaultRepository implements Repository
 {
-    private Clock $clock;
+    private ClockInterface $clock;
     private LoggerInterface $logger;
 
     /** @var WeakMap<T, bool> */
@@ -48,7 +48,7 @@ final class DefaultRepository implements Repository
         private readonly AggregateRootMetadata $metadata,
         private SnapshotStore|null $snapshotStore = null,
         private MessageDecorator|null $messageDecorator = null,
-        Clock|null $clock = null,
+        ClockInterface|null $clock = null,
         LoggerInterface|null $logger = null,
     ) {
         $this->clock = $clock ?? new SystemClock();

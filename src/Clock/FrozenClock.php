@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Clock;
 
 use DateTimeImmutable;
+use Psr\Clock\ClockInterface;
 
 use function sprintf;
 
-final class FrozenClock implements Clock
+final class FrozenClock implements ClockInterface
 {
     public function __construct(
         private DateTimeImmutable $frozenDateTime,
