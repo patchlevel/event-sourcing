@@ -29,7 +29,8 @@ final class AttributeEventMetadataFactoryTest extends TestCase
 
     public function testEventWithoutProperties(): void
     {
-        $event = new #[Event('profile_created')] class {
+        $event = new #[Event('profile_created')]
+        class {
         };
 
         $metadataFactory = new AttributeEventMetadataFactory();
@@ -41,9 +42,10 @@ final class AttributeEventMetadataFactoryTest extends TestCase
 
     public function testEventWithProperties(): void
     {
-        $event = new #[Event('profile_created')] class ('Foo') {
+        $event = new #[Event('profile_created')]
+        class ('Foo') {
             public function __construct(
-                public string $name
+                public string $name,
             ) {
             }
         };
@@ -64,10 +66,11 @@ final class AttributeEventMetadataFactoryTest extends TestCase
 
     public function testEventWithFieldName(): void
     {
-        $event = new #[Event('profile_created')] class ('Foo') {
+        $event = new #[Event('profile_created')]
+        class ('Foo') {
             public function __construct(
                 #[NormalizedName('username')]
-                public string $name
+                public string $name,
             ) {
             }
         };
@@ -88,10 +91,11 @@ final class AttributeEventMetadataFactoryTest extends TestCase
 
     public function testEventWithNormalizer(): void
     {
-        $event = new #[Event('profile_created')] class (Email::fromString('info@patchlevel.de')) {
+        $event = new #[Event('profile_created')]
+        class (Email::fromString('info@patchlevel.de')) {
             public function __construct(
                 #[EmailNormalizer]
-                public Email $email
+                public Email $email,
             ) {
             }
         };
@@ -112,10 +116,11 @@ final class AttributeEventMetadataFactoryTest extends TestCase
 
     public function testEventWithLegacyNormalizer(): void
     {
-        $event = new #[Event('profile_created')] class (Email::fromString('info@patchlevel.de')) {
+        $event = new #[Event('profile_created')]
+        class (Email::fromString('info@patchlevel.de')) {
             public function __construct(
                 #[Normalize(new EmailNormalizer())]
-                public Email $email
+                public Email $email,
             ) {
             }
         };

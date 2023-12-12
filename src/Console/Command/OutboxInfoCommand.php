@@ -16,19 +16,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:outbox:info',
-    'displays the messages stored in the outbox store'
+    'displays the messages stored in the outbox store',
 )]
 final class OutboxInfoCommand extends Command
 {
-    private OutboxStore $store;
-    private EventSerializer $serializer;
-
-    public function __construct(OutboxStore $store, EventSerializer $serializer)
+    public function __construct(private OutboxStore $store, private EventSerializer $serializer)
     {
         parent::__construct();
-
-        $this->store = $store;
-        $this->serializer = $serializer;
     }
 
     protected function configure(): void

@@ -47,7 +47,7 @@ final class PipelineTest extends TestCase
             [
                 new ExcludeEventMiddleware([ProfileCreated::class]),
                 new RecalculatePlayheadMiddleware(),
-            ]
+            ],
         );
 
         self::assertSame(5, $pipeline->count());
@@ -71,17 +71,15 @@ final class PipelineTest extends TestCase
         self::assertSame(1, $resultMessages[2]->playhead());
     }
 
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     private function messages(): array
     {
         return [
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de')
-                )
+                    Email::fromString('hallo@patchlevel.de'),
+                ),
             )
                 ->withAggregateClass(Profile::class)
                 ->withAggregateId('1')
@@ -89,8 +87,8 @@ final class PipelineTest extends TestCase
 
             Message::create(
                 new ProfileVisited(
-                    ProfileId::fromString('1')
-                )
+                    ProfileId::fromString('1'),
+                ),
             )
                 ->withAggregateClass(Profile::class)
                 ->withAggregateId('1')
@@ -98,8 +96,8 @@ final class PipelineTest extends TestCase
 
             Message::create(
                 new ProfileVisited(
-                    ProfileId::fromString('1')
-                )
+                    ProfileId::fromString('1'),
+                ),
             )
                 ->withAggregateClass(Profile::class)
                 ->withAggregateId('1')
@@ -108,8 +106,8 @@ final class PipelineTest extends TestCase
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('2'),
-                    Email::fromString('hallo@patchlevel.de')
-                )
+                    Email::fromString('hallo@patchlevel.de'),
+                ),
             )
                 ->withAggregateClass(Profile::class)
                 ->withAggregateId('2')
@@ -117,8 +115,8 @@ final class PipelineTest extends TestCase
 
             Message::create(
                 new ProfileVisited(
-                    ProfileId::fromString('2')
-                )
+                    ProfileId::fromString('2'),
+                ),
             )
                 ->withAggregateClass(Profile::class)
                 ->withAggregateId('2')

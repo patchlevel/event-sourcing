@@ -11,18 +11,12 @@ final class DefaultEventBus implements EventBus
 {
     /** @var array<Message<object>> */
     private array $queue;
-    /**  @var list<Listener> */
-    private array $listeners;
-
     private bool $processing;
 
-    /**
-     * @param list<Listener> $listeners
-     */
-    public function __construct(array $listeners = [])
+    /** @param list<Listener> $listeners */
+    public function __construct(private array $listeners = [])
     {
         $this->queue = [];
-        $this->listeners = $listeners;
         $this->processing = false;
     }
 

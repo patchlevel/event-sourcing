@@ -52,7 +52,7 @@ final class LoadEventsWithSnapshotsBench
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
-            'eventstore'
+            'eventstore',
         );
 
         $this->snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
@@ -61,7 +61,7 @@ final class LoadEventsWithSnapshotsBench
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,
-            $this->store
+            $this->store,
         );
 
         $schemaDirector->create();

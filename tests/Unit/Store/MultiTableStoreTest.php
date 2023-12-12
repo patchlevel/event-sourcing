@@ -46,7 +46,7 @@ final class MultiTableStoreTest extends TestCase
             ],
             [
                 'archived' => Types::BOOLEAN,
-            ]
+            ],
         )->willReturn([]);
         $connection->createQueryBuilder()->willReturn($queryBuilder);
         $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
@@ -57,7 +57,7 @@ final class MultiTableStoreTest extends TestCase
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
 
         $events = $singleTableStore->load(Profile::class, '1');
@@ -78,7 +78,7 @@ final class MultiTableStoreTest extends TestCase
             ],
             [
                 'archived' => Types::BOOLEAN,
-            ]
+            ],
         )->willReturn(
             [
                 [
@@ -89,7 +89,7 @@ final class MultiTableStoreTest extends TestCase
                     'recorded_on' => '2021-02-17 10:00:00',
                     'custom_headers' => '[]',
                 ],
-            ]
+            ],
         );
 
         $connection->createQueryBuilder()->willReturn($queryBuilder);
@@ -107,7 +107,7 @@ final class MultiTableStoreTest extends TestCase
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
 
         $messages = $singleTableStore->load(Profile::class, '1');
@@ -132,7 +132,7 @@ final class MultiTableStoreTest extends TestCase
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
 
         $store->transactionBegin();
@@ -149,7 +149,7 @@ final class MultiTableStoreTest extends TestCase
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
 
         $store->transactionCommit();
@@ -166,7 +166,7 @@ final class MultiTableStoreTest extends TestCase
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
 
         $store->transactionRollback();
@@ -186,7 +186,7 @@ final class MultiTableStoreTest extends TestCase
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore'
+            'eventstore',
         );
 
         $store->transactional($callback);
@@ -214,7 +214,7 @@ final class MultiTableStoreTest extends TestCase
                 'aggregate' => 'profile',
                 'aggregate_id' => '1',
                 'playhead' => 1,
-            ]
+            ],
         )->shouldBeCalledOnce();
 
         $innerMockedConnection->lastInsertId()->shouldBeCalledOnce()->willReturn('2');
@@ -248,9 +248,7 @@ final class MultiTableStoreTest extends TestCase
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
-            /**
-             * @param array{0: callable} $args
-             */
+            /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
         );
 
@@ -258,7 +256,7 @@ final class MultiTableStoreTest extends TestCase
             $mockedConnection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore_metadata'
+            'eventstore_metadata',
         );
         $multiTableStore->save($message);
     }
@@ -278,14 +276,14 @@ final class MultiTableStoreTest extends TestCase
             SET archived = true
             WHERE aggregate_id = :aggregate_id
             AND playhead < :playhead
-            AND archived = false'
+            AND archived = false',
         )->shouldBeCalledOnce()->willReturn($statement->reveal());
 
         $multiTableStore = new MultiTableStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
-            'eventstore_metadata'
+            'eventstore_metadata',
         );
         $multiTableStore->archiveMessages(Profile::class, '1', 1);
     }

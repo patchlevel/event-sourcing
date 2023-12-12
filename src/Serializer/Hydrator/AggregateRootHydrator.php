@@ -18,8 +18,6 @@ interface AggregateRootHydrator
      */
     public function hydrate(string $class, array $data): AggregateRoot;
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function extract(AggregateRoot $aggregateRoot): array;
 }

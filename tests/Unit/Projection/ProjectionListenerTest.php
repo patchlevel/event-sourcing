@@ -23,8 +23,8 @@ final class ProjectionListenerTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('foo@bar.com')
-            )
+                Email::fromString('foo@bar.com'),
+            ),
         );
 
         $projectionRepository = $this->prophesize(ProjectionHandler::class);

@@ -11,7 +11,7 @@ final class ProfileVisited
 {
     public function __construct(
         #[ProfileIdNormalizer]
-        public ProfileId $visitorId
+        public ProfileId $visitorId,
     ) {
     }
 }

@@ -12,7 +12,7 @@ final class AggregateRootPropertyMetadata
     public function __construct(
         public readonly string $fieldName,
         public readonly ReflectionProperty $reflection,
-        public readonly ?Normalizer $normalizer = null
+        public readonly Normalizer|null $normalizer = null,
     ) {
     }
 }

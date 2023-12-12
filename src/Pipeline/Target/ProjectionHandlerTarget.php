@@ -7,16 +7,11 @@ namespace Patchlevel\EventSourcing\Pipeline\Target;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\ProjectionHandler;
 
-/**
- * @deprecated use ProjectorRepositoryTarget instead
- */
+/** @deprecated use ProjectorRepositoryTarget instead */
 final class ProjectionHandlerTarget implements Target
 {
-    private ProjectionHandler $projectionHandler;
-
-    public function __construct(ProjectionHandler $projectionHandler)
+    public function __construct(private ProjectionHandler $projectionHandler)
     {
-        $this->projectionHandler = $projectionHandler;
     }
 
     public function save(Message $message): void

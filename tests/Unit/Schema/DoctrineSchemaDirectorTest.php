@@ -39,7 +39,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
             $connection->reveal(),
-            $schemaConfigurator->reveal()
+            $schemaConfigurator->reveal(),
         );
 
         $doctrineSchemaManager->create();
@@ -63,7 +63,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
             $connection->reveal(),
-            $schemaConfigurator->reveal()
+            $schemaConfigurator->reveal(),
         );
 
         $sqlStatements = $doctrineSchemaManager->dryRunCreate();
@@ -102,7 +102,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
             $connection->reveal(),
-            $schemaConfigurator->reveal()
+            $schemaConfigurator->reveal(),
         );
 
         $doctrineSchemaManager->update();
@@ -139,7 +139,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
             $connection->reveal(),
-            $schemaConfigurator->reveal()
+            $schemaConfigurator->reveal(),
         );
 
         $sqlStatements = $doctrineSchemaManager->dryRunUpdate();
@@ -173,7 +173,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
             $connection->reveal(),
-            $schemaConfigurator->reveal()
+            $schemaConfigurator->reveal(),
         );
 
         $doctrineSchemaManager->drop();
@@ -202,7 +202,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
             $connection->reveal(),
-            $schemaConfigurator->reveal()
+            $schemaConfigurator->reveal(),
         );
 
         $queries = $doctrineSchemaManager->dryRunDrop();

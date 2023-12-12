@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 final class ProjectorHelper
 {
     public function __construct(
-        private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver()
+        private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
     ) {
     }
 

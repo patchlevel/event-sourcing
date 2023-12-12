@@ -35,28 +35,26 @@ final class ProjectionRebuildCommandTest extends TestCase
 
     public function setUp(): void
     {
-        /**
-         * @return Generator<Message>
-         */
+        /** @return Generator<Message> */
         $this->messages = static function (): Generator {
             yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             );
 
             yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             );
 
             yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             );
 
             yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             );
 
             yield new Message(
-                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de'))
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('info@patchlevel.de')),
             );
         };
     }
@@ -72,7 +70,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $repository->reveal()
+            $repository->reveal(),
         );
 
         $input = new ArrayInput([]);
@@ -100,7 +98,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $handler
+            $handler,
         );
 
         $input = new ArrayInput(['--projection' => $projectionA::class]);
@@ -131,7 +129,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $repository->reveal()
+            $repository->reveal(),
         );
 
         $input = new ArrayInput(['--recreate' => true]);
@@ -161,7 +159,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $handler
+            $handler,
         );
 
         $input = new ArrayInput(['--recreate' => true, '--projection' => DummyProjection::class]);
@@ -192,7 +190,7 @@ final class ProjectionRebuildCommandTest extends TestCase
 
         $command = new ProjectionRebuildCommand(
             $store->reveal(),
-            $repository->reveal()
+            $repository->reveal(),
         );
 
         $input = new ArrayInput([]);

@@ -24,17 +24,13 @@ use function sprintf;
 
 final class MultiTableStore extends DoctrineStore implements StreamableStore, SchemaConfigurator
 {
-    private string $metadataTableName;
-
     public function __construct(
         Connection $connection,
         EventSerializer $serializer,
         AggregateRootRegistry $aggregateRootRegistry,
-        string $metadataTableName = 'eventstore_metadata',
+        private string $metadataTableName = 'eventstore_metadata',
     ) {
         parent::__construct($connection, $serializer, $aggregateRootRegistry);
-
-        $this->metadataTableName = $metadataTableName;
     }
 
     /**
@@ -64,7 +60,7 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
             ],
             [
                 'archived' => Types::BOOLEAN,
-            ]
+            ],
         );
 
         $platform = $this->connection->getDatabasePlatform();
@@ -80,13 +76,11 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
                     ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
                     ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
-            $result
+            $result,
         );
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
     {
         $tableName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -97,7 +91,7 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
             WHERE aggregate_id = :aggregate_id
             AND playhead < :playhead
             AND archived = false',
-            $tableName
+            $tableName,
         ));
         $statement->bindValue('aggregate_id', $id);
         $statement->bindValue('playhead', $untilPlayhead);
@@ -105,9 +99,7 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
         $statement->executeQuery();
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function has(string $aggregate, string $id): bool
     {
         $tableName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -121,7 +113,7 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
 
         $result = $this->connection->fetchOne(
             $sql,
-            ['id' => $id]
+            ['id' => $id],
         );
 
         if (!is_int($result) && !is_string($result)) {
@@ -167,10 +159,10 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
                             'custom_headers' => Types::JSON,
                             'new_stream_start' => Types::BOOLEAN,
                             'archived' => Types::BOOLEAN,
-                        ]
+                        ],
                     );
                 }
-            }
+            },
         );
     }
 
@@ -183,9 +175,7 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
             ->orderBy('id')
             ->getSQL();
 
-        /**
-         * @var Traversable<array{id: string, aggregate_id: string, playhead: string, aggregate: string}> $metaQuery
-         */
+        /** @var Traversable<array{id: string, aggregate_id: string, playhead: string, aggregate: string}> $metaQuery */
         $metaQuery = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
         $platform = $this->connection->getDatabasePlatform();
@@ -203,9 +193,7 @@ final class MultiTableStore extends DoctrineStore implements StreamableStore, Sc
                     ->orderBy('id')
                     ->getSQL();
 
-                /**
-                 * @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}> $query
-                 */
+                /** @var Traversable<array{id: string, aggregate_id: string, playhead: string, event: string, payload: string, recorded_on: string, custom_headers: string}> $query */
                 $query = $this->connection->iterateAssociative($sql, ['index' => $fromIndex]);
 
                 if (!$query instanceof Generator) {

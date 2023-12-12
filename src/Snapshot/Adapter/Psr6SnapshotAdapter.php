@@ -8,16 +8,11 @@ use Psr\Cache\CacheItemPoolInterface;
 
 final class Psr6SnapshotAdapter implements SnapshotAdapter
 {
-    private CacheItemPoolInterface $cache;
-
-    public function __construct(CacheItemPoolInterface $cache)
+    public function __construct(private CacheItemPoolInterface $cache)
     {
-        $this->cache = $cache;
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
+    /** @param array<string, mixed> $data */
     public function save(string $key, array $data): void
     {
         $item = $this->cache->getItem($key);
@@ -38,9 +33,7 @@ final class Psr6SnapshotAdapter implements SnapshotAdapter
             throw new SnapshotNotFound($key);
         }
 
-        /**
-         * @var array<string, mixed> $data
-         */
+        /** @var array<string, mixed> $data */
         $data = $item->get();
 
         return $data;

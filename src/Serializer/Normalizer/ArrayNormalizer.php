@@ -16,10 +16,8 @@ final class ArrayNormalizer implements Normalizer
     {
     }
 
-    /**
-     * @return array<array-key, mixed>|null
-     */
-    public function normalize(mixed $value): ?array
+    /** @return array<array-key, mixed>|null */
+    public function normalize(mixed $value): array|null
     {
         if ($value === null) {
             return null;
@@ -32,10 +30,8 @@ final class ArrayNormalizer implements Normalizer
         return array_map(fn (mixed $value): mixed => $this->normalizer->normalize($value), $value);
     }
 
-    /**
-     * @return array<array-key, mixed>|null
-     */
-    public function denormalize(mixed $value): ?array
+    /** @return array<array-key, mixed>|null */
+    public function denormalize(mixed $value): array|null
     {
         if ($value === null) {
             return null;

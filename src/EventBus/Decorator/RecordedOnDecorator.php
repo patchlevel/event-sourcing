@@ -10,7 +10,7 @@ use Psr\Clock\ClockInterface;
 final class RecordedOnDecorator implements MessageDecorator
 {
     public function __construct(
-        private readonly ClockInterface $clock
+        private readonly ClockInterface $clock,
     ) {
     }
 

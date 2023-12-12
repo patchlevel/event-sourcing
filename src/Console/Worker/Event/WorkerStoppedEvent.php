@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Console\Worker\Worker;
 final class WorkerStoppedEvent
 {
     public function __construct(
-        public readonly Worker $worker
+        public readonly Worker $worker,
     ) {
     }
 }

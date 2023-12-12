@@ -13,8 +13,8 @@ final class SnapshotVersionInvalid extends SnapshotException
         parent::__construct(
             sprintf(
                 'snapshot version with the key "%s" is invalid',
-                $key
-            )
+                $key,
+            ),
         );
     }
 }

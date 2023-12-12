@@ -23,8 +23,8 @@ final class ChainMiddlewareTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )
+                Email::fromString('hallo@patchlevel.de'),
+            ),
         );
 
         $child1 = $this->prophesize(Middleware::class);

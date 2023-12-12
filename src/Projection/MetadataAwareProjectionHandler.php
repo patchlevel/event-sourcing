@@ -10,24 +10,16 @@ use Patchlevel\EventSourcing\Metadata\Projection\ProjectionMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 
-/**
- * @deprecated use ProjectorHelper
- */
+/** @deprecated use ProjectorHelper */
 final class MetadataAwareProjectionHandler implements ProjectionHandler
 {
-    /** @var iterable<Projection> */
-    private iterable $projections;
-
     private ProjectionMetadataFactory $metadataFactory;
 
     private ProjectorResolver $resolver;
 
-    /**
-     * @param iterable<Projection> $projections
-     */
-    public function __construct(iterable $projections, ?ProjectionMetadataFactory $metadataFactory = null)
+    /** @param iterable<Projection> $projections */
+    public function __construct(private iterable $projections, ProjectionMetadataFactory|null $metadataFactory = null)
     {
-        $this->projections = $projections;
         $this->metadataFactory = $metadataFactory ?? new AttributeProjectionMetadataFactory();
         $this->resolver = new MetadataProjectorResolver($this->metadataFactory);
     }
@@ -71,9 +63,7 @@ final class MetadataAwareProjectionHandler implements ProjectionHandler
         }
     }
 
-    /**
-     * @return iterable<Projection>
-     */
+    /** @return iterable<Projection> */
     public function projections(): iterable
     {
         return $this->projections;

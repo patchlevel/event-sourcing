@@ -21,9 +21,7 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
     /** @var array<class-string, EventMetadata> */
     private array $eventMetadata = [];
 
-    /**
-     * @param class-string $event
-     */
+    /** @param class-string $event */
     public function metadata(string $event): EventMetadata
     {
         if (array_key_exists($event, $this->eventMetadata)) {
@@ -55,9 +53,7 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
         return count($reflectionClass->getAttributes(SplitStream::class)) !== 0;
     }
 
-    /**
-     * @return array<string, EventPropertyMetadata>
-     */
+    /** @return array<string, EventPropertyMetadata> */
     private function getPropertyMetadataList(ReflectionClass $reflectionClass): array
     {
         $properties = [];
@@ -76,18 +72,18 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
             $properties[$property->getName()] = new EventPropertyMetadata(
                 $fieldName,
                 $reflection,
-                $this->getNormalizer($property)
+                $this->getNormalizer($property),
             );
         }
 
         return $properties;
     }
 
-    private function getNormalizer(ReflectionProperty $reflectionProperty): ?Normalizer
+    private function getNormalizer(ReflectionProperty $reflectionProperty): Normalizer|null
     {
         $attributeReflectionList = $reflectionProperty->getAttributes(
             Normalizer::class,
-            ReflectionAttribute::IS_INSTANCEOF
+            ReflectionAttribute::IS_INSTANCEOF,
         );
 
         if ($attributeReflectionList !== []) {

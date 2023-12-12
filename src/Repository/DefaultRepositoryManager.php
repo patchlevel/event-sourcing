@@ -20,10 +20,6 @@ use function array_key_exists;
 
 final class DefaultRepositoryManager implements RepositoryManager
 {
-    private AggregateRootRegistry $aggregateRootRegistry;
-    private Store $store;
-    private EventBus $eventBus;
-    private ?SnapshotStore $snapshotStore;
     private MessageDecorator $messageDecorator;
     private LoggerInterface $logger;
 
@@ -31,17 +27,13 @@ final class DefaultRepositoryManager implements RepositoryManager
     private array $instances = [];
 
     public function __construct(
-        AggregateRootRegistry $aggregateRootRegistry,
-        Store $store,
-        EventBus $eventBus,
-        ?SnapshotStore $snapshotStore = null,
-        ?MessageDecorator $messageDecorator = null,
-        ?LoggerInterface $logger = null
+        private AggregateRootRegistry $aggregateRootRegistry,
+        private Store $store,
+        private EventBus $eventBus,
+        private SnapshotStore|null $snapshotStore = null,
+        MessageDecorator|null $messageDecorator = null,
+        LoggerInterface|null $logger = null,
     ) {
-        $this->aggregateRootRegistry = $aggregateRootRegistry;
-        $this->store = $store;
-        $this->eventBus = $eventBus;
-        $this->snapshotStore = $snapshotStore;
         $this->messageDecorator = $messageDecorator ?? new RecordedOnDecorator(new SystemClock());
         $this->logger = $logger ?? new NullLogger();
     }
@@ -72,7 +64,7 @@ final class DefaultRepositoryManager implements RepositoryManager
             $aggregateClass,
             $this->snapshotStore,
             $this->messageDecorator,
-            $this->logger
+            $this->logger,
         );
     }
 }

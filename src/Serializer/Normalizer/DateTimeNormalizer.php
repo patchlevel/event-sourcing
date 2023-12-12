@@ -13,11 +13,11 @@ use function is_string;
 final class DateTimeNormalizer implements Normalizer
 {
     public function __construct(
-        private readonly string $format = DateTime::ATOM
+        private readonly string $format = DateTime::ATOM,
     ) {
     }
 
-    public function normalize(mixed $value): ?string
+    public function normalize(mixed $value): string|null
     {
         if ($value === null) {
             return null;
@@ -30,7 +30,7 @@ final class DateTimeNormalizer implements Normalizer
         return $value->format($this->format);
     }
 
-    public function denormalize(mixed $value): ?DateTime
+    public function denormalize(mixed $value): DateTime|null
     {
         if ($value === null) {
             return null;

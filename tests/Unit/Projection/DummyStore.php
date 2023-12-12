@@ -22,9 +22,7 @@ final class DummyStore implements ProjectionStore
     /** @var list<ProjectionId> */
     public array $removedProjectionIds = [];
 
-    /**
-     * @param list<Projection> $projections
-     */
+    /** @param list<Projection> $projections */
     public function __construct(array $projections = [])
     {
         foreach ($projections as $projection) {

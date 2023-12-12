@@ -24,8 +24,8 @@ final class StoreOutboxConsumerTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $store = $this->prophesize(OutboxStore::class);
@@ -44,8 +44,8 @@ final class StoreOutboxConsumerTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $store = $this->prophesize(OutboxStore::class);

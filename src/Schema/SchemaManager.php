@@ -6,9 +6,7 @@ namespace Patchlevel\EventSourcing\Schema;
 
 use Patchlevel\EventSourcing\Store\Store;
 
-/**
- * @deprecated use SchemaDirector
- */
+/** @deprecated use SchemaDirector */
 interface SchemaManager
 {
     public function create(Store $store): void;

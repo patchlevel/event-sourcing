@@ -8,9 +8,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 final class OnlyArchivedEventMiddleware implements Middleware
 {
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     public function __invoke(Message $message): array
     {
         if ($message->archived()) {

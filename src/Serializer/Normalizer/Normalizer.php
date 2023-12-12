@@ -6,13 +6,9 @@ namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 
 interface Normalizer
 {
-    /**
-     * @throws InvalidArgument
-     */
+    /** @throws InvalidArgument */
     public function normalize(mixed $value): mixed;
 
-    /**
-     * @throws InvalidArgument
-     */
+    /** @throws InvalidArgument */
     public function denormalize(mixed $value): mixed;
 }

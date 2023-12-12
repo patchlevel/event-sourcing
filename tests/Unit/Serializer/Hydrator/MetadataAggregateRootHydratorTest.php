@@ -29,12 +29,12 @@ final class MetadataAggregateRootHydratorTest extends TestCase
     {
         $aggregate = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('info@patchlevel.de')
+            Email::fromString('info@patchlevel.de'),
         );
 
         self::assertEquals(
             ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 1],
-            $this->hydrator->extract($aggregate)
+            $this->hydrator->extract($aggregate),
         );
     }
 
@@ -85,7 +85,7 @@ final class MetadataAggregateRootHydratorTest extends TestCase
         $this->expectException(NormalizationFailure::class);
 
         $this->hydrator->extract(
-            WrongNormalizerAggregate::createFromEvents([])
+            WrongNormalizerAggregate::createFromEvents([]),
         );
     }
 }

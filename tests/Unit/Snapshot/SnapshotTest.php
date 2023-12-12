@@ -17,7 +17,7 @@ final class SnapshotTest extends TestCase
             ProfileWithSnapshot::class,
             '1',
             1,
-            ['foo' => 'bar']
+            ['foo' => 'bar'],
         );
 
         self::assertSame(ProfileWithSnapshot::class, $snapshot->aggregate());

@@ -6,9 +6,7 @@ namespace Patchlevel\EventSourcing\Snapshot\Adapter;
 
 interface SnapshotAdapter
 {
-    /**
-     * @param array<string, mixed> $data
-     */
+    /** @param array<string, mixed> $data */
     public function save(string $key, array $data): void;
 
     /**

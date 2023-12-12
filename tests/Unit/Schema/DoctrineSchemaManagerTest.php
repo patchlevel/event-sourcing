@@ -111,9 +111,7 @@ final class DoctrineSchemaManagerTest extends TestCase
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
 
-        /**
-         * @psalm-suppress InternalMethod
-         */
+        /** @psalm-suppress InternalMethod */
         $schemaManager->createComparator()->willReturn(new Comparator());
 
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
@@ -163,9 +161,7 @@ final class DoctrineSchemaManagerTest extends TestCase
 
         $schemaManager->createSchema()->willReturn($fromSchema->reveal());
 
-        /**
-         * @psalm-suppress InternalMethod
-         */
+        /** @psalm-suppress InternalMethod */
         $schemaManager->createComparator()->willReturn(new Comparator());
 
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());

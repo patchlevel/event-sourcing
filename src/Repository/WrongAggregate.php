@@ -15,7 +15,7 @@ final class WrongAggregate extends RepositoryException
     public function __construct(string $aggregateClass, string $expected)
     {
         parent::__construct(
-            sprintf('Wrong aggregate given: got "%s" but expected "%s"', $aggregateClass, $expected)
+            sprintf('Wrong aggregate given: got "%s" but expected "%s"', $aggregateClass, $expected),
         );
     }
 }

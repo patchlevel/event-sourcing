@@ -19,11 +19,8 @@ use function sprintf;
 
 final class ProfileProjection implements VersionedProjector
 {
-    private Connection $connection;
-
-    public function __construct(Connection $connection)
+    public function __construct(private Connection $connection)
     {
-        $this->connection = $connection;
     }
 
     #[Create]
@@ -55,7 +52,7 @@ final class ProfileProjection implements VersionedProjector
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
-            ]
+            ],
         );
     }
 
@@ -64,7 +61,7 @@ final class ProfileProjection implements VersionedProjector
         return sprintf(
             'projection_%s_%s',
             $this->targetProjection()->name(),
-            $this->targetProjection()->version()
+            $this->targetProjection()->version(),
         );
     }
 

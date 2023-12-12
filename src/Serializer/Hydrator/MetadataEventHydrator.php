@@ -14,14 +14,11 @@ use function assert;
 
 final class MetadataEventHydrator implements EventHydrator
 {
-    private EventMetadataFactory $metadataFactory;
-
     /** @var array<class-string, ReflectionClass> */
     private array $reflectionClassCache = [];
 
-    public function __construct(EventMetadataFactory $metadataFactory)
+    public function __construct(private EventMetadataFactory $metadataFactory)
     {
-        $this->metadataFactory = $metadataFactory;
     }
 
     /**
@@ -50,7 +47,7 @@ final class MetadataEventHydrator implements EventHydrator
                         $class,
                         $propertyMetadata->reflection->getName(),
                         $propertyMetadata->normalizer::class,
-                        $e
+                        $e,
                     );
                 }
             }
@@ -61,7 +58,7 @@ final class MetadataEventHydrator implements EventHydrator
                 throw new TypeMismatch(
                     $class,
                     $propertyMetadata->reflection->getName(),
-                    $e
+                    $e,
                 );
             }
         }
@@ -69,9 +66,7 @@ final class MetadataEventHydrator implements EventHydrator
         return $object;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function extract(object $object): array
     {
         $metadata = $this->metadataFactory->metadata($object::class);
@@ -91,7 +86,7 @@ final class MetadataEventHydrator implements EventHydrator
                         $object::class,
                         $propertyMetadata->reflection->getName(),
                         $propertyMetadata->normalizer::class,
-                        $e
+                        $e,
                     );
                 }
             }

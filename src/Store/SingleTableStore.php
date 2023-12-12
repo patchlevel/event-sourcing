@@ -22,17 +22,13 @@ use function sprintf;
 
 final class SingleTableStore extends DoctrineStore implements StreamableStore, SchemaConfigurator
 {
-    private string $storeTableName;
-
     public function __construct(
         Connection $connection,
         EventSerializer $serializer,
         AggregateRootRegistry $aggregateRootRegistry,
-        string $storeTableName = 'eventstore',
+        private string $storeTableName = 'eventstore',
     ) {
         parent::__construct($connection, $serializer, $aggregateRootRegistry);
-
-        $this->storeTableName = $storeTableName;
     }
 
     /**
@@ -64,7 +60,7 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
             ],
             [
                 'archived' => Types::BOOLEAN,
-            ]
+            ],
         );
 
         $platform = $this->connection->getDatabasePlatform();
@@ -80,13 +76,11 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
                     ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
                     ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
-            $result
+            $result,
         );
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
     {
         $aggregateName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -98,7 +92,7 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
             AND aggregate_id = :aggregate_id
             AND playhead < :playhead
             AND archived = false',
-            $this->storeTableName
+            $this->storeTableName,
         ));
         $statement->bindValue('aggregate', $aggregateName);
         $statement->bindValue('aggregate_id', $id);
@@ -107,9 +101,7 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
         $statement->executeQuery();
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function has(string $aggregate, string $id): bool
     {
         $shortName = $this->aggregateRootRegistry->aggregateName($aggregate);
@@ -127,7 +119,7 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
             [
                 'aggregate' => $shortName,
                 'id' => $id,
-            ]
+            ],
         );
 
         if (!is_int($result) && !is_string($result)) {
@@ -162,16 +154,14 @@ final class SingleTableStore extends DoctrineStore implements StreamableStore, S
                             'custom_headers' => Types::JSON,
                             'new_stream_start' => Types::BOOLEAN,
                             'archived' => Types::BOOLEAN,
-                        ]
+                        ],
                     );
                 }
-            }
+            },
         );
     }
 
-    /**
-     * @return Generator<Message>
-     */
+    /** @return Generator<Message> */
     public function stream(int $fromIndex = 0): Generator
     {
         $sql = $this->connection->createQueryBuilder()

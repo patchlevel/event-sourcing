@@ -9,7 +9,7 @@ final class Projection
     public function __construct(
         private readonly ProjectionId $id,
         private ProjectionStatus $status = ProjectionStatus::New,
-        private int $position = 0
+        private int $position = 0,
     ) {
     }
 

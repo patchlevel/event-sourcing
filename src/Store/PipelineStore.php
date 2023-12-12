@@ -10,9 +10,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 /** @deprecated use StreamableStore */
 interface PipelineStore extends Store
 {
-    /**
-     * @return Generator<Message>
-     */
+    /** @return Generator<Message> */
     public function stream(int $fromIndex = 0): Generator;
 
     public function count(int $fromIndex = 0): int;

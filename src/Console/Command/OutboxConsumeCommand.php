@@ -23,12 +23,12 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[AsCommand(
     'event-sourcing:outbox:consume',
-    'published the messages from the outbox store'
+    'published the messages from the outbox store',
 )]
 final class OutboxConsumeCommand extends Command
 {
     public function __construct(
-        private readonly OutboxConsumer $consumer
+        private readonly OutboxConsumer $consumer,
     ) {
         parent::__construct();
     }
@@ -40,40 +40,40 @@ final class OutboxConsumeCommand extends Command
                 'limit',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'How many messages should be consumed in one run (deprecated: use "message-limit" option)'
+                'How many messages should be consumed in one run (deprecated: use "message-limit" option)',
             )
             ->addOption(
                 'message-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'How many messages should be consumed in one run',
-                100
+                100,
             )
             ->addOption(
                 'run-limit',
                 null,
                 InputOption::VALUE_OPTIONAL,
                 'The maximum number of runs this command should execute',
-                1
+                1,
             )
             ->addOption(
                 'memory-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'How much memory consumption should the worker be terminated'
+                'How much memory consumption should the worker be terminated',
             )
             ->addOption(
                 'time-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'What is the maximum time the worker can run in seconds'
+                'What is the maximum time the worker can run in seconds',
             )
             ->addOption(
                 'sleep',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'How much time should elapse before the next job is executed in microseconds',
-                1000
+                1000,
             );
     }
 
@@ -121,7 +121,7 @@ final class OutboxConsumeCommand extends Command
                 $this->consumer->consume($messageLimit);
             },
             $eventDispatcher,
-            $logger
+            $logger,
         );
 
         if ($sleep < 0) {

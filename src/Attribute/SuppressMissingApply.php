@@ -15,9 +15,7 @@ final class SuppressMissingApply
     private array $suppressEvents = [];
     private bool $suppressAll = false;
 
-    /**
-     * @param list<class-string>|self::ALL $suppress
-     */
+    /** @param list<class-string>|self::ALL $suppress */
     public function __construct(string|array $suppress)
     {
         if ($suppress === self::ALL) {
@@ -29,9 +27,7 @@ final class SuppressMissingApply
         $this->suppressEvents = $suppress;
     }
 
-    /**
-     * @return list<class-string>
-     */
+    /** @return list<class-string> */
     public function suppressEvents(): array
     {
         return $this->suppressEvents;

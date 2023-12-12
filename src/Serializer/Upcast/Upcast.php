@@ -4,17 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer\Upcast;
 
-/**
- * @psalm-immutable
- */
+/** @psalm-immutable */
 final class Upcast
 {
-    /**
-     * @param array<string, mixed> $payload
-     */
+    /** @param array<string, mixed> $payload */
     public function __construct(
         public readonly string $eventName,
-        public readonly array $payload
+        public readonly array $payload,
     ) {
     }
 
@@ -23,9 +19,7 @@ final class Upcast
         return new self($eventName, $this->payload);
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
+    /** @param array<string, mixed> $payload */
     public function replacePayload(array $payload): self
     {
         return new self($this->eventName, $payload);

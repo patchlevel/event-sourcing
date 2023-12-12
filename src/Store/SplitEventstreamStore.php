@@ -8,8 +8,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 interface SplitEventstreamStore extends TransactionStore
 {
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void;
 }

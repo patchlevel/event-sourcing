@@ -36,9 +36,7 @@ final class BankAccount extends AggregateRoot
         return $self;
     }
 
-    /**
-     * @param positive-int $newAddedBalance
-     */
+    /** @param positive-int $newAddedBalance */
     public function addBalance(int $newAddedBalance): void
     {
         $this->recordThat(new BalanceAdded($this->id, $newAddedBalance));

@@ -12,7 +12,7 @@ use function array_key_exists;
 
 abstract class AggregateRoot
 {
-    private static ?AggregateRootMetadataFactory $metadataFactory = null;
+    private static AggregateRootMetadataFactory|null $metadataFactory = null;
 
     /** @var list<object> */
     private array $uncommittedEvents = [];
@@ -63,9 +63,7 @@ abstract class AggregateRoot
         }
     }
 
-    /**
-     * @return list<object>
-     */
+    /** @return list<object> */
     final public function releaseEvents(): array
     {
         $events = $this->uncommittedEvents;

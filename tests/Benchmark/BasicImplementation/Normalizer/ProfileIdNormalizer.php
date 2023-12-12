@@ -23,7 +23,7 @@ final class ProfileIdNormalizer implements Normalizer
         return $value->toString();
     }
 
-    public function denormalize(mixed $value): ?ProfileId
+    public function denormalize(mixed $value): ProfileId|null
     {
         if ($value === null) {
             return null;

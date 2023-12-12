@@ -27,7 +27,7 @@ final class SchemaCreateCommandTest extends TestCase
 
         $command = new SchemaCreateCommand(
             $store,
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput([]);
@@ -55,7 +55,7 @@ final class SchemaCreateCommandTest extends TestCase
 
         $command = new SchemaCreateCommand(
             $store,
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput(['--dry-run' => true]);
@@ -81,7 +81,7 @@ final class SchemaCreateCommandTest extends TestCase
 
         $command = new SchemaCreateCommand(
             $store,
-            $schemaManager->reveal()
+            $schemaManager->reveal(),
         );
 
         $input = new ArrayInput(['--dry-run' => true]);

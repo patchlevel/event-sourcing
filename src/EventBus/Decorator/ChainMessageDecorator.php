@@ -8,11 +8,9 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 final class ChainMessageDecorator implements MessageDecorator
 {
-    /**
-     * @param iterable<MessageDecorator> $messageDecorators
-     */
+    /** @param iterable<MessageDecorator> $messageDecorators */
     public function __construct(
-        private readonly iterable $messageDecorators
+        private readonly iterable $messageDecorators,
     ) {
     }
 

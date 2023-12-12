@@ -16,26 +16,15 @@ use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
 
 final class DefaultEventSerializer implements EventSerializer
 {
-    private EventRegistry $eventRegistry;
-    private EventHydrator $hydrator;
-    private Encoder $encoder;
-    private ?Upcaster $upcaster;
-
     public function __construct(
-        EventRegistry $eventRegistry,
-        EventHydrator $hydrator,
-        Encoder $encoder,
-        ?Upcaster $upcaster = null
+        private EventRegistry $eventRegistry,
+        private EventHydrator $hydrator,
+        private Encoder $encoder,
+        private Upcaster|null $upcaster = null,
     ) {
-        $this->eventRegistry = $eventRegistry;
-        $this->hydrator = $hydrator;
-        $this->encoder = $encoder;
-        $this->upcaster = $upcaster;
     }
 
-    /**
-     * @param array<string, mixed> $options
-     */
+    /** @param array<string, mixed> $options */
     public function serialize(object $event, array $options = []): SerializedEvent
     {
         $name = $this->eventRegistry->eventName($event::class);
@@ -43,13 +32,11 @@ final class DefaultEventSerializer implements EventSerializer
 
         return new SerializedEvent(
             $name,
-            $this->encoder->encode($data, $options)
+            $this->encoder->encode($data, $options),
         );
     }
 
-    /**
-     * @param array<string, mixed> $options
-     */
+    /** @param array<string, mixed> $options */
     public function deserialize(SerializedEvent $data, array $options = []): object
     {
         $payload = $this->encoder->decode($data->payload, $options);
@@ -66,16 +53,14 @@ final class DefaultEventSerializer implements EventSerializer
         return $this->hydrator->hydrate($class, $payload);
     }
 
-    /**
-     * @param list<string> $paths
-     */
-    public static function createFromPaths(array $paths, ?Upcaster $upcaster = null): static
+    /** @param list<string> $paths */
+    public static function createFromPaths(array $paths, Upcaster|null $upcaster = null): static
     {
         return new self(
             (new AttributeEventRegistryFactory())->create($paths),
             new MetadataEventHydrator(new AttributeEventMetadataFactory()),
             new JsonEncoder(),
-            $upcaster
+            $upcaster,
         );
     }
 }

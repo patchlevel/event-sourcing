@@ -26,11 +26,11 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
     {
         $event = new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('profile@test.com')
+            Email::fromString('profile@test.com'),
         );
 
         $message = new Message(
-            $event
+            $event,
         );
 
         $projectionRepository = new MetadataAwareProjectionHandler([]);
@@ -42,7 +42,7 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
     public function testHandle(): void
     {
         $projection = new class implements Projection {
-            public static ?Message $handledMessage = null;
+            public static Message|null $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
@@ -53,11 +53,11 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
 
         $event = new ProfileCreated(
             ProfileId::fromString('1'),
-            Email::fromString('profile@test.com')
+            Email::fromString('profile@test.com'),
         );
 
         $message = new Message(
-            $event
+            $event,
         );
 
         $projectionRepository = new MetadataAwareProjectionHandler([$projection]);
@@ -69,7 +69,7 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
     public function testHandleNotSupportedEvent(): void
     {
         $projection = new class implements Projection {
-            public static ?Message $handledMessage = null;
+            public static Message|null $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
@@ -79,11 +79,11 @@ final class MetadataAwareProjectionHandlerTest extends TestCase
         };
 
         $event = new ProfileVisited(
-            ProfileId::fromString('1')
+            ProfileId::fromString('1'),
         );
 
         $message = new Message(
-            $event
+            $event,
         );
 
         $projectionRepository = new MetadataAwareProjectionHandler([$projection]);

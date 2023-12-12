@@ -17,7 +17,7 @@ final class InMemorySourceTest extends TestCase
     public function testLoad(): void
     {
         $message = new Message(
-            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
         );
 
         $source = new InMemorySource([$message]);
@@ -34,7 +34,7 @@ final class InMemorySourceTest extends TestCase
     public function testCount(): void
     {
         $message = new Message(
-            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
         );
 
         $source = new InMemorySource([$message]);

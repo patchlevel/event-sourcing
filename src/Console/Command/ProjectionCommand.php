@@ -21,13 +21,9 @@ use function sprintf;
 
 abstract class ProjectionCommand extends Command
 {
-    private ProjectionHandler $projectionHandler;
-
-    public function __construct(ProjectionHandler $projectionHandler)
+    public function __construct(private ProjectionHandler $projectionHandler)
     {
         parent::__construct();
-
-        $this->projectionHandler = $projectionHandler;
     }
 
     protected function projectionHandler(mixed $projectionOption): ProjectionHandler
@@ -40,14 +36,12 @@ abstract class ProjectionCommand extends Command
 
         return $this->filterProjectionInProjectionHandler(
             $this->projectionHandler,
-            $normalizedProjectionOption
+            $normalizedProjectionOption,
         );
     }
 
-    /**
-     * @return non-empty-array<class-string<Projection>>|null
-     */
-    private function normalizeProjectionOption(mixed $option): ?array
+    /** @return non-empty-array<class-string<Projection>>|null */
+    private function normalizeProjectionOption(mixed $option): array|null
     {
         if (is_string($option)) {
             $option = [$option];
@@ -74,20 +68,18 @@ abstract class ProjectionCommand extends Command
         return $result;
     }
 
-    /**
-     * @param non-empty-array<class-string<Projection>> $onlyProjections
-     */
+    /** @param non-empty-array<class-string<Projection>> $onlyProjections */
     private function filterProjectionInProjectionHandler(
         ProjectionHandler $projectionHandler,
-        array $onlyProjections
+        array $onlyProjections,
     ): MetadataAwareProjectionHandler {
         if (!$projectionHandler instanceof MetadataAwareProjectionHandler) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Filtering projections is only supported with "%s", but "%s" was used.',
                     MetadataAwareProjectionHandler::class,
-                    $projectionHandler::class
-                )
+                    $projectionHandler::class,
+                ),
             );
         }
 
@@ -95,12 +87,12 @@ abstract class ProjectionCommand extends Command
             array_filter(
                 [...$projectionHandler->projections()],
                 static fn (Projection $projection): bool => in_array($projection::class, $onlyProjections)
-            )
+            ),
         );
 
         return new MetadataAwareProjectionHandler(
             $projections,
-            $projectionHandler->metadataFactory()
+            $projectionHandler->metadataFactory(),
         );
     }
 }

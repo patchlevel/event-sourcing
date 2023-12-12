@@ -21,7 +21,7 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
     /** @var array<class-string, ReflectionClass> */
     private array $reflectionClassCache = [];
 
-    private ?ReflectionProperty $playheadReflection = null;
+    private ReflectionProperty|null $playheadReflection = null;
 
     /**
      * @param class-string<T>      $class
@@ -49,7 +49,7 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
                         $class,
                         $propertyMetadata->reflection->getName(),
                         $propertyMetadata->normalizer::class,
-                        $e
+                        $e,
                     );
                 }
             }
@@ -60,7 +60,7 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
                 throw new TypeMismatch(
                     $class,
                     $propertyMetadata->reflection->getName(),
-                    $e
+                    $e,
                 );
             }
         }
@@ -74,9 +74,7 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
         return $aggregateRoot;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function extract(AggregateRoot $aggregateRoot): array
     {
         $metadata = $aggregateRoot::metadata();
@@ -96,7 +94,7 @@ final class MetadataAggregateRootHydrator implements AggregateRootHydrator
                         $aggregateRoot::class,
                         $propertyMetadata->reflection->getName(),
                         $propertyMetadata->normalizer::class,
-                        $e
+                        $e,
                     );
                 }
             }

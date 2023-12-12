@@ -28,7 +28,7 @@ final class DefaultWorkerTest extends TestCase
                 $args[0]->worker->stop();
 
                 return $args[0];
-            }
+            },
         );
         $evenDispatcher->dispatch(Argument::type(WorkerStoppedEvent::class))->shouldBeCalledTimes(1);
 

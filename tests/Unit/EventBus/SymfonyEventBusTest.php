@@ -26,8 +26,8 @@ final class SymfonyEventBusTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $envelope = new Envelope($message);
@@ -50,15 +50,15 @@ final class SymfonyEventBusTest extends TestCase
         $message1 = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $message2 = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $envelope1 = new Envelope($message1);
@@ -89,7 +89,7 @@ final class SymfonyEventBusTest extends TestCase
     public function testDefaultEventBus(): void
     {
         $listener = new class implements Listener {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function __invoke(Message $message): void
             {
@@ -100,8 +100,8 @@ final class SymfonyEventBusTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $eventBus = SymfonyEventBus::create([$listener]);

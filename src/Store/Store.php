@@ -16,9 +16,7 @@ interface Store
      */
     public function load(string $aggregate, string $id, int $fromPlayhead = 0): array;
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function has(string $aggregate, string $id): bool;
 
     public function save(Message ...$messages): void;

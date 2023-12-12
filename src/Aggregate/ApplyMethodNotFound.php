@@ -18,8 +18,8 @@ final class ApplyMethodNotFound extends AggregateException
             sprintf(
                 'Apply method in "%s" could not be found for the event "%s"',
                 $aggregate,
-                $event
-            )
+                $event,
+            ),
         );
     }
 }

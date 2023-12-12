@@ -46,13 +46,13 @@ final class ShowCommandTest extends TestCase
             new SerializedEvent(
                 'profile.visited',
                 '{"visitorId": "1"}',
-            )
+            ),
         );
 
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class])
+            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $input = new ArrayInput([
@@ -79,7 +79,7 @@ final class ShowCommandTest extends TestCase
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class])
+            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $input = new ArrayInput([
@@ -101,7 +101,7 @@ final class ShowCommandTest extends TestCase
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class])
+            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $input = new ArrayInput([
@@ -123,7 +123,7 @@ final class ShowCommandTest extends TestCase
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class])
+            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $input = new ArrayInput([
@@ -152,7 +152,7 @@ final class ShowCommandTest extends TestCase
         $command = new ShowCommand(
             $store->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class])
+            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $input = new ArrayInput([
@@ -177,8 +177,8 @@ final class ShowCommandTest extends TestCase
             new ShowCommand(
                 $this->prophesize(Store::class)->reveal(),
                 $this->prophesize(EventSerializer::class)->reveal(),
-                new AggregateRootRegistry(['test' => Profile::class])
-            )
+                new AggregateRootRegistry(['test' => Profile::class]),
+            ),
         );
 
         $this->expectException(MissingInputException::class);
@@ -191,8 +191,8 @@ final class ShowCommandTest extends TestCase
             new ShowCommand(
                 $this->prophesize(Store::class)->reveal(),
                 $this->prophesize(EventSerializer::class)->reveal(),
-                new AggregateRootRegistry(['test' => Profile::class])
-            )
+                new AggregateRootRegistry(['test' => Profile::class]),
+            ),
         );
 
         // Select "test" in first question
@@ -220,15 +220,15 @@ final class ShowCommandTest extends TestCase
             new SerializedEvent(
                 'profile.visited',
                 '{"visitorId": "1"}',
-            )
+            ),
         );
 
         $commandTest = new CommandTester(
             new ShowCommand(
                 $store->reveal(),
                 $serializer->reveal(),
-                new AggregateRootRegistry(['profile' => Profile::class])
-            )
+                new AggregateRootRegistry(['profile' => Profile::class]),
+            ),
         );
 
         $commandTest->setInputs([0, 1]);

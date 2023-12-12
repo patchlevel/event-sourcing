@@ -15,7 +15,7 @@ final class AggregateRootNameNotRegistered extends MetadataException
         parent::__construct(
             sprintf(
                 'Aggregate root name "%s" is not registered',
-                $evenName
+                $evenName,
             ),
         );
     }

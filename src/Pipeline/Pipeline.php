@@ -12,21 +12,15 @@ use Patchlevel\EventSourcing\Pipeline\Target\Target;
 
 final class Pipeline
 {
-    private Source $source;
-    private Target $target;
     private ChainMiddleware $middlewares;
 
-    /**
-     * @param list<Middleware> $middlewares
-     */
-    public function __construct(Source $source, Target $target, array $middlewares = [])
+    /** @param list<Middleware> $middlewares */
+    public function __construct(private Source $source, private Target $target, array $middlewares = [])
     {
-        $this->source = $source;
-        $this->target = $target;
         $this->middlewares = new ChainMiddleware($middlewares);
     }
 
-    public function run(?Closure $observer = null): void
+    public function run(Closure|null $observer = null): void
     {
         foreach ($this->source->load() as $message) {
             $result = ($this->middlewares)($message);

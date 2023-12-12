@@ -28,7 +28,7 @@ final class JsonEncoderTest extends TestCase
 
         self::assertEquals(
             '{"profileId":"1","email":"info@patchlevel.de"}',
-            $this->encoder->encode($data)
+            $this->encoder->encode($data),
         );
     }
 
@@ -41,7 +41,7 @@ final class JsonEncoderTest extends TestCase
 
         self::assertEquals(
             '{"profileId":{},"email":{}}',
-            $this->encoder->encode($data)
+            $this->encoder->encode($data),
         );
     }
 

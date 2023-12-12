@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 final class MessagePublished
 {
     public function __construct(
-        public Message $message
+        public Message $message,
     ) {
     }
 }

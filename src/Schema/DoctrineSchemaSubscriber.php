@@ -13,7 +13,7 @@ use function class_exists;
 final class DoctrineSchemaSubscriber implements EventSubscriber
 {
     public function __construct(
-        private readonly SchemaConfigurator $schemaConfigurator
+        private readonly SchemaConfigurator $schemaConfigurator,
     ) {
     }
 
@@ -21,13 +21,11 @@ final class DoctrineSchemaSubscriber implements EventSubscriber
     {
         $this->schemaConfigurator->configureSchema(
             $event->getSchema(),
-            $event->getEntityManager()->getConnection()
+            $event->getEntityManager()->getConnection(),
         );
     }
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function getSubscribedEvents(): array
     {
         $subscribedEvents = [];

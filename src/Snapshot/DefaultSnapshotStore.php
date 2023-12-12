@@ -15,17 +15,11 @@ use function sprintf;
 
 final class DefaultSnapshotStore implements SnapshotStore
 {
-    /** @var array<string, SnapshotAdapter> */
-    private array $snapshotAdapters;
-
     private AggregateRootHydrator $hydrator;
 
-    /**
-     * @param array<string, SnapshotAdapter> $snapshotAdapters
-     */
-    public function __construct(array $snapshotAdapters, ?AggregateRootHydrator $hydrator = null)
+    /** @param array<string, SnapshotAdapter> $snapshotAdapters */
+    public function __construct(private array $snapshotAdapters, AggregateRootHydrator|null $hydrator = null)
     {
-        $this->snapshotAdapters = $snapshotAdapters;
         $this->hydrator = $hydrator ?? new MetadataAggregateRootHydrator();
     }
 
@@ -78,9 +72,7 @@ final class DefaultSnapshotStore implements SnapshotStore
         return $this->hydrator->hydrate($aggregateClass, $data['payload']);
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregateClass
-     */
+    /** @param class-string<AggregateRoot> $aggregateClass */
     public function adapter(string $aggregateClass): SnapshotAdapter
     {
         $adapterName = $aggregateClass::metadata()->snapshotStore;
@@ -96,9 +88,7 @@ final class DefaultSnapshotStore implements SnapshotStore
         return $this->snapshotAdapters[$adapterName];
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregateClass
-     */
+    /** @param class-string<AggregateRoot> $aggregateClass */
     private function key(string $aggregateClass, string $aggregateId): string
     {
         $aggregateName = $aggregateClass::metadata()->name;
@@ -106,10 +96,8 @@ final class DefaultSnapshotStore implements SnapshotStore
         return sprintf('%s-%s', $aggregateName, $aggregateId);
     }
 
-    /**
-     * @param class-string<AggregateRoot> $aggregateClass
-     */
-    private function version(string $aggregateClass): ?string
+    /** @param class-string<AggregateRoot> $aggregateClass */
+    private function version(string $aggregateClass): string|null
     {
         return $aggregateClass::metadata()->snapshotVersion;
     }

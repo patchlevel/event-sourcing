@@ -13,7 +13,7 @@ final class NewVisited
 {
     public function __construct(
         #[ProfileIdNormalizer]
-        public ProfileId $profileId
+        public ProfileId $profileId,
     ) {
     }
 }

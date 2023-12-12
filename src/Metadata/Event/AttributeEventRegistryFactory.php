@@ -12,9 +12,7 @@ use function count;
 
 final class AttributeEventRegistryFactory implements EventRegistryFactory
 {
-    /**
-     * @param list<string> $paths
-     */
+    /** @param list<string> $paths */
     public function create(array $paths): EventRegistry
     {
         $classes = (new ClassFinder())->findClassNames($paths);

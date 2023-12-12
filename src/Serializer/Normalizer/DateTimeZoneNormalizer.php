@@ -12,7 +12,7 @@ use function is_string;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class DateTimeZoneNormalizer implements Normalizer
 {
-    public function normalize(mixed $value): ?string
+    public function normalize(mixed $value): string|null
     {
         if ($value === null) {
             return null;
@@ -25,7 +25,7 @@ final class DateTimeZoneNormalizer implements Normalizer
         return $value->getName();
     }
 
-    public function denormalize(mixed $value): ?DateTimeZone
+    public function denormalize(mixed $value): DateTimeZone|null
     {
         if ($value === null) {
             return null;

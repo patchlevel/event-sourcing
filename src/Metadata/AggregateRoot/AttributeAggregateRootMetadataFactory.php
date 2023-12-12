@@ -30,9 +30,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
     /** @var array<class-string<AggregateRoot>, AggregateRootMetadata> */
     private array $aggregateMetadata = [];
 
-    /**
-     * @param class-string<AggregateRoot> $aggregate
-     */
+    /** @param class-string<AggregateRoot> $aggregate */
     public function metadata(string $aggregate): AggregateRootMetadata
     {
         if (array_key_exists($aggregate, $this->aggregateMetadata)) {
@@ -55,7 +53,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $suppressAll,
             $snapshot?->name(),
             $snapshot?->batch(),
-            $snapshot?->version()
+            $snapshot?->version(),
         );
 
         $this->aggregateMetadata[$aggregate] = $metadata;
@@ -63,9 +61,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         return $metadata;
     }
 
-    /**
-     * @return array{array<class-string, true>, bool}
-     */
+    /** @return array{array<class-string, true>, bool} */
     private function findSuppressMissingApply(ReflectionClass $reflector): array
     {
         $suppressEvents = [];
@@ -103,7 +99,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         return $aggregateAttribute->name();
     }
 
-    private function findSnapshot(ReflectionClass $reflector): ?Snapshot
+    private function findSnapshot(ReflectionClass $reflector): Snapshot|null
     {
         $attributeReflectionList = $reflector->getAttributes(Snapshot::class);
 
@@ -170,7 +166,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                         $aggregate,
                         $eventClass,
                         $applyMethods[$eventClass],
-                        $methodName
+                        $methodName,
                     );
                 }
 
@@ -215,9 +211,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         return [];
     }
 
-    /**
-     * @return array<string, AggregateRootPropertyMetadata>
-     */
+    /** @return array<string, AggregateRootPropertyMetadata> */
     private function getPropertyMetadataList(ReflectionClass $reflectionClass): array
     {
         $properties = [];
@@ -235,18 +229,18 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $properties[$reflectionProperty->getName()] = new AggregateRootPropertyMetadata(
                 $fieldName,
                 $reflectionProperty,
-                $this->getNormalizer($reflectionProperty)
+                $this->getNormalizer($reflectionProperty),
             );
         }
 
         return $properties;
     }
 
-    private function getNormalizer(ReflectionProperty $reflectionProperty): ?Normalizer
+    private function getNormalizer(ReflectionProperty $reflectionProperty): Normalizer|null
     {
         $attributeReflectionList = $reflectionProperty->getAttributes(
             Normalizer::class,
-            ReflectionAttribute::IS_INSTANCEOF
+            ReflectionAttribute::IS_INSTANCEOF,
         );
 
         if ($attributeReflectionList !== []) {

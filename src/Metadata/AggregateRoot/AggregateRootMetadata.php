@@ -15,9 +15,9 @@ final class AggregateRootMetadata
         /** @var array<class-string, true> */
         public readonly array $suppressEvents,
         public readonly bool $suppressAll,
-        public readonly ?string $snapshotStore,
-        public readonly ?int $snapshotBatch,
-        public readonly ?string $snapshotVersion = null,
+        public readonly string|null $snapshotStore,
+        public readonly int|null $snapshotBatch,
+        public readonly string|null $snapshotVersion = null,
     ) {
     }
 }

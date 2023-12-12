@@ -6,18 +6,12 @@ namespace Patchlevel\EventSourcing\Schema;
 
 interface DryRunSchemaDirector extends SchemaDirector
 {
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function dryRunCreate(): array;
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function dryRunUpdate(): array;
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function dryRunDrop(): array;
 }
