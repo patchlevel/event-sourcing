@@ -34,7 +34,7 @@ final class BytesTest extends TestCase
     }
 
     /** @return Generator<array-key, array{string, int}> */
-    public function validParseDataProvider(): Generator
+    public static function validParseDataProvider(): Generator
     {
         yield ['50', 50];
         yield ['50B', 50];
