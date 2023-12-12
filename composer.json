@@ -28,7 +28,7 @@
     "symfony/console": "^5.4.32|^6.4.1|^7.0.1",
     "symfony/event-dispatcher": "^5.4.26|^6.4.0|^7.0.1",
     "symfony/finder": "^5.4.27|^6.4.0|^7.0.0",
-    "symfony/lock": "^5.4.0|^6.4.0|^7.0.0"
+    "symfony/lock": "^5.4.32|^6.4.0|^7.0.0"
   },
   "require-dev": {
     "ext-pdo_sqlite": "~8.1.0 || ~8.2.0 || ~8.3.0",
