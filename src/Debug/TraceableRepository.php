@@ -27,34 +27,50 @@ final class TraceableRepository implements Repository
     /** @return T */
     public function load(string $id): AggregateRoot
     {
-        $data = ProfileData::load($this->aggregateClass, $id);
+        $data = ProfileData::loadAggregate($this->aggregateClass, $id);
 
         $this->dataHolder->addData($data);
         $event = $this->stopwatch?->start('event_sourcing', 'event_sourcing');
         $data->start();
 
         try {
-            $aggregate = $this->repository->load($id);
+            return $this->repository->load($id);
         } finally {
             $data->stop();
             $event?->stop();
         }
-
-        return $aggregate;
     }
 
     public function has(string $id): bool
     {
-        return $this->repository->has($id);
+        $data = ProfileData::hasAggregate($this->aggregateClass, $id);
+
+        $this->dataHolder->addData($data);
+        $event = $this->stopwatch?->start('event_sourcing', 'event_sourcing');
+        $data->start();
+
+        try {
+            return $this->repository->has($id);
+        } finally {
+            $data->stop();
+            $event?->stop();
+        }
     }
 
     /** @param T $aggregate */
     public function save(AggregateRoot $aggregate): void
     {
+        $data = ProfileData::saveAggregate($this->aggregateClass, $aggregate->aggregateRootId());
+
+        $this->dataHolder->addData($data);
         $event = $this->stopwatch?->start('event_sourcing', 'event_sourcing');
+        $data->start();
 
-        $this->repository->save($aggregate);
-
-        $event?->stop();
+        try {
+            $this->repository->save($aggregate);
+        } finally {
+            $data->stop();
+            $event?->stop();
+        }
     }
 }

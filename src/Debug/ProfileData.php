@@ -14,6 +14,7 @@ final class ProfileData
     private float|null $duration = null;
 
     private function __construct(
+        /** @var 'load'|'has'|'save' */
         private readonly string $type,
         /** @var class-string<AggregateRoot> */
         private readonly string $aggregateClass,
@@ -35,6 +36,7 @@ final class ProfileData
         $this->duration = microtime(true) - $this->start;
     }
 
+    /** @return 'load'|'has'|'save' */
     public function type(): string
     {
         return $this->type;
@@ -57,13 +59,19 @@ final class ProfileData
     }
 
     /** @param class-string<AggregateRoot> $aggregateClass */
-    public static function load(string $aggregateClass, string $aggregateId): self
+    public static function loadAggregate(string $aggregateClass, string $aggregateId): self
     {
         return new ProfileData('load', $aggregateClass, $aggregateId);
     }
 
     /** @param class-string<AggregateRoot> $aggregateClass */
-    public static function save(string $aggregateClass, string $aggregateId): self
+    public static function hasAggregate(string $aggregateClass, string $aggregateId): self
+    {
+        return new ProfileData('has', $aggregateClass, $aggregateId);
+    }
+
+    /** @param class-string<AggregateRoot> $aggregateClass */
+    public static function saveAggregate(string $aggregateClass, string $aggregateId): self
     {
         return new ProfileData('save', $aggregateClass, $aggregateId);
     }
