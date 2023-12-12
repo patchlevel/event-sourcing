@@ -161,6 +161,10 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             }
 
             foreach ($eventClasses as $eventClass) {
+                if (!class_exists($eventClass)) {
+                    throw new ArgumentTypeIsNotAClass($methodName, $eventClass);
+                }
+
                 if (array_key_exists($eventClass, $applyMethods)) {
                     throw new DuplicateApplyMethod(
                         $aggregate,
@@ -177,14 +181,11 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         return $applyMethods;
     }
 
-    /**
-     * @return array<class-string>
-     */
+    /** @return array<string> */
     private function getEventClassesByPropertyTypes(ReflectionMethod $method): array
     {
         $propertyType = $method->getParameters()[0]->getType();
         $methodName = $method->getName();
-        $eventClasses = [];
 
         if ($propertyType === null) {
             throw new ArgumentTypeIsMissing($methodName);
@@ -195,27 +196,23 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         }
 
         if ($propertyType instanceof ReflectionNamedType) {
-            $eventClasses = [$propertyType->getName()];
+            return [$propertyType->getName()];
         }
 
         if ($propertyType instanceof ReflectionUnionType) {
-            $eventClasses = array_map(
-                static fn (ReflectionNamedType $reflectionType) => $reflectionType->getName(),
-                $propertyType->getTypes()
+            return array_map(
+                static function (ReflectionNamedType|ReflectionIntersectionType $reflectionType) use ($methodName): string {
+                    if ($reflectionType instanceof ReflectionIntersectionType) {
+                        throw new ArgumentTypeIsMissing($methodName);
+                    }
+
+                    return $reflectionType->getName();
+                },
+                $propertyType->getTypes(),
             );
         }
 
-        $result = [];
-
-        foreach ($eventClasses as $eventClass) {
-            if (!class_exists($eventClass)) {
-                throw new ArgumentTypeIsNotAClass($methodName, $eventClass);
-            }
-
-            $result[] = $eventClass;
-        }
-
-        return $result;
+        return [];
     }
 
     /**

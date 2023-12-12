@@ -31,7 +31,7 @@ final class DateTimeZoneNormalizer implements Normalizer
             return null;
         }
 
-        if (!is_string($value)) {
+        if (!is_string($value) || empty($value)) {
             throw new InvalidArgument();
         }
 

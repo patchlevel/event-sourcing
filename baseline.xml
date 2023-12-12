@@ -1,33 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.6.0@e784128902dfe01d489c4123d69918a9f3c1eac5">
+<files psalm-version="5.17.0@c620f6e80d0abfca532b00bda366062aaedf6e5d">
   <file src="src/Clock/FrozenClock.php">
     <PossiblyFalsePropertyAssignmentValue>
-      <code>$this-&gt;frozenDateTime-&gt;modify(sprintf('+%s seconds', $seconds))</code>
+      <code><![CDATA[$this->frozenDateTime->modify(sprintf('+%s seconds', $seconds))]]></code>
     </PossiblyFalsePropertyAssignmentValue>
   </file>
   <file src="src/Console/Command/ProjectionCommand.php">
     <DeprecatedClass>
       <code>MetadataAwareProjectionHandler</code>
       <code>MetadataAwareProjectionHandler::class</code>
-      <code>new MetadataAwareProjectionHandler(
+      <code><![CDATA[new MetadataAwareProjectionHandler(
             $projections,
-            $projectionHandler-&gt;metadataFactory()
-        )</code>
+            $projectionHandler->metadataFactory()
+        )]]></code>
     </DeprecatedClass>
     <DeprecatedInterface>
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
       <code>ProjectionHandler</code>
-      <code>non-empty-array&lt;class-string&lt;Projection&gt;&gt;</code>
-      <code>non-empty-array&lt;class-string&lt;Projection&gt;&gt;|null</code>
+      <code><![CDATA[non-empty-array<class-string<Projection>>]]></code>
+      <code><![CDATA[non-empty-array<class-string<Projection>>|null]]></code>
     </DeprecatedInterface>
     <InvalidOperand>
-      <code>$projectionHandler-&gt;projections()</code>
+      <code><![CDATA[$projectionHandler->projections()]]></code>
     </InvalidOperand>
     <RedundantFunctionCall>
       <code>array_values</code>
     </RedundantFunctionCall>
+    <ReservedWord>
+      <code>Projection</code>
+    </ReservedWord>
   </file>
   <file src="src/Console/Command/ProjectionRebuildCommand.php">
     <DeprecatedClass>
@@ -62,13 +65,13 @@
   </file>
   <file src="src/Console/Worker/DefaultWorker.php">
     <TypeDoesNotContainType>
-      <code>$this-&gt;shouldStop</code>
-      <code>$this-&gt;shouldStop</code>
+      <code><![CDATA[$this->shouldStop]]></code>
+      <code><![CDATA[$this->shouldStop]]></code>
     </TypeDoesNotContainType>
   </file>
   <file src="src/Console/Worker/Listener/StopWorkerOnSigtermSignalListener.php">
     <MoreSpecificReturnType>
-      <code>array&lt;class-string, string&gt;</code>
+      <code><![CDATA[array<class-string, string>]]></code>
     </MoreSpecificReturnType>
   </file>
   <file src="src/EventBus/Message.php">
@@ -83,6 +86,9 @@
     <DeprecatedClass>
       <code>Normalize::class</code>
     </DeprecatedClass>
+    <DocblockTypeContradiction>
+      <code>$reflectionType instanceof ReflectionIntersectionType</code>
+    </DocblockTypeContradiction>
   </file>
   <file src="src/Metadata/Event/AttributeEventMetadataFactory.php">
     <DeprecatedClass>
@@ -92,28 +98,28 @@
   <file src="src/Metadata/Projection/AttributeProjectionMetadataFactory.php">
     <DeprecatedInterface>
       <code>array</code>
-      <code>class-string&lt;Projection&gt;</code>
+      <code><![CDATA[class-string<Projection>]]></code>
       <code>private array $projectionMetadata = [];</code>
     </DeprecatedInterface>
   </file>
   <file src="src/Metadata/Projection/DuplicateCreateMethod.php">
     <DeprecatedInterface>
-      <code>class-string&lt;Projection&gt;</code>
+      <code><![CDATA[class-string<Projection>]]></code>
     </DeprecatedInterface>
   </file>
   <file src="src/Metadata/Projection/DuplicateDropMethod.php">
     <DeprecatedInterface>
-      <code>class-string&lt;Projection&gt;</code>
+      <code><![CDATA[class-string<Projection>]]></code>
     </DeprecatedInterface>
   </file>
   <file src="src/Metadata/Projection/DuplicateHandleMethod.php">
     <DeprecatedInterface>
-      <code>class-string&lt;Projection&gt;</code>
+      <code><![CDATA[class-string<Projection>]]></code>
     </DeprecatedInterface>
   </file>
   <file src="src/Metadata/Projection/ProjectionMetadataFactory.php">
     <DeprecatedInterface>
-      <code>class-string&lt;Projection&gt;</code>
+      <code><![CDATA[class-string<Projection>]]></code>
     </DeprecatedInterface>
   </file>
   <file src="src/Pipeline/Source/StoreSource.php">
@@ -144,16 +150,16 @@
     <DeprecatedInterface>
       <code>MetadataAwareProjectionHandler</code>
       <code>iterable</code>
-      <code>iterable&lt;Projection&gt;</code>
-      <code>iterable&lt;Projection&gt;</code>
+      <code><![CDATA[iterable<Projection>]]></code>
+      <code><![CDATA[iterable<Projection>]]></code>
     </DeprecatedInterface>
   </file>
   <file src="src/Projection/Projection/ProjectionCollection.php">
     <InvalidReturnStatement>
-      <code>new ArrayIterator(array_values($this-&gt;projections))</code>
+      <code><![CDATA[new ArrayIterator(array_values($this->projections))]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
-      <code>ArrayIterator&lt;int, Projection&gt;</code>
+      <code><![CDATA[ArrayIterator<int, Projection>]]></code>
     </InvalidReturnType>
   </file>
   <file src="src/Projection/ProjectionListener.php">
@@ -164,7 +170,7 @@
   </file>
   <file src="src/Projection/Projector/InMemoryProjectorRepository.php">
     <InvalidOperand>
-      <code>$this-&gt;projectors</code>
+      <code><![CDATA[$this->projectors]]></code>
     </InvalidOperand>
   </file>
   <file src="src/Projection/Projector/MetadataProjectorResolver.php">
@@ -180,17 +186,6 @@
       <code>Projection</code>
       <code>Projection</code>
     </DeprecatedInterface>
-  </file>
-  <file src="src/Repository/DefaultRepository.php">
-    <MixedArgument>
-      <code>++$playhead</code>
-    </MixedArgument>
-    <MixedAssignment>
-      <code>$playhead</code>
-    </MixedAssignment>
-    <MixedOperand>
-      <code>$playhead</code>
-    </MixedOperand>
   </file>
   <file src="src/Schema/DoctrineSchemaDirector.php">
     <DeprecatedMethod>
@@ -233,13 +228,13 @@
   </file>
   <file src="src/Snapshot/DefaultSnapshotStore.php">
     <MixedArgument>
-      <code>$data['payload']</code>
+      <code><![CDATA[$data['payload']]]></code>
     </MixedArgument>
   </file>
   <file src="src/Store/DoctrineStore.php">
     <MixedReturnTypeCoercion>
       <code>$normalizedCustomHeaders</code>
-      <code>array&lt;string, mixed&gt;</code>
+      <code><![CDATA[array<string, mixed>]]></code>
     </MixedReturnTypeCoercion>
   </file>
   <file src="src/Store/MultiTableStore.php">
@@ -366,6 +361,11 @@
       <code>$value</code>
     </MixedArgumentTypeCoercion>
   </file>
+  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php">
+    <ReservedWord>
+      <code><![CDATA[ProfileCreated&ProfileVisited $event]]></code>
+    </ReservedWord>
+  </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
       <code>$event</code>
@@ -387,7 +387,7 @@
   </file>
   <file src="tests/Unit/Pipeline/Target/ProjectionHandlerTargetTest.php">
     <DeprecatedClass>
-      <code>new ProjectionHandlerTarget($projectionHandler-&gt;reveal())</code>
+      <code><![CDATA[new ProjectionHandlerTarget($projectionHandler->reveal())]]></code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Pipeline/Target/ProjectionTargetTest.php">
@@ -415,7 +415,7 @@
   </file>
   <file src="tests/Unit/Projection/ProjectionListenerTest.php">
     <DeprecatedClass>
-      <code>new ProjectionListener($projectionRepository-&gt;reveal())</code>
+      <code><![CDATA[new ProjectionListener($projectionRepository->reveal())]]></code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Projection/Projectionist/DefaultProjectionistTest.php">
@@ -497,7 +497,7 @@
   </file>
   <file src="tests/Unit/Schema/MigrationSchemaProviderTest.php">
     <DeprecatedClass>
-      <code>new MigrationSchemaProvider($store-&gt;reveal())</code>
+      <code><![CDATA[new MigrationSchemaProvider($store->reveal())]]></code>
     </DeprecatedClass>
   </file>
 </files>
