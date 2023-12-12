@@ -1,37 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         bootstrap="tests/bootstrap.php"
-        forceCoversAnnotation="false"
         beStrictAboutTestsThatDoNotTestAnything="true"
         beStrictAboutOutputDuringTests="true"
-        beStrictAboutTodoAnnotatedTests="true"
         beStrictAboutChangesToGlobalState="true"
         failOnRisky="true"
         failOnWarning="true"
-        verbose="true"
         colors="true"
+        xsi:noNamespaceSchemaLocation="/vendor/phpunit/phpunit/phpunit.xsd"
+        cacheDirectory=".phpunit.cache"
+        requireCoverageMetadata="false"
 >
-    <testsuites>
-        <testsuite name="unit">
-            <directory>./tests/Unit</directory>
-        </testsuite>
-        <testsuite name="integration">
-            <directory>./tests/Integration</directory>
-        </testsuite>
-    </testsuites>
-
-    <coverage processUncoveredFiles="true">
-        <include>
-            <directory suffix=".php">src</directory>
-        </include>
-        <report>
-            <html outputDirectory="./coverage"/>
-        </report>
-    </coverage>
-
-    <php>
-        <env name="COLUMNS" value="120"/>
-        <env name="DB_URL" value="sqlite:///:memory:"/>
-        <ini name="error_reporting" value="E_ALL"/>
-    </php>
+  <testsuites>
+    <testsuite name="unit">
+      <directory>./tests/Unit</directory>
+    </testsuite>
+    <testsuite name="integration">
+      <directory>./tests/Integration</directory>
+    </testsuite>
+  </testsuites>
+  <coverage>
+    <report>
+      <html outputDirectory="./coverage"/>
+    </report>
+  </coverage>
+  <php>
+    <env name="COLUMNS" value="120"/>
+    <env name="DB_URL" value="sqlite:///:memory:"/>
+    <ini name="error_reporting" value="E_ALL"/>
+  </php>
+  <source>
+    <include>
+      <directory suffix=".php">src</directory>
+    </include>
+  </source>
 </phpunit>

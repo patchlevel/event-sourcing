@@ -62,7 +62,7 @@ final class ProjectionIdTest extends TestCase
     }
 
     /** @return Generator<array-key, array{string, string, int}> */
-    public function validFromStringProvider(): Generator
+    public static function validFromStringProvider(): Generator
     {
         yield ['hotel-1', 'hotel', 1];
         yield ['hotel-bar-1', 'hotel-bar', 1];
@@ -78,7 +78,7 @@ final class ProjectionIdTest extends TestCase
     }
 
     /** @return Generator<array-key, array{string}> */
-    public function invalidFromStringProvider(): Generator
+    public static function invalidFromStringProvider(): Generator
     {
         yield ['hotel'];
         yield ['hotel-bar'];

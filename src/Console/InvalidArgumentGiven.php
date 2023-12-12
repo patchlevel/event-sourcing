@@ -13,7 +13,7 @@ final class InvalidArgumentGiven extends InvalidArgumentException
 {
     public function __construct(
         private readonly mixed $value,
-        string $need,
+        private readonly string $need,
     ) {
         parent::__construct(
             sprintf(
@@ -27,5 +27,10 @@ final class InvalidArgumentGiven extends InvalidArgumentException
     public function value(): mixed
     {
         return $this->value;
+    }
+
+    public function need(): string
+    {
+        return $this->need;
     }
 }

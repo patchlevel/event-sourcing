@@ -30,7 +30,7 @@ psalm-baseline: vendor                                                          
 
 .PHONY: phpunit
 phpunit: vendor                                                                 ## run phpunit tests
-	vendor/bin/phpunit --colors=always -v
+	XDEBUG_MODE=coverage vendor/bin/phpunit
 
 .PHONY: infection
 infection: vendor                                                               ## run infection

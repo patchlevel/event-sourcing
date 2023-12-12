@@ -445,7 +445,7 @@ final class DefaultRepositoryTest extends TestCase
         )->shouldBeCalled();
         $store->archiveMessages(Profile::class, '1', 3)->shouldBeCalledOnce();
         $store->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
+            /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]()
         );
 

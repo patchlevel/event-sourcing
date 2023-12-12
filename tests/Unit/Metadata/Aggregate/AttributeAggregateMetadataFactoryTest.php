@@ -69,11 +69,8 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
         $metadataFactory->metadata(ProfileWithBrokenApplyNoType::class);
     }
 
-    /** @psalm-suppress UnevaluatedCode */
     public function testBrokenApplyWithIntersectionType(): void
     {
-        $this->markTestSkipped('Needs Pslam to not crash on the intersection type. Should be at psalm 5.');
-
         $metadataFactory = new AttributeAggregateRootMetadataFactory();
         $this->expectException(ArgumentTypeIsMissing::class);
 

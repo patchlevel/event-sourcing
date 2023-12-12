@@ -1,7 +1,7 @@
 vendor/
 coverage/
 phpunit.xml
-.phpunit.result.cache
+.phpunit.cache
 .phpcs-cache
 phpstan.neon
 infection.log

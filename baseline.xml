@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.14.1@b9d355e0829c397b9b3b47d0c0ed042a8a70284d">
+<files psalm-version="5.17.0@c620f6e80d0abfca532b00bda366062aaedf6e5d">
   <file src="src/Aggregate/AggregateRootBehaviour.php">
     <UnsafeInstantiation>
       <code>new static()</code>
@@ -32,6 +32,9 @@
     </InvalidReturnType>
   </file>
   <file src="src/Metadata/AggregateRoot/AttributeAggregateRootMetadataFactory.php">
+    <DocblockTypeContradiction>
+      <code>$reflectionType instanceof ReflectionIntersectionType</code>
+    </DocblockTypeContradiction>
     <InvalidReturnStatement>
       <code><![CDATA[$this->aggregateMetadata[$aggregate]]]></code>
     </InvalidReturnStatement>
@@ -53,15 +56,6 @@
     </InvalidOperand>
   </file>
   <file src="src/Repository/DefaultRepository.php">
-    <MixedArgument>
-      <code>++$playhead</code>
-    </MixedArgument>
-    <MixedAssignment>
-      <code>$playhead</code>
-    </MixedAssignment>
-    <MixedOperand>
-      <code>$playhead</code>
-    </MixedOperand>
     <PropertyTypeCoercion>
       <code>new WeakMap()</code>
     </PropertyTypeCoercion>
@@ -185,6 +179,11 @@
       <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php">
+    <ReservedWord>
+      <code><![CDATA[ProfileCreated&ProfileVisited $event]]></code>
+    </ReservedWord>
+  </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
       <code>$event</code>
@@ -203,11 +202,5 @@
       <code>current</code>
       <code>next</code>
     </InvalidMethodCall>
-  </file>
-  <file src="tests/Unit/Store/ArrayStreamTest.php">
-    <DocblockTypeContradiction>
-      <code>assertSame</code>
-      <code>assertSame</code>
-    </DocblockTypeContradiction>
   </file>
 </files>

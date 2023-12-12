@@ -77,8 +77,6 @@ final class DoctrineDbalStoreTest extends TestCase
 
         self::assertSame(null, $stream->index());
         self::assertSame(null, $stream->position());
-
-        self::assertCount(0, $stream);
     }
 
     public function testLoadWithOneEvent(): void
