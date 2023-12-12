@@ -18,6 +18,6 @@ final class DoctrineDbalStoreSchemaAdapter implements SchemaConfigurator
 
     public function configureSchema(Schema $schema, Connection $connection): void
     {
-        $this->doctrineDbalStore->configureSchema($schema);
+        $this->doctrineDbalStore->configureSchema($schema, static fn () => true);
     }
 }
