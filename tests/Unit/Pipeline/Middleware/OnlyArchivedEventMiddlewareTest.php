@@ -21,8 +21,8 @@ final class OnlyArchivedEventMiddlewareTest extends TestCase
         $message = Message::create(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )
+                Email::fromString('hallo@patchlevel.de'),
+            ),
         )->withArchived(false);
 
         $result = $middleware($message);
@@ -37,8 +37,8 @@ final class OnlyArchivedEventMiddlewareTest extends TestCase
         $message = Message::create(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de')
-            )
+                Email::fromString('hallo@patchlevel.de'),
+            ),
         )->withArchived(true);
 
         $result = $middleware($message);

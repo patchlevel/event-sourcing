@@ -14,7 +14,7 @@ use function array_map;
 
 #[AsCommand(
     'event-sourcing:projectionist:status',
-    'View the current status of the projections'
+    'View the current status of the projections',
 )]
 final class ProjectionistStatusCommand extends ProjectionistCommand
 {
@@ -37,8 +37,8 @@ final class ProjectionistStatusCommand extends ProjectionistCommand
                     $projection->position(),
                     $projection->status()->value,
                 ],
-                [...$projections]
-            )
+                [...$projections],
+            ),
         );
 
         return 0;

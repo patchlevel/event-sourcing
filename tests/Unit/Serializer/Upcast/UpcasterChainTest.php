@@ -49,7 +49,7 @@ final class UpcasterChainTest extends TestCase
                 'bar' => 'baz',
                 'foo' => 'bar',
             ],
-            $upcast->payload
+            $upcast->payload,
         );
     }
 }

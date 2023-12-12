@@ -22,7 +22,7 @@ final class StoreSourceTest extends TestCase
     public function testLoad(): void
     {
         $message = new Message(
-            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
         );
 
         $generatorFactory = static function () use ($message): Generator {
@@ -46,7 +46,7 @@ final class StoreSourceTest extends TestCase
     public function testLoadWithFromIndex(): void
     {
         $message = new Message(
-            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
         );
 
         $generatorFactory = static function () use ($message): Generator {

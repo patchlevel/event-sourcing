@@ -28,7 +28,7 @@ final class ProjectionDropCommandTest extends TestCase
         $repository->drop()->shouldBeCalled();
 
         $command = new ProjectionDropCommand(
-            $repository->reveal()
+            $repository->reveal(),
         );
 
         $input = new ArrayInput([]);
@@ -50,7 +50,7 @@ final class ProjectionDropCommandTest extends TestCase
         $handler = new MetadataAwareProjectionHandler([$projectionA, $projectionB]);
 
         $command = new ProjectionDropCommand(
-            $handler
+            $handler,
         );
 
         $input = new ArrayInput(['--projection' => DummyProjection::class]);

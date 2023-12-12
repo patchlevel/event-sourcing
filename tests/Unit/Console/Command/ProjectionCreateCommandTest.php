@@ -28,7 +28,7 @@ final class ProjectionCreateCommandTest extends TestCase
         $repository->create()->shouldBeCalled();
 
         $command = new ProjectionCreateCommand(
-            $repository->reveal()
+            $repository->reveal(),
         );
 
         $input = new ArrayInput([]);
@@ -50,7 +50,7 @@ final class ProjectionCreateCommandTest extends TestCase
         $handler = new MetadataAwareProjectionHandler([$projectionA, $projectionB]);
 
         $command = new ProjectionCreateCommand(
-            $handler
+            $handler,
         );
 
         $input = new ArrayInput(['--projection' => DummyProjection::class]);

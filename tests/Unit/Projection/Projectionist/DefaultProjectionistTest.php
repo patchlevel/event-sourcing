@@ -50,7 +50,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore->reveal(),
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->boot();
@@ -88,7 +88,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->boot();
@@ -103,7 +103,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testBootWithMethods(): void
     {
         $projector = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
             public bool $created = false;
 
             public function targetProjection(): ProjectionId
@@ -145,7 +145,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->boot();
@@ -163,7 +163,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testBootWithLimit(): void
     {
         $projector = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
             public bool $created = false;
 
             public function targetProjection(): ProjectionId
@@ -205,7 +205,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->boot(new ProjectionCriteria(), 1);
@@ -222,7 +222,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testBootWithCreateError(): void
     {
         $projector = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
             public bool $created = false;
 
             public function targetProjection(): ProjectionId
@@ -254,7 +254,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->boot();
@@ -268,7 +268,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRunning(): void
     {
         $projector = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
             {
@@ -303,7 +303,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->run();
@@ -318,7 +318,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRunningWithLimit(): void
     {
         $projector = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
             {
@@ -355,7 +355,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->run(new ProjectionCriteria(), 1);
@@ -370,7 +370,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRunningWithSkip(): void
     {
         $projector1 = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
             {
@@ -384,7 +384,7 @@ final class DefaultProjectionistTest extends TestCase
         };
 
         $projector2 = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
             {
@@ -422,7 +422,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->run();
@@ -471,7 +471,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->run();
@@ -500,7 +500,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->run();
@@ -513,7 +513,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRunningWithoutActiveProjectors(): void
     {
         $projector = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             public function targetProjection(): ProjectionId
             {
@@ -541,7 +541,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->run();
@@ -552,7 +552,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testTeardownWithProjector(): void
     {
         $projector = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
             public bool $dropped = false;
 
             public function targetProjection(): ProjectionId
@@ -581,7 +581,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->teardown();
@@ -594,7 +594,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testTeardownWithProjectorAndError(): void
     {
         $projector = new class implements VersionedProjector {
-            public ?Message $message = null;
+            public Message|null $message = null;
             public bool $dropped = false;
 
             public function targetProjection(): ProjectionId
@@ -623,7 +623,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->teardown();
@@ -650,7 +650,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->teardown();
@@ -690,7 +690,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->remove();
@@ -724,7 +724,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->remove();
@@ -764,7 +764,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->remove();
@@ -791,7 +791,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->remove();
@@ -823,7 +823,7 @@ final class DefaultProjectionistTest extends TestCase
             $projectionStore,
             $projectorRepository->reveal(),
             $projectorResolver->reveal(),
-            new NullLogger()
+            new NullLogger(),
         );
 
         $projectionist->reactivate();

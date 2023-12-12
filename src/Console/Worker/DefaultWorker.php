@@ -22,7 +22,7 @@ final class DefaultWorker implements Worker
     public function __construct(
         private readonly Closure $job,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly ?LoggerInterface $logger = null
+        private readonly LoggerInterface|null $logger = null,
     ) {
     }
 

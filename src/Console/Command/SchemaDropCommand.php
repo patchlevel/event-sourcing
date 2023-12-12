@@ -19,19 +19,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:schema:drop',
-    'drop eventstore schema'
+    'drop eventstore schema',
 )]
 final class SchemaDropCommand extends Command
 {
-    private Store $store;
-    private SchemaManager|SchemaDirector $schemaDirector;
-
-    public function __construct(Store $store, SchemaManager|SchemaDirector $schemaDirector)
+    public function __construct(private Store $store, private SchemaManager|SchemaDirector $schemaDirector)
     {
         parent::__construct();
-
-        $this->store = $store;
-        $this->schemaDirector = $schemaDirector;
     }
 
     protected function configure(): void

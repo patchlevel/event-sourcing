@@ -11,7 +11,7 @@ final class WrongNormalizerEvent
 {
     public function __construct(
         #[EmailNormalizer]
-        public bool $email
+        public bool $email,
     ) {
     }
 }

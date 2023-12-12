@@ -14,7 +14,7 @@ final class MixedApplyAttributeUsage extends MetadataException
     {
         parent::__construct(sprintf(
             'The method [%s] has at least one apply attribute with an event name and one without which is not allowed.',
-            $methodName
+            $methodName,
         ));
     }
 }

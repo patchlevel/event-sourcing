@@ -6,11 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 final class Email
 {
-    private string $value;
-
-    private function __construct(string $value)
+    private function __construct(private string $value)
     {
-        $this->value = $value;
     }
 
     public static function fromString(string $value): self

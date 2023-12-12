@@ -9,9 +9,7 @@ use Patchlevel\EventSourcing\Store\Store;
 
 use function sprintf;
 
-/**
- * @deprecated use DoctrineSchemaDirector
- */
+/** @deprecated use DoctrineSchemaDirector */
 final class DoctrineSchemaManager implements DryRunSchemaManager
 {
     public function create(Store $store): void
@@ -28,9 +26,7 @@ final class DoctrineSchemaManager implements DryRunSchemaManager
         }
     }
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function dryRunCreate(Store $store): array
     {
         if (!$store instanceof DoctrineStore) {
@@ -54,9 +50,7 @@ final class DoctrineSchemaManager implements DryRunSchemaManager
         }
     }
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function dryRunUpdate(Store $store): array
     {
         if (!$store instanceof DoctrineStore) {
@@ -89,9 +83,7 @@ final class DoctrineSchemaManager implements DryRunSchemaManager
         }
     }
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function dryRunDrop(Store $store): array
     {
         if (!$store instanceof DoctrineStore) {

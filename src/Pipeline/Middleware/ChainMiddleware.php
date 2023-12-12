@@ -10,17 +10,13 @@ use function array_values;
 
 final class ChainMiddleware implements Middleware
 {
-    /**
-     * @param iterable<Middleware> $middlewares
-     */
+    /** @param iterable<Middleware> $middlewares */
     public function __construct(
-        private readonly iterable $middlewares
+        private readonly iterable $middlewares,
     ) {
     }
 
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     public function __invoke(Message $message): array
     {
         $messages = [$message];

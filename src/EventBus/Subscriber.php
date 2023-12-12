@@ -12,7 +12,7 @@ use function array_key_exists;
 abstract class Subscriber implements Listener
 {
     /** @var array<class-string, string>|null */
-    private ?array $handleMethods = null;
+    private array|null $handleMethods = null;
 
     final public function __invoke(Message $message): void
     {
@@ -48,7 +48,7 @@ abstract class Subscriber implements Listener
                         static::class,
                         $eventClass,
                         $this->handleMethods[$eventClass],
-                        $method->getName()
+                        $method->getName(),
                     );
                 }
 

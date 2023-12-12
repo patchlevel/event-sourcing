@@ -23,7 +23,7 @@ final class EmailNormalizer implements Normalizer
         return $value->toString();
     }
 
-    public function denormalize(mixed $value): ?Email
+    public function denormalize(mixed $value): Email|null
     {
         if ($value === null) {
             return null;

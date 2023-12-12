@@ -24,8 +24,8 @@ final class UntilEventMiddlewareTest extends TestCase
         $message = Message::create(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         )->withRecordedOn(new DateTimeImmutable('2020-02-01 00:00:00'));
 
         $result = $middleware($message);
@@ -42,8 +42,8 @@ final class UntilEventMiddlewareTest extends TestCase
         $message = Message::create(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         )->withRecordedOn(new DateTimeImmutable('2020-02-01 00:00:00'));
 
         $result = $middleware($message);

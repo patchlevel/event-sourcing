@@ -7,16 +7,11 @@ namespace Patchlevel\EventSourcing\Projection;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-/**
- * @deprecated use SyncProjectorListener
- */
+/** @deprecated use SyncProjectorListener */
 final class ProjectionListener implements Listener
 {
-    private ProjectionHandler $projectionHandler;
-
-    public function __construct(ProjectionHandler $projectionHandler)
+    public function __construct(private ProjectionHandler $projectionHandler)
     {
-        $this->projectionHandler = $projectionHandler;
     }
 
     public function __invoke(Message $message): void

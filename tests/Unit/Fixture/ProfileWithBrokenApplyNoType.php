@@ -11,9 +11,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 #[Aggregate(ProfileWithBrokenApplyNoType::class)]
 final class ProfileWithBrokenApplyNoType extends AggregateRoot
 {
-    /**
-     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingAnyTypeHint
-     */
+    /** @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingAnyTypeHint */
     #[Apply]
     protected function applyWithNoType($event): void
     {

@@ -15,18 +15,14 @@ final class EventRegistry
     /** @var array<class-string, string> */
     private array $classToNameMap;
 
-    /**
-     * @param array<string, class-string> $eventNameToClassMap
-     */
+    /** @param array<string, class-string> $eventNameToClassMap */
     public function __construct(array $eventNameToClassMap)
     {
         $this->nameToClassMap = $eventNameToClassMap;
         $this->classToNameMap = array_flip($eventNameToClassMap);
     }
 
-    /**
-     * @param class-string $eventClass
-     */
+    /** @param class-string $eventClass */
     public function eventName(string $eventClass): string
     {
         if (!array_key_exists($eventClass, $this->classToNameMap)) {
@@ -36,9 +32,7 @@ final class EventRegistry
         return $this->classToNameMap[$eventClass];
     }
 
-    /**
-     * @return class-string
-     */
+    /** @return class-string */
     public function eventClass(string $eventName): string
     {
         if (!array_key_exists($eventName, $this->nameToClassMap)) {
@@ -58,9 +52,7 @@ final class EventRegistry
         return array_key_exists($eventName, $this->nameToClassMap);
     }
 
-    /**
-     * @return array<string, class-string>
-     */
+    /** @return array<string, class-string> */
     public function eventClasses(): array
     {
         return $this->nameToClassMap;

@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:projection:drop',
-    'drop projection schema'
+    'drop projection schema',
 )]
 final class ProjectionDropCommand extends ProjectionCommand
 {

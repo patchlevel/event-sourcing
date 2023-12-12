@@ -49,7 +49,7 @@ final class WriteEventsBench
 
         $profileProjection = new ProfileProjector($connection);
         $projectionRepository = new MetadataAwareProjectionHandler(
-            [$profileProjection]
+            [$profileProjection],
         );
 
         $this->bus = new DefaultEventBus();
@@ -60,14 +60,14 @@ final class WriteEventsBench
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
-            'eventstore'
+            'eventstore',
         );
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,
-            $this->store
+            $this->store,
         );
 
         $schemaDirector->create();

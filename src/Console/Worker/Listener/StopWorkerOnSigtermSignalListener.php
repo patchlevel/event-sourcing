@@ -16,7 +16,7 @@ use const SIGTERM;
 final class StopWorkerOnSigtermSignalListener implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly ?LoggerInterface $logger = null
+        private readonly LoggerInterface|null $logger = null,
     ) {
     }
 
@@ -28,9 +28,7 @@ final class StopWorkerOnSigtermSignalListener implements EventSubscriberInterfac
         });
     }
 
-    /**
-     * @return array<class-string, string>
-     */
+    /** @return array<class-string, string> */
     public static function getSubscribedEvents(): array
     {
         if (!function_exists('pcntl_signal')) {

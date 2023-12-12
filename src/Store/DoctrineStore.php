@@ -29,7 +29,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
     public function __construct(
         protected Connection $connection,
         protected EventSerializer $serializer,
-        protected AggregateRootRegistry $aggregateRootRegistry
+        protected AggregateRootRegistry $aggregateRootRegistry,
     ) {
     }
 
@@ -86,17 +86,15 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
                         [
                             'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
                             'custom_headers' => Types::JSON,
-                        ]
+                        ],
                     );
                 }
-            }
+            },
         );
     }
 
-    /**
-     * @return list<Message>
-     */
-    public function retrieveOutboxMessages(?int $limit = null): array
+    /** @return list<Message> */
+    public function retrieveOutboxMessages(int|null $limit = null): array
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
@@ -119,7 +117,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
                     ->withRecordedOn(self::normalizeRecordedOn($data['recorded_on'], $platform))
                     ->withCustomHeaders(self::normalizeCustomHeaders($data['custom_headers'], $platform));
             },
-            $result
+            $result,
         );
     }
 
@@ -134,10 +132,10 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
                             'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
                             'aggregate_id' => $message->aggregateId(),
                             'playhead' => $message->playhead(),
-                        ]
+                        ],
                     );
                 }
-            }
+            },
         );
     }
 
@@ -157,9 +155,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
         return (int)$result;
     }
 
-    /**
-     * @deprecated use DoctrineSchemaDirector
-     */
+    /** @deprecated use DoctrineSchemaDirector */
     public function schema(): Schema
     {
         $schema = new Schema([], [], $this->connection->createSchemaManager()->createSchemaConfig());
@@ -182,9 +178,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
         return $normalizedRecordedOn;
     }
 
-    /**
-     * @return positive-int
-     */
+    /** @return positive-int */
     protected static function normalizePlayhead(string|int $playhead, AbstractPlatform $platform): int
     {
         $normalizedPlayhead = Type::getType(Types::INTEGER)->convertToPHPValue($playhead, $platform);
@@ -196,9 +190,7 @@ abstract class DoctrineStore implements Store, TransactionStore, OutboxStore, Sp
         return $normalizedPlayhead;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     protected static function normalizeCustomHeaders(string $customHeaders, AbstractPlatform $platform): array
     {
         $normalizedCustomHeaders = Type::getType(Types::JSON)->convertToPHPValue($customHeaders, $platform);

@@ -18,7 +18,7 @@ final class Bytes
     ];
 
     public function __construct(
-        private readonly int $bytes
+        private readonly int $bytes,
     ) {
     }
 

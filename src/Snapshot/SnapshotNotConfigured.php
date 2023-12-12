@@ -10,16 +10,14 @@ use function sprintf;
 
 final class SnapshotNotConfigured extends SnapshotException
 {
-    /**
-     * @param class-string<AggregateRoot> $aggregateClass
-     */
+    /** @param class-string<AggregateRoot> $aggregateClass */
     public function __construct(string $aggregateClass)
     {
         parent::__construct(
             sprintf(
                 'Missing snapshot configuration for the aggregate class "%s"',
-                $aggregateClass
-            )
+                $aggregateClass,
+            ),
         );
     }
 }

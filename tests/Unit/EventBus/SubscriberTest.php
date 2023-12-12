@@ -21,7 +21,7 @@ final class SubscriberTest extends TestCase
     public function testSubscribeEvent(): void
     {
         $subscriber = new class extends Subscriber {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             #[Handle(ProfileCreated::class)]
             public function handle(Message $message): void
@@ -33,8 +33,8 @@ final class SubscriberTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $eventBus = new DefaultEventBus([$subscriber]);
@@ -46,7 +46,7 @@ final class SubscriberTest extends TestCase
     public function testSubscribeWrongEvent(): void
     {
         $subscriber = new class extends Subscriber {
-            public ?Message $message = null;
+            public Message|null $message = null;
 
             #[Handle(ProfileVisited::class)]
             public function handle(Message $message): void
@@ -58,8 +58,8 @@ final class SubscriberTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $eventBus = new DefaultEventBus([$subscriber]);
@@ -71,8 +71,8 @@ final class SubscriberTest extends TestCase
     public function testSubscribeMultipleEvents(): void
     {
         $subscriber = new class extends Subscriber {
-            public ?Message $a = null;
-            public ?Message $b = null;
+            public Message|null $a = null;
+            public Message|null $b = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleA(Message $message): void
@@ -90,14 +90,14 @@ final class SubscriberTest extends TestCase
         $message1 = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $message2 = new Message(
             new ProfileVisited(
-                ProfileId::fromString('1')
-            )
+                ProfileId::fromString('1'),
+            ),
         );
 
         $eventBus = new DefaultEventBus([$subscriber]);
@@ -124,14 +124,14 @@ final class SubscriberTest extends TestCase
         $message1 = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $message2 = new Message(
             new ProfileVisited(
-                ProfileId::fromString('1')
-            )
+                ProfileId::fromString('1'),
+            ),
         );
 
         $eventBus = new DefaultEventBus([$subscriber]);
@@ -161,8 +161,8 @@ final class SubscriberTest extends TestCase
         $message = new Message(
             new ProfileCreated(
                 ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de')
-            )
+                Email::fromString('info@patchlevel.de'),
+            ),
         );
 
         $eventBus = new DefaultEventBus();

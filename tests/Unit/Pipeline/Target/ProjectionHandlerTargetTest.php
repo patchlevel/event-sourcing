@@ -21,7 +21,7 @@ final class ProjectionHandlerTargetTest extends TestCase
     public function testSave(): void
     {
         $message = new Message(
-            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'))
+            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
         );
 
         $projectionHandler = $this->prophesize(ProjectionHandler::class);

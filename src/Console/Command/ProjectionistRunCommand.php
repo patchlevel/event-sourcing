@@ -21,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[AsCommand(
     'event-sourcing:projectionist:run',
-    'Run the active projectors'
+    'Run the active projectors',
 )]
 final class ProjectionistRunCommand extends ProjectionistCommand
 {
@@ -34,33 +34,33 @@ final class ProjectionistRunCommand extends ProjectionistCommand
                 'run-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'The maximum number of runs this command should execute'
+                'The maximum number of runs this command should execute',
             )
             ->addOption(
                 'message-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'How many messages should be consumed in one run',
-                100
+                100,
             )
             ->addOption(
                 'memory-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'How much memory consumption should the worker be terminated'
+                'How much memory consumption should the worker be terminated',
             )
             ->addOption(
                 'time-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'What is the maximum time the worker can run in seconds'
+                'What is the maximum time the worker can run in seconds',
             )
             ->addOption(
                 'sleep',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'How much time should elapse before the next job is executed in microseconds',
-                1000
+                1000,
             );
     }
 
@@ -88,7 +88,7 @@ final class ProjectionistRunCommand extends ProjectionistCommand
 
         if ($memoryLimit) {
             $eventDispatcher->addSubscriber(
-                new StopWorkerOnMemoryLimitListener(Bytes::parseFromString($memoryLimit), $logger)
+                new StopWorkerOnMemoryLimitListener(Bytes::parseFromString($memoryLimit), $logger),
             );
         }
 
@@ -109,7 +109,7 @@ final class ProjectionistRunCommand extends ProjectionistCommand
                 $this->projectionist->run($criteria, $messageLimit);
             },
             $eventDispatcher,
-            $logger
+            $logger,
         );
 
         if ($sleep < 0) {

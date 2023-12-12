@@ -11,9 +11,7 @@ use function sprintf;
 
 final class DuplicateCreateMethod extends MetadataException
 {
-    /**
-     * @param class-string<Projection> $projection
-     */
+    /** @param class-string<Projection> $projection */
     public function __construct(string $projection, string $fistMethod, string $secondMethod)
     {
         parent::__construct(
@@ -22,7 +20,7 @@ final class DuplicateCreateMethod extends MetadataException
                 $fistMethod,
                 $secondMethod,
                 $projection,
-            )
+            ),
         );
     }
 }

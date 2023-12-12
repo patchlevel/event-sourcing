@@ -11,9 +11,7 @@ interface WatchServer
 {
     public function start(): void;
 
-    /**
-     * @param Closure(Message, int):void $callback
-     */
+    /** @param Closure(Message, int):void $callback */
     public function listen(Closure $callback): void;
 
     public function host(): string;

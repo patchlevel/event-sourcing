@@ -15,12 +15,10 @@ final class StopWorkerOnTimeLimitListener implements EventSubscriberInterface
 {
     private float $endTime = 0;
 
-    /**
-     * @param positive-int $timeLimitInSeconds
-     */
+    /** @param positive-int $timeLimitInSeconds */
     public function __construct(
         private readonly int $timeLimitInSeconds,
-        private readonly ?LoggerInterface $logger = null
+        private readonly LoggerInterface|null $logger = null,
     ) {
     }
 
@@ -38,13 +36,11 @@ final class StopWorkerOnTimeLimitListener implements EventSubscriberInterface
         $event->worker->stop();
         $this->logger?->info(
             'Worker stopped due to time limit of {timeLimit}s exceeded',
-            ['timeLimit' => $this->timeLimitInSeconds]
+            ['timeLimit' => $this->timeLimitInSeconds],
         );
     }
 
-    /**
-     * @return array<class-string, string>
-     */
+    /** @return array<class-string, string> */
     public static function getSubscribedEvents(): array
     {
         return [

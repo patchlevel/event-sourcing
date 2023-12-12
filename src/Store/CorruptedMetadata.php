@@ -13,7 +13,7 @@ final class CorruptedMetadata extends StoreException
         return new self(sprintf(
             'Corrupted metadata: expected id is %s get %s',
             $expectedId,
-            $actualId
+            $actualId,
         ));
     }
 
@@ -21,7 +21,7 @@ final class CorruptedMetadata extends StoreException
     {
         return new self(sprintf(
             'Corrupted metadata: expected id is %s there but it is missing',
-            $expectedId
+            $expectedId,
         ));
     }
 }

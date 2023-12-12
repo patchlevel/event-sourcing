@@ -22,22 +22,17 @@ final class SocketWatchServerClient implements WatchServerClient
 {
     private string $host;
 
-    private MessageSerializer $serializer;
-
     /** @var resource|null */
     private $socket;
 
-    /**
-     * @param string $host The server host
-     */
-    public function __construct(string $host, MessageSerializer $serializer)
+    /** @param string $host The server host */
+    public function __construct(string $host, private MessageSerializer $serializer)
     {
         if (strpos($host, '://') === false) {
             $host = 'tcp://' . $host;
         }
 
         $this->host = $host;
-        $this->serializer = $serializer;
         $this->socket = null;
     }
 
@@ -75,9 +70,7 @@ final class SocketWatchServerClient implements WatchServerClient
         throw new SendingFailed('unknown error');
     }
 
-    /**
-     * @return resource|null
-     */
+    /** @return resource|null */
     private function createSocket()
     {
         if ($this->socket) {
@@ -92,7 +85,7 @@ final class SocketWatchServerClient implements WatchServerClient
                 $errno,
                 $errstr,
                 3,
-                STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT
+                STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT,
             );
 
             if (!$socket) {

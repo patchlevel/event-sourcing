@@ -30,7 +30,7 @@ final class DefaultRepositoryManagerTest extends TestCase
                 'profile2' => ProfileWithSnapshot::class,
             ]),
             $store->reveal(),
-            $eventBus->reveal()
+            $eventBus->reveal(),
         );
 
         $repository1 = $repositoryManager->get(Profile::class);
@@ -47,7 +47,7 @@ final class DefaultRepositoryManagerTest extends TestCase
         $repositoryManager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store->reveal(),
-            $eventBus->reveal()
+            $eventBus->reveal(),
         );
 
         $repository1 = $repositoryManager->get(Profile::class);
@@ -66,7 +66,7 @@ final class DefaultRepositoryManagerTest extends TestCase
         $repositoryManager = new DefaultRepositoryManager(
             new AggregateRootRegistry([]),
             $store->reveal(),
-            $eventBus->reveal()
+            $eventBus->reveal(),
         );
 
         $repositoryManager->get(Profile::class);

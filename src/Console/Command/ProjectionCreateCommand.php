@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     'event-sourcing:projection:create',
-    'create projection schema'
+    'create projection schema',
 )]
 final class ProjectionCreateCommand extends ProjectionCommand
 {

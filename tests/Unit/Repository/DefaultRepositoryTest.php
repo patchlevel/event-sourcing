@@ -56,7 +56,7 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->playhead() === 2;
-            })
+            }),
         )->shouldBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -82,7 +82,7 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->playhead() === 2;
-            })
+            }),
         )->shouldBeCalled();
 
         $repository = new DefaultRepository(
@@ -93,7 +93,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
 
         $aggregate->visitProfile(ProfileId::fromString('2'));
@@ -115,7 +115,7 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->playhead() === 2;
-            })
+            }),
         )->shouldBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -130,7 +130,7 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->playhead() === 2;
-            })
+            }),
         )->shouldBeCalled();
 
         $repository = new DefaultRepository(
@@ -141,7 +141,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
 
         $aggregate->releaseEvents(); // clear events
@@ -169,7 +169,7 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->playhead() === 2;
-            })
+            }),
         )->shouldBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -188,7 +188,7 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->playhead() === 2;
-            })
+            }),
         )->shouldBeCalled();
 
         $decorator = new class implements MessageDecorator {
@@ -203,12 +203,12 @@ final class DefaultRepositoryTest extends TestCase
             $eventBus->reveal(),
             Profile::class,
             null,
-            $decorator
+            $decorator,
         );
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
 
         $aggregate->releaseEvents(); // clear events
@@ -231,7 +231,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $aggregate = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
 
         $this->expectException(WrongAggregate::class);
@@ -244,7 +244,7 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->save(
-            Argument::type(Message::class)
+            Argument::type(Message::class),
         )->shouldNotBeCalled();
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -258,7 +258,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
         $aggregate->releaseEvents();
 
@@ -306,9 +306,7 @@ final class DefaultRepositoryTest extends TestCase
         )->shouldBeCalled();
         $store->archiveMessages(Profile::class, '1', 3)->shouldBeCalledOnce();
         $store->transactional(Argument::any())->will(
-            /**
-             * @param array{0: callable} $args
-             */
+            /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]()
         );
 
@@ -354,12 +352,12 @@ final class DefaultRepositoryTest extends TestCase
             $eventBus->reveal(),
             Profile::class,
             null,
-            new SplitStreamDecorator(new AttributeEventMetadataFactory())
+            new SplitStreamDecorator(new AttributeEventMetadataFactory()),
         );
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
         $aggregate->visitProfile(ProfileId::fromString('2'));
         $aggregate->splitIt();
@@ -372,13 +370,13 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(
             Profile::class,
-            '1'
+            '1',
         )->willReturn([
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de')
-                )
+                    Email::fromString('hallo@patchlevel.de'),
+                ),
             )->withPlayhead(1),
         ]);
 
@@ -403,13 +401,13 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(
             Profile::class,
-            '1'
+            '1',
         )->willReturn([
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de')
-                )
+                    Email::fromString('hallo@patchlevel.de'),
+                ),
             )->withPlayhead(1),
         ]);
 
@@ -435,7 +433,7 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(
             Profile::class,
-            '1'
+            '1',
         )->willReturn([]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -454,7 +452,7 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->has(
             Profile::class,
-            '1'
+            '1',
         )->willReturn(true);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -473,7 +471,7 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->has(
             Profile::class,
-            '1'
+            '1',
         )->willReturn(false);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -491,14 +489,14 @@ final class DefaultRepositoryTest extends TestCase
     {
         $profile = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
 
         $store = $this->prophesize(Store::class);
         $store->load(
             ProfileWithSnapshot::class,
             '1',
-            1
+            1,
         )->willReturn([]);
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -506,14 +504,14 @@ final class DefaultRepositoryTest extends TestCase
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(
             ProfileWithSnapshot::class,
-            '1'
+            '1',
         )->willReturn($profile);
 
         $repository = new DefaultRepository(
             $store->reveal(),
             $eventBus->reveal(),
             ProfileWithSnapshot::class,
-            $snapshotStore->reveal()
+            $snapshotStore->reveal(),
         );
 
         $aggregate = $repository->load('1');
@@ -529,26 +527,26 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(
             ProfileWithSnapshot::class,
-            '1'
+            '1',
         )->willReturn(
             [
                 Message::create(
                     new ProfileCreated(
                         ProfileId::fromString('1'),
-                        Email::fromString('hallo@patchlevel.de')
-                    )
+                        Email::fromString('hallo@patchlevel.de'),
+                    ),
                 )->withPlayhead(1),
                 Message::create(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
-                    )
+                    ),
                 )->withPlayhead(2),
                 Message::create(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
-                    )
+                    ),
                 )->withPlayhead(3),
-            ]
+            ],
         );
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -556,7 +554,7 @@ final class DefaultRepositoryTest extends TestCase
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(
             ProfileWithSnapshot::class,
-            '1'
+            '1',
         )->willThrow(new SnapshotNotFound(ProfileWithSnapshot::class, '1'));
 
         $snapshotStore->save(Argument::type(ProfileWithSnapshot::class))->shouldBeCalled();
@@ -565,7 +563,7 @@ final class DefaultRepositoryTest extends TestCase
             $store->reveal(),
             $eventBus->reveal(),
             ProfileWithSnapshot::class,
-            $snapshotStore->reveal()
+            $snapshotStore->reveal(),
         );
 
         $aggregate = $repository->load('1');
@@ -580,29 +578,29 @@ final class DefaultRepositoryTest extends TestCase
     {
         $profile = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
-            Email::fromString('hallo@patchlevel.de')
+            Email::fromString('hallo@patchlevel.de'),
         );
 
         $store = $this->prophesize(Store::class);
         $store->load(
             ProfileWithSnapshot::class,
             '1',
-            1
+            1,
         )->willReturn([
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
-                )
+                ),
             )->withPlayhead(1),
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
-                )
+                ),
             )->withPlayhead(2),
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
-                )
+                ),
             )->withPlayhead(3),
         ]);
 
@@ -611,7 +609,7 @@ final class DefaultRepositoryTest extends TestCase
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(
             ProfileWithSnapshot::class,
-            '1'
+            '1',
         )->willReturn($profile);
 
         $snapshotStore->save($profile)->shouldBeCalled();
@@ -620,7 +618,7 @@ final class DefaultRepositoryTest extends TestCase
             $store->reveal(),
             $eventBus->reveal(),
             ProfileWithSnapshot::class,
-            $snapshotStore->reveal()
+            $snapshotStore->reveal(),
         );
 
         $aggregate = $repository->load('1');
@@ -638,8 +636,8 @@ final class DefaultRepositoryTest extends TestCase
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de')
-                )
+                    Email::fromString('hallo@patchlevel.de'),
+                ),
             )->withPlayhead(1),
         ]);
 
@@ -653,7 +651,7 @@ final class DefaultRepositoryTest extends TestCase
             $store->reveal(),
             $eventBus->reveal(),
             ProfileWithSnapshot::class,
-            $snapshotStore->reveal()
+            $snapshotStore->reveal(),
         );
 
         $aggregate = $repository->load('1');

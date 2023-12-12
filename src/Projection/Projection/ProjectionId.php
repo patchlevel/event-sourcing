@@ -13,14 +13,12 @@ use function explode;
 use function implode;
 use function sprintf;
 
-/**
- * @psalm-immutable
- */
+/** @psalm-immutable */
 final class ProjectionId
 {
     public function __construct(
         private readonly string $name,
-        private readonly int $version
+        private readonly int $version,
     ) {
     }
 

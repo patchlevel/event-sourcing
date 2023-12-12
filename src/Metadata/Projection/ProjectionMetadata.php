@@ -9,8 +9,8 @@ final class ProjectionMetadata
     public function __construct(
         /** @var array<class-string, string> */
         public readonly array $handleMethods,
-        public readonly ?string $createMethod = null,
-        public readonly ?string $dropMethod = null
+        public readonly string|null $createMethod = null,
+        public readonly string|null $dropMethod = null,
     ) {
     }
 }

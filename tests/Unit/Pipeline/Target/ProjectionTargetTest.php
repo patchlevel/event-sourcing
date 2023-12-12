@@ -24,11 +24,11 @@ final class ProjectionTargetTest extends TestCase
         $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com'));
 
         $message = new Message(
-            $event
+            $event,
         );
 
         $projection = new class implements Projection {
-            public static ?Message $handledMessage = null;
+            public static Message|null $handledMessage = null;
 
             #[Handle(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void

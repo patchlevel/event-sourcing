@@ -37,7 +37,7 @@ final class RunProjectionistEventBusWrapperTest extends TestCase
 
         $eventBus = new RunProjectionistEventBusWrapper(
             $parentEventBus->reveal(),
-            $projectionist->reveal()
+            $projectionist->reveal(),
         );
 
         $eventBus->dispatch(...$messages);

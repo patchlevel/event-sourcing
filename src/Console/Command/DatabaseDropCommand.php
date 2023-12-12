@@ -20,19 +20,13 @@ use function sprintf;
 
 #[AsCommand(
     'event-sourcing:database:drop',
-    'drop eventstore database'
+    'drop eventstore database',
 )]
 final class DatabaseDropCommand extends Command
 {
-    private Store $store;
-    private DoctrineHelper $helper;
-
-    public function __construct(Store $store, DoctrineHelper $helper)
+    public function __construct(private Store $store, private DoctrineHelper $helper)
     {
         parent::__construct();
-
-        $this->store = $store;
-        $this->helper = $helper;
     }
 
     protected function configure(): void

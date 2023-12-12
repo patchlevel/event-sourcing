@@ -17,9 +17,7 @@ use function array_values;
 use function is_array;
 use function is_string;
 
-/**
- * @interal
- */
+/** @interal */
 abstract class ProjectionistCommand extends Command
 {
     public function __construct(
@@ -35,21 +33,19 @@ abstract class ProjectionistCommand extends Command
                 'id',
                 null,
                 InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
-                'filter by projection id'
+                'filter by projection id',
             );
     }
 
     protected function projectionCriteria(InputInterface $input): ProjectionCriteria
     {
         return new ProjectionCriteria(
-            $this->projectionIds($input)
+            $this->projectionIds($input),
         );
     }
 
-    /**
-     * @return list<ProjectionId>|null
-     */
-    private function projectionIds(InputInterface $input): ?array
+    /** @return list<ProjectionId>|null */
+    private function projectionIds(InputInterface $input): array|null
     {
         $ids = $input->getOption('id');
 
@@ -70,8 +66,8 @@ abstract class ProjectionistCommand extends Command
 
                     return ProjectionId::fromString($id);
                 },
-                $ids
-            )
+                $ids,
+            ),
         );
     }
 }

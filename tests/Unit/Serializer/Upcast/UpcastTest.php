@@ -7,9 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Serializer\Upcast;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers Patchlevel\EventSourcing\Serializer\Upcast\Upcast
- */
+/** @covers Patchlevel\EventSourcing\Serializer\Upcast\Upcast */
 final class UpcastTest extends TestCase
 {
     public function testReplaceEventName(): void

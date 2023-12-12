@@ -25,17 +25,13 @@ use function sprintf;
 
 #[AsCommand(
     'event-sourcing:projection:rebuild',
-    'rebuild projection'
+    'rebuild projection',
 )]
 final class ProjectionRebuildCommand extends ProjectionCommand
 {
-    private Store $store;
-
-    public function __construct(Store $store, ProjectionHandler $projectionHandler)
+    public function __construct(private Store $store, ProjectionHandler $projectionHandler)
     {
         parent::__construct($projectionHandler);
-
-        $this->store = $store;
     }
 
     protected function configure(): void
@@ -75,7 +71,7 @@ final class ProjectionRebuildCommand extends ProjectionCommand
         if (is_string($until)) {
             try {
                 $date = new DateTimeImmutable($until);
-            } catch (Throwable $exception) {
+            } catch (Throwable) {
                 $console->error(sprintf('date "%s" not supported. the format should be "2017-02-02 12:00"', $until));
 
                 return 1;
@@ -87,7 +83,7 @@ final class ProjectionRebuildCommand extends ProjectionCommand
         $pipeline = new Pipeline(
             new StoreSource($store),
             new ProjectionHandlerTarget($projectionHandler),
-            $middlewares
+            $middlewares,
         );
 
         $console->warning('rebuild projections');

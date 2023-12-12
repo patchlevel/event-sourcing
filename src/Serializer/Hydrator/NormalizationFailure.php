@@ -21,10 +21,10 @@ final class NormalizationFailure extends HydratorException
                 'normalization for the property "%s" in the class "%s" with the normalizer "%s" failed.',
                 $property,
                 $class,
-                $normalizer
+                $normalizer,
             ),
             0,
-            $e
+            $e,
         );
     }
 }

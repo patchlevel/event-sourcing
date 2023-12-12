@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Projection\Projection;
 
 final class Dummy2Projection implements Projection
 {
-    public ?EventMessage $handledMessage = null;
+    public EventMessage|null $handledMessage = null;
     public bool $createCalled = false;
     public bool $dropCalled = false;
 

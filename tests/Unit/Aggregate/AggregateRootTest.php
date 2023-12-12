@@ -104,8 +104,8 @@ final class AggregateRootTest extends TestCase
         $profile->publishMessage(
             Message::create(
                 $messageId,
-                'foo'
-            )
+                'foo',
+            ),
         );
     }
 

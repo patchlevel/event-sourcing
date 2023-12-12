@@ -14,7 +14,7 @@ final class ProjectorRepositoryTarget implements Target
 {
     public function __construct(
         private readonly ProjectorRepository $projectorRepository,
-        private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver()
+        private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
     ) {
     }
 

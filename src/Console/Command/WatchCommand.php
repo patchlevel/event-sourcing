@@ -17,19 +17,13 @@ use function sprintf;
 
 #[AsCommand(
     'event-sourcing:watch',
-    'live stream of all aggregate events'
+    'live stream of all aggregate events',
 )]
 final class WatchCommand extends Command
 {
-    private WatchServer $server;
-    private EventSerializer $serializer;
-
-    public function __construct(WatchServer $server, EventSerializer $serializer)
+    public function __construct(private WatchServer $server, private EventSerializer $serializer)
     {
         parent::__construct();
-
-        $this->server = $server;
-        $this->serializer = $serializer;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -44,7 +38,7 @@ final class WatchCommand extends Command
         $this->server->listen(
             function (Message $message) use ($console): void {
                 $console->message($this->serializer, $message);
-            }
+            },
         );
 
         return 0;

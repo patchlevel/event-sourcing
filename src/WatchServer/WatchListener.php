@@ -9,18 +9,15 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 final class WatchListener implements Listener
 {
-    private WatchServerClient $client;
-
-    public function __construct(WatchServerClient $client)
+    public function __construct(private WatchServerClient $client)
     {
-        $this->client = $client;
     }
 
     public function __invoke(Message $message): void
     {
         try {
             $this->client->send($message);
-        } catch (SendingFailed $exception) {
+        } catch (SendingFailed) {
             // to nothing
         }
     }

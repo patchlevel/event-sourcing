@@ -11,17 +11,13 @@ final class FilterEventMiddleware implements Middleware
     /** @var callable(object $event):bool */
     private $callable;
 
-    /**
-     * @param callable(object $event):bool $callable
-     */
+    /** @param callable(object $event):bool $callable */
     public function __construct(callable $callable)
     {
         $this->callable = $callable;
     }
 
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     public function __invoke(Message $message): array
     {
         $result = ($this->callable)($message->event());

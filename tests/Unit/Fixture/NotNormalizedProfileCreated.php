@@ -11,7 +11,7 @@ final class NotNormalizedProfileCreated
 {
     public function __construct(
         public ProfileId $profileId,
-        public Email $email
+        public Email $email,
     ) {
     }
 }

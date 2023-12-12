@@ -25,26 +25,20 @@ final class Message
     public const HEADER_NEW_STREAM_START = 'newStreamStart';
 
     /** @var class-string<AggregateRoot>|null */
-    private ?string $aggregateClass = null;
-    private ?string $aggregateId = null;
+    private string|null $aggregateClass = null;
+    private string|null $aggregateId = null;
     /** @var positive-int|null  */
-    private ?int $playhead = null;
-    private ?DateTimeImmutable $recordedOn = null;
+    private int|null $playhead = null;
+    private DateTimeImmutable|null $recordedOn = null;
     private bool $newStreamStart = false;
     private bool $archived = false;
 
     /** @var array<string, mixed> */
     private array $customHeaders = [];
 
-    /** @var T */
-    private readonly object $event;
-
-    /**
-     * @param T $event
-     */
-    public function __construct(object $event)
+    /** @param T $event */
+    public function __construct(private readonly object $event)
     {
-        $this->event = $event;
     }
 
     /**
@@ -59,17 +53,13 @@ final class Message
         return new self($event);
     }
 
-    /**
-     * @return T
-     */
+    /** @return T */
     public function event(): object
     {
         return $this->event;
     }
 
-    /**
-     * @return class-string<AggregateRoot>
-     */
+    /** @return class-string<AggregateRoot> */
     public function aggregateClass(): string
     {
         $value = $this->aggregateClass;
@@ -81,9 +71,7 @@ final class Message
         return $value;
     }
 
-    /**
-     * @param class-string<AggregateRoot> $value
-     */
+    /** @param class-string<AggregateRoot> $value */
     public function withAggregateClass(string $value): self
     {
         $message = clone $this;
@@ -111,9 +99,7 @@ final class Message
         return $message;
     }
 
-    /**
-     * @return positive-int
-     */
+    /** @return positive-int */
     public function playhead(): int
     {
         $value = $this->playhead;
@@ -125,9 +111,7 @@ final class Message
         return $value;
     }
 
-    /**
-     * @param positive-int $value
-     */
+    /** @param positive-int $value */
     public function withPlayhead(int $value): self
     {
         $message = clone $this;
@@ -198,17 +182,13 @@ final class Message
         return $message;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function customHeaders(): array
     {
         return $this->customHeaders;
     }
 
-    /**
-     * @param array<string, mixed> $headers
-     */
+    /** @param array<string, mixed> $headers */
     public function withCustomHeaders(array $headers): self
     {
         $message = clone $this;
@@ -217,9 +197,7 @@ final class Message
         return $message;
     }
 
-    /**
-     * @return Headers
-     */
+    /** @return Headers */
     public function headers(): array
     {
         $headers = $this->customHeaders;
@@ -246,9 +224,7 @@ final class Message
         return $headers;
     }
 
-    /**
-     * @param Headers $headers
-     */
+    /** @param Headers $headers */
     public static function createWithHeaders(object $event, array $headers): self
     {
         $message = self::create($event);

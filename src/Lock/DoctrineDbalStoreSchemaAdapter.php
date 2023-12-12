@@ -12,7 +12,7 @@ use Symfony\Component\Lock\Store\DoctrineDbalStore;
 final class DoctrineDbalStoreSchemaAdapter implements SchemaConfigurator
 {
     public function __construct(
-        private readonly DoctrineDbalStore $doctrineDbalStore
+        private readonly DoctrineDbalStore $doctrineDbalStore,
     ) {
     }
 

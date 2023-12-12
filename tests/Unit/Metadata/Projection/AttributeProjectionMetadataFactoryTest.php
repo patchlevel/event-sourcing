@@ -54,7 +54,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [ProfileVisited::class => 'handle'],
-            $metadata->handleMethods
+            $metadata->handleMethods,
         );
 
         self::assertSame('create', $metadata->createMethod);
@@ -79,7 +79,7 @@ final class AttributeProjectionMetadataFactoryTest extends TestCase
                 ProfileVisited::class => 'handle',
                 ProfileCreated::class => 'handle',
             ],
-            $metadata->handleMethods
+            $metadata->handleMethods,
         );
     }
 

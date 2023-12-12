@@ -16,7 +16,7 @@ final class EnumNormalizer implements Normalizer
 {
     public function __construct(
         /** @var class-string<BackedEnum> */
-        private readonly string $enum
+        private readonly string $enum,
     ) {
     }
 
@@ -33,7 +33,7 @@ final class EnumNormalizer implements Normalizer
         return $value->value;
     }
 
-    public function denormalize(mixed $value): ?BackedEnum
+    public function denormalize(mixed $value): BackedEnum|null
     {
         if ($value === null) {
             return null;

@@ -22,9 +22,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\Processor\SendEmailProcess
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Projection\ProfileProjection;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversNothing
- */
+/** @coversNothing */
 final class OutboxTest extends TestCase
 {
     private Connection $connection;
@@ -44,14 +42,14 @@ final class OutboxTest extends TestCase
     {
         $profileProjection = new ProfileProjection($this->connection);
         $projectionRepository = new MetadataAwareProjectionHandler(
-            [$profileProjection]
+            [$profileProjection],
         );
 
         $store = new SingleTableStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
-            'eventstore'
+            'eventstore',
         );
 
         $realEventBus = new DefaultEventBus();
@@ -63,7 +61,7 @@ final class OutboxTest extends TestCase
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            $store
+            $store,
         );
 
         $schemaDirector->create();
@@ -85,7 +83,7 @@ final class OutboxTest extends TestCase
         self::assertSame(1, $message->playhead());
         self::assertEquals(
             new ProfileCreated(ProfileId::fromString('1'), 'John'),
-            $message->event()
+            $message->event(),
         );
 
         $consumer = new StoreOutboxConsumer($store, $realEventBus);

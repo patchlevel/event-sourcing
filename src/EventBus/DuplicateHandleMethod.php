@@ -20,8 +20,8 @@ final class DuplicateHandleMethod extends EventBusException
                 $fistMethod,
                 $secondMethod,
                 $subscriber,
-                $event
-            )
+                $event,
+            ),
         );
     }
 }

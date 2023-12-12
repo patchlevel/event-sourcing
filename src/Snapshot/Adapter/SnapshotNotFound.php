@@ -15,8 +15,8 @@ final class SnapshotNotFound extends SnapshotException
         parent::__construct(
             sprintf(
                 'snapshot with the key "%s" not found',
-                $key
-            )
+                $key,
+            ),
         );
     }
 }

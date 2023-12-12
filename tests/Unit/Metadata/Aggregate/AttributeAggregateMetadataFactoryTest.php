@@ -35,12 +35,12 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
                 NameChanged::class => 'applyNameChanged',
                 SplittingEvent::class => 'applySplittingEvent',
             ],
-            $metadata->applyMethods
+            $metadata->applyMethods,
         );
         self::assertFalse($metadata->suppressAll);
         self::assertSame(
             [MessageDeleted::class => true],
-            $metadata->suppressEvents
+            $metadata->suppressEvents,
         );
     }
 
@@ -55,7 +55,7 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
                 ProfileVisited::class => 'applyProfileCreated',
                 NameChanged::class => 'applyNameChanged',
             ],
-            $metadata->applyMethods
+            $metadata->applyMethods,
         );
         self::assertFalse($metadata->suppressAll);
         self::assertSame([], $metadata->suppressEvents);
