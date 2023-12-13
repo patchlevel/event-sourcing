@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projection;
+namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projection\Store;
 
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;

@@ -88,7 +88,7 @@ final class DefaultProjectionist implements Projectionist
                     $e->getMessage(),
                 ));
 
-                $projection->error($e->getMessage());
+                $projection->error($e);
                 $this->projectionStore->save($projection);
 
                 if ($throwByError) {
@@ -400,7 +400,7 @@ final class DefaultProjectionist implements Projectionist
                     ),
                 );
 
-                $projection->error($e->getMessage());
+                $projection->error($e);
                 $this->projectionStore->save($projection);
 
                 if ($throwByError) {
