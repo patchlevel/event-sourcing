@@ -26,7 +26,7 @@ use function file_exists;
 use function unlink;
 
 #[Bench\BeforeMethods('setUp')]
-final class LoadEventsWithSnapshotsBench
+final class SnapshotsBench
 {
     private const DB_PATH = __DIR__ . '/BasicImplementation/data/db.sqlite3';
 
@@ -34,6 +34,8 @@ final class LoadEventsWithSnapshotsBench
     private EventBus $bus;
     private SnapshotStore $snapshotStore;
     private Repository $repository;
+
+    private InMemorySnapshotAdapter $adapter;
 
     public function setUp(): void
     {
@@ -55,7 +57,9 @@ final class LoadEventsWithSnapshotsBench
             'eventstore',
         );
 
-        $this->snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
+        $this->adapter = new InMemorySnapshotAdapter();
+
+        $this->snapshotStore = new DefaultSnapshotStore(['default' => $this->adapter]);
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata(), $this->snapshotStore);
 
@@ -74,6 +78,13 @@ final class LoadEventsWithSnapshotsBench
 
         $this->repository->save($profile);
         $this->snapshotStore->save($profile);
+    }
+
+    #[Bench\Revs(20)]
+    public function benchLoad10000EventsMissingSnapshot(): void
+    {
+        $this->adapter->clear();
+        $this->repository->load('1');
     }
 
     #[Bench\Revs(20)]

@@ -23,7 +23,7 @@ use function file_exists;
 use function unlink;
 
 #[Bench\BeforeMethods('setUp')]
-final class LoadEventsBench
+final class SimpleSetupBench
 {
     private const DB_PATH = __DIR__ . '/BasicImplementation/data/db.sqlite3';
 
@@ -73,5 +73,24 @@ final class LoadEventsBench
     public function benchLoad10000Events(): void
     {
         $this->repository->load('1');
+    }
+
+    #[Bench\Revs(20)]
+    public function benchSave1Event(): void
+    {
+        $profile = Profile::create(ProfileId::generate(), 'Peter');
+        $this->repository->save($profile);
+    }
+
+    #[Bench\Revs(20)]
+    public function benchSave10000Events(): void
+    {
+        $profile = Profile::create(ProfileId::generate(), 'Peter');
+
+        for ($i = 1; $i < 10_000; $i++) {
+            $profile->changeName('Peter');
+        }
+
+        $this->repository->save($profile);
     }
 }

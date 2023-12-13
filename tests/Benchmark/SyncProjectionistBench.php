@@ -8,12 +8,15 @@ use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\Lock\DoctrineDbalStoreSchemaAdapter;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -23,12 +26,14 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Processor\SendE
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection\ProfileProjector;
 use PhpBench\Attributes as Bench;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\DoctrineDbalStore as LockDoctrineDbalStore;
 
 use function file_exists;
 use function unlink;
 
 #[Bench\BeforeMethods('setUp')]
-final class WriteEventsBench
+final class SyncProjectionistBench
 {
     private const DB_PATH = __DIR__ . '/BasicImplementation/data/db.sqlite3';
 
@@ -66,14 +71,30 @@ final class WriteEventsBench
             $projectionRepository,
         );
 
-        $this->bus = new DefaultEventBus();
-        $this->bus->addListener(new SendEmailProcessor());
+        $innerEventStream = new DefaultEventBus();
+        $innerEventStream->addListener(new SendEmailProcessor());
+
+        $lockStorage = new LockDoctrineDbalStore($connection);
+        $lockStorageAdapter = new DoctrineDbalStoreSchemaAdapter($lockStorage);
+
+        $this->bus = new SyncProjectionistEventBusWrapper(
+            $innerEventStream,
+            $projectionist,
+            new LockFactory(
+                new LockDoctrineDbalStore($connection),
+            ),
+        );
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata());
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,
-            $this->store,
+            new ChainSchemaConfigurator(
+                [
+                    $this->store,
+                    $lockStorageAdapter,
+                ],
+            ),
         );
 
         $schemaDirector->create();
