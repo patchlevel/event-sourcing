@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Debug;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-
 use function microtime;
 
 final class ProfileData
@@ -13,12 +11,9 @@ final class ProfileData
     private float|null $start = null;
     private float|null $duration = null;
 
-    private function __construct(
-        /** @var 'load'|'has'|'save' */
-        private readonly string $type,
-        /** @var class-string<AggregateRoot> */
-        private readonly string $aggregateClass,
-        private readonly string $aggregateId,
+    public function __construct(
+        private readonly string $name,
+        private readonly array  $context = [],
     ) {
     }
 
@@ -36,43 +31,18 @@ final class ProfileData
         $this->duration = microtime(true) - $this->start;
     }
 
-    /** @return 'load'|'has'|'save' */
-    public function type(): string
+    public function name(): string
     {
-        return $this->type;
+        return $this->name;
     }
 
-    /** @return class-string<AggregateRoot> */
-    public function aggregateClass(): string
+    public function context(): array
     {
-        return $this->aggregateClass;
-    }
-
-    public function aggregateId(): string
-    {
-        return $this->aggregateId;
+        return $this->context;
     }
 
     public function duration(): float|null
     {
         return $this->duration;
-    }
-
-    /** @param class-string<AggregateRoot> $aggregateClass */
-    public static function loadAggregate(string $aggregateClass, string $aggregateId): self
-    {
-        return new ProfileData('load', $aggregateClass, $aggregateId);
-    }
-
-    /** @param class-string<AggregateRoot> $aggregateClass */
-    public static function hasAggregate(string $aggregateClass, string $aggregateId): self
-    {
-        return new ProfileData('has', $aggregateClass, $aggregateId);
-    }
-
-    /** @param class-string<AggregateRoot> $aggregateClass */
-    public static function saveAggregate(string $aggregateClass, string $aggregateId): self
-    {
-        return new ProfileData('save', $aggregateClass, $aggregateId);
     }
 }
