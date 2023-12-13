@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\AbstractSQLiteDriver;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use RuntimeException;
 
@@ -27,11 +28,13 @@ final class DbalManager
             throw new RuntimeException('missing DB_URL env');
         }
 
+        $connectionParams = (new DsnParser())->parse($dbUrl);
+
         if ($dbName !== self::DEFAULT_DB_NAME) {
-            $dbUrl = str_replace(self::DEFAULT_DB_NAME, $dbName, $dbUrl);
+            $connectionParams['dbname'] = $dbName;
         }
 
-        $connection = DriverManager::getConnection(['url' => $dbUrl]);
+        $connection = DriverManager::getConnection($connectionParams);
 
         if ($connection->getDriver() instanceof AbstractSQLiteDriver) {
             return $connection;

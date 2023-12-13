@@ -44,7 +44,7 @@ jobs:
                   - "16.1"
 
         env:
-            DB_URL: 'postgresql://postgres:postgres@localhost:5432/eventstore?charset=utf8'
+            DB_URL: 'pdo_pgsql://postgres:postgres@localhost:5432/eventstore?charset=utf8'
 
         steps:
             - name: "Checkout"
@@ -97,7 +97,7 @@ jobs:
             - "11.2"
 
       env:
-        DB_URL: 'mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
+        DB_URL: 'pdo_mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
 
       steps:
         - name: "Checkout"
@@ -150,7 +150,7 @@ jobs:
             - "8.2"
 
       env:
-        DB_URL: 'mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
+        DB_URL: 'pdo_mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
 
       steps:
         - name: "Checkout"
