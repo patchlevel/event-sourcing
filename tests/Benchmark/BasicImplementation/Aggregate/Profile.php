@@ -44,7 +44,7 @@ final class Profile extends BasicAggregateRoot
     {
         $this->recordThat(new Reborn(
             $this->id,
-            $this->name
+            $this->name,
         ));
     }
 

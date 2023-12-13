@@ -15,8 +15,6 @@ use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
-use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -25,6 +23,7 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use PhpBench\Attributes as Bench;
 
 use function file_exists;
+use function sprintf;
 use function unlink;
 
 #[Bench\BeforeMethods('setUp')]
@@ -63,8 +62,8 @@ final class SplitStreamBench
             Profile::metadata(),
             null,
             new SplitStreamDecorator(
-                new AttributeEventMetadataFactory()
-            )
+                new AttributeEventMetadataFactory(),
+            ),
         );
 
         $schemaDirector = new DoctrineSchemaDirector(
@@ -82,16 +81,18 @@ final class SplitStreamBench
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName(sprintf('Peter %d', $i));
 
-            if ($i % 100 === 0) {
-                $profile->reborn();
+            if ($i % 100 !== 0) {
+                continue;
             }
+
+            $profile->reborn();
         }
 
         $this->repository->save($profile);
     }
 
     #[Bench\Revs(20)]
-    #[Bench\BeforeMethods("provideData")]
+    #[Bench\BeforeMethods('provideData')]
     public function benchLoad10000Events(): void
     {
         $this->repository->load('1');
@@ -100,14 +101,16 @@ final class SplitStreamBench
     #[Bench\Revs(20)]
     public function benchWrite10000Events(): void
     {
-        $profile = Profile::create(ProfileId::fromString('1'), 'Peter');
+        $profile = Profile::create(ProfileId::generate(), 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName(sprintf('Peter %d', $i));
 
-            if ($i % 100 === 0) {
-                $profile->reborn();
+            if ($i % 100 !== 0) {
+                continue;
             }
+
+            $profile->reborn();
         }
 
         $this->repository->save($profile);

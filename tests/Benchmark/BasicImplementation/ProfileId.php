@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation;
 
+use function uniqid;
+
 final class ProfileId
 {
     private function __construct(
@@ -19,5 +21,10 @@ final class ProfileId
     public function toString(): string
     {
         return $this->id;
+    }
+
+    public static function generate(): self
+    {
+        return new self(uniqid('', true));
     }
 }
