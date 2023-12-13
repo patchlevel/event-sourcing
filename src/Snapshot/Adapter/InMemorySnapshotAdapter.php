@@ -26,4 +26,9 @@ final class InMemorySnapshotAdapter implements SnapshotAdapter
 
         return $this->snapshots[$key];
     }
+
+    public function clear(): void
+    {
+        $this->snapshots = [];
+    }
 }

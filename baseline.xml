@@ -82,14 +82,23 @@
       <code>$name</code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="tests/Benchmark/LoadEventsBench.php">
+  <file src="tests/Benchmark/SimpleSetupBench.php">
     <MissingConstructor>
       <code>$bus</code>
       <code>$repository</code>
       <code>$store</code>
     </MissingConstructor>
   </file>
-  <file src="tests/Benchmark/LoadEventsWithSnapshotsBench.php">
+  <file src="tests/Benchmark/SnapshotsBench.php">
+    <MissingConstructor>
+      <code>$adapter</code>
+      <code>$bus</code>
+      <code>$repository</code>
+      <code>$snapshotStore</code>
+      <code>$store</code>
+    </MissingConstructor>
+  </file>
+  <file src="tests/Benchmark/SplitStreamBench.php">
     <MissingConstructor>
       <code>$bus</code>
       <code>$repository</code>
@@ -97,15 +106,7 @@
       <code>$store</code>
     </MissingConstructor>
   </file>
-  <file src="tests/Benchmark/WriteEventsBench.php">
-    <MissingConstructor>
-      <code>$bus</code>
-      <code>$profile</code>
-      <code>$repository</code>
-      <code>$store</code>
-    </MissingConstructor>
-  </file>
-  <file src="tests/Benchmark/WriteEventsWithSyncProjectionistBench.php">
+  <file src="tests/Benchmark/SyncProjectionistBench.php">
     <MissingConstructor>
       <code>$bus</code>
       <code>$profile</code>

@@ -35,6 +35,8 @@ final class SnapshotsBench
     private SnapshotStore $snapshotStore;
     private Repository $repository;
 
+    private InMemorySnapshotAdapter $adapter;
+
     public function setUp(): void
     {
         if (file_exists(self::DB_PATH)) {
@@ -55,7 +57,9 @@ final class SnapshotsBench
             'eventstore',
         );
 
-        $this->snapshotStore = new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]);
+        $this->adapter = new InMemorySnapshotAdapter();
+
+        $this->snapshotStore = new DefaultSnapshotStore(['default' => $this->adapter]);
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata(), $this->snapshotStore);
 
@@ -74,6 +78,13 @@ final class SnapshotsBench
 
         $this->repository->save($profile);
         $this->snapshotStore->save($profile);
+    }
+
+    #[Bench\Revs(20)]
+    public function benchLoad10000EventsMissingSnapshot(): void
+    {
+        $this->adapter->clear();
+        $this->repository->load('1');
     }
 
     #[Bench\Revs(20)]
