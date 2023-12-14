@@ -57,7 +57,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             ->from($this->projectionTable)
             ->getSQL();
 
-        /** @var list<array{name: string, version: int, position: int, status: string, error_message: string|null}> $result */
+        /** @var list<array{name: string, version: int, position: int, status: string, error_message: string|null, error_object: string|null}> $result */
         $result = $this->connection->fetchAllAssociative($sql);
 
         return new ProjectionCollection(
@@ -68,6 +68,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                         ProjectionStatus::from($data['status']),
                         $data['position'],
                         $data['error_message'],
+                        ErrorSerializer::unserialize($data['error_object']),
                     );
                 },
                 $result,
@@ -80,6 +81,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         $this->connection->transactional(
             function (Connection $connection) use ($projections): void {
                 foreach ($projections as $projection) {
+                    $errorObject = ErrorSerializer::serialize($projection->errorObject());
+
                     try {
                         $effectedRows = (int)$connection->update(
                             $this->projectionTable,
@@ -87,6 +90,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
                                 'error_message' => $projection->errorMessage(),
+                                'error_object' => $errorObject,
                             ],
                             [
                                 'name' => $projection->id()->name(),
@@ -106,6 +110,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
                                 'error_message' => $projection->errorMessage(),
+                                'error_object' => $errorObject,
                             ],
                         );
                     }
@@ -141,6 +146,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         $table->addColumn('status', Types::STRING)
             ->setNotnull(true);
         $table->addColumn('error_message', Types::STRING)
+            ->setNotnull(false);
+        $table->addColumn('error_object', Types::BLOB)
             ->setNotnull(false);
 
         $table->setPrimaryKey(['name', 'version']);

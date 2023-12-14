@@ -207,8 +207,10 @@ final class DefaultProjectionistTest extends TestCase
     public function testBootWithCreateError(): void
     {
         $projector = new class implements Projector {
-            public Message|null $message = null;
-            public bool $created = false;
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
 
             public function targetProjection(): ProjectionId
             {
@@ -217,7 +219,7 @@ final class DefaultProjectionistTest extends TestCase
 
             public function create(): void
             {
-                throw new RuntimeException('ERROR');
+                throw $this->exception;
             }
         };
 
@@ -243,10 +245,22 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->boot();
 
-        self::assertEquals([
-            new Projection($projector->targetProjection(), ProjectionStatus::Booting),
-            new Projection($projector->targetProjection(), ProjectionStatus::Error, 0, 'ERROR'),
-        ], $projectionStore->savedProjections);
+        self::assertEquals(
+            [
+                new Projection(
+                    $projector->targetProjection(),
+                    ProjectionStatus::Booting,
+                ),
+                new Projection(
+                    $projector->targetProjection(),
+                    ProjectionStatus::Error,
+                    0,
+                    'ERROR',
+                    $projector->exception,
+                ),
+            ],
+            $projectionStore->savedProjections,
+        );
     }
 
     public function testRunning(): void
@@ -409,6 +423,11 @@ final class DefaultProjectionistTest extends TestCase
     public function testRunningWithError(): void
     {
         $projector = new class implements Projector {
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
+
             public function targetProjection(): ProjectionId
             {
                 return new ProjectionId('test', 1);
@@ -416,7 +435,7 @@ final class DefaultProjectionistTest extends TestCase
 
             public function handle(Message $message): void
             {
-                throw new RuntimeException('ERROR');
+                throw $this->exception;
             }
         };
 
@@ -442,9 +461,18 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->run();
 
-        self::assertEquals([
-            new Projection($projector->targetProjection(), ProjectionStatus::Error, 0, 'ERROR'),
-        ], $projectionStore->savedProjections);
+        self::assertEquals(
+            [
+                new Projection(
+                    $projector->targetProjection(),
+                    ProjectionStatus::Error,
+                    0,
+                    'ERROR',
+                    $projector->exception,
+                ),
+            ],
+            $projectionStore->savedProjections,
+        );
     }
 
     public function testRunningMarkOutdated(): void

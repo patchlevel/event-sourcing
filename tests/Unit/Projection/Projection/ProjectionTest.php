@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 /** @covers \Patchlevel\EventSourcing\Projection\Projection\Projection */
 final class ProjectionTest extends TestCase
@@ -65,7 +66,9 @@ final class ProjectionTest extends TestCase
             new ProjectionId('test', 1),
         );
 
-        $projection->error();
+        $exception = new RuntimeException('test');
+
+        $projection->error($exception);
 
         self::assertEquals(ProjectionStatus::Error, $projection->status());
         self::assertFalse($projection->isNew());
@@ -73,6 +76,8 @@ final class ProjectionTest extends TestCase
         self::assertFalse($projection->isActive());
         self::assertTrue($projection->isError());
         self::assertFalse($projection->isOutdated());
+        self::assertEquals('test', $projection->errorMessage());
+        self::assertEquals($exception, $projection->errorObject());
     }
 
     public function testOutdated(): void

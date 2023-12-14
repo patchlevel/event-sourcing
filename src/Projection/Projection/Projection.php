@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projection;
 
+use Throwable;
+
 final class Projection
 {
     public function __construct(
@@ -11,6 +13,7 @@ final class Projection
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
         private string|null $errorMessage = null,
+        private Throwable|null $errorObject = null,
     ) {
     }
 
@@ -34,6 +37,11 @@ final class Projection
         return $this->errorMessage;
     }
 
+    public function errorObject(): Throwable|null
+    {
+        return $this->errorObject;
+    }
+
     public function incrementPosition(): void
     {
         $this->position++;
@@ -48,6 +56,7 @@ final class Projection
     {
         $this->status = ProjectionStatus::Booting;
         $this->errorMessage = null;
+        $this->errorObject = null;
     }
 
     public function isBooting(): bool
@@ -59,6 +68,7 @@ final class Projection
     {
         $this->status = ProjectionStatus::Active;
         $this->errorMessage = null;
+        $this->errorObject = null;
     }
 
     public function isActive(): bool
@@ -76,10 +86,11 @@ final class Projection
         return $this->status === ProjectionStatus::Outdated;
     }
 
-    public function error(string|null $message = null): void
+    public function error(Throwable|string|null $error = null): void
     {
         $this->status = ProjectionStatus::Error;
-        $this->errorMessage = $message;
+        $this->errorMessage = $error instanceof Throwable ? $error->getMessage() : $error;
+        $this->errorObject = $error instanceof Throwable ? $error : null;
     }
 
     public function isError(): bool
