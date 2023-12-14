@@ -12,9 +12,9 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
 
 use function array_map;
-use function dump;
 
 #[AsCommand(
     'event-sourcing:projection:status',
@@ -91,8 +91,8 @@ final class ProjectionStatusCommand extends ProjectionCommand
 
         $errorObject = $projection->errorObject();
 
-        if ($errorObject) {
-            dump($errorObject);
+        if ($errorObject instanceof Throwable) {
+            $io->throwable($errorObject);
         }
 
         return 0;

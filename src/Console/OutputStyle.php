@@ -9,6 +9,9 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Throwable;
+
+use function sprintf;
 
 final class OutputStyle extends SymfonyStyle
 {
@@ -36,5 +39,18 @@ final class OutputStyle extends SymfonyStyle
         ]);
 
         $this->block($data->payload);
+    }
+
+    public function throwable(Throwable $error): void
+    {
+        $number = 1;
+
+        do {
+            $this->error(sprintf('%d) %s', $number, $error->getMessage()));
+            $this->block($error->getTraceAsString());
+
+            $number++;
+            $error = $error->getPrevious();
+        } while ($error !== null);
     }
 }
