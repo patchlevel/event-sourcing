@@ -99,7 +99,7 @@ final class SplitStreamBench
     }
 
     #[Bench\Revs(20)]
-    public function benchWrite10000Events(): void
+    public function benchSave10000Events(): void
     {
         $profile = Profile::create(ProfileId::generate(), 'Peter');
 

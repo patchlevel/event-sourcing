@@ -93,4 +93,13 @@ final class SimpleSetupBench
 
         $this->repository->save($profile);
     }
+
+    #[Bench\Revs(1)]
+    public function benchSave10000Aggregates(): void
+    {
+        for ($i = 1; $i < 10_000; $i++) {
+            $profile = Profile::create(ProfileId::generate(), 'Peter');
+            $this->repository->save($profile);
+        }
+    }
 }
