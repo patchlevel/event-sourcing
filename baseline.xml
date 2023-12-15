@@ -187,21 +187,52 @@
       <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyBothUsage.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+    </PropertyNotSetInConstructor>
     <ReservedWord>
       <code><![CDATA[ProfileCreated&ProfileVisited $event]]></code>
     </ReservedWord>
+  </file>
+  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyMultipleApply.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
       <code>$event</code>
     </MissingParamType>
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Unit/Fixture/ProfileWithEmptyApply.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <PropertyNotSetInConstructor>
       <code>$email</code>
       <code>$id</code>
       <code>$messages</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Unit/Fixture/ProfileWithSuppressAll.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Unit/Fixture/WrongNormalizerBasicAggregate.php">
+    <PropertyNotSetInConstructor>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Pipeline/Source/InMemorySourceTest.php">
