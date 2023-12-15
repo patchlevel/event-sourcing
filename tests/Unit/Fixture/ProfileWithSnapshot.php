@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\AggregateId;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
@@ -17,6 +18,7 @@ use Patchlevel\Hydrator\Normalizer\ArrayNormalizer;
 final class ProfileWithSnapshot extends BasicAggregateRoot
 {
     #[ProfileIdNormalizer]
+    #[AggregateId]
     private ProfileId $id;
     #[EmailNormalizer]
     private Email $email;
@@ -72,10 +74,5 @@ final class ProfileWithSnapshot extends BasicAggregateRoot
     protected function applyMessagePublished(MessagePublished $event): void
     {
         $this->messages[] = $event->message;
-    }
-
-    public function aggregateRootId(): string
-    {
-        return $this->id->toString();
     }
 }

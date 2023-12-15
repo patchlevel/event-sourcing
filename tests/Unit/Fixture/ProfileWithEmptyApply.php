@@ -20,9 +20,4 @@ final class ProfileWithEmptyApply extends BasicAggregateRoot
     protected function applyNameChanged(NameChanged $event): void
     {
     }
-
-    public function aggregateRootId(): string
-    {
-        return self::class;
-    }
 }

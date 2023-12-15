@@ -16,14 +16,10 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\ProfileId;
 #[Snapshot('default', 100)]
 final class Profile extends BasicAggregateRoot
 {
+    #[AggregateId]
     #[ProfileIdNormalizer]
     private ProfileId $id;
     private string $name;
-
-    public function aggregateRootId(): string
-    {
-        return $this->id->toString();
-    }
 
     public static function create(ProfileId $id, string $name): self
     {

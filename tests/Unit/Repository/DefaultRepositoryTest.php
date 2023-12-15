@@ -527,7 +527,7 @@ final class DefaultRepositoryTest extends TestCase
             Profile::metadata(),
         );
 
-        $aggregate = $repository->load('1');
+        $aggregate = $repository->load(ProfileId::fromString('1'));
 
         self::assertInstanceOf(Profile::class, $aggregate);
         self::assertSame(1, $aggregate->playhead());
@@ -568,8 +568,8 @@ final class DefaultRepositoryTest extends TestCase
             Profile::metadata(),
         );
 
-        $aggregate1 = $repository->load('1');
-        $aggregate2 = $repository->load('1');
+        $aggregate1 = $repository->load(ProfileId::fromString('1'));
+        $aggregate2 = $repository->load(ProfileId::fromString('1'));
 
         self::assertEquals($aggregate1, $aggregate2);
         self::assertNotSame($aggregate1, $aggregate2);
@@ -593,7 +593,7 @@ final class DefaultRepositoryTest extends TestCase
             Profile::metadata(),
         );
 
-        $repository->load('1');
+        $repository->load(ProfileId::fromString('1'));
     }
 
     public function testHasAggregate(): void
@@ -612,7 +612,7 @@ final class DefaultRepositoryTest extends TestCase
             Profile::metadata(),
         );
 
-        self::assertTrue($repository->has('1'));
+        self::assertTrue($repository->has(ProfileId::fromString('1')));
     }
 
     public function testNotHasAggregate(): void
@@ -631,7 +631,7 @@ final class DefaultRepositoryTest extends TestCase
             Profile::metadata(),
         );
 
-        self::assertFalse($repository->has('1'));
+        self::assertFalse($repository->has(ProfileId::fromString('1')));
     }
 
     public function testLoadAggregateWithSnapshot(): void
@@ -664,7 +664,7 @@ final class DefaultRepositoryTest extends TestCase
             $snapshotStore->reveal(),
         );
 
-        $aggregate = $repository->load('1');
+        $aggregate = $repository->load(ProfileId::fromString('1'));
 
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertSame(1, $aggregate->playhead());
@@ -718,7 +718,7 @@ final class DefaultRepositoryTest extends TestCase
             $snapshotStore->reveal(),
         );
 
-        $aggregate = $repository->load('1');
+        $aggregate = $repository->load(ProfileId::fromString('1'));
 
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertSame(3, $aggregate->playhead());
@@ -764,7 +764,7 @@ final class DefaultRepositoryTest extends TestCase
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(
             ProfileWithSnapshot::class,
-            '1',
+            ProfileId::fromString('1'),
         )->willReturn($profile);
 
         $snapshotStore->save($profile)->shouldBeCalled();
@@ -776,7 +776,7 @@ final class DefaultRepositoryTest extends TestCase
             $snapshotStore->reveal(),
         );
 
-        $aggregate = $repository->load('1');
+        $aggregate = $repository->load(ProfileId::fromString('1'));
 
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertSame(4, $aggregate->playhead());
@@ -800,7 +800,7 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
 
         $snapshotStore = $this->prophesize(SnapshotStore::class);
-        $snapshotStore->load(ProfileWithSnapshot::class, '1')
+        $snapshotStore->load(ProfileWithSnapshot::class, ProfileId::fromString('1'))
             ->willThrow(SnapshotNotFound::class);
 
         $repository = new DefaultRepository(
@@ -810,7 +810,7 @@ final class DefaultRepositoryTest extends TestCase
             $snapshotStore->reveal(),
         );
 
-        $aggregate = $repository->load('1');
+        $aggregate = $repository->load(ProfileId::fromString('1'));
 
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
         self::assertSame(1, $aggregate->playhead());

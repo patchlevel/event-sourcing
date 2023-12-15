@@ -19,9 +19,4 @@ final class ProfileWithSuppressAll extends BasicAggregateRoot
 
         return $self;
     }
-
-    public function aggregateRootId(): string
-    {
-        return '1';
-    }
 }

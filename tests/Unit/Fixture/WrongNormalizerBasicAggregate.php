@@ -12,9 +12,4 @@ final class WrongNormalizerBasicAggregate extends BasicAggregateRoot
 {
     #[EmailNormalizer]
     public bool $email = true;
-
-    public function aggregateRootId(): string
-    {
-        return '1';
-    }
 }

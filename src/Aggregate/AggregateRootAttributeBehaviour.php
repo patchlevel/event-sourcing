@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use ReflectionProperty;
+
 use function array_key_exists;
 
 trait AggregateRootAttributeBehaviour
 {
     use AggregateRootBehaviour;
     use AggregateRootMetadataAwareBehaviour;
+
+    private AggregateRootId|null $_aggregateRootId = null;
 
     protected function apply(object $event): void
     {
@@ -25,5 +29,25 @@ trait AggregateRootAttributeBehaviour
 
         $method = $metadata->applyMethods[$event::class];
         $this->$method($event);
+    }
+
+    public function aggregateRootId(): AggregateRootId
+    {
+        if ($this->_aggregateRootId instanceof AggregateRootId) {
+            return $this->_aggregateRootId;
+        }
+
+        $metadata = static::metadata();
+
+        $reflection = new ReflectionProperty($this, $metadata->idProperty);
+
+        /** @var mixed $aggregateId */
+        $aggregateId = $reflection->getValue($this);
+
+        if (!$aggregateId instanceof AggregateRootId) {
+            throw new AggregateIdNotFound($this::class);
+        }
+
+        return $this->_aggregateRootId = $aggregateId;
     }
 }

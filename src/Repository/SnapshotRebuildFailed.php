@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Throwable;
 
 use function sprintf;
@@ -14,14 +15,14 @@ final class SnapshotRebuildFailed extends RepositoryException
     /** @param class-string<AggregateRoot> $aggregateClass */
     public function __construct(
         private string $aggregateClass,
-        private string $aggregateId,
+        private AggregateRootId $aggregateId,
         Throwable $previous,
     ) {
         parent::__construct(
             sprintf(
                 'Rebuild from snapshot of aggregate "%s" with the id "%s" failed',
                 $aggregateClass,
-                $aggregateId,
+                $aggregateId->toString(),
             ),
             0,
             $previous,
@@ -34,7 +35,7 @@ final class SnapshotRebuildFailed extends RepositoryException
         return $this->aggregateClass;
     }
 
-    public function aggregateId(): string
+    public function aggregateId(): AggregateRootId
     {
         return $this->aggregateId;
     }

@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\AggregateId;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 
@@ -13,6 +14,7 @@ use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 #[SuppressMissingApply([MessageDeleted::class])]
 final class Profile extends BasicAggregateRoot
 {
+    #[AggregateId]
     private ProfileId $id;
     private Email $email;
     private int $visits = 0;
@@ -88,10 +90,5 @@ final class Profile extends BasicAggregateRoot
     {
         $this->email = $event->email;
         $this->visits = $event->visits;
-    }
-
-    public function aggregateRootId(): string
-    {
-        return $this->id->toString();
     }
 }

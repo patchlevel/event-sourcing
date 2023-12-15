@@ -15,9 +15,4 @@ final class ProfileWithBrokenApplyIntersection extends BasicAggregateRoot
     protected function applyIntersection(ProfileCreated&ProfileVisited $event): void
     {
     }
-
-    public function aggregateRootId(): string
-    {
-        return self::class;
-    }
 }

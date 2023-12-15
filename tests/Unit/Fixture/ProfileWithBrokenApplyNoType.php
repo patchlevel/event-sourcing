@@ -16,9 +16,4 @@ final class ProfileWithBrokenApplyNoType extends BasicAggregateRoot
     protected function applyWithNoType($event): void
     {
     }
-
-    public function aggregateRootId(): string
-    {
-        return self::class;
-    }
 }

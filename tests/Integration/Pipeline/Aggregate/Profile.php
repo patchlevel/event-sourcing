@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\AggregateId;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\OldVisited;
@@ -16,14 +17,10 @@ use Patchlevel\EventSourcing\Tests\Integration\Pipeline\ProfileId;
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
+    #[AggregateId]
     private ProfileId $id;
     private bool $privacy;
     private int $visited;
-
-    public function aggregateRootId(): string
-    {
-        return $this->id->toString();
-    }
 
     public static function create(ProfileId $id): self
     {

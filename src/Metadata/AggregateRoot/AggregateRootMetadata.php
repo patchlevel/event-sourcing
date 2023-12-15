@@ -13,6 +13,7 @@ final class AggregateRootMetadata
         /** @var class-string<T> */
         public readonly string $className,
         public readonly string $name,
+        public readonly string $idProperty,
         /** @var array<class-string, string> */
         public readonly array $applyMethods,
         /** @var array<class-string, true> */

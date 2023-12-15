@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\AggregateId;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Snapshot as AttributeSnapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
@@ -41,6 +42,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         $reflector = new ReflectionClass($aggregate);
 
         $aggregateName = $this->findAggregateName($reflector);
+        $idProperty = $this->findIdProperty($reflector);
         [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflector);
         $applyMethods = $this->findApplyMethods($reflector, $aggregate);
         $snapshot = $this->findSnapshot($reflector);
@@ -48,6 +50,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         $metadata = new AggregateRootMetadata(
             $aggregate,
             $aggregateName,
+            $idProperty,
             $applyMethods,
             $suppressEvents,
             $suppressAll,
@@ -95,6 +98,23 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         $aggregateAttribute = $attributeReflectionList[0]->newInstance();
 
         return $aggregateAttribute->name();
+    }
+
+    private function findIdProperty(ReflectionClass $reflector): string
+    {
+        $properties = $reflector->getProperties();
+
+        foreach ($properties as $property) {
+            $attributes = $property->getAttributes(AggregateId::class);
+
+            if ($attributes === []) {
+                continue;
+            }
+
+            return $property->getName();
+        }
+
+        throw new AggregateIdNotFound($reflector->getName());
     }
 
     private function findSnapshot(ReflectionClass $reflector): Snapshot|null

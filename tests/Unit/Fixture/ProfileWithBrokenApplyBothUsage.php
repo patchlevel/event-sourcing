@@ -16,9 +16,4 @@ final class ProfileWithBrokenApplyBothUsage extends BasicAggregateRoot
     protected function applyProfileCreated(ProfileCreated|ProfileVisited $event): void
     {
     }
-
-    public function aggregateRootId(): string
-    {
-        return self::class;
-    }
 }
