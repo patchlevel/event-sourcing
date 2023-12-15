@@ -92,7 +92,8 @@ final class BasicIntegrationTest extends TestCase
         $schemaDirector->create();
         $projectionist->boot();
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $profileId = ProfileId::fromString('1');
+        $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -108,10 +109,10 @@ final class BasicIntegrationTest extends TestCase
             $eventStream,
         );
         $repository = $manager->get(Profile::class);
-        $profile = $repository->load('1');
+        $profile = $repository->load($profileId);
 
         self::assertInstanceOf(Profile::class, $profile);
-        self::assertSame('1', $profile->aggregateRootId());
+        self::assertEquals($profileId, $profile->aggregateRootId());
         self::assertSame(1, $profile->playhead());
         self::assertSame('John', $profile->name());
         self::assertSame(1, SendEmailMock::count());
@@ -165,7 +166,8 @@ final class BasicIntegrationTest extends TestCase
         $schemaDirector->create();
         $projectionist->boot();
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $profileId = ProfileId::fromString('1');
+        $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -184,10 +186,10 @@ final class BasicIntegrationTest extends TestCase
         );
         $repository = $manager->get(Profile::class);
 
-        $profile = $repository->load('1');
+        $profile = $repository->load($profileId);
 
         self::assertInstanceOf(Profile::class, $profile);
-        self::assertSame('1', $profile->aggregateRootId());
+        self::assertEquals($profileId, $profile->aggregateRootId());
         self::assertSame(1, $profile->playhead());
         self::assertSame('John', $profile->name());
         self::assertSame(1, SendEmailMock::count());
@@ -241,7 +243,8 @@ final class BasicIntegrationTest extends TestCase
         $schemaDirector->create();
         $projectionist->boot();
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $profileId = ProfileId::fromString('1');
+        $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
@@ -257,10 +260,10 @@ final class BasicIntegrationTest extends TestCase
             $eventStream,
         );
         $repository = $manager->get(Profile::class);
-        $profile = $repository->load('1');
+        $profile = $repository->load($profileId);
 
         self::assertInstanceOf(Profile::class, $profile);
-        self::assertSame('1', $profile->aggregateRootId());
+        self::assertEquals($profileId, $profile->aggregateRootId());
         self::assertSame(1, $profile->playhead());
         self::assertSame('John', $profile->name());
         self::assertSame(1, SendEmailMock::count());

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use Patchlevel\Hydrator\Attribute\Ignore;
 use ReflectionProperty;
 
 use function array_key_exists;
@@ -13,6 +14,7 @@ trait AggregateRootAttributeBehaviour
     use AggregateRootBehaviour;
     use AggregateRootMetadataAwareBehaviour;
 
+    #[Ignore]
     private AggregateRootId|null $_aggregateRootId = null;
 
     protected function apply(object $event): void
@@ -45,7 +47,7 @@ trait AggregateRootAttributeBehaviour
         $aggregateId = $reflection->getValue($this);
 
         if (!$aggregateId instanceof AggregateRootId) {
-            throw new AggregateIdNotFound($this::class);
+            throw new AggregateIdNotSupported($this::class, $aggregateId);
         }
 
         return $this->_aggregateRootId = $aggregateId;

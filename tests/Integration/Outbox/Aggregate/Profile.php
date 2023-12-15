@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Outbox\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\AggregateId;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;

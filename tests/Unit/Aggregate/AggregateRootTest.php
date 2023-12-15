@@ -29,7 +29,7 @@ final class AggregateRootTest extends TestCase
 
         $profile = Profile::createProfile($id, $email);
 
-        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame($id, $profile->aggregateRootId());
         self::assertSame(1, $profile->playhead());
         self::assertEquals($id, $profile->id());
         self::assertEquals($email, $profile->email());
@@ -53,7 +53,7 @@ final class AggregateRootTest extends TestCase
 
         $profile = Profile::createFromEvents([new ProfileCreated($id, $email)]);
 
-        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame($id, $profile->aggregateRootId());
         self::assertSame(1, $profile->playhead());
         self::assertEquals($id, $profile->id());
         self::assertEquals($email, $profile->email());
@@ -74,7 +74,7 @@ final class AggregateRootTest extends TestCase
         $profile = Profile::createProfile($id, $email);
         $profile->visitProfile($target);
 
-        self::assertSame('1', $profile->aggregateRootId());
+        self::assertSame($id, $profile->aggregateRootId());
         self::assertSame(2, $profile->playhead());
         self::assertEquals($id, $profile->id());
         self::assertEquals($email, $profile->email());

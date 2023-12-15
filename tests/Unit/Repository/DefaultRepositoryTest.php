@@ -636,8 +636,10 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testLoadAggregateWithSnapshot(): void
     {
+        $id = ProfileId::fromString('1');
+
         $profile = ProfileWithSnapshot::createProfile(
-            ProfileId::fromString('1'),
+            $id,
             Email::fromString('hallo@patchlevel.de'),
         );
 
@@ -654,7 +656,7 @@ final class DefaultRepositoryTest extends TestCase
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(
             ProfileWithSnapshot::class,
-            '1',
+            $id,
         )->willReturn($profile);
 
         $repository = new DefaultRepository(
@@ -706,8 +708,8 @@ final class DefaultRepositoryTest extends TestCase
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(
             ProfileWithSnapshot::class,
-            '1',
-        )->willThrow(new SnapshotNotFound(ProfileWithSnapshot::class, '1'));
+            ProfileId::fromString('1'),
+        )->willThrow(new SnapshotNotFound(ProfileWithSnapshot::class, ProfileId::fromString('1')));
 
         $snapshotStore->save(Argument::type(ProfileWithSnapshot::class))->shouldBeCalled();
 

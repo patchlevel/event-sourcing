@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream;
 
-final class AccountId
+use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+
+final class AccountId implements AggregateRootId
 {
     private function __construct(
         private string $id,
