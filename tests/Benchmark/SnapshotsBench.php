@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
@@ -36,6 +37,8 @@ final class SnapshotsBench
     private Repository $repository;
 
     private InMemorySnapshotAdapter $adapter;
+
+    private AggregateRootId $id;
 
     public function setUp(): void
     {
@@ -70,7 +73,8 @@ final class SnapshotsBench
 
         $schemaDirector->create();
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'Peter');
+        $this->id = ProfileId::generate();
+        $profile = Profile::create($this->id, 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName('Peter');
@@ -84,12 +88,12 @@ final class SnapshotsBench
     public function benchLoad10000EventsMissingSnapshot(): void
     {
         $this->adapter->clear();
-        $this->repository->load(ProfileId::fromString('1'));
+        $this->repository->load($this->id);
     }
 
     #[Bench\Revs(20)]
     public function benchLoad10000Events(): void
     {
-        $this->repository->load(ProfileId::fromString('1'));
+        $this->repository->load($this->id);
     }
 }
