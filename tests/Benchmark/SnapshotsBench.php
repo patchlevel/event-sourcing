@@ -84,12 +84,12 @@ final class SnapshotsBench
     public function benchLoad10000EventsMissingSnapshot(): void
     {
         $this->adapter->clear();
-        $this->repository->load('1');
+        $this->repository->load(ProfileId::fromString('1'));
     }
 
     #[Bench\Revs(20)]
     public function benchLoad10000Events(): void
     {
-        $this->repository->load('1');
+        $this->repository->load(ProfileId::fromString('1'));
     }
 }

@@ -95,7 +95,7 @@ final class SplitStreamBench
     #[Bench\BeforeMethods('provideData')]
     public function benchLoad10000Events(): void
     {
-        $this->repository->load('1');
+        $this->repository->load(ProfileId::fromString('1'));
     }
 
     #[Bench\Revs(20)]

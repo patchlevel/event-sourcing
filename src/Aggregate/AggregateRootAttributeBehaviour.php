@@ -15,7 +15,7 @@ trait AggregateRootAttributeBehaviour
     use AggregateRootMetadataAwareBehaviour;
 
     #[Ignore]
-    private AggregateRootId|null $_aggregateRootId = null;
+    private AggregateRootId|null $cachedAggregateRootId = null;
 
     protected function apply(object $event): void
     {
@@ -35,8 +35,8 @@ trait AggregateRootAttributeBehaviour
 
     public function aggregateRootId(): AggregateRootId
     {
-        if ($this->_aggregateRootId instanceof AggregateRootId) {
-            return $this->_aggregateRootId;
+        if ($this->cachedAggregateRootId instanceof AggregateRootId) {
+            return $this->cachedAggregateRootId;
         }
 
         $metadata = static::metadata();
@@ -50,6 +50,6 @@ trait AggregateRootAttributeBehaviour
             throw new AggregateIdNotSupported($this::class, $aggregateId);
         }
 
-        return $this->_aggregateRootId = $aggregateId;
+        return $this->cachedAggregateRootId = $aggregateId;
     }
 }
