@@ -102,4 +102,15 @@ final class SimpleSetupBench
             $this->repository->save($profile);
         }
     }
+
+    #[Bench\Revs(20)]
+    public function benchSave10000AggregatesTransaction(): void
+    {
+        $this->store->transactional(function (): void {
+            for ($i = 1; $i < 10_000; $i++) {
+                $profile = Profile::create(ProfileId::generate(), 'Peter');
+                $this->repository->save($profile);
+            }
+        });
+    }
 }
