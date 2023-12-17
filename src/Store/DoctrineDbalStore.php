@@ -8,6 +8,7 @@ use Closure;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
@@ -16,6 +17,9 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 
+use function array_fill;
+use function count;
+use function implode;
 use function is_int;
 use function is_string;
 use function sprintf;
@@ -27,6 +31,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
         private readonly EventSerializer $serializer,
         private readonly AggregateRootRegistry $aggregateRootRegistry,
         private readonly string $storeTableName = 'eventstore',
+        private readonly int $batch = 1000,
     ) {
     }
 
@@ -114,36 +119,76 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
     {
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
+                $jsonType = Type::getType(Types::JSON);
+                $booleanType = Type::getType(Types::BOOLEAN);
+                $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
+
+                $placeholders = [];
+
+                $columns = [
+                    'aggregate',
+                    'aggregate_id',
+                    'playhead',
+                    'event',
+                    'payload',
+                    'recorded_on',
+                    'new_stream_start',
+                    'archived',
+                    'custom_headers',
+                ];
+
+                $placeholder = implode(', ', array_fill(0, count($columns), '?'));
+
                 foreach ($messages as $message) {
                     $data = $this->serializer->serialize($message->event());
 
                     try {
-                        $connection->insert(
-                            $this->storeTableName,
-                            [
-                                'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
-                                'aggregate_id' => $message->aggregateId(),
-                                'playhead' => $message->playhead(),
-                                'event' => $data->name,
-                                'payload' => $data->payload,
-                                'recorded_on' => $message->recordedOn(),
-                                'new_stream_start' => $message->newStreamStart(),
-                                'archived' => $message->archived(),
-                                'custom_headers' => $message->customHeaders(),
-                            ],
-                            [
-                                'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
-                                'custom_headers' => Types::JSON,
-                                'new_stream_start' => Types::BOOLEAN,
-                                'archived' => Types::BOOLEAN,
-                            ],
-                        );
+                        $parameters[] = $this->aggregateRootRegistry->aggregateName($message->aggregateClass());
+                        $parameters[] = $message->aggregateId();
+                        $parameters[] = $message->playhead();
+                        $parameters[] = $data->name;
+                        $parameters[] = $data->payload;
+                        $parameters[] = $dateTimeType->convertToDatabaseValue($message->recordedOn(), $connection->getDatabasePlatform());
+                        $parameters[] = $booleanType->convertToDatabaseValue($message->newStreamStart(), $connection->getDatabasePlatform());
+                        $parameters[] = $booleanType->convertToDatabaseValue($message->archived(), $connection->getDatabasePlatform());
+                        $parameters[] = $jsonType->convertToDatabaseValue($message->customHeaders(), $connection->getDatabasePlatform());
                     } catch (HeaderNotFound $e) {
                         throw new MissingDataForStorage($e->name, $e);
                     }
+
+                    $placeholders[] = $placeholder;
                 }
+
+                if ($parameters === []) {
+                    return;
+                }
+
+                $query = sprintf(
+                    "INSERT INTO %s (%s) VALUES\n(%s)",
+                    $this->storeTableName,
+                    implode(', ', $columns),
+                    implode("),\n(", $placeholders),
+                );
+
+                $connection->executeStatement($query, $parameters);
             },
         );
+    }
+
+    /**
+     * @param string[] $fields
+     *
+     * @return string[]
+     */
+    private function placeholder(array $fields): array
+    {
+        $placeholders = [];
+
+        foreach ($fields as $field) {
+            $placeholders[] = ':' . $field;
+        }
+
+        return $placeholders;
     }
 
     /**
