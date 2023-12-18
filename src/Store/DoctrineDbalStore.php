@@ -116,6 +116,10 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
 
     public function save(Message ...$messages): void
     {
+        if ($messages === []) {
+            return;
+        }
+
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
                 $booleanType = Type::getType(Types::BOOLEAN);
@@ -141,9 +145,12 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 ];
 
                 $columnsLength = count($columns);
-                $placeholder = implode(', ', array_fill(0, count($columns), '?'));
+                $placeholder = implode(', ', array_fill(0, $columnsLength, '?'));
 
                 foreach ($messages as $position => $message) {
+                    $offset = (int)$position * $columnsLength;
+                    $placeholders[] = $placeholder;
+
                     $data = $this->serializer->serialize($message->event());
 
                     try {
@@ -152,26 +159,21 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                         $parameters[] = $message->playhead();
                         $parameters[] = $data->name;
                         $parameters[] = $data->payload;
+
                         $parameters[] = $message->recordedOn();
+                        $types[$offset + 5] = $dateTimeType;
+
                         $parameters[] = $message->newStreamStart();
+                        $types[$offset + 6] = $booleanType;
+
                         $parameters[] = $message->archived();
+                        $types[$offset + 7] = $booleanType;
+
                         $parameters[] = $message->customHeaders();
+                        $types[$offset + 8] = $jsonType;
                     } catch (HeaderNotFound $e) {
                         throw new MissingDataForStorage($e->name, $e);
                     }
-
-                    $offset = (int)$position * $columnsLength;
-
-                    $types[$offset + 5] = $dateTimeType;
-                    $types[$offset + 6] = $booleanType;
-                    $types[$offset + 7] = $booleanType;
-                    $types[$offset + 8] = $jsonType;
-
-                    $placeholders[] = $placeholder;
-                }
-
-                if ($parameters === []) {
-                    return;
                 }
 
                 $query = sprintf(
@@ -210,6 +212,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
             AND archived = false',
             $this->storeTableName,
         ));
+
         $statement->bindValue('aggregate', $aggregateName);
         $statement->bindValue('aggregate_id', $id);
         $statement->bindValue('playhead', $untilPlayhead);
