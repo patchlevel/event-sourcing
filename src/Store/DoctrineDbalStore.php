@@ -8,6 +8,7 @@ use Closure;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
@@ -30,7 +31,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
         private readonly EventSerializer $serializer,
         private readonly AggregateRootRegistry $aggregateRootRegistry,
         private readonly string $storeTableName = 'eventstore',
-        private readonly int $batch = 1000,
     ) {
     }
 
@@ -118,7 +118,14 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
     {
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
+                $booleanType = Type::getType(Types::BOOLEAN);
+                $jsonType = Type::getType(Types::JSON);
+                $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
+
+                $parameters = [];
                 $placeholders = [];
+
+                /** @var array<int, Type> $types */
                 $types = [];
 
                 $columns = [
@@ -134,7 +141,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 ];
 
                 $columnsLength = count($columns);
-
                 $placeholder = implode(', ', array_fill(0, count($columns), '?'));
 
                 foreach ($messages as $position => $message) {
@@ -154,12 +160,12 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                         throw new MissingDataForStorage($e->name, $e);
                     }
 
-                    $offset = $position * $columnsLength;
+                    $offset = (int)$position * $columnsLength;
 
-                    $types[$offset + 5] = Types::DATETIMETZ_IMMUTABLE;
-                    $types[$offset + 6] = Types::BOOLEAN;
-                    $types[$offset + 7] = Types::BOOLEAN;
-                    $types[$offset + 8] = Types::JSON;
+                    $types[$offset + 5] = $dateTimeType;
+                    $types[$offset + 6] = $booleanType;
+                    $types[$offset + 7] = $booleanType;
+                    $types[$offset + 8] = $jsonType;
 
                     $placeholders[] = $placeholder;
                 }
@@ -178,22 +184,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 $connection->executeStatement($query, $parameters, $types);
             },
         );
-    }
-
-    /**
-     * @param string[] $fields
-     *
-     * @return string[]
-     */
-    private function placeholder(array $fields): array
-    {
-        $placeholders = [];
-
-        foreach ($fields as $field) {
-            $placeholders[] = ':' . $field;
-        }
-
-        return $placeholders;
     }
 
     /**
