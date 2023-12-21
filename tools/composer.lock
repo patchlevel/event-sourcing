@@ -1324,22 +1324,21 @@
         },
         {
             "name": "roave/backward-compatibility-check",
-            "version": "8.4.0",
+            "version": "8.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/BackwardCompatibilityCheck.git",
-                "reference": "9b45bc3431f3dc651a8f2d6e199ca0d1e60a9978"
+                "reference": "5e533114a996f73a7551846c06c59a80185f4d16"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/BackwardCompatibilityCheck/zipball/9b45bc3431f3dc651a8f2d6e199ca0d1e60a9978",
-                "reference": "9b45bc3431f3dc651a8f2d6e199ca0d1e60a9978",
+                "url": "https://api.github.com/repos/Roave/BackwardCompatibilityCheck/zipball/5e533114a996f73a7551846c06c59a80185f4d16",
+                "reference": "5e533114a996f73a7551846c06c59a80185f4d16",
                 "shasum": ""
             },
             "require": {
                 "azjezz/psl": "^2.3.1",
-                "composer/composer": "^2.5.1",
-                "ext-json": "*",
+                "composer/composer": "^2.6.4",
                 "nikic/php-parser": "^4.15.3",
                 "nikolaposa/version": "^4.1.0",
                 "ocramius/package-versions": "^2.7.0",
@@ -1387,9 +1386,9 @@
             "description": "Tool to compare two revisions of a public API to check for BC breaks",
             "support": {
                 "issues": "https://github.com/Roave/BackwardCompatibilityCheck/issues",
-                "source": "https://github.com/Roave/BackwardCompatibilityCheck/tree/8.4.0"
+                "source": "https://github.com/Roave/BackwardCompatibilityCheck/tree/8.6.0"
             },
-            "time": "2023-11-25T16:28:35+00:00"
+            "time": "2023-12-20T14:01:33+00:00"
         },
         {
             "name": "roave/better-reflection",
