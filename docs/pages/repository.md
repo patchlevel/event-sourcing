@@ -67,13 +67,12 @@ $repository = $repositoryManager->get(Profile::class);
 
 ### Decorator
 
-If you want to add more metadata to the message, like e.g. an application id, then you can use decorator.
+If you want to add more metadata to the message, like e.g. an application id, then you can use decorators.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Decorator\RecordedOnDecorator;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 
-$decorator = new RecordedOnDecorator($clock);
+$decorator = new ApplicationIdDecorator();
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
@@ -104,7 +103,10 @@ After the events have been written,
 the new events are dispatched on the [event bus](./event_bus.md).
 
 ```php
-$profile = Profile::create('david.badura@patchlevel.de');
+use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+
+$id = UuidAggregateRootId::generate();
+$profile = Profile::create($id, 'david.badura@patchlevel.de');
 
 $repository->save($profile);
 ```
@@ -124,12 +126,15 @@ An `aggregate` can be loaded using the `load` method.
 All events for the aggregate are loaded from the database and the current state is rebuilt.
 
 ```php
-$profile = $repository->load('229286ff-6f95-4df6-bc72-0a239fe7b284');
+use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+
+$id = UuidAggregateRootId::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
+$profile = $repository->load($id);
 ```
 
 !!! warning
 
-    When the method is called, the aggregate is always reloaded from the database and rebuilt.
+    When the method is called, the aggregate is always reloaded and rebuilt from the database.
 
 !!! note
 
@@ -142,7 +147,9 @@ You can also check whether an `aggregate` with a certain id exists.
 It is checked whether any event with this id exists in the database.
 
 ```php
-if($repository->has('229286ff-6f95-4df6-bc72-0a239fe7b284')) {
+$id = UuidAggregateRootId::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
+
+if($repository->has($id)) {
     // ...
 }
 ```
@@ -178,7 +185,7 @@ class ProfileRepository
     
     public function load(ProfileId $id): Profile 
     {
-        return $this->repository->load($id->toString());
+        return $this->repository->load($id);
     }
     
     public function save(Profile $profile): void 
@@ -188,7 +195,7 @@ class ProfileRepository
     
     public function has(ProfileId $id): bool 
     {
-        return $this->repository->has($id->toString());
+        return $this->repository->has($id);
     }
 }
 ```

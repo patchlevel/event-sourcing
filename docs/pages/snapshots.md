@@ -72,14 +72,18 @@ You can define normalizers to bring the properties into the correct format.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\AggregateId;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
 final class Profile extends BasicAggregateRoot
 {
-    public string $id;
+    #[AggregateId]
+    #[UuidAggregateRootIdNormalizer]
+    public UuidAggregateRootId $id;
     public string $name,
     #[Normalize(new DateTimeImmutableNormalizer())]
     public DateTimeImmutable $createdAt;
@@ -95,7 +99,7 @@ final class Profile extends BasicAggregateRoot
 
 !!! warning
 
-    In the end it has to be possible to serialize it as json.
+    In the end it has to be possible to serialize it as json. Also the aggregate ID.
 
 !!! note
 
@@ -193,3 +197,41 @@ use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 
 $adapter = new InMemorySnapshotAdapter();
 ```
+
+## Usage
+
+The snapshot store is automatically used by the repository and takes care of saving and loading. 
+But you can also use the snapshot store yourself.
+
+### Save
+
+This allows you to save the aggregate as a snapshot:
+
+```php
+$snapshotStore->save($aggregate);
+```
+
+!!! danger
+
+    If the state of an aggregate is saved as a snapshot without being saved to the event store (database), 
+    it can lead to data loss or broken aggregates!
+
+### Load
+
+You can also load an aggregate from the snapshot store:
+
+```php
+use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+
+$id = UuidAggregateRootId::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
+$aggregate = $snapshotStore->load(Profile::class, $id);
+```
+
+The method returns the Aggregate if it was loaded successfully. 
+If the aggregate was not found, then a `SnapshotNotFound` is thrown. 
+And if the version is no longer correct and the snapshot is therefore invalid, then a `SnapshotVersionInvalid` is thrown.
+
+!!! warning
+
+    The aggregate may be in an old state as the snapshot may lag behind. 
+    You still have to bring the aggregate up to date by loading the missing events from the event store.

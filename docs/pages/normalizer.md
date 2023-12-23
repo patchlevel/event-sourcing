@@ -200,6 +200,48 @@ final class DTO {
 }
 ```
 
+### UuidAggregateId
+
+To normalize a `UuidAggregateRootId` one can use the `UuidAggregateIdNormalizer`.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\Hydrator\Normalizer\UuidAggregateIdNormalizer;
+
+final class DTO {
+    #[UuidAggregateIdNormalizer]
+    public UuidAggregateRootId $id;
+}
+```
+
+### ValueAggregateId
+
+To normalize a `ValueAggregateRootId` one can use the `ValeAggregateIdNormalizer`.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\ValueAggregateRootId;
+use Patchlevel\Hydrator\Normalizer\ValeAggregateIdNormalizer;
+
+final class DTO {
+    #[ValeAggregateIdNormalizer]
+    public ValueAggregateRootId $id;
+}
+```
+
+### Own AggregateId
+
+If you have your own AggregateId, you can use the `AggregateIdNormalizer` base normalizer.
+the `AggregateIdNormalizer` needs the FQCN of the AggregateId as a parameter.
+
+```php
+use Patchlevel\Hydrator\Normalizer\AggregateIdNormalizer;
+
+final class DTO {
+    #[AggregateIdNormalizer(Id::class)]
+    public Id $id;
+}
+```
+
 ## Custom Normalizer
 
 Since we only offer normalizers for PHP native things, 
@@ -235,6 +277,7 @@ Finally, you have to allow the normalizer to be used as an attribute.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\Normalizer;
+use Patchlevel\Hydrator\Normalizer\InvalidArgument;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class NameNormalizer implements Normalizer
@@ -242,7 +285,7 @@ class NameNormalizer implements Normalizer
     public function normalize(mixed $value): string
     {
         if (!$value instanceof Name) {
-            throw new InvalidArgumentException();
+            throw InvalidArgument::withWrongType(Name::class, $value);
         }
 
         return $value->toString();
@@ -255,7 +298,7 @@ class NameNormalizer implements Normalizer
         }
 
         if (!is_string($value)) {
-            throw new InvalidArgumentException();
+            throw InvalidArgument::withWrongType('string', $value);
         }
 
         return new Name($value);

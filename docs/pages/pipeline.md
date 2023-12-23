@@ -111,7 +111,7 @@ $source = new class implements Source {
 
     public function count(): int
     {
-        reutrn 1;
+        return 1;
     }
 }
 ```
