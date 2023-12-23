@@ -10,13 +10,15 @@ First we define the events that happen in our system.
 A hotel can be created with a `name` and a `id`:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\BasicAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Serializer\Normalizer\UuidAggregateIdNormalizer;
 
 #[Event('hotel.created')]
 final class HotelCreated
 {
     public function __construct(
-        public readonly BasicAggregateRootId $hotelId,
+        #[UuidAggregateIdNormalizer]
+        public readonly UuidAggregateRootId $hotelId,
         public readonly string $hotelName
     ) {
     }
@@ -62,7 +64,7 @@ These events are thrown here and the state of the hotel is also changed.
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\BasicAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\AggregateId;
 use Patchlevel\EventSourcing\Attribute\Apply;
@@ -71,7 +73,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 final class Hotel extends BasicAggregateRoot
 {
     #[AggregateId]
-    private BasicAggregateRootId $id;
+    private UuidAggregateRootId $id;
     private string $name;
     
     /**
@@ -89,7 +91,7 @@ final class Hotel extends BasicAggregateRoot
         return $this->guests;
     }
 
-    public static function create(BasicAggregateRootId $id, string $hotelName): static
+    public static function create(UuidAggregateRootId $id, string $hotelName): static
     {
         $self = new static();
         $self->recordThat(new HotelCreated($id, $hotelName));
@@ -364,16 +366,16 @@ $projectionist->boot();
 We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\BasicAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 
-$hotel1 = Hotel::create(new BasicAggregateRootId('1'), 'HOTEL');
+$hotel1 = Hotel::create(UuidAggregateRootId::generate(), 'HOTEL');
 $hotel1->checkIn('David');
 $hotel1->checkIn('Daniel');
 $hotel1->checkOut('David');
 
 $hotelRepository->save($hotel1);
 
-$hotel2 = $hotelRepository->load(new BasicAggregateRootId('2'));
+$hotel2 = $hotelRepository->load(UuidAggregateRootId::fromString('d0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0'));
 $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 

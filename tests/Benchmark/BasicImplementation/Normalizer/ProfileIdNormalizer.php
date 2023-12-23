@@ -5,34 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Normalizer;
 
 use Attribute;
-use InvalidArgumentException;
+use Patchlevel\EventSourcing\Serializer\Normalizer\AggregateIdNormalizer;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
-use Patchlevel\Hydrator\Normalizer\Normalizer;
-
-use function is_string;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-final class ProfileIdNormalizer implements Normalizer
+final class ProfileIdNormalizer extends AggregateIdNormalizer
 {
-    public function normalize(mixed $value): string
+    public function __construct()
     {
-        if (!$value instanceof ProfileId) {
-            throw new InvalidArgumentException();
-        }
-
-        return $value->toString();
-    }
-
-    public function denormalize(mixed $value): ProfileId|null
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        if (!is_string($value)) {
-            throw new InvalidArgumentException();
-        }
-
-        return ProfileId::fromString($value);
+        parent::__construct(ProfileId::class);
     }
 }
