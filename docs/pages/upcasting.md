@@ -7,9 +7,9 @@ denormalizing to an event object. There you can change the event name and adjust
 
 ## Adjust payload
 
-Let's assume the have an `ProfileCreated` event which holds an email. Now the business needs to have all emails to be in
-lower cast. For that we could adjust the aggregate and the projections to take care of that. Or we can do this
-beforehand so we dont need to maintain two different places.
+Let's assume we have an `ProfileCreated` event which holds an email. Now the business needs to have all emails to be in
+lower case. For that we could adjust the aggregate and the projections to take care of that. Or we can do this
+beforehand so we don't need to maintain two different places.
 
 ```php
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
