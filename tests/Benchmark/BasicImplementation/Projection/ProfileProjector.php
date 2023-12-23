@@ -7,24 +7,20 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projectio
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
+use Patchlevel\EventSourcing\Projection\Projector\BasicProjector;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 
 use function assert;
 
-final class ProfileProjector implements Projector
+#[Projection('dummy', 1)]
+final class ProfileProjector extends BasicProjector
 {
     public function __construct(
         private Connection $connection,
     ) {
-    }
-
-    public function targetProjection(): ProjectionId
-    {
-        return new ProjectionId('dummy', 1);
     }
 
     #[Create]

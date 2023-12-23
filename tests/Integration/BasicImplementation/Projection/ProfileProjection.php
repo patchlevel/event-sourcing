@@ -8,24 +8,20 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
+use Patchlevel\EventSourcing\Projection\Projector\BasicProjector;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
 use function assert;
 
-final class ProfileProjection implements Projector
+#[Projection('profile', 1)]
+final class ProfileProjection extends BasicProjector
 {
     public function __construct(
         private Connection $connection,
     ) {
-    }
-
-    public function targetProjection(): ProjectionId
-    {
-        return new ProjectionId('dummy', 1);
     }
 
     #[Create]

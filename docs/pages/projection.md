@@ -18,20 +18,16 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
+use Patchlevel\EventSourcing\Projection\Projector\BasicProjector;
 
-final class ProfileProjection implements Projector
+#[Projection('profile', 1)]
+final class ProfileProjector extends BasicProjector
 {
     public function __construct(
         private readonly Connection $connection
     ) {
-    }
-    
-    public function targetProjection(): ProjectionId 
-    {
-        return new ProjectionId('profile', 1)
     }
     
     /**
