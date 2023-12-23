@@ -8,5 +8,5 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 interface Target
 {
-    public function save(Message $message): void;
+    public function save(Message ...$messages): void;
 }

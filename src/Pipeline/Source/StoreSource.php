@@ -13,8 +13,8 @@ use Traversable;
 final class StoreSource implements Source
 {
     public function __construct(
-        private Store $store,
-        private int $fromIndex = 0,
+        private readonly Store $store,
+        private readonly int $fromIndex = 0,
     ) {
     }
 

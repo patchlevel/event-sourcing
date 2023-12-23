@@ -10,7 +10,7 @@ final class IncludeEventMiddleware implements Middleware
 {
     /** @param list<class-string> $classes */
     public function __construct(
-        private array $classes,
+        private readonly array $classes,
     ) {
     }
 

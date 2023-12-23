@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 final class UntilEventMiddleware implements Middleware
 {
     public function __construct(
-        private DateTimeImmutable $until,
+        private readonly DateTimeImmutable $until,
     ) {
     }
 
