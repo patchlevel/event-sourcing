@@ -12,6 +12,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Statement;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use EmptyIterator;
 use Patchlevel\EventSourcing\EventBus\Message;
@@ -191,27 +192,14 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $innerMockedConnection = $this->prophesize(Connection::class);
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $innerMockedConnection->getDatabasePlatform()->willReturn($platform->reveal());
-
-        $innerMockedConnection->insert(
-            'eventstore',
+        $innerMockedConnection->executeStatement(
+            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, []],
             [
-                'aggregate' => 'profile',
-                'aggregate_id' => '1',
-                'playhead' => 1,
-                'event' => 'profile_created',
-                'payload' => '',
-                'recorded_on' => $recordedOn,
-                'new_stream_start' => false,
-                'archived' => false,
-                'custom_headers' => [],
-            ],
-            [
-                'recorded_on' => 'datetimetz_immutable',
-                'custom_headers' => 'json',
-                'archived' => Types::BOOLEAN,
-                'new_stream_start' => Types::BOOLEAN,
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                6 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+                8 => Type::getType(Types::JSON),
             ],
         )->shouldBeCalledOnce();
 
