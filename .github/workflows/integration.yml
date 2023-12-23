@@ -37,11 +37,11 @@ jobs:
                 operating-system:
                     - "ubuntu-latest"
                 postgres-version:
-                  - "11.19-alpine"
-                  - "12.14"
-                  - "13.10"
-                  - "14.7"
-                  - "15.2"
+                  - "12.17"
+                  - "13.13"
+                  - "14.10"
+                  - "15.5"
+                  - "16.1"
 
         env:
             DB_URL: 'postgresql://postgres:postgres@localhost:5432/eventstore?charset=utf8'
@@ -78,7 +78,7 @@ jobs:
             MYSQL_DATABASE: "eventstore"
 
           options: >-
-            --health-cmd "mysqladmin ping --silent"
+            --health-cmd "mariadb-admin ping --silent"
           ports:
             - "3306:3306"
 
@@ -91,9 +91,10 @@ jobs:
           operating-system:
             - "ubuntu-latest"
           mariadb-version:
-            - "10.3"
+            - "10.4"
             - "10.6"
-            - "10.10"
+            - "10.11"
+            - "11.2"
 
       env:
         DB_URL: 'mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
@@ -146,6 +147,7 @@ jobs:
           mysql-version:
             - "5.7"
             - "8.0"
+            - "8.2"
 
       env:
         DB_URL: 'mysql://root@127.0.0.1:3306/eventstore?charset=utf8'

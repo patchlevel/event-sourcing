@@ -43,9 +43,9 @@ But we can only really support the databases if we can also automatically ensure
 
 | Database    | Version                         |
 |-------------|---------------------------------|
-| PostgresSQL | 11.19, 12.14, 13.10, 14.7, 15.2 |
-| MariaDB     | 10.3, 10.6, 10.10               |
-| MySQL       | 5.7, 8.0                        |
+| PostgresSQL | 12.17, 13.13, 14.10, 15.5, 16.1 |
+| MariaDB     | 10.4, 10.6, 10.11, 11.2         |
+| MySQL       | 5.7, 8.0, 8.2                   |
 | SQLite      | 3.x                             |
 
 ## Sponsors
