@@ -11,6 +11,7 @@ final class Projection
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
         private ProjectionError|null $error = null,
+        private int $retry = 0,
     ) {
     }
 
@@ -85,5 +86,30 @@ final class Projection
     public function isError(): bool
     {
         return $this->status === ProjectionStatus::Error;
+    }
+
+    public function incrementRetry(): void
+    {
+        $this->retry++;
+    }
+
+    public function retry(): int
+    {
+        return $this->retry;
+    }
+
+    public function resetRetry(): void
+    {
+        $this->retry = 0;
+    }
+
+    public function disallowRetry(): void
+    {
+        $this->retry = -1;
+    }
+
+    public function isRetryDisallowed(): bool
+    {
+        return $this->retry === -1;
     }
 }

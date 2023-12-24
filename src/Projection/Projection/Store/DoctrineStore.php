@@ -23,7 +23,8 @@ use function array_map;
  *     position: int,
  *     status: string,
  *     error_message: string|null,
- *     error_object: string|null
+ *     error_object: string|null,
+ *     retry: int,
  * }
  */
 final class DoctrineStore implements ProjectionStore, SchemaConfigurator
@@ -84,6 +85,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                 $row['error_message'],
                 ErrorSerializer::unserialize($row['error_object']),
             ) : null,
+            $row['retry'],
         );
     }
 
@@ -102,6 +104,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'status' => $projection->status()->value,
                                 'error_message' => $projection->projectionError()?->errorMessage,
                                 'error_object' => $errorObject,
+                                'retry' => $projection->retry(),
                             ],
                             [
                                 'name' => $projection->id()->name(),
@@ -122,6 +125,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'status' => $projection->status()->value,
                                 'error_message' => $projection->projectionError()?->errorMessage,
                                 'error_object' => $errorObject,
+                                'retry' => $projection->retry(),
                             ],
                         );
                     }
@@ -160,6 +164,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             ->setNotnull(false);
         $table->addColumn('error_object', Types::BLOB)
             ->setNotnull(false);
+        $table->addColumn('retry', Types::INTEGER)
+            ->setNotnull(true);
 
         $table->setPrimaryKey(['name', 'version']);
     }
