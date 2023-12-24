@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
@@ -87,7 +88,7 @@ final class DefaultProjectionist implements Projectionist
                     $e->getMessage(),
                 ));
 
-                $projection->error($e);
+                $projection->error(ProjectionError::fromThrowable($e));
                 $this->projectionStore->save($projection);
 
                 if ($throwByError) {
@@ -400,7 +401,7 @@ final class DefaultProjectionist implements Projectionist
                     ),
                 );
 
-                $projection->error($e);
+                $projection->error(ProjectionError::fromThrowable($e));
                 $this->projectionStore->save($projection);
 
                 if ($throwByError) {

@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projection;
 
-use Throwable;
-
 final class Projection
 {
     public function __construct(
         private readonly ProjectionId $id,
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
-        private string|null $errorMessage = null,
-        private Throwable|null $errorObject = null,
+        private ProjectionError|null $error = null,
     ) {
     }
 
@@ -32,14 +29,9 @@ final class Projection
         return $this->position;
     }
 
-    public function errorMessage(): string|null
+    public function projectionError(): ProjectionError|null
     {
-        return $this->errorMessage;
-    }
-
-    public function errorObject(): Throwable|null
-    {
-        return $this->errorObject;
+        return $this->error;
     }
 
     public function incrementPosition(): void
@@ -55,8 +47,7 @@ final class Projection
     public function booting(): void
     {
         $this->status = ProjectionStatus::Booting;
-        $this->errorMessage = null;
-        $this->errorObject = null;
+        $this->error = null;
     }
 
     public function isBooting(): bool
@@ -67,8 +58,7 @@ final class Projection
     public function active(): void
     {
         $this->status = ProjectionStatus::Active;
-        $this->errorMessage = null;
-        $this->errorObject = null;
+        $this->error = null;
     }
 
     public function isActive(): bool
@@ -86,11 +76,10 @@ final class Projection
         return $this->status === ProjectionStatus::Outdated;
     }
 
-    public function error(Throwable|string|null $error = null): void
+    public function error(ProjectionError|null $error = null): void
     {
         $this->status = ProjectionStatus::Error;
-        $this->errorMessage = $error instanceof Throwable ? $error->getMessage() : $error;
-        $this->errorObject = $error instanceof Throwable ? $error : null;
+        $this->error = $error;
     }
 
     public function isError(): bool
