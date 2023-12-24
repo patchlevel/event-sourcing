@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\DuplicateHandleMethod;
+use Patchlevel\EventSourcing\EventBus\DuplicateSubscribeMethod;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Subscriber;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -23,7 +23,7 @@ final class SubscriberTest extends TestCase
         $subscriber = new class extends Subscriber {
             public Message|null $message = null;
 
-            #[Handle(ProfileCreated::class)]
+            #[Subscribe(ProfileCreated::class)]
             public function handle(Message $message): void
             {
                 $this->message = $message;
@@ -48,7 +48,7 @@ final class SubscriberTest extends TestCase
         $subscriber = new class extends Subscriber {
             public Message|null $message = null;
 
-            #[Handle(ProfileVisited::class)]
+            #[Subscribe(ProfileVisited::class)]
             public function handle(Message $message): void
             {
                 $this->message = $message;
@@ -74,13 +74,13 @@ final class SubscriberTest extends TestCase
             public Message|null $a = null;
             public Message|null $b = null;
 
-            #[Handle(ProfileCreated::class)]
+            #[Subscribe(ProfileCreated::class)]
             public function handleA(Message $message): void
             {
                 $this->a = $message;
             }
 
-            #[Handle(ProfileVisited::class)]
+            #[Subscribe(ProfileVisited::class)]
             public function handleB(Message $message): void
             {
                 $this->b = $message;
@@ -113,8 +113,8 @@ final class SubscriberTest extends TestCase
             /** @var list<Message> */
             public array $messages = [];
 
-            #[Handle(ProfileCreated::class)]
-            #[Handle(ProfileVisited::class)]
+            #[Subscribe(ProfileCreated::class)]
+            #[Subscribe(ProfileVisited::class)]
             public function handle(Message $message): void
             {
                 $this->messages[] = $message;
@@ -144,15 +144,15 @@ final class SubscriberTest extends TestCase
 
     public function testDuplicatedEvents(): void
     {
-        $this->expectException(DuplicateHandleMethod::class);
+        $this->expectException(DuplicateSubscribeMethod::class);
 
         $subscriber = new class extends Subscriber {
-            #[Handle(ProfileCreated::class)]
+            #[Subscribe(ProfileCreated::class)]
             public function handleA(Message $message): void
             {
             }
 
-            #[Handle(ProfileCreated::class)]
+            #[Subscribe(ProfileCreated::class)]
             public function handleB(Message $message): void
             {
             }

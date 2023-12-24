@@ -8,7 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
@@ -45,7 +45,7 @@ final class ProfileProjection implements Projector
         $this->connection->createSchemaManager()->dropTable('projection_profile');
     }
 
-    #[Handle(ProfileCreated::class)]
+    #[Subscribe(ProfileCreated::class)]
     public function handleProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();

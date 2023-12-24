@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Metadata\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use ReflectionClass;
 
@@ -28,27 +28,27 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
 
         $methods = $reflector->getMethods();
 
-        $handleMethods = [];
+        $subscribeMethods = [];
         $createMethod = null;
         $dropMethod = null;
 
         foreach ($methods as $method) {
-            $attributes = $method->getAttributes(Handle::class);
+            $attributes = $method->getAttributes(Subscribe::class);
 
             foreach ($attributes as $attribute) {
                 $instance = $attribute->newInstance();
                 $eventClass = $instance->eventClass();
 
-                if (array_key_exists($eventClass, $handleMethods)) {
-                    throw new DuplicateHandleMethod(
+                if (array_key_exists($eventClass, $subscribeMethods)) {
+                    throw new DuplicateSubscribeMethod(
                         $projector,
                         $eventClass,
-                        $handleMethods[$eventClass],
+                        $subscribeMethods[$eventClass],
                         $method->getName(),
                     );
                 }
 
-                $handleMethods[$eventClass] = $method->getName();
+                $subscribeMethods[$eventClass] = $method->getName();
             }
 
             if ($method->getAttributes(Create::class)) {
@@ -79,7 +79,7 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
         }
 
         $metadata = new ProjectorMetadata(
-            $handleMethods,
+            $subscribeMethods,
             $createMethod,
             $dropMethod,
         );

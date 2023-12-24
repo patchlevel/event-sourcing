@@ -13,5 +13,5 @@ interface ProjectorResolver
 
     public function resolveDropMethod(Projector $projector): Closure|null;
 
-    public function resolveHandleMethod(Projector $projector, Message $message): Closure|null;
+    public function resolveSubscribeMethod(Projector $projector, Message $message): Closure|null;
 }

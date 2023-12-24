@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projectio
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
@@ -39,7 +39,7 @@ final class ProfileProjector implements Projector
         $this->connection->executeStatement('DROP TABLE IF EXISTS projection_profile;');
     }
 
-    #[Handle(ProfileCreated::class)]
+    #[Subscribe(ProfileCreated::class)]
     public function handleProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();

@@ -42,17 +42,17 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$method(...);
     }
 
-    public function resolveHandleMethod(Projector $projector, Message $message): Closure|null
+    public function resolveSubscribeMethod(Projector $projector, Message $message): Closure|null
     {
         $event = $message->event();
         $metadata = $this->metadataFactory->metadata($projector::class);
 
-        if (!array_key_exists($event::class, $metadata->handleMethods)) {
+        if (!array_key_exists($event::class, $metadata->subscribeMethods)) {
             return null;
         }
 
-        $handleMethod = $metadata->handleMethods[$event::class];
+        $subscribeMethod = $metadata->subscribeMethods[$event::class];
 
-        return $projector->$handleMethod(...);
+        return $projector->$subscribeMethod(...);
     }
 }

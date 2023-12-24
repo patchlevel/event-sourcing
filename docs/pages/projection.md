@@ -17,7 +17,7 @@ In this example we always create a new data set in a relational database when a 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
@@ -63,7 +63,7 @@ final class ProfileProjection implements Projector
         );
     }
 
-    #[Handle(ProfileCreated::class)]
+    #[Subscribe(ProfileCreated::class)]
     public function handleProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();
@@ -97,8 +97,8 @@ Projectors can have one `create` and `drop` method that is executed when the pro
 In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
 To do this, you must add either the `Create` or `Drop` attribute to the method. The method name itself doesn't matter.
 
-Otherwise, a projector can have any number of handle methods that are called for certain defined events.
-In order to say which method is responsible for which event, you need the `Handle` attribute.
+Otherwise, a projector can subscribe any number of events.
+In order to say which method is responsible for which event, you need the `Subscribe` attribute.
 As the first parameter, you must pass the event class to which the reaction should then take place.
 The method itself must expect a `Message`, which then contains the event. The method name itself doesn't matter.
 

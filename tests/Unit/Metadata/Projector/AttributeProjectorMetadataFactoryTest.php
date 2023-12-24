@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projector\DuplicateCreateMethod;
 use Patchlevel\EventSourcing\Metadata\Projector\DuplicateDropMethod;
@@ -30,7 +30,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
         $metadataFactory = new AttributeProjectorMetadataFactory();
         $metadata = $metadataFactory->metadata($projection::class);
 
-        self::assertSame([], $metadata->handleMethods);
+        self::assertSame([], $metadata->subscribeMethods);
         self::assertNull($metadata->createMethod);
         self::assertNull($metadata->dropMethod);
     }
@@ -43,7 +43,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
                 return new ProjectionId('foo', 1);
             }
 
-            #[Handle(ProfileVisited::class)]
+            #[Subscribe(ProfileVisited::class)]
             public function handle(): void
             {
             }
@@ -64,7 +64,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [ProfileVisited::class => 'handle'],
-            $metadata->handleMethods,
+            $metadata->subscribeMethods,
         );
 
         self::assertSame('create', $metadata->createMethod);
@@ -79,8 +79,8 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
                 return new ProjectionId('foo', 1);
             }
 
-            #[Handle(ProfileVisited::class)]
-            #[Handle(ProfileCreated::class)]
+            #[Subscribe(ProfileVisited::class)]
+            #[Subscribe(ProfileCreated::class)]
             public function handle(): void
             {
             }
@@ -94,7 +94,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
                 ProfileVisited::class => 'handle',
                 ProfileCreated::class => 'handle',
             ],
-            $metadata->handleMethods,
+            $metadata->subscribeMethods,
         );
     }
 

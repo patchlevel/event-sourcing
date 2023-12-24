@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message as EventMessage;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
@@ -22,7 +22,7 @@ final class Dummy2Projection implements Projector
         return new ProjectionId('dummy2', 1);
     }
 
-    #[Handle(ProfileCreated::class)]
+    #[Subscribe(ProfileCreated::class)]
     public function handleProfileCreated(EventMessage $message): void
     {
         $this->handledMessage = $message;

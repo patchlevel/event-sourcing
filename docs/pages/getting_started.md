@@ -156,7 +156,7 @@ Each projector is then responsible for a specific projection and version.
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
@@ -181,7 +181,7 @@ final class HotelProjection implements Projector
         return $this->db->fetchAllAssociative('SELECT id, name, guests FROM hotel;')
     }
 
-    #[Handle(HotelCreated::class)]
+    #[Subscribe(HotelCreated::class)]
     public function handleHotelCreated(Message $message): void
     {
         $event = $message->event();
@@ -196,7 +196,7 @@ final class HotelProjection implements Projector
         );
     }
     
-    #[Handle(GuestIsCheckedIn::class)]
+    #[Subscribe(GuestIsCheckedIn::class)]
     public function handleGuestIsCheckedIn(Message $message): void
     {
         $this->db->executeStatement(
@@ -205,7 +205,7 @@ final class HotelProjection implements Projector
         );
     }
     
-    #[Handle(GuestIsCheckedOut::class)]
+    #[Subscribe(GuestIsCheckedOut::class)]
     public function handleGuestIsCheckedOut(Message $message): void
     {
         $this->db->executeStatement(
@@ -237,7 +237,7 @@ final class HotelProjection implements Projector
 In our example we also want to send an email to the head office as soon as a guest is checked in.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Subscriber;
 
@@ -248,7 +248,7 @@ final class SendCheckInEmailProcessor extends Subscriber
     ) {
     }
 
-    #[Handle(GuestIsCheckedIn::class)]
+    #[Subscribe(GuestIsCheckedIn::class)]
     public function onGuestIsCheckedIn(Message $message): void
     {
         $this->mailer->send(

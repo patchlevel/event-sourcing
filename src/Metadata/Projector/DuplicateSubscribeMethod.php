@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
 use function sprintf;
 
-final class DuplicateHandleMethod extends MetadataException
+final class DuplicateSubscribeMethod extends MetadataException
 {
     /**
      * @param class-string<Projector> $projector
@@ -19,7 +19,7 @@ final class DuplicateHandleMethod extends MetadataException
     {
         parent::__construct(
             sprintf(
-                'Two methods "%s" and "%s" on the projection "%s" want to handle the same event "%s". Only one method can handle an event.',
+                'Two methods "%s" and "%s" on the projection "%s" want to subscribe the same event "%s". Only one method can subscribe an event.',
                 $fistMethod,
                 $secondMethod,
                 $projector,

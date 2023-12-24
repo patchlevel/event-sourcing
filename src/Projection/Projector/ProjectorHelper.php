@@ -16,13 +16,13 @@ final class ProjectorHelper
     public function handleMessage(Message $message, Projector ...$projectors): void
     {
         foreach ($projectors as $projector) {
-            $handleMethod = $this->projectorResolver->resolveHandleMethod($projector, $message);
+            $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($projector, $message);
 
-            if (!$handleMethod) {
+            if (!$subscribeMethod) {
                 continue;
             }
 
-            $handleMethod($message);
+            $subscribeMethod($message);
         }
     }
 
