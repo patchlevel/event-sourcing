@@ -1,8 +1,8 @@
 # Projections
 
-With `projections` you can create your data optimized for reading.
+With `projections` you can transform your data optimized for reading.
 projections can be adjusted, deleted or rebuilt at any time.
-This is possible because the source of truth remains untouched
+This is possible because the event store remains untouched
 and everything can always be reproduced from the events.
 
 A projection can be anything.
@@ -22,7 +22,7 @@ use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\BasicProjector;
 
-#[Projection('profile', 1)]
+#[Projection('profile')]
 final class ProfileProjector extends BasicProjector
 {
     public function __construct(
@@ -35,28 +35,21 @@ final class ProfileProjector extends BasicProjector
      */
     public function getProfiles(): array 
     {
-        return $this->connection->fetchAllAssociative(
-            sprintf('SELECT id, name FROM %s;', $this->table())
-        );
+        return $this->connection->fetchAllAssociative("SELECT id, name FROM ${this->table()};");
     }
 
     #[Create]
     public function create(): void
     {
         $this->connection->executeStatement(
-            sprintf(
-                'CREATE TABLE IF NOT EXISTS %s (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);', 
-                $this->table()
-            )
+            "CREATE TABLE IF NOT EXISTS ${this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);"
         );
     }
 
     #[Drop]
     public function drop(): void
     {
-        $this->connection->executeStatement(
-            sprintf('DROP TABLE IF EXISTS %s;', $this->table())
-        );
+        $this->connection->executeStatement("DROP TABLE IF EXISTS ${this->table()};");
     }
 
     #[Subscribe(ProfileCreated::class)]
@@ -65,9 +58,9 @@ final class ProfileProjector extends BasicProjector
         $profileCreated = $message->event();
     
         $this->connection->executeStatement(
-            sprintf('INSERT INTO %s (`id`, `name`) VALUES(:id, :name);', $this->table()),
+            "INSERT INTO ${this->table()} (id, name) VALUES(?, ?);",
             [
-                'id' => $profileCreated->profileId,
+                'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name
             ]
         );
@@ -84,14 +77,18 @@ final class ProfileProjector extends BasicProjector
 }
 ```
 
-Each projector is responsible for a specific projection and version. 
-In order for us to be able to define this, we have to use the `targetProjection` method to return a ProjectionId.
-So that several versions of the projection can exist,
-the version of the projection should flow into the table or collection name.
+Each projector is responsible for a specific projection and version.
+This combination of information results in the so-called `project ID`.
+In order for us to be able to define this, we have to use the `Projection` attribute.
+In our example, the projection is called "profile" and has the version "0" because we did not specify it.
+So that there is no problems with existing projection, 
+both the name of the projection and the version should be part of the table/collection name.
+In our example, we build a `table` helper method, what creates the following string: "projection_profile_0".
 
 Projectors can have one `create` and `drop` method that is executed when the projection is created or deleted.
-In some cases it may be that no schema has to be created for the projection, as the target does it automatically.
-To do this, you must add either the `Create` or `Drop` attribute to the method. The method name itself doesn't matter.
+For this there are the attributes `Create` and `Drop`. The method name itself doesn't matter.
+In some cases it may be that no schema has to be created for the projection, 
+as the target does it automatically, so you can skip this.
 
 Otherwise, a projector can subscribe any number of events.
 In order to say which method is responsible for which event, you need the `Subscribe` attribute.
@@ -103,7 +100,7 @@ Several projectors can also listen to the same event.
 
 !!! danger
 
-    You should not execute any actions with projectors, 
+    You should not execute any actions like commands with projectors, 
     otherwise these will be executed again if you rebuild the projection!
 
 !!! tip
@@ -111,9 +108,39 @@ Several projectors can also listen to the same event.
     If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
     to make the event method return the correct type.
 
+## Versioning
+
+As soon as the structure of a projection changes, the version must be change or increment.
+Otherwise the projectionist will not recognize that the projection has changed and will not rebuild it.
+To do this, you have to change the version in the `Projection` attribute.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Create;
+use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projector\BasicProjector;
+
+#[Projection('profile', version: 1)]
+final class ProfileProjector extends BasicProjector
+{
+   // ...
+}
+```
+
+!!! warning
+
+    If you change the version, you must also change the table/collection name.
+
+!!! tip
+
+    You can also use the `ProjectionId` from `targetProjection` to build the table/collection name.
+
 ## Projector Repository
 
-The projector repository can hold and make available all projectors.
+The projector repository is responsible for managing the projectors.
 
 ```php
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
@@ -141,8 +168,25 @@ If something breaks, the projectionist marks the individual projections as fault
 ## Projection Id
 
 A projection id consists of a unique name and a version.
+It can be defined using the `Projection` attribute.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Projection;
+
+#[Projection('profile', version: 1)]
+final class ProfileProjector extends BasicProjector
+{
+   // ...
+}
+```
+
 As soon as the projection changes, such as the structure or the data, the version of the projection must be incremented.
-This tells the projectionist to build an another projection.
+This tells the projectionist to build an another projection with this projector.
+
+!!! note
+
+    Most databases have a limit on the length of the table/collection name.
+    The limit is usually 64 characters.
 
 ## Projection Position
 
@@ -171,7 +215,7 @@ stateDiagram-v2
 
 ### New
 
-A projection gets the status new if there is a projector with an unknown projection id.
+A projection gets the status new if there is a projector with an unknown `projection id`.
 This can happen when either a new projector has been added, the version has changed
 or the projection has been manually deleted from the projection store.
 
@@ -184,7 +228,7 @@ As soon as the projection is built up to the current status, the status changes 
 ### Active
 
 The active status describes the projections currently being actively managed by the projectionist.
-These projections have a projector, follow the event stream and are up to date.
+These projections have a projector, follow the event stream and should be up-to-date.
 
 ### Outdated
 
@@ -193,7 +237,7 @@ that does not have a projector in the source code with a corresponding projectio
 then this projection is marked as outdated.
 This happens when either the projector has been deleted
 or the projection id of a projector has changed.
-In the last case there is a new projection.
+In the last case there should be a new projection.
 
 An outdated projection does not automatically become active again when the projection id exists again.
 This happens, for example, when an old version was deployed again during a rollback.
@@ -220,7 +264,7 @@ In order for the projectionist to be able to do its work, you have to assemble i
 
 In order for the projectionist to know the status and position of the projections, they must be saved.
 
-Currently there is only the Doctrine Store.
+We can use the `DoctrineStore` for this:
 
 ```php
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
