@@ -8,7 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\Projector;
@@ -45,7 +45,7 @@ final class BankAccountProjection implements Projector
         $this->connection->createSchemaManager()->dropTable('projection_bank_account');
     }
 
-    #[Handle(BankAccountCreated::class)]
+    #[Subscribe(BankAccountCreated::class)]
     public function handleBankAccountCreated(Message $message): void
     {
         $event = $message->event();
@@ -59,7 +59,7 @@ final class BankAccountProjection implements Projector
         );
     }
 
-    #[Handle(BalanceAdded::class)]
+    #[Subscribe(BalanceAdded::class)]
     public function handleBalanceAdded(Message $message): void
     {
         $event = $message->event();

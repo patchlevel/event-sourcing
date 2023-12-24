@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
@@ -30,7 +30,7 @@ final class MetadataProjectorResolverTest extends TestCase
                 return new ProjectionId('dummy', 1);
             }
 
-            #[Handle(ProfileCreated::class)]
+            #[Subscribe(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
             {
                 self::$handledMessage = $message;
@@ -45,7 +45,7 @@ final class MetadataProjectorResolverTest extends TestCase
         );
 
         $resolver = new MetadataProjectorResolver();
-        $result = $resolver->resolveHandleMethod($projection, $message);
+        $result = $resolver->resolveSubscribeMethod($projection, $message);
 
         self::assertIsCallable($result);
 
@@ -70,7 +70,7 @@ final class MetadataProjectorResolverTest extends TestCase
         );
 
         $resolver = new MetadataProjectorResolver();
-        $result = $resolver->resolveHandleMethod($projection, $message);
+        $result = $resolver->resolveSubscribeMethod($projection, $message);
 
         self::assertNull($result);
     }

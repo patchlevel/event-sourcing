@@ -50,7 +50,7 @@ final class SendEmailProcessor implements Listener
 You can also create the whole thing as a subscriber too.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Subscriber;
 
@@ -61,7 +61,7 @@ final class SendEmailProcessor extends Subscriber
     ) {
     }
 
-    #[Handle(ProfileCreated::class)]
+    #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(Message $message): void
     {
         $this->mailer->send(

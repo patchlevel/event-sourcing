@@ -376,11 +376,11 @@ final class DefaultProjectionist implements Projectionist
             throw ProjectorNotFound::forProjectionId($projection->id());
         }
 
-        $handleMethod = $this->projectorResolver->resolveHandleMethod($projector, $message);
+        $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($projector, $message);
 
-        if ($handleMethod) {
+        if ($subscribeMethod) {
             try {
-                $handleMethod($message);
+                $subscribeMethod($message);
 
                 $this->logger?->debug(
                     sprintf(

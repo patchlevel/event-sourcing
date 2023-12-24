@@ -163,16 +163,16 @@ final class WelcomeListener implements Listener
 ## Subscriber
 
 A `Subscriber` is a listener, except that it has implemented the invoke method itself. 
-Instead, you can define your own and multiple methods and listen for specific events with the attribute `Handle`.
+Instead, you can define your own and multiple methods and listen for specific events with the attribute `Subscribe`.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 
 final class WelcomeSubscriber extends Subscriber 
 {
-    #[Handle(ProfileCreated::class)]
+    #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(Message $message): void
     {
         echo 'Welcome!';

@@ -8,7 +8,7 @@ final class ProjectorMetadata
 {
     public function __construct(
         /** @var array<class-string, string> */
-        public readonly array $handleMethods = [],
+        public readonly array $subscribeMethods = [],
         public readonly string|null $createMethod = null,
         public readonly string|null $dropMethod = null,
     ) {
