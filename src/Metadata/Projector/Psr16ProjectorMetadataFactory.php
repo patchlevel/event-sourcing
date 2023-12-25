@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Projector;
 
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Psr\SimpleCache\CacheInterface;
 
 final class Psr16ProjectorMetadataFactory implements ProjectorMetadataFactory
@@ -15,7 +14,7 @@ final class Psr16ProjectorMetadataFactory implements ProjectorMetadataFactory
     ) {
     }
 
-    /** @param class-string<Projector> $projector */
+    /** @param class-string $projector */
     public function metadata(string $projector): ProjectorMetadata
     {
         /** @var ?ProjectorMetadata $metadata */

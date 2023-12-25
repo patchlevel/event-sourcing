@@ -6,18 +6,18 @@ namespace Patchlevel\EventSourcing\Metadata\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use ReflectionClass;
 
 use function array_key_exists;
 
 final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactory
 {
-    /** @var array<class-string<Projector>, ProjectorMetadata> */
+    /** @var array<class-string, ProjectorMetadata> */
     private array $projectorMetadata = [];
 
-    /** @param class-string<Projector> $projector */
+    /** @param class-string $projector */
     public function metadata(string $projector): ProjectorMetadata
     {
         if (array_key_exists($projector, $this->projectorMetadata)) {
@@ -25,6 +25,14 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
         }
 
         $reflector = new ReflectionClass($projector);
+
+        $attributes = $reflector->getAttributes(Projection::class);
+
+        if ($attributes === []) {
+            throw new ClassIsNotAProjector($projector);
+        }
+
+        $projection = $attributes[0]->newInstance();
 
         $methods = $reflector->getMethods();
 
@@ -79,6 +87,8 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
         }
 
         $metadata = new ProjectorMetadata(
+            $projection->name(),
+            $projection->version(),
             $subscribeMethods,
             $createMethod,
             $dropMethod,

@@ -13,7 +13,7 @@ final class ProjectorHelper
     ) {
     }
 
-    public function handleMessage(Message $message, Projector ...$projectors): void
+    public function handleMessage(Message $message, object ...$projectors): void
     {
         foreach ($projectors as $projector) {
             $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($projector, $message);
@@ -26,7 +26,7 @@ final class ProjectorHelper
         }
     }
 
-    public function createProjection(Projector ...$projectors): void
+    public function createProjection(object ...$projectors): void
     {
         foreach ($projectors as $projector) {
             $createMethod = $this->projectorResolver->resolveCreateMethod($projector);
@@ -39,7 +39,7 @@ final class ProjectorHelper
         }
     }
 
-    public function dropProjection(Projector ...$projectors): void
+    public function dropProjection(object ...$projectors): void
     {
         foreach ($projectors as $projector) {
             $dropMethod = $this->projectorResolver->resolveDropMethod($projector);

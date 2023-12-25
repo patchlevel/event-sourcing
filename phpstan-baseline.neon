@@ -6,7 +6,7 @@ parameters:
 			path: src/EventBus/Message.php
 
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\InMemoryProjectorRepository\\:\\:projectors\\(\\) should return array\\<int, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\Projector\\> but returns array\\<int\\|string, Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\Projector\\>\\.$#"
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\InMemoryProjectorRepository\\:\\:projectors\\(\\) should return array\\<int, object\\> but returns array\\<int\\|string, object\\>\\.$#"
 			count: 1
 			path: src/Projection/Projector/InMemoryProjectorRepository.php
 

@@ -10,13 +10,12 @@ use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector\BasicProjector;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 
 use function assert;
 
 #[Projection('dummy', 1)]
-final class ProfileProjector extends BasicProjector
+final class ProfileProjector
 {
     public function __construct(
         private Connection $connection,

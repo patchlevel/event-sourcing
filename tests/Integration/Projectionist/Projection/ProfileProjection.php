@@ -8,16 +8,15 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
 use function assert;
-use function sprintf;
 
-final class ProfileProjection implements Projector
+#[Projection('profile', 1)]
+final class ProfileProjection
 {
     public function __construct(
         private Connection $connection,
@@ -59,15 +58,6 @@ final class ProfileProjection implements Projector
 
     private function tableName(): string
     {
-        return sprintf(
-            'projection_%s_%s',
-            $this->targetProjection()->name(),
-            $this->targetProjection()->version(),
-        );
-    }
-
-    public function targetProjection(): ProjectionId
-    {
-        return new ProjectionId('profile', 1);
+        return 'projection_profile_1';
     }
 }

@@ -17,7 +17,11 @@ final class ErrorSerializer
             return null;
         }
 
-        return serialize($error);
+        try {
+            return serialize($error);
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     public static function unserialize(string|null $error): Throwable|null

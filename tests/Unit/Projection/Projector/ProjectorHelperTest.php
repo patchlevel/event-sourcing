@@ -6,10 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -22,13 +22,9 @@ final class ProjectorHelperTest extends TestCase
 {
     public function testHandle(): void
     {
-        $projector = new class implements Projector {
+        $projector = new #[Projection('dummy')]
+        class {
             public static Message|null $handledMessage = null;
-
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
 
             #[Subscribe(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
@@ -54,7 +50,8 @@ final class ProjectorHelperTest extends TestCase
 
     public function testHandleNotSupportedEvent(): void
     {
-        $projector = new class implements Projector {
+        $projector = new #[Projection('dummy')]
+        class {
             public static Message|null $handledMessage = null;
 
             public function targetProjection(): ProjectionId
@@ -85,7 +82,8 @@ final class ProjectorHelperTest extends TestCase
 
     public function testCreate(): void
     {
-        $projector = new class implements Projector {
+        $projector = new #[Projection('dummy')]
+        class {
             public static bool $called = false;
 
             public function targetProjection(): ProjectionId
@@ -108,7 +106,8 @@ final class ProjectorHelperTest extends TestCase
 
     public function testDrop(): void
     {
-        $projector = new class implements Projector {
+        $projector = new #[Projection('dummy')]
+        class {
             public static bool $called = false;
 
             public function targetProjection(): ProjectionId

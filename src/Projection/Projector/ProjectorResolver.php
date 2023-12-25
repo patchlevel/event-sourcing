@@ -6,12 +6,15 @@ namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use Closure;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 
 interface ProjectorResolver
 {
-    public function resolveCreateMethod(Projector $projector): Closure|null;
+    public function resolveCreateMethod(object $projector): Closure|null;
 
-    public function resolveDropMethod(Projector $projector): Closure|null;
+    public function resolveDropMethod(object $projector): Closure|null;
 
-    public function resolveSubscribeMethod(Projector $projector, Message $message): Closure|null;
+    public function resolveSubscribeMethod(object $projector, Message $message): Closure|null;
+
+    public function projectionId(object $projector): ProjectionId;
 }

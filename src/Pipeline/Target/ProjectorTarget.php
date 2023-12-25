@@ -6,14 +6,13 @@ namespace Patchlevel\EventSourcing\Pipeline\Target;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 
 final class ProjectorTarget implements Target
 {
     public function __construct(
-        private readonly Projector $projector,
+        private readonly object $projector,
         private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
     ) {
     }

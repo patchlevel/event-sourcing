@@ -6,25 +6,33 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projector\ClassIsNotAProjector;
 use Patchlevel\EventSourcing\Metadata\Projector\DuplicateCreateMethod;
 use Patchlevel\EventSourcing\Metadata\Projector\DuplicateDropMethod;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
 final class AttributeProjectorMetadataFactoryTest extends TestCase
 {
+    public function testNotAProjection(): void
+    {
+        $this->expectException(ClassIsNotAProjector::class);
+
+        $projection = new class {
+        };
+
+        $metadataFactory = new AttributeProjectorMetadataFactory();
+        $metadataFactory->metadata($projection::class);
+    }
+
     public function testEmptyProjection(): void
     {
-        $projection = new class implements Projector {
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('foo', 1);
-            }
+        $projection = new #[Projection('foo', 1)]
+        class {
         };
 
         $metadataFactory = new AttributeProjectorMetadataFactory();
@@ -33,16 +41,14 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
         self::assertSame([], $metadata->subscribeMethods);
         self::assertNull($metadata->createMethod);
         self::assertNull($metadata->dropMethod);
+        self::assertSame('foo', $metadata->name);
+        self::assertSame(1, $metadata->version);
     }
 
     public function testStandardProjection(): void
     {
-        $projection = new class implements Projector {
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('foo', 1);
-            }
-
+        $projection = new #[Projection('foo', 1)]
+        class {
             #[Subscribe(ProfileVisited::class)]
             public function handle(): void
             {
@@ -73,12 +79,8 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
     public function testMultipleHandlerOnOneMethod(): void
     {
-        $projection = new class implements Projector {
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('foo', 1);
-            }
-
+        $projection = new #[Projection('foo', 1)]
+        class {
             #[Subscribe(ProfileVisited::class)]
             #[Subscribe(ProfileCreated::class)]
             public function handle(): void
@@ -102,12 +104,8 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
     {
         $this->expectException(DuplicateCreateMethod::class);
 
-        $projection = new class implements Projector {
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('foo', 1);
-            }
-
+        $projection = new #[Projection('foo', 1)]
+        class {
             #[Create]
             public function create1(): void
             {
@@ -127,12 +125,8 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
     {
         $this->expectException(DuplicateDropMethod::class);
 
-        $projection = new class implements Projector {
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('foo', 1);
-            }
-
+        $projection = new #[Projection('foo', 1)]
+        class {
             #[Drop]
             public function drop1(): void
             {

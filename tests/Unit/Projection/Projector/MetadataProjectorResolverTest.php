@@ -6,11 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -22,13 +21,9 @@ final class MetadataProjectorResolverTest extends TestCase
 {
     public function testResolveHandleMethod(): void
     {
-        $projection = new class implements Projector {
+        $projection = new #[Projection('dummy')]
+        class {
             public static Message|null $handledMessage = null;
-
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
 
             #[Subscribe(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
@@ -56,11 +51,8 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveHandleMethod(): void
     {
-        $projection = new class implements Projector {
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
+        $projection = new #[Projection('dummy')]
+        class {
         };
 
         $message = new Message(
@@ -77,13 +69,9 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testResolveCreateMethod(): void
     {
-        $projection = new class implements Projector {
+        $projection = new #[Projection('dummy')]
+        class {
             public static bool $called = false;
-
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
 
             #[Create]
             public function method(): void
@@ -104,11 +92,8 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveCreateMethod(): void
     {
-        $projection = new class implements Projector {
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
+        $projection = new #[Projection('dummy')]
+        class {
         };
 
         $resolver = new MetadataProjectorResolver();
@@ -119,13 +104,9 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testResolveDropMethod(): void
     {
-        $projection = new class implements Projector {
+        $projection = new #[Projection('dummy')]
+        class {
             public static bool $called = false;
-
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
 
             #[Drop]
             public function method(): void
@@ -146,16 +127,26 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveDropMethod(): void
     {
-        $projection = new class implements Projector {
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
+        $projection = new #[Projection('dummy')]
+        class {
         };
 
         $resolver = new MetadataProjectorResolver();
         $result = $resolver->resolveDropMethod($projection);
 
         self::assertNull($result);
+    }
+
+    public function testProjectionId(): void
+    {
+        $projection = new #[Projection('dummy', 1)]
+        class {
+        };
+
+        $resolver = new MetadataProjectorResolver();
+        $result = $resolver->projectionId($projection);
+
+        self::assertEquals('dummy', $result->name());
+        self::assertEquals(1, $result->version());
     }
 }
