@@ -20,11 +20,13 @@ use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector\BasicProjector;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 
 #[Projection('profile')]
-final class ProfileProjector extends BasicProjector
+final class ProfileProjector
 {
+    use ProjectorUtil;
+
     public function __construct(
         private readonly Connection $connection
     ) {
@@ -70,8 +72,8 @@ final class ProfileProjector extends BasicProjector
     {
         return sprintf(
             'projection_%s_%s', 
-            $this->targetProjection()->name(), 
-            $this->targetProjection()->version()
+            $this->projectionName(), 
+            $this->projectionVersion()
         );
     }
 }
@@ -121,10 +123,9 @@ use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projector\BasicProjector;
 
 #[Projection('profile', version: 1)]
-final class ProfileProjector extends BasicProjector
+final class ProfileProjector
 {
    // ...
 }
@@ -136,7 +137,7 @@ final class ProfileProjector extends BasicProjector
 
 !!! tip
 
-    You can also use the `ProjectionId` from `targetProjection` to build the table/collection name.
+    You can also use the `ProjectorUtil` to build the table/collection name.
 
 ## Projector Repository
 
@@ -174,7 +175,7 @@ It can be defined using the `Projection` attribute.
 use Patchlevel\EventSourcing\Attribute\Projection;
 
 #[Projection('profile', version: 1)]
-final class ProfileProjector extends BasicProjector
+final class ProfileProjector
 {
    // ...
 }

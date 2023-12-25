@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Pipeline\Target;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 
@@ -20,10 +19,18 @@ final class ProjectorRepositoryTarget implements Target
 
     public function save(Message ...$messages): void
     {
-        $helper = new ProjectorHelper($this->projectorResolver);
+        $projectors = $this->projectorRepository->projectors();
 
         foreach ($messages as $message) {
-            $helper->handleMessage($message, ...$this->projectorRepository->projectors());
+            foreach ($projectors as $projector) {
+                $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($projector, $message);
+
+                if (!$subscribeMethod) {
+                    continue;
+                }
+
+                $subscribeMethod($message);
+            }
         }
     }
 }

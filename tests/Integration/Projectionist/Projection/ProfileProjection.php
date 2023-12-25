@@ -11,13 +11,17 @@ use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
 use function assert;
+use function sprintf;
 
 #[Projection('profile', 1)]
 final class ProfileProjection
 {
+    use ProjectorUtil;
+
     public function __construct(
         private Connection $connection,
     ) {
@@ -58,6 +62,10 @@ final class ProfileProjection
 
     private function tableName(): string
     {
-        return 'projection_profile_1';
+        return sprintf(
+            'projection_%s_%s',
+            $this->projectionName(),
+            $this->projectionVersion(),
+        );
     }
 }

@@ -160,11 +160,13 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\BasicProjector;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 
 #[Projection('hotel')]
-final class HotelProjector extends BasicProjector
+final class HotelProjector
 {
+    use ProjectorUtil;
+
     public function __construct(
         private readonly Connection $db
     ) {
@@ -184,7 +186,7 @@ final class HotelProjector extends BasicProjector
         $event = $message->event();
     
         $this->db->insert(
-            $this->slug(), 
+            $this->table(), 
             [
                 'id' => $event->hotelId, 
                 'name' => $event->hotelName,
@@ -227,8 +229,8 @@ final class HotelProjector extends BasicProjector
     {
         return sprintf(
             'projection_%s_%s', 
-            $this->targetProjection()->name(), 
-            $this->targetProjection()->version()
+            $this->projectionName(), 
+            $this->projectionVersion()
         );
     }
 }
