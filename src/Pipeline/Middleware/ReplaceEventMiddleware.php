@@ -17,7 +17,7 @@ final class ReplaceEventMiddleware implements Middleware
      * @param callable(T      $event):object $callable
      */
     public function __construct(
-        private string $class,
+        private readonly string $class,
         callable $callable,
     ) {
         $this->callable = $callable;

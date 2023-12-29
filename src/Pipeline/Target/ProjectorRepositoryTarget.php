@@ -18,9 +18,12 @@ final class ProjectorRepositoryTarget implements Target
     ) {
     }
 
-    public function save(Message $message): void
+    public function save(Message ...$messages): void
     {
-        (new ProjectorHelper($this->projectorResolver))
-            ->handleMessage($message, ...$this->projectorRepository->projectors());
+        $helper = new ProjectorHelper($this->projectorResolver);
+
+        foreach ($messages as $message) {
+            $helper->handleMessage($message, ...$this->projectorRepository->projectors());
+        }
     }
 }

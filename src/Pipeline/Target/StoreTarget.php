@@ -10,12 +10,12 @@ use Patchlevel\EventSourcing\Store\Store;
 final class StoreTarget implements Target
 {
     public function __construct(
-        private Store $store,
+        private readonly Store $store,
     ) {
     }
 
-    public function save(Message $message): void
+    public function save(Message ...$messages): void
     {
-        $this->store->save($message);
+        $this->store->save(...$messages);
     }
 }

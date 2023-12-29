@@ -16,8 +16,8 @@ final class Pipeline
 
     /** @param list<Middleware> $middlewares */
     public function __construct(
-        private Source $source,
-        private Target $target,
+        private readonly Source $source,
+        private readonly Target $target,
         array $middlewares = [],
     ) {
         $this->middlewares = new ChainMiddleware($middlewares);
@@ -27,10 +27,7 @@ final class Pipeline
     {
         foreach ($this->source->load() as $message) {
             $result = ($this->middlewares)($message);
-
-            foreach ($result as $resultMessage) {
-                $this->target->save($resultMessage);
-            }
+            $this->target->save(...$result);
 
             if (!$observer) {
                 continue;
