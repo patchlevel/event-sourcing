@@ -18,7 +18,7 @@ final class ErrorSerializer
         }
 
         try {
-            return serialize($error);
+            return @serialize($error);
         } catch (Throwable) {
             return null;
         }
