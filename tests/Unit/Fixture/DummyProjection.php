@@ -6,12 +6,13 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message as EventMessage;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 
-final class DummyProjection implements Projector
+#[Projection('dummy', 1)]
+final class DummyProjection
 {
     public EventMessage|null $handledMessage = null;
     public bool $createCalled = false;

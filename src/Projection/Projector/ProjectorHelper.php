@@ -4,51 +4,36 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projector;
 
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 
 final class ProjectorHelper
 {
     public function __construct(
-        private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
+        private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory(),
     ) {
     }
 
-    public function handleMessage(Message $message, Projector ...$projectors): void
+    public function name(object $projector): string
     {
-        foreach ($projectors as $projector) {
-            $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($projector, $message);
+        $metadata = $this->metadataFactory->metadata($projector::class);
 
-            if (!$subscribeMethod) {
-                continue;
-            }
-
-            $subscribeMethod($message);
-        }
+        return $metadata->name;
     }
 
-    public function createProjection(Projector ...$projectors): void
+    public function version(object $projector): int
     {
-        foreach ($projectors as $projector) {
-            $createMethod = $this->projectorResolver->resolveCreateMethod($projector);
+        $metadata = $this->metadataFactory->metadata($projector::class);
 
-            if (!$createMethod) {
-                continue;
-            }
-
-            $createMethod();
-        }
+        return $metadata->version;
     }
 
-    public function dropProjection(Projector ...$projectors): void
+    public function projectionId(object $projector): ProjectionId
     {
-        foreach ($projectors as $projector) {
-            $dropMethod = $this->projectorResolver->resolveDropMethod($projector);
-
-            if (!$dropMethod) {
-                continue;
-            }
-
-            $dropMethod();
-        }
+        return new ProjectionId(
+            $this->name($projector),
+            $this->version($projector),
+        );
     }
 }

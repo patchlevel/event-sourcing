@@ -4,128 +4,44 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projector;
 
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper */
 final class ProjectorHelperTest extends TestCase
 {
-    public function testHandle(): void
+    public function testProjectionName(): void
     {
-        $projector = new class implements Projector {
-            public static Message|null $handledMessage = null;
-
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
-
-            #[Subscribe(ProfileCreated::class)]
-            public function handleProfileCreated(Message $message): void
-            {
-                self::$handledMessage = $message;
-            }
+        $projector = new #[Projection('dummy')]
+        class {
         };
 
-        $event = new ProfileCreated(
-            ProfileId::fromString('1'),
-            Email::fromString('profile@test.com'),
-        );
-
-        $message = new Message(
-            $event,
-        );
-
         $helper = new ProjectorHelper();
-        $helper->handleMessage($message, $projector);
 
-        self::assertSame($message, $projector::$handledMessage);
+        self::assertSame('dummy', $helper->name($projector));
     }
 
-    public function testHandleNotSupportedEvent(): void
+    public function testProjectionVersion(): void
     {
-        $projector = new class implements Projector {
-            public static Message|null $handledMessage = null;
-
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
-
-            #[Subscribe(ProfileCreated::class)]
-            public function handleProfileCreated(Message $message): void
-            {
-                self::$handledMessage = $message;
-            }
+        $projector = new #[Projection('dummy', 1)]
+        class {
         };
 
-        $event = new ProfileVisited(
-            ProfileId::fromString('1'),
-        );
-
-        $message = new Message(
-            $event,
-        );
-
         $helper = new ProjectorHelper();
-        $helper->handleMessage($message, $projector);
 
-        self::assertNull($projector::$handledMessage);
+        self::assertSame(1, $helper->version($projector));
     }
 
-    public function testCreate(): void
+    public function testProjectionId(): void
     {
-        $projector = new class implements Projector {
-            public static bool $called = false;
-
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
-
-            #[Create]
-            public function method(): void
-            {
-                self::$called = true;
-            }
+        $projector = new #[Projection('dummy', 1)]
+        class {
         };
 
         $helper = new ProjectorHelper();
-        $helper->createProjection($projector);
 
-        self::assertTrue($projector::$called);
-    }
-
-    public function testDrop(): void
-    {
-        $projector = new class implements Projector {
-            public static bool $called = false;
-
-            public function targetProjection(): ProjectionId
-            {
-                return new ProjectionId('dummy', 1);
-            }
-
-            #[Drop]
-            public function method(): void
-            {
-                self::$called = true;
-            }
-        };
-
-        $helper = new ProjectorHelper();
-        $helper->dropProjection($projector);
-
-        self::assertTrue($projector::$called);
+        self::assertEquals(new ProjectionId('dummy', 1), $helper->projectionId($projector));
     }
 }

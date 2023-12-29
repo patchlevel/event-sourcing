@@ -12,7 +12,6 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
@@ -24,7 +23,7 @@ use function sprintf;
 
 final class DefaultProjectionist implements Projectionist
 {
-    /** @var array<string, Projector>|null */
+    /** @var array<string, object>|null */
     private array|null $projectors = null;
 
     public function __construct(
@@ -354,15 +353,16 @@ final class DefaultProjectionist implements Projectionist
     public function projections(): ProjectionCollection
     {
         $projections = $this->projectionStore->all();
+        $projectors = $this->projectors();
 
-        foreach ($this->projectors() as $projector) {
-            $targetProjection = $projector->targetProjection();
+        foreach ($projectors as $projector) {
+            $projectionId = $this->projectorResolver->projectionId($projector);
 
-            if ($projections->has($targetProjection)) {
+            if ($projections->has($projectionId)) {
                 continue;
             }
 
-            $projections = $projections->add(new Projection($targetProjection));
+            $projections = $projections->add(new Projection($projectionId));
         }
 
         return $projections;
@@ -419,23 +419,23 @@ final class DefaultProjectionist implements Projectionist
         $this->projectionStore->save($projection);
     }
 
-    private function projector(ProjectionId $projectorId): Projector|null
+    private function projector(ProjectionId $projectorId): object|null
     {
         $projectors = $this->projectors();
 
         return $projectors[$projectorId->toString()] ?? null;
     }
 
-    /** @return array<string, Projector> */
+    /** @return array<string, object> */
     private function projectors(): array
     {
         if ($this->projectors === null) {
             $this->projectors = [];
 
             foreach ($this->projectorRepository->projectors() as $projector) {
-                $targetProjection = $projector->targetProjection();
+                $projectionId = $this->projectorResolver->projectionId($projector);
 
-                $this->projectors[$targetProjection->toString()] = $projector;
+                $this->projectors[$projectionId->toString()] = $projector;
             }
         }
 

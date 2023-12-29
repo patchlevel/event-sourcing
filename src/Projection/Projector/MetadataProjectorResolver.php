@@ -8,6 +8,7 @@ use Closure;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 
 use function array_key_exists;
 
@@ -18,7 +19,7 @@ final class MetadataProjectorResolver implements ProjectorResolver
     ) {
     }
 
-    public function resolveCreateMethod(Projector $projector): Closure|null
+    public function resolveCreateMethod(object $projector): Closure|null
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
         $method = $metadata->createMethod;
@@ -30,7 +31,7 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$method(...);
     }
 
-    public function resolveDropMethod(Projector $projector): Closure|null
+    public function resolveDropMethod(object $projector): Closure|null
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
         $method = $metadata->dropMethod;
@@ -42,7 +43,7 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$method(...);
     }
 
-    public function resolveSubscribeMethod(Projector $projector, Message $message): Closure|null
+    public function resolveSubscribeMethod(object $projector, Message $message): Closure|null
     {
         $event = $message->event();
         $metadata = $this->metadataFactory->metadata($projector::class);
@@ -54,5 +55,15 @@ final class MetadataProjectorResolver implements ProjectorResolver
         $subscribeMethod = $metadata->subscribeMethods[$event::class];
 
         return $projector->$subscribeMethod(...);
+    }
+
+    public function projectionId(object $projector): ProjectionId
+    {
+        $metadata = $this->metadataFactory->metadata($projector::class);
+
+        return new ProjectionId(
+            $metadata->name,
+            $metadata->version,
+        );
     }
 }

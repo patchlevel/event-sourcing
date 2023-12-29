@@ -6,13 +6,13 @@ namespace Patchlevel\EventSourcing\Projection\Projector;
 
 final class InMemoryProjectorRepository implements ProjectorRepository
 {
-    /** @param iterable<Projector> $projectors */
+    /** @param iterable<object> $projectors */
     public function __construct(
         private readonly iterable $projectors = [],
     ) {
     }
 
-    /** @return list<Projector> */
+    /** @return list<object> */
     public function projectors(): array
     {
         return [...$this->projectors];

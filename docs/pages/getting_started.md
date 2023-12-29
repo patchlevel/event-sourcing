@@ -157,20 +157,19 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 
-final class HotelProjection implements Projector
+#[Projection('hotel')]
+final class HotelProjector
 {
+    use ProjectorUtil;
+
     public function __construct(
         private readonly Connection $db
     ) {
-    }
-    
-    public function targetProjection(): ProjectionId
-    {
-        return new ProjectionId('hotel', 1);
     }
     
     /**
@@ -178,7 +177,7 @@ final class HotelProjection implements Projector
      */
     public function getHotels(): array 
     {
-        return $this->db->fetchAllAssociative('SELECT id, name, guests FROM hotel;')
+        return $this->db->fetchAllAssociative("SELECT id, name, guests FROM ${this->table()};");
     }
 
     #[Subscribe(HotelCreated::class)]
@@ -187,7 +186,7 @@ final class HotelProjection implements Projector
         $event = $message->event();
     
         $this->db->insert(
-            'hotel', 
+            $this->table(), 
             [
                 'id' => $event->hotelId, 
                 'name' => $event->hotelName,
@@ -200,7 +199,7 @@ final class HotelProjection implements Projector
     public function handleGuestIsCheckedIn(Message $message): void
     {
         $this->db->executeStatement(
-            'UPDATE hotel SET guests = guests + 1 WHERE id = ?;',
+            "UPDATE ${this->table()} SET guests = guests + 1 WHERE id = ?;",
             [$message->aggregateId()]
         );
     }
@@ -209,7 +208,7 @@ final class HotelProjection implements Projector
     public function handleGuestIsCheckedOut(Message $message): void
     {
         $this->db->executeStatement(
-            'UPDATE hotel SET guests = guests - 1 WHERE id = ?;',
+            "UPDATE ${this->table()} SET guests = guests - 1 WHERE id = ?;",
             [$message->aggregateId()]
         );
     }
@@ -217,13 +216,22 @@ final class HotelProjection implements Projector
     #[Create]
     public function create(): void
     {
-        $this->db->executeStatement('CREATE TABLE IF NOT EXISTS hotel (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);');
+        $this->db->executeStatement("CREATE TABLE IF NOT EXISTS ${this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);");
     }
 
     #[Drop]
     public function drop(): void
     {
-        $this->db->executeStatement('DROP TABLE IF EXISTS hotel;');
+        $this->db->executeStatement("DROP TABLE IF EXISTS ${this->table()};");
+    }
+    
+    private function table(): string
+    {
+        return sprintf(
+            'projection_%s_%s', 
+            $this->projectionName(), 
+            $this->projectionVersion()
+        );
     }
 }
 ```
@@ -234,7 +242,7 @@ final class HotelProjection implements Projector
 
 ## Processor
 
-In our example we also want to send an email to the head office as soon as a guest is checked in.
+In our example we also want to email the head office as soon as a guest is checked in.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -296,10 +304,10 @@ $store = new DoctrineDbalStore(
     $aggregateRegistry
 );
 
-$hotelProjection = new HotelProjection($connection);
+$hotelProjector = new HotelProjector($connection);
 
 $projectorRepository = new ProjectorRepository([
-    $hotelProjection,
+    $hotelProjector,
 ]);
 
 $projectionStore = new DoctrineStore($connection);

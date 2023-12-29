@@ -8,23 +8,18 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Projection;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\Projector;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BankAccountCreated;
 
-final class BankAccountProjection implements Projector
+#[Projection('dummy', 1)]
+final class BankAccountProjection
 {
     public function __construct(
         private Connection $connection,
     ) {
-    }
-
-    public function targetProjection(): ProjectionId
-    {
-        return new ProjectionId('dummy', 1);
     }
 
     #[Create]
