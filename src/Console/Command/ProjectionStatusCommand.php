@@ -57,7 +57,7 @@ final class ProjectionStatusCommand extends ProjectionCommand
                         $projection->id()->version(),
                         $projection->position(),
                         $projection->status()->value,
-                        $projection->errorMessage(),
+                        $projection->projectionError()?->errorMessage,
                     ],
                     [...$projections],
                 ),
@@ -84,12 +84,12 @@ final class ProjectionStatusCommand extends ProjectionCommand
                     $projection->id()->version(),
                     $projection->position(),
                     $projection->status()->value,
-                    $projection->errorMessage(),
+                    $projection->projectionError()?->errorMessage,
                 ],
             ],
         );
 
-        $errorObject = $projection->errorObject();
+        $errorObject = $projection->projectionError()?->errorObject;
 
         if ($errorObject instanceof Throwable) {
             $io->throwable($errorObject);

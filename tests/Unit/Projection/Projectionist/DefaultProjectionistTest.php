@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
@@ -250,8 +251,8 @@ final class DefaultProjectionistTest extends TestCase
                     $projectionId,
                     ProjectionStatus::Error,
                     0,
-                    'ERROR',
-                    $projector->exception,
+                    new ProjectionError('ERROR', $projector->exception),
+                    -1,
                 ),
             ],
             $projectionStore->savedProjections,
@@ -452,8 +453,8 @@ final class DefaultProjectionistTest extends TestCase
                     $projectionId,
                     ProjectionStatus::Error,
                     0,
-                    'ERROR',
-                    $projector->exception,
+                    new ProjectionError('ERROR', $projector->exception),
+                    1,
                 ),
             ],
             $projectionStore->savedProjections,

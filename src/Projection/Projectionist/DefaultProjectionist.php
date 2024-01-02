@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
@@ -23,6 +24,8 @@ use function sprintf;
 
 final class DefaultProjectionist implements Projectionist
 {
+    private const RETRY_LIMIT = 5;
+
     /** @var array<string, object>|null */
     private array|null $projectors = null;
 
@@ -87,9 +90,6 @@ final class DefaultProjectionist implements Projectionist
                     $e->getMessage(),
                 ));
 
-                $projection->error($e);
-                $this->projectionStore->save($projection);
-
                 if ($throwByError) {
                     throw new ProjectionistError(
                         $projector::class,
@@ -97,6 +97,10 @@ final class DefaultProjectionist implements Projectionist
                         $e,
                     );
                 }
+
+                $projection->error(ProjectionError::fromThrowable($e));
+                $projection->disallowRetry();
+                $this->projectionStore->save($projection);
             }
         }
 
@@ -160,22 +164,10 @@ final class DefaultProjectionist implements Projectionist
         int|null $limit = null,
         bool $throwByError = false,
     ): void {
-        $projections = $this->projections()
-            ->filterByProjectionStatus(ProjectionStatus::Active)
-            ->filterByCriteria($criteria);
+        $projections = $this->projections()->filterByCriteria($criteria);
 
-        foreach ($projections as $projection) {
-            $projector = $this->projector($projection->id());
-
-            if ($projector) {
-                continue;
-            }
-
-            $projection->outdated();
-            $this->projectionStore->save($projection);
-
-            $this->logger?->info(sprintf('projection "%s" has been marked as outdated', $projection->id()->toString()));
-        }
+        $this->handleOutdatedProjections($projections);
+        $this->handleRetryProjections($projections);
 
         $projections = $projections->filterByProjectionStatus(ProjectionStatus::Active);
 
@@ -378,44 +370,51 @@ final class DefaultProjectionist implements Projectionist
 
         $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($projector, $message);
 
-        if ($subscribeMethod) {
-            try {
-                $subscribeMethod($message);
+        if (!$subscribeMethod) {
+            $projection->incrementPosition();
+            $this->projectionStore->save($projection);
 
-                $this->logger?->debug(
-                    sprintf(
-                        'projector "%s" for "%s" processed the event "%s"',
-                        $projector::class,
-                        $projection->id()->toString(),
-                        $message->event()::class,
-                    ),
+            return;
+        }
+
+        try {
+            $subscribeMethod($message);
+
+            $this->logger?->debug(
+                sprintf(
+                    'projector "%s" for "%s" processed the event "%s"',
+                    $projector::class,
+                    $projection->id()->toString(),
+                    $message->event()::class,
+                ),
+            );
+        } catch (Throwable $e) {
+            $this->logger?->error(
+                sprintf(
+                    'projector "%s" for "%s" could not process the event: %s',
+                    $projector::class,
+                    $projection->id()->toString(),
+                    $e->getMessage(),
+                ),
+            );
+
+            if ($throwByError) {
+                throw new ProjectionistError(
+                    $projector::class,
+                    $projection->id(),
+                    $e,
                 );
-            } catch (Throwable $e) {
-                $this->logger?->error(
-                    sprintf(
-                        'projector "%s" for "%s" could not process the event: %s',
-                        $projector::class,
-                        $projection->id()->toString(),
-                        $e->getMessage(),
-                    ),
-                );
-
-                $projection->error($e);
-                $this->projectionStore->save($projection);
-
-                if ($throwByError) {
-                    throw new ProjectionistError(
-                        $projector::class,
-                        $projection->id(),
-                        $e,
-                    );
-                }
-
-                return;
             }
+
+            $projection->error(ProjectionError::fromThrowable($e));
+            $projection->incrementRetry();
+            $this->projectionStore->save($projection);
+
+            return;
         }
 
         $projection->incrementPosition();
+        $projection->resetRetry();
         $this->projectionStore->save($projection);
     }
 
@@ -440,5 +439,43 @@ final class DefaultProjectionist implements Projectionist
         }
 
         return $this->projectors;
+    }
+
+    private function handleOutdatedProjections(ProjectionCollection $projections): void
+    {
+        foreach ($projections as $projection) {
+            if ($projection->isRetryDisallowed()) {
+                continue;
+            }
+
+            if (!$projection->isActive() && !$projection->isError()) {
+                continue;
+            }
+
+            $projector = $this->projector($projection->id());
+
+            if ($projector) {
+                continue;
+            }
+
+            $projection->outdated();
+            $this->projectionStore->save($projection);
+
+            $this->logger?->info(sprintf('projection "%s" has been marked as outdated', $projection->id()->toString()));
+        }
+    }
+
+    private function handleRetryProjections(ProjectionCollection $projections): void
+    {
+        foreach ($projections->filterByProjectionStatus(ProjectionStatus::Error) as $projection) {
+            if ($projection->retry() >= self::RETRY_LIMIT) {
+                continue;
+            }
+
+            $projection->active();
+            $this->projectionStore->save($projection);
+
+            $this->logger?->info(sprintf('retry projection "%s"', $projection->id()->toString()));
+        }
     }
 }
