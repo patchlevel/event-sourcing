@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
@@ -21,7 +21,7 @@ final class MetadataProjectorResolverTest extends TestCase
 {
     public function testResolveHandleMethod(): void
     {
-        $projection = new #[Projection('dummy')]
+        $projection = new #[Projector('dummy')]
         class {
             public static Message|null $handledMessage = null;
 
@@ -51,7 +51,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveHandleMethod(): void
     {
-        $projection = new #[Projection('dummy')]
+        $projection = new #[Projector('dummy')]
         class {
         };
 
@@ -69,7 +69,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testResolveCreateMethod(): void
     {
-        $projection = new #[Projection('dummy')]
+        $projection = new #[Projector('dummy')]
         class {
             public static bool $called = false;
 
@@ -92,7 +92,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveCreateMethod(): void
     {
-        $projection = new #[Projection('dummy')]
+        $projection = new #[Projector('dummy')]
         class {
         };
 
@@ -104,7 +104,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testResolveDropMethod(): void
     {
-        $projection = new #[Projection('dummy')]
+        $projection = new #[Projector('dummy')]
         class {
             public static bool $called = false;
 
@@ -127,7 +127,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testNotResolveDropMethod(): void
     {
-        $projection = new #[Projection('dummy')]
+        $projection = new #[Projector('dummy')]
         class {
         };
 
@@ -139,7 +139,7 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testProjectionId(): void
     {
-        $projection = new #[Projection('dummy', 1)]
+        $projection = new #[Projector('dummy', 1)]
         class {
         };
 

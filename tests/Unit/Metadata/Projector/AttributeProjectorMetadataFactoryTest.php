@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projector\ClassIsNotAProjector;
@@ -31,7 +31,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
     public function testEmptyProjection(): void
     {
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
         };
 
@@ -47,7 +47,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
     public function testStandardProjection(): void
     {
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
             #[Subscribe(ProfileVisited::class)]
             public function handle(): void
@@ -79,7 +79,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
     public function testMultipleHandlerOnOneMethod(): void
     {
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
             #[Subscribe(ProfileVisited::class)]
             #[Subscribe(ProfileCreated::class)]
@@ -104,7 +104,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
     {
         $this->expectException(DuplicateCreateMethod::class);
 
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
             #[Create]
             public function create1(): void
@@ -125,7 +125,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
     {
         $this->expectException(DuplicateDropMethod::class);
 
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
             #[Drop]
             public function drop1(): void

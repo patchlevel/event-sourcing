@@ -8,7 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
@@ -17,7 +17,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreat
 use function assert;
 use function sprintf;
 
-#[Projection('profile', 1)]
+#[Projector('profile', 1)]
 final class ProfileProjection
 {
     use ProjectorUtil;

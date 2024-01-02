@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projectionist;
 
-use Patchlevel\EventSourcing\Attribute\Projection as ProjectionAttribute;
+use Patchlevel\EventSourcing\Attribute\Projector as ProjectionAttribute;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;

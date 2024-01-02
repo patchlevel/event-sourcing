@@ -18,11 +18,11 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 
-#[Projection('profile')]
+#[Projector('profile')]
 final class ProfileProjector
 {
     use ProjectorUtil;
@@ -81,7 +81,7 @@ final class ProfileProjector
 
 Each projector is responsible for a specific projection and version.
 This combination of information results in the so-called `project ID`.
-In order for us to be able to define this, we have to use the `Projection` attribute.
+In order for us to be able to define this, we have to use the `Projector` attribute.
 In our example, the projection is called "profile" and has the version "0" because we did not specify it.
 So that there is no problems with existing projection, 
 both the name of the projection and the version should be part of the table/collection name.
@@ -114,17 +114,17 @@ Several projectors can also listen to the same event.
 
 As soon as the structure of a projection changes, the version must be change or increment.
 Otherwise the projectionist will not recognize that the projection has changed and will not rebuild it.
-To do this, you have to change the version in the `Projection` attribute.
+To do this, you have to change the version in the `Projector` attribute.
 
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-#[Projection('profile', version: 1)]
+#[Projector('profile', version: 1)]
 final class ProfileProjector
 {
    // ...
@@ -169,12 +169,12 @@ If something breaks, the projectionist marks the individual projections as fault
 ## Projection Id
 
 A projection id consists of a unique name and a version.
-It can be defined using the `Projection` attribute.
+It can be defined using the `Projector` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 
-#[Projection('profile', version: 1)]
+#[Projector('profile', version: 1)]
 final class ProfileProjector
 {
    // ...

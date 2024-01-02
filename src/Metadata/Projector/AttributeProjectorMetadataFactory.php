@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Metadata\Projector;
 
 use Patchlevel\EventSourcing\Attribute\Create;
 use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use ReflectionClass;
 
@@ -26,7 +26,7 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
 
         $reflector = new ReflectionClass($projector);
 
-        $attributes = $reflector->getAttributes(Projection::class);
+        $attributes = $reflector->getAttributes(Projector::class);
 
         if ($attributes === []) {
             throw new ClassIsNotAProjector($projector);
