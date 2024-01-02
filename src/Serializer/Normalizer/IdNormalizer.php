@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 
 use Attribute;
-use Cspray\Phinal\AllowInheritance;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\Hydrator\Normalizer\InvalidArgument;
 use Patchlevel\Hydrator\Normalizer\Normalizer;
@@ -13,8 +12,7 @@ use Patchlevel\Hydrator\Normalizer\Normalizer;
 use function is_string;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-#[AllowInheritance('you can make specific normalizers for different classes')]
-class AggregateIdNormalizer implements Normalizer
+final class IdNormalizer implements Normalizer
 {
     public function __construct(
         /** @var class-string<AggregateRootId> */

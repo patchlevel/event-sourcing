@@ -76,7 +76,7 @@ final class SplitStreamBench
 
         $schemaDirector->create();
 
-        $this->id = ProfileId::generate();
+        $this->id = ProfileId::v7();
     }
 
     public function provideData(): void
@@ -106,7 +106,7 @@ final class SplitStreamBench
     #[Bench\Revs(20)]
     public function benchSave10000Events(): void
     {
-        $profile = Profile::create(ProfileId::generate(), 'Peter');
+        $profile = Profile::create(ProfileId::v7(), 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName(sprintf('Peter %d', $i));

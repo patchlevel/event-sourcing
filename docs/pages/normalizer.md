@@ -200,45 +200,18 @@ final class DTO {
 }
 ```
 
-### UuidAggregateId
+### Id
 
-To normalize a `UuidAggregateRootId` one can use the `UuidAggregateIdNormalizer`.
-
-```php
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
-use Patchlevel\Hydrator\Normalizer\UuidAggregateIdNormalizer;
-
-final class DTO {
-    #[UuidAggregateIdNormalizer]
-    public UuidAggregateRootId $id;
-}
-```
-
-### BasicAggregateIdNormalizer
-
-To normalize a `ValueAggregateRootId` one can use the `BasicAggregateIdNormalizer`.
+If you have your own AggregateRootId, you can use the `IdNormalizer`.
+the `IdNormalizer` needs the FQCN of the AggregateRootId as a parameter.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\ValueAggregateRootId;
-use Patchlevel\Hydrator\Normalizer\BasicAggregateIdNormalizer;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\Hydrator\Normalizer\IdNormalizer;
 
 final class DTO {
-    #[BasicAggregateIdNormalizer]
-    public ValueAggregateRootId $id;
-}
-```
-
-### Own AggregateId
-
-If you have your own AggregateId, you can use the `AggregateIdNormalizer` base normalizer.
-the `AggregateIdNormalizer` needs the FQCN of the AggregateId as a parameter.
-
-```php
-use Patchlevel\Hydrator\Normalizer\AggregateIdNormalizer;
-
-final class DTO {
-    #[AggregateIdNormalizer(Id::class)]
-    public Id $id;
+    #[IdNormalizer(Uuid::class)]
+    public Uuid $id;
 }
 ```
 

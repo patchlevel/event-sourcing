@@ -46,7 +46,7 @@ $schemaDirector->create();
 
 $store->transactional(static function () use ($repository): void {
     for ($i = 0; $i < 10_000; $i++) {
-        $id = ProfileId::generate();
+        $id = ProfileId::v7();
         $profile = Profile::create($id, 'Peter');
 
         for ($j = 0; $j < 10; $j++) {

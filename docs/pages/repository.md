@@ -103,9 +103,9 @@ After the events have been written,
 the new events are dispatched on the [event bus](./event_bus.md).
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 
-$id = UuidAggregateRootId::generate();
+$id = Uuid::v7();
 $profile = Profile::create($id, 'david.badura@patchlevel.de');
 
 $repository->save($profile);
@@ -126,9 +126,9 @@ An `aggregate` can be loaded using the `load` method.
 All events for the aggregate are loaded from the database and the current state is rebuilt.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 
-$id = UuidAggregateRootId::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
+$id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
 $profile = $repository->load($id);
 ```
 
@@ -147,7 +147,7 @@ You can also check whether an `aggregate` with a certain id exists.
 It is checked whether any event with this id exists in the database.
 
 ```php
-$id = UuidAggregateRootId::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
+$id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
 
 if($repository->has($id)) {
     // ...

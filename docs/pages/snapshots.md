@@ -72,18 +72,19 @@ You can define normalizers to bring the properties into the correct format.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
+use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[UuidAggregateRootIdNormalizer]
-    public UuidAggregateRootId $id;
+    #[IdNormalizer]
+    public Uuid $id;
     public string $name,
     #[Normalize(new DateTimeImmutableNormalizer())]
     public DateTimeImmutable $createdAt;
@@ -221,9 +222,9 @@ $snapshotStore->save($aggregate);
 You can also load an aggregate from the snapshot store:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 
-$id = UuidAggregateRootId::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
+$id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
 $aggregate = $snapshotStore->load(Profile::class, $id);
 ```
 

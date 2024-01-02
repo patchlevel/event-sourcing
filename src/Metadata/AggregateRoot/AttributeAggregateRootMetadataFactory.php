@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot as AttributeSnapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;

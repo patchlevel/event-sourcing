@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Aggr
 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\AccountId;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BankAccountCreated;

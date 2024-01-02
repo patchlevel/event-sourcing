@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 
 #[Aggregate(ProfileInvalid::class)]
 final class ProfileInvalid extends BasicAggregateRoot

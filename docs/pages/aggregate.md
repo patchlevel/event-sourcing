@@ -19,12 +19,12 @@ An aggregate must fulfill a few points so that we can use it in event-sourcing:
 
 We can implement this ourselves, or use the `BasicAggregateRoot` implementation that already brings everything with it.
 This basic implementation uses attributes to configure the aggregate and to specify how it should handle events. 
-We are building a minimal aggregate class here which only has an ID and mark this with the `AggregateId` attribute. 
+We are building a minimal aggregate class here which only has an ID and mark this with the `Id` attribute. 
 To make it easy to register with a name, we also add the `Aggregate` attribute. This is what it looks like:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 
@@ -32,9 +32,9 @@ use Patchlevel\EventSourcing\Attribute\Id;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    private UuidAggregateRootId $id;
+    private Uuid $id;
 
-    public static function register(UuidAggregateRootId $id): self 
+    public static function register(Uuid $id): self 
     {
         $self = new self();
         
@@ -93,20 +93,20 @@ final class CreateProfileHandler
 In order that an aggregate is actually saved, at least one event must exist in the DB.
 For our aggregate we create the Event `ProfileRegistered` with an ID and a name.
 Since the ID is a complex data type and cannot be easily serialized, we need to define a normalizer for the ID. 
-We do this with the `UuidAggregateIdNormalizer` attribute.
+We do this with the `IdNormalizer` attribute.
 We also give the event a unique name using the `Event` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Serializer\Normalizer\UuidAggregateIdNormalizer;
+use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 #[Event('profile.registered')]
 final class ProfileRegistered
 {
     public function __construct(
-        #[UuidAggregateIdNormalizer]
-        public readonly UuidAggregateRootId $profileId,
+        #[IdNormalizer(Uuid::class)]
+        public readonly Uuid $profileId,
         public readonly string $name
     ) {}
 }
@@ -120,7 +120,7 @@ After we have defined the event, we have to adapt the profile aggregate:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
@@ -129,7 +129,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    private UuidAggregateRootId $id;
+    private Uuid $id;
     private string $name;
     
     public function name(): string 
@@ -137,7 +137,7 @@ final class Profile extends BasicAggregateRoot
         return $this->name;
     }
 
-    public static function register(UuidAggregateRootId $id, string $name): self
+    public static function register(Uuid $id, string $name): self
     {
         $self = new self();
         $self->recordThat(new ProfileRegistered($id, $name));
@@ -197,7 +197,7 @@ This method then creates the event `NameChanged` and records it:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
@@ -206,7 +206,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    private UuidAggregateRootId $id;
+    private Uuid $id;
     private string $name;
 
     public function name(): string 
@@ -214,7 +214,7 @@ final class Profile extends BasicAggregateRoot
         return $this->name;
     }
 
-    public static function register(UuidAggregateRootId $id, string $name): static
+    public static function register(Uuid $id, string $name): static
     {
         $self = new static();
         $self->recordThat(new ProfileRegistered($id, $name));
@@ -444,7 +444,7 @@ We can now use the value object `Name` in our aggregate:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
@@ -453,10 +453,10 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    private UuidAggregateRootId $id;
+    private Uuid $id;
     private Name $name;
     
-    public static function register(UuidAggregateRootId $id, Name $name): static
+    public static function register(Uuid $id, Name $name): static
     {
         $self = new static();
         $self->recordThat(new ProfileRegistered($id, $name));
@@ -563,7 +563,7 @@ But you can pass this information by yourself.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
@@ -572,11 +572,11 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    private UuidAggregateRootId $id;
+    private Uuid $id;
     private Name $name;
     private DateTimeImmutable $registeredAt;
     
-    public static function register(UuidAggregateRootId $id, string $name, DateTimeImmutable $registeredAt): static
+    public static function register(Uuid $id, string $name, DateTimeImmutable $registeredAt): static
     {
         $self = new static();
         $self->recordThat(new ProfileRegistered($id, $name, $registeredAt));
@@ -592,7 +592,7 @@ But if you still want to make sure that the time is "now" and not in the past or
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
@@ -602,11 +602,11 @@ use Patchlevel\EventSourcing\Clock\Clock;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    private UuidAggregateRootId $id;
+    private Uuid $id;
     private Name $name;
     private DateTimeImmutable $registeredAt;
     
-    public static function register(UuidAggregateRootId $id, string $name, Clock $clock): static
+    public static function register(Uuid $id, string $name, Clock $clock): static
     {
         $self = new static();
         $self->recordThat(new ProfileRegistered($id, $name, $clock->now()));

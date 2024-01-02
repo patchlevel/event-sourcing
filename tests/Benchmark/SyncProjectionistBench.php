@@ -102,7 +102,7 @@ final class SyncProjectionistBench
         $schemaDirector->create();
         $projectionist->boot();
 
-        $this->id = ProfileId::generate();
+        $this->id = ProfileId::v7();
         $this->profile = Profile::create($this->id, 'Peter');
         $this->repository->save($this->profile);
     }

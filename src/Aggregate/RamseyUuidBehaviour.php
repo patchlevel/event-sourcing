@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Aggregate;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
-trait RamseyAggregateIdBehaviour
+trait RamseyUuidBehaviour
 {
     public function __construct(
         private readonly UuidInterface $id,
@@ -24,7 +24,12 @@ trait RamseyAggregateIdBehaviour
         return $this->id->toString();
     }
 
-    public static function generate(): self
+    public static function v6(): self
+    {
+        return new self(Uuid::uuid6());
+    }
+
+    public static function v7(): self
     {
         return new self(Uuid::uuid7());
     }
