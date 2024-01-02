@@ -66,13 +66,13 @@ use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('hotel')]
 final class Hotel extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     private UuidAggregateRootId $id;
     private string $name;
     

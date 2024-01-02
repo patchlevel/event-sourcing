@@ -26,12 +26,12 @@ To make it easy to register with a name, we also add the `Aggregate` attribute. 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     private UuidAggregateRootId $id;
 
     public static function register(UuidAggregateRootId $id): self 
@@ -122,13 +122,13 @@ After we have defined the event, we have to adapt the profile aggregate:
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     private UuidAggregateRootId $id;
     private string $name;
     
@@ -199,13 +199,13 @@ This method then creates the event `NameChanged` and records it:
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     private UuidAggregateRootId $id;
     private string $name;
 
@@ -446,13 +446,13 @@ We can now use the value object `Name` in our aggregate:
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     private UuidAggregateRootId $id;
     private Name $name;
     
@@ -565,13 +565,13 @@ But you can pass this information by yourself.
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     private UuidAggregateRootId $id;
     private Name $name;
     private DateTimeImmutable $registeredAt;
@@ -594,14 +594,14 @@ But if you still want to make sure that the time is "now" and not in the past or
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Clock\Clock;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     private UuidAggregateRootId $id;
     private Name $name;
     private DateTimeImmutable $registeredAt;

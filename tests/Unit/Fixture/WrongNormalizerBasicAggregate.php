@@ -6,12 +6,12 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 
 #[Aggregate('wrong_normalizer')]
 final class WrongNormalizerBasicAggregate extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     private ProfileId $id;
 
     #[EmailNormalizer]

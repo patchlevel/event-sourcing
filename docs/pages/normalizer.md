@@ -214,16 +214,16 @@ final class DTO {
 }
 ```
 
-### ValueAggregateId
+### BasicAggregateIdNormalizer
 
-To normalize a `ValueAggregateRootId` one can use the `ValeAggregateIdNormalizer`.
+To normalize a `ValueAggregateRootId` one can use the `BasicAggregateIdNormalizer`.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\ValueAggregateRootId;
-use Patchlevel\Hydrator\Normalizer\ValeAggregateIdNormalizer;
+use Patchlevel\Hydrator\Normalizer\BasicAggregateIdNormalizer;
 
 final class DTO {
-    #[ValeAggregateIdNormalizer]
+    #[BasicAggregateIdNormalizer]
     public ValueAggregateRootId $id;
 }
 ```

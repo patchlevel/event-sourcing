@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Aggr
 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\AccountId;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\Mon
 #[Aggregate('profile')]
 final class BankAccount extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     private AccountId $id;
     private string $name;
     private int $balanceInCents;

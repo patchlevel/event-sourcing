@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Snapshot as AttributeSnapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
@@ -105,7 +105,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         $properties = $reflector->getProperties();
 
         foreach ($properties as $property) {
-            $attributes = $property->getAttributes(AggregateId::class);
+            $attributes = $property->getAttributes(Id::class);
 
             if ($attributes === []) {
                 continue;

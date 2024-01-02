@@ -74,14 +74,14 @@ You can define normalizers to bring the properties into the correct format.
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\UuidAggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\AggregateId;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
 final class Profile extends BasicAggregateRoot
 {
-    #[AggregateId]
+    #[Id]
     #[UuidAggregateRootIdNormalizer]
     public UuidAggregateRootId $id;
     public string $name,
@@ -99,7 +99,7 @@ final class Profile extends BasicAggregateRoot
 
 !!! warning
 
-    In the end it has to be possible to serialize it as json. Also the aggregate ID.
+    In the end it the complete aggregate must be serializeable as json, also the aggregate Id.
 
 !!! note
 
