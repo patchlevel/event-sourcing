@@ -9,15 +9,15 @@ use RuntimeException;
 use function get_debug_type;
 use function sprintf;
 
-final class AggregateIdNotSupported extends RuntimeException
+final class AggregateRootIdNotSupported extends RuntimeException
 {
-    /** @param class-string $className */
-    public function __construct(string $className, mixed $value)
+    /** @param class-string $aggregateRootClass */
+    public function __construct(string $aggregateRootClass, mixed $value)
     {
         parent::__construct(
             sprintf(
-                'aggregate id in class "%s" must be instance of "%s", got "%s"',
-                $className,
+                'aggregate root id in class "%s" must be instance of "%s", got "%s"',
+                $aggregateRootClass,
                 AggregateRootId::class,
                 get_debug_type($value),
             ),

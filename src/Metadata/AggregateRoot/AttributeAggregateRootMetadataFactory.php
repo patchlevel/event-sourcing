@@ -114,7 +114,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             return $property->getName();
         }
 
-        throw new AggregateIdNotFound($reflector->getName());
+        throw new AggregateRootIdNotFound($reflector->getName());
     }
 
     private function findSnapshot(ReflectionClass $reflector): Snapshot|null

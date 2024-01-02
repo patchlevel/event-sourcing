@@ -43,13 +43,13 @@ trait AggregateRootAttributeBehaviour
 
         $reflection = new ReflectionProperty($this, $metadata->idProperty);
 
-        /** @var mixed $aggregateId */
-        $aggregateId = $reflection->getValue($this);
+        /** @var mixed $aggregateRootId */
+        $aggregateRootId = $reflection->getValue($this);
 
-        if (!$aggregateId instanceof AggregateRootId) {
-            throw new AggregateIdNotSupported($this::class, $aggregateId);
+        if (!$aggregateRootId instanceof AggregateRootId) {
+            throw new AggregateRootIdNotSupported($this::class, $aggregateRootId);
         }
 
-        return $this->cachedAggregateRootId = $aggregateId;
+        return $this->cachedAggregateRootId = $aggregateRootId;
     }
 }

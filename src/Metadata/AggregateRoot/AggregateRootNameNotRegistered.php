@@ -10,12 +10,12 @@ use function sprintf;
 
 final class AggregateRootNameNotRegistered extends MetadataException
 {
-    public function __construct(string $evenName)
+    public function __construct(string $name)
     {
         parent::__construct(
             sprintf(
                 'Aggregate root name "%s" is not registered',
-                $evenName,
+                $name,
             ),
         );
     }

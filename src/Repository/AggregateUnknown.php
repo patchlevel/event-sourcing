@@ -11,14 +11,14 @@ use function sprintf;
 
 final class AggregateUnknown extends RepositoryException
 {
-    /** @param class-string<AggregateRoot> $aggregateClass */
-    public function __construct(string $aggregateClass, AggregateRootId $aggregateId)
+    /** @param class-string<AggregateRoot> $aggregateRootClass */
+    public function __construct(string $aggregateRootClass, AggregateRootId $aggregateRootId)
     {
         parent::__construct(
             sprintf(
                 'The aggregate %s with the ID "%s" was not loaded from this repository. Please reload the aggregate.',
-                $aggregateClass,
-                $aggregateId->toString(),
+                $aggregateRootClass,
+                $aggregateRootId->toString(),
             ),
         );
     }

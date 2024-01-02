@@ -12,17 +12,17 @@ use function sprintf;
 
 final class SnapshotRebuildFailed extends RepositoryException
 {
-    /** @param class-string<AggregateRoot> $aggregateClass */
+    /** @param class-string<AggregateRoot> $aggregateRootClass */
     public function __construct(
-        private string $aggregateClass,
-        private AggregateRootId $aggregateId,
+        private string $aggregateRootClass,
+        private AggregateRootId $aggregateRootId,
         Throwable $previous,
     ) {
         parent::__construct(
             sprintf(
                 'Rebuild from snapshot of aggregate "%s" with the id "%s" failed',
-                $aggregateClass,
-                $aggregateId->toString(),
+                $aggregateRootClass,
+                $aggregateRootId->toString(),
             ),
             0,
             $previous,
@@ -32,11 +32,11 @@ final class SnapshotRebuildFailed extends RepositoryException
     /** @return class-string<AggregateRoot> */
     public function aggregateClass(): string
     {
-        return $this->aggregateClass;
+        return $this->aggregateRootClass;
     }
 
-    public function aggregateId(): AggregateRootId
+    public function aggregateRootId(): AggregateRootId
     {
-        return $this->aggregateId;
+        return $this->aggregateRootId;
     }
 }

@@ -11,14 +11,14 @@ use function sprintf;
 
 final class AggregateDetached extends RepositoryException
 {
-    /** @param class-string<AggregateRoot> $aggregateClass */
-    public function __construct(string $aggregateClass, AggregateRootId $aggregateId)
+    /** @param class-string<AggregateRoot> $aggregateRootClass */
+    public function __construct(string $aggregateRootClass, AggregateRootId $aggregateRootId)
     {
         parent::__construct(
             sprintf(
                 'An error occurred while saving the aggregate "%s" with the ID "%s", causing the uncommitted events to be lost. Please reload the aggregate.',
-                $aggregateClass,
-                $aggregateId->toString(),
+                $aggregateRootClass,
+                $aggregateRootId->toString(),
             ),
         );
     }
