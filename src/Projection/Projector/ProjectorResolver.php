@@ -10,9 +10,9 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 
 interface ProjectorResolver
 {
-    public function resolveCreateMethod(object $projector): Closure|null;
+    public function resolveSetupMethod(object $projector): Closure|null;
 
-    public function resolveDropMethod(object $projector): Closure|null;
+    public function resolveTeardownMethod(object $projector): Closure|null;
 
     public function resolveSubscribeMethod(object $projector, Message $message): Closure|null;
 

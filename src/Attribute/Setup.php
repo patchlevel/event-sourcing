@@ -7,6 +7,6 @@ namespace Patchlevel\EventSourcing\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_METHOD)]
-final class Create
+final class Setup
 {
 }

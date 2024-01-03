@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 
@@ -22,13 +22,13 @@ final class ProfileProjector
     ) {
     }
 
-    #[Create]
+    #[Setup]
     public function create(): void
     {
         $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY, name VARCHAR);');
     }
 
-    #[Drop]
+    #[Teardown]
     public function drop(): void
     {
         $this->connection->executeStatement('DROP TABLE IF EXISTS projection_profile;');

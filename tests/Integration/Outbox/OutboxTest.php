@@ -23,7 +23,7 @@ use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Processor\SendEmailProcessor;
-use Patchlevel\EventSourcing\Tests\Integration\Outbox\Projection\ProfileProjection;
+use Patchlevel\EventSourcing\Tests\Integration\Outbox\Projection\ProfileProjector;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore as LockInMemoryStore;
@@ -68,9 +68,9 @@ final class OutboxTest extends TestCase
 
         $outboxEventBus = new OutboxEventBus($outboxStore);
 
-        $profileProjection = new ProfileProjection($this->connection);
+        $profileProjector = new ProfileProjector($this->connection);
         $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection],
+            [$profileProjector],
         );
 
         $projectionist = new DefaultProjectionist(

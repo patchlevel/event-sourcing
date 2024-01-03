@@ -11,8 +11,8 @@ final class ProjectorMetadata
         public readonly int $version,
         /** @var array<class-string, string> */
         public readonly array $subscribeMethods = [],
-        public readonly string|null $createMethod = null,
-        public readonly string|null $dropMethod = null,
+        public readonly string|null $setupMethod = null,
+        public readonly string|null $teardownMethod = null,
     ) {
     }
 }

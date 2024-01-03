@@ -20,7 +20,7 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Aggregate\Profile;
-use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProjection;
+use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProjector;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\DoctrineDbalStore as LockStore;
@@ -76,7 +76,7 @@ final class ProjectionistTest extends TestCase
             $store,
             $projectionStore,
             new InMemoryProjectorRepository(
-                [new ProfileProjection($this->connection)],
+                [new ProfileProjector($this->connection)],
             ),
         );
 
@@ -111,7 +111,7 @@ final class ProjectionistTest extends TestCase
             $store,
             $projectionStore,
             new InMemoryProjectorRepository(
-                [new ProfileProjection($this->connection)],
+                [new ProfileProjector($this->connection)],
             ),
         );
 

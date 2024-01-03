@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projector;
 
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -73,7 +73,7 @@ final class MetadataProjectorResolverTest extends TestCase
         class {
             public static bool $called = false;
 
-            #[Create]
+            #[Setup]
             public function method(): void
             {
                 self::$called = true;
@@ -81,7 +81,7 @@ final class MetadataProjectorResolverTest extends TestCase
         };
 
         $resolver = new MetadataProjectorResolver();
-        $result = $resolver->resolveCreateMethod($projection);
+        $result = $resolver->resolveSetupMethod($projection);
 
         self::assertIsCallable($result);
 
@@ -97,7 +97,7 @@ final class MetadataProjectorResolverTest extends TestCase
         };
 
         $resolver = new MetadataProjectorResolver();
-        $result = $resolver->resolveCreateMethod($projection);
+        $result = $resolver->resolveSetupMethod($projection);
 
         self::assertNull($result);
     }
@@ -108,7 +108,7 @@ final class MetadataProjectorResolverTest extends TestCase
         class {
             public static bool $called = false;
 
-            #[Drop]
+            #[Teardown]
             public function method(): void
             {
                 self::$called = true;
@@ -116,7 +116,7 @@ final class MetadataProjectorResolverTest extends TestCase
         };
 
         $resolver = new MetadataProjectorResolver();
-        $result = $resolver->resolveDropMethod($projection);
+        $result = $resolver->resolveTeardownMethod($projection);
 
         self::assertIsCallable($result);
 
@@ -132,7 +132,7 @@ final class MetadataProjectorResolverTest extends TestCase
         };
 
         $resolver = new MetadataProjectorResolver();
-        $result = $resolver->resolveDropMethod($projection);
+        $result = $resolver->resolveTeardownMethod($projection);
 
         self::assertNull($result);
     }

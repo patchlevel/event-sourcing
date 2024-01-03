@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Projector;
 
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use ReflectionClass;
 
 use function array_key_exists;
@@ -59,9 +59,9 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
                 $subscribeMethods[$eventClass] = $method->getName();
             }
 
-            if ($method->getAttributes(Create::class)) {
+            if ($method->getAttributes(Setup::class)) {
                 if ($createMethod) {
-                    throw new DuplicateCreateMethod(
+                    throw new DuplicateSetupMethod(
                         $projector,
                         $createMethod,
                         $method->getName(),
@@ -71,12 +71,12 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
                 $createMethod = $method->getName();
             }
 
-            if (!$method->getAttributes(Drop::class)) {
+            if (!$method->getAttributes(Teardown::class)) {
                 continue;
             }
 
             if ($dropMethod) {
-                throw new DuplicateDropMethod(
+                throw new DuplicateTeardownMethod(
                     $projector,
                     $dropMethod,
                     $method->getName(),

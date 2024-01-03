@@ -78,7 +78,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->projectionId($projector)->willReturn($projectionId);
-        $projectorResolver->resolveCreateMethod($projector)->willReturn(null);
+        $projectorResolver->resolveSetupMethod($projector)->willReturn(null);
         $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn(null);
 
         $projectionist = new DefaultProjectionist(
@@ -127,7 +127,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveCreateMethod($projector)->willReturn($projector->create(...));
+        $projectorResolver->resolveSetupMethod($projector)->willReturn($projector->create(...));
         $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
         $projectorResolver->projectionId($projector)->willReturn($projectionId);
 
@@ -180,7 +180,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveCreateMethod($projector)->willReturn($projector->create(...));
+        $projectorResolver->resolveSetupMethod($projector)->willReturn($projector->create(...));
         $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
         $projectorResolver->projectionId($projector)->willReturn($projectionId);
 
@@ -229,7 +229,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveCreateMethod($projector)->willReturn($projector->create(...));
+        $projectorResolver->resolveSetupMethod($projector)->willReturn($projector->create(...));
         $projectorResolver->projectionId($projector)->willReturn($projectionId);
 
         $projectionist = new DefaultProjectionist(
@@ -537,7 +537,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveDropMethod($projector)->willReturn($projector->drop(...));
+        $projectorResolver->resolveTeardownMethod($projector)->willReturn($projector->drop(...));
         $projectorResolver->projectionId($projector)->willReturn($projectionId);
 
         $projectionist = new DefaultProjectionist(
@@ -576,7 +576,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveDropMethod($projector)->willReturn($projector->drop(...));
+        $projectorResolver->resolveTeardownMethod($projector)->willReturn($projector->drop(...));
         $projectorResolver->projectionId($projector)->willReturn($projectionId);
 
         $projectionist = new DefaultProjectionist(
@@ -639,7 +639,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveDropMethod($projector)->willReturn($projector->drop(...));
+        $projectorResolver->resolveTeardownMethod($projector)->willReturn($projector->drop(...));
         $projectorResolver->projectionId($projector)->willReturn($projectionId);
 
         $projectionist = new DefaultProjectionist(
@@ -671,7 +671,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveDropMethod($projector)->willReturn(null);
+        $projectorResolver->resolveTeardownMethod($projector)->willReturn(null);
         $projectorResolver->projectionId($projector)->willReturn($projectionId);
 
         $projectionist = new DefaultProjectionist(
@@ -708,7 +708,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveDropMethod($projector)->willReturn($projector->drop(...));
+        $projectorResolver->resolveTeardownMethod($projector)->willReturn($projector->drop(...));
         $projectorResolver->projectionId($projector)->willReturn($projectionId);
 
         $projectionist = new DefaultProjectionist(

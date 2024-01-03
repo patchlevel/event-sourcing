@@ -6,10 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
 use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
@@ -18,7 +18,7 @@ use function assert;
 use function sprintf;
 
 #[Projector('profile', 1)]
-final class ProfileProjection
+final class ProfileProjector
 {
     use ProjectorUtil;
 
@@ -27,7 +27,7 @@ final class ProfileProjection
     ) {
     }
 
-    #[Create]
+    #[Setup]
     public function create(): void
     {
         $table = new Table($this->tableName());
@@ -38,7 +38,7 @@ final class ProfileProjection
         $this->connection->createSchemaManager()->createTable($table);
     }
 
-    #[Drop]
+    #[Teardown]
     public function drop(): void
     {
         $this->connection->createSchemaManager()->dropTable($this->tableName());
