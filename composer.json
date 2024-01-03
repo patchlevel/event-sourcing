@@ -27,6 +27,7 @@
     "psr/clock": "^1.0",
     "psr/log": "^2.0.0|^3.0.0",
     "psr/simple-cache": "^2.0.0|^3.0.0",
+    "ramsey/uuid": "^4.7",
     "symfony/console": "^5.4.32|^6.4.1|^7.0.1",
     "symfony/finder": "^5.4.27|^6.4.0|^7.0.0",
     "symfony/lock": "^5.4.32|^6.4.0|^7.0.0"

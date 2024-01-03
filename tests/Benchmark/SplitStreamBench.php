@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
@@ -35,6 +36,8 @@ final class SplitStreamBench
     private EventBus $bus;
     private SnapshotStore $snapshotStore;
     private Repository $repository;
+
+    private AggregateRootId $id;
 
     public function setUp(): void
     {
@@ -72,11 +75,13 @@ final class SplitStreamBench
         );
 
         $schemaDirector->create();
+
+        $this->id = ProfileId::v7();
     }
 
     public function provideData(): void
     {
-        $profile = Profile::create(ProfileId::fromString('1'), 'Peter');
+        $profile = Profile::create($this->id, 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName(sprintf('Peter %d', $i));
@@ -95,13 +100,13 @@ final class SplitStreamBench
     #[Bench\BeforeMethods('provideData')]
     public function benchLoad10000Events(): void
     {
-        $this->repository->load('1');
+        $this->repository->load($this->id);
     }
 
     #[Bench\Revs(20)]
     public function benchSave10000Events(): void
     {
-        $profile = Profile::create(ProfileId::generate(), 'Peter');
+        $profile = Profile::create(ProfileId::v7(), 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName(sprintf('Peter %d', $i));

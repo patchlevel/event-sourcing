@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 interface AggregateRoot
 {
-    public function aggregateRootId(): string;
+    public function aggregateRootId(): AggregateRootId;
 
     /** @param iterable<object> $events */
     public function catchUp(iterable $events): void;

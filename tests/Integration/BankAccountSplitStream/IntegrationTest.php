@@ -91,7 +91,8 @@ final class IntegrationTest extends TestCase
         $schemaDirector->create();
         $projectionist->boot();
 
-        $bankAccount = BankAccount::create(AccountId::fromString('1'), 'John');
+        $bankAccountId = AccountId::fromString('1');
+        $bankAccount = BankAccount::create($bankAccountId, 'John');
         $bankAccount->addBalance(100);
         $bankAccount->addBalance(500);
         $repository->save($bankAccount);
@@ -114,10 +115,10 @@ final class IntegrationTest extends TestCase
             ]),
         );
         $repository = $manager->get(BankAccount::class);
-        $bankAccount = $repository->load('1');
+        $bankAccount = $repository->load($bankAccountId);
 
         self::assertInstanceOf(BankAccount::class, $bankAccount);
-        self::assertSame('1', $bankAccount->aggregateRootId());
+        self::assertEquals($bankAccountId, $bankAccount->aggregateRootId());
         self::assertSame(3, $bankAccount->playhead());
         self::assertSame('John', $bankAccount->name());
         self::assertSame(600, $bankAccount->balance());
@@ -148,10 +149,10 @@ final class IntegrationTest extends TestCase
             ]),
         );
         $repository = $manager->get(BankAccount::class);
-        $bankAccount = $repository->load('1');
+        $bankAccount = $repository->load($bankAccountId);
 
         self::assertInstanceOf(BankAccount::class, $bankAccount);
-        self::assertSame('1', $bankAccount->aggregateRootId());
+        self::assertEquals($bankAccountId, $bankAccount->aggregateRootId());
         self::assertSame(5, $bankAccount->playhead());
         self::assertSame('John', $bankAccount->name());
         self::assertSame(800, $bankAccount->balance());

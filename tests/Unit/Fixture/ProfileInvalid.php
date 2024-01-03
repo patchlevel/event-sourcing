@@ -7,10 +7,12 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 
 #[Aggregate(ProfileInvalid::class)]
 final class ProfileInvalid extends BasicAggregateRoot
 {
+    #[Id]
     private ProfileId $id;
     private Email $email;
 
@@ -34,10 +36,5 @@ final class ProfileInvalid extends BasicAggregateRoot
     {
         $this->id = $event->profileId;
         $this->email = $event->email;
-    }
-
-    public function aggregateRootId(): string
-    {
-        return $this->id->toString();
     }
 }

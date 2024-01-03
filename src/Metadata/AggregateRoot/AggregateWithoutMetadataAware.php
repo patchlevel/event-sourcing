@@ -10,9 +10,9 @@ use function sprintf;
 
 final class AggregateWithoutMetadataAware extends MetadataException
 {
-    /** @param class-string $class */
-    public function __construct(string $class)
+    /** @param class-string $aggregateRootClass */
+    public function __construct(string $aggregateRootClass)
     {
-        parent::__construct(sprintf('The class "%s" does not implements AggregateRootMetadataAware', $class));
+        parent::__construct(sprintf('The class "%s" does not implements AggregateRootMetadataAware', $aggregateRootClass));
     }
 }

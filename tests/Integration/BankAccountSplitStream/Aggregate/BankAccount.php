@@ -7,26 +7,21 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Aggr
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\AccountId;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BankAccountCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\MonthPassed;
-use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Normalizer\AccountIdNormalizer;
 
 #[Aggregate('profile')]
 final class BankAccount extends BasicAggregateRoot
 {
-    #[AccountIdNormalizer]
+    #[Id]
     private AccountId $id;
     private string $name;
     private int $balanceInCents;
     /** @var list<object> */
     public array $appliedEvents = [];
-
-    public function aggregateRootId(): string
-    {
-        return $this->id->toString();
-    }
 
     public static function create(AccountId $id, string $name): self
     {

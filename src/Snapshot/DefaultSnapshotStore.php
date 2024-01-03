@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Snapshot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
@@ -56,7 +57,7 @@ final class DefaultSnapshotStore implements SnapshotStore
      *
      * @template T of AggregateRoot
      */
-    public function load(string $aggregateClass, string $id): AggregateRoot
+    public function load(string $aggregateClass, AggregateRootId $id): AggregateRoot
     {
         $adapter = $this->adapter($aggregateClass);
         $key = $this->key($aggregateClass, $id);
@@ -98,11 +99,11 @@ final class DefaultSnapshotStore implements SnapshotStore
     }
 
     /** @param class-string<AggregateRoot> $aggregateClass */
-    private function key(string $aggregateClass, string $aggregateId): string
+    private function key(string $aggregateClass, AggregateRootId $aggregateId): string
     {
         $aggregateName = $this->metadataFactory->metadata($aggregateClass)->name;
 
-        return sprintf('%s-%s', $aggregateName, $aggregateId);
+        return sprintf('%s-%s', $aggregateName, $aggregateId->toString());
     }
 
     /** @param class-string<AggregateRoot> $aggregateClass */

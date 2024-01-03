@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
@@ -30,6 +31,8 @@ final class SimpleSetupBench
     private Store $store;
     private EventBus $bus;
     private Repository $repository;
+
+    private AggregateRootId $id;
 
     public function setUp(): void
     {
@@ -60,7 +63,9 @@ final class SimpleSetupBench
 
         $schemaDirector->create();
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'Peter');
+        $this->id = ProfileId::v7();
+
+        $profile = Profile::create($this->id, 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeName('Peter');
@@ -72,20 +77,20 @@ final class SimpleSetupBench
     #[Bench\Revs(20)]
     public function benchLoad10000Events(): void
     {
-        $this->repository->load('1');
+        $this->repository->load($this->id);
     }
 
     #[Bench\Revs(20)]
     public function benchSave1Event(): void
     {
-        $profile = Profile::create(ProfileId::generate(), 'Peter');
+        $profile = Profile::create(ProfileId::v7(), 'Peter');
         $this->repository->save($profile);
     }
 
     #[Bench\Revs(20)]
     public function benchSave10000Events(): void
     {
-        $profile = Profile::create(ProfileId::generate(), 'Peter');
+        $profile = Profile::create(ProfileId::v7(), 'Peter');
 
         for ($i = 1; $i < 10_000; $i++) {
             $profile->changeName('Peter');
@@ -98,7 +103,7 @@ final class SimpleSetupBench
     public function benchSave10000Aggregates(): void
     {
         for ($i = 1; $i < 10_000; $i++) {
-            $profile = Profile::create(ProfileId::generate(), 'Peter');
+            $profile = Profile::create(ProfileId::v7(), 'Peter');
             $this->repository->save($profile);
         }
     }
@@ -108,7 +113,7 @@ final class SimpleSetupBench
     {
         $this->store->transactional(function (): void {
             for ($i = 1; $i < 10_000; $i++) {
-                $profile = Profile::create(ProfileId::generate(), 'Peter');
+                $profile = Profile::create(ProfileId::v7(), 'Peter');
                 $this->repository->save($profile);
             }
         });

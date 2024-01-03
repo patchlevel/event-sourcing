@@ -44,11 +44,15 @@ $schemaDirector = new DoctrineSchemaDirector(
 
 $schemaDirector->create();
 
-$id = ProfileId::generate();
-$profile = Profile::create($id, 'Peter');
+$store->transactional(static function () use ($repository): void {
+    for ($i = 0; $i < 10_000; $i++) {
+        $id = ProfileId::v7();
+        $profile = Profile::create($id, 'Peter');
 
-for ($i = 0; $i < 10_000; $i++) {
-    $profile->changeName('Peter ' . $i);
-}
+        for ($j = 0; $j < 10; $j++) {
+            $profile->changeName('Peter ' . $j);
+        }
 
-$repository->save($profile);
+        $repository->save($profile);
+    }
+});

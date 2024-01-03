@@ -7,25 +7,22 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
+use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\Reborn;
-use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Normalizer\ProfileIdNormalizer;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
 final class Profile extends BasicAggregateRoot
 {
-    #[ProfileIdNormalizer]
+    #[Id]
+    #[IdNormalizer(ProfileId::class)]
     private ProfileId $id;
     private string $name;
-
-    public function aggregateRootId(): string
-    {
-        return $this->id->toString();
-    }
 
     public static function create(ProfileId $id, string $name): self
     {

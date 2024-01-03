@@ -200,6 +200,21 @@ final class DTO {
 }
 ```
 
+### Id
+
+If you have your own AggregateRootId, you can use the `IdNormalizer`.
+the `IdNormalizer` needs the FQCN of the AggregateRootId as a parameter.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\Hydrator\Normalizer\IdNormalizer;
+
+final class DTO {
+    #[IdNormalizer(Uuid::class)]
+    public Uuid $id;
+}
+```
+
 ## Custom Normalizer
 
 Since we only offer normalizers for PHP native things, 
@@ -235,6 +250,7 @@ Finally, you have to allow the normalizer to be used as an attribute.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\Normalizer;
+use Patchlevel\Hydrator\Normalizer\InvalidArgument;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class NameNormalizer implements Normalizer
@@ -242,7 +258,7 @@ class NameNormalizer implements Normalizer
     public function normalize(mixed $value): string
     {
         if (!$value instanceof Name) {
-            throw new InvalidArgumentException();
+            throw InvalidArgument::withWrongType(Name::class, $value);
         }
 
         return $value->toString();
@@ -255,7 +271,7 @@ class NameNormalizer implements Normalizer
         }
 
         if (!is_string($value)) {
-            throw new InvalidArgumentException();
+            throw InvalidArgument::withWrongType('string', $value);
         }
 
         return new Name($value);

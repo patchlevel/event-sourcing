@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events;
 
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\SplitStream;
-use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Normalizer\ProfileIdNormalizer;
+use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
 #[Event('profile.reborn')]
@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 final class Reborn
 {
     public function __construct(
-        #[ProfileIdNormalizer]
+        #[IdNormalizer(ProfileId::class)]
         public ProfileId $profileId,
         public string $name,
     ) {

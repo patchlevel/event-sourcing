@@ -67,14 +67,18 @@ so that the library knows how to write this data to the database and load it aga
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\IdNormalizer;
 
-#[Event('profile.name_changed')]
-final class NameChanged
+#[Event('profile.created')]
+final class ProfileCreated
 {
     public function __construct(
-        public readonly string $name,
+        #[IdNormalizer(Uuid::class)]
+        public readonly Uuid $id,
+        #[NameNormalizer]
+        public readonly Name $name,
         #[DateTimeImmutableNormalizer]
-        public readonly DateTimeImmutable $changedAt
+        public readonly DateTimeImmutable $createdAt
     ) {}
 }
 ```

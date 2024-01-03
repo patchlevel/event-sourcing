@@ -10,11 +10,15 @@ First we define the events that happen in our system.
 A hotel can be created with a `name` and a `id`:
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
+
 #[Event('hotel.created')]
 final class HotelCreated
 {
     public function __construct(
-        public readonly string $hotelId,
+        #[IdNormalizer(Uuid::class)]
+        public readonly Uuid $hotelId,
         public readonly string $hotelName
     ) {
     }
@@ -60,13 +64,16 @@ These events are thrown here and the state of the hotel is also changed.
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('hotel')]
 final class Hotel extends BasicAggregateRoot
 {
-    private string $id;
+    #[Id]
+    private Uuid $id;
     private string $name;
     
     /**
@@ -84,7 +91,7 @@ final class Hotel extends BasicAggregateRoot
         return $this->guests;
     }
 
-    public static function create(string $id, string $hotelName): static
+    public static function create(Uuid $id, string $hotelName): static
     {
         $self = new static();
         $self->recordThat(new HotelCreated($id, $hotelName));
@@ -133,11 +140,6 @@ final class Hotel extends BasicAggregateRoot
                 fn ($name) => $name !== $event->guestName;
             )
         );
-    }
-
-    public function aggregateRootId(): string
-    {
-        return $this->id;
     }
 }
 ```
@@ -188,7 +190,7 @@ final class HotelProjector
         $this->db->insert(
             $this->table(), 
             [
-                'id' => $event->hotelId, 
+                'id' => $message->aggregateId(), 
                 'name' => $event->hotelName,
                 'guests' => 0
             ]
@@ -364,14 +366,16 @@ $projectionist->boot();
 We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
 
 ```php
-$hotel1 = Hotel::create('1', 'HOTEL');
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+
+$hotel1 = Hotel::create(Uuid::v7(), 'HOTEL');
 $hotel1->checkIn('David');
 $hotel1->checkIn('Daniel');
 $hotel1->checkOut('David');
 
 $hotelRepository->save($hotel1);
 
-$hotel2 = $hotelRepository->load('2');
+$hotel2 = $hotelRepository->load(Uuid::fromString('d0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0'));
 $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 
@@ -380,7 +384,8 @@ $hotels = $hotelProjection->getHotels();
 
 !!! note
 
-    An aggregateId can be an **uuid**, you can find more about this [here](uuid.md).
+    You can also use other forms of IDs such as uuid version 6 or a custom format. 
+    You can find more about this [here](aggregate_id.md).
 
 ## Result
 

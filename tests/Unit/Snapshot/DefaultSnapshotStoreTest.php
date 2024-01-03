@@ -56,7 +56,7 @@ final class DefaultSnapshotStoreTest extends TestCase
 
         $store = new DefaultSnapshotStore(['memory' => $adapter->reveal()]);
 
-        $aggregate = $store->load(ProfileWithSnapshot::class, '1');
+        $aggregate = $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
 
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('info@patchlevel.de'), $aggregate->email());
@@ -74,7 +74,7 @@ final class DefaultSnapshotStoreTest extends TestCase
 
         $store = new DefaultSnapshotStore(['memory' => $adapter->reveal()]);
 
-        $store->load(ProfileWithSnapshot::class, '1');
+        $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
     }
 
     public function testLoadExpiredSnapshot(): void
@@ -93,7 +93,7 @@ final class DefaultSnapshotStoreTest extends TestCase
 
         $store = new DefaultSnapshotStore(['memory' => $adapter->reveal()]);
 
-        $store->load(ProfileWithSnapshot::class, '1');
+        $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
     }
 
     public function testAdapterIsMissing(): void
@@ -101,7 +101,7 @@ final class DefaultSnapshotStoreTest extends TestCase
         $this->expectException(AdapterNotFound::class);
 
         $store = new DefaultSnapshotStore([]);
-        $store->load(ProfileWithSnapshot::class, '1');
+        $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
     }
 
     public function testGetAdapter(): void

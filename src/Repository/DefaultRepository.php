@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
@@ -57,7 +58,7 @@ final class DefaultRepository implements Repository
     }
 
     /** @return T */
-    public function load(string $id): AggregateRoot
+    public function load(AggregateRootId $id): AggregateRoot
     {
         if ($this->snapshotStore && $this->metadata->snapshot) {
             try {
@@ -69,7 +70,7 @@ final class DefaultRepository implements Repository
                     sprintf(
                         'snapshot for aggregate "%s" with the id "%s" not found',
                         $this->metadata->className,
-                        $id,
+                        $id->toString(),
                     ),
                 );
             } catch (SnapshotVersionInvalid) {
@@ -77,7 +78,7 @@ final class DefaultRepository implements Repository
                     sprintf(
                         'snapshot for aggregate "%s" with the id "%s" is invalid',
                         $this->metadata->className,
-                        $id,
+                        $id->toString(),
                     ),
                 );
             }
@@ -85,7 +86,7 @@ final class DefaultRepository implements Repository
 
         $criteria = (new CriteriaBuilder())
             ->aggregateClass($this->metadata->className)
-            ->aggregateId($id)
+            ->aggregateId($id->toString())
             ->archived(false)
             ->build();
 
@@ -117,11 +118,11 @@ final class DefaultRepository implements Repository
         return $aggregate;
     }
 
-    public function has(string $id): bool
+    public function has(AggregateRootId $id): bool
     {
         $criteria = (new CriteriaBuilder())
             ->aggregateClass($this->metadata->className)
-            ->aggregateId($id)
+            ->aggregateId($id->toString())
             ->build();
 
         return $this->store->count($criteria) > 0;
@@ -162,7 +163,7 @@ final class DefaultRepository implements Repository
                 static function (object $event) use ($aggregate, &$playhead, $messageDecorator, $clock) {
                     $message = Message::create($event)
                         ->withAggregateClass($aggregate::class)
-                        ->withAggregateId($aggregate->aggregateRootId())
+                        ->withAggregateId($aggregate->aggregateRootId()->toString())
                         ->withPlayhead(++$playhead)
                         ->withRecordedOn($clock->now());
 
@@ -194,7 +195,7 @@ final class DefaultRepository implements Repository
      *
      * @return T
      */
-    private function loadFromSnapshot(string $aggregateClass, string $id): AggregateRoot
+    private function loadFromSnapshot(string $aggregateClass, AggregateRootId $id): AggregateRoot
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 
@@ -202,7 +203,7 @@ final class DefaultRepository implements Repository
 
         $criteria = (new CriteriaBuilder())
             ->aggregateClass($this->metadata->className)
-            ->aggregateId($id)
+            ->aggregateId($id->toString())
             ->fromPlayhead($aggregate->playhead())
             ->build();
 

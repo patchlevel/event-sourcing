@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\Projectionist;
 
-final class ProfileId
+use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+
+final class ProfileId implements AggregateRootId
 {
     private function __construct(
         private string $id,

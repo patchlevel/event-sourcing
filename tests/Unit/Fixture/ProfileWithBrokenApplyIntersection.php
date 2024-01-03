@@ -7,17 +7,16 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 
 #[Aggregate(ProfileWithBrokenApplyIntersection::class)]
 final class ProfileWithBrokenApplyIntersection extends BasicAggregateRoot
 {
+    #[Id]
+    private ProfileId $id;
+
     #[Apply]
     protected function applyIntersection(ProfileCreated&ProfileVisited $event): void
     {
-    }
-
-    public function aggregateRootId(): string
-    {
-        return self::class;
     }
 }

@@ -2,14 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
+namespace Patchlevel\EventSourcing\Aggregate;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-
-final class ProfileId implements AggregateRootId
+trait CustomIdBehaviour
 {
-    private function __construct(
-        private string $id,
+    public function __construct(
+        private readonly string $id,
     ) {
     }
 

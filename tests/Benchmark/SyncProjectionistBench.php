@@ -42,6 +42,8 @@ final class SyncProjectionistBench
     private Repository $repository;
     private Profile $profile;
 
+    private ProfileId $id;
+
     public function setUp(): void
     {
         if (file_exists(self::DB_PATH)) {
@@ -100,7 +102,8 @@ final class SyncProjectionistBench
         $schemaDirector->create();
         $projectionist->boot();
 
-        $this->profile = Profile::create(ProfileId::fromString('1'), 'Peter');
+        $this->id = ProfileId::v7();
+        $this->profile = Profile::create($this->id, 'Peter');
         $this->repository->save($this->profile);
     }
 
