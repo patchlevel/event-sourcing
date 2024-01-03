@@ -23,7 +23,7 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Aggregate\
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BankAccountCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\MonthPassed;
-use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Projection\BankAccountProjection;
+use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Projection\BankAccountProjector;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\LockFactory;
@@ -55,8 +55,8 @@ final class IntegrationTest extends TestCase
             'eventstore',
         );
 
-        $bankAccountProjection = new BankAccountProjection($this->connection);
-        $projectionRepository = new InMemoryProjectorRepository([$bankAccountProjection]);
+        $bankAccountProjector = new BankAccountProjector($this->connection);
+        $projectionRepository = new InMemoryProjectorRepository([$bankAccountProjector]);
 
         $projectionist = new DefaultProjectionist(
             $store,

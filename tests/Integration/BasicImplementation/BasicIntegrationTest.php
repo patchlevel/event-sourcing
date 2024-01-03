@@ -22,7 +22,7 @@ use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjection;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjector;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\LockFactory;
@@ -53,9 +53,9 @@ final class BasicIntegrationTest extends TestCase
             'eventstore',
         );
 
-        $profileProjection = new ProfileProjection($this->connection);
+        $profileProjector = new ProfileProjector($this->connection);
         $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection],
+            [$profileProjector],
         );
 
         $projectionist = new DefaultProjectionist(
@@ -127,7 +127,7 @@ final class BasicIntegrationTest extends TestCase
             'eventstore',
         );
 
-        $profileProjection = new ProfileProjection($this->connection);
+        $profileProjection = new ProfileProjector($this->connection);
         $projectorRepository = new InMemoryProjectorRepository(
             [$profileProjection],
         );
@@ -204,7 +204,7 @@ final class BasicIntegrationTest extends TestCase
             'eventstore',
         );
 
-        $profileProjection = new ProfileProjection($this->connection);
+        $profileProjection = new ProfileProjector($this->connection);
         $projectorRepository = new InMemoryProjectorRepository(
             [$profileProjection],
         );

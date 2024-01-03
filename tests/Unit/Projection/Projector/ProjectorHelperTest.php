@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projector;
 
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorHelper;
 use PHPUnit\Framework\TestCase;
@@ -14,7 +14,7 @@ final class ProjectorHelperTest extends TestCase
 {
     public function testProjectionName(): void
     {
-        $projector = new #[Projection('dummy')]
+        $projector = new #[Projector('dummy')]
         class {
         };
 
@@ -25,7 +25,7 @@ final class ProjectorHelperTest extends TestCase
 
     public function testProjectionVersion(): void
     {
-        $projector = new #[Projection('dummy', 1)]
+        $projector = new #[Projector('dummy', 1)]
         class {
         };
 
@@ -36,7 +36,7 @@ final class ProjectorHelperTest extends TestCase
 
     public function testProjectionId(): void
     {
-        $projector = new #[Projection('dummy', 1)]
+        $projector = new #[Projector('dummy', 1)]
         class {
         };
 

@@ -15,14 +15,14 @@ In this example we always create a new data set in a relational database when a 
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Setup;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 
-#[Projection('profile')]
+#[Projector('profile')]
 final class ProfileProjector
 {
     use ProjectorUtil;
@@ -40,7 +40,7 @@ final class ProfileProjector
         return $this->connection->fetchAllAssociative("SELECT id, name FROM ${this->table()};");
     }
 
-    #[Create]
+    #[Setup]
     public function create(): void
     {
         $this->connection->executeStatement(
@@ -48,7 +48,7 @@ final class ProfileProjector
         );
     }
 
-    #[Drop]
+    #[Teardown]
     public function drop(): void
     {
         $this->connection->executeStatement("DROP TABLE IF EXISTS ${this->table()};");
@@ -81,14 +81,14 @@ final class ProfileProjector
 
 Each projector is responsible for a specific projection and version.
 This combination of information results in the so-called `project ID`.
-In order for us to be able to define this, we have to use the `Projection` attribute.
+In order for us to be able to define this, we have to use the `Projector` attribute.
 In our example, the projection is called "profile" and has the version "0" because we did not specify it.
 So that there is no problems with existing projection, 
 both the name of the projection and the version should be part of the table/collection name.
 In our example, we build a `table` helper method, what creates the following string: "projection_profile_0".
 
-Projectors can have one `create` and `drop` method that is executed when the projection is created or deleted.
-For this there are the attributes `Create` and `Drop`. The method name itself doesn't matter.
+Projectors can have one `setup` and `teardown` method that is executed when the projection is created or deleted.
+For this there are the attributes `Setup` and `Teardown`. The method name itself doesn't matter.
 In some cases it may be that no schema has to be created for the projection, 
 as the target does it automatically, so you can skip this.
 
@@ -114,17 +114,17 @@ Several projectors can also listen to the same event.
 
 As soon as the structure of a projection changes, the version must be change or increment.
 Otherwise the projectionist will not recognize that the projection has changed and will not rebuild it.
-To do this, you have to change the version in the `Projection` attribute.
+To do this, you have to change the version in the `Projector` attribute.
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Setup;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-#[Projection('profile', version: 1)]
+#[Projector('profile', version: 1)]
 final class ProfileProjector
 {
    // ...
@@ -169,12 +169,12 @@ If something breaks, the projectionist marks the individual projections as fault
 ## Projection Id
 
 A projection id consists of a unique name and a version.
-It can be defined using the `Projection` attribute.
+It can be defined using the `Projector` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 
-#[Projection('profile', version: 1)]
+#[Projector('profile', version: 1)]
 final class ProfileProjector
 {
    // ...

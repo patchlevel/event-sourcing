@@ -19,10 +19,10 @@ final class MetadataProjectorResolver implements ProjectorResolver
     ) {
     }
 
-    public function resolveCreateMethod(object $projector): Closure|null
+    public function resolveSetupMethod(object $projector): Closure|null
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
-        $method = $metadata->createMethod;
+        $method = $metadata->setupMethod;
 
         if (!$method) {
             return null;
@@ -31,10 +31,10 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$method(...);
     }
 
-    public function resolveDropMethod(object $projector): Closure|null
+    public function resolveTeardownMethod(object $projector): Closure|null
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
-        $method = $metadata->dropMethod;
+        $method = $metadata->teardownMethod;
 
         if (!$method) {
             return null;

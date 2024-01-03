@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Projector;
 
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projector\ClassIsNotAProjector;
-use Patchlevel\EventSourcing\Metadata\Projector\DuplicateCreateMethod;
-use Patchlevel\EventSourcing\Metadata\Projector\DuplicateDropMethod;
+use Patchlevel\EventSourcing\Metadata\Projector\DuplicateSetupMethod;
+use Patchlevel\EventSourcing\Metadata\Projector\DuplicateTeardownMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +31,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
     public function testEmptyProjection(): void
     {
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
         };
 
@@ -39,27 +39,27 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
         $metadata = $metadataFactory->metadata($projection::class);
 
         self::assertSame([], $metadata->subscribeMethods);
-        self::assertNull($metadata->createMethod);
-        self::assertNull($metadata->dropMethod);
+        self::assertNull($metadata->setupMethod);
+        self::assertNull($metadata->teardownMethod);
         self::assertSame('foo', $metadata->name);
         self::assertSame(1, $metadata->version);
     }
 
     public function testStandardProjection(): void
     {
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
             #[Subscribe(ProfileVisited::class)]
             public function handle(): void
             {
             }
 
-            #[Create]
+            #[Setup]
             public function create(): void
             {
             }
 
-            #[Drop]
+            #[Teardown]
             public function drop(): void
             {
             }
@@ -73,13 +73,13 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
             $metadata->subscribeMethods,
         );
 
-        self::assertSame('create', $metadata->createMethod);
-        self::assertSame('drop', $metadata->dropMethod);
+        self::assertSame('create', $metadata->setupMethod);
+        self::assertSame('drop', $metadata->teardownMethod);
     }
 
     public function testMultipleHandlerOnOneMethod(): void
     {
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
             #[Subscribe(ProfileVisited::class)]
             #[Subscribe(ProfileCreated::class)]
@@ -100,18 +100,18 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
         );
     }
 
-    public function testDuplicateCreateAttributeException(): void
+    public function testDuplicateSetupAttributeException(): void
     {
-        $this->expectException(DuplicateCreateMethod::class);
+        $this->expectException(DuplicateSetupMethod::class);
 
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
-            #[Create]
+            #[Setup]
             public function create1(): void
             {
             }
 
-            #[Create]
+            #[Setup]
             public function create2(): void
             {
             }
@@ -121,18 +121,18 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
         $metadataFactory->metadata($projection::class);
     }
 
-    public function testDuplicateDropAttributeException(): void
+    public function testDuplicateTeardownAttributeException(): void
     {
-        $this->expectException(DuplicateDropMethod::class);
+        $this->expectException(DuplicateTeardownMethod::class);
 
-        $projection = new #[Projection('foo', 1)]
+        $projection = new #[Projector('foo', 1)]
         class {
-            #[Drop]
+            #[Teardown]
             public function drop1(): void
             {
             }
 
-            #[Drop]
+            #[Teardown]
             public function drop2(): void
             {
             }

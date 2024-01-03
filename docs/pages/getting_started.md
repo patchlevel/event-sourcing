@@ -156,15 +156,15 @@ Each projector is then responsible for a specific projection and version.
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
+use Patchlevel\EventSourcing\Attribute\Setup;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 
-#[Projection('hotel')]
+#[Projector('hotel')]
 final class HotelProjector
 {
     use ProjectorUtil;
@@ -215,13 +215,13 @@ final class HotelProjector
         );
     }
     
-    #[Create]
+    #[Setup]
     public function create(): void
     {
         $this->db->executeStatement("CREATE TABLE IF NOT EXISTS ${this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);");
     }
 
-    #[Drop]
+    #[Teardown]
     public function drop(): void
     {
         $this->db->executeStatement("DROP TABLE IF EXISTS ${this->table()};");

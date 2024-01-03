@@ -63,11 +63,11 @@ final class DefaultProjectionist implements Projectionist
                 $projection->id()->toString(),
             ));
 
-            $createMethod = $this->projectorResolver->resolveCreateMethod($projector);
+            $setupMethod = $this->projectorResolver->resolveSetupMethod($projector);
 
-            if (!$createMethod) {
+            if (!$setupMethod) {
                 $this->logger?->info(sprintf(
-                    'projector "%s" for "%s" has no create method',
+                    'projector "%s" for "%s" has no "setup" method',
                     $projector::class,
                     $projection->id()->toString(),
                 ));
@@ -76,7 +76,7 @@ final class DefaultProjectionist implements Projectionist
             }
 
             try {
-                $createMethod();
+                $setupMethod();
                 $this->logger?->info(sprintf(
                     'projector "%s" for "%s" prepared',
                     $projector::class,
@@ -242,11 +242,11 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            $dropMethod = $this->projectorResolver->resolveDropMethod($projector);
+            $teardownMethod = $this->projectorResolver->resolveTeardownMethod($projector);
 
-            if ($dropMethod) {
+            if ($teardownMethod) {
                 try {
-                    $dropMethod();
+                    $teardownMethod();
                 } catch (Throwable $e) {
                     $this->logger?->error(
                         sprintf('projection for "%s" could not be removed, skipped', $projection->id()->toString()),
@@ -281,9 +281,9 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            $dropMethod = $this->projectorResolver->resolveDropMethod($projector);
+            $teardownMethod = $this->projectorResolver->resolveTeardownMethod($projector);
 
-            if (!$dropMethod) {
+            if (!$teardownMethod) {
                 $this->projectionStore->remove($projection->id());
 
                 $this->logger?->info(
@@ -294,11 +294,11 @@ final class DefaultProjectionist implements Projectionist
             }
 
             try {
-                $dropMethod();
+                $teardownMethod();
             } catch (Throwable $e) {
                 $this->logger?->error(
                     sprintf(
-                        'projector "%s" drop method could not be executed:',
+                        'projector "%s" teardown method could not be executed:',
                         $projector::class,
                     ),
                 );

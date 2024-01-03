@@ -6,23 +6,25 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Proj
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BankAccountCreated;
 
-#[Projection('dummy', 1)]
-final class BankAccountProjection
+use function assert;
+
+#[Projector('dummy', 1)]
+final class BankAccountProjector
 {
     public function __construct(
         private Connection $connection,
     ) {
     }
 
-    #[Create]
+    #[Setup]
     public function create(): void
     {
         $table = new Table('projection_bank_account');
@@ -34,7 +36,7 @@ final class BankAccountProjection
         $this->connection->createSchemaManager()->createTable($table);
     }
 
-    #[Drop]
+    #[Teardown]
     public function drop(): void
     {
         $this->connection->createSchemaManager()->dropTable('projection_bank_account');
@@ -44,6 +46,8 @@ final class BankAccountProjection
     public function handleBankAccountCreated(Message $message): void
     {
         $event = $message->event();
+
+        assert($event instanceof BankAccountCreated);
 
         $this->connection->executeStatement(
             'INSERT INTO projection_bank_account (id, name, balance_in_cents) VALUES(:id, :name, 0);',
@@ -58,6 +62,8 @@ final class BankAccountProjection
     public function handleBalanceAdded(Message $message): void
     {
         $event = $message->event();
+
+        assert($event instanceof BalanceAdded);
 
         $this->connection->executeStatement(
             'UPDATE projection_bank_account SET balance_in_cents = balance_in_cents + :balance WHERE id = :id;',

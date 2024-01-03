@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-final class Projection
+final class Projector
 {
     public function __construct(
         private string $name,

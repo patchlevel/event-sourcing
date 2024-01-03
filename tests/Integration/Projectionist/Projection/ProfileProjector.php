@@ -2,31 +2,35 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection;
+namespace Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
-use Patchlevel\EventSourcing\Attribute\Create;
-use Patchlevel\EventSourcing\Attribute\Drop;
-use Patchlevel\EventSourcing\Attribute\Projection;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
+use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
 use function assert;
+use function sprintf;
 
-#[Projection('profile', 1)]
-final class ProfileProjection
+#[Projector('profile', 1)]
+final class ProfileProjector
 {
+    use ProjectorUtil;
+
     public function __construct(
         private Connection $connection,
     ) {
     }
 
-    #[Create]
+    #[Setup]
     public function create(): void
     {
-        $table = new Table('projection_profile');
+        $table = new Table($this->tableName());
         $table->addColumn('id', 'string');
         $table->addColumn('name', 'string');
         $table->setPrimaryKey(['id']);
@@ -34,10 +38,10 @@ final class ProfileProjection
         $this->connection->createSchemaManager()->createTable($table);
     }
 
-    #[Drop]
+    #[Teardown]
     public function drop(): void
     {
-        $this->connection->createSchemaManager()->dropTable('projection_profile');
+        $this->connection->createSchemaManager()->dropTable($this->tableName());
     }
 
     #[Subscribe(ProfileCreated::class)]
@@ -48,11 +52,20 @@ final class ProfileProjection
         assert($profileCreated instanceof ProfileCreated);
 
         $this->connection->executeStatement(
-            'INSERT INTO projection_profile (id, name) VALUES(:id, :name);',
+            'INSERT INTO ' . $this->tableName() . ' (id, name) VALUES(:id, :name);',
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
             ],
+        );
+    }
+
+    private function tableName(): string
+    {
+        return sprintf(
+            'projection_%s_%s',
+            $this->projectionName(),
+            $this->projectionVersion(),
         );
     }
 }
