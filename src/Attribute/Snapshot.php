@@ -10,24 +10,9 @@ use Attribute;
 final class Snapshot
 {
     public function __construct(
-        private string $name,
-        private int|null $batch = null,
-        private string|null $version = null,
+        public readonly string $name,
+        public readonly int|null $batch = null,
+        public readonly string|null $version = null,
     ) {
-    }
-
-    public function name(): string
-    {
-        return $this->name;
-    }
-
-    public function batch(): int|null
-    {
-        return $this->batch;
-    }
-
-    public function version(): string|null
-    {
-        return $this->version;
     }
 }

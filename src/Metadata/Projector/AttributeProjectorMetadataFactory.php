@@ -32,7 +32,7 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
             throw new ClassIsNotAProjector($projector);
         }
 
-        $projection = $attributes[0]->newInstance();
+        $projectorInfo = $attributes[0]->newInstance();
 
         $methods = $reflector->getMethods();
 
@@ -45,7 +45,7 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
 
             foreach ($attributes as $attribute) {
                 $instance = $attribute->newInstance();
-                $eventClass = $instance->eventClass();
+                $eventClass = $instance->eventClass;
 
                 if (array_key_exists($eventClass, $subscribeMethods)) {
                     throw new DuplicateSubscribeMethod(
@@ -87,8 +87,8 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
         }
 
         $metadata = new ProjectorMetadata(
-            $projection->name(),
-            $projection->version(),
+            $projectorInfo->name,
+            $projectorInfo->version,
             $subscribeMethods,
             $createMethod,
             $dropMethod,

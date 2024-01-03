@@ -11,13 +11,7 @@ final class Subscribe
 {
     /** @param class-string $eventClass */
     public function __construct(
-        private string $eventClass,
+        public readonly string $eventClass,
     ) {
-    }
-
-    /** @return class-string */
-    public function eventClass(): string
-    {
-        return $this->eventClass;
     }
 }

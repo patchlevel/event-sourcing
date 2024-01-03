@@ -41,7 +41,7 @@ abstract class Subscriber implements Listener
 
             foreach ($attributes as $attribute) {
                 $instance = $attribute->newInstance();
-                $eventClass = $instance->eventClass();
+                $eventClass = $instance->eventClass;
 
                 if (array_key_exists($eventClass, $this->subscribeMethods)) {
                     throw new DuplicateSubscribeMethod(

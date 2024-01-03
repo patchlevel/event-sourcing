@@ -15,15 +15,15 @@ final class SuppressMissingApplyTest extends TestCase
     {
         $attribute = new SuppressMissingApply([ProfileCreated::class]);
 
-        self::assertSame([ProfileCreated::class], $attribute->suppressEvents());
-        self::assertSame(false, $attribute->suppressAll());
+        self::assertSame([ProfileCreated::class], $attribute->suppressEvents);
+        self::assertSame(false, $attribute->suppressAll);
     }
 
     public function testSuppressAll(): void
     {
         $attribute = new SuppressMissingApply(SuppressMissingApply::ALL);
 
-        self::assertSame([], $attribute->suppressEvents());
-        self::assertSame(true, $attribute->suppressAll());
+        self::assertSame([], $attribute->suppressEvents);
+        self::assertSame(true, $attribute->suppressAll);
     }
 }
