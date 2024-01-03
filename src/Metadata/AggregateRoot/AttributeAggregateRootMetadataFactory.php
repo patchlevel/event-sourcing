@@ -73,13 +73,13 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
 
-            if ($instance->suppressAll()) {
+            if ($instance->suppressAll) {
                 $suppressAll = true;
 
                 continue;
             }
 
-            foreach ($instance->suppressEvents() as $event) {
+            foreach ($instance->suppressEvents as $event) {
                 $suppressEvents[$event] = true;
             }
         }
@@ -97,7 +97,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
 
         $aggregateAttribute = $attributeReflectionList[0]->newInstance();
 
-        return $aggregateAttribute->name();
+        return $aggregateAttribute->name;
     }
 
     private function findIdProperty(ReflectionClass $reflector): string
@@ -128,9 +128,9 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         $attribute = $attributeReflectionList[0]->newInstance();
 
         return new Snapshot(
-            $attribute->name(),
-            $attribute->batch(),
-            $attribute->version(),
+            $attribute->name,
+            $attribute->batch,
+            $attribute->version,
         );
     }
 
@@ -159,7 +159,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
 
             foreach ($attributes as $attribute) {
                 $applyAttribute = $attribute->newInstance();
-                $eventClass = $applyAttribute->eventClass();
+                $eventClass = $applyAttribute->eventClass;
 
                 if ($eventClass !== null) {
                     $hasOneNonEmptyApply = true;

@@ -10,12 +10,7 @@ use Attribute;
 final class Aggregate
 {
     public function __construct(
-        private string $name,
+        public readonly string $name,
     ) {
-    }
-
-    public function name(): string
-    {
-        return $this->name;
     }
 }

@@ -12,29 +12,20 @@ final class SuppressMissingApply
     public const ALL = '*';
 
     /** @var list<class-string> */
-    private array $suppressEvents = [];
-    private bool $suppressAll = false;
+    public readonly array $suppressEvents;
+    public readonly bool $suppressAll;
 
     /** @param list<class-string>|self::ALL $suppress */
     public function __construct(string|array $suppress)
     {
         if ($suppress === self::ALL) {
+            $this->suppressEvents = [];
             $this->suppressAll = true;
 
             return;
         }
 
         $this->suppressEvents = $suppress;
-    }
-
-    /** @return list<class-string> */
-    public function suppressEvents(): array
-    {
-        return $this->suppressEvents;
-    }
-
-    public function suppressAll(): bool
-    {
-        return $this->suppressAll;
+        $this->suppressAll = false;
     }
 }

@@ -27,7 +27,7 @@ final class AttributeEventRegistryFactory implements EventRegistryFactory
                 continue;
             }
 
-            $eventName = $attributes[0]->newInstance()->name();
+            $eventName = $attributes[0]->newInstance()->name;
 
             $result[$eventName] = $class;
         }

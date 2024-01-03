@@ -33,7 +33,7 @@ final class AttributeAggregateRootRegistryFactory implements AggregateRootRegist
                 throw new NoAggregateRoot($class);
             }
 
-            $aggregateName = $attributes[0]->newInstance()->name();
+            $aggregateName = $attributes[0]->newInstance()->name;
 
             $result[$aggregateName] = $class;
         }
