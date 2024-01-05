@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use InvalidArgumentException;
 
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use function array_pop;
 use function count;
 use function ctype_digit;
@@ -59,5 +60,10 @@ final class ProjectorId
         $name = implode('-', $parts);
 
         return new self($name, (int)$version);
+    }
+
+    public function toProjectionId(): ProjectionId
+    {
+        return new ProjectionId($this->name, $this->version);
     }
 }

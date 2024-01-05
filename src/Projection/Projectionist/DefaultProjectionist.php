@@ -349,7 +349,7 @@ final class DefaultProjectionist implements Projectionist
 
         foreach ($projectors as $projector) {
             $projectorId = $this->projectorResolver->projectorId($projector);
-            $projectionId = new ProjectionId($projectorId->name(), $projectorId->version());
+            $projectionId = $projectorId->toProjectionId();
 
             if ($projections->has($projectionId)) {
                 continue;
