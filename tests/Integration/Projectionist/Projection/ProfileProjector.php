@@ -64,8 +64,8 @@ final class ProfileProjector
     {
         return sprintf(
             'projection_%s_%s',
-            $this->projectionName(),
-            $this->projectionVersion(),
+            $this->projectorName(),
+            $this->projectorVersion(),
         );
     }
 }

@@ -348,7 +348,8 @@ final class DefaultProjectionist implements Projectionist
         $projectors = $this->projectors();
 
         foreach ($projectors as $projector) {
-            $projectionId = $this->projectorResolver->projectionId($projector);
+            $projectorId = $this->projectorResolver->projectorId($projector);
+            $projectionId = $projectorId->toProjectionId();
 
             if ($projections->has($projectionId)) {
                 continue;
@@ -432,9 +433,9 @@ final class DefaultProjectionist implements Projectionist
             $this->projectors = [];
 
             foreach ($this->projectorRepository->projectors() as $projector) {
-                $projectionId = $this->projectorResolver->projectionId($projector);
+                $projectorId = $this->projectorResolver->projectorId($projector);
 
-                $this->projectors[$projectionId->toString()] = $projector;
+                $this->projectors[$projectorId->toString()] = $projector;
             }
         }
 

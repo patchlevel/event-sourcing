@@ -8,7 +8,6 @@ use Closure;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 
 use function array_key_exists;
 
@@ -57,11 +56,11 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$subscribeMethod(...);
     }
 
-    public function projectionId(object $projector): ProjectionId
+    public function projectorId(object $projector): ProjectorId
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
 
-        return new ProjectionId(
+        return new ProjectorId(
             $metadata->name,
             $metadata->version,
         );

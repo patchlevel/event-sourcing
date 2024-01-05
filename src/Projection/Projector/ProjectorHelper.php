@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadata;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 
 final class ProjectorHelper
 {
@@ -17,23 +17,23 @@ final class ProjectorHelper
 
     public function name(object $projector): string
     {
-        $metadata = $this->metadataFactory->metadata($projector::class);
-
-        return $metadata->name;
+        return $this->getProjectorMetadata($projector)->name;
     }
 
     public function version(object $projector): int
     {
-        $metadata = $this->metadataFactory->metadata($projector::class);
-
-        return $metadata->version;
+        return $this->getProjectorMetadata($projector)->version;
     }
 
-    public function projectionId(object $projector): ProjectionId
+    public function projectorId(object $projector): ProjectorId
     {
-        return new ProjectionId(
-            $this->name($projector),
-            $this->version($projector),
-        );
+        $metadata = $this->getProjectorMetadata($projector);
+
+        return new ProjectorId($metadata->name, $metadata->version);
+    }
+
+    private function getProjectorMetadata(object $projector): ProjectorMetadata
+    {
+        return $this->metadataFactory->metadata($projector::class);
     }
 }
