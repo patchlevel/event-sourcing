@@ -165,7 +165,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         $table->addColumn('error_object', Types::BLOB)
             ->setNotnull(false);
         $table->addColumn('retry', Types::INTEGER)
-            ->setNotnull(true);
+            ->setNotnull(true)
+            ->setDefault(0);
 
         $table->setPrimaryKey(['name', 'version']);
     }
