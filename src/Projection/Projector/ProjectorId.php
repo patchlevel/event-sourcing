@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use InvalidArgumentException;
-
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
+
 use function array_pop;
 use function count;
 use function ctype_digit;
