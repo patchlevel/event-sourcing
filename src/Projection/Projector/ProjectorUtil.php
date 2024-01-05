@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 
 trait ProjectorUtil
 {
@@ -31,18 +30,18 @@ trait ProjectorUtil
         return new ProjectorHelper(self::metadataFactory());
     }
 
-    private function projectionName(): string
+    private function projectorName(): string
     {
         return $this->getProjectorHelper()->name($this);
     }
 
-    private function projectionVersion(): int
+    private function projectorVersion(): int
     {
         return $this->getProjectorHelper()->version($this);
     }
 
-    private function projectionId(): ProjectionId
+    private function projectorId(): ProjectorId
     {
-        return $this->getProjectorHelper()->projectionId($this);
+        return $this->getProjectorHelper()->projectorId($this);
     }
 }

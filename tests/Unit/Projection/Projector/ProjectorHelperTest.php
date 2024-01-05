@@ -42,6 +42,6 @@ final class ProjectorHelperTest extends TestCase
 
         $helper = new ProjectorHelper();
 
-        self::assertEquals(new ProjectionId('dummy', 1), $helper->projectionId($projector));
+        self::assertEquals(new ProjectionId('dummy', 1), $helper->projectorId($projector));
     }
 }
