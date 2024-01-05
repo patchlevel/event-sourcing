@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
+use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorId;
@@ -256,7 +257,7 @@ final class DefaultProjectionistTest extends TestCase
                     $projectionId,
                     ProjectionStatus::Error,
                     0,
-                    new ProjectionError('ERROR', $projector->exception),
+                    new ProjectionError('ERROR', ErrorContext::fromThrowable($projector->exception)),
                     -1,
                 ),
             ],
@@ -463,7 +464,7 @@ final class DefaultProjectionistTest extends TestCase
                     $projectionId,
                     ProjectionStatus::Error,
                     0,
-                    new ProjectionError('ERROR', $projector->exception),
+                    new ProjectionError('ERROR', ErrorContext::fromThrowable($projector->exception)),
                     1,
                 ),
             ],
