@@ -26,18 +26,23 @@ trait ProjectorUtil
         return self::$metadataFactory;
     }
 
+    private function getProjectorHelper(): ProjectorHelper
+    {
+        return (new ProjectorHelper(self::metadataFactory()));
+    }
+
     private function projectionName(): string
     {
-        return (new ProjectorHelper(self::metadataFactory()))->name($this);
+        return $this->getProjectorHelper()->name($this);
     }
 
     private function projectionVersion(): int
     {
-        return (new ProjectorHelper(self::metadataFactory()))->version($this);
+        return $this->getProjectorHelper()->version($this);
     }
 
     private function projectionId(): ProjectionId
     {
-        return (new ProjectorHelper(self::metadataFactory()))->projectionId($this);
+        return $this->getProjectorHelper()->projectionId($this);
     }
 }

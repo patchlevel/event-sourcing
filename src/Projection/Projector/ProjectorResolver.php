@@ -16,5 +16,5 @@ interface ProjectorResolver
 
     public function resolveSubscribeMethod(object $projector, Message $message): Closure|null;
 
-    public function projectionId(object $projector): ProjectionId;
+    public function projectorId(object $projector): ProjectorId;
 }

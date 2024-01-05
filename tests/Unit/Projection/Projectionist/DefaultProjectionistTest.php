@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorId;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Patchlevel\EventSourcing\Store\ArrayStream;
@@ -60,6 +61,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testBootWithoutCreateMethod(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
         };
@@ -77,7 +79,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
         $projectorResolver->resolveSetupMethod($projector)->willReturn(null);
         $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn(null);
 
@@ -100,6 +102,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testBootWithMethods(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public Message|null $message = null;
@@ -129,7 +132,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveSetupMethod($projector)->willReturn($projector->create(...));
         $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -153,6 +156,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testBootWithLimit(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public Message|null $message = null;
@@ -182,7 +186,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveSetupMethod($projector)->willReturn($projector->create(...));
         $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -205,6 +209,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testBootWithCreateError(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public function __construct(
@@ -230,7 +235,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveSetupMethod($projector)->willReturn($projector->create(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -262,6 +267,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRunning(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public Message|null $message = null;
@@ -284,7 +290,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -305,6 +311,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRunningWithLimit(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public Message|null $message = null;
@@ -331,7 +338,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveSubscribeMethod($projector, $message1)->willReturn($projector->handle(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -352,6 +359,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRunningWithSkip(): void
     {
         $projectionId1 = new ProjectionId('test1', 1);
+        $projectorId1 = new ProjectorId('test1', 1);
         $projector1 = new #[ProjectionAttribute('test1', 1)]
         class {
             public Message|null $message = null;
@@ -363,6 +371,7 @@ final class DefaultProjectionistTest extends TestCase
         };
 
         $projectionId2 = new ProjectionId('test2', 1);
+        $projectorId2 = new ProjectorId('test2', 1);
         $projector2 = new #[ProjectionAttribute('test1', 1)]
         class {
             public Message|null $message = null;
@@ -388,8 +397,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveSubscribeMethod($projector1, $message)->willReturn($projector1->handle(...));
-        $projectorResolver->projectionId($projector1)->willReturn($projectionId1);
-        $projectorResolver->projectionId($projector2)->willReturn($projectionId2);
+        $projectorResolver->projectorId($projector1)->willReturn($projectorId1);
+        $projectorResolver->projectorId($projector2)->willReturn($projectorId2);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -411,6 +420,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRunningWithError(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public function __construct(
@@ -436,7 +446,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -518,6 +528,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testTeardownWithProjector(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public Message|null $message = null;
@@ -538,7 +549,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveTeardownMethod($projector)->willReturn($projector->drop(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -557,6 +568,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testTeardownWithProjectorAndError(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public Message|null $message = null;
@@ -577,7 +589,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveTeardownMethod($projector)->willReturn($projector->drop(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -621,6 +633,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRemoveWithProjector(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public bool $dropped = false;
@@ -640,7 +653,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveTeardownMethod($projector)->willReturn($projector->drop(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -659,6 +672,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRemoveWithoutDropMethod(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
         };
@@ -672,7 +686,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveTeardownMethod($projector)->willReturn(null);
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -690,6 +704,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testRemoveWithProjectorAndError(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
             public bool $dropped = false;
@@ -709,7 +724,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveTeardownMethod($projector)->willReturn($projector->drop(...));
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -753,6 +768,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testReactivate(): void
     {
         $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
         $projector = new #[ProjectionAttribute('test', 1)]
         class {
         };
@@ -765,7 +781,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->projectionId($projector)->willReturn($projectionId);
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
