@@ -33,7 +33,7 @@ final class ProjectorHelper
         return new ProjectionId($metadata->name, $metadata->version);
     }
 
-    public function getProjectorMetadata(object $projector): ProjectorMetadata
+    private function getProjectorMetadata(object $projector): ProjectorMetadata
     {
         return $this->metadataFactory->metadata($projector::class);
     }

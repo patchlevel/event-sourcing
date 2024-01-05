@@ -28,7 +28,7 @@ trait ProjectorUtil
 
     private function getProjectorHelper(): ProjectorHelper
     {
-        return (new ProjectorHelper(self::metadataFactory()));
+        return new ProjectorHelper(self::metadataFactory());
     }
 
     private function projectionName(): string
