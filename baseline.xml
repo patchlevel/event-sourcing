@@ -50,6 +50,18 @@
       <code><![CDATA[ArrayIterator<int, Projection>]]></code>
     </InvalidReturnType>
   </file>
+  <file src="src/Projection/Projection/Store/DoctrineStore.php">
+    <MixedArgument>
+      <code>$context</code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code>$context</code>
+    </MixedAssignment>
+    <PossiblyNullPropertyFetch>
+      <code><![CDATA[$projectionError->errorContext]]></code>
+      <code><![CDATA[$projectionError->errorContext]]></code>
+    </PossiblyNullPropertyFetch>
+  </file>
   <file src="src/Projection/Projector/InMemoryProjectorRepository.php">
     <InvalidOperand>
       <code><![CDATA[$this->projectors]]></code>
@@ -135,12 +147,6 @@
       <code>$name</code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="tests/Integration/BankAccountSplitStream/Projection/BankAccountProjection.php">
-    <MixedMethodCall>
-      <code>toString</code>
-      <code>toString</code>
-    </MixedMethodCall>
-  </file>
   <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>
       <code>$id</code>
@@ -152,11 +158,6 @@
       <code>$id</code>
       <code>$name</code>
     </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Integration/Outbox/Projection/ProfileProjection.php">
-    <MixedMethodCall>
-      <code>toString</code>
-    </MixedMethodCall>
   </file>
   <file src="tests/Integration/Pipeline/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>

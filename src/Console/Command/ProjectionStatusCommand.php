@@ -8,14 +8,16 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
+use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Throwable;
 
 use function array_map;
+use function is_array;
 
+/** @psalm-import-type Context from ErrorContext */
 #[AsCommand(
     'event-sourcing:projection:status',
     'View the current status of the projections',
@@ -89,12 +91,21 @@ final class ProjectionStatusCommand extends ProjectionCommand
             ],
         );
 
-        $errorObject = $projection->projectionError()?->errorObject;
+        $contexts = $projection->projectionError()?->errorContext;
 
-        if ($errorObject instanceof Throwable) {
-            $io->throwable($errorObject);
+        if (is_array($contexts)) {
+            foreach ($contexts as $context) {
+                $this->displayError($io, $context);
+            }
         }
 
         return 0;
+    }
+
+    /** @param Context $context */
+    private function displayError(OutputStyle $io, array $context): void
+    {
+        $io->error($context['message']);
+        $io->block($context['trace']);
     }
 }

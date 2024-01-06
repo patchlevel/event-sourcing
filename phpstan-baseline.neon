@@ -6,6 +6,11 @@ parameters:
 			path: src/EventBus/Message.php
 
 		-
+			message: "#^Parameter \\#2 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\ProjectionError constructor expects array\\<int, array\\{message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: string\\}\\>\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Projection/Projection/Store/DoctrineStore.php
+
+		-
 			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\InMemoryProjectorRepository\\:\\:projectors\\(\\) should return array\\<int, object\\> but returns array\\<int\\|string, object\\>\\.$#"
 			count: 1
 			path: src/Projection/Projector/InMemoryProjectorRepository.php

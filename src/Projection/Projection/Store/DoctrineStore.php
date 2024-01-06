@@ -16,6 +16,10 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 
 use function array_map;
+use function json_decode;
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
 
 /** @psalm-type Data = array{
  *     name: string,
@@ -23,7 +27,7 @@ use function array_map;
  *     position: int,
  *     status: string,
  *     error_message: string|null,
- *     error_object: string|null,
+ *     error_context: string|null,
  *     retry: int,
  * }
  */
@@ -77,13 +81,16 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
     /** @param Data $row */
     private function createProjection(array $row): Projection
     {
+        $context = $row['error_context'] ?
+            json_decode($row['error_context'], true, 512, JSON_THROW_ON_ERROR) : null;
+
         return new Projection(
             new ProjectionId($row['name'], $row['version']),
             ProjectionStatus::from($row['status']),
             $row['position'],
             $row['error_message'] ? new ProjectionError(
                 $row['error_message'],
-                ErrorSerializer::unserialize($row['error_object']),
+                $context,
             ) : null,
             $row['retry'],
         );
@@ -94,7 +101,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         $this->connection->transactional(
             function (Connection $connection) use ($projections): void {
                 foreach ($projections as $projection) {
-                    $errorObject = ErrorSerializer::serialize($projection->projectionError()?->errorObject);
+                    $projectionError = $projection->projectionError();
 
                     try {
                         $effectedRows = (int)$connection->update(
@@ -102,8 +109,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                             [
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
-                                'error_message' => $projection->projectionError()?->errorMessage,
-                                'error_object' => $errorObject,
+                                'error_message' => $projectionError?->errorMessage,
+                                'error_context' => $projectionError?->errorContext ? json_encode($projectionError->errorContext, JSON_THROW_ON_ERROR) : null,
                                 'retry' => $projection->retry(),
                             ],
                             [
@@ -123,8 +130,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'version' => $projection->id()->version(),
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
-                                'error_message' => $projection->projectionError()?->errorMessage,
-                                'error_object' => $errorObject,
+                                'error_message' => $projectionError?->errorMessage,
+                                'error_context' => $projectionError?->errorContext ? json_encode($projectionError->errorContext, JSON_THROW_ON_ERROR) : null,
                                 'retry' => $projection->retry(),
                             ],
                         );
@@ -162,7 +169,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             ->setNotnull(true);
         $table->addColumn('error_message', Types::STRING)
             ->setNotnull(false);
-        $table->addColumn('error_object', Types::BLOB)
+        $table->addColumn('error_context', Types::JSON)
             ->setNotnull(false);
         $table->addColumn('retry', Types::INTEGER)
             ->setNotnull(true)
