@@ -60,7 +60,11 @@ final class Message
         return $this->event;
     }
 
-    /** @return class-string<AggregateRoot> */
+    /**
+     * @return class-string<AggregateRoot>
+     *
+     * @throws HeaderNotFound
+     */
     public function aggregateClass(): string
     {
         $value = $this->aggregateClass;
@@ -81,6 +85,7 @@ final class Message
         return $message;
     }
 
+    /** @throws HeaderNotFound */
     public function aggregateId(): string
     {
         $value = $this->aggregateId;
@@ -100,7 +105,11 @@ final class Message
         return $message;
     }
 
-    /** @return positive-int */
+    /**
+     * @return positive-int
+     *
+     * @throws HeaderNotFound
+     */
     public function playhead(): int
     {
         $value = $this->playhead;
@@ -121,6 +130,7 @@ final class Message
         return $message;
     }
 
+    /** @throws HeaderNotFound */
     public function recordedOn(): DateTimeImmutable
     {
         $value = $this->recordedOn;
@@ -166,6 +176,7 @@ final class Message
         return $message;
     }
 
+    /** @throws HeaderNotFound */
     public function customHeader(string $name): mixed
     {
         if (array_keys($this->customHeaders, $name)) {

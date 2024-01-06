@@ -18,6 +18,7 @@ use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
+use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -142,8 +143,9 @@ final class DefaultRepository implements Repository
             }
 
             $playhead = $aggregate->playhead() - $eventCount;
+            $newAggregate = $playhead === 0;
 
-            if (!isset($this->aggregateIsValid[$aggregate]) && $playhead !== 0) {
+            if (!isset($this->aggregateIsValid[$aggregate]) && !$newAggregate) {
                 throw new AggregateUnknown($aggregate::class, $aggregate->aggregateRootId());
             }
 
@@ -176,8 +178,17 @@ final class DefaultRepository implements Repository
                 $events,
             );
 
-            $this->store->transactional(function () use ($messages): void {
-                $this->store->save(...$messages);
+            $this->store->transactional(function () use ($messages, $aggregate, $newAggregate): void {
+                try {
+                    $this->store->save(...$messages);
+                } catch (UniqueConstraintViolation) {
+                    if ($newAggregate) {
+                        throw new AggregateAlreadyExists($aggregate::class, $aggregate->aggregateRootId());
+                    }
+
+                    throw new AggregateOutdated($aggregate::class, $aggregate->aggregateRootId());
+                }
+
                 $this->archive(...$messages);
                 $this->eventBus->dispatch(...$messages);
             });

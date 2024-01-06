@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Store;
 
 use Closure;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
@@ -183,7 +184,11 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                     implode("),\n(", $placeholders),
                 );
 
-                $connection->executeStatement($query, $parameters, $types);
+                try {
+                    $connection->executeStatement($query, $parameters, $types);
+                } catch (UniqueConstraintViolationException $e) {
+                    throw new UniqueConstraintViolation($e);
+                }
             },
         );
     }
