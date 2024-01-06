@@ -10,6 +10,10 @@ use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotNotFound;
 
 interface SnapshotStore
 {
+    /**
+     * @throws SnapshotNotConfigured
+     * @throws AdapterNotFound
+     */
     public function save(AggregateRoot $aggregateRoot): void;
 
     /**
@@ -18,6 +22,9 @@ interface SnapshotStore
      * @return T
      *
      * @throws SnapshotNotFound
+     * @throws SnapshotVersionInvalid
+     * @throws SnapshotNotConfigured
+     * @throws AdapterNotFound
      *
      * @template T of AggregateRoot
      */

@@ -9,13 +9,22 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 
 interface Projectionist
 {
+    /**
+     * @throws ProjectionistError
+     * @throws ProjectorNotFound
+     */
     public function boot(
         ProjectionCriteria $criteria = new ProjectionCriteria(),
         int|null $limit = null,
         bool $throwByError = false,
     ): void;
 
-    /** @param positive-int $limit */
+    /**
+     * @param positive-int $limit
+     *
+     * @throws ProjectionistError
+     * @throws ProjectorNotFound
+     */
     public function run(
         ProjectionCriteria $criteria = new ProjectionCriteria(),
         int|null $limit = null,

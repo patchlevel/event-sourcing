@@ -18,6 +18,10 @@ interface Store
 
     public function count(Criteria|null $criteria = null): int;
 
+    /**
+     * @throws MissingDataForStorage
+     * @throws UniqueConstraintViolation
+     */
     public function save(Message ...$messages): void;
 
     /**

@@ -9,8 +9,10 @@ use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
+use Patchlevel\EventSourcing\Repository\AggregateAlreadyExists;
 use Patchlevel\EventSourcing\Repository\AggregateDetached;
 use Patchlevel\EventSourcing\Repository\AggregateNotFound;
+use Patchlevel\EventSourcing\Repository\AggregateOutdated;
 use Patchlevel\EventSourcing\Repository\AggregateUnknown;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
@@ -20,6 +22,7 @@ use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -398,6 +401,81 @@ final class DefaultRepositoryTest extends TestCase
         );
 
         $aggregate->releaseEvents();
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+
+        $repository->save($aggregate);
+    }
+
+    public function testDuplicate(): void
+    {
+        $this->expectException(AggregateAlreadyExists::class);
+
+        $store = $this->prophesize(Store::class);
+        $store->save(
+            Argument::type(Message::class),
+        )->willThrow(new UniqueConstraintViolation());
+
+        $store->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0]()
+        );
+
+        $eventBus = $this->prophesize(EventBus::class);
+        $eventBus->dispatch(Argument::type('object'))->shouldNotBeCalled();
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::metadata(),
+        );
+
+        $aggregate = Profile::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de'),
+        );
+
+        $repository->save($aggregate);
+    }
+
+    public function testOutdated(): void
+    {
+        $this->expectException(AggregateOutdated::class);
+
+        $store = $this->prophesize(Store::class);
+
+        $store->save(
+            Argument::that(static function (Message $message) {
+                return $message->playhead() === 1;
+            }),
+        )->shouldBeCalled();
+
+        $store->save(
+            Argument::that(static function (Message $message) {
+                return $message->playhead() === 2;
+            }),
+        )->willThrow(new UniqueConstraintViolation());
+
+        $store->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0]()
+        );
+
+        $eventBus = $this->prophesize(EventBus::class);
+        $eventBus->dispatch(Argument::type('object'))->shouldBeCalled();
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            $eventBus->reveal(),
+            Profile::metadata(),
+        );
+
+        $aggregate = Profile::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de'),
+        );
+
+        $repository->save($aggregate);
 
         $aggregate->visitProfile(ProfileId::fromString('2'));
 

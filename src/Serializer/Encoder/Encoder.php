@@ -11,6 +11,8 @@ interface Encoder
     /**
      * @param array<string, mixed> $data
      * @param array<string, mixed> $options
+     *
+     * @throws EncodeNotPossible
      */
     public function encode(array $data, array $options = []): string;
 
@@ -18,6 +20,8 @@ interface Encoder
      * @param array<string, mixed> $options
      *
      * @return array<string, mixed>
+     *
+     * @throws DecodeNotPossible
      */
     public function decode(string $data, array $options = []): array;
 }
