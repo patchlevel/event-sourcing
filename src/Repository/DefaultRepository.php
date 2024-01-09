@@ -63,13 +63,31 @@ final class DefaultRepository implements Repository
     {
         if ($this->snapshotStore && $this->metadata->snapshot) {
             try {
-                return $this->loadFromSnapshot($this->metadata->className, $id);
+                $aggregate = $this->loadFromSnapshot($this->metadata->className, $id);
+
+                $this->logger->debug(
+                    sprintf(
+                        'Repository: Aggregate "%s" with the id "%s" loaded from snapshot.',
+                        $this->metadata->className,
+                        $id->toString(),
+                    ),
+                );
+
+                return $aggregate;
             } catch (SnapshotRebuildFailed $exception) {
+                $this->logger->error(
+                    sprintf(
+                        'Repository: Aggregate "%s" with the id "%s" could not be rebuild from snapshot.',
+                        $this->metadata->className,
+                        $id->toString(),
+                    ),
+                );
+
                 $this->logger->error($exception->getMessage());
             } catch (SnapshotNotFound) {
                 $this->logger->debug(
                     sprintf(
-                        'snapshot for aggregate "%s" with the id "%s" not found',
+                        'Repository: Snapshot for aggregate "%s" with the id "%s" not found.',
                         $this->metadata->className,
                         $id->toString(),
                     ),
@@ -77,7 +95,7 @@ final class DefaultRepository implements Repository
             } catch (SnapshotVersionInvalid) {
                 $this->logger->debug(
                     sprintf(
-                        'snapshot for aggregate "%s" with the id "%s" is invalid',
+                        'Repository: Snapshot for aggregate "%s" with the id "%s" is invalid.',
                         $this->metadata->className,
                         $id->toString(),
                     ),
@@ -99,6 +117,14 @@ final class DefaultRepository implements Repository
             $firstMessage = $stream->current();
 
             if ($firstMessage === null) {
+                $this->logger->debug(
+                    sprintf(
+                        'Repository: Aggregate "%s" with the id "%s" not found.',
+                        $this->metadata->className,
+                        $id->toString(),
+                    ),
+                );
+
                 throw new AggregateNotFound($this->metadata->className, $id);
             }
 
@@ -115,6 +141,14 @@ final class DefaultRepository implements Repository
         }
 
         $this->aggregateIsValid[$aggregate] = true;
+
+        $this->logger->debug(
+            sprintf(
+                'Repository: Aggregate "%s" with the id "%s" loaded from store.',
+                $this->metadata->className,
+                $id->toString(),
+            ),
+        );
 
         return $aggregate;
     }
@@ -260,6 +294,14 @@ final class DefaultRepository implements Repository
         if ($count < $batchSize) {
             return;
         }
+
+        $this->logger->debug(
+            sprintf(
+                'Repository: Save snapshot for aggregate "%s" with the id "%s".',
+                $this->metadata->className,
+                $aggregate->aggregateRootId()->toString(),
+            ),
+        );
 
         $this->snapshotStore->save($aggregate);
     }
