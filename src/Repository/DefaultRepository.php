@@ -281,17 +281,25 @@ final class DefaultRepository implements Repository
             return;
         }
 
+        $lastMessageWithNewStreamStart = null;
+
         foreach ($messages as $message) {
             if (!$message->newStreamStart()) {
                 continue;
             }
 
-            $this->store->archiveMessages(
-                $message->aggregateClass(),
-                $message->aggregateId(),
-                $message->playhead(),
-            );
+            $lastMessageWithNewStreamStart = $message;
         }
+
+        if ($lastMessageWithNewStreamStart === null) {
+            return;
+        }
+
+        $this->store->archiveMessages(
+            $lastMessageWithNewStreamStart->aggregateClass(),
+            $lastMessageWithNewStreamStart->aggregateId(),
+            $lastMessageWithNewStreamStart->playhead(),
+        );
     }
 
     /** @return Traversable<object> */
