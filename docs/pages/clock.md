@@ -15,7 +15,7 @@ This uses the native system clock to return the DateTimeImmutable instance - in 
 use Patchlevel\EventSourcing\Clock\SystemClock;
 
 $clock = new SystemClock();
-$date = $clock->now(); // get the actual datetime 
+$date = $clock->now(); // get the actual datetime
 $date2 = $clock->now();
 
 $date == $date2 // false
@@ -33,7 +33,7 @@ use Patchlevel\EventSourcing\Clock\FrozenClock;
 $date = new DateTimeImmutable();
 
 $clock = new FrozenClock($date);
-$frozenDate = $clock->now(); // gets the date provided before 
+$frozenDate = $clock->now(); // gets the date provided before
 
 $date == $frozenDate // true
 $date === $frozenDate // false

@@ -11,12 +11,12 @@ event/message.
 A `Message` contains the event and related meta information such as the aggregate class and id.
 A message contains the following information:
 
-* aggregate class
-* aggregate id
-* playhead
-* event
-* recorded on
-* custom headers
+- aggregate class
+- aggregate id
+- playhead
+- event
+- recorded on
+- custom headers
 
 Each event is packed into a message and dispatched using the event bus.
 
@@ -83,7 +83,7 @@ $eventBus->addListener($projectionListener);
 
 !!! note
 
-    You can determine the order in which the listeners are executed. For example, 
+    You can determine the order in which the listeners are executed. For example,
     you can also add listeners after `ProjectionListener`
     to access the [projections](./projection.md).
 
@@ -132,7 +132,7 @@ $eventBus = new SymfonyEventBus($symfonyMessenger);
 
 !!! note
 
-    An event bus can have zero or more listeners on an event. 
+    An event bus can have zero or more listeners on an event.
     You should allow no handler in the [HandleMessageMiddleware](https://symfony.com/doc/current/components/messenger.html).
 
 ## Listener
@@ -144,7 +144,7 @@ This listener is then called for all saved events / messages.
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-final class WelcomeListener implements Listener 
+final class WelcomeListener implements Listener
 {
     public function __invoke(Message $message): void
     {
@@ -157,12 +157,12 @@ final class WelcomeListener implements Listener
 
 !!! warning
 
-    If you only want to listen to certain messages, 
+    If you only want to listen to certain messages,
     then you have to check it in the `__invoke` method or use the subscriber.
 
 ## Subscriber
 
-A `Subscriber` is a listener, except that it has implemented the invoke method itself. 
+A `Subscriber` is a listener, except that it has implemented the invoke method itself.
 Instead, you can define your own and multiple methods and listen for specific events with the attribute `Handle`.
 
 ```php
@@ -170,7 +170,7 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-final class WelcomeSubscriber extends Subscriber 
+final class WelcomeSubscriber extends Subscriber
 {
     #[Handle(ProfileCreated::class)]
     public function onProfileCreated(Message $message): void

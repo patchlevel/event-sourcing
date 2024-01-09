@@ -6,14 +6,14 @@ says if the user start a new subscription all past events should not be consider
 banking scenario. There the business decides to save the current state every quarter for each banking account.
 
 Not only that some businesses requires such an action it also increases the performance for aggregate which would have a
-really long event stream. 
+really long event stream.
 
 ## Flagging an event to split the stream
 
 To use this feature you need to add the `SplitStreamDecorator`. You will also need events which will trigger this
-action. For that you can use the `#[SplitStream]` attribute. We decided that we are not literallty splitting the stream, 
-instead we are marking all past events as archived as soon as this event is saved. Then the past events will not be 
-loaded anymore for building the aggregate. This means that all needed data has to be present in these events which 
+action. For that you can use the `#[SplitStream]` attribute. We decided that we are not literallty splitting the stream,
+instead we are marking all past events as archived as soon as this event is saved. Then the past events will not be
+loaded anymore for building the aggregate. This means that all needed data has to be present in these events which
 should trigger the event split.
 
 ```php
@@ -33,7 +33,7 @@ final class MonthPassed
 
 !!! warning
 
-    The event needs all data which is relevant the aggregate to be used since all past event will not be loaded! Keep 
+    The event needs all data which is relevant the aggregate to be used since all past event will not be loaded! Keep
     this in mind if you want to use this feature.
 
 !!! note

@@ -20,7 +20,7 @@ $connection = DriverManager::getConnection([
 
 !!! note
 
-    You can find out more about how to create a connection 
+    You can find out more about how to create a connection
     [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
 
 ## Store types
@@ -110,17 +110,17 @@ $store->transactionRollback();
 
 ### Transactional function
 
-There is also the possibility of executing a function in a transaction. 
+There is also the possibility of executing a function in a transaction.
 Then dbal takes care of starting a transaction, committing it and then possibly rollback it again.
 
 ```php
 $store->transactional(function () use ($command, $bankAccountRepository) {
     $accountFrom = $bankAccountRepository->get($command->from());
     $accountTo = $bankAccountRepository->get($command->to());
-    
+
     $accountFrom->transferMoney($command->to(), $command->amount());
     $accountTo->receiveMoney($command->from(), $command->amount());
-    
+
     $bankAccountRepository->save($accountFrom);
     $bankAccountRepository->save($accountTo);
 });
@@ -128,8 +128,8 @@ $store->transactional(function () use ($command, $bankAccountRepository) {
 
 !!! tip
 
-    To ensure that all listeners are executed for the released events 
-    or that the listeners are not executed if the transaction fails, 
+    To ensure that all listeners are executed for the released events
+    or that the listeners are not executed if the transaction fails,
     you can use the [outbox](outbox.md) pattern for it.
 
 ## Schema

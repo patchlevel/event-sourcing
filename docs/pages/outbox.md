@@ -1,17 +1,17 @@
 # Outbox
 
-There is the problem that errors can occur when saving an aggregate or in the individual event listeners. 
-This means that you either saved an aggregate, but an error occurred in the email listener, so that no email went out. 
+There is the problem that errors can occur when saving an aggregate or in the individual event listeners.
+This means that you either saved an aggregate, but an error occurred in the email listener, so that no email went out.
 Or that an email was sent but the aggregate could not be saved.
 
-Both cases are very bad and can only be solved if both the saving of an aggregate 
+Both cases are very bad and can only be solved if both the saving of an aggregate
 and the dispatching of the events are in a transaction.
 
-The best way to ensure this is to store the events to be dispatched together 
+The best way to ensure this is to store the events to be dispatched together
 with the aggregate in a transaction in the same database.
 
-After the transaction becomes successful, the events can be loaded from the outbox table with a worker 
-and then dispatched into the correct event bus. As soon as the events have been dispatched, 
+After the transaction becomes successful, the events can be loaded from the outbox table with a worker
+and then dispatched into the correct event bus. As soon as the events have been dispatched,
 they are deleted from the outbox table. If an error occurs when dispatching, the whole thing will be retrieved later.
 
 ## Configuration
@@ -29,10 +29,10 @@ $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
     $outboxEventBus
-); 
+);
 ```
 
-And then you have to define the consumer. This gets the right event bus. 
+And then you have to define the consumer. This gets the right event bus.
 It is used to load the events to be dispatched from the database, dispatch the events and then empty the outbox table.
 
 ```php
@@ -50,7 +50,7 @@ $store->transactional(function () use ($command, $profileRepository) {
         $command->id(),
         $command->email()
     );
-    
+
     $profileRepository->save($profile);
 });
 ```
@@ -65,7 +65,7 @@ You can also interact directly with the outbox store.
 $store->saveOutboxMessage($message);
 $store->markOutboxMessageConsumed($message);
 
-$store->retrieveOutboxMessages(); 
+$store->retrieveOutboxMessages();
 $store->countOutboxMessages()
 ```
 

@@ -3,7 +3,7 @@
 A `repository` takes care of storing and loading the `aggregates`.
 He is also responsible for building [messages](event_bus.md) from the events and then dispatching them to the event bus.
 
-Every aggregate needs a repository to be stored. 
+Every aggregate needs a repository to be stored.
 And each repository is only responsible for one aggregate.
 
 ## Create a repository
@@ -11,9 +11,9 @@ And each repository is only responsible for one aggregate.
 The best way to create a repository is to use the `DefaultRepositoryManager`.
 This helps to build the repository correctly.
 
-The `DefaultRepositoryManager` needs some services to work. 
-For one, it needs [AggregateRootRegistry](aggregate.md#aggregate-root-registry) so that it knows which aggregates exist. 
-The [store](store.md), which is then given to the repository so that it can save and load the events at the end. 
+The `DefaultRepositoryManager` needs some services to work.
+For one, it needs [AggregateRootRegistry](aggregate.md#aggregate-root-registry) so that it knows which aggregates exist.
+The [store](store.md), which is then given to the repository so that it can save and load the events at the end.
 And the [EventBus](event_bus.md) to publish the new events.
 
 After plugging the `DefaultRepositoryManager` together, you can create the repository associated with the aggregate.
@@ -36,7 +36,7 @@ $repository = $repositoryManager->get(Profile::class);
 
 ### Snapshots
 
-Loading events for an aggregate is superfast. 
+Loading events for an aggregate is superfast.
 You can have thousands of events in the database that load in a few milliseconds and build the corresponding aggregate.
 
 But at some point you realize that it takes time. To counteract this there is a snapshot store.
@@ -88,8 +88,8 @@ $repository = $repositoryManager->get(Profile::class);
 
 !!! warning
 
-    We also use the decorator to fill in the `recordedOn` time. 
-    If you want to add your own decorator, then you need to make sure to add the `RecordedOnDecorator` as well. 
+    We also use the decorator to fill in the `recordedOn` time.
+    If you want to add your own decorator, then you need to make sure to add the `RecordedOnDecorator` as well.
     You can e.g. solve with the `ChainMessageDecorator`.
 
 !!! note
@@ -98,15 +98,15 @@ $repository = $repositoryManager->get(Profile::class);
 
 ## Use the repository
 
-Each `repository` has three methods that are responsible for loading an `aggregate`, 
+Each `repository` has three methods that are responsible for loading an `aggregate`,
 saving it or checking whether it exists.
 
 ### Save an aggregate
 
-An `aggregate` can be `saved`. 
-All new events that have not yet been written to the database are fetched from the aggregate. 
-These events are then also append to the database. 
-After the events have been written, 
+An `aggregate` can be `saved`.
+All new events that have not yet been written to the database are fetched from the aggregate.
+These events are then also append to the database.
+After the events have been written,
 the new events are dispatched on the [event bus](./event_bus.md).
 
 ```php
@@ -121,12 +121,12 @@ $repository->save($profile);
 
 !!! tip
 
-    If you want to make sure that dispatching events and storing events is transaction safe, 
+    If you want to make sure that dispatching events and storing events is transaction safe,
     then you should look at the [outbox](outbox.md) pattern.
 
 ### Load an aggregate
 
-An `aggregate` can be loaded using the `load` method. 
+An `aggregate` can be loaded using the `load` method.
 All events for the aggregate are loaded from the database and the current state is rebuilt.
 
 ```php
@@ -139,12 +139,12 @@ $profile = $repository->load('229286ff-6f95-4df6-bc72-0a239fe7b284');
 
 !!! note
 
-    You can only fetch one aggregate at a time and don't do any complex queries either. 
+    You can only fetch one aggregate at a time and don't do any complex queries either.
     Projections are used for this purpose.
 
 ### Has an aggregate
 
-You can also check whether an `aggregate` with a certain id exists. 
+You can also check whether an `aggregate` with a certain id exists.
 It is checked whether any event with this id exists in the database.
 
 ```php
@@ -155,7 +155,7 @@ if($repository->has('229286ff-6f95-4df6-bc72-0a239fe7b284')) {
 
 !!! note
 
-    The query is fast and does not load any event. 
+    The query is fast and does not load any event.
     This means that the state of the aggregate is not rebuild either.
 
 ## Custom Repository
@@ -172,27 +172,27 @@ This also gives you more type security.
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 
-class ProfileRepository 
+class ProfileRepository
 {
     /** @var Repository<Profile>  */
     private Repository $repository;
 
-    public function __construct(RepositoryManager $repositoryManager) 
+    public function __construct(RepositoryManager $repositoryManager)
     {
         $this->repository = $repositoryManager->get(Profile::class);
     }
-    
-    public function load(ProfileId $id): Profile 
+
+    public function load(ProfileId $id): Profile
     {
         return $this->repository->load($id->toString());
     }
-    
-    public function save(Profile $profile): void 
+
+    public function save(Profile $profile): void
     {
         return $this->repository->save($profile);
     }
-    
-    public function has(ProfileId $id): bool 
+
+    public function has(ProfileId $id): bool
     {
         return $this->repository->has($id->toString());
     }

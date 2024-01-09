@@ -78,26 +78,26 @@ nav:
   - Introduction: index.md
   - Getting Started: getting_started.md
   - Basics:
-    - Aggregate: aggregate.md
-    - Events: events.md
-    - Repository: repository.md
-    - Store: store.md
-    - Event Bus:  event_bus.md
-    - Processor: processor.md
-    - Projection: projection.md
+      - Aggregate: aggregate.md
+      - Events: events.md
+      - Repository: repository.md
+      - Store: store.md
+      - Event Bus: event_bus.md
+      - Processor: processor.md
+      - Projection: projection.md
   - Advanced:
-    - Normalizer: normalizer.md
-    - Snapshots: snapshots.md
-    - Upcasting: upcasting.md
-    - Projectionist: projectionist.md
-    - Outbox: outbox.md
-    - Pipeline: pipeline.md
-    - Message Decorator: message_decorator.md
-    - Split Stream: split_stream.md
-    - Time / Clock: clock.md
+      - Normalizer: normalizer.md
+      - Snapshots: snapshots.md
+      - Upcasting: upcasting.md
+      - Projectionist: projectionist.md
+      - Outbox: outbox.md
+      - Pipeline: pipeline.md
+      - Message Decorator: message_decorator.md
+      - Split Stream: split_stream.md
+      - Time / Clock: clock.md
   - Other / Tools:
-    - UUID: uuid.md
-    - CLI: cli.md
-    - Schema Migration: migration.md
-    - Watch Server: watch_server.md
-    - Tests: tests.md
+      - UUID: uuid.md
+      - CLI: cli.md
+      - Schema Migration: migration.md
+      - Watch Server: watch_server.md
+      - Tests: tests.md

@@ -21,7 +21,7 @@ final class SendEmailProcessor implements Listener
     public function __invoke(Message $message): void
     {
         $event = $message->event();
-    
+
         if (!$event instanceof ProfileCreated) {
             return;
         }
@@ -37,13 +37,12 @@ final class SendEmailProcessor implements Listener
 
 !!! warning
 
-    If you only want to listen to certain events, 
+    If you only want to listen to certain events,
     then you have to check it in the `__invoke` method or use the subscriber.
 
 !!! tip
 
     You can find out more about the event bus [here](event_bus.md).
-
 
 ## Subscriber
 

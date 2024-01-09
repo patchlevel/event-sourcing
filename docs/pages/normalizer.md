@@ -12,7 +12,7 @@ You have to set the normalizer to the properties using the specific normalizer c
 ```php
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeImmutableNormalizer]
     public DateTimeImmutable $date;
@@ -24,7 +24,7 @@ The whole thing also works with property promotion.
 ```php
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     public function __construct(
         #[DateTimeImmutableNormalizer]
@@ -95,7 +95,7 @@ objects. Internally, it basically does an `array_map` and then runs the specifie
 use Patchlevel\EventSourcing\Serializer\Normalizer\ArrayNormalizer;
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[ArrayNormalizer(new DateTimeImmutableNormalizer())]
     public array $dates;
@@ -114,7 +114,7 @@ you can convert DateTimeImmutable objects to a String and back again.
 ```php
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeImmutableNormalizer]
     public DateTimeImmutable $date;
@@ -127,7 +127,7 @@ The default is `DateTimeImmutable::ATOM`.
 ```php
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeImmutableNormalizer(format: DateTimeImmutable::RFC3339_EXTENDED)]
     public DateTimeImmutable $date;
@@ -145,7 +145,7 @@ The `DateTime` Normalizer works exactly like the DateTimeNormalizer. Only for Da
 ```php
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeNormalizer]
     public DateTime $date;
@@ -157,7 +157,7 @@ You can also specify the format here. The default is `DateTime::ATOM`.
 ```php
 use Patchlevel\EventSourcing\Serializer\Normalizer\DateTimeNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeNormalizer(format: DateTime::RFC3339_EXTENDED)]
     public DateTime $date;
@@ -166,7 +166,7 @@ final class DTO
 
 !!! warning
 
-    It is highly recommended to only ever use DateTimeImmutable objects and the DateTimeImmutableNormalizer. 
+    It is highly recommended to only ever use DateTimeImmutable objects and the DateTimeImmutableNormalizer.
     This prevents you from accidentally changing the state of the DateTime and thereby causing bugs.
 
 !!! note
@@ -188,7 +188,7 @@ final class DTO {
 
 ### Enum
 
-Backed enums can also be normalized. 
+Backed enums can also be normalized.
 For this, the enum FQCN must also be pass so that the `EnumNormalizer` knows which enum it is.
 
 ```php
@@ -202,7 +202,7 @@ final class DTO {
 
 ## Custom Normalizer
 
-Since we only offer normalizers for PHP native things, 
+Since we only offer normalizers for PHP native things,
 you have to write your own normalizers for your own structures, such as value objects.
 
 In our example we have built a value object that should hold a name.
@@ -211,17 +211,17 @@ In our example we have built a value object that should hold a name.
 final class Name
 {
     private string $value;
-    
-    public function __construct(string $value) 
+
+    public function __construct(string $value)
     {
         if (strlen($value) < 3) {
             throw new NameIsToShortException($value);
         }
-        
+
         $this->value = $value;
     }
-    
-    public function toString(): string 
+
+    public function toString(): string
     {
         return $this->value;
     }
@@ -311,6 +311,6 @@ The whole thing looks like this
 
 !!! note
 
-    NormalizedName also works for snapshots. 
-    But since a snapshot is just a cache, you can also just invalidate it, 
+    NormalizedName also works for snapshots.
+    But since a snapshot is just a cache, you can also just invalidate it,
     if you have backwards compatibility break in the property name

@@ -2,7 +2,7 @@
 
 There are usecases where you want to add some extra context to your events like metadata which is not directly relevant
 for your domain. With `MessageDecorator` we are providing a solution to add this metadata to your events. The metadata
-will also be persisted in the database and can be retrieved later on. 
+will also be persisted in the database and can be retrieved later on.
 
 ## Built-in decorator
 
@@ -10,7 +10,7 @@ We offer a few decorators that you can use.
 
 ### RecordedOnDecorator
 
-Each message needs a `RecordedOn` time. The `RecordedOnDecorator` is needed so that this is added to the message. 
+Each message needs a `RecordedOn` time. The `RecordedOnDecorator` is needed so that this is added to the message.
 This decorator needs a [clock](clock.md) implementation.
 
 ```php
@@ -23,7 +23,7 @@ $decorator = new RecordedOnDecorator($clock);
 
 !!! warning
 
-    A `RecordedOn` time must always be created. 
+    A `RecordedOn` time must always be created.
     Either this decorator must always be added or an appropriate replacement must be provided.
 
 ### SplitStreamDecorator
@@ -62,7 +62,7 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 
 $decorator = new ChainMessageDecorator([
     new RecordedOnDecorator($clock),
-    new SplitStreamDecorator($eventMetadataFactory)  
+    new SplitStreamDecorator($eventMetadataFactory)
 ]);
 
 $repositoryManager = new DefaultRepositoryManager(
@@ -78,8 +78,8 @@ $repository = $repositoryManager->get(Profile::class);
 
 !!! warning
 
-    We also use the decorator to fill in the `RecordedOn` time. 
-    If you want to add your own decorator or the SplitStreamDecorator, 
+    We also use the decorator to fill in the `RecordedOn` time.
+    If you want to add your own decorator or the SplitStreamDecorator,
     then you need to make sure to add the `RecordedOnDecorator` as well.
 
 !!! note
@@ -100,7 +100,7 @@ final class OnSystemRecordedDecorator implements MessageDecorator
     {
         return $message->withCustomHeader('system', 'accounting_system');
     }
-} 
+}
 ```
 
 !!! note

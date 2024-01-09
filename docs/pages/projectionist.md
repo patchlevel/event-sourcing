@@ -1,8 +1,8 @@
 # Projectionist
 
 The projectionist manages individual projectors and keeps the projections running.
-Internally, the projectionist does this by tracking where each projection is in the event stream 
-and keeping all projections up to date. 
+Internally, the projectionist does this by tracking where each projection is in the event stream
+and keeping all projections up to date.
 He also takes care that new projections are booted and old ones are removed again.
 If something breaks, the projectionist marks the individual projections as faulty.
 
@@ -19,12 +19,12 @@ If something breaks, the projectionist marks the individual projections as fault
 
 ## Versioned Projector
 
-So that the projectionist can also assign the projectors to a projection, 
-the interface must be changed from `Projector` to `VersionedProjector`. 
+So that the projectionist can also assign the projectors to a projection,
+the interface must be changed from `Projector` to `VersionedProjector`.
 As the name suggests, the projector will also be versionable.
 
-In addition, you have to implement the `targetProjection` method, which returns the target projection id. 
-So that several versions of the projection can exist, 
+In addition, you have to implement the `targetProjection` method, which returns the target projection id.
+So that several versions of the projection can exist,
 the version of the projection should flow into the table or collection name.
 
 ```php
@@ -42,19 +42,19 @@ final class ProfileProjection implements VersionedProjector
         private readonly Connection $connection
     ) {
     }
-    
-    public function targetProjection(): ProjectionId 
+
+    public function targetProjection(): ProjectionId
     {
         return new ProjectionId(
-            name: 'profile', 
+            name: 'profile',
             version: 1
         );
     }
-    
+
     /**
      * @return list<array{id: string, name: string}>
      */
-    public function getProfiles(): array 
+    public function getProfiles(): array
     {
         return $this->connection->fetchAllAssociative(
             sprintf('SELECT id, name FROM %s;', $this->table())
@@ -66,7 +66,7 @@ final class ProfileProjection implements VersionedProjector
     {
         $this->connection->executeStatement(
             sprintf(
-                'CREATE TABLE IF NOT EXISTS %s (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);', 
+                'CREATE TABLE IF NOT EXISTS %s (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);',
                 $this->table()
             )
         );
@@ -84,7 +84,7 @@ final class ProfileProjection implements VersionedProjector
     public function handleProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();
-    
+
         $this->connection->executeStatement(
             sprintf('INSERT INTO %s (`id`, `name`) VALUES(:id, :name);', $this->table()),
             [
@@ -93,12 +93,12 @@ final class ProfileProjection implements VersionedProjector
             ]
         );
     }
-    
-    private function table(): string 
+
+    private function table(): string
     {
         return sprintf(
-            'projection_%s_%s', 
-            $this->targetProjection()->name(), 
+            'projection_%s_%s',
+            $this->targetProjection()->name(),
             $this->targetProjection()->version()
         );
     }
@@ -118,10 +118,10 @@ So that the projectionist knows where the projection stopped and must continue.
 
 ## Projection Status
 
-There is a lifecycle for each projection. 
+There is a lifecycle for each projection.
 This cycle is tracked by the projectionist.
 
-``` mermaid
+```mermaid
 stateDiagram-v2
     direction LR
     [*] --> New
@@ -155,29 +155,29 @@ These projections have a projector, follow the event stream and are up to date.
 
 ### Outdated
 
-If a projection exists in the projection store 
-that does not have a projector in the source code with a corresponding projection id, 
+If a projection exists in the projection store
+that does not have a projector in the source code with a corresponding projection id,
 then this projection is marked as outdated.
 This happens when either the projector has been deleted
 or the projection id of a projector has changed.
 In the last case there is a new projection.
 
-An outdated projection does not automatically become active again when the projection id exists again. 
+An outdated projection does not automatically become active again when the projection id exists again.
 This happens, for example, when an old version was deployed again during a rollback.
 
 There are two options here:
 
-* Reactivate the projection.
-* Remove the projection and rebuild it from scratch.
+- Reactivate the projection.
+- Remove the projection and rebuild it from scratch.
 
 ### Error
 
-If an error occurs in a projector, then the target projection is set to Error. 
-This projection will then no longer run until the projection is activated again. 
+If an error occurs in a projector, then the target projection is set to Error.
+This projection will then no longer run until the projection is activated again.
 There are two options here:
 
-* Reactivate the projection.
-* Remove the projection and rebuild it from scratch.
+- Reactivate the projection.
+- Remove the projection and rebuild it from scratch.
 
 ## Setup
 
@@ -186,7 +186,6 @@ In order for the projectionist to be able to do its work, you have to assemble i
 !!! warning
 
     The SyncProjectorListener must be removed again so that the events are not processed directly!
-
 
 ### Projection Store
 
@@ -200,7 +199,7 @@ use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 $projectionStore = new DoctrineStore($connection);
 ```
 
-So that the schema for the projection store can also be created, 
+So that the schema for the projection store can also be created,
 we have to tell the `SchemaDirector` our schema configuration.
 Using `ChainSchemaConfigurator` we can add multiple schema configurators.
 In our case they need the `SchemaConfigurator` from the event store and projection store.
@@ -220,7 +219,7 @@ $schemaDirector = new DoctrineSchemaDirector(
 
 !!! note
 
-    You can find more about schema configurator [here](./store.md) 
+    You can find more about schema configurator [here](./store.md)
 
 ### Projectionist
 
@@ -242,7 +241,7 @@ The Projectionist has a few methods needed to use it effectively. These are expl
 
 ### Boot
 
-So that the projectionist can manage the projections, they must be booted. 
+So that the projectionist can manage the projections, they must be booted.
 In this step, the structures are created for all new projections.
 The projections then catch up with the current position of the event stream.
 When the projections are finished, they switch to the active state.
@@ -261,7 +260,7 @@ $projectionist->run();
 
 ### Teardown
 
-If projections are outdated, they can be cleaned up here. 
+If projections are outdated, they can be cleaned up here.
 The projectionist also tries to remove the structures created for the projection.
 
 ```php
@@ -279,7 +278,7 @@ $projectionist->remove();
 
 ### Reactivate
 
-If a projection had an error, you can reactivate it. 
+If a projection had an error, you can reactivate it.
 As a result, the projection gets the status active again and is then kept up-to-date again by the projectionist.
 
 ```php

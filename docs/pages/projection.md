@@ -27,11 +27,11 @@ final class ProfileProjection implements Projector
         private readonly Connection $connection
     ) {
     }
-    
+
     /**
      * @return list<array{id: string, name: string}>
      */
-    public function getProfiles(): array 
+    public function getProfiles(): array
     {
         return $this->connection->fetchAllAssociative('SELECT id, name FROM projection_profile;');
     }
@@ -52,7 +52,7 @@ final class ProfileProjection implements Projector
     public function handleProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();
-    
+
         $this->connection->executeStatement(
             'INSERT INTO projection_profile (`id`, `name`) VALUES(:id, :name);',
             [
@@ -78,12 +78,12 @@ Several projectors can also listen to the same event.
 
 !!! danger
 
-    You should not execute any actions with projectors, 
+    You should not execute any actions with projectors,
     otherwise these will be executed again if you rebuild the projection!
 
 !!! tip
 
-    If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
+    If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin)
     to make the event method return the correct type.
 
 ## Projector Repository

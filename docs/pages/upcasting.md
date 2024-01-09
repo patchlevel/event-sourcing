@@ -23,7 +23,7 @@ final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
         if ($upcast->eventName !== 'profile_created') {
             return $upcast;
         }
-        
+
         return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']);
     }
 }
@@ -49,7 +49,7 @@ final class LegacyEventNameUpaster implements Upcaster
     public function __construct(
         private readonly EventRegistry $eventRegistry
     ){}
-    
+
     public function __invoke(Upcast $upcast): Upcast
     {
         return $upcast->replaceEventName(
@@ -61,7 +61,7 @@ final class LegacyEventNameUpaster implements Upcaster
 
 ## Use upcasting
 
-After we have defined the upcasting rules, we also have to pass the whole thing to the serializer. 
+After we have defined the upcasting rules, we also have to pass the whole thing to the serializer.
 Since we have multiple upcasters, we use a chain here.
 
 ```php
@@ -92,8 +92,8 @@ final class EventStreamCleanupCommand extends Command
     protected static $defaultDescription = 'rebuild event stream';
 
     public function __construct(
-        private readonly Store $sourceStore, 
-        private readonly Store $targetStore, 
+        private readonly Store $sourceStore,
+        private readonly Store $targetStore,
         private readonly ProjectionHandler $projectionHandler
     ){
     }
@@ -101,17 +101,17 @@ final class EventStreamCleanupCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $pipeline = new Pipeline(
-            new StoreSource($sourceStore), 
+            new StoreSource($sourceStore),
             new StoreTarget($targetStore)
         );
-        
+
         $pipeline->run();
     }
 ```
 
 !!! danger
 
-    Under no circumstances may the same store be used that is used for the source. 
+    Under no circumstances may the same store be used that is used for the source.
     Otherwise the store will be broken afterwards!
 
 !!! note

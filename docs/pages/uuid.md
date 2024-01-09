@@ -2,8 +2,8 @@
 
 A UUID can be generated for the `aggregateId`. There are two popular libraries that can be used:
 
-* [ramsey/uuid](https://github.com/ramsey/uuid)
-* [symfony/uid](https://symfony.com/doc/current/components/uid.html)
+- [ramsey/uuid](https://github.com/ramsey/uuid)
+- [symfony/uid](https://symfony.com/doc/current/components/uid.html)
 
 The `aggregate` does not care how the id is generated, since only an aggregate-wide unique string is expected here.
 
@@ -24,13 +24,13 @@ final class Profile extends AggregateRoot
     {
         return $this->id->toString();
     }
-    
-    public function id(): UuidInterface 
+
+    public function id(): UuidInterface
     {
         return $this->id;
     }
-    
-    public function name(): string 
+
+    public function name(): string
     {
         return $this->name;
     }
@@ -38,15 +38,15 @@ final class Profile extends AggregateRoot
     public static function create(string $name): self
     {
         $id = Uuid::uuid4();
-    
+
         $self = new self();
         $self->recordThat(new ProfileCreated($id, $name));
 
         return $self;
     }
-    
+
     #[Apply]
-    protected function applyProfileCreated(ProfileCreated $event): void 
+    protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId();
         $this->name = $event->name();
@@ -61,21 +61,21 @@ The whole thing looks like this:
 ```php
 use Ramsey\Uuid\Uuid;
 
-class ProfileId 
+class ProfileId
 {
     private string $id;
-    
-    public function __construct(string $id) 
+
+    public function __construct(string $id)
     {
         $this->id = $id;
     }
-    
-    public static function generate(): self 
+
+    public static function generate(): self
     {
         return new self(Uuid::uuid4()->toString());
     }
-    
-    public function toString(): string 
+
+    public function toString(): string
     {
         return $this->id;
     }
@@ -99,13 +99,13 @@ final class Profile extends AggregateRoot
     {
         return $this->id->toString();
     }
-    
-    public function id(): ProfileId 
+
+    public function id(): ProfileId
     {
         return $this->id;
     }
-    
-    public function name(): string 
+
+    public function name(): string
     {
         return $this->name;
     }
@@ -113,15 +113,15 @@ final class Profile extends AggregateRoot
     public static function create(string $name): self
     {
         $id = ProfileId::generate();
-    
+
         $self = new self();
         $self->recordThat(new ProfileCreated($id, $name));
 
         return $self;
     }
-    
+
     #[Apply]
-    protected function applyProfileCreated(ProfileCreated $event): void 
+    protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId();
         $this->name = $event->name();
@@ -131,5 +131,5 @@ final class Profile extends AggregateRoot
 
 !!! note
 
-    If you want to use snapshots, then you have to make sure that the value objects are normalized. 
+    If you want to use snapshots, then you have to make sure that the value objects are normalized.
     You can find how to do this [here](normalizer.md).

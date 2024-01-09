@@ -49,7 +49,7 @@ final class GuestIsCheckedOut
 
 !!! note
 
-    You can find out more about events [here](events.md).    
+    You can find out more about events [here](events.md).
 
 ## Define aggregates
 
@@ -68,7 +68,7 @@ final class Hotel extends AggregateRoot
 {
     private string $id;
     private string $name;
-    
+
     /**
      * @var list<string>
      */
@@ -97,35 +97,35 @@ final class Hotel extends AggregateRoot
         if (in_array($guestName, $this->guests, true)) {
             throw new GuestHasAlreadyCheckedIn($guestName);
         }
-    
+
         $this->recordThat(new GuestIsCheckedIn($guestName));
     }
-    
+
     public function checkOut(string $guestName): void
     {
         if (!in_array($guestName, $this->guests, true)) {
             throw new IsNotAGuest($guestName);
         }
-    
+
         $this->recordThat(new GuestIsCheckedOut($guestName));
     }
-    
+
     #[Apply]
-    protected function applyHotelCreated(HotelCreated $event): void 
+    protected function applyHotelCreated(HotelCreated $event): void
     {
         $this->id = $event->hotelId;
         $this->name = $event->hotelName;
-        $this->guests = [];    
+        $this->guests = [];
     }
-    
+
     #[Apply]
-    protected function applyGuestIsCheckedIn(GuestIsCheckedIn $event): void 
+    protected function applyGuestIsCheckedIn(GuestIsCheckedIn $event): void
     {
         $this->guests[] = $event->guestName;
     }
-    
+
     #[Apply]
-    protected function applyGuestIsCheckedOut(GuestIsCheckedOut $event): void 
+    protected function applyGuestIsCheckedOut(GuestIsCheckedOut $event): void
     {
         $this->guests = array_values(
             array_filter(
@@ -165,11 +165,11 @@ final class HotelProjection implements Projector
         private readonly Connection $db
     ) {
     }
-    
+
     /**
      * @return list<array{id: string, name: string, guests: int}>
      */
-    public function getHotels(): array 
+    public function getHotels(): array
     {
         return $this->db->fetchAllAssociative('SELECT id, name, guests FROM hotel;')
     }
@@ -178,17 +178,17 @@ final class HotelProjection implements Projector
     public function handleHotelCreated(Message $message): void
     {
         $event = $message->event();
-    
+
         $this->db->insert(
-            'hotel', 
+            'hotel',
             [
-                'id' => $event->hotelId, 
+                'id' => $event->hotelId,
                 'name' => $event->hotelName,
                 'guests' => 0
             ]
         );
     }
-    
+
     #[Handle(GuestIsCheckedIn::class)]
     public function handleGuestIsCheckedIn(Message $message): void
     {
@@ -197,7 +197,7 @@ final class HotelProjection implements Projector
             [$message->aggregateId()]
         );
     }
-    
+
     #[Handle(GuestIsCheckedOut::class)]
     public function handleGuestIsCheckedOut(Message $message): void
     {
@@ -206,7 +206,7 @@ final class HotelProjection implements Projector
             [$message->aggregateId()]
         );
     }
-    
+
     #[Create]
     public function create(): void
     {
@@ -358,5 +358,5 @@ $hotels = $hotelProjection->getHotels();
 
     We have successfully implemented and used event sourcing.
 
-    Feel free to browse further in the documentation for more detailed information. 
+    Feel free to browse further in the documentation for more detailed information.
     If there are still open questions, create a ticket on Github and we will try to help you.

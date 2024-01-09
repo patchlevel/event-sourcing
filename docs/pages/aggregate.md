@@ -2,10 +2,10 @@
 
 !!! abstract
 
-    Aggregate is a pattern in Domain-Driven Design. A DDD aggregate is a cluster of domain objects 
+    Aggregate is a pattern in Domain-Driven Design. A DDD aggregate is a cluster of domain objects
     that can be treated as a single unit. [...]
 
-    [DDD Aggregate - Martin Flower](https://martinfowler.com/bliki/DDD_Aggregate.html) 
+    [DDD Aggregate - Martin Flower](https://martinfowler.com/bliki/DDD_Aggregate.html)
 
 An Aggregate has to inherit from `AggregateRoot` and need to implement the method `aggregateRootId`.
 `aggregateRootId` is the identifier from `AggregateRoot` like a primary key for an entity.
@@ -28,12 +28,12 @@ final class Profile extends AggregateRoot
     {
         return $this->id;
     }
-    
-    public static function register(string $id): self 
+
+    public static function register(string $id): self
     {
         $self = new self();
         // todo: record create event
-        
+
         return $self;
     }
 }
@@ -61,11 +61,11 @@ final class CreateProfileHandler
     public function __construct(
         private readonly Repository $profileRepository
     ) {}
-    
+
     public function __invoke(CreateProfile $command): void
     {
         $profile = Profile::register($command->id());
-        
+
         $this->profileRepository->save($profile);
     }
 }
@@ -121,8 +121,8 @@ final class Profile extends AggregateRoot
     {
         return $this->id;
     }
-    
-    public function name(): string 
+
+    public function name(): string
     {
         return $this->name;
     }
@@ -134,9 +134,9 @@ final class Profile extends AggregateRoot
 
         return $self;
     }
-    
+
     #[Apply]
-    protected function applyProfileRegistered(ProfileRegistered $event): void 
+    protected function applyProfileRegistered(ProfileRegistered $event): void
     {
         $this->id = $event->profileId;
         $this->name = $event->name;
@@ -152,7 +152,7 @@ In our named constructor `register` we have now created the event and recorded i
 The aggregate remembers all new recorded events in order to save them later.
 At the same time, a defined apply method is executed directly so that we can change our state.
 
-So that the AggregateRoot also knows which method it should call, 
+So that the AggregateRoot also knows which method it should call,
 we have to mark it with the `Apply` [attributes](https://www.php.net/manual/en/language.attributes.overview.php).
 We did that in the `applyProfileRegistered` method.
 In this method we change the `Profile` properties `id` and `name` with the transferred values.
@@ -179,7 +179,7 @@ final class NameChanged
 
     Events should best be written in the past, as they describe a state that has happened.
 
-After we have defined the event, we can define a new public method called `changeName` to change the profile name. 
+After we have defined the event, we can define a new public method called `changeName` to change the profile name.
 This method then creates the event `NameChanged` and records it:
 
 ```php
@@ -197,8 +197,8 @@ final class Profile extends AggregateRoot
     {
         return $this->id;
     }
-    
-    public function name(): string 
+
+    public function name(): string
     {
         return $this->name;
     }
@@ -210,19 +210,19 @@ final class Profile extends AggregateRoot
 
         return $self;
     }
-    
-    public function changeName(string $name): void 
+
+    public function changeName(string $name): void
     {
         $this->recordThat(new NameChanged($name));
     }
-    
+
     #[Apply]
     protected function applyProfileRegistered(ProfileRegistered $event): void
     {
         $this->id = $event->profileId;
         $this->name = $event->name;
     }
-    
+
     #[Apply]
     protected function applyNameChanged(NameChanged $event): void
     {
@@ -231,7 +231,7 @@ final class Profile extends AggregateRoot
 }
 ```
 
-We have also defined a new `apply` method named `applyNameChanged` 
+We have also defined a new `apply` method named `applyNameChanged`
 where we change the name depending on the value in the event.
 
 When using it, it can look like this:
@@ -244,16 +244,16 @@ final class ChangeNameHandler
 {
     private Repository $profileRepository;
 
-    public function __construct(Repository $profileRepository) 
+    public function __construct(Repository $profileRepository)
     {
         $this->profileRepository = $profileRepository;
     }
-    
+
     public function __invoke(ChangeName $command): void
     {
         $profile = $this->profileRepository->load($command->id());
         $profile->changeName($command->name());
-    
+
         $this->profileRepository->save($profile);
     }
 }
@@ -271,7 +271,7 @@ The method `changeName` is then executed on the aggregate to change the name.
 In this method the event `NameChanged` is generated and recorded.
 The `applyNameChanged` method was also called again internally to adjust the state.
 
-When the `save` method is called on the repository, 
+When the `save` method is called on the repository,
 all newly recorded events are then fetched and written to the database.
 In this specific case only the `NameChanged` changed event.
 
@@ -291,7 +291,7 @@ final class Profile extends AggregateRoot
     private string $name;
 
     // ...
-    
+
     #[Apply(ProfileCreated::class)]
     #[Apply(NameChanged::class)]
     protected function applyProfileCreated(ProfileCreated|NameChanged $event): void
@@ -299,7 +299,7 @@ final class Profile extends AggregateRoot
         if ($event instanceof ProfileCreated) {
             $this->id = $event->profileId;
         }
-        
+
         $this->name = $event->name;
     }
 }
@@ -307,9 +307,9 @@ final class Profile extends AggregateRoot
 
 ## Suppress missing apply methods
 
-Sometimes you have events that do not change the state of the aggregate itself, 
-but are still recorded for the future, to listen on it or to create a projection. 
-So that you are not forced to write an apply method for it, 
+Sometimes you have events that do not change the state of the aggregate itself,
+but are still recorded for the future, to listen on it or to create a projection.
+So that you are not forced to write an apply method for it,
 you can suppress the missing apply exceptions these events with the `SuppressMissingApply` attribute.
 
 ```php
@@ -326,7 +326,7 @@ final class Profile extends AggregateRoot
     private string $name;
 
     // ...
-    
+
     #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
@@ -354,7 +354,7 @@ final class Profile extends AggregateRoot
     private string $name;
 
     // ...
-    
+
     #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
@@ -372,11 +372,11 @@ final class Profile extends AggregateRoot
 
 Usually, aggregates have business rules that must be observed. Like there may not be more than 10 people in a group.
 
-These rules must be checked before an event is recorded. 
+These rules must be checked before an event is recorded.
 As soon as an event was recorded, the described thing happened and cannot be undone.
 
-A further check in the apply method is also not possible because these events have already happened 
-and were then also saved in the database. 
+A further check in the apply method is also not possible because these events have already happened
+and were then also saved in the database.
 
 In the next example we want to make sure that **the name is at least 3 characters long**:
 
@@ -390,25 +390,25 @@ final class Profile extends AggregateRoot
 {
     private string $id;
     private string $name;
-    
+
     // ...
-    
-    public function name(): string 
+
+    public function name(): string
     {
         return $this->name;
     }
-    
-    public function changeName(string $name): void 
+
+    public function changeName(string $name): void
     {
         if (strlen($name) < 3) {
             throw new NameIsToShortException($name);
         }
-    
+
         $this->recordThat(new NameChanged($name));
     }
-    
+
     #[Apply]
-    protected function applyNameChanged(NameChanged $event): void 
+    protected function applyNameChanged(NameChanged $event): void
     {
         $this->name = $event->name();
     }
@@ -419,27 +419,27 @@ final class Profile extends AggregateRoot
 
     Disregarding this can break the rebuilding of the state!
 
-We have now ensured that this rule takes effect when a name is changed with the method `changeName`. 
+We have now ensured that this rule takes effect when a name is changed with the method `changeName`.
 But when we create a new profile this rule does not currently apply.
 
-In order for this to work, we either have to duplicate the rule or outsource it. 
+In order for this to work, we either have to duplicate the rule or outsource it.
 Here we show how we can do it all with a value object:
 
 ```php
 final class Name
 {
     private string $value;
-    
-    public function __construct(string $value) 
+
+    public function __construct(string $value)
     {
         if (strlen($value) < 3) {
             throw new NameIsToShortException($value);
         }
-        
+
         $this->value = $value;
     }
-    
-    public function toString(): string 
+
+    public function toString(): string
     {
         return $this->value;
     }
@@ -458,7 +458,7 @@ final class Profile extends AggregateRoot
 {
     private string $id;
     private Name $name;
-    
+
     public static function register(string $id, Name $name): static
     {
         $self = new static();
@@ -466,28 +466,28 @@ final class Profile extends AggregateRoot
 
         return $self;
     }
-    
+
     // ...
-    
-    public function name(): Name 
+
+    public function name(): Name
     {
         return $this->name;
     }
-    
-    public function changeName(Name $name): void 
+
+    public function changeName(Name $name): void
     {
         $this->recordThat(new NameChanged($name));
     }
-    
+
     #[Apply]
-    protected function applyNameChanged(NameChanged $event): void 
+    protected function applyNameChanged(NameChanged $event): void
     {
         $this->name = $event->name;
     }
 }
 ```
 
-In order for the whole thing to work, we still have to adapt our `NameChanged` event, 
+In order for the whole thing to work, we still have to adapt our `NameChanged` event,
 since we only expected a string before but now passed a `Name` value object.
 
 ```php
@@ -502,6 +502,7 @@ final class NameChanged
     ) {}
 }
 ```
+
 !!! warning
 
     The payload must be serializable and unserializable as json.
@@ -515,8 +516,8 @@ Sometimes also from states, which were changed in the same method.
 This is not a problem, as the `apply` methods are always executed immediately.
 
 In the next case we throw an exception if the hotel is already overbooked.
-Besides that, we record another event `FullyBooked`, if the hotel is fully booked with the last booking. 
-With this event we could [notify](./processor.md) external systems 
+Besides that, we record another event `FullyBooked`, if the hotel is fully booked with the last booking.
+With this event we could [notify](./processor.md) external systems
 or fill a [projection](./projection.md) with fully booked hotels.
 
 ```php
@@ -532,24 +533,24 @@ final class Hotel extends AggregateRoot
     private const SIZE = 5;
 
     private int $people;
-    
+
     // ...
-    
-    public function book(string $name): void 
+
+    public function book(string $name): void
     {
         if ($this->people === self::SIZE) {
             throw new NoPlaceException($name);
         }
-        
+
         $this->recordThat(new RoomBocked($name));
-        
+
         if ($this->people === self::SIZE) {
             $this->recordThat(new FullyBooked());
         }
     }
-    
+
     #[Apply]
-    protected function applyRoomBocked(RoomBocked $event): void 
+    protected function applyRoomBocked(RoomBocked $event): void
     {
         $this->people++;
     }
@@ -558,10 +559,10 @@ final class Hotel extends AggregateRoot
 
 ## Working with dates
 
-An aggregate should always be deterministic. In other words, whenever I execute methods on the aggregate, 
+An aggregate should always be deterministic. In other words, whenever I execute methods on the aggregate,
 I always get the same result. This also makes testing much easier.
 
-But that often doesn't seem to be possible, e.g. if you want to save a createAt date. 
+But that often doesn't seem to be possible, e.g. if you want to save a createAt date.
 But you can pass this information by yourself.
 
 ```php
@@ -575,7 +576,7 @@ final class Profile extends AggregateRoot
     private string $id;
     private Name $name;
     private DateTimeImmutable $registeredAt;
-    
+
     public static function register(string $id, string $name, DateTimeImmutable $registeredAt): static
     {
         $self = new static();
@@ -583,7 +584,7 @@ final class Profile extends AggregateRoot
 
         return $self;
     }
-    
+
     // ...
 }
 ```
@@ -602,7 +603,7 @@ final class Profile extends AggregateRoot
     private string $id;
     private Name $name;
     private DateTimeImmutable $registeredAt;
-    
+
     public static function register(string $id, string $name, Clock $clock): static
     {
         $self = new static();
@@ -610,12 +611,12 @@ final class Profile extends AggregateRoot
 
         return $self;
     }
-    
+
     // ...
 }
 ```
 
-Now you can pass the `SystemClock` to determine the current time. 
+Now you can pass the `SystemClock` to determine the current time.
 Or for test purposes the `FrozenClock`, which always returns the same time.
 
 !!! note

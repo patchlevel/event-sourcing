@@ -1,24 +1,24 @@
 # CLI
 
-The library also offers `symfony` cli commands to create or delete `databases`. 
-It is also possible to manage the `schema` and `projections`. 
-These commands are `optional` and only wrap existing functionalities 
+The library also offers `symfony` cli commands to create or delete `databases`.
+It is also possible to manage the `schema` and `projections`.
+These commands are `optional` and only wrap existing functionalities
 that are also available in this way.
 
 ## Database commands
 
 There are two commands for creating and deleting a database.
 
-* DatabaseCreateCommand: `event-sourcing:database:create`
-* DatabaseDropCommand: `event-sourcing:database:drop`
+- DatabaseCreateCommand: `event-sourcing:database:create`
+- DatabaseDropCommand: `event-sourcing:database:drop`
 
 ## Schema commands
 
 The database schema can also be created, updated and dropped.
 
-* SchemaCreateCommand: `event-sourcing:schema:create`
-* SchemaUpdateCommand: `event-sourcing:schema:update`
-* SchemaDropCommand: `event-sourcing:schema:drop`
+- SchemaCreateCommand: `event-sourcing:schema:create`
+- SchemaUpdateCommand: `event-sourcing:schema:update`
+- SchemaDropCommand: `event-sourcing:schema:drop`
 
 !!! note
 
@@ -29,9 +29,9 @@ The database schema can also be created, updated and dropped.
 
 The creation, deletion and rebuilding of the projections is also possible via the cli.
 
-* ProjectionCreateCommand: `event-sourcing:projection:create`
-* ProjectionDropCommand: `event-sourcing:projection:drop`
-* ProjectionRebuildCommand: `event-sourcing:projection:rebuild`
+- ProjectionCreateCommand: `event-sourcing:projection:create`
+- ProjectionDropCommand: `event-sourcing:projection:drop`
+- ProjectionRebuildCommand: `event-sourcing:projection:rebuild`
 
 !!! note
 
@@ -41,12 +41,12 @@ The creation, deletion and rebuilding of the projections is also possible via th
 
 To manage your projectors there are the following cli commands.
 
-* ProjectionistBootCommand: `event-sourcing:projectionist:boot`
-* ProjectionistReactiveCommand: `event-sourcing:projectionist:reactive`
-* ProjectionistRemoveCommand: `event-sourcing:projectionist:remove`
-* ProjectionistRunCommand: `event-sourcing:projectionist:run`
-* ProjectionistStatusCommand: `event-sourcing:projectionist:status`
-* ProjectionistTeardownCommand: `event-sourcing:projectionist:teardown`
+- ProjectionistBootCommand: `event-sourcing:projectionist:boot`
+- ProjectionistReactiveCommand: `event-sourcing:projectionist:reactive`
+- ProjectionistRemoveCommand: `event-sourcing:projectionist:remove`
+- ProjectionistRunCommand: `event-sourcing:projectionist:run`
+- ProjectionistStatusCommand: `event-sourcing:projectionist:status`
+- ProjectionistTeardownCommand: `event-sourcing:projectionist:teardown`
 
 !!! note
 
@@ -56,8 +56,8 @@ To manage your projectors there are the following cli commands.
 
 Interacting with the outbox store is also possible via the cli.
 
-* OutboxInfoCommand: `event-sourcing:outbox:info`
-* OutboxConsumeCommand: `event-sourcing:outbox:consume`
+- OutboxInfoCommand: `event-sourcing:outbox:info`
+- OutboxConsumeCommand: `event-sourcing:outbox:consume`
 
 !!! note
 
@@ -98,5 +98,5 @@ $cli->run();
 
 !!! note
 
-    You can also register doctrine migration commands, 
+    You can also register doctrine migration commands,
     see the [store](./store.md) documentation for this.

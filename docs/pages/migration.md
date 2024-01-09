@@ -53,7 +53,7 @@ $connection = DriverManager::getConnection([
 $config = new PhpFile('migrations.php');
 
 $dependencyFactory = DependencyFactory::fromConnection(
-    $config, 
+    $config,
     new ExistingConnection($connection)
 );
 
@@ -63,7 +63,7 @@ $schemaDirector = new DoctrineSchemaDirector(
 );
 
 $dependencyFactory->setService(
-    SchemaProvider::class, 
+    SchemaProvider::class,
     new DoctrineMigrationSchemaProvider($schemaDirector)
 );
 
@@ -73,7 +73,7 @@ $cli->setCatchExceptions(true);
 $cli->addCommands([
 
     // other cli commands
-    
+
     new Command\ExecuteCommand($dependencyFactory, 'event-sourcing:migrations:execute'),
     new Command\GenerateCommand($dependencyFactory, 'event-sourcing:migrations:generate'),
     new Command\LatestCommand($dependencyFactory, 'event-sourcing:migrations:latest'),
@@ -89,19 +89,18 @@ $cli->run();
 
 !!! note
 
-    Here you can find more information on how to 
+    Here you can find more information on how to
     [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
-
 
 ## Migration commands
 
 There are some commands to use the migration feature.
 
-* ExecuteCommand: `event-sourcing:migrations:execute`
-* GenerateCommand: `event-sourcing:migrations:generate`
-* LatestCommand: `event-sourcing:migrations:latest`
-* ListCommand: `event-sourcing:migrations:list`
-* MigrateCommand: `event-sourcing:migrations:migrate`
-* DiffCommand: `event-sourcing:migrations:diff`
-* StatusCommand: `event-sourcing:migrations:status`
-* VersionCommand: `event-sourcing:migrations:version`
+- ExecuteCommand: `event-sourcing:migrations:execute`
+- GenerateCommand: `event-sourcing:migrations:generate`
+- LatestCommand: `event-sourcing:migrations:latest`
+- ListCommand: `event-sourcing:migrations:list`
+- MigrateCommand: `event-sourcing:migrations:migrate`
+- DiffCommand: `event-sourcing:migrations:diff`
+- StatusCommand: `event-sourcing:migrations:status`
+- VersionCommand: `event-sourcing:migrations:version`

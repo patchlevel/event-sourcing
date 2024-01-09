@@ -48,7 +48,7 @@ $pipeline = new Pipeline(
 );
 ```
 
-The principle remains the same. 
+The principle remains the same.
 There is a source where the data comes from.
 A target where the data should flow.
 And any number of middlewares to do something with the data beforehand.
@@ -88,7 +88,7 @@ $source = new InMemorySource([
 
 ### Custom Source
 
-You can also create your own source class. It has to inherit from `Source`. 
+You can also create your own source class. It has to inherit from `Source`.
 Here you can, for example, create a migration from another event sourcing system or similar system.
 
 ```php
@@ -104,7 +104,7 @@ $source = new class implements Source {
         yield new Message(
             Profile::class,
             '1',
-            0, 
+            0,
             new ProfileCreated('1', ['name' => 'David'])
         );
     }
@@ -132,7 +132,7 @@ $target = new StoreTarget($store);
 
 !!! danger
 
-    Under no circumstances may the same store be used that is used for the source. 
+    Under no circumstances may the same store be used that is used for the source.
     Otherwise the store will be broken afterwards!
 
 !!! note
@@ -227,7 +227,6 @@ $middleware = new ExcludeEventMiddleware([EmailChanged::class]);
 
 ### Include
 
-
 With this middleware you can only allow certain events.
 
 ```php
@@ -242,8 +241,8 @@ $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
 
 ### Filter
 
-If the middlewares `ExcludeEventMiddleware` and `IncludeEventMiddleware` are not sufficient, 
-you can also write your own filter. 
+If the middlewares `ExcludeEventMiddleware` and `IncludeEventMiddleware` are not sufficient,
+you can also write your own filter.
 This middleware expects a callback that returns either true to allow events or false to not allow them.
 
 ```php
@@ -254,7 +253,7 @@ $middleware = new FilterEventMiddleware(function (AggregateChanged $event) {
     if (!$event instanceof ProfileCreated) {
         return true;
     }
-    
+
     return $event->allowNewsletter();
 });
 ```
@@ -278,7 +277,6 @@ $middleware = new ExcludeArchivedEventMiddleware();
     After this middleware, the playhead must be recalculated!
 
 ### Only Archived Events
-
 
 With this middleware you can only allow archived events.
 
@@ -328,7 +326,7 @@ $middleware = new UntilEventMiddleware(new DateTimeImmutable('2020-01-01 12:00:0
 ### Recalculate playhead
 
 This middleware can be used to recalculate the playhead.
-The playhead must always be in ascending order so that the data is valid. 
+The playhead must always be in ascending order so that the data is valid.
 Some middleware can break this order and the middleware `RecalculatePlayheadMiddleware` can fix this problem.
 
 ```php
@@ -358,17 +356,17 @@ $middleware = new ChainMiddleware([
 
 ### Custom middleware
 
-You can also write a custom middleware. The middleware gets a message and can return `N` messages. 
+You can also write a custom middleware. The middleware gets a message and can return `N` messages.
 There are the following possibilities:
 
-* Return only the message to an array to leave it unchanged.
-* Put another message in the array to swap the message.
-* Return an empty array to remove the message.
-* Or return multiple messages to enrich the stream.
+- Return only the message to an array to leave it unchanged.
+- Put another message in the array to swap the message.
+- Return an empty array to remove the message.
+- Or return multiple messages to enrich the stream.
 
-In our case, the domain has changed a bit. 
-In the beginning we had a `ProfileCreated` event that just created a profile. 
-Now we have a `ProfileRegistered` and a `ProfileActivated` event, 
+In our case, the domain has changed a bit.
+In the beginning we had a `ProfileCreated` event that just created a profile.
+Now we have a `ProfileRegistered` and a `ProfileActivated` event,
 which should replace the `ProfileCreated` event.
 
 ```php
@@ -380,23 +378,23 @@ final class SplitProfileCreatedMiddleware implements Middleware
     public function __invoke(Message $message): array
     {
         $event = $message->event();
-        
+
         if (!$event instanceof ProfileCreated) {
             return [$message];
         }
-        
+
         $profileRegisteredMessage = Message::createWithHeaders(
-            new ProfileRegistered($event->id(), $event->name()), 
+            new ProfileRegistered($event->id(), $event->name()),
             $message->headers()
         );
-        
+
         $profileActivatedMessage = Message::createWithHeaders(
-            new ProfileActivated($event->id()), 
+            new ProfileActivated($event->id()),
             $message->headers()
         );
 
         return [$profileRegisteredMessage, $profileActivatedMessage];
-    }    
+    }
 }
 ```
 
