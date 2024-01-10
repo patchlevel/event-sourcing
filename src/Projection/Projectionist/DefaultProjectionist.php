@@ -94,6 +94,10 @@ final class DefaultProjectionist implements Projectionist
                     $e->getMessage(),
                 ));
 
+                $projection->error(ProjectionError::fromThrowable($e));
+                $projection->disallowRetry();
+                $this->projectionStore->save($projection);
+
                 if ($throwByError) {
                     throw new ProjectionistError(
                         $projector::class,
@@ -101,10 +105,6 @@ final class DefaultProjectionist implements Projectionist
                         $e,
                     );
                 }
-
-                $projection->error(ProjectionError::fromThrowable($e));
-                $projection->disallowRetry();
-                $this->projectionStore->save($projection);
             }
         }
 
@@ -469,6 +469,10 @@ final class DefaultProjectionist implements Projectionist
                 ),
             );
 
+            $projection->error(ProjectionError::fromThrowable($e));
+            $projection->incrementRetry();
+            $this->projectionStore->save($projection);
+
             if ($throwByError) {
                 throw new ProjectionistError(
                     $projector::class,
@@ -476,10 +480,6 @@ final class DefaultProjectionist implements Projectionist
                     $e,
                 );
             }
-
-            $projection->error(ProjectionError::fromThrowable($e));
-            $projection->incrementRetry();
-            $this->projectionStore->save($projection);
 
             return;
         }

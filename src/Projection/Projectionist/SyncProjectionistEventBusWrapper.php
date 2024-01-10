@@ -15,6 +15,7 @@ final class SyncProjectionistEventBusWrapper implements EventBus
         private readonly EventBus $parentEventBus,
         private readonly Projectionist $projectionist,
         private readonly LockFactory $lockFactory,
+        private readonly bool $throwByError = true,
     ) {
     }
 
@@ -29,7 +30,7 @@ final class SyncProjectionistEventBusWrapper implements EventBus
         }
 
         try {
-            $this->projectionist->run();
+            $this->projectionist->run(throwByError: $this->throwByError);
         } finally {
             $lock->release();
         }
