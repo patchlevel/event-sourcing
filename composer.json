@@ -25,6 +25,7 @@
     "patchlevel/worker": "^1.1.0",
     "psr/cache": "^2.0.0|^3.0.0",
     "psr/clock": "^1.0",
+    "psr/event-dispatcher": "^1.0",
     "psr/log": "^2.0.0|^3.0.0",
     "psr/simple-cache": "^2.0.0|^3.0.0",
     "ramsey/uuid": "^4.7",
