@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\EventBus;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use ReflectionClass;
 
+use function array_merge;
+
 final class AttributeListenerProvider implements ListenerProvider
 {
     /** @var array<string, list<ListenerDescriptor>>|null */
@@ -22,7 +24,10 @@ final class AttributeListenerProvider implements ListenerProvider
     public function listenersForEvent(object $event): iterable
     {
         if ($this->subscribeMethods !== null) {
-            return $this->subscribeMethods[$event::class] ?? [];
+            return array_merge(
+                $this->subscribeMethods[$event::class] ?? [],
+                $this->subscribeMethods['*'] ?? [],
+            );
         }
 
         $this->subscribeMethods = [];
@@ -45,6 +50,9 @@ final class AttributeListenerProvider implements ListenerProvider
             }
         }
 
-        return $this->subscribeMethods[$event::class] ?? [];
+        return array_merge(
+            $this->subscribeMethods[$event::class] ?? [],
+            $this->subscribeMethods['*'] ?? [],
+        );
     }
 }

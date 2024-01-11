@@ -112,4 +112,54 @@ final class AttributeListenerProviderTest extends TestCase
             new ListenerDescriptor($listener2->__invoke(...)),
         ], $listeners);
     }
+
+    public function testSubscribeAll(): void
+    {
+        $listener = new class {
+            #[Subscribe('*')]
+            public function __invoke(Message $message): void
+            {
+            }
+        };
+
+        $event = new ProfileCreated(
+            ProfileId::fromString('1'),
+            Email::fromString('info@patchlevel.de'),
+        );
+
+        $eventBus = new AttributeListenerProvider([$listener]);
+        $listeners = $eventBus->listenersForEvent($event);
+
+        self::assertEquals([
+            new ListenerDescriptor($listener->__invoke(...)),
+        ], $listeners);
+    }
+
+    public function testMixedSubscribeTypes(): void
+    {
+        $listener = new class {
+            #[Subscribe('*')]
+            public function foo(Message $message): void
+            {
+            }
+
+            #[Subscribe(ProfileCreated::class)]
+            public function bar(Message $message): void
+            {
+            }
+        };
+
+        $event = new ProfileCreated(
+            ProfileId::fromString('1'),
+            Email::fromString('info@patchlevel.de'),
+        );
+
+        $eventBus = new AttributeListenerProvider([$listener]);
+        $listeners = $eventBus->listenersForEvent($event);
+
+        self::assertEquals([
+            new ListenerDescriptor($listener->bar(...)),
+            new ListenerDescriptor($listener->foo(...)),
+        ], $listeners);
+    }
 }

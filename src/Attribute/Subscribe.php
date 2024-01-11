@@ -9,7 +9,9 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 final class Subscribe
 {
-    /** @param class-string $eventClass */
+    public const ALL = '*';
+
+    /** @param class-string|'*' $eventClass */
     public function __construct(
         public readonly string $eventClass,
     ) {
