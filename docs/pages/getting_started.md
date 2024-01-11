@@ -251,7 +251,7 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Subscriber;
 
-final class SendCheckInEmailProcessor extends Subscriber
+final class SendCheckInEmailProcessor
 {
     public function __construct(
         private readonly Mailer $mailer
@@ -283,6 +283,7 @@ use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
 use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -293,9 +294,6 @@ $connection = DriverManager::getConnection([
 ]);
 
 $mailer = /* your own mailer */;
-
-$eventBus = new DefaultEventBus();
-$eventBus->addListener(new SendCheckInEmailProcessor($mailer));
 
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
@@ -319,6 +317,17 @@ $projectionist = new DefaultProjectionist(
     $projectionStore,
     $projectorRepository
 );
+
+$eventBus = SyncProjectionistEventBusWrapper::createWithDefaultLockStrategy(
+    DefaultEventBus::create([
+        new SyncProjectorListener($projectionist),
+    ]),
+    $projectionist
+);
+
+$eventBus = DefaultEventBus::create([
+    new SendCheckInEmailProcessor($mailer),
+]);
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRegistry,

@@ -77,8 +77,9 @@ final class OutboxTest extends TestCase
             $projectorRepository,
         );
 
-        $realEventBus = new DefaultEventBus();
-        $realEventBus->addListener(new SendEmailProcessor());
+        $realEventBus = DefaultEventBus::create([
+            new SendEmailProcessor(),
+        ]);
 
         $eventStream = new SyncProjectionistEventBusWrapper(
             $outboxEventBus,

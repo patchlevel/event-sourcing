@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
@@ -64,8 +63,7 @@ final class BasicIntegrationTest extends TestCase
             $projectorRepository,
         );
 
-        $innerEventStream = new DefaultEventBus();
-        $innerEventStream->addListener(new SendEmailProcessor());
+        $innerEventStream = DefaultEventBus::create([new SendEmailProcessor()]);
 
         $eventStream = new SyncProjectionistEventBusWrapper(
             $innerEventStream,
@@ -109,83 +107,6 @@ final class BasicIntegrationTest extends TestCase
             $eventStream,
         );
         $repository = $manager->get(Profile::class);
-        $profile = $repository->load($profileId);
-
-        self::assertInstanceOf(Profile::class, $profile);
-        self::assertEquals($profileId, $profile->aggregateRootId());
-        self::assertSame(1, $profile->playhead());
-        self::assertSame('John', $profile->name());
-        self::assertSame(1, SendEmailMock::count());
-    }
-
-    public function testWithSymfonySuccessful(): void
-    {
-        $store = new DoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
-            'eventstore',
-        );
-
-        $profileProjection = new ProfileProjector($this->connection);
-        $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection],
-        );
-
-        $projectionist = new DefaultProjectionist(
-            $store,
-            new InMemoryStore(),
-            $projectorRepository,
-        );
-
-        $innerEventStream = SymfonyEventBus::create([
-            new SendEmailProcessor(),
-        ]);
-
-        $eventStream = new SyncProjectionistEventBusWrapper(
-            $innerEventStream,
-            $projectionist,
-            new LockFactory(
-                new LockInMemoryStore(),
-            ),
-        );
-
-        $manager = new DefaultRepositoryManager(
-            new AggregateRootRegistry(['profile' => Profile::class]),
-            $store,
-            $eventStream,
-        );
-
-        $repository = $manager->get(Profile::class);
-
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            $store,
-        );
-
-        $schemaDirector->create();
-        $projectionist->boot();
-
-        $profileId = ProfileId::fromString('1');
-        $profile = Profile::create($profileId, 'John');
-        $repository->save($profile);
-
-        $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
-
-        self::assertIsArray($result);
-        self::assertArrayHasKey('id', $result);
-        self::assertSame('1', $result['id']);
-        self::assertSame('John', $result['name']);
-
-        $manager = new DefaultRepositoryManager(
-            new AggregateRootRegistry(['profile' => Profile::class]),
-            $store,
-            $eventStream,
-            null,
-            new FooMessageDecorator(),
-        );
-        $repository = $manager->get(Profile::class);
-
         $profile = $repository->load($profileId);
 
         self::assertInstanceOf(Profile::class, $profile);
@@ -215,8 +136,7 @@ final class BasicIntegrationTest extends TestCase
             $projectorRepository,
         );
 
-        $innerEventStream = new DefaultEventBus();
-        $innerEventStream->addListener(new SendEmailProcessor());
+        $innerEventStream = DefaultEventBus::create([new SendEmailProcessor()]);
 
         $eventStream = new SyncProjectionistEventBusWrapper(
             $innerEventStream,

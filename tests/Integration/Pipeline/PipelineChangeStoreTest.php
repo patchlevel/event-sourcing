@@ -75,8 +75,8 @@ final class PipelineChangeStoreTest extends TestCase
 
         $newSchemaDirector->create();
 
-        $oldRepository = new DefaultRepository($oldStore, new DefaultEventBus(), Profile::metadata());
-        $newRepository = new DefaultRepository($newStore, new DefaultEventBus(), Profile::metadata());
+        $oldRepository = new DefaultRepository($oldStore, DefaultEventBus::create(), Profile::metadata());
+        $newRepository = new DefaultRepository($newStore, DefaultEventBus::create(), Profile::metadata());
 
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId);

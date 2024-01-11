@@ -26,7 +26,7 @@ $connection = DriverManager::getConnection([
     'path' => DB_PATH,
 ]);
 
-$bus = new DefaultEventBus();
+$bus = DefaultEventBus::create();
 
 $store = new DoctrineDbalStore(
     $connection,

@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
+use Patchlevel\EventSourcing\EventBus\ListenerProvider;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\NameChanged;
@@ -13,15 +14,18 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
+use Prophecy\PhpUnit\ProphecyTrait;
 
 use function microtime;
 
 /** @covers \Patchlevel\EventSourcing\EventBus\DefaultEventBus */
 final class DefaultEventBusTest extends TestCase
 {
+    use ProphecyTrait;
+
     public function testDispatchEvent(): void
     {
-        $listener = new class implements Listener {
+        $listener = new class {
             public Message|null $message = null;
 
             public function __invoke(Message $message): void
@@ -37,7 +41,10 @@ final class DefaultEventBusTest extends TestCase
             ),
         );
 
-        $eventBus = new DefaultEventBus([$listener]);
+        $provider = $this->prophesize(ListenerProvider::class);
+        $provider->listenersForEvent($message->event())->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
+
+        $eventBus = new DefaultEventBus($provider->reveal());
         $eventBus->dispatch($message);
 
         self::assertSame($message, $listener->message);
@@ -45,7 +52,7 @@ final class DefaultEventBusTest extends TestCase
 
     public function testDispatchMultipleMessages(): void
     {
-        $listener = new class implements Listener {
+        $listener = new class {
             /** @var list<Message> */
             public array $message = [];
 
@@ -69,37 +76,16 @@ final class DefaultEventBusTest extends TestCase
             ),
         );
 
-        $eventBus = new DefaultEventBus([$listener]);
+        $provider = $this->prophesize(ListenerProvider::class);
+        $provider->listenersForEvent($message1->event())->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
+        $provider->listenersForEvent($message2->event())->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
+
+        $eventBus = new DefaultEventBus($provider->reveal());
         $eventBus->dispatch($message1, $message2);
 
         self::assertCount(2, $listener->message);
         self::assertSame($message1, $listener->message[0]);
         self::assertSame($message2, $listener->message[1]);
-    }
-
-    public function testDynamicListener(): void
-    {
-        $listener = new class implements Listener {
-            public Message|null $message = null;
-
-            public function __invoke(Message $message): void
-            {
-                $this->message = $message;
-            }
-        };
-
-        $message = new Message(
-            new ProfileCreated(
-                ProfileId::fromString('1'),
-                Email::fromString('info@patchlevel.de'),
-            ),
-        );
-
-        $eventBus = new DefaultEventBus();
-        $eventBus->addListener($listener);
-        $eventBus->dispatch($message);
-
-        self::assertSame($message, $listener->message);
     }
 
     public function testSynchroneEvents(): void
@@ -111,13 +97,21 @@ final class DefaultEventBusTest extends TestCase
             ),
         );
 
-        $eventBus = new DefaultEventBus();
+        $messageB = new Message(
+            new ProfileVisited(
+                ProfileId::fromString('1'),
+            ),
+        );
 
-        $listenerA = new class ($eventBus) implements Listener {
+        $provider = $this->prophesize(ListenerProvider::class);
+        $eventBus = new DefaultEventBus($provider->reveal());
+
+        $listenerA = new class ($eventBus, $messageB) {
             public float|null $time = null;
 
             public function __construct(
                 private DefaultEventBus $bus,
+                private Message $message,
             ) {
             }
 
@@ -127,19 +121,13 @@ final class DefaultEventBusTest extends TestCase
                     return;
                 }
 
-                $messageB = new Message(
-                    new ProfileVisited(
-                        ProfileId::fromString('1'),
-                    ),
-                );
-
-                $this->bus->dispatch($messageB);
+                $this->bus->dispatch($this->message);
 
                 $this->time = microtime(true);
             }
         };
 
-        $listenerB = new class implements Listener {
+        $listenerB = new class {
             public float|null $time = null;
 
             public function __invoke(Message $message): void
@@ -152,8 +140,8 @@ final class DefaultEventBusTest extends TestCase
             }
         };
 
-        $eventBus->addListener($listenerA);
-        $eventBus->addListener($listenerB);
+        $provider->listenersForEvent($messageA->event())->willReturn([new ListenerDescriptor($listenerA->__invoke(...))]);
+        $provider->listenersForEvent($messageB->event())->willReturn([new ListenerDescriptor($listenerB->__invoke(...))]);
 
         $eventBus->dispatch($messageA);
 
@@ -178,13 +166,22 @@ final class DefaultEventBusTest extends TestCase
             ),
         );
 
-        $eventBus = new DefaultEventBus();
+        $messageC = new Message(
+            new NameChanged(
+                'name',
+            ),
+        );
 
-        $listenerA = new class ($eventBus) implements Listener {
+        $provider = $this->prophesize(ListenerProvider::class);
+        $eventBus = new DefaultEventBus($provider->reveal());
+
+        $listenerA = new class ($eventBus, $messageC) {
             public float|null $time = null;
 
-            public function __construct(private DefaultEventBus $bus)
-            {
+            public function __construct(
+                private DefaultEventBus $bus,
+                private Message $message,
+            ) {
             }
 
             public function __invoke(Message $message): void
@@ -193,19 +190,13 @@ final class DefaultEventBusTest extends TestCase
                     return;
                 }
 
-                $messageB = new Message(
-                    new NameChanged(
-                        'name',
-                    ),
-                );
-
-                $this->bus->dispatch($messageB);
+                $this->bus->dispatch($this->message);
 
                 $this->time = microtime(true);
             }
         };
 
-        $listenerB = new class implements Listener {
+        $listenerB = new class {
             public float|null $time = null;
 
             public function __invoke(Message $message): void
@@ -218,8 +209,9 @@ final class DefaultEventBusTest extends TestCase
             }
         };
 
-        $eventBus->addListener($listenerA);
-        $eventBus->addListener($listenerB);
+        $provider->listenersForEvent($messageA->event())->willReturn([new ListenerDescriptor($listenerA->__invoke(...))]);
+        $provider->listenersForEvent($messageB->event())->willReturn([]);
+        $provider->listenersForEvent($messageC->event())->willReturn([new ListenerDescriptor($listenerB->__invoke(...))]);
 
         $eventBus->dispatch($messageA, $messageB);
 

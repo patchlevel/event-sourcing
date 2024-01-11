@@ -65,7 +65,7 @@ final class IntegrationTest extends TestCase
         );
 
         $eventStream = new SyncProjectionistEventBusWrapper(
-            new DefaultEventBus(),
+            DefaultEventBus::create(),
             $projectionist,
             new LockFactory(
                 new LockInMemoryStore(),

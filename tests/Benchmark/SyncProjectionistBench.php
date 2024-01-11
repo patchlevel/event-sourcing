@@ -73,8 +73,7 @@ final class SyncProjectionistBench
             $projectionRepository,
         );
 
-        $innerEventStream = new DefaultEventBus();
-        $innerEventStream->addListener(new SendEmailProcessor());
+        $innerEventStream = DefaultEventBus::create([new SendEmailProcessor()]);
 
         $lockStorage = new LockDoctrineDbalStore($connection);
         $lockStorageAdapter = new DoctrineDbalStoreSchemaAdapter($lockStorage);
