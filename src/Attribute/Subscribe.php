@@ -11,7 +11,7 @@ final class Subscribe
 {
     public const ALL = '*';
 
-    /** @param class-string|'*' $eventClass */
+    /** @param class-string|self::ALL $eventClass */
     public function __construct(
         public readonly string $eventClass,
     ) {

@@ -14,7 +14,7 @@ final class WatchListener
     ) {
     }
 
-    #[Subscribe('*')]
+    #[Subscribe(Subscribe::ALL)]
     public function __invoke(Message $message): void
     {
         try {

@@ -26,7 +26,7 @@ final class AttributeListenerProvider implements ListenerProvider
         if ($this->subscribeMethods !== null) {
             return array_merge(
                 $this->subscribeMethods[$event::class] ?? [],
-                $this->subscribeMethods['*'] ?? [],
+                $this->subscribeMethods[Subscribe::ALL] ?? [],
             );
         }
 
@@ -52,7 +52,7 @@ final class AttributeListenerProvider implements ListenerProvider
 
         return array_merge(
             $this->subscribeMethods[$event::class] ?? [],
-            $this->subscribeMethods['*'] ?? [],
+            $this->subscribeMethods[Subscribe::ALL] ?? [],
         );
     }
 }

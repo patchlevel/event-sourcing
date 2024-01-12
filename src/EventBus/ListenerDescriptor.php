@@ -20,25 +20,25 @@ final class ListenerDescriptor
 
         $this->callable = $callable;
 
-        $r = new ReflectionFunction($callable);
+        $reflectionFunction = new ReflectionFunction($callable);
 
-        if (method_exists($r, 'isAnonymous') && $r->isAnonymous()) {
+        if (method_exists($reflectionFunction, 'isAnonymous') && $reflectionFunction->isAnonymous()) {
             $this->name = 'Closure';
 
             return;
         }
 
-        $callable = $r->getClosureThis();
+        $callable = $reflectionFunction->getClosureThis();
 
         if (!$callable) {
-            $class = $r->getClosureCalledClass();
+            $class = $reflectionFunction->getClosureCalledClass();
 
-            $this->name = ($class ? $class->name . '::' : '') . $r->name;
+            $this->name = ($class ? $class->name . '::' : '') . $reflectionFunction->name;
 
             return;
         }
 
-        $this->name = $callable::class . '::' . $r->name;
+        $this->name = $callable::class . '::' . $reflectionFunction->name;
     }
 
     public function name(): string
