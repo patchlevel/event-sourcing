@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
 use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyListener;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 
 final class ListenerDescriptorTest extends TestCase
@@ -20,6 +21,7 @@ final class ListenerDescriptorTest extends TestCase
         self::assertEquals('Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyListener::__invoke', $descriptor->name());
     }
 
+    #[RequiresPhp('>= 8.2')]
     public function testAnonymousFunction(): void
     {
         $listener = static function (): void {

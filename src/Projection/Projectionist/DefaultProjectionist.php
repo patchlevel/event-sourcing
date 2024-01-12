@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
-use Patchlevel\EventSourcing\Store\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -128,7 +128,7 @@ final class DefaultProjectionist implements Projectionist
         $stream = null;
 
         try {
-            $criteria = (new CriteriaBuilder())->fromIndex($currentPosition)->build();
+            $criteria = new Criteria(fromIndex: $currentPosition);
             $stream = $this->streamableMessageStore->load($criteria);
 
             $messageCounter = 0;
@@ -210,7 +210,7 @@ final class DefaultProjectionist implements Projectionist
         $stream = null;
 
         try {
-            $criteria = (new CriteriaBuilder())->fromIndex($currentPosition)->build();
+            $criteria = new Criteria(fromIndex: $currentPosition);
             $stream = $this->streamableMessageStore->load($criteria);
 
             $messageCounter = 0;

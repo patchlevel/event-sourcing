@@ -325,10 +325,6 @@ $eventBus = SyncProjectionistEventBusWrapper::createWithDefaultLockStrategy(
     $projectionist
 );
 
-$eventBus = DefaultEventBus::create([
-    new SendCheckInEmailProcessor($mailer),
-]);
-
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRegistry,
     $store,

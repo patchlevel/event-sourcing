@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\EventBus;
 use Closure;
 use ReflectionFunction;
 
+use function method_exists;
+
 final class ListenerDescriptor
 {
     private readonly Closure $callable;
@@ -20,15 +22,23 @@ final class ListenerDescriptor
 
         $r = new ReflectionFunction($callable);
 
-        if ($r->isAnonymous()) {
+        if (method_exists($r, 'isAnonymous') && $r->isAnonymous()) {
             $this->name = 'Closure';
-        } elseif (!$callable = $r->getClosureThis()) {
+
+            return;
+        }
+
+        $callable = $r->getClosureThis();
+
+        if (!$callable) {
             $class = $r->getClosureCalledClass();
 
             $this->name = ($class ? $class->name . '::' : '') . $r->name;
-        } else {
-            $this->name = $callable::class . '::' . $r->name;
+
+            return;
         }
+
+        $this->name = $callable::class . '::' . $r->name;
     }
 
     public function name(): string

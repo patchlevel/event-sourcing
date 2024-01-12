@@ -40,32 +40,34 @@ final class DefaultEventBus implements EventBus
             return;
         }
 
-        $this->processing = true;
+        try {
+            $this->processing = true;
 
-        $this->logger?->debug('EventBus: Start processing queue.');
+            $this->logger?->debug('EventBus: Start processing queue.');
 
-        while ($message = array_shift($this->queue)) {
-            $this->logger?->debug(sprintf(
-                'EventBus: Dispatch message "%s" to listeners.',
-                $message->event()::class,
-            ));
-
-            $listeners = $this->listenerProvider->listenersForEvent($message->event());
-
-            foreach ($listeners as $listener) {
-                $this->logger?->info(sprintf(
-                    'EventBus: Dispatch message with event "%s" to listener "%s".',
+            while ($message = array_shift($this->queue)) {
+                $this->logger?->debug(sprintf(
+                    'EventBus: Dispatch message "%s" to listeners.',
                     $message->event()::class,
-                    $listener->name(),
                 ));
 
-                ($listener->callable())($message);
+                $listeners = $this->listenerProvider->listenersForEvent($message->event());
+
+                foreach ($listeners as $listener) {
+                    $this->logger?->info(sprintf(
+                        'EventBus: Dispatch message with event "%s" to listener "%s".',
+                        $message->event()::class,
+                        $listener->name(),
+                    ));
+
+                    ($listener->callable())($message);
+                }
             }
+        } finally {
+            $this->processing = false;
+
+            $this->logger?->debug('EventBus: Finished processing queue.');
         }
-
-        $this->processing = false;
-
-        $this->logger?->debug('EventBus: Finished processing queue.');
     }
 
     /** @param iterable<object> $listeners */
