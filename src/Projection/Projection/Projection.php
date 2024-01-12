@@ -35,9 +35,9 @@ final class Projection
         return $this->error;
     }
 
-    public function incrementPosition(): void
+    public function changePosition(int $position): void
     {
-        $this->position++;
+        $this->position = $position;
     }
 
     public function isNew(): bool
