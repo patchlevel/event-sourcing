@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
+use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
@@ -62,9 +63,6 @@ final class OutboxTest extends TestCase
             $registry,
             'outbox',
         );
-
-        $realEventBus = new DefaultEventBus();
-        $realEventBus->addListener(new SendEmailProcessor());
 
         $outboxEventBus = new OutboxEventBus($outboxStore);
 
@@ -122,7 +120,11 @@ final class OutboxTest extends TestCase
             $message->event(),
         );
 
-        $consumer = new StoreOutboxConsumer($outboxStore, $realEventBus);
+        $consumer = new StoreOutboxConsumer(
+            $outboxStore,
+            new EventBusPublisher($realEventBus),
+        );
+
         $consumer->consume();
 
         self::assertSame(0, $outboxStore->countOutboxMessages());

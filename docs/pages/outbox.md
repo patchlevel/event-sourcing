@@ -36,7 +36,14 @@ And then you have to define the consumer. This gets the right event bus.
 It is used to load the events to be dispatched from the database, dispatch the events and then empty the outbox table.
 
 ```php
-$consumer = new StoreOutboxConsumer($store, $realEventBus);
+use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
+use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
+
+$consumer = new StoreOutboxConsumer(
+    $store, 
+    new EventBusPublisher($realEventBus)
+);
+
 $consumer->consume();
 ```
 
