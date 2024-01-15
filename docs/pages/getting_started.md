@@ -57,9 +57,11 @@ final class GuestIsCheckedOut
 
 ## Define aggregates
 
-Next we need to define the aggregate. So the hotel and how the hotel should behave.
-We have also defined the `create`, `checkIn` and `checkOut` methods accordingly.
-These events are thrown here and the state of the hotel is also changed.
+Next we need to define the hotel aggregate. 
+How you can interact with it, what events happen and what the business rules are.
+For this we create the methods `create`, `checkIn` and `checkOut`.
+In these methods the business checks are made and events are recorded.
+Otherwise we still need apply methods to change the state.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
@@ -298,10 +300,10 @@ $mailer = /* your own mailer */;
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
 
-$store = new DoctrineDbalStore(
+$eventStore = new DoctrineDbalStore(
     $connection,
     $serializer,
-    $aggregateRegistry
+    $aggregateRegistry,
 );
 
 $hotelProjector = new HotelProjector($connection);
@@ -313,25 +315,22 @@ $projectorRepository = new ProjectorRepository([
 $projectionStore = new DoctrineStore($connection);
 
 $projectionist = new DefaultProjectionist(
-    $store,
+    $eventStore,
     $projectionStore,
-    $projectorRepository
+    $projectorRepository,
 );
 
 $eventBus = SyncProjectionistEventBusWrapper::createWithDefaultLockStrategy(
     DefaultEventBus::create([
-        new SyncProjectorListener($projectionist),
+        new SendCheckInEmailProcessor($mailer),
     ]),
-    $projectionist
+    $projectionist,
 );
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRegistry,
-    $store,
-    SyncProjectionistEventBusWrapper::createWithDefaultLockStrategy(
-        $eventBus,
-        $projectionist
-    )
+    $eventStore,
+    $eventBus,
 );
 
 $hotelRepository = $repositoryManager->get(Hotel::class);
@@ -353,7 +352,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
     new ChainSchemaConfigurator([
-        $store,
+        $eventStore,
         $projectionStore
     ])
 );
