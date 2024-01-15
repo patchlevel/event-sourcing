@@ -65,6 +65,16 @@ final class ArrayStream implements Stream, IteratorAggregate
         return $this->index;
     }
 
+    public function next(): void
+    {
+        $this->iterator->next();
+    }
+
+    public function end(): bool
+    {
+        return !$this->iterator->valid();
+    }
+
     public function current(): Message|null
     {
         return $this->iterator->current() ?: null;

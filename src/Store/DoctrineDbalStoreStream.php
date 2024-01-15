@@ -42,6 +42,16 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
         $this->result->free();
     }
 
+    public function next(): void
+    {
+        $this->generator->next();
+    }
+
+    public function end(): bool
+    {
+        return !$this->generator->valid();
+    }
+
     public function current(): Message|null
     {
         return $this->generator->current() ?: null;

@@ -12,7 +12,11 @@ interface Stream extends Traversable
 {
     public function close(): void;
 
+    public function next(): void;
+
     public function current(): Message|null;
+
+    public function end(): bool;
 
     /** @return positive-int|0|null */
     public function position(): int|null;

@@ -62,11 +62,19 @@ final class ShowCommand extends Command
         do {
             $i = 0;
 
-            foreach ($stream as $message) {
+            while (!$stream->end()) {
                 $i++;
                 $currentCount++;
 
+                $message = $stream->current();
+
+                if (!$message) {
+                    break 2;
+                }
+
                 $console->message($this->serializer, $message);
+
+                $stream->next();
 
                 if ($i >= $limit) {
                     break;
