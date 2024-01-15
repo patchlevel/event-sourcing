@@ -137,40 +137,16 @@ $eventBus = new SymfonyEventBus($symfonyMessenger);
 
 ## Listener
 
-A listener must implement the `Listener` interface and define the `__invoke` method.
+You can listen for specific events with the attribute `Subscribe`.
 This listener is then called for all saved events / messages.
 
-```php
-use Patchlevel\EventSourcing\EventBus\Listener;
-use Patchlevel\EventSourcing\EventBus\Message;
-
-final class WelcomeListener implements Listener 
-{
-    public function __invoke(Message $message): void
-    {
-        if ($message->event() instanceof ProfileCreated) {
-            echo 'Welcome!';
-        }
-    }
-}
-```
-
-!!! warning
-
-    If you only want to listen to certain messages, 
-    then you have to check it in the `__invoke` method or use the subscriber.
-
-## Subscriber
-
-A `Subscriber` is a listener, except that it has implemented the invoke method itself. 
-Instead, you can define your own and multiple methods and listen for specific events with the attribute `Subscribe`.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-final class WelcomeSubscriber extends Subscriber 
+final class WelcomeSubscriber 
 {
     #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(Message $message): void

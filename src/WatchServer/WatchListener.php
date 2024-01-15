@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\WatchServer;
 
-use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-final class WatchListener implements Listener
+final class WatchListener
 {
     public function __construct(
-        private WatchServerClient $client,
+        private readonly WatchServerClient $client,
     ) {
     }
 
+    #[Subscribe(Subscribe::ALL)]
     public function __invoke(Message $message): void
     {
         try {

@@ -50,7 +50,7 @@ final class SplitStreamBench
             'path' => self::DB_PATH,
         ]);
 
-        $this->bus = new DefaultEventBus();
+        $this->bus = DefaultEventBus::create();
 
         $this->store = new DoctrineDbalStore(
             $connection,

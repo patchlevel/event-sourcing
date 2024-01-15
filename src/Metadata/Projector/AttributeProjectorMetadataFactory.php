@@ -47,6 +47,13 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
                 $instance = $attribute->newInstance();
                 $eventClass = $instance->eventClass;
 
+                if ($eventClass === Subscribe::ALL) {
+                    throw new SubscribeAllNotSupported(
+                        $projector,
+                        $method->getName(),
+                    );
+                }
+
                 if (array_key_exists($eventClass, $subscribeMethods)) {
                     throw new DuplicateSubscribeMethod(
                         $projector,

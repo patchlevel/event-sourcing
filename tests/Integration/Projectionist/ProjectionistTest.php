@@ -54,7 +54,7 @@ final class ProjectionistTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            new DefaultEventBus(),
+            DefaultEventBus::create(),
         );
 
         $repository = $manager->get(Profile::class);
@@ -119,7 +119,7 @@ final class ProjectionistTest extends TestCase
             $aggregateRegistry,
             $store,
             new SyncProjectionistEventBusWrapper(
-                new DefaultEventBus(),
+                DefaultEventBus::create(),
                 $projectionist,
                 new LockFactory($lockStore),
             ),
