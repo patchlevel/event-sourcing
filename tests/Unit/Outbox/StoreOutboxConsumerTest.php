@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Outbox;
 
-use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Outbox\OutboxPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxStore;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -32,8 +32,8 @@ final class StoreOutboxConsumerTest extends TestCase
         $store->retrieveOutboxMessages(null)->willReturn([$message]);
         $store->markOutboxMessageConsumed($message)->shouldBeCalled();
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch($message)->shouldBeCalled();
+        $eventBus = $this->prophesize(OutboxPublisher::class);
+        $eventBus->publish($message)->shouldBeCalled();
 
         $consumer = new StoreOutboxConsumer($store->reveal(), $eventBus->reveal());
         $consumer->consume();
@@ -52,8 +52,8 @@ final class StoreOutboxConsumerTest extends TestCase
         $store->retrieveOutboxMessages(100)->willReturn([$message]);
         $store->markOutboxMessageConsumed($message)->shouldBeCalled();
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch($message)->shouldBeCalled();
+        $eventBus = $this->prophesize(OutboxPublisher::class);
+        $eventBus->publish($message)->shouldBeCalled();
 
         $consumer = new StoreOutboxConsumer($store->reveal(), $eventBus->reveal());
         $consumer->consume(100);
