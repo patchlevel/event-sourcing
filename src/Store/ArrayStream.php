@@ -20,11 +20,15 @@ final class ArrayStream implements Stream, IteratorAggregate
     /** @var positive-int|0|null */
     private int|null $position;
 
-    /** @param list<Message> $messages The index is based on position. An offset is not supported. */
+    /** @var positive-int|null */
+    private int|null $index;
+
+    /** @param array<positive-int|0, Message> $messages The index is the key. An offset is not supported. */
     public function __construct(array $messages = [])
     {
         $this->iterator = $messages === [] ? new ArrayIterator() : $this->createGenerator($messages);
         $this->position = null;
+        $this->index = null;
     }
 
     public function close(): void
@@ -54,13 +58,11 @@ final class ArrayStream implements Stream, IteratorAggregate
      */
     public function index(): int|null
     {
-        $position = $this->position();
-
-        if ($position === null) {
-            return null;
+        if (!$this->index) {
+            $this->iterator->key();
         }
 
-        return $position + 1;
+        return $this->index;
     }
 
     public function current(): Message|null
@@ -69,17 +71,29 @@ final class ArrayStream implements Stream, IteratorAggregate
     }
 
     /**
-     * @param list<Message> $messages
+     * @param array<positive-int|0, Message> $messages
      *
      * @return Generator<Message>
      */
     private function createGenerator(array $messages): Generator
     {
-        foreach ($messages as $message) {
+        $hasIndex = true;
+
+        foreach ($messages as $index => $message) {
             if ($this->position === null) {
                 $this->position = 0;
             } else {
                 $this->position++;
+            }
+
+            if ($index === 0) {
+                $hasIndex = false;
+            }
+
+            if ($hasIndex) {
+                $this->index = $index;
+            } else {
+                $this->index = $this->position + 1;
             }
 
             yield $message;

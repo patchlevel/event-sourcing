@@ -103,14 +103,14 @@ final class ProjectionTest extends TestCase
         self::assertTrue($projection->isOutdated());
     }
 
-    public function testIncrementPosition(): void
+    public function testChangePosition(): void
     {
         $projection = new Projection(
             new ProjectionId('test', 1),
         );
 
-        $projection->incrementPosition();
+        $projection->changePosition(10);
 
-        self::assertEquals(1, $projection->position());
+        self::assertEquals(10, $projection->position());
     }
 }

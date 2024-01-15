@@ -20,7 +20,6 @@ use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria;
-use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -207,6 +206,69 @@ final class DefaultProjectionistTest extends TestCase
         self::assertSame($message, $projector->message);
     }
 
+    public function testBootingWithSkip(): void
+    {
+        $projectionId1 = new ProjectionId('test1', 1);
+        $projectorId1 = new ProjectorId('test1', 1);
+        $projector1 = new #[ProjectionAttribute('test1', 1)]
+        class {
+            public Message|null $message = null;
+
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $projectionId2 = new ProjectionId('test2', 1);
+        $projectorId2 = new ProjectorId('test2', 1);
+        $projector2 = new #[ProjectionAttribute('test1', 1)]
+        class {
+            public Message|null $message = null;
+
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $projectionStore = new DummyStore([
+            new Projection($projectionId1, ProjectionStatus::Booting),
+            new Projection($projectionId2, ProjectionStatus::Booting, 1),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $projectorRepository = $this->prophesize(ProjectorRepository::class);
+        $projectorRepository->projectors()->willReturn([$projector1, $projector2])->shouldBeCalledOnce();
+
+        $projectorResolver = $this->prophesize(ProjectorResolver::class);
+        $projectorResolver->resolveSubscribeMethod($projector1, $message)->willReturn($projector1->handle(...));
+        $projectorResolver->projectorId($projector1)->willReturn($projectorId1);
+        $projectorResolver->projectorId($projector2)->willReturn($projectorId2);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            $projectorRepository->reveal(),
+            $projectorResolver->reveal(),
+        );
+
+        $projectionist->boot();
+
+        self::assertEquals([
+            new Projection($projectionId1, ProjectionStatus::Booting, 1),
+            new Projection($projectionId1, ProjectionStatus::Active, 1),
+            new Projection($projectionId2, ProjectionStatus::Active, 1),
+        ], $projectionStore->savedProjections);
+
+        self::assertSame($message, $projector1->message);
+        self::assertNull($projector2->message);
+    }
+
     public function testBootWithCreateError(): void
     {
         $projectionId = new ProjectionId('test', 1);
@@ -263,6 +325,55 @@ final class DefaultProjectionistTest extends TestCase
             ],
             $projectionStore->savedProjections,
         );
+    }
+
+    public function testBootingWithGabInIndex(): void
+    {
+        $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
+        $projector = new #[ProjectionAttribute('test', 1)]
+        class {
+            /** @var list<Message> */
+            public array $messages = [];
+
+            public function handle(Message $message): void
+            {
+                $this->messages[] = $message;
+            }
+        };
+
+        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Booting)]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+        $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([1 => $message1, 3 => $message2]))->shouldBeCalledOnce();
+
+        $projectorRepository = $this->prophesize(ProjectorRepository::class);
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
+
+        $projectorResolver = $this->prophesize(ProjectorResolver::class);
+        $projectorResolver->resolveSubscribeMethod($projector, $message1)->willReturn($projector->handle(...));
+        $projectorResolver->resolveSubscribeMethod($projector, $message2)->willReturn($projector->handle(...));
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            $projectorRepository->reveal(),
+            $projectorResolver->reveal(),
+        );
+
+        $projectionist->boot();
+
+        self::assertEquals([
+            new Projection($projectionId, ProjectionStatus::Booting, 1),
+            new Projection($projectionId, ProjectionStatus::Booting, 3),
+            new Projection($projectionId, ProjectionStatus::Active, 3),
+        ], $projectionStore->savedProjections);
+
+        self::assertSame([$message1, $message2], $projector->messages);
     }
 
     public function testRunning(): void
@@ -524,6 +635,54 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->run();
 
         self::assertEquals([], $projectionStore->savedProjections);
+    }
+
+    public function testRunningWithGabInIndex(): void
+    {
+        $projectionId = new ProjectionId('test', 1);
+        $projectorId = new ProjectorId('test', 1);
+        $projector = new #[ProjectionAttribute('test', 1)]
+        class {
+            /** @var list<Message> */
+            public array $messages = [];
+
+            public function handle(Message $message): void
+            {
+                $this->messages[] = $message;
+            }
+        };
+
+        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Active)]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+        $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([1 => $message1, 3 => $message2]))->shouldBeCalledOnce();
+
+        $projectorRepository = $this->prophesize(ProjectorRepository::class);
+        $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
+
+        $projectorResolver = $this->prophesize(ProjectorResolver::class);
+        $projectorResolver->resolveSubscribeMethod($projector, $message1)->willReturn($projector->handle(...));
+        $projectorResolver->resolveSubscribeMethod($projector, $message2)->willReturn($projector->handle(...));
+        $projectorResolver->projectorId($projector)->willReturn($projectorId);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            $projectorRepository->reveal(),
+            $projectorResolver->reveal(),
+        );
+
+        $projectionist->run();
+
+        self::assertEquals([
+            new Projection($projectionId, ProjectionStatus::Active, 1),
+            new Projection($projectionId, ProjectionStatus::Active, 3),
+        ], $projectionStore->savedProjections);
+
+        self::assertSame([$message1, $message2], $projector->messages);
     }
 
     public function testTeardownWithProjector(): void
@@ -800,6 +959,6 @@ final class DefaultProjectionistTest extends TestCase
 
     private function criteria(int $fromIndex = 0): Criteria
     {
-        return (new CriteriaBuilder())->fromIndex($fromIndex)->build();
+        return new Criteria(fromIndex: $fromIndex);
     }
 }

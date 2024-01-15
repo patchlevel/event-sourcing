@@ -94,6 +94,11 @@
       <code><![CDATA[$data['payload']]]></code>
     </MixedArgument>
   </file>
+  <file src="src/Store/ArrayStream.php">
+    <InvalidPropertyAssignmentValue>
+      <code>$index</code>
+    </InvalidPropertyAssignmentValue>
+  </file>
   <file src="src/Store/DoctrineHelper.php">
     <MixedReturnTypeCoercion>
       <code>$normalizedCustomHeaders</code>

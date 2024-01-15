@@ -21,6 +21,11 @@ parameters:
 			path: src/Snapshot/DefaultSnapshotStore.php
 
 		-
+			message: "#^Property Patchlevel\\\\EventSourcing\\\\Store\\\\ArrayStream\\:\\:\\$index \\(int\\<1, max\\>\\|null\\) does not accept int\\<0, max\\>\\.$#"
+			count: 1
+			path: src/Store/ArrayStream.php
+
+		-
 			message: "#^Ternary operator condition is always true\\.$#"
 			count: 1
 			path: src/Store/ArrayStream.php

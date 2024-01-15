@@ -116,35 +116,53 @@ final class DefaultProjectionist implements Projectionist
             return;
         }
 
-        $currentPosition = $projections->getLowestProjectionPosition();
+        $startIndex = $projections->getLowestProjectionPosition();
 
         $this->logger?->debug(
             sprintf(
                 'Projectionist: Event stream is processed for booting from position %s.',
-                $currentPosition,
+                $startIndex,
             ),
         );
 
         $stream = null;
 
         try {
-            $criteria = new Criteria(fromIndex: $currentPosition);
+            $criteria = new Criteria(fromIndex: $startIndex);
             $stream = $this->streamableMessageStore->load($criteria);
 
             $messageCounter = 0;
 
             foreach ($stream as $message) {
-                foreach ($projections->filterByProjectionStatus(ProjectionStatus::Booting) as $projection) {
-                    $this->handleMessage($message, $projection, $throwByError);
+                $index = $stream->index();
+
+                if ($index === null) {
+                    throw new UnexpectedError('Stream index is null, this should not happen.');
                 }
 
-                $currentPosition++;
+                foreach ($projections->filterByProjectionStatus(ProjectionStatus::Booting) as $projection) {
+                    if ($projection->position() >= $index) {
+                        $this->logger?->debug(
+                            sprintf(
+                                'Projectionist: Projection "%s" is farther than the current position (%d > %d), continue booting.',
+                                $projection->id()->toString(),
+                                $projection->position(),
+                                $index,
+                            ),
+                        );
+
+                        continue;
+                    }
+
+                    $this->handleMessage($index, $message, $projection, $throwByError);
+                }
+
                 $messageCounter++;
 
                 $this->logger?->debug(
                     sprintf(
                         'Projectionist: Current event stream position for booting: %s',
-                        $currentPosition,
+                        $index,
                     ),
                 );
 
@@ -198,45 +216,50 @@ final class DefaultProjectionist implements Projectionist
             return;
         }
 
-        $currentPosition = $projections->getLowestProjectionPosition();
+        $startIndex = $projections->getLowestProjectionPosition();
 
         $this->logger?->debug(
             sprintf(
                 'Projectionist: Event stream is processed from position %d.',
-                $currentPosition,
+                $startIndex,
             ),
         );
 
         $stream = null;
 
         try {
-            $criteria = new Criteria(fromIndex: $currentPosition);
+            $criteria = new Criteria(fromIndex: $startIndex);
             $stream = $this->streamableMessageStore->load($criteria);
 
             $messageCounter = 0;
 
             foreach ($stream as $message) {
+                $index = $stream->index();
+
+                if ($index === null) {
+                    throw new UnexpectedError('Stream index is null, this should not happen.');
+                }
+
                 foreach ($projections->filterByProjectionStatus(ProjectionStatus::Active) as $projection) {
-                    if ($projection->position() > $currentPosition) {
+                    if ($projection->position() >= $index) {
                         $this->logger?->debug(
                             sprintf(
                                 'Projectionist: Projection "%s" is farther than the current position (%d > %d), continue processing.',
                                 $projection->id()->toString(),
                                 $projection->position(),
-                                $currentPosition,
+                                $index,
                             ),
                         );
 
                         continue;
                     }
 
-                    $this->handleMessage($message, $projection, $throwByError);
+                    $this->handleMessage($index, $message, $projection, $throwByError);
                 }
 
-                $currentPosition++;
                 $messageCounter++;
 
-                $this->logger?->debug(sprintf('Projectionist: Current event stream position: %s', $currentPosition));
+                $this->logger?->debug(sprintf('Projectionist: Current event stream position: %s', $index));
 
                 if ($limit !== null && $messageCounter >= $limit) {
                     $this->logger?->info(
@@ -256,7 +279,7 @@ final class DefaultProjectionist implements Projectionist
         $this->logger?->info(
             sprintf(
                 'Projectionist: End of stream on position "%d" has been reached, finish processing.',
-                $currentPosition,
+                $stream->index() ?: 'unknown',
             ),
         );
     }
@@ -430,7 +453,7 @@ final class DefaultProjectionist implements Projectionist
         return $projections;
     }
 
-    private function handleMessage(Message $message, Projection $projection, bool $throwByError): void
+    private function handleMessage(int $index, Message $message, Projection $projection, bool $throwByError): void
     {
         $projector = $this->projector($projection->id());
 
@@ -441,7 +464,7 @@ final class DefaultProjectionist implements Projectionist
         $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($projector, $message);
 
         if (!$subscribeMethod) {
-            $projection->incrementPosition();
+            $projection->changePosition($index);
             $this->projectionStore->save($projection);
 
             $this->logger?->debug(
@@ -484,7 +507,7 @@ final class DefaultProjectionist implements Projectionist
             return;
         }
 
-        $projection->incrementPosition();
+        $projection->changePosition($index);
         $projection->resetRetry();
         $this->projectionStore->save($projection);
 
