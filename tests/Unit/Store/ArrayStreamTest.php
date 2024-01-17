@@ -26,13 +26,14 @@ final class ArrayStreamTest extends TestCase
         self::assertSame(null, $stream->position());
         self::assertSame(null, $stream->current());
         self::assertSame(null, $stream->index());
+        self::assertSame(true, $stream->end());
 
         $array = iterator_to_array($stream);
 
         self::assertSame([], $array);
     }
 
-    public function testWithMessages(): void
+    public function testOneMessage(): void
     {
         $message = Message::create(
             new ProfileCreated(
@@ -48,17 +49,17 @@ final class ArrayStreamTest extends TestCase
         self::assertSame(1, $stream->index());
         self::assertSame(0, $stream->position());
         self::assertSame($message, $stream->current());
+        self::assertSame(false, $stream->end());
 
-        $array = iterator_to_array($stream);
+        $stream->next();
 
         self::assertSame(1, $stream->index());
         self::assertSame(0, $stream->position());
         self::assertSame(null, $stream->current());
-
-        self::assertSame($messages, $array);
+        self::assertSame(true, $stream->end());
     }
 
-    public function testPosition(): void
+    public function testMultipleMessages(): void
     {
         $messages = [
             Message::create(
@@ -85,10 +86,28 @@ final class ArrayStreamTest extends TestCase
 
         self::assertSame(1, $stream->index());
         self::assertSame(0, $stream->position());
+        self::assertSame($messages[0], $stream->current());
+        self::assertSame(false, $stream->end());
 
-        iterator_to_array($stream);
+        $stream->next();
+
+        self::assertSame(2, $stream->index());
+        self::assertSame(1, $stream->position());
+        self::assertSame($messages[1], $stream->current());
+        self::assertSame(false, $stream->end());
+
+        $stream->next();
 
         self::assertSame(3, $stream->index());
         self::assertSame(2, $stream->position());
+        self::assertSame($messages[2], $stream->current());
+        self::assertSame(false, $stream->end());
+
+        $stream->next();
+
+        self::assertSame(3, $stream->index());
+        self::assertSame(2, $stream->position());
+        self::assertSame(null, $stream->current());
+        self::assertSame(true, $stream->end());
     }
 }
