@@ -6,7 +6,10 @@ namespace Patchlevel\EventSourcing\Projection\Projection\Store;
 
 use Throwable;
 
-/** @psalm-type Context = array{message: string, code: int|string, file: string, line: int, trace: string} */
+/**
+ * @psalm-type Trace = array{file?: string, line?: int, function?: string, class?: string, type?: string, args?: array}
+ * @psalm-type Context = array{message: string, code: int|string, file: string, line: int, trace: list<Trace>}
+ */
 final class ErrorContext
 {
     /** @return list<Context> */
@@ -15,7 +18,7 @@ final class ErrorContext
         $errors = [];
 
         do {
-            $errors[] = self::transform($error);
+            $errors[] = self::transformThrowable($error);
             $error = $error->getPrevious();
         } while ($error);
 
@@ -23,14 +26,14 @@ final class ErrorContext
     }
 
     /** @return Context */
-    private static function transform(Throwable $error): array
+    private static function transformThrowable(Throwable $error): array
     {
         return [
             'message' => $error->getMessage(),
             'code' => $error->getCode(),
             'file' => $error->getFile(),
             'line' => $error->getLine(),
-            'trace' => $error->getTraceAsString(),
+            'trace' => $error->getTrace(),
         ];
     }
 }
