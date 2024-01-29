@@ -96,7 +96,7 @@ final class OutboxConsumeCommand extends Command
         $eventDispatcher = new EventDispatcher();
         $eventDispatcher->addSubscriber(new StopWorkerOnSigtermSignalListener($logger));
 
-        if ($runLimit) {
+        if ($runLimit !== null) {
             if ($runLimit <= 0) {
                 throw new InvalidArgumentGiven($runLimit, 'null|positive-int');
             }
@@ -104,11 +104,11 @@ final class OutboxConsumeCommand extends Command
             $eventDispatcher->addSubscriber(new StopWorkerOnIterationLimitListener($runLimit, $logger));
         }
 
-        if ($memoryLimit) {
+        if ($memoryLimit !== null) {
             $eventDispatcher->addSubscriber(new StopWorkerOnMemoryLimitListener(Bytes::parseFromString($memoryLimit), $logger));
         }
 
-        if ($timeLimit) {
+        if ($timeLimit !== null) {
             if ($timeLimit <= 0) {
                 throw new InvalidArgumentGiven($timeLimit, 'null|positive-int');
             }

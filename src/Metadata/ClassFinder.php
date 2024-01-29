@@ -59,7 +59,7 @@ final class ClassFinder
         foreach ($files as $file) {
             $path = $file->getRealPath();
 
-            if (!$path) {
+            if ($path === false) {
                 continue;
             }
 

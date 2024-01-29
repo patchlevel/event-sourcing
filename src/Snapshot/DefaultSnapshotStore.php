@@ -77,7 +77,7 @@ final class DefaultSnapshotStore implements SnapshotStore
     {
         $adapterName = $aggregateClass::metadata()->snapshotStore;
 
-        if (!$adapterName) {
+        if ($adapterName === null) {
             throw new SnapshotNotConfigured($aggregateClass);
         }
 

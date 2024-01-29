@@ -51,7 +51,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
             }
 
             if ($method->getAttributes(Create::class)) {
-                if ($createMethod) {
+                if ($createMethod !== null) {
                     throw new DuplicateCreateMethod(
                         $projection,
                         $createMethod,
@@ -66,7 +66,7 @@ final class AttributeProjectionMetadataFactory implements ProjectionMetadataFact
                 continue;
             }
 
-            if ($dropMethod) {
+            if ($dropMethod !== null) {
                 throw new DuplicateDropMethod(
                     $projection,
                     $dropMethod,

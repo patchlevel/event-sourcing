@@ -11,7 +11,7 @@ use function array_key_exists;
 
 abstract class Subscriber implements Listener
 {
-    /** @var array<class-string, string>|null */
+    /** @var array<class-string, non-empty-string>|null */
     private array|null $handleMethods = null;
 
     final public function __invoke(Message $message): void
@@ -22,7 +22,7 @@ abstract class Subscriber implements Listener
 
         $method = $this->handleMethods[$message->event()::class] ?? null;
 
-        if (!$method) {
+        if ($method === null) {
             return;
         }
 
