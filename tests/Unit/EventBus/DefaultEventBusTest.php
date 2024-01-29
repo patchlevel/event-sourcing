@@ -42,7 +42,7 @@ final class DefaultEventBusTest extends TestCase
         );
 
         $provider = $this->prophesize(ListenerProvider::class);
-        $provider->listenersForEvent($message->event())->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
+        $provider->listenersForEvent(ProfileCreated::class)->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
 
         $eventBus = new DefaultEventBus($provider->reveal());
         $eventBus->dispatch($message);
@@ -77,8 +77,8 @@ final class DefaultEventBusTest extends TestCase
         );
 
         $provider = $this->prophesize(ListenerProvider::class);
-        $provider->listenersForEvent($message1->event())->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
-        $provider->listenersForEvent($message2->event())->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
+        $provider->listenersForEvent(ProfileCreated::class)->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
+        $provider->listenersForEvent(ProfileCreated::class)->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
 
         $eventBus = new DefaultEventBus($provider->reveal());
         $eventBus->dispatch($message1, $message2);
@@ -140,8 +140,8 @@ final class DefaultEventBusTest extends TestCase
             }
         };
 
-        $provider->listenersForEvent($messageA->event())->willReturn([new ListenerDescriptor($listenerA->__invoke(...))]);
-        $provider->listenersForEvent($messageB->event())->willReturn([new ListenerDescriptor($listenerB->__invoke(...))]);
+        $provider->listenersForEvent(ProfileCreated::class)->willReturn([new ListenerDescriptor($listenerA->__invoke(...))]);
+        $provider->listenersForEvent(ProfileVisited::class)->willReturn([new ListenerDescriptor($listenerB->__invoke(...))]);
 
         $eventBus->dispatch($messageA);
 
@@ -209,9 +209,9 @@ final class DefaultEventBusTest extends TestCase
             }
         };
 
-        $provider->listenersForEvent($messageA->event())->willReturn([new ListenerDescriptor($listenerA->__invoke(...))]);
-        $provider->listenersForEvent($messageB->event())->willReturn([]);
-        $provider->listenersForEvent($messageC->event())->willReturn([new ListenerDescriptor($listenerB->__invoke(...))]);
+        $provider->listenersForEvent(ProfileCreated::class)->willReturn([new ListenerDescriptor($listenerA->__invoke(...))]);
+        $provider->listenersForEvent(ProfileVisited::class)->willReturn([]);
+        $provider->listenersForEvent(NameChanged::class)->willReturn([new ListenerDescriptor($listenerB->__invoke(...))]);
 
         $eventBus->dispatch($messageA, $messageB);
 

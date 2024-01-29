@@ -20,12 +20,16 @@ final class AttributeListenerProvider implements ListenerProvider
     ) {
     }
 
-    /** @return iterable<ListenerDescriptor> */
-    public function listenersForEvent(object $event): iterable
+    /**
+     * @param class-string $eventClass
+     *
+     * @return iterable<ListenerDescriptor>
+     */
+    public function listenersForEvent(string $eventClass): iterable
     {
         if ($this->subscribeMethods !== null) {
             return array_merge(
-                $this->subscribeMethods[$event::class] ?? [],
+                $this->subscribeMethods[$eventClass] ?? [],
                 $this->subscribeMethods[Subscribe::ALL] ?? [],
             );
         }
@@ -41,9 +45,9 @@ final class AttributeListenerProvider implements ListenerProvider
 
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
-                    $eventClass = $instance->eventClass;
+                    $subscribedEventClass = $instance->eventClass;
 
-                    $this->subscribeMethods[$eventClass][] = new ListenerDescriptor(
+                    $this->subscribeMethods[$subscribedEventClass][] = new ListenerDescriptor(
                         $listener->{$method->getName()}(...),
                     );
                 }
@@ -51,7 +55,7 @@ final class AttributeListenerProvider implements ListenerProvider
         }
 
         return array_merge(
-            $this->subscribeMethods[$event::class] ?? [],
+            $this->subscribeMethods[$eventClass] ?? [],
             $this->subscribeMethods[Subscribe::ALL] ?? [],
         );
     }

@@ -46,17 +46,19 @@ final class DefaultEventBus implements EventBus
             $this->logger?->debug('EventBus: Start processing queue.');
 
             while ($message = array_shift($this->queue)) {
+                $eventClass = $message->event()::class;
+
                 $this->logger?->debug(sprintf(
                     'EventBus: Dispatch message "%s" to listeners.',
-                    $message->event()::class,
+                    $eventClass,
                 ));
 
-                $listeners = $this->listenerProvider->listenersForEvent($message->event());
+                $listeners = $this->listenerProvider->listenersForEvent($eventClass);
 
                 foreach ($listeners as $listener) {
                     $this->logger?->info(sprintf(
                         'EventBus: Dispatch message with event "%s" to listener "%s".',
-                        $message->event()::class,
+                        $eventClass,
                         $listener->name(),
                     ));
 

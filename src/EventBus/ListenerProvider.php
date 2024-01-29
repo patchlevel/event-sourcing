@@ -6,6 +6,10 @@ namespace Patchlevel\EventSourcing\EventBus;
 
 interface ListenerProvider
 {
-    /** @return iterable<ListenerDescriptor> */
-    public function listenersForEvent(object $event): iterable;
+    /**
+     * @param class-string $eventClass
+     *
+     * @return iterable<ListenerDescriptor>
+     */
+    public function listenersForEvent(string $eventClass): iterable;
 }
