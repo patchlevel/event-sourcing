@@ -55,7 +55,7 @@ final class DefaultRepository implements Repository
     {
         $aggregateClass = $this->aggregateClass;
 
-        if ($this->snapshotStore && $this->metadata->snapshotStore) {
+        if ($this->snapshotStore && $this->metadata->snapshotStore !== null) {
             try {
                 return $this->loadFromSnapshot($aggregateClass, $id);
             } catch (SnapshotRebuildFailed $exception) {
@@ -93,7 +93,7 @@ final class DefaultRepository implements Repository
             $messages[0]->playhead() - 1,
         );
 
-        if ($this->snapshotStore && $this->metadata->snapshotStore) {
+        if ($this->snapshotStore && $this->metadata->snapshotStore !== null) {
             $this->saveSnapshot($aggregate, $messages);
         }
 
@@ -208,7 +208,7 @@ final class DefaultRepository implements Repository
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 
-        $batchSize = $this->metadata->snapshotBatch ?: 1;
+        $batchSize = (int)$this->metadata->snapshotBatch ?: 1;
 
         if (count($messages) < $batchSize) {
             return;

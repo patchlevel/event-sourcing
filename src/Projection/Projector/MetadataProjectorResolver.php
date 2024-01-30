@@ -24,7 +24,7 @@ final class MetadataProjectorResolver implements ProjectorResolver
         $metadata = $this->metadataFactory->metadata($projector::class);
         $method = $metadata->createMethod;
 
-        if (!$method) {
+        if ($method === null) {
             return null;
         }
 
@@ -36,7 +36,7 @@ final class MetadataProjectorResolver implements ProjectorResolver
         $metadata = $this->metadataFactory->metadata($projector::class);
         $method = $metadata->dropMethod;
 
-        if (!$method) {
+        if ($method === null) {
             return null;
         }
 
