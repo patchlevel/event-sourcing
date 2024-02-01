@@ -1,0 +1,134 @@
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Aggregate
+      collectors:
+        - type: directory
+          value: src/Aggregate/.*
+    - name: Attribute
+      collectors:
+        - type: directory
+          value: src/Attribute/.*
+    - name: Clock
+      collectors:
+        - type: directory
+          value: src/Clock/.*
+    - name: Console
+      collectors:
+        - type: directory
+          value: src/Console/.*
+    - name: EventBus
+      collectors:
+        - type: directory
+          value: src/EventBus/.*
+    - name: Lock
+      collectors:
+        - type: directory
+          value: src/Lock/.*
+    - name: Metadata
+      collectors:
+        - type: directory
+          value: src/Metadata/.*
+    - name: Outbox
+      collectors:
+        - type: directory
+          value: src/Outbox/.*
+    - name: Pipeline
+      collectors:
+        - type: directory
+          value: src/Pipeline/.*
+    - name: Projection
+      collectors:
+        - type: directory
+          value: src/Projection/.*
+    - name: Repository
+      collectors:
+        - type: directory
+          value: src/Repository/.*
+    - name: Schema
+      collectors:
+        - type: directory
+          value: src/Schema/.*
+    - name: Serializer
+      collectors:
+        - type: directory
+          value: src/Serializer/.*
+    - name: Snapshot
+      collectors:
+        - type: directory
+          value: src/Snapshot/.*
+    - name: Store
+      collectors:
+        - type: directory
+          value: src/Store/.*
+    - name: WatchServer
+      collectors:
+        - type: directory
+          value: src/WatchServer/.*
+
+  ruleset:
+    Aggregate:
+      - Attribute
+      - Metadata
+    Attribute:
+    Clock:
+    Console:
+      - EventBus
+      - Metadata
+      - Outbox
+      - Pipeline
+      - Projection
+      - Schema
+      - Serializer
+      - Store
+      - WatchServer
+    EventBus:
+      - Aggregate
+      - Attribute
+      - Metadata
+    Lock:
+      - Schema
+    Metadata:
+      - Aggregate
+      - Attribute
+    Outbox:
+      - EventBus
+      - Metadata
+      - Schema
+      - Serializer
+      - Store
+    Pipeline:
+      - Aggregate
+      - EventBus
+      - Projection
+      - Store
+    Projection:
+      - Metadata
+      - EventBus
+      - Schema
+      - Store
+    Repository:
+      - Aggregate
+      - Clock
+      - Metadata
+      - EventBus
+      - Snapshot
+      - Store
+    Schema:
+    Serializer:
+      - Aggregate
+      - Metadata
+    Snapshot:
+      - Aggregate
+      - Metadata
+    Store:
+      - Aggregate
+      - Metadata
+      - EventBus
+      - Schema
+      - Serializer
+    WatchServer:
+      - Attribute
+      - EventBus
+      - Serializer

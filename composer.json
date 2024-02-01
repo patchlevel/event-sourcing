@@ -45,6 +45,7 @@
     "phpstan/phpstan": "^1.10.49",
     "phpunit/phpunit": "^10.5.2",
     "psalm/plugin-phpunit": "^0.18.4",
+    "qossmic/deptrac": "dev-main#5dd4bbc507fb6b36468c8de889bdd2d586e4a580",
     "roave/infection-static-analysis-plugin": "^1.34.0",
     "symfony/messenger": "^5.4.31|^6.4.0|^7.0.1",
     "symfony/var-dumper": "^5.4.29|^6.4.0|^7.0.0",
