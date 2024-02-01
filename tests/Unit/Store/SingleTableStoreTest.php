@@ -9,6 +9,8 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Query\SelectQuery;
+use Doctrine\DBAL\SQL\Builder\SelectSQLBuilder;
 use Doctrine\DBAL\Statement;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
@@ -34,8 +36,6 @@ final class SingleTableStoreTest extends TestCase
 
     public function testLoadWithNoEvents(): void
     {
-        $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
-
         $connection = $this->prophesize(Connection::class);
         $connection->fetchAllAssociative(
             'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)',
@@ -49,8 +49,19 @@ final class SingleTableStoreTest extends TestCase
                 'archived' => Types::BOOLEAN,
             ],
         )->willReturn([]);
+
+        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $selectSqlBuilder = $this->prophesize(SelectSQLBuilder::class);
+
+        $selectSqlBuilder->buildSQL(Argument::type(SelectQuery::class))
+            ->willReturn('SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)');
+
+        $abstractPlatform->createSelectSQLBuilder()
+            ->willReturn($selectSqlBuilder->reveal());
+
+        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
 
         $serializer = $this->prophesize(EventSerializer::class);
 
@@ -67,8 +78,6 @@ final class SingleTableStoreTest extends TestCase
 
     public function testLoadWithOneEvent(): void
     {
-        $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
-
         $connection = $this->prophesize(Connection::class);
         $connection->fetchAllAssociative(
             'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)',
@@ -94,11 +103,20 @@ final class SingleTableStoreTest extends TestCase
             ],
         );
 
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $selectSqlBuilder = $this->prophesize(SelectSQLBuilder::class);
+
+        $selectSqlBuilder->buildSQL(Argument::type(SelectQuery::class))
+            ->willReturn('SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)');
+
+        $abstractPlatform->createSelectSQLBuilder()
+            ->willReturn($selectSqlBuilder->reveal());
+
         $abstractPlatform->getDateTimeTzFormatString()->willReturn('Y-m-d H:i:s');
+
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
+        $connection->createQueryBuilder()->willReturn($queryBuilder);
 
         $serializer = $this->prophesize(EventSerializer::class);
         $serializer->deserialize(

@@ -9,6 +9,8 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Query\SelectQuery;
+use Doctrine\DBAL\SQL\Builder\SelectSQLBuilder;
 use Doctrine\DBAL\Statement;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
@@ -34,8 +36,6 @@ final class MultiTableStoreTest extends TestCase
 
     public function testLoadWithNoEvents(): void
     {
-        $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
-
         $connection = $this->prophesize(Connection::class);
         $connection->fetchAllAssociative(
             'SELECT * FROM profile WHERE (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)',
@@ -48,26 +48,35 @@ final class MultiTableStoreTest extends TestCase
                 'archived' => Types::BOOLEAN,
             ],
         )->willReturn([]);
+
+        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $selectSqlBuilder = $this->prophesize(SelectSQLBuilder::class);
+
+        $selectSqlBuilder->buildSQL(Argument::type(SelectQuery::class))
+            ->willReturn('SELECT * FROM profile WHERE (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)');
+
+        $abstractPlatform->createSelectSQLBuilder()
+            ->willReturn($selectSqlBuilder->reveal());
+
+        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
 
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $singleTableStore = new MultiTableStore(
+        $multiTableStore = new MultiTableStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
-        $events = $singleTableStore->load(Profile::class, '1');
+        $events = $multiTableStore->load(Profile::class, '1');
         self::assertCount(0, $events);
     }
 
     public function testLoadWithOneEvent(): void
     {
-        $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
-
         $connection = $this->prophesize(Connection::class);
         $connection->fetchAllAssociative(
             'SELECT * FROM profile WHERE (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)',
@@ -92,25 +101,34 @@ final class MultiTableStoreTest extends TestCase
             ],
         );
 
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $selectSqlBuilder = $this->prophesize(SelectSQLBuilder::class);
+
+        $selectSqlBuilder->buildSQL(Argument::type(SelectQuery::class))
+            ->willReturn('SELECT * FROM profile WHERE (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived)');
+
+        $abstractPlatform->createSelectSQLBuilder()
+            ->willReturn($selectSqlBuilder->reveal());
+
         $abstractPlatform->getDateTimeTzFormatString()->willReturn('Y-m-d H:i:s');
+
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
+        $connection->createQueryBuilder()->willReturn($queryBuilder);
 
         $serializer = $this->prophesize(EventSerializer::class);
         $serializer->deserialize(
             new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'),
         )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
-        $singleTableStore = new MultiTableStore(
+        $multiTableStore = new MultiTableStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
-        $messages = $singleTableStore->load(Profile::class, '1');
+        $messages = $multiTableStore->load(Profile::class, '1');
         self::assertCount(1, $messages);
 
         $message = $messages[0];
