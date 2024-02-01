@@ -16,6 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use function array_map;
 use function is_array;
+use function sprintf;
 
 /** @psalm-import-type Context from ErrorContext */
 #[AsCommand(
@@ -106,6 +107,9 @@ final class ProjectionStatusCommand extends ProjectionCommand
     private function displayError(OutputStyle $io, array $context): void
     {
         $io->error($context['message']);
-        $io->block($context['trace']);
+
+        foreach ($context['trace'] as $trace) {
+            $io->writeln(sprintf('%s: %s', $trace['file'] ?? '#unknown', $trace['line'] ?? '#unknown'));
+        }
     }
 }
