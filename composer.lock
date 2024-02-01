@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0d37265cbb1d7222688eea284dfa9539",
+    "content-hash": "35c83bd2024057b56c882a16545c9568",
     "packages": [
         {
             "name": "brick/math",
@@ -471,16 +471,16 @@
         },
         {
             "name": "patchlevel/worker",
-            "version": "1.1.0",
+            "version": "1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/patchlevel/worker.git",
-                "reference": "d49f1545eedf5ae5ec57840af13850d9c256e0fe"
+                "reference": "1076160dcbf704adea66db13196e320479ec3090"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/patchlevel/worker/zipball/d49f1545eedf5ae5ec57840af13850d9c256e0fe",
-                "reference": "d49f1545eedf5ae5ec57840af13850d9c256e0fe",
+                "url": "https://api.github.com/repos/patchlevel/worker/zipball/1076160dcbf704adea66db13196e320479ec3090",
+                "reference": "1076160dcbf704adea66db13196e320479ec3090",
                 "shasum": ""
             },
             "require": {
@@ -528,9 +528,9 @@
             ],
             "support": {
                 "issues": "https://github.com/patchlevel/worker/issues",
-                "source": "https://github.com/patchlevel/worker/tree/1.1.0"
+                "source": "https://github.com/patchlevel/worker/tree/1.1.1"
             },
-            "time": "2023-12-12T14:22:01+00:00"
+            "time": "2024-02-01T13:03:05+00:00"
         },
         {
             "name": "psr/cache",
