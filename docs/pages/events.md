@@ -112,3 +112,12 @@ use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 
 $eventRegistry = (new AttributeEventRegistryFactory())->create($paths);
 ```
+
+## Learn more
+
+* [How to normalize events](normalizer.md)
+* [How to dispatch events](event_bus.md)
+* [How to listen on events](processor.md)
+* [How to store events](store.md)
+* [How to split streams](split_stream.md)
+* [How to upcast events](upcasting.md)

@@ -654,3 +654,11 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 
 $aggregateRegistry = (new AttributeEventRegistryFactory())->create($paths);
 ```
+
+## Learn more
+
+* [How to create own aggregate id](aggregate_id.md)
+* [How to store and load aggregates](repository.md)
+* [How to snapshot aggregates](snapshots.md)
+* [How to create Projections](projection.md)
+* [How to split streams](split_stream.md)
