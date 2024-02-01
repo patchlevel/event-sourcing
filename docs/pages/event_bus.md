@@ -104,6 +104,30 @@ $eventBus = new DefaultEventBus($listenerProvider);
 
     The `DefaultEventBus::create` method uses the `AttributeListenerProvider` by default.
 
+### Custom listener provider
+
+You can also use your own listener provider.
+
+```php
+use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\EventBus\ListenerProvider;
+use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
+
+$listenerProvider = new class implements ListenerProvider {
+    public function listenersForEvent(string $eventClass): iterable
+    {
+        return [
+            new ListenerDescriptor(
+                (new WelcomeSubscriber())->onProfileCreated(...),
+            ),
+        ];
+    }
+};
+```
+
+!!! tip
+
+    You can use `$listenerDiscriptor->name()` to get the name of the listener.
 
 ## Listener
 
@@ -147,6 +171,22 @@ final class WelcomeSubscriber
     }
 }
 ```
+
+## Psr-14 Event Bus
+
+You can also use a [psr-14](https://www.php-fig.org/psr/psr-14/) compatible event bus.
+In this case, you can't use the `Subscribe` attribute. 
+You need to use the system of the psr-14 event bus.
+
+```php
+use Patchlevel\EventSourcing\EventBus\Psr14EventBus;
+
+$eventBus = new Psr14EventBus($psr14EventDispatcher);
+```
+
+!!! warning
+
+    You can't use the `Subscribe` attribute with the psr-14 event bus.
 
 ## Learn more
 
