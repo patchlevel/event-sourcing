@@ -60,7 +60,7 @@ final class GuestIsCheckedOut
 Next we need to define the hotel aggregate. 
 How you can interact with it, which events happen and what the business rules are.
 For this we create the methods `create`, `checkIn` and `checkOut`.
-In these methods the business checks are made and events are recorded.
+In these methods the business checks are made and the events are recorded.
 Last but not least, we need the associated apply methods to change the state.
 
 ```php
