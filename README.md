@@ -12,13 +12,13 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * Everything is included in the package for event sourcing
 * Based on [doctrine dbal](https://github.com/doctrine/dbal) and their ecosystem
 * Developer experience oriented and fully typed
-* [Snapshots](https://patchlevel.github.io/event-sourcing-docs/latest/snapshots/) system to quickly rebuild the aggregates
-* Allow to [Split-Stream](https://patchlevel.github.io/event-sourcing-docs/latest/split_stream/) for big aggregates
-* [Pipeline](https://patchlevel.github.io/event-sourcing-docs/latest/pipeline/) to export,import and migrate events
-* [Projectionist](https://patchlevel.github.io/event-sourcing-docs/latest/projection/) to manage versioned projections
-* [Upcast](https://patchlevel.github.io/event-sourcing-docs/latest/upcasting/) old events
-* [Scheme management](https://patchlevel.github.io/event-sourcing-docs/latest/store/) and [doctrine migration](https://patchlevel.github.io/event-sourcing-docs/latest/migration/) support
-* Dev [tools](https://patchlevel.github.io/event-sourcing-docs/latest/watch_server/) such as a realtime event watcher
+* Automatic [snapshot](https://patchlevel.github.io/event-sourcing-docs/latest/snapshots/)-system to boost your performance
+* [Split](https://patchlevel.github.io/event-sourcing-docs/latest/split_stream/) big aggregates into multiple streams
+* Build-in [pipeline](https://patchlevel.github.io/event-sourcing-docs/latest/pipeline/) to export, import and migrate event streams
+* Versioned and managed lifecycle of [projections](https://patchlevel.github.io/event-sourcing-docs/latest/projection/)
+* Smooth [upcasting](https://patchlevel.github.io/event-sourcing-docs/latest/upcasting/) of old events
+* Simple setup with [scheme management](https://patchlevel.github.io/event-sourcing-docs/latest/store/) and [doctrine migration](https://patchlevel.github.io/event-sourcing-docs/latest/migration/)
+* Dev [tools](https://patchlevel.github.io/event-sourcing-docs/latest/watch_server/) like realtime event watcher
 * Built in [cli commands](https://patchlevel.github.io/event-sourcing-docs/latest/cli/) with [symfony](https://symfony.com/)
 * and much more...
 
