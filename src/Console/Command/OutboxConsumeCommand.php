@@ -47,7 +47,7 @@ final class OutboxConsumeCommand extends Command
                 'memory-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'How much memory consumption should the worker be terminated',
+                'How much memory consumption should the worker be terminated (e.g. 250MB)',
             )
             ->addOption(
                 'time-limit',
@@ -59,7 +59,7 @@ final class OutboxConsumeCommand extends Command
                 'sleep',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'How much time should elapse before the next job is executed in microseconds',
+                'How much time should elapse before the next job is executed in milliseconds',
                 1000,
             );
     }
