@@ -61,7 +61,7 @@ Next we need to define the hotel aggregate.
 How you can interact with it, what events happen and what the business rules are.
 For this we create the methods `create`, `checkIn` and `checkOut`.
 In these methods the business checks are made and events are recorded.
-Otherwise we still need apply methods to change the state.
+Last but not least, we need the associated apply methods to change the state.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
