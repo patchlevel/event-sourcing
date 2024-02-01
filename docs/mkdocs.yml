@@ -86,6 +86,7 @@ nav:
     - Processor: processor.md
     - Projection: projection.md
   - Advanced:
+    - Aggregate ID: aggregate_id.md
     - Normalizer: normalizer.md
     - Snapshots: snapshots.md
     - Upcasting: upcasting.md
@@ -94,9 +95,8 @@ nav:
     - Message Decorator: message_decorator.md
     - Split Stream: split_stream.md
     - Time / Clock: clock.md
+    - Testing: testing.md
   - Other / Tools:
-    - UUID: uuid.md
     - CLI: cli.md
     - Schema Migration: migration.md
     - Watch Server: watch_server.md
-    - Tests: tests.md
