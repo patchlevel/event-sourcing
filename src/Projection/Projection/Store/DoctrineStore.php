@@ -81,14 +81,14 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
     /** @param Data $row */
     private function createProjection(array $row): Projection
     {
-        $context = $row['error_context'] ?
+        $context = $row['error_context'] !== null ?
             json_decode($row['error_context'], true, 512, JSON_THROW_ON_ERROR) : null;
 
         return new Projection(
             new ProjectionId($row['name'], $row['version']),
             ProjectionStatus::from($row['status']),
             $row['position'],
-            $row['error_message'] ? new ProjectionError(
+            $row['error_message'] !== null ? new ProjectionError(
                 $row['error_message'],
                 $context,
             ) : null,
@@ -110,7 +110,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
                                 'error_message' => $projectionError?->errorMessage,
-                                'error_context' => $projectionError?->errorContext ? json_encode($projectionError->errorContext, JSON_THROW_ON_ERROR) : null,
+                                'error_context' => $projectionError?->errorContext !== null ? json_encode($projectionError->errorContext, JSON_THROW_ON_ERROR) : null,
                                 'retry' => $projection->retry(),
                             ],
                             [
@@ -131,7 +131,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
                                 'error_message' => $projectionError?->errorMessage,
-                                'error_context' => $projectionError?->errorContext ? json_encode($projectionError->errorContext, JSON_THROW_ON_ERROR) : null,
+                                'error_context' => $projectionError?->errorContext !== null ? json_encode($projectionError->errorContext, JSON_THROW_ON_ERROR) : null,
                                 'retry' => $projection->retry(),
                             ],
                         );

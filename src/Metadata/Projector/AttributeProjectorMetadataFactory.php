@@ -67,7 +67,7 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
             }
 
             if ($method->getAttributes(Setup::class)) {
-                if ($createMethod) {
+                if ($createMethod !== null) {
                     throw new DuplicateSetupMethod(
                         $projector,
                         $createMethod,
@@ -82,7 +82,7 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
                 continue;
             }
 
-            if ($dropMethod) {
+            if ($dropMethod !== null) {
                 throw new DuplicateTeardownMethod(
                     $projector,
                     $dropMethod,

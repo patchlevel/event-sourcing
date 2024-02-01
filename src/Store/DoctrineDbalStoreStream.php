@@ -60,7 +60,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     /** @return positive-int|0|null */
     public function position(): int|null
     {
-        if (!$this->position) {
+        if ($this->position === null) {
             $this->generator->key();
         }
 
@@ -70,7 +70,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     /** @return positive-int|null */
     public function index(): int|null
     {
-        if (!$this->index) {
+        if ($this->index === null) {
             $this->generator->key();
         }
 

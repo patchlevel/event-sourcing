@@ -330,7 +330,7 @@ final class DefaultRepository implements Repository
             return;
         }
 
-        $batchSize = $this->metadata->snapshot?->batch ?: 1;
+        $batchSize = (int)$this->metadata->snapshot?->batch ?: 1;
         $count = $streamPosition + 1;
 
         if ($count < $batchSize) {

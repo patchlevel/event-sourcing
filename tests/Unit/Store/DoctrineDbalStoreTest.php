@@ -10,7 +10,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Query\SelectQuery;
 use Doctrine\DBAL\Result;
+use Doctrine\DBAL\SQL\Builder\SelectSQLBuilder;
 use Doctrine\DBAL\Statement;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
@@ -38,12 +40,10 @@ final class DoctrineDbalStoreTest extends TestCase
 
     public function testLoadWithNoEvents(): void
     {
-        $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
-
+        $connection = $this->prophesize(Connection::class);
         $result = $this->prophesize(Result::class);
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
-        $connection = $this->prophesize(Connection::class);
         $connection->executeQuery(
             'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
             [
@@ -55,19 +55,29 @@ final class DoctrineDbalStoreTest extends TestCase
             Argument::type('array'),
         )->willReturn($result->reveal());
 
+        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $selectSqlBuilder = $this->prophesize(SelectSQLBuilder::class);
+
+        $selectSqlBuilder->buildSQL(Argument::type(SelectQuery::class))
+            ->willReturn('SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC');
+
+        $abstractPlatform->createSelectSQLBuilder()
+            ->willReturn($selectSqlBuilder->reveal());
+
+        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->getDatabasePlatform()->willReturn($this->prophesize(AbstractPlatform::class)->reveal());
 
         $serializer = $this->prophesize(EventSerializer::class);
 
-        $singleTableStore = new DoctrineDbalStore(
+        $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
-        $stream = $singleTableStore->load(
+        $stream = $doctrineDbalStore->load(
             (new CriteriaBuilder())
                 ->aggregateClass(Profile::class)
                 ->aggregateId('1')
@@ -82,8 +92,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
     public function testLoadWithOneEvent(): void
     {
-        $queryBuilder = new QueryBuilder($this->prophesize(Connection::class)->reveal());
-
+        $connection = $this->prophesize(Connection::class);
         $result = $this->prophesize(Result::class);
         $result->iterateAssociative()->willReturn(new ArrayIterator(
             [
@@ -100,7 +109,6 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         ));
 
-        $connection = $this->prophesize(Connection::class);
         $connection->executeQuery(
             'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
             [
@@ -112,25 +120,34 @@ final class DoctrineDbalStoreTest extends TestCase
             Argument::type('array'),
         )->willReturn($result->reveal());
 
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $selectSqlBuilder = $this->prophesize(SelectSQLBuilder::class);
+
+        $selectSqlBuilder->buildSQL(Argument::type(SelectQuery::class))
+            ->willReturn('SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC');
+
+        $abstractPlatform->createSelectSQLBuilder()
+            ->willReturn($selectSqlBuilder->reveal());
         $abstractPlatform->getDateTimeTzFormatString()->willReturn('Y-m-d H:i:s');
+
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+
+        $queryBuilder = new QueryBuilder($connection->reveal());
+        $connection->createQueryBuilder()->willReturn($queryBuilder);
 
         $serializer = $this->prophesize(EventSerializer::class);
         $serializer->deserialize(
             new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'),
         )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
-        $singleTableStore = new DoctrineDbalStore(
+        $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
-        $stream = $singleTableStore->load(
+        $stream = $doctrineDbalStore->load(
             (new CriteriaBuilder())
                 ->aggregateClass(Profile::class)
                 ->aggregateId('1')
@@ -211,7 +228,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
-            /** @param array{0: callable} $args */
+        /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
         );
 

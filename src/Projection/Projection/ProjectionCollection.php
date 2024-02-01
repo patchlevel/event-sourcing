@@ -75,7 +75,11 @@ final class ProjectionCollection implements Countable, IteratorAggregate
             $min = $projection->position();
         }
 
-        return $min ?: 0;
+        if ($min === null) {
+            return 0;
+        }
+
+        return $min;
     }
 
     /** @param callable(Projection $projection):bool $callable */

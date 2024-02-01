@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Serializer\Encoder;
 
 use JsonException;
 
+use function array_key_exists;
 use function json_decode;
 use function json_encode;
 
@@ -22,7 +23,7 @@ final class JsonEncoder implements Encoder
     {
         $flags = JSON_THROW_ON_ERROR;
 
-        if ($options[self::OPTION_PRETTY_PRINT] ?? false) {
+        if (array_key_exists(self::OPTION_PRETTY_PRINT, $options) && $options[self::OPTION_PRETTY_PRINT] === true) {
             $flags |= JSON_PRETTY_PRINT;
         }
 
