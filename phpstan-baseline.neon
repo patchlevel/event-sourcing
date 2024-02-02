@@ -16,7 +16,7 @@ parameters:
 			path: src/Projection/Projection/ProjectionError.php
 
 		-
-			message: "#^Parameter \\#2 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\ProjectionError constructor expects array\\<int, array\\{message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
+			message: "#^Parameter \\#2 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\ProjectionError constructor expects array\\<int, array\\{class\\: class\\-string, message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Projection/Projection/Store/DoctrineStore.php
 
@@ -27,6 +27,21 @@ parameters:
 
 		-
 			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\Store\\\\ErrorContext\\:\\:transformThrowable\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Projection/Projection/Store/ErrorContext.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\Store\\\\ErrorContext\\:\\:transformTrace\\(\\) has parameter \\$trace with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Projection/Projection/Store/ErrorContext.php
+
+		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\Store\\\\ErrorContext\\:\\:transformTrace\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Projection/Projection/Store/ErrorContext.php
+
+		-
+			message: "#^PHPDoc tag @var for variable \\$trace has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Projection/Projection/Store/ErrorContext.php
 
