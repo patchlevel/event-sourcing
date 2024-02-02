@@ -69,77 +69,70 @@ $message->customHeaders(); // ['application-id' => 'app']
 
 ## Event Bus
 
-### Default event bus
-
-The library also delivers a light-weight event bus for which you can register listeners/subscribers and dispatch events.
+The event bus is responsible for dispatching the messages to the listeners.
+The library also delivers a light-weight event bus for which you can register listeners and dispatch events.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 
-$eventBus = new DefaultEventBus();
-$eventBus->addListener($mailListener);
-$eventBus->addListener($projectionListener);
-```
-
-!!! note
-
-    You can determine the order in which the listeners are executed. For example, 
-    you can also add listeners after `ProjectionListener`
-    to access the [projections](./projection.md).
-
-### Symfony event bus
-
-You can also use the [symfony message bus](https://symfony.com/doc/current/components/messenger.html)
-which is much more powerful.
-
-To use the optional symfony messenger you first have to `install` the packet.
-
-```bash
-composer require symfony/messenger
-```
-
-You can either let us build it with the `create` factory:
-
-```php
-use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
-
-$eventBus = SymfonyEventBus::create([
+$eventBus = DefaultEventBus::create([
     $mailListener,
-    $projectionListener
 ]);
 ```
 
 !!! note
 
-    You can determine the order in which the listeners are executed. For example,
-    you can also add listeners after `ProjectionListener`
-    to access the [projections](./projection.md).
+    The order in which the listeners are executed is determined by the order in which they are passed to the factory.
 
-Or plug it together by hand:
+## Listener provider
+
+The listener provider is responsible for finding all listeners for a specific event.
+The default listener provider uses attributes to find the listeners.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\SymfonyEventBus;
+use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\EventBus\AttributeListenerProvider;
 
-$symfonyMessenger = //...
+$listenerProvider = new AttributeListenerProvider([
+    $mailListener,
+]);
 
-$eventBus = new SymfonyEventBus($symfonyMessenger);
+$eventBus = new DefaultEventBus($listenerProvider);
 ```
 
-!!! warning
+!!! tip
 
-    You can't mix it with a command bus.
-    You should create a [new bus](https://symfony.com/doc/current/messenger/multiple_buses.html) for it.
+    The `DefaultEventBus::create` method uses the `AttributeListenerProvider` by default.
 
-!!! note
+### Custom listener provider
 
-    An event bus can have zero or more listeners on an event. 
-    You should allow no handler in the [HandleMessageMiddleware](https://symfony.com/doc/current/components/messenger.html).
+You can also use your own listener provider.
+
+```php
+use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\EventBus\ListenerProvider;
+use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
+
+$listenerProvider = new class implements ListenerProvider {
+    public function listenersForEvent(string $eventClass): iterable
+    {
+        return [
+            new ListenerDescriptor(
+                (new WelcomeSubscriber())->onProfileCreated(...),
+            ),
+        ];
+    }
+};
+```
+
+!!! tip
+
+    You can use `$listenerDiscriptor->name()` to get the name of the listener.
 
 ## Listener
 
 You can listen for specific events with the attribute `Subscribe`.
 This listener is then called for all saved events / messages.
-
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -155,3 +148,50 @@ final class WelcomeSubscriber
     }
 }
 ```
+
+!!! tip
+
+    If you use psalm, you can use the [event sourcing plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) for better type support.
+
+### Listen on all events
+
+If you want to listen on all events, you can pass `*` or `Subscribe::ALL` instead of the event class.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\EventBus\Listener;
+use Patchlevel\EventSourcing\EventBus\Message;
+
+final class WelcomeSubscriber 
+{
+    #[Subscribe('*')]
+    public function onProfileCreated(Message $message): void
+    {
+        echo 'Welcome!';
+    }
+}
+```
+
+## Psr-14 Event Bus
+
+You can also use a [psr-14](https://www.php-fig.org/psr/psr-14/) compatible event bus.
+In this case, you can't use the `Subscribe` attribute. 
+You need to use the system of the psr-14 event bus.
+
+```php
+use Patchlevel\EventSourcing\EventBus\Psr14EventBus;
+
+$eventBus = new Psr14EventBus($psr14EventDispatcher);
+```
+
+!!! warning
+
+    You can't use the `Subscribe` attribute with the psr-14 event bus.
+
+## Learn more
+
+* [How to decorate messages](message_decorator.md)
+* [How to use outbox pattern](outbox.md)
+* [How to use processor](processor.md)
+* [How to use projections](projection.md)
+* [How to debug messages with the watch server](watch_server.md)

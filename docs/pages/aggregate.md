@@ -1,8 +1,8 @@
 # Aggregate
 
 The linchpin of event-sourcing is the aggregate. These aggregates can be imagined like entities in ORM. 
-One main difference is that we don't save the current state, but only the individual events that led to the state. 
-This means it is always possible to build the state again from the events.
+One main difference is that we don't save the current state, but only the individual events that led to the state.
+This means it is always possible to build the current state again from the events.
 
 !!! note
 
@@ -115,6 +115,7 @@ final class ProfileRegistered
 !!! note
 
     You can find out more about events [here](./events.md).
+    And for normalizer [here](./normalizer.md).
 
 After we have defined the event, we have to adapt the profile aggregate:
 
@@ -269,6 +270,10 @@ final class ChangeNameHandler
     }
 }
 ```
+
+!!! success
+
+    Our aggregate can now be changed and saved.
 
 !!! note
 
@@ -649,3 +654,11 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 
 $aggregateRegistry = (new AttributeEventRegistryFactory())->create($paths);
 ```
+
+## Learn more
+
+* [How to create own aggregate id](aggregate_id.md)
+* [How to store and load aggregates](repository.md)
+* [How to snapshot aggregates](snapshots.md)
+* [How to create Projections](projection.md)
+* [How to split streams](split_stream.md)

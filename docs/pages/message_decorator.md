@@ -1,6 +1,6 @@
 # Message Decorator
 
-There are usecases where you want to add some extra context to your events like metadata which is not directly relevant
+There are use-cases where you want to add some extra context to your events like metadata which is not directly relevant
 for your domain. With `MessageDecorator` we are providing a solution to add this metadata to your events. The metadata
 will also be persisted in the database and can be retrieved later on. 
 
@@ -22,7 +22,7 @@ $decorator = new SplitStreamDecorator($eventMetadataFactory);
 
 ### ChainMessageDecorator
 
-To use multiple decorators at the same time, one can use the `ChainMessageDecorator`.
+To use multiple decorators at the same time, you can use the `ChainMessageDecorator`.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
@@ -35,10 +35,12 @@ $decorator = new ChainMessageDecorator([
 
 ## Use decorator
 
-To use the message decorator, you have to pass it to the `DefaultRepositoryManager`.
+To use the message decorator, you have to pass it to the `DefaultRepositoryManager`, 
+which will then pass it to all Repositories.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
+use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 
 $decorator = new ChainMessageDecorator([
@@ -84,3 +86,10 @@ final class OnSystemRecordedDecorator implements MessageDecorator
 !!! tip
 
     You can also set multiple headers with `withCustomHeaders` which expects an hashmap.
+
+## Learn more
+
+* [How to define events](events.md)
+* [How to use the event bus](event_bus.md)
+* [How to configure repositories](repository.md)
+* [How to upcast events](upcasting.md)
