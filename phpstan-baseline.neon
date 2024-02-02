@@ -1,49 +1,14 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\ProjectionStatusCommand\\:\\:displayError\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Console/Command/ProjectionStatusCommand.php
-
-		-
 			message: "#^Method Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\:\\:headers\\(\\) should return array\\{aggregateClass\\?\\: class\\-string\\<Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\>, aggregateId\\?\\: string, playhead\\?\\: int\\<1, max\\>, recordedOn\\?\\: DateTimeImmutable, newStreamStart\\?\\: bool, archived\\?\\: bool\\} but returns non\\-empty\\-array\\<string, mixed\\>\\.$#"
 			count: 1
 			path: src/EventBus/Message.php
 
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\ProjectionError\\:\\:__construct\\(\\) has parameter \\$errorContext with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Projection/Projection/ProjectionError.php
-
-		-
 			message: "#^Parameter \\#2 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\ProjectionError constructor expects array\\<int, array\\{class\\: class\\-string, message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Projection/Projection/Store/DoctrineStore.php
-
-		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\Store\\\\ErrorContext\\:\\:fromThrowable\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Projection/Projection/Store/ErrorContext.php
-
-		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\Store\\\\ErrorContext\\:\\:transformThrowable\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Projection/Projection/Store/ErrorContext.php
-
-		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\Store\\\\ErrorContext\\:\\:transformTrace\\(\\) has parameter \\$trace with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Projection/Projection/Store/ErrorContext.php
-
-		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\Store\\\\ErrorContext\\:\\:transformTrace\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Projection/Projection/Store/ErrorContext.php
-
-		-
-			message: "#^PHPDoc tag @var for variable \\$trace has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Projection/Projection/Store/ErrorContext.php
 
 		-
 			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\InMemoryProjectorRepository\\:\\:projectors\\(\\) should return array\\<int, object\\> but returns array\\<int\\|string, object\\>\\.$#"

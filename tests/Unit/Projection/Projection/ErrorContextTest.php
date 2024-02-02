@@ -59,7 +59,10 @@ final class ErrorContextTest extends TestCase
         ], $firstTrace['args'] ?? null);
     }
 
-    /** @param resource $resource */
+    /**
+     * @param resource                $resource
+     * @param array<array-key, mixed> $array
+     */
     private function createException(
         string $message,
         CustomId $id,
