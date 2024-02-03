@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -31,7 +30,6 @@ final class StoreTest extends TestCase
         $this->store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
@@ -52,12 +50,12 @@ final class StoreTest extends TestCase
     {
         $messages = [
             Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
-                ->withAggregateClass(Profile::class)
+                ->withAggregateName('profile')
                 ->withAggregateId('test')
                 ->withPlayhead(1)
                 ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00')),
             Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
-                ->withAggregateClass(Profile::class)
+                ->withAggregateName('profile')
                 ->withAggregateId('test')
                 ->withPlayhead(2)
                 ->withRecordedOn(new DateTimeImmutable('2020-01-02 00:00:00')),
@@ -92,7 +90,7 @@ final class StoreTest extends TestCase
     public function testLoad(): void
     {
         $message = Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('test')
             ->withPlayhead(1)
             ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'));

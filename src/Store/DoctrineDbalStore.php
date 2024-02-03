@@ -11,10 +11,8 @@ use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 
@@ -30,7 +28,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $serializer,
-        private readonly AggregateRootRegistry $aggregateRootRegistry,
         private readonly string $storeTableName = 'eventstore',
     ) {
     }
@@ -58,7 +55,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 $builder->getParameterTypes(),
             ),
             $this->serializer,
-            $this->aggregateRootRegistry,
             $this->connection->getDatabasePlatform(),
         );
     }
@@ -86,8 +82,8 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
 
     private function applyCriteria(QueryBuilder $builder, Criteria $criteria): void
     {
-        if ($criteria->aggregateClass !== null) {
-            $shortName = $this->aggregateRootRegistry->aggregateName($criteria->aggregateClass);
+        if ($criteria->aggregateName !== null) {
+            $shortName = $criteria->aggregateName;
             $builder->andWhere('aggregate = :aggregate');
             $builder->setParameter('aggregate', $shortName);
         }
@@ -156,7 +152,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                     $data = $this->serializer->serialize($message->event());
 
                     try {
-                        $parameters[] = $this->aggregateRootRegistry->aggregateName($message->aggregateClass());
+                        $parameters[] = $message->aggregateName();
                         $parameters[] = $message->aggregateId();
                         $parameters[] = $message->playhead();
                         $parameters[] = $data->name;
@@ -204,11 +200,8 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
         $this->connection->transactional($function);
     }
 
-    /** @param class-string<AggregateRoot> $aggregate */
-    public function archiveMessages(string $aggregate, string $id, int $untilPlayhead): void
+    public function archiveMessages(string $aggregateName, string $aggregateId, int $untilPlayhead): void
     {
-        $aggregateName = $this->aggregateRootRegistry->aggregateName($aggregate);
-
         $statement = $this->connection->prepare(sprintf(
             'UPDATE %s 
             SET archived = true
@@ -220,7 +213,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
         ));
 
         $statement->bindValue('aggregate', $aggregateName);
-        $statement->bindValue('aggregate_id', $id);
+        $statement->bindValue('aggregate_id', $aggregateId);
         $statement->bindValue('playhead', $untilPlayhead);
 
         $statement->executeQuery();

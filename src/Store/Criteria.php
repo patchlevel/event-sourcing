@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-
 final class Criteria
 {
     public function __construct(
-        /** @var class-string<AggregateRoot>|null */
-        public readonly string|null $aggregateClass = null,
+        public readonly string|null $aggregateName = null,
         public readonly string|null $aggregateId = null,
         public readonly int|null $fromIndex = null,
         public readonly int|null $fromPlayhead = null,

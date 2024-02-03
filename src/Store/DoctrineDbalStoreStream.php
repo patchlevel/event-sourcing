@@ -9,7 +9,6 @@ use Doctrine\DBAL\Result;
 use Generator;
 use IteratorAggregate;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
@@ -29,10 +28,9 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     public function __construct(
         private readonly Result $result,
         EventSerializer $serializer,
-        AggregateRootRegistry $aggregateRootRegistry,
         AbstractPlatform $platform,
     ) {
-        $this->generator = $this->buildGenerator($result, $serializer, $aggregateRootRegistry, $platform);
+        $this->generator = $this->buildGenerator($result, $serializer, $platform);
         $this->position = null;
         $this->index = null;
     }
@@ -87,7 +85,6 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     private function buildGenerator(
         Result $result,
         EventSerializer $serializer,
-        AggregateRootRegistry $aggregateRootRegistry,
         AbstractPlatform $platform,
     ): Generator {
         /** @var array{id: positive-int, aggregate: string, aggregate_id: string, playhead: int|string, event: string, payload: string, recorded_on: string, custom_headers: string} $data */
@@ -102,7 +99,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
             $event = $serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
             yield Message::create($event)
-                ->withAggregateClass($aggregateRootRegistry->aggregateClass($data['aggregate']))
+                ->withAggregateName($data['aggregate'])
                 ->withAggregateId($data['aggregate_id'])
                 ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
                 ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))

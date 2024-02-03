@@ -14,9 +14,9 @@ final class HeaderNotFound extends EventBusException
         parent::__construct(sprintf('message header "%s" is not defined', $name));
     }
 
-    public static function aggregateClass(): self
+    public static function aggregateName(): self
     {
-        return new self(Message::HEADER_AGGREGATE_CLASS);
+        return new self(Message::HEADER_AGGREGATE_NAME);
     }
 
     public static function aggregateId(): self

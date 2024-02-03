@@ -46,7 +46,6 @@ final class ProjectionistTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']),
             'eventstore',
         );
 
@@ -101,7 +100,6 @@ final class ProjectionistTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            $aggregateRegistry,
             'eventstore',
         );
 

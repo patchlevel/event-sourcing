@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Outbox;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
@@ -49,19 +48,16 @@ final class OutboxTest extends TestCase
     public function testSuccessful(): void
     {
         $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
-        $registry = (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/Aggregate']);
 
         $store = new DoctrineDbalStore(
             $this->connection,
             $serializer,
-            $registry,
             'eventstore',
         );
 
         $outboxStore = new DoctrineOutboxStore(
             $this->connection,
             $serializer,
-            $registry,
             'outbox',
         );
 
@@ -115,7 +111,7 @@ final class OutboxTest extends TestCase
         $message = $messages[0];
 
         self::assertSame('1', $message->aggregateId());
-        self::assertSame(Profile::class, $message->aggregateClass());
+        self::assertSame('profile', $message->aggregateName());
         self::assertSame(1, $message->playhead());
         self::assertEquals(
             new ProfileCreated(ProfileId::fromString('1'), 'John'),

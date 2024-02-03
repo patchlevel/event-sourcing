@@ -8,7 +8,6 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
@@ -24,7 +23,6 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $serializer,
-        private readonly AggregateRootRegistry $aggregateRootRegistry,
         private readonly string $outboxTable = 'outbox',
     ) {
     }
@@ -41,7 +39,7 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
                     $connection->insert(
                         $this->outboxTable,
                         [
-                            'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
+                            'aggregate' => $message->aggregateName(),
                             'aggregate_id' => $message->aggregateId(),
                             'playhead' => $message->playhead(),
                             'event' => $data->name,
@@ -77,7 +75,7 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
                 $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
                 return Message::create($event)
-                    ->withAggregateClass($this->aggregateRootRegistry->aggregateClass($data['aggregate']))
+                    ->withAggregateName($data['aggregate'])
                     ->withAggregateId($data['aggregate_id'])
                     ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
                     ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
@@ -95,7 +93,7 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
                     $connection->delete(
                         $this->outboxTable,
                         [
-                            'aggregate' => $this->aggregateRootRegistry->aggregateName($message->aggregateClass()),
+                            'aggregate' => $message->aggregateName(),
                             'aggregate_id' => $message->aggregateId(),
                             'playhead' => $message->playhead(),
                         ],

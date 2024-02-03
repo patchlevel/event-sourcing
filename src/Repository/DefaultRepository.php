@@ -68,7 +68,7 @@ final class DefaultRepository implements Repository
                 $this->logger->debug(
                     sprintf(
                         'Repository: Aggregate "%s" with the id "%s" loaded from snapshot.',
-                        $this->metadata->className,
+                        $this->metadata->name,
                         $id->toString(),
                     ),
                 );
@@ -78,7 +78,7 @@ final class DefaultRepository implements Repository
                 $this->logger->error(
                     sprintf(
                         'Repository: Aggregate "%s" with the id "%s" could not be rebuild from snapshot.',
-                        $this->metadata->className,
+                        $this->metadata->name,
                         $id->toString(),
                     ),
                 );
@@ -88,7 +88,7 @@ final class DefaultRepository implements Repository
                 $this->logger->debug(
                     sprintf(
                         'Repository: Snapshot for aggregate "%s" with the id "%s" not found.',
-                        $this->metadata->className,
+                        $this->metadata->name,
                         $id->toString(),
                     ),
                 );
@@ -96,7 +96,7 @@ final class DefaultRepository implements Repository
                 $this->logger->debug(
                     sprintf(
                         'Repository: Snapshot for aggregate "%s" with the id "%s" is invalid.',
-                        $this->metadata->className,
+                        $this->metadata->name,
                         $id->toString(),
                     ),
                 );
@@ -104,7 +104,7 @@ final class DefaultRepository implements Repository
         }
 
         $criteria = (new CriteriaBuilder())
-            ->aggregateClass($this->metadata->className)
+            ->aggregateName($this->metadata->name)
             ->aggregateId($id->toString())
             ->archived(false)
             ->build();
@@ -120,7 +120,7 @@ final class DefaultRepository implements Repository
                 $this->logger->debug(
                     sprintf(
                         'Repository: Aggregate "%s" with the id "%s" not found.',
-                        $this->metadata->className,
+                        $this->metadata->name,
                         $id->toString(),
                     ),
                 );
@@ -145,7 +145,7 @@ final class DefaultRepository implements Repository
         $this->logger->debug(
             sprintf(
                 'Repository: Aggregate "%s" with the id "%s" loaded from store.',
-                $this->metadata->className,
+                $this->metadata->name,
                 $id->toString(),
             ),
         );
@@ -156,7 +156,7 @@ final class DefaultRepository implements Repository
     public function has(AggregateRootId $id): bool
     {
         $criteria = (new CriteriaBuilder())
-            ->aggregateClass($this->metadata->className)
+            ->aggregateName($this->metadata->name)
             ->aggregateId($id->toString())
             ->build();
 
@@ -167,6 +167,7 @@ final class DefaultRepository implements Repository
     public function save(AggregateRoot $aggregate): void
     {
         $this->assertValidAggregate($aggregate);
+        $aggregateId = $aggregate->aggregateRootId()->toString();
 
         try {
             $events = $aggregate->releaseEvents();
@@ -183,8 +184,8 @@ final class DefaultRepository implements Repository
                 $this->logger->error(
                     sprintf(
                         'Repository: Aggregate "%s" with the id "%s" is unknown.',
-                        $this->metadata->className,
-                        $aggregate->aggregateRootId()->toString(),
+                        $this->metadata->name,
+                        $aggregateId,
                     ),
                 );
 
@@ -195,8 +196,8 @@ final class DefaultRepository implements Repository
                 $this->logger->error(
                     sprintf(
                         'Repository: Aggregate "%s" with the id "%s" has a playhead mismatch. Expected "%d" but got "%d".',
-                        $this->metadata->className,
-                        $aggregate->aggregateRootId()->toString(),
+                        $this->metadata->name,
+                        $aggregateId,
                         $aggregate->playhead(),
                         $eventCount,
                     ),
@@ -213,11 +214,13 @@ final class DefaultRepository implements Repository
             $messageDecorator = $this->messageDecorator;
             $clock = $this->clock;
 
+            $aggregateName = $this->metadata->name;
+
             $messages = array_map(
-                static function (object $event) use ($aggregate, &$playhead, $messageDecorator, $clock) {
+                static function (object $event) use ($aggregateName, $aggregateId, &$playhead, $messageDecorator, $clock) {
                     $message = Message::create($event)
-                        ->withAggregateClass($aggregate::class)
-                        ->withAggregateId($aggregate->aggregateRootId()->toString())
+                        ->withAggregateName($aggregateName)
+                        ->withAggregateId($aggregateId)
                         ->withPlayhead(++$playhead)
                         ->withRecordedOn($clock->now());
 
@@ -230,7 +233,7 @@ final class DefaultRepository implements Repository
                 $events,
             );
 
-            $this->store->transactional(function () use ($messages, $aggregate, $newAggregate): void {
+            $this->store->transactional(function () use ($messages, $aggregate, $aggregateId, $newAggregate): void {
                 try {
                     $this->store->save(...$messages);
                 } catch (UniqueConstraintViolation) {
@@ -239,7 +242,7 @@ final class DefaultRepository implements Repository
                             sprintf(
                                 'Repository: Aggregate "%s" with the id "%s" already exists.',
                                 $aggregate::class,
-                                $aggregate->aggregateRootId()->toString(),
+                                $aggregateId,
                             ),
                         );
 
@@ -250,7 +253,7 @@ final class DefaultRepository implements Repository
                         sprintf(
                             'Repository: Aggregate "%s" with the id "%s" is outdated.',
                             $aggregate::class,
-                            $aggregate->aggregateRootId()->toString(),
+                            $aggregateId,
                         ),
                     );
 
@@ -266,8 +269,8 @@ final class DefaultRepository implements Repository
             $this->logger->debug(
                 sprintf(
                     'Repository: Aggregate "%s" with the id "%s" saved.',
-                    $this->metadata->className,
-                    $aggregate->aggregateRootId()->toString(),
+                    $this->metadata->name,
+                    $aggregateId,
                 ),
             );
         } catch (Throwable $exception) {
@@ -289,7 +292,7 @@ final class DefaultRepository implements Repository
         $aggregate = $this->snapshotStore->load($aggregateClass, $id);
 
         $criteria = (new CriteriaBuilder())
-            ->aggregateClass($this->metadata->className)
+            ->aggregateName($this->metadata->name)
             ->aggregateId($id->toString())
             ->fromPlayhead($aggregate->playhead())
             ->build();
@@ -380,7 +383,7 @@ final class DefaultRepository implements Repository
         }
 
         $this->store->archiveMessages(
-            $lastMessageWithNewStreamStart->aggregateClass(),
+            $lastMessageWithNewStreamStart->aggregateName(),
             $lastMessageWithNewStreamStart->aggregateId(),
             $lastMessageWithNewStreamStart->playhead(),
         );
@@ -388,7 +391,7 @@ final class DefaultRepository implements Repository
         $this->logger->debug(
             sprintf(
                 'Repository: Archive messages for aggregate "%s" with the id "%s" until playhead "%d".',
-                $lastMessageWithNewStreamStart->aggregateClass(),
+                $lastMessageWithNewStreamStart->aggregateName(),
                 $lastMessageWithNewStreamStart->aggregateId(),
                 $lastMessageWithNewStreamStart->playhead(),
             ),
