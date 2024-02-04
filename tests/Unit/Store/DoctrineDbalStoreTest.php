@@ -182,7 +182,7 @@ final class DoctrineDbalStoreTest extends TestCase
         };
 
         $connection = $this->prophesize(Connection::class);
-        $connection->transactional($callback)->shouldBeCalled();
+        $connection->transactional($callback)->willReturn(null)->shouldBeCalled();
 
         $serializer = $this->prophesize(EventSerializer::class);
 

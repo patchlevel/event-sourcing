@@ -1,6 +1,11 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Cannot unset offset 'url' on array\\{application_name\\?\\: string, charset\\?\\: string, dbname\\?\\: string, defaultTableOptions\\?\\: array\\<string, mixed\\>, driver\\?\\: 'ibm_db2'\\|'mysqli'\\|'oci8'\\|'pdo_mysql'\\|'pdo_oci'\\|'pdo_pgsql'\\|'pdo_sqlite'\\|'pdo_sqlsrv'\\|'pgsql'\\|'sqlite3'\\|'sqlsrv', driverClass\\?\\: class\\-string\\<Doctrine\\\\DBAL\\\\Driver\\>, driverOptions\\?\\: array, host\\?\\: string, \\.\\.\\.\\}\\.$#"
+			count: 1
+			path: src/Console/DoctrineHelper.php
+
+		-
 			message: "#^Method Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\:\\:headers\\(\\) should return array\\{aggregateClass\\?\\: class\\-string\\<Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\>, aggregateId\\?\\: string, playhead\\?\\: int\\<1, max\\>, recordedOn\\?\\: DateTimeImmutable, newStreamStart\\?\\: bool, archived\\?\\: bool\\} but returns non\\-empty\\-array\\<string, mixed\\>\\.$#"
 			count: 1
 			path: src/EventBus/Message.php
@@ -39,4 +44,3 @@ parameters:
 			message: "#^While loop condition is always true\\.$#"
 			count: 1
 			path: src/WatchServer/SocketWatchServer.php
-

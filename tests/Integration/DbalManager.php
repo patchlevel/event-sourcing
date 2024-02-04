@@ -14,7 +14,6 @@ use RuntimeException;
 use function getenv;
 use function in_array;
 use function is_string;
-use function str_replace;
 
 final class DbalManager
 {

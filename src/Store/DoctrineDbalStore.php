@@ -130,7 +130,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 $parameters = [];
                 $placeholders = [];
 
-                /** @var array<int, Type> $types */
+                /** @var array<int<0, max>, Type> $types */
                 $types = [];
 
                 $columns = [
@@ -149,6 +149,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 $placeholder = implode(', ', array_fill(0, $columnsLength, '?'));
 
                 foreach ($messages as $position => $message) {
+                    /** @var int<0, max> $offset */
                     $offset = (int)$position * $columnsLength;
                     $placeholders[] = $placeholder;
 
