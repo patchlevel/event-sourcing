@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
@@ -100,7 +101,7 @@ final class OutboxTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot();
+        $projectionist->boot(new ProjectionCriteria(), null, true);
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);

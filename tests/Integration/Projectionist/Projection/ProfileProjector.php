@@ -31,8 +31,8 @@ final class ProfileProjector
     public function create(): void
     {
         $table = new Table($this->tableName());
-        $table->addColumn('id', 'string');
-        $table->addColumn('name', 'string');
+        $table->addColumn('id', 'string')->setLength(36);
+        $table->addColumn('name', 'string')->setLength(255);
         $table->setPrimaryKey(['id']);
 
         $this->connection->createSchemaManager()->createTable($table);

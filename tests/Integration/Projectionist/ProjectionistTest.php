@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Lock\DoctrineDbalStoreSchemaAdapter;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
@@ -138,12 +139,12 @@ final class ProjectionistTest extends TestCase
 
         $schemaDirector->drop();
         $schemaDirector->create();
-        $projectionist->boot();
+        $projectionist->boot(new ProjectionCriteria(), null, true);
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
-        $projectionist->run();
+        $projectionist->run(new ProjectionCriteria(), null, true);
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile_1 WHERE id = ?', ['1']);
 
