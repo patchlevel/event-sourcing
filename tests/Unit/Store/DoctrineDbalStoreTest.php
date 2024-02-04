@@ -27,6 +27,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -241,6 +242,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $singleTableStore->save($message);
     }
 
+    #[RequiresPhp('>= 8.2')]
     public function testArchiveMessages(): void
     {
         $serializer = $this->prophesize(EventSerializer::class);
