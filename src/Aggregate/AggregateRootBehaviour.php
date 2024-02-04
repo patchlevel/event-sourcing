@@ -7,10 +7,6 @@ namespace Patchlevel\EventSourcing\Aggregate;
 use Patchlevel\Hydrator\Attribute\Ignore;
 use Patchlevel\Hydrator\Attribute\NormalizedName;
 
-use function end;
-use function explode;
-use function method_exists;
-
 trait AggregateRootBehaviour
 {
     /** @var list<object> */
@@ -24,16 +20,7 @@ trait AggregateRootBehaviour
     {
     }
 
-    protected function apply(object $event): void
-    {
-        $method = $this->findApplyMethod($event);
-
-        if (!method_exists($this, $method)) {
-            return;
-        }
-
-        $this->$method($event);
-    }
+    abstract protected function apply(object $event): void;
 
     protected function recordThat(object $event): void
     {
@@ -78,12 +65,5 @@ trait AggregateRootBehaviour
     public function playhead(): int
     {
         return $this->playhead;
-    }
-
-    private function findApplyMethod(object $event): string
-    {
-        $classParts = explode('\\', $event::class);
-
-        return 'apply' . end($classParts);
     }
 }
