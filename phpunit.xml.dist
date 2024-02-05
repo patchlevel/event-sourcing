@@ -27,7 +27,7 @@
   </coverage>
   <php>
     <env name="COLUMNS" value="120"/>
-    <env name="DB_URL" value="sqlite:///:memory:"/>
+    <env name="DB_URL" value="sqlite3:///:memory:"/>
     <ini name="error_reporting" value="E_ALL"/>
     <ini name="zend.exception_ignore_args" value="0"/>
   </php>

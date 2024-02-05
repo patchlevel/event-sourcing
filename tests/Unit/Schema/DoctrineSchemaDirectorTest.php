@@ -9,6 +9,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SchemaConfig;
 use Doctrine\DBAL\Schema\SchemaDiff;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
@@ -24,10 +25,10 @@ final class DoctrineSchemaDirectorTest extends TestCase
     public function testCreate(): void
     {
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createSchemaConfig()->willReturn();
+        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
 
         $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getCreateTablesSQL(Argument::any(), Argument::any())->willReturn(['this is sql!']);
+        $platform->getCreateTablesSQL(Argument::any())->willReturn(['this is sql!']);
         $platform->supportsSchemas()->willReturn(false);
 
         $connection = $this->prophesize(Connection::class);
@@ -49,10 +50,10 @@ final class DoctrineSchemaDirectorTest extends TestCase
     public function testDryRunCreate(): void
     {
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createSchemaConfig()->willReturn();
+        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
 
         $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getCreateTablesSQL(Argument::any(), Argument::any())->willReturn(['this is sql!']);
+        $platform->getCreateTablesSQL(Argument::any())->willReturn(['this is sql!']);
         $platform->supportsSchemas()->willReturn(false);
 
         $connection = $this->prophesize(Connection::class);
@@ -84,7 +85,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
         $schemaManager->createComparator()->willReturn($comperator->reveal());
         $schemaManager->introspectSchema()->willReturn($fromSchema->reveal());
-        $schemaManager->createSchemaConfig()->willReturn();
+        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getAlterSchemaSQL($diff->reveal())->willReturn(['x', 'y']);
@@ -118,7 +119,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
         $schemaManager->createComparator()->willReturn($comperator->reveal());
         $schemaManager->introspectSchema()->willReturn($fromSchema->reveal());
-        $schemaManager->createSchemaConfig()->willReturn();
+        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getAlterSchemaSQL($diff->reveal())->willReturn(['x', 'y']);
@@ -145,7 +146,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $currentSchema = $this->prophesize(Schema::class);
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createSchemaConfig()->willReturn();
+        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
 
         $currentSchema->hasTable('foo')->willReturn(true);
         $currentSchema->hasTable('bar')->willReturn(false);
@@ -177,7 +178,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $currentSchema = $this->prophesize(Schema::class);
         $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createSchemaConfig()->willReturn();
+        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
 
         $currentSchema->hasTable('foo')->willReturn(true);
         $currentSchema->hasTable('bar')->willReturn(false);

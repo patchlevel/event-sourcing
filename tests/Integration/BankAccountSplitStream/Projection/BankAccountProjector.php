@@ -28,8 +28,8 @@ final class BankAccountProjector
     public function create(): void
     {
         $table = new Table('projection_bank_account');
-        $table->addColumn('id', 'string');
-        $table->addColumn('name', 'string');
+        $table->addColumn('id', 'string')->setLength(36);
+        $table->addColumn('name', 'string')->setLength(255);
         $table->addColumn('balance_in_cents', 'integer');
         $table->setPrimaryKey(['id']);
 

@@ -160,14 +160,17 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         $table = $schema->createTable($this->projectionTable);
 
         $table->addColumn('name', Types::STRING)
+            ->setLength(255)
             ->setNotnull(true);
         $table->addColumn('version', Types::INTEGER)
             ->setNotnull(true);
         $table->addColumn('position', Types::INTEGER)
             ->setNotnull(true);
         $table->addColumn('status', Types::STRING)
+            ->setLength(32)
             ->setNotnull(true);
         $table->addColumn('error_message', Types::STRING)
+            ->setLength(255)
             ->setNotnull(false);
         $table->addColumn('error_context', Types::JSON)
             ->setNotnull(false);

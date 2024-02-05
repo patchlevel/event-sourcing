@@ -126,12 +126,15 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
         $table = $schema->createTable($this->outboxTable);
 
         $table->addColumn('aggregate', Types::STRING)
+            ->setLength(255)
             ->setNotnull(true);
         $table->addColumn('aggregate_id', Types::STRING)
+            ->setLength(32)
             ->setNotnull(true);
         $table->addColumn('playhead', Types::INTEGER)
             ->setNotnull(true);
         $table->addColumn('event', Types::STRING)
+            ->setLength(255)
             ->setNotnull(true);
         $table->addColumn('payload', Types::JSON)
             ->setNotnull(true);
