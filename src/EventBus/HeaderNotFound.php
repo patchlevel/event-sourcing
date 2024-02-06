@@ -34,6 +34,16 @@ final class HeaderNotFound extends EventBusException
         return new self(Message::HEADER_RECORDED_ON);
     }
 
+    public static function newStreamStart(): self
+    {
+        return new self(Message::HEADER_NEW_STREAM_START);
+    }
+
+    public static function archived(): self
+    {
+        return new self(Message::HEADER_ARCHIVED);
+    }
+
     public static function custom(string $name): self
     {
         return new self($name);

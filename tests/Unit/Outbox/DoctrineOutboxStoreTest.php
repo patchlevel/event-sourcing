@@ -73,7 +73,7 @@ final class DoctrineOutboxStoreTest extends TestCase
             ->withRecordedOn($recordedOn)
             ->withNewStreamStart(false)
             ->withArchived(false)
-            ->withCustomHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
+            ->withHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
 
         $innerMockedConnection = $this->prophesize(Connection::class);
         $innerMockedConnection->delete(
@@ -178,7 +178,7 @@ final class DoctrineOutboxStoreTest extends TestCase
             ->withRecordedOn($recordedOn)
             ->withNewStreamStart(false)
             ->withArchived(false)
-            ->withCustomHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
+            ->withHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
 
         $queryBuilder = $this->prophesize(QueryBuilder::class);
         $queryBuilder->select('*')->shouldBeCalledOnce()->willReturn($queryBuilder->reveal());

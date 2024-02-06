@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
@@ -222,7 +223,9 @@ final class DefaultRepository implements Repository
                         ->withAggregateName($aggregateName)
                         ->withAggregateId($aggregateId)
                         ->withPlayhead(++$playhead)
-                        ->withRecordedOn($clock->now());
+                        ->withRecordedOn($clock->now())
+                        ->withArchived(false)
+                        ->withNewStreamStart(false);
 
                     if ($messageDecorator) {
                         return $messageDecorator($message);
@@ -371,7 +374,13 @@ final class DefaultRepository implements Repository
         $lastMessageWithNewStreamStart = null;
 
         foreach ($messages as $message) {
-            if (!$message->newStreamStart()) {
+            try {
+                $newStreamStart = $message->newStreamStart();
+            } catch (HeaderNotFound) {
+                continue;
+            }
+
+            if (!$newStreamStart) {
                 continue;
             }
 

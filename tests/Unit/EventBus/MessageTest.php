@@ -71,9 +71,9 @@ final class MessageTest extends TestCase
     {
         $message = Message::create(new class {
         })
-            ->withCustomHeader('custom-field', 'foo-bar');
+            ->withHeader('custom-field', 'foo-bar');
 
-        self::assertEquals('foo-bar', $message->customHeader('custom-field'));
+        self::assertEquals('foo-bar', $message->header('custom-field'));
         self::assertEquals(
             ['custom-field' => 'foo-bar'],
             $message->customHeaders(),
@@ -84,9 +84,9 @@ final class MessageTest extends TestCase
     {
         $message = Message::create(new class {
         })
-            ->withCustomHeaders(['custom-field' => 'foo-bar']);
+            ->withHeaders(['custom-field' => 'foo-bar']);
 
-        self::assertEquals('foo-bar', $message->customHeader('custom-field'));
+        self::assertEquals('foo-bar', $message->header('custom-field'));
         self::assertEquals(
             ['custom-field' => 'foo-bar'],
             $message->customHeaders(),
@@ -127,13 +127,7 @@ final class MessageTest extends TestCase
         $message = Message::create(new class {
         });
 
-        self::assertSame(
-            [
-                'newStreamStart' => false,
-                'archived' => false,
-            ],
-            $message->headers(),
-        );
+        self::assertSame([], $message->headers());
     }
 
     public function testAllHeaders(): void
@@ -148,17 +142,17 @@ final class MessageTest extends TestCase
             ->withRecordedOn($recordedAt)
             ->withArchived(true)
             ->withNewStreamStart(true)
-            ->withCustomHeader('foo', 'bar');
+            ->withHeader('foo', 'bar');
 
         self::assertSame(
             [
-                'foo' => 'bar',
                 'aggregateName' => 'profile',
                 'aggregateId' => '1',
                 'playhead' => 3,
                 'recordedOn' => $recordedAt,
-                'newStreamStart' => true,
                 'archived' => true,
+                'newStreamStart' => true,
+                'foo' => 'bar',
             ],
             $message->headers(),
         );
@@ -169,13 +163,7 @@ final class MessageTest extends TestCase
         $message = Message::createWithHeaders(new class {
         }, []);
 
-        self::assertSame(
-            [
-                'newStreamStart' => false,
-                'archived' => false,
-            ],
-            $message->headers(),
-        );
+        self::assertSame([], $message->headers());
     }
 
     public function testCreateWithAllHeaders(): void
@@ -236,6 +224,6 @@ final class MessageTest extends TestCase
 
         $this->expectException(HeaderNotFound::class);
         /** @psalm-suppress UnusedMethodCall */
-        $message->customHeader('foo');
+        $message->header('foo');
     }
 }

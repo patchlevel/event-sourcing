@@ -74,7 +74,7 @@ final class OnSystemRecordedDecorator implements MessageDecorator
 {
     public function __invoke(Message $message): Message
     {
-        return $message->withCustomHeader('system', 'accounting_system');
+        return $message->withHeader('system', 'accounting_system');
     }
 } 
 ```

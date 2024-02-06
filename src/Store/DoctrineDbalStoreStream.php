@@ -103,7 +103,9 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
                 ->withAggregateId($data['aggregate_id'])
                 ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
                 ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
-                ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
+                ->withArchived(DoctrineHelper::normalizeArchived($data['archived'], $platform))
+                ->withNewStreamStart(DoctrineHelper::normalizeNewStreamStart($data['new_stream_start'], $platform))
+                ->withHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
         }
     }
 }

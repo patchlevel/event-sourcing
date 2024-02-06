@@ -11,6 +11,6 @@ final class FooMessageDecorator implements MessageDecorator
 {
     public function __invoke(Message $message): Message
     {
-        return $message->withCustomHeader('foo', 'bar');
+        return $message->withHeader('foo', 'bar');
     }
 }

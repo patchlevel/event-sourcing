@@ -51,7 +51,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 $message = Message::create(new NameChanged('foo'))
     // ...
-    ->withCustomHeader('application-id', 'app');
+    ->withHeader('application-id', 'app');
 ```
 
 !!! note

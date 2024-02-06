@@ -60,7 +60,7 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
             function (array $data) {
                 $message = $this->messageSerializer->deserialize($data['message']);
 
-                return $message->withCustomHeader(self::HEADER_OUTBOX_IDENTIFIER, $data['id']);
+                return $message->withHeader(self::HEADER_OUTBOX_IDENTIFIER, $data['id']);
             },
             $result,
         );

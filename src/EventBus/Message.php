@@ -17,7 +17,8 @@ use function array_key_exists;
  *     playhead?: positive-int,
  *     recordedOn?: DateTimeImmutable,
  *     newStreamStart?: bool,
- *     archived?: bool
+ *     archived?: bool,
+ *     ...<string, mixed>
  *  }
  */
 final class Message
@@ -29,16 +30,8 @@ final class Message
     public const HEADER_ARCHIVED = 'archived';
     public const HEADER_NEW_STREAM_START = 'newStreamStart';
 
-    private string|null $aggregateName = null;
-    private string|null $aggregateId = null;
-    /** @var positive-int|null  */
-    private int|null $playhead = null;
-    private DateTimeImmutable|null $recordedOn = null;
-    private bool $newStreamStart = false;
-    private bool $archived = false;
-
-    /** @var array<string, mixed> */
-    private array $customHeaders = [];
+    /** @var Headers */
+    private array $headers = [];
 
     /** @param T $event */
     public function __construct(
@@ -58,6 +51,12 @@ final class Message
         return new self($event);
     }
 
+    /** @param Headers $headers */
+    public static function createWithHeaders(object $event, array $headers): self
+    {
+        return self::create($event)->withHeaders($headers);
+    }
+
     /** @return T */
     public function event(): object
     {
@@ -67,7 +66,7 @@ final class Message
     /** @throws HeaderNotFound */
     public function aggregateName(): string
     {
-        $value = $this->aggregateName;
+        $value = $this->headers[self::HEADER_AGGREGATE_NAME] ?? null;
 
         if ($value === null) {
             throw HeaderNotFound::aggregateName();
@@ -78,16 +77,13 @@ final class Message
 
     public function withAggregateName(string $value): self
     {
-        $message = clone $this;
-        $message->aggregateName = $value;
-
-        return $message;
+        return $this->withHeader(self::HEADER_AGGREGATE_NAME, $value);
     }
 
     /** @throws HeaderNotFound */
     public function aggregateId(): string
     {
-        $value = $this->aggregateId;
+        $value = $this->headers[self::HEADER_AGGREGATE_ID] ?? null;
 
         if ($value === null) {
             throw HeaderNotFound::aggregateId();
@@ -98,10 +94,7 @@ final class Message
 
     public function withAggregateId(string $value): self
     {
-        $message = clone $this;
-        $message->aggregateId = $value;
-
-        return $message;
+        return $this->withHeader(self::HEADER_AGGREGATE_ID, $value);
     }
 
     /**
@@ -111,7 +104,7 @@ final class Message
      */
     public function playhead(): int
     {
-        $value = $this->playhead;
+        $value = $this->headers[self::HEADER_PLAYHEAD] ?? null;
 
         if ($value === null) {
             throw HeaderNotFound::playhead();
@@ -123,16 +116,13 @@ final class Message
     /** @param positive-int $value */
     public function withPlayhead(int $value): self
     {
-        $message = clone $this;
-        $message->playhead = $value;
-
-        return $message;
+        return $this->withHeader(self::HEADER_PLAYHEAD, $value);
     }
 
     /** @throws HeaderNotFound */
     public function recordedOn(): DateTimeImmutable
     {
-        $value = $this->recordedOn;
+        $value = $this->headers[self::HEADER_RECORDED_ON] ?? null;
 
         if ($value === null) {
             throw HeaderNotFound::recordedOn();
@@ -143,67 +133,55 @@ final class Message
 
     public function withRecordedOn(DateTimeImmutable $value): self
     {
-        $message = clone $this;
-        $message->recordedOn = $value;
-
-        return $message;
+        return $this->withHeader(self::HEADER_RECORDED_ON, $value);
     }
 
     public function newStreamStart(): bool
     {
-        return $this->newStreamStart;
+        $value = $this->headers[self::HEADER_NEW_STREAM_START] ?? null;
+
+        if ($value === null) {
+            throw HeaderNotFound::newStreamStart();
+        }
+
+        return $value;
     }
 
     public function withNewStreamStart(bool $value): self
     {
-        $message = clone $this;
-        $message->newStreamStart = $value;
-
-        return $message;
+        return $this->withHeader(self::HEADER_NEW_STREAM_START, $value);
     }
 
     public function archived(): bool
     {
-        return $this->archived;
+        $value = $this->headers[self::HEADER_ARCHIVED] ?? null;
+
+        if ($value === null) {
+            throw HeaderNotFound::archived();
+        }
+
+        return $value;
     }
 
     public function withArchived(bool $value): self
     {
-        $message = clone $this;
-        $message->archived = $value;
-
-        return $message;
+        return $this->withHeader(self::HEADER_ARCHIVED, $value);
     }
 
     /** @throws HeaderNotFound */
-    public function customHeader(string $name): mixed
+    public function header(string $name): mixed
     {
-        if (!array_key_exists($name, $this->customHeaders)) {
+        if (!array_key_exists($name, $this->headers)) {
             throw HeaderNotFound::custom($name);
         }
 
-        return $this->customHeaders[$name];
+        return $this->headers[$name];
     }
 
-    public function withCustomHeader(string $name, mixed $value): self
+    public function withHeader(string $name, mixed $value): self
     {
         $message = clone $this;
-        $message->customHeaders[$name] = $value;
-
-        return $message;
-    }
-
-    /** @return array<string, mixed> */
-    public function customHeaders(): array
-    {
-        return $this->customHeaders;
-    }
-
-    /** @param array<string, mixed> $headers */
-    public function withCustomHeaders(array $headers): self
-    {
-        $message = clone $this;
-        $message->customHeaders += $headers;
+        $message->headers[$name] = $value;
 
         return $message;
     }
@@ -211,68 +189,32 @@ final class Message
     /** @return Headers */
     public function headers(): array
     {
-        $headers = $this->customHeaders;
-
-        if ($this->aggregateName !== null) {
-            $headers[self::HEADER_AGGREGATE_NAME] = $this->aggregateName;
-        }
-
-        if ($this->aggregateId !== null) {
-            $headers[self::HEADER_AGGREGATE_ID] = $this->aggregateId;
-        }
-
-        if ($this->playhead !== null) {
-            $headers[self::HEADER_PLAYHEAD] = $this->playhead;
-        }
-
-        if ($this->recordedOn !== null) {
-            $headers[self::HEADER_RECORDED_ON] = $this->recordedOn;
-        }
-
-        $headers[self::HEADER_NEW_STREAM_START] = $this->newStreamStart;
-        $headers[self::HEADER_ARCHIVED] = $this->archived;
-
-        return $headers;
+        return $this->headers;
     }
 
     /** @param Headers $headers */
-    public static function createWithHeaders(object $event, array $headers): self
+    public function withHeaders(array $headers): self
     {
-        $message = self::create($event);
+        $message = clone $this;
+        $message->headers += $headers;
 
-        if (array_key_exists(self::HEADER_AGGREGATE_NAME, $headers)) {
-            $message = $message->withAggregateName($headers[self::HEADER_AGGREGATE_NAME]);
-        }
+        return $message;
+    }
 
-        if (array_key_exists(self::HEADER_AGGREGATE_ID, $headers)) {
-            $message = $message->withAggregateId($headers[self::HEADER_AGGREGATE_ID]);
-        }
-
-        if (array_key_exists(self::HEADER_PLAYHEAD, $headers)) {
-            $message = $message->withPlayhead($headers[self::HEADER_PLAYHEAD]);
-        }
-
-        if (array_key_exists(self::HEADER_RECORDED_ON, $headers)) {
-            $message = $message->withRecordedOn($headers[self::HEADER_RECORDED_ON]);
-        }
-
-        if (array_key_exists(self::HEADER_NEW_STREAM_START, $headers)) {
-            $message = $message->withNewStreamStart($headers[self::HEADER_NEW_STREAM_START]);
-        }
-
-        if (array_key_exists(self::HEADER_ARCHIVED, $headers)) {
-            $message = $message->withArchived($headers[self::HEADER_ARCHIVED]);
-        }
+    /** @return array<string, mixed> */
+    public function customHeaders(): array
+    {
+        $headers = $this->headers;
 
         unset(
             $headers[self::HEADER_AGGREGATE_NAME],
             $headers[self::HEADER_AGGREGATE_ID],
             $headers[self::HEADER_PLAYHEAD],
             $headers[self::HEADER_RECORDED_ON],
-            $headers[self::HEADER_NEW_STREAM_START],
             $headers[self::HEADER_ARCHIVED],
+            $headers[self::HEADER_NEW_STREAM_START],
         );
 
-        return $message->withCustomHeaders($headers);
+        return $headers;
     }
 }

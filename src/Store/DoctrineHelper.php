@@ -48,4 +48,26 @@ final class DoctrineHelper
 
         return $normalizedCustomHeaders;
     }
+
+    public static function normalizeArchived(mixed $value, AbstractPlatform $platform): bool
+    {
+        $normalizedValue = Type::getType(Types::BOOLEAN)->convertToPHPValue($value, $platform);
+
+        if (!is_bool($normalizedValue)) {
+            throw new InvalidType('archived', 'boolean');
+        }
+
+        return $normalizedValue;
+    }
+
+    public static function normalizeNewStreamStart(mixed $value, AbstractPlatform $platform): bool
+    {
+        $normalizedValue = Type::getType(Types::BOOLEAN)->convertToPHPValue($value, $platform);
+
+        if (!is_bool($normalizedValue)) {
+            throw new InvalidType('new_stream_start', 'boolean');
+        }
+
+        return $normalizedValue;
+    }
 }

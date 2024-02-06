@@ -29,9 +29,9 @@ final class SplitStreamDecoratorTest extends TestCase
         );
 
         $decorator = new SplitStreamDecorator(new AttributeEventMetadataFactory());
-        $decorator($message);
+        $decoratedMessage = $decorator($message);
 
-        self::assertFalse($message->newStreamStart());
+        self::assertFalse($decoratedMessage->newStreamStart());
     }
 
     public function testSplittingStream(): void

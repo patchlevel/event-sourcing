@@ -19,10 +19,6 @@ final class SplitStreamDecorator implements MessageDecorator
         $event = $message->event();
         $metadata = $this->eventMetadataFactory->metadata($event::class);
 
-        if ($metadata->splitStream) {
-            return $message->withNewStreamStart(true);
-        }
-
-        return $message;
+        return $message->withNewStreamStart($metadata->splitStream);
     }
 }
