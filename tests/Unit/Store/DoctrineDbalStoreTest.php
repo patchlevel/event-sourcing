@@ -18,13 +18,11 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use EmptyIterator;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\RequiresPhp;
@@ -74,13 +72,12 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
         $stream = $doctrineDbalStore->load(
             (new CriteriaBuilder())
-                ->aggregateClass(Profile::class)
+                ->aggregateName('profile')
                 ->aggregateId('1')
                 ->fromPlayhead(0)
                 ->archived(false)
@@ -144,13 +141,12 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
         $stream = $doctrineDbalStore->load(
             (new CriteriaBuilder())
-                ->aggregateClass(Profile::class)
+                ->aggregateName('profile')
                 ->aggregateId('1')
                 ->fromPlayhead(0)
                 ->archived(false)
@@ -190,7 +186,6 @@ final class DoctrineDbalStoreTest extends TestCase
         $store = new DoctrineDbalStore(
             $connection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
 
@@ -201,7 +196,7 @@ final class DoctrineDbalStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(1)
             ->withRecordedOn($recordedOn)
@@ -236,7 +231,6 @@ final class DoctrineDbalStoreTest extends TestCase
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
         $singleTableStore->save($message);
@@ -266,9 +260,8 @@ final class DoctrineDbalStoreTest extends TestCase
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
             'eventstore',
         );
-        $singleTableStore->archiveMessages(Profile::class, '1', 1);
+        $singleTableStore->archiveMessages('profile', '1', 1);
     }
 }

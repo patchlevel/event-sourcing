@@ -38,7 +38,7 @@ final class ShowAggregateCommandTest extends TestCase
         $store->load(new Criteria(Profile::class, '1'))->willReturn(
             new ArrayStream([
                 Message::create($event)
-                    ->withAggregateClass(Profile::class)
+                    ->withAggregateName('profile')
                     ->withAggregateId('1')
                     ->withPlayhead(1)
                     ->withRecordedOn(new DateTimeImmutable()),
@@ -214,7 +214,7 @@ final class ShowAggregateCommandTest extends TestCase
         $store->load(new Criteria(Profile::class, '1'))->willReturn(
             new ArrayStream([
                 Message::create($event)
-                    ->withAggregateClass(Profile::class)
+                    ->withAggregateName('profile')
                     ->withAggregateId('1')
                     ->withPlayhead(1)
                     ->withRecordedOn(new DateTimeImmutable()),

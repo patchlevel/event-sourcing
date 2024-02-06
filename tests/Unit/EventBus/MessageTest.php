@@ -9,7 +9,6 @@ use Generator;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,9 +33,9 @@ final class MessageTest extends TestCase
     {
         $message = Message::create(new class {
         })
-            ->withAggregateClass(Profile::class);
+            ->withAggregateName('profile');
 
-        self::assertSame(Profile::class, $message->aggregateClass());
+        self::assertSame('profile', $message->aggregateName());
     }
 
     public function testCreateMessageWithAggregateIdHeader(): void
@@ -143,7 +142,7 @@ final class MessageTest extends TestCase
 
         $message = Message::create(new class {
         })
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(3)
             ->withRecordedOn($recordedAt)
@@ -154,7 +153,7 @@ final class MessageTest extends TestCase
         self::assertSame(
             [
                 'foo' => 'bar',
-                'aggregateClass' => Profile::class,
+                'aggregateName' => 'profile',
                 'aggregateId' => '1',
                 'playhead' => 3,
                 'recordedOn' => $recordedAt,
@@ -187,7 +186,7 @@ final class MessageTest extends TestCase
             },
             [
                 'foo' => 'bar',
-                'aggregateClass' => Profile::class,
+                'aggregateName' => 'profile',
                 'aggregateId' => '1',
                 'playhead' => 3,
                 'recordedOn' => $recordedAt,
@@ -199,7 +198,7 @@ final class MessageTest extends TestCase
         self::assertSame(
             [
                 'foo' => 'bar',
-                'aggregateClass' => Profile::class,
+                'aggregateName' => 'profile',
                 'aggregateId' => '1',
                 'playhead' => 3,
                 'recordedOn' => $recordedAt,
@@ -224,7 +223,7 @@ final class MessageTest extends TestCase
     /** @return Generator<string, array{string}> */
     public static function provideHeaderNotFound(): Generator
     {
-        yield 'aggregateClass' => ['aggregateClass'];
+        yield 'aggregateName' => ['aggregateName'];
         yield 'aggregateId' => ['aggregateId'];
         yield 'playhead' => ['playhead'];
         yield 'recordedOn' => ['recordedOn'];

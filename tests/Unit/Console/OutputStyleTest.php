@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +40,7 @@ final class OutputStyleTest extends TestCase
         ));
 
         $message = Message::create($event)
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(1)
             ->withRecordedOn(new DateTimeImmutable());

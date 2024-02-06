@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\InMemorySource;
 use Patchlevel\EventSourcing\Pipeline\Target\InMemoryTarget;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -106,7 +105,7 @@ final class PipelineTest extends TestCase
                     Email::fromString('hallo@patchlevel.de'),
                 ),
             )
-                ->withAggregateClass(Profile::class)
+                ->withAggregateName('profile')
                 ->withAggregateId('1')
                 ->withPlayhead(1),
 
@@ -115,7 +114,7 @@ final class PipelineTest extends TestCase
                     ProfileId::fromString('1'),
                 ),
             )
-                ->withAggregateClass(Profile::class)
+                ->withAggregateName('profile')
                 ->withAggregateId('1')
                 ->withPlayhead(2),
 
@@ -124,7 +123,7 @@ final class PipelineTest extends TestCase
                     ProfileId::fromString('1'),
                 ),
             )
-                ->withAggregateClass(Profile::class)
+                ->withAggregateName('profile')
                 ->withAggregateId('1')
                 ->withPlayhead(3),
 
@@ -134,7 +133,7 @@ final class PipelineTest extends TestCase
                     Email::fromString('hallo@patchlevel.de'),
                 ),
             )
-                ->withAggregateClass(Profile::class)
+                ->withAggregateName('profile')
                 ->withAggregateId('2')
                 ->withPlayhead(1),
 
@@ -143,7 +142,7 @@ final class PipelineTest extends TestCase
                     ProfileId::fromString('2'),
                 ),
             )
-                ->withAggregateClass(Profile::class)
+                ->withAggregateName('profile')
                 ->withAggregateId('2')
                 ->withPlayhead(2),
         ];

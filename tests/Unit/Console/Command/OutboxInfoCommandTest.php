@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\Outbox\OutboxStore;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +30,7 @@ final class OutboxInfoCommandTest extends TestCase
         $store = $this->prophesize(OutboxStore::class);
         $store->retrieveOutboxMessages(null)->willReturn([
             Message::create($event)
-                ->withAggregateClass(Profile::class)
+                ->withAggregateName('profile')
                 ->withAggregateId('1')
                 ->withPlayhead(1)
                 ->withRecordedOn(new DateTimeImmutable()),
@@ -69,7 +68,7 @@ final class OutboxInfoCommandTest extends TestCase
         $store = $this->prophesize(OutboxStore::class);
         $store->retrieveOutboxMessages(100)->willReturn([
             Message::create($event)
-                ->withAggregateClass(Profile::class)
+                ->withAggregateName('profile')
                 ->withAggregateId('1')
                 ->withPlayhead(1)
                 ->withRecordedOn(new DateTimeImmutable()),

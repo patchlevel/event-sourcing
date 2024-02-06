@@ -9,7 +9,6 @@ use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -56,7 +55,6 @@ final class SnapshotsBench
         $this->store = new DoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
-            (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
             'eventstore',
         );
 

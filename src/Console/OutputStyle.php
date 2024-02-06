@@ -24,14 +24,14 @@ final class OutputStyle extends SymfonyStyle
 
         $this->horizontalTable([
             'eventClass',
-            'aggregateClass',
+            'aggregateName',
             'aggregateId',
             'playhead',
             'recordedOn',
         ], [
             [
                 $event::class,
-                $message->aggregateClass(),
+                $message->aggregateName(),
                 $message->aggregateId(),
                 $message->playhead(),
                 $message->recordedOn()->format(DateTimeInterface::ATOM),

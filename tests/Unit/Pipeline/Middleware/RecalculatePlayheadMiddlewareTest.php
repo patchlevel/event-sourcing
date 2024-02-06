@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -25,14 +24,14 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(5);
 
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame(Profile::class, $result[0]->aggregateClass());
+        self::assertSame('profile', $result[0]->aggregateName());
         self::assertSame(1, $result[0]->playhead());
     }
 
@@ -46,7 +45,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(1);
 
@@ -65,24 +64,24 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(5);
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame(Profile::class, $result[0]->aggregateClass());
+        self::assertSame('profile', $result[0]->aggregateName());
         self::assertSame(1, $result[0]->playhead());
 
         $message = Message::create($event)
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(8);
 
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame(Profile::class, $result[0]->aggregateClass());
+        self::assertSame('profile', $result[0]->aggregateName());
         self::assertSame(2, $result[0]->playhead());
     }
 
@@ -96,17 +95,17 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(5);
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame(Profile::class, $result[0]->aggregateClass());
+        self::assertSame('profile', $result[0]->aggregateName());
         self::assertSame(1, $result[0]->playhead());
 
         $message = Message::create($event)
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(8);
 
@@ -114,7 +113,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame(Profile::class, $result[0]->aggregateClass());
+        self::assertSame('profile', $result[0]->aggregateName());
         self::assertSame(1, $result[0]->playhead());
     }
 }

@@ -6,7 +6,7 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\:\\:headers\\(\\) should return array\\{aggregateClass\\?\\: class\\-string\\<Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateRoot\\>, aggregateId\\?\\: string, playhead\\?\\: int\\<1, max\\>, recordedOn\\?\\: DateTimeImmutable, newStreamStart\\?\\: bool, archived\\?\\: bool\\} but returns non\\-empty\\-array\\<string, mixed\\>\\.$#"
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\:\\:headers\\(\\) should return array\\{aggregateName\\?\\: string, aggregateId\\?\\: string, playhead\\?\\: int\\<1, max\\>, recordedOn\\?\\: DateTimeImmutable, newStreamStart\\?\\: bool, archived\\?\\: bool\\} but returns non\\-empty\\-array\\<string, mixed\\>\\.$#"
 			count: 1
 			path: src/EventBus/Message.php
 
