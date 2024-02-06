@@ -23,12 +23,12 @@ This stores the events to be dispatched in the database.
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 
-$outboxEventBus = new OutboxEventBus($store);
+$eventBus = new OutboxEventBus($store);
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
-    $outboxEventBus
+    $eventBus
 ); 
 ```
 
@@ -36,15 +36,20 @@ And then you have to define the consumer. This gets the right event bus.
 It is used to load the events to be dispatched from the database, dispatch the events and then empty the outbox table.
 
 ```php
+use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
-use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
+use Patchlevel\EventSourcing\Outbox\StoreOutboxProcessor;
 
-$consumer = new StoreOutboxConsumer(
+$consumer = DefaultConsumer::create([
+    $mailListener,
+]);
+
+$processor = new StoreOutboxProcessor(
     $store, 
-    new EventBusPublisher($realEventBus)
+    new EventBusPublisher($consumer)
 );
 
-$consumer->consume();
+$processor->process();
 ```
 
 ## Using outbox

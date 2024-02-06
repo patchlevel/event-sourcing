@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\OutboxConsumeCommand;
-use Patchlevel\EventSourcing\Outbox\OutboxConsumer;
+use Patchlevel\EventSourcing\Outbox\OutboxProcessor;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -18,8 +18,8 @@ final class OutboxConsumeCommandTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $consumer = $this->prophesize(OutboxConsumer::class);
-        $consumer->consume(100)->shouldBeCalled();
+        $consumer = $this->prophesize(OutboxProcessor::class);
+        $consumer->process(100)->shouldBeCalled();
 
         $command = new OutboxConsumeCommand(
             $consumer->reveal(),
@@ -35,8 +35,8 @@ final class OutboxConsumeCommandTest extends TestCase
 
     public function testSuccessfulWithAllLimits(): void
     {
-        $consumer = $this->prophesize(OutboxConsumer::class);
-        $consumer->consume(200)->shouldBeCalled();
+        $consumer = $this->prophesize(OutboxProcessor::class);
+        $consumer->process(200)->shouldBeCalled();
 
         $command = new OutboxConsumeCommand(
             $consumer->reveal(),
