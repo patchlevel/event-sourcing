@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\EventBus\Serializer;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\DeserializeFailed;
 use Patchlevel\EventSourcing\EventBus\Serializer\PhpNativeMessageSerializer;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -49,6 +50,24 @@ final class PhpNativeMessageSerializerTest extends TestCase
             'newStreamStart' => false,
             'archived' => false,
         ], $message->headers());
+    }
+
+    public function testDeserializeEncodeFailed(): void
+    {
+        $this->expectException(DeserializeFailed::class);
+
+        $nativeSerializer = new PhpNativeMessageSerializer();
+
+        $nativeSerializer->deserialize('FOO');
+    }
+
+    public function testDeserializeNotAMessage(): void
+    {
+        $this->expectException(DeserializeFailed::class);
+
+        $nativeSerializer = new PhpNativeMessageSerializer();
+
+        $nativeSerializer->deserialize('Tzo4OiJzdGRDbGFzcyI6MDp7fQ==');
     }
 
     public function testEquals(): void

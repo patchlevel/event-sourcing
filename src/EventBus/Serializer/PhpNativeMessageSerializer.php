@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 use function base64_decode;
 use function base64_encode;
+use function is_string;
 use function serialize;
 use function unserialize;
 
@@ -20,9 +21,21 @@ final class PhpNativeMessageSerializer implements MessageSerializer
 
     public function deserialize(string $content): Message
     {
-        return unserialize(
-            base64_decode($content),
+        $decodedString = base64_decode($content, true);
+
+        if (!is_string($decodedString)) {
+            throw DeserializeFailed::decodeFailed();
+        }
+
+        $message = unserialize(
+            $decodedString,
             ['allowed_classes' => true],
         );
+
+        if (!$message instanceof Message) {
+            throw DeserializeFailed::invalidMessage($message);
+        }
+
+        return $message;
     }
 }

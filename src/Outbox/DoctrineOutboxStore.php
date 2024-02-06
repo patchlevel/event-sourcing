@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Outbox;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
+use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\MessageSerializer;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
@@ -71,8 +72,7 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
                 foreach ($messages as $message) {
-                    $id = $message->customHeader(self::HEADER_OUTBOX_IDENTIFIER);
-
+                    $id = $this->extractId($message);
                     $connection->delete($this->outboxTable, ['id' => $id]);
                 }
             },
@@ -107,5 +107,20 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
             ->setLength(16_000);
 
         $table->setPrimaryKey(['id']);
+    }
+
+    private function extractId(Message $message): int
+    {
+        try {
+            $value = $message->customHeader(self::HEADER_OUTBOX_IDENTIFIER);
+        } catch (HeaderNotFound) {
+            throw OutboxHeaderIssue::missingHeader(self::HEADER_OUTBOX_IDENTIFIER);
+        }
+
+        if (!is_int($value)) {
+            throw OutboxHeaderIssue::invalidHeaderType($value);
+        }
+
+        return $value;
     }
 }
