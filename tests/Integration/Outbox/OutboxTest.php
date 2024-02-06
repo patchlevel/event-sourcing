@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Outbox;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
@@ -74,9 +74,7 @@ final class OutboxTest extends TestCase
             $projectorRepository,
         );
 
-        $realEventBus = DefaultEventBus::create([
-            new SendEmailProcessor(),
-        ]);
+        $eventBusConsumer = DefaultConsumer::create([new SendEmailProcessor()]);
 
         $eventStream = new SyncProjectionistEventBusWrapper(
             $outboxEventBus,
@@ -120,7 +118,7 @@ final class OutboxTest extends TestCase
 
         $consumer = new StoreOutboxConsumer(
             $outboxStore,
-            new EventBusPublisher($realEventBus),
+            new EventBusPublisher($eventBusConsumer),
         );
 
         $consumer->consume();
