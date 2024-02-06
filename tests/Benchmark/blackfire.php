@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -31,7 +30,6 @@ $bus = DefaultEventBus::create();
 $store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
-    (new AttributeAggregateRootRegistryFactory())->create([__DIR__ . '/BasicImplementation/Aggregate']),
     'eventstore',
 );
 

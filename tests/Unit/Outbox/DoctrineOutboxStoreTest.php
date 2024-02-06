@@ -14,13 +14,11 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +34,7 @@ final class DoctrineOutboxStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(1)
             ->withRecordedOn($recordedOn)
@@ -73,7 +71,6 @@ final class DoctrineOutboxStoreTest extends TestCase
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $doctrineOutboxStore->saveOutboxMessage($message);
@@ -83,7 +80,7 @@ final class DoctrineOutboxStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(1)
             ->withRecordedOn($recordedOn)
@@ -110,7 +107,6 @@ final class DoctrineOutboxStoreTest extends TestCase
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $mockedConnection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $doctrineOutboxStore->markOutboxMessageConsumed($message);
@@ -132,7 +128,6 @@ final class DoctrineOutboxStoreTest extends TestCase
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $result = $doctrineOutboxStore->countOutboxMessages();
@@ -155,7 +150,6 @@ final class DoctrineOutboxStoreTest extends TestCase
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $this->expectException(WrongQueryResult::class);
@@ -183,7 +177,6 @@ final class DoctrineOutboxStoreTest extends TestCase
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $messages = $doctrineOutboxStore->retrieveOutboxMessages();
@@ -195,7 +188,7 @@ final class DoctrineOutboxStoreTest extends TestCase
         $recordedOn = new DateTimeImmutable();
         $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s'));
         $message = Message::create($event)
-            ->withAggregateClass(Profile::class)
+            ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(1)
             ->withRecordedOn($recordedOn)
@@ -233,7 +226,6 @@ final class DoctrineOutboxStoreTest extends TestCase
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $messages = $doctrineOutboxStore->retrieveOutboxMessages();
@@ -248,7 +240,6 @@ final class DoctrineOutboxStoreTest extends TestCase
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
             $serializer->reveal(),
-            new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
         $table = $this->prophesize(Table::class);

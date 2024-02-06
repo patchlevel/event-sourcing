@@ -45,7 +45,7 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -56,7 +56,7 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->playhead() === 1;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -76,7 +76,7 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -87,7 +87,7 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->playhead() === 1;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -120,7 +120,7 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -134,7 +134,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -154,7 +154,7 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -168,7 +168,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -203,7 +203,7 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -227,7 +227,7 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -293,7 +293,7 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -313,7 +313,7 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -488,7 +488,7 @@ final class DefaultRepositoryTest extends TestCase
         $store->willImplement(ArchivableStore::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -499,7 +499,7 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->playhead() === 1;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -510,7 +510,7 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->playhead() === 2;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -521,7 +521,7 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->playhead() === 3;
             }),
         )->shouldBeCalled();
-        $store->archiveMessages(Profile::class, '1', 3)->shouldBeCalledOnce();
+        $store->archiveMessages('profile', '1', 3)->shouldBeCalledOnce();
         $store->transactional(Argument::any())->will(
             /** @param array{0: callable} $args */
             static fn (array $args): mixed => $args[0]()
@@ -530,7 +530,7 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -541,7 +541,7 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->playhead() === 1;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -552,7 +552,7 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->playhead() === 2;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateClass() !== Profile::class) {
+                if ($message->aggregateName() !== 'profile') {
                     return false;
                 }
 
@@ -586,7 +586,7 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(
-            Profile::class,
+            'profile',
             '1',
         ))->willReturn(new ArrayStream([
             Message::create(
@@ -617,7 +617,7 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(
-            Profile::class,
+            'profile',
             '1',
         ))->willReturn(
             new ArrayStream([
@@ -659,7 +659,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(
-            Profile::class,
+            'profile',
             '1',
         ))->willReturn(new ArrayStream());
 
@@ -678,7 +678,7 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->count(new Criteria(
-            Profile::class,
+            'profile',
             '1',
         ))->willReturn(1);
 
@@ -697,7 +697,7 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->count(new Criteria(
-            Profile::class,
+            'profile',
             '1',
         ))->willReturn(0);
 
@@ -723,7 +723,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(
-            ProfileWithSnapshot::class,
+            'profile_with_snapshot',
             '1',
             null,
             1,
@@ -757,7 +757,7 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(
             new Criteria(
-                ProfileWithSnapshot::class,
+                'profile_with_snapshot',
                 '1',
             ),
         )->willReturn(
@@ -816,7 +816,7 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(
             new Criteria(
-                ProfileWithSnapshot::class,
+                'profile_with_snapshot',
                 '1',
                 null,
                 1,
@@ -867,7 +867,7 @@ final class DefaultRepositoryTest extends TestCase
     public function testLoadAggregateWithoutSnapshot(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(ProfileWithSnapshot::class, '1'))
+        $store->load(new Criteria('profile_with_snapshot', '1'))
             ->willReturn(new ArrayStream([
                 Message::create(
                     new ProfileCreated(

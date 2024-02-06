@@ -10,11 +10,11 @@ use PHPUnit\Framework\TestCase;
 /** @covers \Patchlevel\EventSourcing\EventBus\HeaderNotFound */
 final class HeaderNotFoundTest extends TestCase
 {
-    public function testAggregateClass(): void
+    public function testAggregateName(): void
     {
         self::assertSame(
-            'message header "aggregateClass" is not defined',
-            HeaderNotFound::aggregateClass()->getMessage(),
+            'message header "aggregateName" is not defined',
+            HeaderNotFound::aggregateName()->getMessage(),
         );
     }
 

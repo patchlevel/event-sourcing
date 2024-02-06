@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\EventBus;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_key_exists;
 
@@ -13,7 +12,7 @@ use function array_key_exists;
  * @template-covariant T of object
  * @psalm-immutable
  * @psalm-type Headers = array{
- *     aggregateClass?: class-string<AggregateRoot>,
+ *     aggregateName?: string,
  *     aggregateId?: string,
  *     playhead?: positive-int,
  *     recordedOn?: DateTimeImmutable,
@@ -23,15 +22,14 @@ use function array_key_exists;
  */
 final class Message
 {
-    public const HEADER_AGGREGATE_CLASS = 'aggregateClass';
+    public const HEADER_AGGREGATE_NAME = 'aggregateName';
     public const HEADER_AGGREGATE_ID = 'aggregateId';
     public const HEADER_PLAYHEAD = 'playhead';
     public const HEADER_RECORDED_ON = 'recordedOn';
     public const HEADER_ARCHIVED = 'archived';
     public const HEADER_NEW_STREAM_START = 'newStreamStart';
 
-    /** @var class-string<AggregateRoot>|null */
-    private string|null $aggregateClass = null;
+    private string|null $aggregateName = null;
     private string|null $aggregateId = null;
     /** @var positive-int|null  */
     private int|null $playhead = null;
@@ -66,27 +64,22 @@ final class Message
         return $this->event;
     }
 
-    /**
-     * @return class-string<AggregateRoot>
-     *
-     * @throws HeaderNotFound
-     */
-    public function aggregateClass(): string
+    /** @throws HeaderNotFound */
+    public function aggregateName(): string
     {
-        $value = $this->aggregateClass;
+        $value = $this->aggregateName;
 
         if ($value === null) {
-            throw HeaderNotFound::aggregateClass();
+            throw HeaderNotFound::aggregateName();
         }
 
         return $value;
     }
 
-    /** @param class-string<AggregateRoot> $value */
-    public function withAggregateClass(string $value): self
+    public function withAggregateName(string $value): self
     {
         $message = clone $this;
-        $message->aggregateClass = $value;
+        $message->aggregateName = $value;
 
         return $message;
     }
@@ -220,8 +213,8 @@ final class Message
     {
         $headers = $this->customHeaders;
 
-        if ($this->aggregateClass !== null) {
-            $headers[self::HEADER_AGGREGATE_CLASS] = $this->aggregateClass;
+        if ($this->aggregateName !== null) {
+            $headers[self::HEADER_AGGREGATE_NAME] = $this->aggregateName;
         }
 
         if ($this->aggregateId !== null) {
@@ -247,8 +240,8 @@ final class Message
     {
         $message = self::create($event);
 
-        if (array_key_exists(self::HEADER_AGGREGATE_CLASS, $headers)) {
-            $message = $message->withAggregateClass($headers[self::HEADER_AGGREGATE_CLASS]);
+        if (array_key_exists(self::HEADER_AGGREGATE_NAME, $headers)) {
+            $message = $message->withAggregateName($headers[self::HEADER_AGGREGATE_NAME]);
         }
 
         if (array_key_exists(self::HEADER_AGGREGATE_ID, $headers)) {
@@ -272,7 +265,7 @@ final class Message
         }
 
         unset(
-            $headers[self::HEADER_AGGREGATE_CLASS],
+            $headers[self::HEADER_AGGREGATE_NAME],
             $headers[self::HEADER_AGGREGATE_ID],
             $headers[self::HEADER_PLAYHEAD],
             $headers[self::HEADER_RECORDED_ON],
