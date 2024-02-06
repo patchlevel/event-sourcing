@@ -52,13 +52,13 @@ final class PhpNativeMessageSerializerTest extends TestCase
         ], $message->headers());
     }
 
-    public function testDeserializeEncodeFailed(): void
+    public function testDeserializeDecodeFailed(): void
     {
         $this->expectException(DeserializeFailed::class);
 
         $nativeSerializer = new PhpNativeMessageSerializer();
 
-        $nativeSerializer->deserialize('FOO');
+        $nativeSerializer->deserialize('!@#%$^&*()');
     }
 
     public function testDeserializeNotAMessage(): void

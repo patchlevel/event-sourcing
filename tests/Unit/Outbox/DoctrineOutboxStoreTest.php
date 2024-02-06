@@ -8,9 +8,7 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\MessageSerializer;
@@ -212,7 +210,6 @@ final class DoctrineOutboxStoreTest extends TestCase
     public function testConfigureSchema(): void
     {
         $connection = $this->prophesize(Connection::class);
-
         $serializer = $this->prophesize(MessageSerializer::class);
 
         $doctrineOutboxStore = new DoctrineOutboxStore(
@@ -220,30 +217,21 @@ final class DoctrineOutboxStoreTest extends TestCase
             $serializer->reveal(),
         );
 
-        $table = $this->prophesize(Table::class);
-        $column = $this->prophesize(Column::class);
-        $table->addColumn('id', Types::INTEGER)->shouldBeCalledOnce()
-            ->willReturn(
-                $column
-                    ->setNotnull(true)->shouldBeCalledOnce()
-                    ->getObjectProphecy()->setAutoincrement(true)->shouldBeCalledOnce()->willReturn($column->reveal())
-                    ->getObjectProphecy()->reveal(),
-            );
+        $expectedSchema = new Schema();
+        $table = $expectedSchema->createTable('outbox');
 
-        $column = $this->prophesize(Column::class);
-        $table->addColumn('message', Types::TEXT)->shouldBeCalledOnce()
-            ->willReturn(
-                $column
-                    ->setNotnull(true)->shouldBeCalledOnce()
-                    ->getObjectProphecy()->setLength(16_000)->shouldBeCalledOnce()->willReturn($column->reveal())
-                    ->getObjectProphecy()->reveal(),
-            );
+        $table->addColumn('id', Types::INTEGER)
+            ->setNotnull(true)
+            ->setAutoincrement(true);
+        $table->addColumn('message', Types::STRING)
+            ->setNotnull(true)
+            ->setLength(16_000);
 
-        $table->setPrimaryKey(['id'])->shouldBeCalledOnce();
+        $table->setPrimaryKey(['id']);
 
-        $schema = $this->prophesize(Schema::class);
-        $schema->createTable('outbox')->shouldBeCalledOnce()->willReturn($table->reveal());
+        $schema = new Schema();
+        $doctrineOutboxStore->configureSchema($schema, $connection->reveal());
 
-        $doctrineOutboxStore->configureSchema($schema->reveal(), $connection->reveal());
+        $this->assertEquals($expectedSchema, $schema);
     }
 }
