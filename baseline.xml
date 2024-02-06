@@ -28,6 +28,11 @@
       <code>Headers</code>
     </InvalidReturnType>
   </file>
+  <file src="src/EventBus/Serializer/EventSerializerMessageSerializer.php">
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$data['headers']]]></code>
+    </MixedArgumentTypeCoercion>
+  </file>
   <file src="src/Metadata/AggregateRoot/AggregateRootMetadataAwareMetadataFactory.php">
     <InvalidReturnStatement>
       <code>$aggregate::metadata()</code>

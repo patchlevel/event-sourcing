@@ -33,7 +33,7 @@ final class PhpNativeMessageSerializer implements MessageSerializer
         );
 
         if (!$message instanceof Message) {
-            throw DeserializeFailed::invalidMessage($message);
+            throw DeserializeFailed::invalidData($message);
         }
 
         return $message;
