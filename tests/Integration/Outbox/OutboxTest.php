@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Outbox;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
-use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
+use Patchlevel\EventSourcing\Outbox\StoreOutboxProcessor;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
@@ -74,9 +74,7 @@ final class OutboxTest extends TestCase
             $projectorRepository,
         );
 
-        $realEventBus = DefaultEventBus::create([
-            new SendEmailProcessor(),
-        ]);
+        $eventBusConsumer = DefaultConsumer::create([new SendEmailProcessor()]);
 
         $eventStream = new SyncProjectionistEventBusWrapper(
             $outboxEventBus,
@@ -118,12 +116,12 @@ final class OutboxTest extends TestCase
             $message->event(),
         );
 
-        $consumer = new StoreOutboxConsumer(
+        $consumer = new StoreOutboxProcessor(
             $outboxStore,
-            new EventBusPublisher($realEventBus),
+            new EventBusPublisher($eventBusConsumer),
         );
 
-        $consumer->consume();
+        $consumer->process();
 
         self::assertSame(0, $outboxStore->countOutboxMessages());
         self::assertCount(0, $outboxStore->retrieveOutboxMessages());

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Outbox;
 
-final class StoreOutboxConsumer implements OutboxConsumer
+final class StoreOutboxProcessor implements OutboxProcessor
 {
     public function __construct(
         private readonly OutboxStore $store,
@@ -12,7 +12,7 @@ final class StoreOutboxConsumer implements OutboxConsumer
     ) {
     }
 
-    public function consume(int|null $limit = null): void
+    public function process(int|null $limit = null): void
     {
         $messages = $this->store->retrieveOutboxMessages($limit);
 

@@ -84,12 +84,31 @@ $eventBus = DefaultEventBus::create([
 
     The order in which the listeners are executed is determined by the order in which they are passed to the factory.
 
+Internally, the event bus uses the `Consumer` to consume the messages and call the listeners.
+
+## Consumer
+
+The consumer is responsible for consuming the messages and calling the listeners.
+
+```php
+use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
+
+$consumer = DefaultConsumer::create([
+    $mailListener,
+];
+
+$consumer->consume($message);
+```
+
+Internally, the consumer uses the `ListenerProvider` to find the listeners for the message.
+
 ## Listener provider
 
 The listener provider is responsible for finding all listeners for a specific event.
 The default listener provider uses attributes to find the listeners.
 
 ```php
+use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\AttributeListenerProvider;
 
@@ -97,12 +116,14 @@ $listenerProvider = new AttributeListenerProvider([
     $mailListener,
 ]);
 
-$eventBus = new DefaultEventBus($listenerProvider);
+$eventBus = new DefaultEventBus(
+    new DefaultConsumer($listenerProvider)
+);
 ```
 
 !!! tip
 
-    The `DefaultEventBus::create` method uses the `AttributeListenerProvider` by default.
+    The `DefaultEventBus::create` method uses the `DefaultConsumer` and `AttributeListenerProvider` by default.
 
 ### Custom listener provider
 

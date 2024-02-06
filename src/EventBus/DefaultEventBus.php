@@ -16,7 +16,7 @@ final class DefaultEventBus implements EventBus
     private bool $processing;
 
     public function __construct(
-        private readonly ListenerProvider $listenerProvider,
+        private readonly Consumer $consumer,
         private readonly LoggerInterface|null $logger = null,
     ) {
         $this->queue = [];
@@ -46,24 +46,7 @@ final class DefaultEventBus implements EventBus
             $this->logger?->debug('EventBus: Start processing queue.');
 
             while ($message = array_shift($this->queue)) {
-                $eventClass = $message->event()::class;
-
-                $this->logger?->debug(sprintf(
-                    'EventBus: Dispatch message "%s" to listeners.',
-                    $eventClass,
-                ));
-
-                $listeners = $this->listenerProvider->listenersForEvent($eventClass);
-
-                foreach ($listeners as $listener) {
-                    $this->logger?->info(sprintf(
-                        'EventBus: Dispatch message with event "%s" to listener "%s".',
-                        $eventClass,
-                        $listener->name(),
-                    ));
-
-                    ($listener->callable())($message);
-                }
+                $this->consumer->consume($message);
             }
         } finally {
             $this->processing = false;
@@ -75,6 +58,6 @@ final class DefaultEventBus implements EventBus
     /** @param iterable<object> $listeners */
     public static function create(iterable $listeners = []): self
     {
-        return new self(new AttributeListenerProvider($listeners));
+        return new self(DefaultConsumer::create($listeners));
     }
 }

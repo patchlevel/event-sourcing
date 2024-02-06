@@ -7,14 +7,14 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Outbox;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Outbox\OutboxPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxStore;
-use Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer;
+use Patchlevel\EventSourcing\Outbox\StoreOutboxProcessor;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Outbox\StoreOutboxConsumer */
+/** @covers \Patchlevel\EventSourcing\Outbox\StoreOutboxProcessor */
 final class StoreOutboxConsumerTest extends TestCase
 {
     use ProphecyTrait;
@@ -35,8 +35,8 @@ final class StoreOutboxConsumerTest extends TestCase
         $eventBus = $this->prophesize(OutboxPublisher::class);
         $eventBus->publish($message)->shouldBeCalled();
 
-        $consumer = new StoreOutboxConsumer($store->reveal(), $eventBus->reveal());
-        $consumer->consume();
+        $consumer = new StoreOutboxProcessor($store->reveal(), $eventBus->reveal());
+        $consumer->process();
     }
 
     public function testConsumeWithLimit(): void
@@ -55,7 +55,7 @@ final class StoreOutboxConsumerTest extends TestCase
         $eventBus = $this->prophesize(OutboxPublisher::class);
         $eventBus->publish($message)->shouldBeCalled();
 
-        $consumer = new StoreOutboxConsumer($store->reveal(), $eventBus->reveal());
-        $consumer->consume(100);
+        $consumer = new StoreOutboxProcessor($store->reveal(), $eventBus->reveal());
+        $consumer->process(100);
     }
 }
