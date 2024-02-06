@@ -209,6 +209,19 @@ $eventBus = new Psr14EventBus($psr14EventDispatcher);
 
     You can't use the `Subscribe` attribute with the psr-14 event bus.
 
+## Chain Event Bus
+
+If you want to use multiple event buses, you can use the `ChainEventBus`.
+
+```php
+use Patchlevel\EventSourcing\EventBus\ChainEventBus;
+
+$eventBus = new ChainEventBus([
+    $eventBus1,
+    $eventBus2,
+]);
+```
+
 ## Learn more
 
 * [How to decorate messages](message_decorator.md)

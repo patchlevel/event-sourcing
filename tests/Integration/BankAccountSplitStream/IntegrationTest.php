@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream;
 
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
 use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
@@ -13,7 +14,7 @@ use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -63,18 +64,20 @@ final class IntegrationTest extends TestCase
             $projectionRepository,
         );
 
-        $eventStream = new SyncProjectionistEventBusWrapper(
+        $eventBus = new ChainEventBus([
             DefaultEventBus::create(),
-            $projectionist,
-            new LockFactory(
-                new LockInMemoryStore(),
+            new ProjectionistEventBus(
+                $projectionist,
+                new LockFactory(
+                    new LockInMemoryStore(),
+                ),
             ),
-        );
+        ]);
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
             $store,
-            $eventStream,
+            $eventBus,
             null,
             new ChainMessageDecorator([
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
@@ -107,7 +110,7 @@ final class IntegrationTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
             $store,
-            $eventStream,
+            $eventBus,
             null,
             new ChainMessageDecorator([
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
@@ -141,7 +144,7 @@ final class IntegrationTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
             $store,
-            $eventStream,
+            $eventBus,
             null,
             new ChainMessageDecorator([
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),

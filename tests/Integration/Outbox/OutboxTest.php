@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Outbox;
 
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
@@ -13,7 +14,7 @@ use Patchlevel\EventSourcing\Outbox\StoreOutboxProcessor;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
@@ -76,15 +77,17 @@ final class OutboxTest extends TestCase
 
         $eventBusConsumer = DefaultConsumer::create([new SendEmailProcessor()]);
 
-        $eventStream = new SyncProjectionistEventBusWrapper(
+        $eventBus = new ChainEventBus([
             $outboxEventBus,
-            $projectionist,
-            new LockFactory(
-                new LockInMemoryStore(),
+            new ProjectionistEventBus(
+                $projectionist,
+                new LockFactory(
+                    new LockInMemoryStore(),
+                ),
             ),
-        );
+        ]);
 
-        $repository = new DefaultRepository($store, $eventStream, Profile::metadata());
+        $repository = new DefaultRepository($store, $eventBus, Profile::metadata());
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,

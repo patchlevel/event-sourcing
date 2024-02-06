@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -62,20 +63,22 @@ final class BasicIntegrationTest extends TestCase
             $projectorRepository,
         );
 
-        $innerEventStream = DefaultEventBus::create([new SendEmailProcessor()]);
-
-        $eventStream = new SyncProjectionistEventBusWrapper(
-            $innerEventStream,
-            $projectionist,
-            new LockFactory(
-                new LockInMemoryStore(),
+        $eventBus = new ChainEventBus([
+            DefaultEventBus::create([
+                new SendEmailProcessor(),
+            ]),
+            new ProjectionistEventBus(
+                $projectionist,
+                new LockFactory(
+                    new LockInMemoryStore(),
+                ),
             ),
-        );
+        ]);
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            $eventStream,
+            $eventBus,
             null,
             new FooMessageDecorator(),
         );
@@ -103,7 +106,7 @@ final class BasicIntegrationTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            $eventStream,
+            $eventBus,
         );
         $repository = $manager->get(Profile::class);
         $profile = $repository->load($profileId);
@@ -134,20 +137,22 @@ final class BasicIntegrationTest extends TestCase
             $projectorRepository,
         );
 
-        $innerEventStream = DefaultEventBus::create([new SendEmailProcessor()]);
-
-        $eventStream = new SyncProjectionistEventBusWrapper(
-            $innerEventStream,
-            $projectionist,
-            new LockFactory(
-                new LockInMemoryStore(),
+        $eventBus = new ChainEventBus([
+            DefaultEventBus::create([
+                new SendEmailProcessor(),
+            ]),
+            new ProjectionistEventBus(
+                $projectionist,
+                new LockFactory(
+                    new LockInMemoryStore(),
+                ),
             ),
-        );
+        ]);
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            $eventStream,
+            $eventBus,
             new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
             new FooMessageDecorator(),
         );
@@ -175,7 +180,7 @@ final class BasicIntegrationTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            $eventStream,
+            $eventBus,
         );
         $repository = $manager->get(Profile::class);
         $profile = $repository->load($profileId);
