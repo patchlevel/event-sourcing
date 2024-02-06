@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\EventBus;
 
 final class ChainEventBus implements EventBus
 {
+    /** @param iterable<EventBus> $eventBuses */
     public function __construct(
         private readonly iterable $eventBuses,
     ) {

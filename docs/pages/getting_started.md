@@ -282,10 +282,11 @@ After we have defined everything, we still have to plug the whole thing together
 
 ```php
 use Doctrine\DBAL\DriverManager;
+use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
 use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -320,12 +321,12 @@ $projectionist = new DefaultProjectionist(
     $projectorRepository,
 );
 
-$eventBus = SyncProjectionistEventBusWrapper::createWithDefaultLockStrategy(
+$eventBus = new ChainEventBus([
     DefaultEventBus::create([
         new SendCheckInEmailProcessor($mailer),
     ]),
-    $projectionist,
-);
+    ProjectionistEventBus::createWithDefaultLockStrategy($projectionist)
+]);
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRegistry,

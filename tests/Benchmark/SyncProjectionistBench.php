@@ -6,12 +6,13 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
+use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Lock\DoctrineDbalStoreSchemaAdapter;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
@@ -71,18 +72,18 @@ final class SyncProjectionistBench
             $projectionRepository,
         );
 
-        $innerEventStream = DefaultEventBus::create([new SendEmailProcessor()]);
-
         $lockStorage = new LockDoctrineDbalStore($connection);
         $lockStorageAdapter = new DoctrineDbalStoreSchemaAdapter($lockStorage);
 
-        $this->bus = new SyncProjectionistEventBusWrapper(
-            $innerEventStream,
-            $projectionist,
-            new LockFactory(
-                new LockDoctrineDbalStore($connection),
+        $this->bus = new ChainEventBus([
+            DefaultEventBus::create([new SendEmailProcessor()]),
+            new ProjectionistEventBus(
+                $projectionist,
+                new LockFactory(
+                    new LockDoctrineDbalStore($connection),
+                ),
             ),
-        );
+        ]);
 
         $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata());
 

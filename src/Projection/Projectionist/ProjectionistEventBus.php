@@ -9,10 +9,9 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\FlockStore;
 
-final class SyncProjectionistEventBusWrapper implements EventBus
+final class ProjectionistEventBus implements EventBus
 {
     public function __construct(
-        private readonly EventBus $parentEventBus,
         private readonly Projectionist $projectionist,
         private readonly LockFactory $lockFactory,
         private readonly bool $throwByError = true,
@@ -21,8 +20,6 @@ final class SyncProjectionistEventBusWrapper implements EventBus
 
     public function dispatch(Message ...$messages): void
     {
-        $this->parentEventBus->dispatch(...$messages);
-
         $lock = $this->lockFactory->createLock('projectionist-run');
 
         if (!$lock->acquire(true)) {
@@ -36,10 +33,9 @@ final class SyncProjectionistEventBusWrapper implements EventBus
         }
     }
 
-    public static function createWithDefaultLockStrategy(EventBus $parentEventBus, Projectionist $projectionist): self
+    public static function createWithDefaultLockStrategy(Projectionist $projectionist): self
     {
         return new self(
-            $parentEventBus,
             $projectionist,
             new LockFactory(
                 new FlockStore(),

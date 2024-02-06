@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projectionist;
 
-use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projectionist\Projectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper */
-final class SyncProjectionistEventBusWrapperTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus */
+final class ProjectionistEventBusTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -27,16 +26,11 @@ final class SyncProjectionistEventBusWrapperTest extends TestCase
             Message::create(new ProfileVisited(ProfileId::fromString('2'))),
         ];
 
-        $parentEventBus = $this->prophesize(EventBus::class);
-        $parentEventBus->dispatch(...$messages)->shouldBeCalledOnce();
-        $parentEventBus->reveal();
-
         $projectionist = $this->prophesize(Projectionist::class);
         $projectionist->run()->shouldBeCalledOnce();
         $projectionist->reveal();
 
-        $eventBus = new SyncProjectionistEventBusWrapper(
-            $parentEventBus->reveal(),
+        $eventBus = new ProjectionistEventBus(
             $projectionist->reveal(),
         );
 

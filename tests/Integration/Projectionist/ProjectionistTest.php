@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Projectionist;
 
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Lock\DoctrineDbalStoreSchemaAdapter;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
@@ -12,7 +13,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegist
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\SyncProjectionistEventBusWrapper;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
@@ -117,11 +118,13 @@ final class ProjectionistTest extends TestCase
         $manager = new DefaultRepositoryManager(
             $aggregateRegistry,
             $store,
-            new SyncProjectionistEventBusWrapper(
+            new ChainEventBus([
                 DefaultEventBus::create(),
-                $projectionist,
-                new LockFactory($lockStore),
-            ),
+                new ProjectionistEventBus(
+                    $projectionist,
+                    new LockFactory($lockStore),
+                ),
+            ]),
         );
 
         $repository = $manager->get(Profile::class);
