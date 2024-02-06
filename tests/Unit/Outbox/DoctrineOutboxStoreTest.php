@@ -7,16 +7,14 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Outbox;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver;
-use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\MessageSerializer;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
-use Patchlevel\EventSourcing\Serializer\EventSerializer;
-use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -44,16 +42,7 @@ final class DoctrineOutboxStoreTest extends TestCase
         $innerMockedConnection = $this->prophesize(Connection::class);
         $innerMockedConnection->insert(
             'outbox',
-            [
-                'aggregate' => 'profile',
-                'aggregate_id' => '1',
-                'playhead' => 1,
-                'event' => 'profile_created',
-                'payload' => '',
-                'recorded_on' => $recordedOn,
-                'custom_headers' => [],
-            ],
-            ['recorded_on' => 'datetimetz_immutable', 'custom_headers' => 'json'],
+            ['message' => 'serialized'],
         )->shouldBeCalledOnce();
 
         $driver = $this->prophesize(Driver::class);
@@ -65,8 +54,8 @@ final class DoctrineOutboxStoreTest extends TestCase
             static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
         );
 
-        $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
+        $serializer = $this->prophesize(MessageSerializer::class);
+        $serializer->serialize($message)->shouldBeCalledOnce()->willReturn('serialized');
 
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $mockedConnection->reveal(),
@@ -85,12 +74,13 @@ final class DoctrineOutboxStoreTest extends TestCase
             ->withPlayhead(1)
             ->withRecordedOn($recordedOn)
             ->withNewStreamStart(false)
-            ->withArchived(false);
+            ->withArchived(false)
+            ->withCustomHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
 
         $innerMockedConnection = $this->prophesize(Connection::class);
         $innerMockedConnection->delete(
             'outbox',
-            ['aggregate' => 'profile', 'aggregate_id' => '1', 'playhead' => 1],
+            ['id' => 42],
         )->shouldBeCalledOnce();
 
         $driver = $this->prophesize(Driver::class);
@@ -102,7 +92,7 @@ final class DoctrineOutboxStoreTest extends TestCase
             static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
         );
 
-        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer = $this->prophesize(MessageSerializer::class);
 
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $mockedConnection->reveal(),
@@ -123,7 +113,7 @@ final class DoctrineOutboxStoreTest extends TestCase
         $connection->createQueryBuilder()->shouldBeCalledOnce()->willReturn($queryBuilder->reveal());
         $connection->fetchOne('this sql')->shouldBeCalledOnce()->willReturn('1');
 
-        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer = $this->prophesize(MessageSerializer::class);
 
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
@@ -145,7 +135,7 @@ final class DoctrineOutboxStoreTest extends TestCase
         $connection->createQueryBuilder()->shouldBeCalledOnce()->willReturn($queryBuilder->reveal());
         $connection->fetchOne('this sql')->shouldBeCalledOnce()->willReturn([]);
 
-        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer = $this->prophesize(MessageSerializer::class);
 
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
@@ -168,11 +158,7 @@ final class DoctrineOutboxStoreTest extends TestCase
         $connection->createQueryBuilder()->shouldBeCalledOnce()->willReturn($queryBuilder->reveal());
         $connection->fetchAllAssociative('this sql')->shouldBeCalledOnce()->willReturn([]);
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $connection->getDatabasePlatform()->shouldBeCalledOnce()->willReturn($platform->reveal());
-
-        $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->deserialize(Argument::type(SerializedEvent::class))->shouldNotBeCalled();
+        $serializer = $this->prophesize(MessageSerializer::class);
 
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
@@ -193,7 +179,8 @@ final class DoctrineOutboxStoreTest extends TestCase
             ->withPlayhead(1)
             ->withRecordedOn($recordedOn)
             ->withNewStreamStart(false)
-            ->withArchived(false);
+            ->withArchived(false)
+            ->withCustomHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
 
         $queryBuilder = $this->prophesize(QueryBuilder::class);
         $queryBuilder->select('*')->shouldBeCalledOnce()->willReturn($queryBuilder->reveal());
@@ -205,23 +192,13 @@ final class DoctrineOutboxStoreTest extends TestCase
         $connection->createQueryBuilder()->shouldBeCalledOnce()->willReturn($queryBuilder->reveal());
         $connection->fetchAllAssociative('this sql')->shouldBeCalledOnce()->willReturn([
             [
-                'event' => 'profile_created',
-                'payload' => '{"profile_id": "1", "email": "s"}',
-                'aggregate' => 'profile',
-                'aggregate_id' => '1',
-                'playhead' => 1,
-                'recorded_on' => $recordedOn->format('Y-m-d\TH:i:s.ue'),
-                'custom_headers' => '{}',
+                'id' => 42,
+                'message' => 'serialized',
             ],
         ]);
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d\TH:i:s.ue');
-
-        $connection->getDatabasePlatform()->shouldBeCalledOnce()->willReturn($platform->reveal());
-
-        $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->deserialize(new SerializedEvent('profile_created', '{"profile_id": "1", "email": "s"}'))->shouldBeCalledOnce()->willReturn($event);
+        $serializer = $this->prophesize(MessageSerializer::class);
+        $serializer->deserialize('serialized')->shouldBeCalledOnce()->willReturn($message);
 
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
@@ -235,7 +212,8 @@ final class DoctrineOutboxStoreTest extends TestCase
     public function testConfigureSchema(): void
     {
         $connection = $this->prophesize(Connection::class);
-        $serializer = $this->prophesize(EventSerializer::class);
+
+        $serializer = $this->prophesize(MessageSerializer::class);
 
         $doctrineOutboxStore = new DoctrineOutboxStore(
             $connection->reveal(),
@@ -244,65 +222,24 @@ final class DoctrineOutboxStoreTest extends TestCase
 
         $table = $this->prophesize(Table::class);
         $column = $this->prophesize(Column::class);
-        $table->addColumn('aggregate', Types::STRING)->shouldBeCalledOnce()
+        $table->addColumn('id', Types::INTEGER)->shouldBeCalledOnce()
             ->willReturn(
                 $column
                     ->setNotnull(true)->shouldBeCalledOnce()
-                    ->getObjectProphecy()->setLength(255)->shouldBeCalledOnce()->willReturn($column->reveal())
+                    ->getObjectProphecy()->setAutoincrement(true)->shouldBeCalledOnce()->willReturn($column->reveal())
                     ->getObjectProphecy()->reveal(),
             );
 
         $column = $this->prophesize(Column::class);
-        $table->addColumn('aggregate_id', Types::STRING)->shouldBeCalledOnce()
+        $table->addColumn('message', Types::TEXT)->shouldBeCalledOnce()
             ->willReturn(
                 $column
                     ->setNotnull(true)->shouldBeCalledOnce()
-                    ->getObjectProphecy()->setLength(32)->shouldBeCalledOnce()->willReturn($column->reveal())
+                    ->getObjectProphecy()->setLength(16_000)->shouldBeCalledOnce()->willReturn($column->reveal())
                     ->getObjectProphecy()->reveal(),
             );
 
-        $column = $this->prophesize(Column::class);
-        $table->addColumn('playhead', Types::INTEGER)->shouldBeCalledOnce()
-            ->willReturn(
-                $column
-                    ->setNotnull(true)->shouldBeCalledOnce()
-                    ->getObjectProphecy()->reveal(),
-            );
-
-        $column = $this->prophesize(Column::class);
-        $table->addColumn('event', Types::STRING)->shouldBeCalledOnce()
-            ->willReturn(
-                $column
-                    ->setNotnull(true)->shouldBeCalledOnce()
-                    ->getObjectProphecy()->setLength(255)->shouldBeCalledOnce()->willReturn($column->reveal())
-                    ->getObjectProphecy()->reveal(),
-            );
-
-        $column = $this->prophesize(Column::class);
-        $table->addColumn('payload', Types::JSON)->shouldBeCalledOnce()
-            ->willReturn(
-                $column
-                    ->setNotnull(true)->shouldBeCalledOnce()
-                    ->getObjectProphecy()->reveal(),
-            );
-
-        $column = $this->prophesize(Column::class);
-        $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)->shouldBeCalledOnce()
-            ->willReturn(
-                $column
-                    ->setNotnull(false)->shouldBeCalledOnce()
-                    ->getObjectProphecy()->reveal(),
-            );
-
-        $column = $this->prophesize(Column::class);
-        $table->addColumn('custom_headers', Types::JSON)->shouldBeCalledOnce()
-            ->willReturn(
-                $column
-                    ->setNotnull(true)->shouldBeCalledOnce()
-                    ->getObjectProphecy()->reveal(),
-            );
-
-        $table->setPrimaryKey(['aggregate', 'aggregate_id', 'playhead'])->shouldBeCalledOnce();
+        $table->setPrimaryKey(['id'])->shouldBeCalledOnce();
 
         $schema = $this->prophesize(Schema::class);
         $schema->createTable('outbox')->shouldBeCalledOnce()->willReturn($table->reveal());

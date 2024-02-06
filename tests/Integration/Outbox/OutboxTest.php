@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Outbox;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
+use Patchlevel\EventSourcing\EventBus\Serializer\PhpNativeMessageSerializer;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
@@ -58,7 +59,7 @@ final class OutboxTest extends TestCase
 
         $outboxStore = new DoctrineOutboxStore(
             $this->connection,
-            $serializer,
+            new PhpNativeMessageSerializer(),
             'outbox',
         );
 

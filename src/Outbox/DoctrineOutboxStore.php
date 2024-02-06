@@ -8,10 +8,8 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\MessageSerializer;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
-use Patchlevel\EventSourcing\Serializer\EventSerializer;
-use Patchlevel\EventSourcing\Serializer\SerializedEvent;
-use Patchlevel\EventSourcing\Store\DoctrineHelper;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
 
 use function array_map;
@@ -20,9 +18,11 @@ use function is_string;
 
 final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
 {
+    public const HEADER_OUTBOX_IDENTIFIER = 'outboxIdentifier';
+
     public function __construct(
         private readonly Connection $connection,
-        private readonly EventSerializer $serializer,
+        private readonly MessageSerializer $messageSerializer,
         private readonly string $outboxTable = 'outbox',
     ) {
     }
@@ -32,24 +32,10 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
                 foreach ($messages as $message) {
-                    $event = $message->event();
-
-                    $data = $this->serializer->serialize($event);
-
                     $connection->insert(
                         $this->outboxTable,
                         [
-                            'aggregate' => $message->aggregateName(),
-                            'aggregate_id' => $message->aggregateId(),
-                            'playhead' => $message->playhead(),
-                            'event' => $data->name,
-                            'payload' => $data->payload,
-                            'recorded_on' => $message->recordedOn(),
-                            'custom_headers' => $message->customHeaders(),
-                        ],
-                        [
-                            'recorded_on' => Types::DATETIMETZ_IMMUTABLE,
-                            'custom_headers' => Types::JSON,
+                            'message' => $this->messageSerializer->serialize($message),
                         ],
                     );
                 }
@@ -66,20 +52,15 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
             ->setMaxResults($limit)
             ->getSQL();
 
-        /** @var list<array{aggregate: string, aggregate_id: string, playhead: string|int, event: string, payload: string, recorded_on: string, custom_headers: string}> $result */
+        /** @var list<array{id: int, message: string}> $result */
         $result = $this->connection->fetchAllAssociative($sql);
-        $platform = $this->connection->getDatabasePlatform();
 
         return array_map(
-            function (array $data) use ($platform) {
-                $event = $this->serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
+            function (array $data) {
+                $message = $this->messageSerializer->deserialize($data['message']);
 
-                return Message::create($event)
-                    ->withAggregateName($data['aggregate'])
-                    ->withAggregateId($data['aggregate_id'])
-                    ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
-                    ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
-                    ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
+                return $message
+                    ->withCustomHeader(self::HEADER_OUTBOX_IDENTIFIER, $data['id']);
             },
             $result,
         );
@@ -90,14 +71,9 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
                 foreach ($messages as $message) {
-                    $connection->delete(
-                        $this->outboxTable,
-                        [
-                            'aggregate' => $message->aggregateName(),
-                            'aggregate_id' => $message->aggregateId(),
-                            'playhead' => $message->playhead(),
-                        ],
-                    );
+                    $id = $message->customHeader(self::HEADER_OUTBOX_IDENTIFIER);
+
+                    $connection->delete($this->outboxTable, ['id' => $id]);
                 }
             },
         );
@@ -123,24 +99,13 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
     {
         $table = $schema->createTable($this->outboxTable);
 
-        $table->addColumn('aggregate', Types::STRING)
-            ->setLength(255)
-            ->setNotnull(true);
-        $table->addColumn('aggregate_id', Types::STRING)
-            ->setLength(32)
-            ->setNotnull(true);
-        $table->addColumn('playhead', Types::INTEGER)
-            ->setNotnull(true);
-        $table->addColumn('event', Types::STRING)
-            ->setLength(255)
-            ->setNotnull(true);
-        $table->addColumn('payload', Types::JSON)
-            ->setNotnull(true);
-        $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
-            ->setNotnull(false);
-        $table->addColumn('custom_headers', Types::JSON)
-            ->setNotnull(true);
+        $table->addColumn('id', Types::INTEGER)
+            ->setNotnull(true)
+            ->setAutoincrement(true);
+        $table->addColumn('message', Types::STRING)
+            ->setNotnull(true)
+            ->setLength(16_000);
 
-        $table->setPrimaryKey(['aggregate', 'aggregate_id', 'playhead']);
+        $table->setPrimaryKey(['id']);
     }
 }
