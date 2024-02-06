@@ -9,4 +9,8 @@ final class DummyListener
     public function __invoke(): void
     {
     }
+
+    public static function foo(): void
+    {
+    }
 }

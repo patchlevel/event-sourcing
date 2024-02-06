@@ -113,4 +113,25 @@ final class ProjectionTest extends TestCase
 
         self::assertEquals(10, $projection->position());
     }
+
+    public function testRetry(): void
+    {
+        $projection = new Projection(
+            new ProjectionId('test', 1),
+        );
+
+        self::assertEquals(0, $projection->retry());
+        self::assertFalse($projection->isRetryDisallowed());
+
+        $projection->incrementRetry();
+        self::assertEquals(1, $projection->retry());
+
+        $projection->disallowRetry();
+        self::assertEquals(-1, $projection->retry());
+        self::assertTrue($projection->isRetryDisallowed());
+
+        $projection->resetRetry();
+        self::assertEquals(0, $projection->retry());
+        self::assertFalse($projection->isRetryDisallowed());
+    }
 }

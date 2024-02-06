@@ -7,12 +7,16 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\AdapterNotFound;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\SnapshotNotConfigured;
+use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
+use RuntimeException;
 
 /** @covers \Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore */
 final class DefaultSnapshotStoreTest extends TestCase
@@ -63,6 +67,19 @@ final class DefaultSnapshotStoreTest extends TestCase
         self::assertEquals(2, $aggregate->playhead());
     }
 
+    public function testLoadNotFound(): void
+    {
+        $adapter = $this->prophesize(SnapshotAdapter::class);
+        $adapter->load(
+            'profile_with_snapshot-1',
+        )->willThrow(RuntimeException::class);
+
+        $store = new DefaultSnapshotStore(['memory' => $adapter->reveal()]);
+
+        $this->expectException(SnapshotNotFound::class);
+        $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
+    }
+
     public function testLoadLegacySnapshots(): void
     {
         $this->expectException(SnapshotVersionInvalid::class);
@@ -102,6 +119,14 @@ final class DefaultSnapshotStoreTest extends TestCase
 
         $store = new DefaultSnapshotStore([]);
         $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
+    }
+
+    public function testSnapshotConfigIsMissing(): void
+    {
+        $this->expectException(SnapshotNotConfigured::class);
+
+        $store = new DefaultSnapshotStore([], null);
+        $store->load(Profile::class, ProfileId::fromString('1'));
     }
 
     public function testGetAdapter(): void

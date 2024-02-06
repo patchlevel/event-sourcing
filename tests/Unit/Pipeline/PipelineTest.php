@@ -35,6 +35,31 @@ final class PipelineTest extends TestCase
         self::assertSame($messages, $target->messages());
     }
 
+    public function testPipelineWithObserver(): void
+    {
+        $messages = $this->messages();
+
+        $source = new InMemorySource($messages);
+        $target = new InMemoryTarget();
+        $pipeline = new Pipeline($source, $target);
+
+        self::assertSame(5, $pipeline->count());
+
+        $observer = new class {
+            public bool $called = false;
+
+            public function __invoke(Message $message): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $pipeline->run($observer->__invoke(...));
+
+        self::assertSame($messages, $target->messages());
+        self::assertTrue($observer->called);
+    }
+
     public function testPipelineWithMiddleware(): void
     {
         $messages = $this->messages();

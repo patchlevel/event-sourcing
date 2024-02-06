@@ -27,4 +27,16 @@ final class InMemorySnapshotAdapterTest extends TestCase
         $store = new InMemorySnapshotAdapter();
         $store->load('baz');
     }
+
+    public function testClear(): void
+    {
+        $store = new InMemorySnapshotAdapter();
+        $store->save('baz', ['foo' => 'bar']);
+
+        self::assertSame(['foo' => 'bar'], $store->load('baz'));
+        $store->clear();
+
+        $this->expectException(SnapshotNotFound::class);
+        $store->load('baz');
+    }
 }

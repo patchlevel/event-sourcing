@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\ClassIsNotAnEvent;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory */
 final class AttributeEventMetadataFactoryTest extends TestCase
 {
     public function testEmptyEvent(): void

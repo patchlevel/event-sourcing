@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory */
 final class AttributeEventRegistryFactoryTest extends TestCase
 {
     public function testCreateRegistry(): void

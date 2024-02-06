@@ -17,5 +17,6 @@ final class InvalidArgumentGivenTest extends TestCase
 
         self::assertSame('Invalid argument given: need type "int" got "string"', $exception->getMessage());
         self::assertSame($expectedValue, $exception->value());
+        self::assertSame(0, $exception->getCode());
     }
 }

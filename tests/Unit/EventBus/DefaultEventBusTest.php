@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
 use Patchlevel\EventSourcing\EventBus\ListenerProvider;
@@ -45,6 +46,31 @@ final class DefaultEventBusTest extends TestCase
         $provider->listenersForEvent(ProfileCreated::class)->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
 
         $eventBus = new DefaultEventBus($provider->reveal());
+        $eventBus->dispatch($message);
+
+        self::assertSame($message, $listener->message);
+    }
+
+    public function testDispatchEventWithSubscribe(): void
+    {
+        $listener = new class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileCreated::class)]
+            public function __invoke(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $message = new Message(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de'),
+            ),
+        );
+
+        $eventBus = DefaultEventBus::create([$listener]);
         $eventBus->dispatch($message);
 
         self::assertSame($message, $listener->message);

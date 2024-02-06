@@ -16,6 +16,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory */
 final class AttributeProjectorMetadataFactoryTest extends TestCase
 {
     public function testNotAProjection(): void

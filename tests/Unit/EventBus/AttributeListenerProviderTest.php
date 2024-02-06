@@ -130,4 +130,30 @@ final class AttributeListenerProviderTest extends TestCase
             new ListenerDescriptor($listener->foo(...)),
         ], $listeners);
     }
+
+    public function testCaching(): void
+    {
+        $listener = new class {
+            #[Subscribe('*')]
+            public function foo(Message $message): void
+            {
+            }
+
+            #[Subscribe(ProfileCreated::class)]
+            public function bar(Message $message): void
+            {
+            }
+        };
+
+        $eventBus = new AttributeListenerProvider([$listener]);
+        $listeners = $eventBus->listenersForEvent(ProfileCreated::class);
+
+        self::assertEquals([
+            new ListenerDescriptor($listener->bar(...)),
+            new ListenerDescriptor($listener->foo(...)),
+        ], $listeners);
+
+        $cachedListeners = $eventBus->listenersForEvent(ProfileCreated::class);
+        self::assertSame($listeners, $cachedListeners);
+    }
 }
