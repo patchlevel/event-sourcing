@@ -16,29 +16,8 @@ final class ListenerDescriptor
 
     public function __construct(callable $callable)
     {
-        $callable = $callable(...);
-
-        $this->callable = $callable;
-
-        $reflectionFunction = new ReflectionFunction($callable);
-
-        if (method_exists($reflectionFunction, 'isAnonymous') && $reflectionFunction->isAnonymous()) {
-            $this->name = 'Closure';
-
-            return;
-        }
-
-        $callable = $reflectionFunction->getClosureThis();
-
-        if (!$callable) {
-            $class = $reflectionFunction->getClosureCalledClass();
-
-            $this->name = ($class ? $class->name . '::' : '') . $reflectionFunction->name;
-
-            return;
-        }
-
-        $this->name = $callable::class . '::' . $reflectionFunction->name;
+        $this->callable = $callable(...);
+        $this->name = self::closureName($this->callable);
     }
 
     public function name(): string
@@ -49,5 +28,24 @@ final class ListenerDescriptor
     public function callable(): callable
     {
         return $this->callable;
+    }
+
+    private static function closureName(Closure $closure): string
+    {
+        $reflectionFunction = new ReflectionFunction($closure);
+
+        if (method_exists($reflectionFunction, 'isAnonymous') && $reflectionFunction->isAnonymous()) {
+            return 'Closure';
+        }
+
+        $closureThis = $reflectionFunction->getClosureThis();
+
+        if (!$closureThis) {
+            $class = $reflectionFunction->getClosureCalledClass();
+
+            return ($class ? $class->name . '::' : '') . $reflectionFunction->name;
+        }
+
+        return $closureThis::class . '::' . $reflectionFunction->name;
     }
 }

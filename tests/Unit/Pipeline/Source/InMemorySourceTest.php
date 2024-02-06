@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Source;
 
+use ArrayIterator;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\InMemorySource;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -38,6 +39,17 @@ final class InMemorySourceTest extends TestCase
         );
 
         $source = new InMemorySource([$message]);
+
+        self::assertSame(1, $source->count());
+    }
+
+    public function testCountWithIterator(): void
+    {
+        $message = new Message(
+            new ProfileCreated(ProfileId::fromString('1'), Email::fromString('foo@test.com')),
+        );
+
+        $source = new InMemorySource(new ArrayIterator([$message]));
 
         self::assertSame(1, $source->count());
     }

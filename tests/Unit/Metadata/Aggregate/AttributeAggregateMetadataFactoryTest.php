@@ -21,6 +21,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithEmptyApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory */
 final class AttributeAggregateMetadataFactoryTest extends TestCase
 {
     public function testProfile(): void

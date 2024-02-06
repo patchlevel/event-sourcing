@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\SimpleCache\CacheInterface;
 
-/** @covers  \Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter */
+/** @covers \Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter */
 final class Psr16SnapshotAdapterTest extends TestCase
 {
     use ProphecyTrait;

@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Metadata;
 use Patchlevel\EventSourcing\Metadata\ClassFinder;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Metadata\ClassFinder */
 final class ClassFinderTest extends TestCase
 {
     public function testEmpty(): void

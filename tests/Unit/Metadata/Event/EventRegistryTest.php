@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Metadata\Event\EventRegistry */
 final class EventRegistryTest extends TestCase
 {
     public function testEmpty(): void

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer\Encoder;
 
 use Patchlevel\EventSourcing\Serializer\Encoder\DecodeNotPossible;
+use Patchlevel\EventSourcing\Serializer\Encoder\EncodeNotPossible;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder */
 final class JsonEncoderTest extends TestCase
 {
     private JsonEncoder $encoder;
@@ -30,6 +32,31 @@ final class JsonEncoderTest extends TestCase
             '{"profileId":"1","email":"info@patchlevel.de"}',
             $this->encoder->encode($data),
         );
+    }
+
+    public function testEncodePrettify(): void
+    {
+        $data = [
+            'profileId' => '1',
+            'email' => 'info@patchlevel.de',
+        ];
+        self::assertEquals(
+            '{
+    "profileId": "1",
+    "email": "info@patchlevel.de"
+}',
+            $this->encoder->encode($data, [JsonEncoder::OPTION_PRETTY_PRINT => true]),
+        );
+    }
+
+    public function testEncodeError(): void
+    {
+        $data = [
+            'foo' => ["\xF4\xBF\xBF\xBF̆" => 1],
+        ];
+
+        $this->expectException(EncodeNotPossible::class);
+        $this->encoder->encode($data);
     }
 
     public function testEncodeNotNormalizedData(): void

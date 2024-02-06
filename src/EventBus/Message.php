@@ -8,12 +8,18 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_key_exists;
-use function array_keys;
 
 /**
  * @template-covariant T of object
  * @psalm-immutable
- * @psalm-type Headers = array{aggregateClass?: class-string<AggregateRoot>, aggregateId?:string, playhead?:positive-int, recordedOn?: DateTimeImmutable, newStreamStart?: bool, archived?: bool}
+ * @psalm-type Headers = array{
+ *     aggregateClass?: class-string<AggregateRoot>,
+ *     aggregateId?: string,
+ *     playhead?: positive-int,
+ *     recordedOn?: DateTimeImmutable,
+ *     newStreamStart?: bool,
+ *     archived?: bool
+ *  }
  */
 final class Message
 {
@@ -179,7 +185,7 @@ final class Message
     /** @throws HeaderNotFound */
     public function customHeader(string $name): mixed
     {
-        if (array_keys($this->customHeaders, $name)) {
+        if (!array_key_exists($name, $this->customHeaders)) {
             throw HeaderNotFound::custom($name);
         }
 

@@ -28,6 +28,11 @@ final class RecalculatePlayheadMiddleware implements Middleware
         ];
     }
 
+    public function reset(): void
+    {
+        $this->index = [];
+    }
+
     /**
      * @param class-string<AggregateRoot> $aggregateClass
      *

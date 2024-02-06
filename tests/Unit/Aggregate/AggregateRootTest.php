@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateRootIdNotSupported;
 use Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\MetadataNotPossible;
@@ -16,10 +17,16 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileInvalid;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSuppressAll;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot */
+/**
+ * @covers \Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot
+ * @covers \Patchlevel\EventSourcing\Aggregate\AggregateRootBehaviour
+ * @covers \Patchlevel\EventSourcing\Aggregate\AggregateRootAttributeBehaviour
+ * @covers \Patchlevel\EventSourcing\Aggregate\AggregateRootMetadataAwareBehaviour
+ */
 final class AggregateRootTest extends TestCase
 {
     public function testApplyMethod(): void
@@ -161,5 +168,25 @@ final class AggregateRootTest extends TestCase
         $this->expectException(MetadataNotPossible::class);
 
         BasicAggregateRoot::metadata();
+    }
+
+    public function testCachedAggregateId(): void
+    {
+        $profileId = ProfileId::fromString('1');
+        $email = Email::fromString('hallo@patchlevel.de');
+
+        $profile = Profile::createProfile($profileId, $email);
+        $id = $profile->aggregateRootId();
+
+        self::assertSame($profileId, $id);
+        self::assertSame($id, $profile->aggregateRootId());
+    }
+
+    public function testInvalidAggregateId(): void
+    {
+        $aggregate = ProfileWithBrokenId::create();
+
+        $this->expectException(AggregateRootIdNotSupported::class);
+        $aggregate->aggregateRootId();
     }
 }

@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
 use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain */
 final class UpcasterChainTest extends TestCase
 {
     public function testChainSuccessful(): void

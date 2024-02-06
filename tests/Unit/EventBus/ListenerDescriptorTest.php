@@ -9,9 +9,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyListener;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\EventBus\ListenerDescriptor */
 final class ListenerDescriptorTest extends TestCase
 {
-    public function testClass(): void
+    public function testObjectMethod(): void
     {
         $listener = new DummyListener();
 
@@ -19,6 +20,16 @@ final class ListenerDescriptorTest extends TestCase
 
         self::assertEquals($listener->__invoke(...), $descriptor->callable());
         self::assertEquals('Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyListener::__invoke', $descriptor->name());
+    }
+
+    public function testStaticObjectMethod(): void
+    {
+        $listener = new DummyListener();
+
+        $descriptor = new ListenerDescriptor([$listener, 'foo']);
+
+        self::assertEquals($listener->__invoke(...), $descriptor->callable());
+        self::assertEquals('Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyListener::foo', $descriptor->name());
     }
 
     #[RequiresPhp('>= 8.2')]

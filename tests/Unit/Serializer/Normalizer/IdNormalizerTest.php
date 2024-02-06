@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Ramsey\Uuid\Exception\InvalidUuidStringException;
 
+/** @covers \Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class IdNormalizerTest extends TestCase
 {
@@ -57,5 +58,13 @@ final class IdNormalizerTest extends TestCase
     {
         $normalizer = new IdNormalizer(CustomId::class);
         $this->assertEquals(new CustomId('foo'), $normalizer->denormalize('foo'));
+    }
+
+    public function testDenormalizeWithWrongValue(): void
+    {
+        $normalizer = new IdNormalizer(CustomId::class);
+
+        $this->expectException(InvalidArgument::class);
+        $normalizer->denormalize(123);
     }
 }

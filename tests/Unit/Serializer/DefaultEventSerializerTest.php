@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\Hydrator\MetadataHydrator;
 use PHPUnit\Framework\TestCase;
 
+/** @covers \Patchlevel\EventSourcing\Serializer\DefaultEventSerializer */
 final class DefaultEventSerializerTest extends TestCase
 {
     private DefaultEventSerializer $serializer;

@@ -202,4 +202,16 @@ final class ProjectionCollectionTest extends TestCase
         self::assertFalse($newCollection->has($barId));
         self::assertSame(1, $newCollection->count());
     }
+
+    public function testIterator(): void
+    {
+        $id = new ProjectionId('test', 1);
+        $projection = new Projection($id);
+        $collection = new ProjectionCollection([$projection]);
+
+        $iterator = $collection->getIterator();
+
+        self::assertSame($projection, $iterator->current());
+        self::assertSame(1, $iterator->count());
+    }
 }
