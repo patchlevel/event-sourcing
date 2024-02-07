@@ -11,6 +11,8 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
+use function array_keys;
+use function array_values;
 use function sprintf;
 
 final class OutputStyle extends SymfonyStyle
@@ -18,25 +20,34 @@ final class OutputStyle extends SymfonyStyle
     public function message(EventSerializer $serializer, Message $message): void
     {
         $event = $message->event();
-        $data = $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true]);
+
+        try {
+            $data = $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true]);
+        } catch (Throwable $error) {
+            $this->error(
+                sprintf(
+                    'Error while serializing event "%s": %s',
+                    $message->event()::class,
+                    $error->getMessage(),
+                ),
+            );
+
+            if ($this->isVeryVerbose()) {
+                $this->throwable($error);
+            }
+
+            return;
+        }
 
         $this->title($data->name);
 
-        $this->horizontalTable([
-            'eventClass',
-            'aggregateName',
-            'aggregateId',
-            'playhead',
-            'recordedOn',
-        ], [
-            [
-                $event::class,
-                $message->aggregateName(),
-                $message->aggregateId(),
-                $message->playhead(),
-                $message->recordedOn()->format(DateTimeInterface::ATOM),
-            ],
-        ]);
+        $headers = $message->headers();
+
+        if (isset($headers['recordedOn']) && $headers['recordedOn'] instanceof DateTimeInterface) {
+            $headers['recordedOn'] = $headers['recordedOn']->format(DateTimeInterface::ATOM);
+        }
+
+        $this->horizontalTable(array_keys($headers), [array_values($headers)]);
 
         $this->block($data->payload);
     }

@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
+use RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -23,7 +24,7 @@ final class OutputStyleTest extends TestCase
 {
     use ProphecyTrait;
 
-    public function testWrite(): void
+    public function testMessage(): void
     {
         $input = new ArrayInput([]);
         $output = new BufferedOutput();
@@ -52,8 +53,38 @@ final class OutputStyleTest extends TestCase
         $content = $output->fetch();
 
         self::assertStringContainsString('profile.created', $content);
-        self::assertStringContainsString('Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated', $content);
-        self::assertStringContainsString('Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile', $content);
+        self::assertStringContainsString('profile', $content);
         self::assertStringContainsString('{"id":"1","email":"foo@bar.com"}', $content);
+    }
+
+    public function testMessageWithError(): void
+    {
+        $input = new ArrayInput([]);
+        $output = new BufferedOutput();
+
+        $event = new ProfileCreated(
+            ProfileId::fromString('1'),
+            Email::fromString('foo@bar.com'),
+        );
+
+        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer
+            ->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])
+            ->willThrow(new RuntimeException('Unknown Error'));
+
+        $message = Message::create($event)
+            ->withAggregateName('profile')
+            ->withAggregateId('1')
+            ->withPlayhead(1)
+            ->withRecordedOn(new DateTimeImmutable());
+
+        $console = new OutputStyle($input, $output);
+
+        $console->message($serializer->reveal(), $message);
+
+        $content = $output->fetch();
+
+        self::assertStringContainsString('Unknown Error', $content);
+        self::assertStringContainsString(ProfileCreated::class, $content);
     }
 }
