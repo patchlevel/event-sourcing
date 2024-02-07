@@ -53,12 +53,16 @@ final class StoreTest extends TestCase
                 ->withAggregateName('profile')
                 ->withAggregateId('test')
                 ->withPlayhead(1)
-                ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00')),
+                ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'))
+                ->withArchived(false)
+                ->withNewStreamStart(false),
             Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
                 ->withAggregateName('profile')
                 ->withAggregateId('test')
                 ->withPlayhead(2)
-                ->withRecordedOn(new DateTimeImmutable('2020-01-02 00:00:00')),
+                ->withRecordedOn(new DateTimeImmutable('2020-01-02 00:00:00'))
+                ->withArchived(false)
+                ->withNewStreamStart(false),
         ];
 
         $this->store->save(...$messages);
@@ -93,7 +97,9 @@ final class StoreTest extends TestCase
             ->withAggregateName('profile')
             ->withAggregateId('test')
             ->withPlayhead(1)
-            ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'));
+            ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'))
+            ->withArchived(false)
+            ->withNewStreamStart(false);
 
         $this->store->save($message);
 

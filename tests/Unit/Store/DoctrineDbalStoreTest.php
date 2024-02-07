@@ -102,6 +102,8 @@ final class DoctrineDbalStoreTest extends TestCase
                     'event' => 'profile.created',
                     'payload' => '{"profileId": "1", "email": "s"}',
                     'recorded_on' => '2021-02-17 10:00:00',
+                    'archived' => '0',
+                    'new_stream_start' => '0',
                     'custom_headers' => '[]',
                 ],
             ],
@@ -124,9 +126,9 @@ final class DoctrineDbalStoreTest extends TestCase
         $selectSqlBuilder->buildSQL(Argument::type(SelectQuery::class))
             ->willReturn('SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC');
 
-        $abstractPlatform->createSelectSQLBuilder()
-            ->willReturn($selectSqlBuilder->reveal());
-        $abstractPlatform->getDateTimeTzFormatString()->willReturn('Y-m-d H:i:s');
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn($selectSqlBuilder->reveal());
+        $abstractPlatform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
+        $abstractPlatform->convertFromBoolean('0')->shouldBeCalledTimes(2)->willReturn(false);
 
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
 

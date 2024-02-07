@@ -20,6 +20,15 @@ use function array_key_exists;
  *     archived?: bool,
  *     ...<string, mixed>
  *  }
+ *
+ * @phpstan-type Headers = array{
+ *      aggregateName?: string,
+ *      aggregateId?: string,
+ *      playhead?: positive-int,
+ *      recordedOn?: DateTimeImmutable,
+ *      newStreamStart?: bool,
+ *      archived?: bool
+ *   }
  */
 final class Message
 {

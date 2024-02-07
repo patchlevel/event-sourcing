@@ -20,14 +20,6 @@
       <code><![CDATA[$method->getName()]]></code>
     </MixedMethodCall>
   </file>
-  <file src="src/EventBus/Message.php">
-    <InvalidReturnStatement>
-      <code>$headers</code>
-    </InvalidReturnStatement>
-    <InvalidReturnType>
-      <code>Headers</code>
-    </InvalidReturnType>
-  </file>
   <file src="src/EventBus/Serializer/EventSerializerMessageSerializer.php">
     <MixedArgumentTypeCoercion>
       <code><![CDATA[$data['headers']]]></code>
@@ -103,6 +95,11 @@
     <InvalidPropertyAssignmentValue>
       <code>$index</code>
     </InvalidPropertyAssignmentValue>
+  </file>
+  <file src="src/Store/DoctrineDbalStoreStream.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform)]]></code>
+    </ArgumentTypeCoercion>
   </file>
   <file src="src/Store/DoctrineHelper.php">
     <MixedReturnTypeCoercion>
@@ -192,23 +189,6 @@
       <code>$id</code>
       <code>$name</code>
     </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/EventBus/MessageTest.php">
-    <InvalidArgument>
-      <code><![CDATA[[
-                'foo' => 'bar',
-                'aggregateName' => 'profile',
-                'aggregateId' => '1',
-                'playhead' => 3,
-                'recordedOn' => $recordedAt,
-                'newStreamStart' => true,
-                'archived' => true,
-            ]]]></code>
-    </InvalidArgument>
-    <TypeDoesNotContainType>
-      <code>assertSame</code>
-      <code>assertSame</code>
-    </TypeDoesNotContainType>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion>

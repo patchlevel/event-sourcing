@@ -111,7 +111,7 @@ final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
     private function extractId(Message $message): int
     {
         try {
-            $value = $message->customHeader(self::HEADER_OUTBOX_IDENTIFIER);
+            $value = $message->header(self::HEADER_OUTBOX_IDENTIFIER);
         } catch (HeaderNotFound) {
             throw OutboxHeaderIssue::missingHeader(self::HEADER_OUTBOX_IDENTIFIER);
         }
