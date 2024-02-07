@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Console;
 
 use InvalidArgumentException;
 
-use function gettype;
+use function get_debug_type;
 use function sprintf;
 
 final class InvalidArgumentGiven extends InvalidArgumentException
@@ -19,7 +19,7 @@ final class InvalidArgumentGiven extends InvalidArgumentException
             sprintf(
                 'Invalid argument given: need type "%s" got "%s"',
                 $need,
-                gettype($value),
+                get_debug_type($value),
             ),
         );
     }

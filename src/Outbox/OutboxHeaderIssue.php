@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Outbox;
 
 use RuntimeException;
 
-use function gettype;
+use function get_debug_type;
 use function sprintf;
 
 final class OutboxHeaderIssue extends RuntimeException
@@ -18,6 +18,6 @@ final class OutboxHeaderIssue extends RuntimeException
 
     public static function invalidHeaderType(mixed $value): self
     {
-        return new self(sprintf('Invalid header given: need type "int" got "%s"', gettype($value)));
+        return new self(sprintf('Invalid header given: need type "int" got "%s"', get_debug_type($value)));
     }
 }
