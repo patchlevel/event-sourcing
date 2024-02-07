@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\WatchServer;
 
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\MessageSerializer;
 
 use function fclose;
 use function restore_error_handler;

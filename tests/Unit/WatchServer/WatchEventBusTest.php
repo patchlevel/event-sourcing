@@ -8,13 +8,13 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\WatchServer\SendingFailed;
-use Patchlevel\EventSourcing\WatchServer\WatchListener;
+use Patchlevel\EventSourcing\WatchServer\WatchEventBus;
 use Patchlevel\EventSourcing\WatchServer\WatchServerClient;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\WatchServer\WatchListener */
-final class WatchListenerTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\WatchServer\WatchEventBus */
+final class WatchEventBusTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -25,8 +25,8 @@ final class WatchListenerTest extends TestCase
         $client = $this->prophesize(WatchServerClient::class);
         $client->send($message)->shouldBeCalled();
 
-        $listener = new WatchListener($client->reveal());
-        $listener->__invoke($message);
+        $bus = new WatchEventBus($client->reveal());
+        $bus->dispatch($message);
     }
 
     public function testIgnoreErrors(): void
@@ -36,7 +36,7 @@ final class WatchListenerTest extends TestCase
         $client = $this->prophesize(WatchServerClient::class);
         $client->send($message)->shouldBeCalled()->willThrow(SendingFailed::class);
 
-        $listener = new WatchListener($client->reveal());
-        $listener->__invoke($message);
+        $bus = new WatchEventBus($client->reveal());
+        $bus->dispatch($message);
     }
 }

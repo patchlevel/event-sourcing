@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\WatchServer;
+namespace Patchlevel\EventSourcing\EventBus\Serializer;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 
