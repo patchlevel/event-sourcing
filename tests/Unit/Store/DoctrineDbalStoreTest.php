@@ -201,9 +201,7 @@ final class DoctrineDbalStoreTest extends TestCase
             ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(1)
-            ->withRecordedOn($recordedOn)
-            ->withNewStreamStart(false)
-            ->withArchived(false);
+            ->withRecordedOn($recordedOn);
 
         $innerMockedConnection = $this->prophesize(Connection::class);
 

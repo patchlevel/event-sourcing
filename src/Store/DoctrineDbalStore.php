@@ -160,18 +160,28 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
 
                         $parameters[] = $message->recordedOn();
                         $types[$offset + 5] = $dateTimeType;
-
-                        $parameters[] = $message->newStreamStart();
-                        $types[$offset + 6] = $booleanType;
-
-                        $parameters[] = $message->archived();
-                        $types[$offset + 7] = $booleanType;
-
-                        $parameters[] = $message->customHeaders();
-                        $types[$offset + 8] = $jsonType;
                     } catch (HeaderNotFound $e) {
                         throw new MissingDataForStorage($e->name, $e);
                     }
+
+                    try {
+                        $newStreamStart = $message->newStreamStart();
+                    } catch (HeaderNotFound) {
+                        $newStreamStart = false;
+                    }
+                    $parameters[] = $newStreamStart;
+                    $types[$offset + 6] = $booleanType;
+
+                    try {
+                        $archived = $message->archived();
+                    } catch (HeaderNotFound) {
+                        $archived = false;
+                    }
+                    $parameters[] = $archived;
+                    $types[$offset + 7] = $booleanType;
+
+                    $parameters[] = $message->customHeaders();
+                    $types[$offset + 8] = $jsonType;
                 }
 
                 $query = sprintf(

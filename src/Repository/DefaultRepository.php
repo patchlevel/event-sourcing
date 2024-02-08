@@ -223,9 +223,7 @@ final class DefaultRepository implements Repository
                         ->withAggregateName($aggregateName)
                         ->withAggregateId($aggregateId)
                         ->withPlayhead(++$playhead)
-                        ->withRecordedOn($clock->now())
-                        ->withArchived(false)
-                        ->withNewStreamStart(false);
+                        ->withRecordedOn($clock->now());
 
                     if ($messageDecorator) {
                         return $messageDecorator($message);

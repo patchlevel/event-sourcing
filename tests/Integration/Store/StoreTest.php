@@ -53,16 +53,12 @@ final class StoreTest extends TestCase
                 ->withAggregateName('profile')
                 ->withAggregateId('test')
                 ->withPlayhead(1)
-                ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'))
-                ->withArchived(false)
-                ->withNewStreamStart(false),
+                ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00')),
             Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
                 ->withAggregateName('profile')
                 ->withAggregateId('test')
                 ->withPlayhead(2)
-                ->withRecordedOn(new DateTimeImmutable('2020-01-02 00:00:00'))
-                ->withArchived(false)
-                ->withNewStreamStart(false),
+                ->withRecordedOn(new DateTimeImmutable('2020-01-02 00:00:00')),
         ];
 
         $this->store->save(...$messages);
@@ -97,9 +93,7 @@ final class StoreTest extends TestCase
             ->withAggregateName('profile')
             ->withAggregateId('test')
             ->withPlayhead(1)
-            ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'))
-            ->withArchived(false)
-            ->withNewStreamStart(false);
+            ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'));
 
         $this->store->save($message);
 
@@ -107,6 +101,14 @@ final class StoreTest extends TestCase
 
         self::assertSame(1, $stream->index());
         self::assertSame(0, $stream->position());
-        self::assertEquals($message, $stream->current());
+
+        $loadedMessage = $stream->current();
+
+        self::assertNotSame($message, $loadedMessage);
+        self::assertEquals($message->aggregateId(), $loadedMessage->aggregateId());
+        self::assertEquals($message->aggregateName(), $loadedMessage->aggregateName());
+        self::assertEquals($message->playhead(), $loadedMessage->playhead());
+        self::assertEquals($message->event(), $loadedMessage->event());
+        self::assertEquals($message->recordedOn(), $loadedMessage->recordedOn());
     }
 }

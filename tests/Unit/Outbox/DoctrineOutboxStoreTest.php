@@ -34,9 +34,7 @@ final class DoctrineOutboxStoreTest extends TestCase
             ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(1)
-            ->withRecordedOn($recordedOn)
-            ->withNewStreamStart(false)
-            ->withArchived(false);
+            ->withRecordedOn($recordedOn);
 
         $innerMockedConnection = $this->prophesize(Connection::class);
         $innerMockedConnection->insert(
@@ -72,8 +70,6 @@ final class DoctrineOutboxStoreTest extends TestCase
             ->withAggregateId('1')
             ->withPlayhead(1)
             ->withRecordedOn($recordedOn)
-            ->withNewStreamStart(false)
-            ->withArchived(false)
             ->withHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
 
         $innerMockedConnection = $this->prophesize(Connection::class);
@@ -108,9 +104,7 @@ final class DoctrineOutboxStoreTest extends TestCase
             ->withAggregateName('profile')
             ->withAggregateId('1')
             ->withPlayhead(1)
-            ->withRecordedOn($recordedOn)
-            ->withNewStreamStart(false)
-            ->withArchived(false);
+            ->withRecordedOn($recordedOn);
 
         $innerMockedConnection = $this->prophesize(Connection::class);
         $innerMockedConnection->delete(
@@ -147,8 +141,6 @@ final class DoctrineOutboxStoreTest extends TestCase
             ->withAggregateId('1')
             ->withPlayhead(1)
             ->withRecordedOn($recordedOn)
-            ->withNewStreamStart(false)
-            ->withArchived(false)
             ->withHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 'asd');
 
         $innerMockedConnection = $this->prophesize(Connection::class);
@@ -254,8 +246,6 @@ final class DoctrineOutboxStoreTest extends TestCase
             ->withAggregateId('1')
             ->withPlayhead(1)
             ->withRecordedOn($recordedOn)
-            ->withNewStreamStart(false)
-            ->withArchived(false)
             ->withHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
 
         $queryBuilder = $this->prophesize(QueryBuilder::class);
