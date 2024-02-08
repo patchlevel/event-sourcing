@@ -215,6 +215,8 @@ final class MessageTest extends TestCase
         yield 'aggregateId' => ['aggregateId'];
         yield 'playhead' => ['playhead'];
         yield 'recordedOn' => ['recordedOn'];
+        yield 'archived' => ['archived'];
+        yield 'newStreamStart' => ['newStreamStart'];
     }
 
     public function testCustomHeaderNotFound(): void

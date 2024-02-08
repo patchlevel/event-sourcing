@@ -42,6 +42,22 @@ final class HeaderNotFoundTest extends TestCase
         );
     }
 
+    public function testArchived(): void
+    {
+        self::assertSame(
+            'message header "archived" is not defined',
+            HeaderNotFound::archived()->getMessage(),
+        );
+    }
+
+    public function testNewStreamStart(): void
+    {
+        self::assertSame(
+            'message header "newStreamStart" is not defined',
+            HeaderNotFound::newStreamStart()->getMessage(),
+        );
+    }
+
     public function testCustom(): void
     {
         self::assertSame(

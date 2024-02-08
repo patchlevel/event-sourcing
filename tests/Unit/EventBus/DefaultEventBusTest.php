@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Consumer;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
@@ -91,5 +92,30 @@ final class DefaultEventBusTest extends TestCase
         $consumer->consume($messageC)->shouldBeCalled();
 
         $eventBus->dispatch($messageA, $messageB);
+    }
+
+    public function testCreate(): void
+    {
+        $message = new Message(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de'),
+            ),
+        );
+
+        $listener = new class implements Consumer {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileCreated::class)]
+            public function consume(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $eventBus = DefaultEventBus::create([$listener]);
+        $eventBus->dispatch($message);
+
+        self::assertSame($message, $listener->message);
     }
 }

@@ -82,6 +82,18 @@ final class EventSerializerMessageSerializerTest extends TestCase
         $serializer->deserialize('!@#%$^&*()');
     }
 
+    public function testDeserializeDecodeFailedInvalidData(): void
+    {
+        $this->expectException(DeserializeFailed::class);
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $serializer = new EventSerializerMessageSerializer(
+            $eventSerializer->reveal(),
+        );
+
+        $serializer->deserialize('');
+    }
+
     public function testEquals(): void
     {
         $event = new ProfileVisited(

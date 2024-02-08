@@ -45,4 +45,20 @@ final class OnlyArchivedEventMiddlewareTest extends TestCase
 
         self::assertSame([$message], $result);
     }
+
+    public function testHeaderNotSet(): void
+    {
+        $middleware = new OnlyArchivedEventMiddleware();
+
+        $message = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('hallo@patchlevel.de'),
+            ),
+        );
+
+        $result = $middleware($message);
+
+        self::assertSame([], $result);
+    }
 }

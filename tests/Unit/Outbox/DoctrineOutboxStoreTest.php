@@ -13,6 +13,7 @@ use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\MessageSerializer;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
+use Patchlevel\EventSourcing\Outbox\OutboxHeaderIssue;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -97,6 +98,83 @@ final class DoctrineOutboxStoreTest extends TestCase
             $serializer->reveal(),
         );
 
+        $doctrineOutboxStore->markOutboxMessageConsumed($message);
+    }
+
+    public function testMarkOutboxMessageConsumedHeaderMissing(): void
+    {
+        $recordedOn = new DateTimeImmutable();
+        $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
+            ->withAggregateName('profile')
+            ->withAggregateId('1')
+            ->withPlayhead(1)
+            ->withRecordedOn($recordedOn)
+            ->withNewStreamStart(false)
+            ->withArchived(false);
+
+        $innerMockedConnection = $this->prophesize(Connection::class);
+        $innerMockedConnection->delete(
+            'outbox',
+            ['id' => 42],
+        )->shouldNotBeCalled();
+
+        $driver = $this->prophesize(Driver::class);
+        $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
+
+        $mockedConnection = $this->prophesize(Connection::class);
+        $mockedConnection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
+        );
+
+        $serializer = $this->prophesize(MessageSerializer::class);
+
+        $doctrineOutboxStore = new DoctrineOutboxStore(
+            $mockedConnection->reveal(),
+            $serializer->reveal(),
+        );
+
+        $this->expectException(OutboxHeaderIssue::class);
+        $this->expectExceptionMessage('missing header "outboxIdentifier"');
+        $doctrineOutboxStore->markOutboxMessageConsumed($message);
+    }
+
+    public function testMarkOutboxMessageConsumedHeaderInvalid(): void
+    {
+        $recordedOn = new DateTimeImmutable();
+        $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
+            ->withAggregateName('profile')
+            ->withAggregateId('1')
+            ->withPlayhead(1)
+            ->withRecordedOn($recordedOn)
+            ->withNewStreamStart(false)
+            ->withArchived(false)
+            ->withHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 'asd');
+
+        $innerMockedConnection = $this->prophesize(Connection::class);
+        $innerMockedConnection->delete(
+            'outbox',
+            ['id' => 42],
+        )->shouldNotBeCalled();
+
+        $driver = $this->prophesize(Driver::class);
+        $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
+
+        $mockedConnection = $this->prophesize(Connection::class);
+        $mockedConnection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
+        );
+
+        $serializer = $this->prophesize(MessageSerializer::class);
+
+        $doctrineOutboxStore = new DoctrineOutboxStore(
+            $mockedConnection->reveal(),
+            $serializer->reveal(),
+        );
+
+        $this->expectException(OutboxHeaderIssue::class);
+        $this->expectExceptionMessage('Invalid header given: need type "int" got "string"');
         $doctrineOutboxStore->markOutboxMessageConsumed($message);
     }
 
