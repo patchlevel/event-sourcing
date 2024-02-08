@@ -45,6 +45,7 @@ final class ExcludeArchivedEventMiddlewareTest extends TestCase
 
         self::assertSame([$message], $result);
     }
+
     public function testHeaderNotSet(): void
     {
         $middleware = new ExcludeArchivedEventMiddleware();

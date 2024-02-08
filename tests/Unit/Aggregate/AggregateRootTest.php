@@ -196,18 +196,19 @@ final class AggregateRootTest extends TestCase
     public function testUpdateMetadataFactory(): void
     {
         $newFactory = new class implements AggregateRootMetadataFactory {
-            public int $calledTimes = 0;
+            public bool $called = false;
+
             public function metadata(string $aggregate): AggregateRootMetadata
             {
-                $this->calledTimes++;
+                $this->called = true;
 
-                return new AggregateRootMetadata($aggregate, 'name', 'id' , [], [], false, null);
+                return new AggregateRootMetadata($aggregate, 'name', 'id', [], [], false, null);
             }
         };
 
         Profile::setMetadataFactory($newFactory);
-        self::assertSame(0, $newFactory->calledTimes);
+        self::assertFalse($newFactory->called);
         Profile::getMetadata();
-        self::assertSame(1, $newFactory->calledTimes);
+        self::assertTrue($newFactory->called);
     }
 }

@@ -20,7 +20,6 @@ use function array_key_exists;
  *     archived?: bool,
  *     ...<string, mixed>
  *  }
- *
  * @phpstan-type Headers = array{
  *      aggregateName?: string,
  *      aggregateId?: string,
