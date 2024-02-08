@@ -104,6 +104,7 @@ final class StoreTest extends TestCase
 
         $loadedMessage = $stream->current();
 
+        self::assertInstanceOf(Message::class, $loadedMessage);
         self::assertNotSame($message, $loadedMessage);
         self::assertEquals($message->aggregateId(), $loadedMessage->aggregateId());
         self::assertEquals($message->aggregateName(), $loadedMessage->aggregateName());

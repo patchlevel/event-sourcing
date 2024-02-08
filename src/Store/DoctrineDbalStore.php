@@ -169,6 +169,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                     } catch (HeaderNotFound) {
                         $newStreamStart = false;
                     }
+
                     $parameters[] = $newStreamStart;
                     $types[$offset + 6] = $booleanType;
 
@@ -177,6 +178,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                     } catch (HeaderNotFound) {
                         $archived = false;
                     }
+
                     $parameters[] = $archived;
                     $types[$offset + 7] = $booleanType;
 
