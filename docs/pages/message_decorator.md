@@ -65,7 +65,7 @@ $repository = $repositoryManager->get(Profile::class);
 ## Create own decorator
 
 You can also use this feature to add your own metadata to your events. For this the have an extra methods on `Message`
-to add data `withCustomHeader` and to read this data later on `customHeader`.
+to add data `withHeader` and to read this data later on `header`.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\Message;
@@ -74,7 +74,7 @@ final class OnSystemRecordedDecorator implements MessageDecorator
 {
     public function __invoke(Message $message): Message
     {
-        return $message->withCustomHeader('system', 'accounting_system');
+        return $message->withHeader('system', 'accounting_system');
     }
 } 
 ```
@@ -85,7 +85,7 @@ final class OnSystemRecordedDecorator implements MessageDecorator
 
 !!! tip
 
-    You can also set multiple headers with `withCustomHeaders` which expects an hashmap.
+    You can also set multiple headers with `withHeaders` which expects an hashmap.
 
 ## Learn more
 

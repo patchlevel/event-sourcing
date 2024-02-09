@@ -6,7 +6,7 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\:\\:headers\\(\\) should return array\\{aggregateName\\?\\: string, aggregateId\\?\\: string, playhead\\?\\: int\\<1, max\\>, recordedOn\\?\\: DateTimeImmutable, newStreamStart\\?\\: bool, archived\\?\\: bool\\} but returns non\\-empty\\-array\\<string, mixed\\>\\.$#"
+			message: "#^Property Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\<T of object\\>\\:\\:\\$headers \\(array\\{aggregateName\\?\\: string, aggregateId\\?\\: string, playhead\\?\\: int\\<1, max\\>, recordedOn\\?\\: DateTimeImmutable, newStreamStart\\?\\: bool, archived\\?\\: bool\\}\\) does not accept non\\-empty\\-array\\<string, mixed\\>\\.$#"
 			count: 1
 			path: src/EventBus/Message.php
 
@@ -34,6 +34,11 @@ parameters:
 			message: "#^Ternary operator condition is always true\\.$#"
 			count: 1
 			path: src/Store/ArrayStream.php
+
+		-
+			message: "#^Parameter \\#1 \\$headers of method Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\<object\\>\\:\\:withHeaders\\(\\) expects array\\{aggregateName\\?\\: string, aggregateId\\?\\: string, playhead\\?\\: int\\<1, max\\>, recordedOn\\?\\: DateTimeImmutable, newStreamStart\\?\\: bool, archived\\?\\: bool\\}, array\\<string, mixed\\> given\\.$#"
+			count: 1
+			path: src/Store/DoctrineDbalStoreStream.php
 
 		-
 			message: "#^Ternary operator condition is always true\\.$#"

@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\MetadataNotPossible;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
@@ -19,6 +20,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileInvalid;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSuppressAll;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -188,5 +190,25 @@ final class AggregateRootTest extends TestCase
 
         $this->expectException(AggregateRootIdNotSupported::class);
         $aggregate->aggregateRootId();
+    }
+
+    #[RunInSeparateProcess]
+    public function testUpdateMetadataFactory(): void
+    {
+        $newFactory = new class implements AggregateRootMetadataFactory {
+            public bool $called = false;
+
+            public function metadata(string $aggregate): AggregateRootMetadata
+            {
+                $this->called = true;
+
+                return new AggregateRootMetadata($aggregate, 'name', 'id', [], [], false, null);
+            }
+        };
+
+        Profile::setMetadataFactory($newFactory);
+        self::assertFalse($newFactory->called);
+        Profile::getMetadata();
+        self::assertTrue($newFactory->called);
     }
 }

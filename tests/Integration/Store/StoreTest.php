@@ -101,6 +101,15 @@ final class StoreTest extends TestCase
 
         self::assertSame(1, $stream->index());
         self::assertSame(0, $stream->position());
-        self::assertEquals($message, $stream->current());
+
+        $loadedMessage = $stream->current();
+
+        self::assertInstanceOf(Message::class, $loadedMessage);
+        self::assertNotSame($message, $loadedMessage);
+        self::assertEquals($message->aggregateId(), $loadedMessage->aggregateId());
+        self::assertEquals($message->aggregateName(), $loadedMessage->aggregateName());
+        self::assertEquals($message->playhead(), $loadedMessage->playhead());
+        self::assertEquals($message->event(), $loadedMessage->event());
+        self::assertEquals($message->recordedOn(), $loadedMessage->recordedOn());
     }
 }

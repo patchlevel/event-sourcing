@@ -87,7 +87,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
         EventSerializer $serializer,
         AbstractPlatform $platform,
     ): Generator {
-        /** @var array{id: positive-int, aggregate: string, aggregate_id: string, playhead: int|string, event: string, payload: string, recorded_on: string, custom_headers: string} $data */
+        /** @var array{id: positive-int, aggregate: string, aggregate_id: string, playhead: int|string, event: string, payload: string, recorded_on: string, archived: int|string, new_stream_start: int|string, custom_headers: string} $data */
         foreach ($result->iterateAssociative() as $data) {
             if ($this->position === null) {
                 $this->position = 0;
@@ -103,7 +103,9 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
                 ->withAggregateId($data['aggregate_id'])
                 ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
                 ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
-                ->withCustomHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
+                ->withArchived(DoctrineHelper::normalizeArchived($data['archived'], $platform))
+                ->withNewStreamStart(DoctrineHelper::normalizeNewStreamStart($data['new_stream_start'], $platform))
+                ->withHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
         }
     }
 }

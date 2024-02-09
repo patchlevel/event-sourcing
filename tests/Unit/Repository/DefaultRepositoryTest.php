@@ -211,7 +211,7 @@ final class DefaultRepositoryTest extends TestCase
                     return false;
                 }
 
-                if ($message->customHeader('test') !== 'foo') {
+                if ($message->header('test') !== 'foo') {
                     return false;
                 }
 
@@ -235,7 +235,7 @@ final class DefaultRepositoryTest extends TestCase
                     return false;
                 }
 
-                if ($message->customHeader('test') !== 'foo') {
+                if ($message->header('test') !== 'foo') {
                     return false;
                 }
 
@@ -246,7 +246,7 @@ final class DefaultRepositoryTest extends TestCase
         $decorator = new class implements MessageDecorator {
             public function __invoke(Message $message): Message
             {
-                return $message->withCustomHeader('test', 'foo');
+                return $message->withHeader('test', 'foo');
             }
         };
 
