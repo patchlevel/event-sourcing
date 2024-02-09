@@ -8,15 +8,14 @@ event/message.
 
 ## Message
 
-A `Message` contains the event and related meta information such as the aggregate class and id.
-A message contains the following information:
+A `Message` contains the event and related meta information as headers. A `Message` contains only two properties, first
+the `event` and second the `headers`. Internally we are also using the `headers` to store meta information for
+the `Message` for example:
 
-* aggregate class
+* aggregate name
 * aggregate id
 * playhead
-* event
 * recorded on
-* custom headers
 
 Each event is packed into a message and dispatched using the event bus.
 
@@ -26,7 +25,7 @@ use Patchlevel\EventSourcing\EventBus\Message;
 
 $clock = SystemClock();
 $message = Message::create(new NameChanged('foo'))
-    ->withAggregateClass(Profile::class)
+    ->withAggregateName('profile')
     ->withAggregateId('bca7576c-536f-4428-b694-7b1f00c714b7')
     ->withPlayhead(2)
     ->withRecordedOn($clock->now());
@@ -38,13 +37,13 @@ $eventBus->dispatch($message);
 
     The message object is immutable.
 
-You don't have to create the message yourself,
-it is automatically created, saved and dispatched in the [repository](repository.md).
+You don't have to create the message yourself, it is automatically created, saved and dispatched in
+the [repository](repository.md).
 
 ### Custom headers
 
-You can also enrich your own header or metadata information.
-This information is then accessible in the message object and is also stored in the database.
+As already mentioned, you can enrich the `Message` with your own meta information. This is then accessible in the
+message object and is also stored in the database.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\Message;
@@ -58,14 +57,34 @@ $message = Message::create(new NameChanged('foo'))
 
     You can read about how to pass additional headers to the message object in the [message decorator](message_decorator.md) docs.
 
-You can also access your custom headers.
+You can also access your custom headers. For this case there is also a method to only retrieve the headers which are not
+used internally.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\Message;
 
-$message->customHeader('application-id'); // app
+$message->header('application-id'); // app
 $message->customHeaders(); // ['application-id' => 'app']
 ```
+
+If you want *all* the headers you can also retrieve them.
+
+```php
+use Patchlevel\EventSourcing\EventBus\Message;
+
+$message->headers(); 
+// results in:
+[
+    'aggregateName' => 'profile', 
+    'aggregateId' => '1', 
+    // {...}, 
+    'application-id' => 'app'
+]
+```
+
+!!! warning
+
+    Relying on internal meta data could be dangerous as they could be changed. So be cautios if you want to implement logic on them.
 
 ## Event Bus
 
@@ -196,7 +215,7 @@ final class WelcomeSubscriber
 ## Psr-14 Event Bus
 
 You can also use a [psr-14](https://www.php-fig.org/psr/psr-14/) compatible event bus.
-In this case, you can't use the `Subscribe` attribute. 
+In this case, you can't use the `Subscribe` attribute.
 You need to use the system of the psr-14 event bus.
 
 ```php
