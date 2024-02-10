@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Clock\SystemClock;
@@ -17,6 +18,7 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
 use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
@@ -129,9 +131,10 @@ final class DefaultRepository implements Repository
                 throw new AggregateNotFound($this->metadata->className, $id);
             }
 
+            $aggregateHeader = $firstMessage->header(AggregateHeader::class);
             $aggregate = $this->metadata->className::createFromEvents(
                 $this->unpack($stream),
-                $firstMessage->playhead() - 1,
+                $aggregateHeader->playhead - 1,
             );
 
             if ($this->snapshotStore && $this->metadata->snapshot) {
@@ -220,10 +223,12 @@ final class DefaultRepository implements Repository
             $messages = array_map(
                 static function (object $event) use ($aggregateName, $aggregateId, &$playhead, $messageDecorator, $clock) {
                     $message = Message::create($event)
-                        ->withAggregateName($aggregateName)
-                        ->withAggregateId($aggregateId)
-                        ->withPlayhead(++$playhead)
-                        ->withRecordedOn($clock->now());
+                        ->withHeader(new AggregateHeader(
+                            $aggregateName,
+                            $aggregateId,
+                            ++$playhead,
+                            $clock->now()
+                        ));
 
                     if ($messageDecorator) {
                         return $messageDecorator($message);
@@ -373,12 +378,12 @@ final class DefaultRepository implements Repository
 
         foreach ($messages as $message) {
             try {
-                $newStreamStart = $message->newStreamStart();
+                $newStreamStartHeader = $message->header(NewStreamStartHeader::class);
             } catch (HeaderNotFound) {
                 continue;
             }
 
-            if (!$newStreamStart) {
+            if (!$newStreamStartHeader->newStreamStart) {
                 continue;
             }
 
@@ -389,18 +394,19 @@ final class DefaultRepository implements Repository
             return;
         }
 
+        $aggregateHeader = $lastMessageWithNewStreamStart->header(AggregateHeader::class);
         $this->store->archiveMessages(
-            $lastMessageWithNewStreamStart->aggregateName(),
-            $lastMessageWithNewStreamStart->aggregateId(),
-            $lastMessageWithNewStreamStart->playhead(),
+            $aggregateHeader->aggregateName,
+            $aggregateHeader->aggregateId,
+            $aggregateHeader->playhead,
         );
 
         $this->logger->debug(
             sprintf(
                 'Repository: Archive messages for aggregate "%s" with the id "%s" until playhead "%d".',
-                $lastMessageWithNewStreamStart->aggregateName(),
-                $lastMessageWithNewStreamStart->aggregateId(),
-                $lastMessageWithNewStreamStart->playhead(),
+                $aggregateHeader->aggregateName,
+                $aggregateHeader->aggregateId,
+                $aggregateHeader->playhead,
             ),
         );
     }

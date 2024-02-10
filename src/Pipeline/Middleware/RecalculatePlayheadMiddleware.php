@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 
 use function array_key_exists;
@@ -16,14 +17,22 @@ final class RecalculatePlayheadMiddleware implements Middleware
     /** @return list<Message> */
     public function __invoke(Message $message): array
     {
-        $playhead = $this->nextPlayhead($message->aggregateName(), $message->aggregateId());
+        $header = $message->header(AggregateHeader::class);
+        $playhead = $this->nextPlayhead($header->aggregateName, $header->aggregateId);
 
-        if ($message->playhead() === $playhead) {
+        if ($header->playhead === $playhead) {
             return [$message];
         }
 
+        $header = $message->header(AggregateHeader::class);
+
         return [
-            $message->withPlayhead($playhead),
+            $message->withHeader(new AggregateHeader(
+                $header->aggregateName,
+                $header->aggregateId,
+                $playhead,
+                $header->recordedOn,
+            )),
         ];
     }
 

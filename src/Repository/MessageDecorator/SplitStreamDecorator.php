@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Repository\MessageDecorator;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
+use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
 
 final class SplitStreamDecorator implements MessageDecorator
 {
@@ -19,6 +20,6 @@ final class SplitStreamDecorator implements MessageDecorator
         $event = $message->event();
         $metadata = $this->eventMetadataFactory->metadata($event::class);
 
-        return $message->withNewStreamStart($metadata->splitStream);
+        return $message->withHeader(new NewStreamStartHeader($metadata->splitStream));
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 
 final class UntilEventMiddleware implements Middleware
@@ -17,7 +18,7 @@ final class UntilEventMiddleware implements Middleware
     /** @return list<Message> */
     public function __invoke(Message $message): array
     {
-        $recordedOn = $message->recordedOn();
+        $recordedOn = $message->header(AggregateHeader::class)->recordedOn;
 
         if ($recordedOn < $this->until) {
             return [$message];

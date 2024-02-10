@@ -11,6 +11,8 @@ use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\EventBus\Header;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
@@ -158,20 +160,22 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                     $data = $this->serializer->serialize($message->event());
 
                     try {
-                        $parameters[] = $message->aggregateName();
-                        $parameters[] = $message->aggregateId();
-                        $parameters[] = $message->playhead();
+                        $aggregateHeader = $message->header(AggregateHeader::class);
+
+                        $parameters[] = $aggregateHeader->aggregateName;
+                        $parameters[] = $aggregateHeader->aggregateId;
+                        $parameters[] = $aggregateHeader->playhead;
                         $parameters[] = $data->name;
                         $parameters[] = $data->payload;
 
-                        $parameters[] = $message->recordedOn();
+                        $parameters[] = $aggregateHeader->recordedOn;
                         $types[$offset + 5] = $dateTimeType;
                     } catch (HeaderNotFound $e) {
                         throw new MissingDataForStorage($e->name, $e);
                     }
 
                     try {
-                        $newStreamStart = $message->newStreamStart();
+                        $newStreamStart = $message->header(NewStreamStartHeader::class)->newStreamStart;
                     } catch (HeaderNotFound) {
                         $newStreamStart = false;
                     }
@@ -180,7 +184,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                     $types[$offset + 6] = $booleanType;
 
                     try {
-                        $archived = $message->archived();
+                        $archived = $message->header(ArchivedHeader::class)->archived;
                     } catch (HeaderNotFound) {
                         $archived = false;
                     }
@@ -188,7 +192,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                     $parameters[] = $archived;
                     $types[$offset + 7] = $booleanType;
 
-                    $parameters[] = $message->customHeaders();
+                    $parameters[] = $this->getCustomHeaders($message);
                     $types[$offset + 8] = $jsonType;
 
                     $position++;
@@ -300,5 +304,23 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
         $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
+    }
+
+    /**
+     * @return array<class-string<H>, H>
+     *
+     * @template H of Header
+     */
+    public function getCustomHeaders(Message $message): array
+    {
+        $headers = $message->headers();
+
+        unset(
+            $headers[AggregateHeader::class],
+            $headers[NewStreamStartHeader::class],
+            $headers[ArchivedHeader::class],
+        );
+
+        return $headers;
     }
 }

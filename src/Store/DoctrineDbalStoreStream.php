@@ -8,6 +8,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Result;
 use Generator;
 use IteratorAggregate;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
@@ -99,12 +100,14 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
             $event = $serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
             yield Message::create($event)
-                ->withAggregateName($data['aggregate'])
-                ->withAggregateId($data['aggregate_id'])
-                ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
-                ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
-                ->withArchived(DoctrineHelper::normalizeArchived($data['archived'], $platform))
-                ->withNewStreamStart(DoctrineHelper::normalizeNewStreamStart($data['new_stream_start'], $platform))
+                ->withHeader(new AggregateHeader(
+                    $data['aggregate'],
+                    $data['aggregate_id'],
+                    DoctrineHelper::normalizePlayhead($data['playhead'], $platform),
+                    DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform)
+                ))
+                ->withHeader(new ArchivedHeader(DoctrineHelper::normalizeArchived($data['archived'], $platform)))
+                ->withHeader(new NewStreamStartHeader(DoctrineHelper::normalizeNewStreamStart($data['new_stream_start'], $platform)))
                 ->withHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
         }
     }
