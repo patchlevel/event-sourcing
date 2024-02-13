@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\EventBus;
 
 use function array_key_exists;
+use function array_map;
+use function array_values;
 
 /**
  * @template-covariant T of object
@@ -20,7 +22,7 @@ final class Message
     public const HEADER_NEW_STREAM_START = 'newStreamStart';
 
     /**
-     * @var array<class-string<Header>, Header>
+     * @var class-string-map<H of Header, H>
      */
     private array $headers = [];
 
@@ -43,8 +45,7 @@ final class Message
     }
 
     /**
-     * @template H of Header
-     * @param array<class-string<H>, H> $headers
+     * @param array<Header> $headers
      */
     public static function createWithHeaders(object $event, array $headers): self
     {
@@ -58,13 +59,13 @@ final class Message
     }
 
     /**
-     * @param class-string<H> $name
+     * @param class-string<H1> $name
      *
-     * @return H
+     * @return H1
      *
      * @throws HeaderNotFound
      *
-     * @template H of Header
+     * @template H1 of Header
      */
     public function header(string $name): mixed
     {
@@ -84,8 +85,7 @@ final class Message
     }
 
     /**
-     * @template H of Header
-     * @return array<class-string<H>, H>
+     * @return array<class-string<Header>, Header>
      */
     public function headers(): array
     {
@@ -93,13 +93,18 @@ final class Message
     }
 
     /**
-     * @template H of Header
-     * @param array<class-string<H>, H> $headers
+     * @param array<Header> $headers
      */
     public function withHeaders(array $headers): self
     {
+        $newHeaders = [];
+
+        foreach ($headers as $header) {
+            $newHeaders[$header::class] = $header;
+        }
+
         $message = clone $this;
-        $message->headers += $headers;
+        $message->headers = array_merge($message->headers, $newHeaders);
 
         return $message;
     }

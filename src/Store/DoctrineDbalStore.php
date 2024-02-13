@@ -307,9 +307,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
     }
 
     /**
-     * @return array<class-string<H>, H>
-     *
-     * @template H of Header
+     * @return array<Header>
      */
     public function getCustomHeaders(Message $message): array
     {

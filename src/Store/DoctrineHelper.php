@@ -9,6 +9,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 
+use Patchlevel\EventSourcing\EventBus\Header;
 use function is_array;
 use function is_bool;
 use function is_int;
@@ -38,7 +39,7 @@ final class DoctrineHelper
         return $normalizedPlayhead;
     }
 
-    /** @return array<string, mixed> */
+    /** @return array<Header> */
     public static function normalizeCustomHeaders(string $customHeaders, AbstractPlatform $platform): array
     {
         $normalizedCustomHeaders = Type::getType(Types::JSON)->convertToPHPValue($customHeaders, $platform);
@@ -47,6 +48,13 @@ final class DoctrineHelper
             throw new InvalidType('custom_headers', 'array');
         }
 
+        foreach ($normalizedCustomHeaders as $customHeader) {
+            if (!$customHeader instanceof Header) {
+                throw new \RuntimeException();
+            }
+        }
+
+        /** @var array<Header> $normalizedCustomHeaders */
         return $normalizedCustomHeaders;
     }
 
