@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projection\Store;
 
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +16,7 @@ final class InMemoryStoreTest extends TestCase
     {
         $store = new InMemoryStore();
 
-        $id = new ProjectionId('test', 1);
+        $id = 'test';
         $projection = new Projection($id);
 
         $store->save($projection);
@@ -34,14 +33,14 @@ final class InMemoryStoreTest extends TestCase
         $this->expectException(ProjectionNotFound::class);
 
         $store = new InMemoryStore();
-        $store->get(new ProjectionId('test', 1));
+        $store->get('test');
     }
 
     public function testRemove(): void
     {
         $store = new InMemoryStore();
 
-        $id = new ProjectionId('test', 1);
+        $id = 'test';
         $projection = new Projection($id);
 
         $store->save($projection);

@@ -32,7 +32,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
     public function testEmptyProjection(): void
     {
-        $projection = new #[Projector('foo', 1)]
+        $projection = new #[Projector('foo')]
         class {
         };
 
@@ -42,13 +42,12 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
         self::assertSame([], $metadata->subscribeMethods);
         self::assertNull($metadata->setupMethod);
         self::assertNull($metadata->teardownMethod);
-        self::assertSame('foo', $metadata->name);
-        self::assertSame(1, $metadata->version);
+        self::assertSame('foo', $metadata->id);
     }
 
     public function testStandardProjection(): void
     {
-        $projection = new #[Projector('foo', 1)]
+        $projection = new #[Projector('foo')]
         class {
             #[Subscribe(ProfileVisited::class)]
             public function handle(): void
@@ -80,7 +79,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
     public function testMultipleHandlerOnOneMethod(): void
     {
-        $projection = new #[Projector('foo', 1)]
+        $projection = new #[Projector('foo')]
         class {
             #[Subscribe(ProfileVisited::class)]
             #[Subscribe(ProfileCreated::class)]
@@ -103,7 +102,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
     public function testSubscribeAll(): void
     {
-        $projection = new #[Projector('foo', 1)]
+        $projection = new #[Projector('foo')]
         class {
             #[Subscribe(Subscribe::ALL)]
             public function handle(): void
@@ -126,7 +125,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
     {
         $this->expectException(DuplicateSetupMethod::class);
 
-        $projection = new #[Projector('foo', 1)]
+        $projection = new #[Projector('foo')]
         class {
             #[Setup]
             public function create1(): void
@@ -147,7 +146,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
     {
         $this->expectException(DuplicateTeardownMethod::class);
 
-        $projection = new #[Projector('foo', 1)]
+        $projection = new #[Projector('foo')]
         class {
             #[Teardown]
             public function drop1(): void

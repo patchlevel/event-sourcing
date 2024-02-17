@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
@@ -47,17 +46,13 @@ final class ProjectionStatusCommand extends ProjectionCommand
             $io->table(
                 [
                     'id',
-                    'name',
-                    'version',
                     'position',
                     'status',
                     'error message',
                 ],
                 array_map(
                     static fn (Projection $projection) => [
-                        $projection->id()->toString(),
-                        $projection->id()->name(),
-                        $projection->id()->version(),
+                        $projection->id(),
                         $projection->position(),
                         $projection->status()->value,
                         $projection->projectionError()?->errorMessage,
@@ -69,22 +64,18 @@ final class ProjectionStatusCommand extends ProjectionCommand
             return 0;
         }
 
-        $projection = $projections->get(ProjectionId::fromString($id));
+        $projection = $projections->get($id);
 
         $io->horizontalTable(
             [
                 'id',
-                'name',
-                'version',
                 'position',
                 'status',
                 'error message',
             ],
             [
                 [
-                    $projection->id()->toString(),
-                    $projection->id()->name(),
-                    $projection->id()->version(),
+                    $projection->id(),
                     $projection->position(),
                     $projection->status()->value,
                     $projection->projectionError()?->errorMessage,

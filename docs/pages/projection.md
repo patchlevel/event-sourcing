@@ -22,7 +22,7 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 
-#[Projector('profile')]
+#[Projector('profile_1')]
 final class ProfileProjector
 {
     use ProjectorUtil;
@@ -70,22 +70,21 @@ final class ProfileProjector
     
     private function table(): string 
     {
-        return sprintf(
-            'projection_%s_%s', 
-            $this->projectionName(), 
-            $this->projectionVersion()
-        );
+        return 'projection_' . $this->projectionId();
     }
 }
 ```
 
-Each projector is responsible for a specific projection and version.
-This combination of information results in the so-called `project ID`.
+!!! tip
+
+    Add a version as suffix to the `projectorId`, so you can increment it when the projection changes.
+
+Each projector has an unique ID and is responsible for a specific projection.
 In order for us to be able to define this, we have to use the `Projector` attribute.
-In our example, the projection is called "profile" and has the version "0" because we did not specify it.
+In our example, the projection is called "profile".
 So that there is no problems with existing projection, 
-both the name of the projection and the version should be part of the table/collection name.
-In our example, we build a `table` helper method, what creates the following string: "projection_profile_0".
+the name of the projection should be part of the table/collection name.
+In our example, we build a `table` helper method, what creates the following string: "projection_profile".
 
 Projectors can have one `setup` and `teardown` method that is executed when the projection is created or deleted.
 For this there are the attributes `Setup` and `Teardown`. The method name itself doesn't matter.
@@ -112,9 +111,11 @@ Several projectors can also listen to the same event.
 
 ## Versioning
 
-As soon as the structure of a projection changes, the version must be change or increment.
+As soon as the structure of a projection changes or the or you need other events from the past, 
+the `projectorId` must be change or increment.
+
 Otherwise the projectionist will not recognize that the projection has changed and will not rebuild it.
-To do this, you have to change the version in the `Projector` attribute.
+To do this, you can add a version to the `projectorId`:
 
 ```php
 use Doctrine\DBAL\Connection;
@@ -124,7 +125,7 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\EventBus\Message;
 
-#[Projector('profile', version: 1)]
+#[Projector('profile_1')]
 final class ProfileProjector
 {
    // ...
@@ -133,7 +134,7 @@ final class ProfileProjector
 
 !!! warning
 
-    If you change the version, you must also change the table/collection name.
+    If you change the ID, you must also change the table/collection name.
 
 !!! tip
 
@@ -168,20 +169,19 @@ If something breaks, the projectionist marks the individual projections as fault
 
 ## Projection Id
 
-A projection id consists of a unique name and a version.
-It can be defined using the `Projector` attribute.
+A projection id is unique and can be defined using the `Projector` attribute.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Projector;
 
-#[Projector('profile', version: 1)]
+#[Projector('profile_1')]
 final class ProfileProjector
 {
    // ...
 }
 ```
 
-As soon as the projection changes, such as the structure or the data, the version of the projection must be incremented.
+As soon as the projection changes, such as the structure or the data, the id of the projection must be changed.
 This tells the projectionist to build an another projection with this projector.
 
 !!! note
@@ -217,7 +217,7 @@ stateDiagram-v2
 ### New
 
 A projection gets the status new if there is a projector with an unknown `projection id`.
-This can happen when either a new projector has been added, the version has changed
+This can happen when either a new projector has been added, the `projector id` has changed
 or the projection has been manually deleted from the projection store.
 
 ### Booting

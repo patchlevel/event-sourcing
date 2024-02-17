@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\Profil
 
 use function assert;
 
-#[Projector('profile', 1)]
+#[Projector('profile-1')]
 final class ProfileProjector
 {
     public function __construct(

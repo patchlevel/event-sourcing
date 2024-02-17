@@ -10,8 +10,8 @@ use function sprintf;
 
 final class ProjectionNotFound extends RuntimeException
 {
-    public function __construct(ProjectionId $projectionId)
+    public function __construct(string $projectionId)
     {
-        parent::__construct(sprintf('projection with the id "%s" not found', $projectionId->toString()));
+        parent::__construct(sprintf('projection with the id "%s" not found', $projectionId));
     }
 }

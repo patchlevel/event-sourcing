@@ -61,13 +61,8 @@ final class MetadataProjectorResolver implements ProjectorResolver
         );
     }
 
-    public function projectorId(object $projector): ProjectorId
+    public function projectorId(object $projector): string
     {
-        $metadata = $this->metadataFactory->metadata($projector::class);
-
-        return new ProjectorId(
-            $metadata->name,
-            $metadata->version,
-        );
+        return $this->metadataFactory->metadata($projector::class)->id;
     }
 }

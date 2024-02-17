@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projectionist\Projectionist;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -44,7 +43,7 @@ abstract class ProjectionCommand extends Command
         );
     }
 
-    /** @return list<ProjectionId>|null */
+    /** @return list<string>|null */
     private function projectionIds(InputInterface $input): array|null
     {
         $ids = $input->getOption('id');
@@ -59,12 +58,12 @@ abstract class ProjectionCommand extends Command
 
         return array_values(
             array_map(
-                static function (mixed $id) use ($ids): ProjectionId {
+                static function (mixed $id) use ($ids): string {
                     if (!is_string($id)) {
                         throw new InvalidArgumentGiven($ids, 'list<string>');
                     }
 
-                    return ProjectionId::fromString($id);
+                    return $id;
                 },
                 $ids,
             ),

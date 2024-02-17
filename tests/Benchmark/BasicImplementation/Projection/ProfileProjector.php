@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileC
 
 use function assert;
 
-#[Projector('dummy', 1)]
+#[Projector('dummy_1')]
 final class ProfileProjector
 {
     public function __construct(

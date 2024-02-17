@@ -165,14 +165,12 @@ final class MetadataProjectorResolverTest extends TestCase
 
     public function testProjectionId(): void
     {
-        $projector = new #[Projector('dummy', 1)]
+        $projector = new #[Projector('dummy')]
         class {
         };
 
         $resolver = new MetadataProjectorResolver();
-        $projectorId = $resolver->projectorId($projector);
 
-        self::assertEquals('dummy', $projectorId->name());
-        self::assertEquals(1, $projectorId->version());
+        self::assertEquals('dummy', $resolver->projectorId($projector));
     }
 }

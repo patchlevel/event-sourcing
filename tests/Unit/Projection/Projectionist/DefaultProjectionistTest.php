@@ -10,12 +10,10 @@ use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorId;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Patchlevel\EventSourcing\Store\ArrayStream;
@@ -60,9 +58,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootWithoutCreateMethod(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
         };
 
@@ -101,9 +99,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootWithMethods(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public Message|null $message = null;
             public bool $created = false;
@@ -155,9 +153,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootWithLimit(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public Message|null $message = null;
             public bool $created = false;
@@ -208,9 +206,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootingWithSkip(): void
     {
-        $projectionId1 = new ProjectionId('test1', 1);
-        $projectorId1 = new ProjectorId('test1', 1);
-        $projector1 = new #[ProjectionAttribute('test1', 1)]
+        $projectionId1 = 'test1';
+        $projectorId1 = 'test1';
+        $projector1 = new #[ProjectionAttribute('test1')]
         class {
             public Message|null $message = null;
 
@@ -220,9 +218,9 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionId2 = new ProjectionId('test2', 1);
-        $projectorId2 = new ProjectorId('test2', 1);
-        $projector2 = new #[ProjectionAttribute('test1', 1)]
+        $projectionId2 = 'test2';
+        $projectorId2 = 'test2';
+        $projector2 = new #[ProjectionAttribute('test1')]
         class {
             public Message|null $message = null;
 
@@ -271,9 +269,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootWithCreateError(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public function __construct(
                 public readonly RuntimeException $exception = new RuntimeException('ERROR'),
@@ -329,9 +327,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testBootingWithGabInIndex(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             /** @var list<Message> */
             public array $messages = [];
@@ -378,9 +376,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunning(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public Message|null $message = null;
 
@@ -422,9 +420,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningWithLimit(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public Message|null $message = null;
 
@@ -470,9 +468,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningWithSkip(): void
     {
-        $projectionId1 = new ProjectionId('test1', 1);
-        $projectorId1 = new ProjectorId('test1', 1);
-        $projector1 = new #[ProjectionAttribute('test1', 1)]
+        $projectionId1 = 'test1';
+        $projectorId1 = 'test1';
+        $projector1 = new #[ProjectionAttribute('test1')]
         class {
             public Message|null $message = null;
 
@@ -482,9 +480,9 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionId2 = new ProjectionId('test2', 1);
-        $projectorId2 = new ProjectorId('test2', 1);
-        $projector2 = new #[ProjectionAttribute('test1', 1)]
+        $projectionId2 = 'test2';
+        $projectorId2 = 'test2';
+        $projector2 = new #[ProjectionAttribute('test1')]
         class {
             public Message|null $message = null;
 
@@ -531,9 +529,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningWithError(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public function __construct(
                 public readonly RuntimeException $exception = new RuntimeException('ERROR'),
@@ -585,7 +583,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningMarkOutdated(): void
     {
-        $projectionId = new ProjectionId('test', 1);
+        $projectionId = 'test';
 
         $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Active)]);
 
@@ -613,7 +611,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningWithoutActiveProjectors(): void
     {
-        $projectionId = new ProjectionId('test', 1);
+        $projectionId = 'test';
 
         $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Booting)]);
 
@@ -639,9 +637,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRunningWithGabInIndex(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             /** @var list<Message> */
             public array $messages = [];
@@ -687,9 +685,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testTeardownWithProjector(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public Message|null $message = null;
             public bool $dropped = false;
@@ -727,9 +725,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testTeardownWithProjectorAndError(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public Message|null $message = null;
             public bool $dropped = false;
@@ -766,7 +764,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testTeardownWithoutProjector(): void
     {
-        $projectorId = new ProjectionId('test', 1);
+        $projectorId = 'test';
 
         $projectionStore = new DummyStore([new Projection($projectorId, ProjectionStatus::Outdated)]);
 
@@ -792,9 +790,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRemoveWithProjector(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public bool $dropped = false;
 
@@ -831,9 +829,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRemoveWithoutDropMethod(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
         };
 
@@ -863,9 +861,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRemoveWithProjectorAndError(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
             public bool $dropped = false;
 
@@ -901,7 +899,7 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testRemoveWithoutProjector(): void
     {
-        $projectorId = new ProjectionId('test', 1);
+        $projectorId = 'test';
 
         $projectionStore = new DummyStore([new Projection($projectorId, ProjectionStatus::Outdated)]);
 
@@ -927,9 +925,9 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testReactivate(): void
     {
-        $projectionId = new ProjectionId('test', 1);
-        $projectorId = new ProjectorId('test', 1);
-        $projector = new #[ProjectionAttribute('test', 1)]
+        $projectionId = 'test';
+        $projectorId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
         class {
         };
 

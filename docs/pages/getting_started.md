@@ -231,11 +231,7 @@ final class HotelProjector
     
     private function table(): string
     {
-        return sprintf(
-            'projection_%s_%s', 
-            $this->projectionName(), 
-            $this->projectionVersion()
-        );
+        return 'projection_' . $this->projectorId();
     }
 }
 ```

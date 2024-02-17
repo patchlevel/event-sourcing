@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projectionist;
 
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use RuntimeException;
 use Throwable;
 
@@ -14,14 +13,14 @@ final class ProjectionistError extends RuntimeException
 {
     public function __construct(
         public readonly string $projector,
-        public readonly ProjectionId $projectionId,
+        public readonly string $projectionId,
         Throwable $error,
     ) {
         parent::__construct(
             sprintf(
                 'error in projector "%s" for "%s": %s',
                 $projector,
-                $projectionId->toString(),
+                $projectionId,
                 $error->getMessage(),
             ),
             0,

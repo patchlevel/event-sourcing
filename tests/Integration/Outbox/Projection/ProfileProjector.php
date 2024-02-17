@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 
 use function assert;
 
-#[Projector('dummy', 1)]
+#[Projector('dummy-1')]
 final class ProfileProjector
 {
     public function __construct(

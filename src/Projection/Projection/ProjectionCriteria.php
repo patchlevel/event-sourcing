@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Projection\Projection;
 /** @psalm-immutable */
 final class ProjectionCriteria
 {
-    /** @param list<ProjectionId>|null $ids */
+    /** @param list<string>|null $ids */
     public function __construct(
         public readonly array|null $ids = null,
     ) {

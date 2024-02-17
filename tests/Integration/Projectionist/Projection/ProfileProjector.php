@@ -15,9 +15,8 @@ use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
 use function assert;
-use function sprintf;
 
-#[Projector('profile', 1)]
+#[Projector('profile_1')]
 final class ProfileProjector
 {
     use ProjectorUtil;
@@ -62,10 +61,6 @@ final class ProfileProjector
 
     private function tableName(): string
     {
-        return sprintf(
-            'projection_%s_%s',
-            $this->projectorName(),
-            $this->projectorVersion(),
-        );
+        return 'projection_' . $this->projectorId();
     }
 }
