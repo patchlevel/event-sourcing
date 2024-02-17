@@ -13,8 +13,8 @@ We offer a few decorators that you can use.
 In order to use the [split stream](split_stream.md) feature, the `SplitStreamDecorator` must be added.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 
 $eventMetadataFactory = new AttributeEventMetadataFactory();
 $decorator = new SplitStreamDecorator($eventMetadataFactory);
@@ -25,7 +25,7 @@ $decorator = new SplitStreamDecorator($eventMetadataFactory);
 To use multiple decorators at the same time, you can use the `ChainMessageDecorator`.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
 
 $decorator = new ChainMessageDecorator([
     $decorator1,
@@ -39,9 +39,9 @@ To use the message decorator, you have to pass it to the `DefaultRepositoryManag
 which will then pass it to all Repositories.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
-use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 
 $decorator = new ChainMessageDecorator([
     new SplitStreamDecorator($eventMetadataFactory)  
@@ -69,6 +69,7 @@ to add data `withHeader` and to read this data later on `header`.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 
 final class OnSystemRecordedDecorator implements MessageDecorator
 {

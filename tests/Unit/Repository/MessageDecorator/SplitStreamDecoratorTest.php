@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\EventBus\Decorator;
+namespace Patchlevel\EventSourcing\Tests\Unit\Repository\MessageDecorator;
 
-use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator */
+/** @covers \Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator */
 final class SplitStreamDecoratorTest extends TestCase
 {
     use ProphecyTrait;

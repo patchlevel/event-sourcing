@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\EventBus\Decorator;
+namespace Patchlevel\EventSourcing\Repository\MessageDecorator;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 
