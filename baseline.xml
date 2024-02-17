@@ -64,17 +64,17 @@
       <code><![CDATA[$projectionError->errorContext]]></code>
     </PossiblyNullPropertyFetch>
   </file>
-  <file src="src/Projection/Projector/InMemoryProjectorRepository.php">
-    <InvalidOperand>
-      <code><![CDATA[$this->projectors]]></code>
-    </InvalidOperand>
-  </file>
-  <file src="src/Projection/Projector/MetadataProjectorResolver.php">
+  <file src="src/Projection/Projectionist/DefaultProjectionist.php">
     <MixedMethodCall>
       <code>$method</code>
       <code>$method</code>
       <code>$method</code>
     </MixedMethodCall>
+  </file>
+  <file src="src/Projection/Projector/InMemoryProjectorRepository.php">
+    <InvalidOperand>
+      <code><![CDATA[$this->projectors]]></code>
+    </InvalidOperand>
   </file>
   <file src="src/Repository/DefaultRepository.php">
     <PropertyTypeCoercion>

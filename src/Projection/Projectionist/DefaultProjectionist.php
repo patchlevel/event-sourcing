@@ -21,6 +21,8 @@ use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+use function array_map;
+use function array_merge;
 use function sprintf;
 
 final class DefaultProjectionist implements Projectionist
@@ -108,6 +110,8 @@ final class DefaultProjectionist implements Projectionist
                 }
             }
         }
+
+        $this->handleFromNowProjections($projections);
 
         $projections = $projections->filterByProjectionStatus(ProjectionStatus::Booting);
 
@@ -596,6 +600,41 @@ final class DefaultProjectionist implements Projectionist
         }
     }
 
+    private function handleFromNowProjections(ProjectionCollection $projections): void
+    {
+        $latestIndex = null;
+
+        foreach ($projections->filterByProjectionStatus(ProjectionStatus::Booting) as $projection) {
+            $projector = $this->projector($projection->id());
+
+            if (!$projector) {
+                continue;
+            }
+
+            $metadata = $this->metadataFactory->metadata($projector::class);
+
+            if (!$metadata->fromNow) {
+                continue;
+            }
+
+            if ($latestIndex === null) {
+                $latestIndex = $this->latestIndex();
+            }
+
+            $projection->changePosition($latestIndex);
+            $projection->active();
+            $this->projectionStore->save($projection);
+
+            $this->logger?->info(
+                sprintf(
+                    'Projectionist: Projector "%s" for "%s" is in "from now" mode: skip past messages and set to active.',
+                    $projector::class,
+                    $projection->id(),
+                ),
+            );
+        }
+    }
+
     private function resolveSetupMethod(object $projector): Closure|null
     {
         $metadata = $this->metadataFactory->metadata($projector::class);
@@ -640,5 +679,12 @@ final class DefaultProjectionist implements Projectionist
     private function projectorId(object $projector): string
     {
         return $this->metadataFactory->metadata($projector::class)->id;
+    }
+
+    private function latestIndex(): int
+    {
+        $stream = $this->streamableMessageStore->load(null, 1, null, true);
+
+        return $stream->index() ?: 1;
     }
 }
