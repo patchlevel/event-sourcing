@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use Closure;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
 
-use function array_key_exists;
+use function array_map;
+use function array_merge;
 
 final class MetadataProjectorResolver implements ProjectorResolver
 {
@@ -42,18 +44,21 @@ final class MetadataProjectorResolver implements ProjectorResolver
         return $projector->$method(...);
     }
 
-    public function resolveSubscribeMethod(object $projector, Message $message): Closure|null
+    /** @return iterable<Closure> */
+    public function resolveSubscribeMethods(object $projector, Message $message): iterable
     {
         $event = $message->event();
         $metadata = $this->metadataFactory->metadata($projector::class);
 
-        if (!array_key_exists($event::class, $metadata->subscribeMethods)) {
-            return null;
-        }
+        $methods = array_merge(
+            $metadata->subscribeMethods[$event::class] ?? [],
+            $metadata->subscribeMethods[Subscribe::ALL] ?? [],
+        );
 
-        $subscribeMethod = $metadata->subscribeMethods[$event::class];
-
-        return $projector->$subscribeMethod(...);
+        return array_map(
+            static fn (string $method) => $projector->$method(...),
+            $methods,
+        );
     }
 
     public function projectorId(object $projector): ProjectorId

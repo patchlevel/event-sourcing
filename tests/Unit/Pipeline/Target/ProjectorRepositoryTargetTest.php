@@ -38,7 +38,7 @@ final class ProjectorRepositoryTargetTest extends TestCase
         $projectorRepository->projectors()->shouldBeCalledOnce()->willReturn([$projector]);
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveSubscribeMethod($projector, $message)->shouldBeCalledOnce()->willReturn($projector(...));
+        $projectorResolver->resolveSubscribeMethods($projector, $message)->shouldBeCalledOnce()->willReturn([$projector(...)]);
 
         $projectorRepositoryTarget = new ProjectorRepositoryTarget($projectorRepository->reveal(), $projectorResolver->reveal());
         $projectorRepositoryTarget->save($message);
@@ -65,7 +65,7 @@ final class ProjectorRepositoryTargetTest extends TestCase
         $projectorRepository->projectors()->shouldBeCalledOnce()->willReturn([$projector]);
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveSubscribeMethod($projector, $message)->shouldBeCalledOnce()->willReturn(null);
+        $projectorResolver->resolveSubscribeMethods($projector, $message)->shouldBeCalledOnce()->willReturn([]);
 
         $projectorRepositoryTarget = new ProjectorRepositoryTarget($projectorRepository->reveal(), $projectorResolver->reveal());
         $projectorRepositoryTarget->save($message);

@@ -73,7 +73,7 @@
     <MixedMethodCall>
       <code>$method</code>
       <code>$method</code>
-      <code>$subscribeMethod</code>
+      <code>$method</code>
     </MixedMethodCall>
   </file>
   <file src="src/Repository/DefaultRepository.php">

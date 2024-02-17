@@ -461,15 +461,15 @@ final class DefaultProjectionist implements Projectionist
             throw ProjectorNotFound::forProjectionId($projection->id());
         }
 
-        $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($projector, $message);
+        $subscribeMethods = $this->projectorResolver->resolveSubscribeMethods($projector, $message);
 
-        if (!$subscribeMethod) {
+        if ($subscribeMethods === []) {
             $projection->changePosition($index);
             $this->projectionStore->save($projection);
 
             $this->logger?->debug(
                 sprintf(
-                    'Projectionist: Projector "%s" for "%s" has no subscribe method for "%s", continue.',
+                    'Projectionist: Projector "%s" for "%s" has no subscribe methods for "%s", continue.',
                     $projector::class,
                     $projection->id()->toString(),
                     $message->event()::class,
@@ -480,7 +480,9 @@ final class DefaultProjectionist implements Projectionist
         }
 
         try {
-            $subscribeMethod($message);
+            foreach ($subscribeMethods as $subscribeMethod) {
+                $subscribeMethod($message);
+            }
         } catch (Throwable $e) {
             $this->logger?->error(
                 sprintf(

@@ -13,7 +13,8 @@ interface ProjectorResolver
 
     public function resolveTeardownMethod(object $projector): Closure|null;
 
-    public function resolveSubscribeMethod(object $projector, Message $message): Closure|null;
+    /** @return iterable<Closure> */
+    public function resolveSubscribeMethods(object $projector, Message $message): iterable;
 
     public function projectorId(object $projector): ProjectorId;
 }
