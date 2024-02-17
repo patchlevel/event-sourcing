@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projectionist;
 
+use Closure;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
-use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
 use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
@@ -32,7 +34,7 @@ final class DefaultProjectionist implements Projectionist
         private readonly Store $streamableMessageStore,
         private readonly ProjectionStore $projectionStore,
         private readonly ProjectorRepository $projectorRepository,
-        private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
+        private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory(),
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -66,7 +68,7 @@ final class DefaultProjectionist implements Projectionist
                 $projection->id(),
             ));
 
-            $setupMethod = $this->projectorResolver->resolveSetupMethod($projector);
+            $setupMethod = $this->resolveSetupMethod($projector);
 
             if (!$setupMethod) {
                 $this->logger?->debug(sprintf(
@@ -306,7 +308,7 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            $teardownMethod = $this->projectorResolver->resolveTeardownMethod($projector);
+            $teardownMethod = $this->resolveTeardownMethod($projector);
 
             if (!$teardownMethod) {
                 $this->projectionStore->remove($projection->id());
@@ -372,7 +374,7 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            $teardownMethod = $this->projectorResolver->resolveTeardownMethod($projector);
+            $teardownMethod = $this->resolveTeardownMethod($projector);
 
             if (!$teardownMethod) {
                 $this->projectionStore->remove($projection->id());
@@ -439,7 +441,7 @@ final class DefaultProjectionist implements Projectionist
         $projectors = $this->projectors();
 
         foreach ($projectors as $projector) {
-            $projectorId = $this->projectorResolver->projectorId($projector);
+            $projectorId = $this->projectorId($projector);
 
             if ($projections->has($projectorId)) {
                 continue;
@@ -459,7 +461,7 @@ final class DefaultProjectionist implements Projectionist
             throw ProjectorNotFound::forProjectionId($projection->id());
         }
 
-        $subscribeMethods = $this->projectorResolver->resolveSubscribeMethods($projector, $message);
+        $subscribeMethods = $this->resolveSubscribeMethods($projector, $message);
 
         if ($subscribeMethods === []) {
             $projection->changePosition($index);
@@ -535,7 +537,7 @@ final class DefaultProjectionist implements Projectionist
             $this->projectors = [];
 
             foreach ($this->projectorRepository->projectors() as $projector) {
-                $projectorId = $this->projectorResolver->projectorId($projector);
+                $projectorId = $this->projectorId($projector);
 
                 $this->projectors[$projectorId] = $projector;
             }
@@ -592,5 +594,51 @@ final class DefaultProjectionist implements Projectionist
                 ),
             );
         }
+    }
+
+    private function resolveSetupMethod(object $projector): Closure|null
+    {
+        $metadata = $this->metadataFactory->metadata($projector::class);
+        $method = $metadata->setupMethod;
+
+        if ($method === null) {
+            return null;
+        }
+
+        return $projector->$method(...);
+    }
+
+    private function resolveTeardownMethod(object $projector): Closure|null
+    {
+        $metadata = $this->metadataFactory->metadata($projector::class);
+        $method = $metadata->teardownMethod;
+
+        if ($method === null) {
+            return null;
+        }
+
+        return $projector->$method(...);
+    }
+
+    /** @return iterable<Closure> */
+    private function resolveSubscribeMethods(object $projector, Message $message): iterable
+    {
+        $event = $message->event();
+        $metadata = $this->metadataFactory->metadata($projector::class);
+
+        $methods = array_merge(
+            $metadata->subscribeMethods[$event::class] ?? [],
+            $metadata->subscribeMethods[Subscribe::ALL] ?? [],
+        );
+
+        return array_map(
+            static fn (string $method) => $projector->$method(...),
+            $methods,
+        );
+    }
+
+    private function projectorId(object $projector): string
+    {
+        return $this->metadataFactory->metadata($projector::class)->id;
     }
 }
