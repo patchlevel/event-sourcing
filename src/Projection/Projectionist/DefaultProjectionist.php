@@ -15,7 +15,6 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
@@ -30,12 +29,13 @@ final class DefaultProjectionist implements Projectionist
     private const RETRY_LIMIT = 5;
 
     /** @var array<string, object>|null */
-    private array|null $projectors = null;
+    private array|null $projectorIndex = null;
 
+    /** @param iterable<object> $projectors */
     public function __construct(
         private readonly Store $streamableMessageStore,
         private readonly ProjectionStore $projectionStore,
-        private readonly ProjectorRepository $projectorRepository,
+        private readonly iterable $projectors,
         private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory(),
         private readonly LoggerInterface|null $logger = null,
     ) {
@@ -442,9 +442,8 @@ final class DefaultProjectionist implements Projectionist
     public function projections(): ProjectionCollection
     {
         $projections = $this->projectionStore->all();
-        $projectors = $this->projectors();
 
-        foreach ($projectors as $projector) {
+        foreach ($this->projectors as $projector) {
             $projectorId = $this->projectorId($projector);
 
             if ($projections->has($projectorId)) {
@@ -529,25 +528,17 @@ final class DefaultProjectionist implements Projectionist
 
     private function projector(string $projectorId): object|null
     {
-        $projectors = $this->projectors();
+        if ($this->projectorIndex === null) {
+            $this->projectorIndex = [];
 
-        return $projectors[$projectorId] ?? null;
-    }
-
-    /** @return array<string, object> */
-    private function projectors(): array
-    {
-        if ($this->projectors === null) {
-            $this->projectors = [];
-
-            foreach ($this->projectorRepository->projectors() as $projector) {
+            foreach ($this->projectors as $projector) {
                 $projectorId = $this->projectorId($projector);
 
-                $this->projectors[$projectorId] = $projector;
+                $this->projectorIndex[$projectorId] = $projector;
             }
         }
 
-        return $this->projectors;
+        return $this->projectorIndex[$projectorId] ?? null;
     }
 
     private function handleOutdatedProjections(ProjectionCollection $projections): void

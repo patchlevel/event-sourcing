@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
@@ -52,12 +51,11 @@ final class IntegrationTest extends TestCase
         );
 
         $bankAccountProjector = new BankAccountProjector($this->connection);
-        $projectionRepository = new InMemoryProjectorRepository([$bankAccountProjector]);
 
         $projectionist = new DefaultProjectionist(
             $store,
             new InMemoryStore(),
-            $projectionRepository,
+            [$bankAccountProjector],
         );
 
         $eventBus = DefaultEventBus::create([$bankAccountProjector]);
