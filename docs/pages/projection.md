@@ -118,12 +118,7 @@ Otherwise the projectionist will not recognize that the projection has changed a
 To do this, you can add a version to the `projectorId`:
 
 ```php
-use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\Setup;
-use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Attribute\Projector;
-use Patchlevel\EventSourcing\EventBus\Message;
 
 #[Projector('profile_1')]
 final class ProfileProjector
@@ -140,16 +135,20 @@ final class ProfileProjector
 
     You can also use the `ProjectorUtil` to build the table/collection name.
 
-## Projector Repository
+## From Now
 
-The projector repository is responsible for managing the projectors.
+Certain projectors operate exclusively on post-release events, disregarding historical data. 
+Consider, for instance, the scenario of launching a fresh email service. 
+Its primary function is to dispatch welcome emails to newly registered users triggered by a `ProfileCreated` event. 
 
 ```php
-use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
+use Patchlevel\EventSourcing\Attribute\Projector;
 
-$projectorRepository = new InMemoryProjectorRepository([
-    new ProfileProjection($connection)
-]);
+#[Projector('profile_1', fromNow: true)]
+final class WelcomeEmailProjector
+{
+   // ...
+}
 ```
 
 ## Projectionist
@@ -305,7 +304,7 @@ use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 $projectionist = new DefaultProjectionist(
     $eventStore,
     $projectionStore,
-    $projectorRepository
+    [$projector1, $projector2, $projector3]
 );
 ```
 

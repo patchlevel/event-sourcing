@@ -317,6 +317,42 @@ final class DefaultProjectionistTest extends TestCase
         self::assertSame([$message1, $message2], $projector->messages);
     }
 
+    public function testBootingWithFromNow(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test', fromNow: true)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Booting)]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->boot();
+
+        self::assertEquals([
+            new Projection($projectionId, ProjectionStatus::Active, 1),
+        ], $projectionStore->savedProjections);
+
+        self::assertNull($projector->message);
+    }
+
     public function testRunning(): void
     {
         $projectionId = 'test';
