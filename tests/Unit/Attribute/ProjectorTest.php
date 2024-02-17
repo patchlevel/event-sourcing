@@ -14,7 +14,6 @@ final class ProjectorTest extends TestCase
     {
         $attribute = new Projector('foo');
 
-        self::assertSame('foo', $attribute->name);
-        self::assertSame(0, $attribute->version);
+        self::assertSame('foo', $attribute->id);
     }
 }

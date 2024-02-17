@@ -25,28 +25,28 @@ final class ProjectionCollection implements Countable, IteratorAggregate
         $result = [];
 
         foreach ($projections as $projection) {
-            if (array_key_exists($projection->id()->toString(), $result)) {
+            if (array_key_exists($projection->id(), $result)) {
                 throw new DuplicateProjectionId($projection->id());
             }
 
-            $result[$projection->id()->toString()] = $projection;
+            $result[$projection->id()] = $projection;
         }
 
         $this->projections = $result;
     }
 
-    public function get(ProjectionId $projectorId): Projection
+    public function get(string $projectorId): Projection
     {
         if (!$this->has($projectorId)) {
             throw new ProjectionNotFound($projectorId);
         }
 
-        return $this->projections[$projectorId->toString()];
+        return $this->projections[$projectorId];
     }
 
-    public function has(ProjectionId $projectorId): bool
+    public function has(string $projectorId): bool
     {
-        return array_key_exists($projectorId->toString(), $this->projections);
+        return array_key_exists($projectorId, $this->projections);
     }
 
     public function add(Projection $projection): self
@@ -104,7 +104,7 @@ final class ProjectionCollection implements Countable, IteratorAggregate
             static function (Projection $projection) use ($criteria): bool {
                 if ($criteria->ids !== null) {
                     foreach ($criteria->ids as $id) {
-                        if ($projection->id()->equals($id)) {
+                        if ($projection->id() === $id) {
                             return true;
                         }
                     }

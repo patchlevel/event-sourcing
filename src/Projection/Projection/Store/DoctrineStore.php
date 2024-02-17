@@ -10,7 +10,6 @@ use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
@@ -22,8 +21,7 @@ use function json_encode;
 use const JSON_THROW_ON_ERROR;
 
 /** @psalm-type Data = array{
- *     name: string,
- *     version: int,
+ *     id: string,
  *     position: int,
  *     status: string,
  *     error_message: string|null,
@@ -39,19 +37,16 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
     ) {
     }
 
-    public function get(ProjectionId $projectionId): Projection
+    public function get(string $projectionId): Projection
     {
         $sql = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->projectionTable)
-            ->where('name = :name AND version = :version')
+            ->where('id = :id')
             ->getSQL();
 
         /** @var Data|false $result */
-        $result = $this->connection->fetchAssociative($sql, [
-            'name' => $projectionId->name(),
-            'version' => $projectionId->version(),
-        ]);
+        $result = $this->connection->fetchAssociative($sql, ['id' => $projectionId]);
 
         if ($result === false) {
             throw new ProjectionNotFound($projectionId);
@@ -85,7 +80,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             json_decode($row['error_context'], true, 512, JSON_THROW_ON_ERROR) : null;
 
         return new Projection(
-            new ProjectionId($row['name'], $row['version']),
+            $row['id'],
             ProjectionStatus::from($row['status']),
             $row['position'],
             $row['error_message'] !== null ? new ProjectionError(
@@ -114,8 +109,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                                 'retry' => $projection->retry(),
                             ],
                             [
-                                'name' => $projection->id()->name(),
-                                'version' => $projection->id()->version(),
+                                'id' => $projection->id(),
                             ],
                         );
 
@@ -126,8 +120,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
                         $connection->insert(
                             $this->projectionTable,
                             [
-                                'name' => $projection->id()->name(),
-                                'version' => $projection->id()->version(),
+                                'id' => $projection->id(),
                                 'position' => $projection->position(),
                                 'status' => $projection->status()->value,
                                 'error_message' => $projectionError?->errorMessage,
@@ -141,15 +134,12 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         );
     }
 
-    public function remove(ProjectionId ...$projectionIds): void
+    public function remove(string ...$projectionIds): void
     {
         $this->connection->transactional(
             function (Connection $connection) use ($projectionIds): void {
                 foreach ($projectionIds as $projectionId) {
-                    $connection->delete($this->projectionTable, [
-                        'name' => $projectionId->name(),
-                        'version' => $projectionId->version(),
-                    ]);
+                    $connection->delete($this->projectionTable, ['id' => $projectionId]);
                 }
             },
         );
@@ -159,10 +149,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
     {
         $table = $schema->createTable($this->projectionTable);
 
-        $table->addColumn('name', Types::STRING)
+        $table->addColumn('id', Types::STRING)
             ->setLength(255)
-            ->setNotnull(true);
-        $table->addColumn('version', Types::INTEGER)
             ->setNotnull(true);
         $table->addColumn('position', Types::INTEGER)
             ->setNotnull(true);
@@ -178,6 +166,6 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
             ->setNotnull(true)
             ->setDefault(0);
 
-        $table->setPrimaryKey(['name', 'version']);
+        $table->setPrimaryKey(['id']);
     }
 }

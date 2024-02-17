@@ -10,8 +10,7 @@ use Attribute;
 final class Projector
 {
     public function __construct(
-        public readonly string $name,
-        public readonly int $version = 0,
+        public readonly string $id,
     ) {
     }
 }

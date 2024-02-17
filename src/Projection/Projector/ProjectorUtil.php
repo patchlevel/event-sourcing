@@ -30,17 +30,7 @@ trait ProjectorUtil
         return new ProjectorHelper(self::metadataFactory());
     }
 
-    private function projectorName(): string
-    {
-        return $this->getProjectorHelper()->name($this);
-    }
-
-    private function projectorVersion(): int
-    {
-        return $this->getProjectorHelper()->version($this);
-    }
-
-    private function projectorId(): ProjectorId
+    private function projectorId(): string
     {
         return $this->getProjectorHelper()->projectorId($this);
     }

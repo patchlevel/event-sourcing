@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message as EventMessage;
 
-#[Projector('dummy', 1)]
+#[Projector('dummy')]
 final class DummyProjector
 {
     public EventMessage|null $handledMessage = null;

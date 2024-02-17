@@ -16,5 +16,5 @@ interface ProjectorResolver
     /** @return iterable<Closure> */
     public function resolveSubscribeMethods(object $projector, Message $message): iterable;
 
-    public function projectorId(object $projector): ProjectorId;
+    public function projectorId(object $projector): string;
 }

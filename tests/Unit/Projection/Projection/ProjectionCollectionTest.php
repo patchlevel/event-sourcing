@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Projection\Projection\DuplicateProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use PHPUnit\Framework\TestCase;
@@ -18,7 +17,7 @@ final class ProjectionCollectionTest extends TestCase
 {
     public function testCreate(): void
     {
-        $id = new ProjectionId('test', 1);
+        $id = 'test';
         $projection = new Projection($id);
         $collection = new ProjectionCollection([$projection]);
 
@@ -31,7 +30,7 @@ final class ProjectionCollectionTest extends TestCase
     {
         $this->expectException(DuplicateProjectionId::class);
 
-        $id = new ProjectionId('test', 1);
+        $id = 'test';
 
         new ProjectionCollection([
             new Projection($id),
@@ -45,12 +44,12 @@ final class ProjectionCollectionTest extends TestCase
 
         $collection = new ProjectionCollection();
         /** @psalm-suppress UnusedMethodCall */
-        $collection->get(new ProjectionId('test', 1));
+        $collection->get('test');
     }
 
     public function testAdd(): void
     {
-        $id = new ProjectionId('test', 1);
+        $id = 'test';
         $projection = new Projection($id);
 
         $collection = new ProjectionCollection();
@@ -65,7 +64,7 @@ final class ProjectionCollectionTest extends TestCase
     {
         $this->expectException(DuplicateProjectionId::class);
 
-        $id = new ProjectionId('test', 1);
+        $id = 'test';
 
         /** @psalm-suppress UnusedMethodCall */
         (new ProjectionCollection())
@@ -77,17 +76,17 @@ final class ProjectionCollectionTest extends TestCase
     {
         $collection = new ProjectionCollection([
             new Projection(
-                new ProjectionId('foo', 1),
+                'foo',
                 ProjectionStatus::Active,
                 10,
             ),
             new Projection(
-                new ProjectionId('bar', 1),
+                'bar',
                 ProjectionStatus::Active,
                 5,
             ),
             new Projection(
-                new ProjectionId('baz', 1),
+                'baz',
                 ProjectionStatus::Active,
                 15,
             ),
@@ -105,8 +104,8 @@ final class ProjectionCollectionTest extends TestCase
 
     public function testFilter(): void
     {
-        $fooId = new ProjectionId('foo', 1);
-        $barId = new ProjectionId('bar', 1);
+        $fooId = 'foo';
+        $barId = 'bar';
 
         $collection = new ProjectionCollection([
             new Projection(
@@ -129,8 +128,8 @@ final class ProjectionCollectionTest extends TestCase
 
     public function testFilterByProjectStatus(): void
     {
-        $fooId = new ProjectionId('foo', 1);
-        $barId = new ProjectionId('bar', 1);
+        $fooId = 'foo';
+        $barId = 'bar';
 
         $collection = new ProjectionCollection([
             new Projection(
@@ -153,8 +152,8 @@ final class ProjectionCollectionTest extends TestCase
 
     public function testFilterByCriteriaEmpty(): void
     {
-        $fooId = new ProjectionId('foo', 1);
-        $barId = new ProjectionId('bar', 1);
+        $fooId = 'foo';
+        $barId = 'bar';
 
         $collection = new ProjectionCollection([
             new Projection(
@@ -179,8 +178,8 @@ final class ProjectionCollectionTest extends TestCase
 
     public function testFilterByCriteriaWithIds(): void
     {
-        $fooId = new ProjectionId('foo', 1);
-        $barId = new ProjectionId('bar', 1);
+        $fooId = 'foo';
+        $barId = 'bar';
 
         $collection = new ProjectionCollection([
             new Projection(
@@ -205,7 +204,7 @@ final class ProjectionCollectionTest extends TestCase
 
     public function testIterator(): void
     {
-        $id = new ProjectionId('test', 1);
+        $id = 'test';
         $projection = new Projection($id);
         $collection = new ProjectionCollection([$projection]);
 

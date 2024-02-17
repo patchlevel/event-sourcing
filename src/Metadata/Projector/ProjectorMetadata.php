@@ -7,8 +7,7 @@ namespace Patchlevel\EventSourcing\Metadata\Projector;
 final class ProjectorMetadata
 {
     public function __construct(
-        public readonly string $name,
-        public readonly int $version,
+        public readonly string $id,
         /** @var array<class-string|"*", list<string>> */
         public readonly array $subscribeMethods = [],
         public readonly string|null $setupMethod = null,

@@ -15,21 +15,9 @@ final class ProjectorHelper
     ) {
     }
 
-    public function name(object $projector): string
+    public function projectorId(object $projector): string
     {
-        return $this->getProjectorMetadata($projector)->name;
-    }
-
-    public function version(object $projector): int
-    {
-        return $this->getProjectorMetadata($projector)->version;
-    }
-
-    public function projectorId(object $projector): ProjectorId
-    {
-        $metadata = $this->getProjectorMetadata($projector);
-
-        return new ProjectorId($metadata->name, $metadata->version);
+        return $this->getProjectorMetadata($projector)->id;
     }
 
     private function getProjectorMetadata(object $projector): ProjectorMetadata

@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projection;
 
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +16,7 @@ final class ProjectionTest extends TestCase
 {
     public function testCreate(): void
     {
-        $id = new ProjectionId('test', 1);
+        $id = 'test';
         $projection = new Projection($id);
 
         self::assertSame($id, $projection->id());
@@ -33,7 +32,7 @@ final class ProjectionTest extends TestCase
     public function testBooting(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1),
+            'test',
         );
 
         $projection->booting();
@@ -49,7 +48,7 @@ final class ProjectionTest extends TestCase
     public function testActive(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1),
+            'test',
         );
 
         $projection->active();
@@ -65,7 +64,7 @@ final class ProjectionTest extends TestCase
     public function testError(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1),
+            'test',
         );
 
         $exception = new RuntimeException('test');
@@ -90,7 +89,7 @@ final class ProjectionTest extends TestCase
     public function testOutdated(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1),
+            'test',
         );
 
         $projection->outdated();
@@ -106,7 +105,7 @@ final class ProjectionTest extends TestCase
     public function testChangePosition(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1),
+            'test',
         );
 
         $projection->changePosition(10);
@@ -117,7 +116,7 @@ final class ProjectionTest extends TestCase
     public function testRetry(): void
     {
         $projection = new Projection(
-            new ProjectionId('test', 1),
+            'test',
         );
 
         self::assertEquals(0, $projection->retry());

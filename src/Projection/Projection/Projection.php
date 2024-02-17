@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Projection\Projection;
 final class Projection
 {
     public function __construct(
-        private readonly ProjectionId $id,
+        private readonly string $id,
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
         private ProjectionError|null $error = null,
@@ -15,7 +15,7 @@ final class Projection
     ) {
     }
 
-    public function id(): ProjectionId
+    public function id(): string
     {
         return $this->id;
     }

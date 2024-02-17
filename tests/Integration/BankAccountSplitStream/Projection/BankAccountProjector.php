@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\Ban
 
 use function assert;
 
-#[Projector('dummy', 1)]
+#[Projector('dummy-1')]
 final class BankAccountProjector
 {
     public function __construct(

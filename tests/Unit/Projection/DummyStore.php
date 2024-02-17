@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 
@@ -19,21 +18,21 @@ final class DummyStore implements ProjectionStore
     private array $projections = [];
     /** @var list<Projection> */
     public array $savedProjections = [];
-    /** @var list<ProjectionId> */
+    /** @var list<string> */
     public array $removedProjectionIds = [];
 
     /** @param list<Projection> $projections */
     public function __construct(array $projections = [])
     {
         foreach ($projections as $projection) {
-            $this->projections[$projection->id()->toString()] = $projection;
+            $this->projections[$projection->id()] = $projection;
         }
     }
 
-    public function get(ProjectionId $projectionId): Projection
+    public function get(string $projectionId): Projection
     {
-        if (array_key_exists($projectionId->toString(), $this->projections)) {
-            return $this->projections[$projectionId->toString()];
+        if (array_key_exists($projectionId, $this->projections)) {
+            return $this->projections[$projectionId];
         }
 
         throw new ProjectionNotFound($projectionId);
@@ -47,16 +46,16 @@ final class DummyStore implements ProjectionStore
     public function save(Projection ...$projections): void
     {
         foreach ($projections as $projection) {
-            $this->projections[$projection->id()->toString()] = $projection;
+            $this->projections[$projection->id()] = $projection;
             $this->savedProjections[] = clone $projection;
         }
     }
 
-    public function remove(ProjectionId ...$projectionIds): void
+    public function remove(string ...$projectionIds): void
     {
         foreach ($projectionIds as $projectionId) {
             $this->removedProjectionIds[] = $projectionId;
-            unset($this->projections[$projectionId->toString()]);
+            unset($this->projections[$projectionId]);
         }
     }
 }

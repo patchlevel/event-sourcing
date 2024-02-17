@@ -10,8 +10,8 @@ use function sprintf;
 
 final class DuplicateProjectionId extends RuntimeException
 {
-    public function __construct(ProjectionId $projectionId)
+    public function __construct(string $projectionId)
     {
-        parent::__construct(sprintf('projection with the id "%s" exist already', $projectionId->toString()));
+        parent::__construct(sprintf('projection with the id "%s" exist already', $projectionId));
     }
 }
