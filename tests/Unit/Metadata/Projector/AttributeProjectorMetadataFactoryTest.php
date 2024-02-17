@@ -70,7 +70,7 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
         $metadata = $metadataFactory->metadata($projection::class);
 
         self::assertEquals(
-            [ProfileVisited::class => 'handle'],
+            [ProfileVisited::class => ['handle']],
             $metadata->subscribeMethods,
         );
 
@@ -94,8 +94,29 @@ final class AttributeProjectorMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => 'handle',
-                ProfileCreated::class => 'handle',
+                ProfileVisited::class => ['handle'],
+                ProfileCreated::class => ['handle'],
+            ],
+            $metadata->subscribeMethods,
+        );
+    }
+
+    public function testSubscribeAll(): void
+    {
+        $projection = new #[Projector('foo', 1)]
+        class {
+            #[Subscribe(Subscribe::ALL)]
+            public function handle(): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeProjectorMetadataFactory();
+        $metadata = $metadataFactory->metadata($projection::class);
+
+        self::assertEquals(
+            [
+                '*' => ['handle'],
             ],
             $metadata->subscribeMethods,
         );

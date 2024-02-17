@@ -23,12 +23,9 @@ final class MetadataProjectorResolverTest extends TestCase
     {
         $projection = new #[Projector('dummy')]
         class {
-            public static Message|null $handledMessage = null;
-
             #[Subscribe(ProfileCreated::class)]
             public function handleProfileCreated(Message $message): void
             {
-                self::$handledMessage = $message;
             }
         };
 
@@ -40,13 +37,42 @@ final class MetadataProjectorResolverTest extends TestCase
         );
 
         $resolver = new MetadataProjectorResolver();
-        $result = $resolver->resolveSubscribeMethod($projection, $message);
+        $result = $resolver->resolveSubscribeMethods($projection, $message);
 
-        self::assertIsCallable($result);
+        self::assertEquals(
+            [
+                $projection->handleProfileCreated(...),
+            ],
+            $result,
+        );
+    }
 
-        $result($message);
+    public function testResolveHandleAll(): void
+    {
+        $projection = new #[Projector('dummy')]
+        class {
+            #[Subscribe(Subscribe::ALL)]
+            public function handleProfileCreated(Message $message): void
+            {
+            }
+        };
 
-        self::assertSame($message, $projection::$handledMessage);
+        $message = new Message(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('profile@test.com'),
+            ),
+        );
+
+        $resolver = new MetadataProjectorResolver();
+        $result = $resolver->resolveSubscribeMethods($projection, $message);
+
+        self::assertEquals(
+            [
+                $projection->handleProfileCreated(...),
+            ],
+            $result,
+        );
     }
 
     public function testNotResolveHandleMethod(): void
@@ -62,9 +88,9 @@ final class MetadataProjectorResolverTest extends TestCase
         );
 
         $resolver = new MetadataProjectorResolver();
-        $result = $resolver->resolveSubscribeMethod($projection, $message);
+        $result = $resolver->resolveSubscribeMethods($projection, $message);
 
-        self::assertNull($result);
+        self::assertEmpty($result);
     }
 
     public function testResolveCreateMethod(): void

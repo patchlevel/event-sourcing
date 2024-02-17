@@ -23,13 +23,11 @@ final class ProjectorRepositoryTarget implements Target
 
         foreach ($messages as $message) {
             foreach ($projectors as $projector) {
-                $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($projector, $message);
+                $subscribeMethods = $this->projectorResolver->resolveSubscribeMethods($projector, $message);
 
-                if (!$subscribeMethod) {
-                    continue;
+                foreach ($subscribeMethods as $subscribeMethod) {
+                    $subscribeMethod($message);
                 }
-
-                $subscribeMethod($message);
             }
         }
     }

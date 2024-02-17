@@ -19,13 +19,11 @@ final class ProjectorTarget implements Target
     public function save(Message ...$messages): void
     {
         foreach ($messages as $message) {
-            $subscribeMethod = $this->projectorResolver->resolveSubscribeMethod($this->projector, $message);
+            $subscribeMethods = $this->projectorResolver->resolveSubscribeMethods($this->projector, $message);
 
-            if (!$subscribeMethod) {
-                continue;
+            foreach ($subscribeMethods as $subscribeMethod) {
+                $subscribeMethod($message);
             }
-
-            $subscribeMethod($message);
         }
     }
 }

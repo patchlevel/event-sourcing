@@ -81,7 +81,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->projectorId($projector)->willReturn($projectorId);
         $projectorResolver->resolveSetupMethod($projector)->willReturn(null);
-        $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn(null);
+        $projectorResolver->resolveSubscribeMethods($projector, $message)->willReturn([]);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -131,7 +131,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveSetupMethod($projector)->willReturn($projector->create(...));
-        $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
+        $projectorResolver->resolveSubscribeMethods($projector, $message)->willReturn([$projector->handle(...)]);
         $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
@@ -185,7 +185,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
         $projectorResolver->resolveSetupMethod($projector)->willReturn($projector->create(...));
-        $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
+        $projectorResolver->resolveSubscribeMethods($projector, $message)->willReturn([$projector->handle(...)]);
         $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
@@ -246,7 +246,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector1, $projector2])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveSubscribeMethod($projector1, $message)->willReturn($projector1->handle(...));
+        $projectorResolver->resolveSubscribeMethods($projector1, $message)->willReturn([$projector1->handle(...)]);
         $projectorResolver->projectorId($projector1)->willReturn($projectorId1);
         $projectorResolver->projectorId($projector2)->willReturn($projectorId2);
 
@@ -354,8 +354,8 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveSubscribeMethod($projector, $message1)->willReturn($projector->handle(...));
-        $projectorResolver->resolveSubscribeMethod($projector, $message2)->willReturn($projector->handle(...));
+        $projectorResolver->resolveSubscribeMethods($projector, $message1)->willReturn([$projector->handle(...)]);
+        $projectorResolver->resolveSubscribeMethods($projector, $message2)->willReturn([$projector->handle(...)]);
         $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
@@ -401,7 +401,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
+        $projectorResolver->resolveSubscribeMethods($projector, $message)->willReturn([$projector->handle(...)]);
         $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
@@ -449,7 +449,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveSubscribeMethod($projector, $message1)->willReturn($projector->handle(...));
+        $projectorResolver->resolveSubscribeMethods($projector, $message1)->willReturn([$projector->handle(...)]);
         $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
@@ -508,7 +508,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector1, $projector2])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveSubscribeMethod($projector1, $message)->willReturn($projector1->handle(...));
+        $projectorResolver->resolveSubscribeMethods($projector1, $message)->willReturn([$projector1->handle(...)]);
         $projectorResolver->projectorId($projector1)->willReturn($projectorId1);
         $projectorResolver->projectorId($projector2)->willReturn($projectorId2);
 
@@ -557,7 +557,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveSubscribeMethod($projector, $message)->willReturn($projector->handle(...));
+        $projectorResolver->resolveSubscribeMethods($projector, $message)->willReturn([$projector->handle(...)]);
         $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
@@ -664,8 +664,8 @@ final class DefaultProjectionistTest extends TestCase
         $projectorRepository->projectors()->willReturn([$projector])->shouldBeCalledOnce();
 
         $projectorResolver = $this->prophesize(ProjectorResolver::class);
-        $projectorResolver->resolveSubscribeMethod($projector, $message1)->willReturn($projector->handle(...));
-        $projectorResolver->resolveSubscribeMethod($projector, $message2)->willReturn($projector->handle(...));
+        $projectorResolver->resolveSubscribeMethods($projector, $message1)->willReturn([$projector->handle(...)]);
+        $projectorResolver->resolveSubscribeMethods($projector, $message2)->willReturn([$projector->handle(...)]);
         $projectorResolver->projectorId($projector)->willReturn($projectorId);
 
         $projectionist = new DefaultProjectionist(
