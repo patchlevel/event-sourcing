@@ -278,12 +278,9 @@ After we have defined everything, we still have to plug the whole thing together
 
 ```php
 use Doctrine\DBAL\DriverManager;
-use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
-use Patchlevel\EventSourcing\Projection\Projector\SyncProjectorListener;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -317,11 +314,8 @@ $projectionist = new DefaultProjectionist(
     $projectorRepository,
 );
 
-$eventBus = new ChainEventBus([
-    DefaultEventBus::create([
-        new SendCheckInEmailProcessor($mailer),
-    ]),
-    ProjectionistEventBus::createWithDefaultLockStrategy($projectionist)
+$eventBus = DefaultEventBus::create([
+    new SendCheckInEmailProcessor($mailer),
 ]);
 
 $repositoryManager = new DefaultRepositoryManager(
@@ -380,8 +374,14 @@ $hotel2 = $hotelRepository->load(Uuid::fromString('d0d0d0d0-d0d0-d0d0-d0d0-d0d0d
 $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 
+$projectionist->run();
+
 $hotels = $hotelProjection->getHotels();
 ```
+
+!!! warning
+
+    You need to run the projectionist to update the projections.
 
 !!! note
 

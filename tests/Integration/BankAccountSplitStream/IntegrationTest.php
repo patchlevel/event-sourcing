@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
 use Patchlevel\EventSourcing\EventBus\Decorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
@@ -14,7 +13,6 @@ use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -27,8 +25,6 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\Mon
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Projection\BankAccountProjector;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\Lock\Store\InMemoryStore as LockInMemoryStore;
 
 use function count;
 
@@ -64,15 +60,7 @@ final class IntegrationTest extends TestCase
             $projectionRepository,
         );
 
-        $eventBus = new ChainEventBus([
-            DefaultEventBus::create(),
-            new ProjectionistEventBus(
-                $projectionist,
-                new LockFactory(
-                    new LockInMemoryStore(),
-                ),
-            ),
-        ]);
+        $eventBus = DefaultEventBus::create([$bankAccountProjector]);
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
