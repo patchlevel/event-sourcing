@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -69,9 +68,7 @@ final class ProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $store,
             $projectionStore,
-            new InMemoryProjectorRepository(
-                [new ProfileProjector($this->connection)],
-            ),
+            [new ProfileProjector($this->connection)],
         );
 
         $projectionist->boot();

@@ -4,21 +4,24 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projectionist;
 
+use Closure;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
-use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorResolver;
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorRepository;
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorResolver;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+use function array_map;
+use function array_merge;
 use function sprintf;
 
 final class DefaultProjectionist implements Projectionist
@@ -26,13 +29,14 @@ final class DefaultProjectionist implements Projectionist
     private const RETRY_LIMIT = 5;
 
     /** @var array<string, object>|null */
-    private array|null $projectors = null;
+    private array|null $projectorIndex = null;
 
+    /** @param iterable<object> $projectors */
     public function __construct(
         private readonly Store $streamableMessageStore,
         private readonly ProjectionStore $projectionStore,
-        private readonly ProjectorRepository $projectorRepository,
-        private readonly ProjectorResolver $projectorResolver = new MetadataProjectorResolver(),
+        private readonly iterable $projectors,
+        private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory(),
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -66,7 +70,7 @@ final class DefaultProjectionist implements Projectionist
                 $projection->id(),
             ));
 
-            $setupMethod = $this->projectorResolver->resolveSetupMethod($projector);
+            $setupMethod = $this->resolveSetupMethod($projector);
 
             if (!$setupMethod) {
                 $this->logger?->debug(sprintf(
@@ -106,6 +110,8 @@ final class DefaultProjectionist implements Projectionist
                 }
             }
         }
+
+        $this->handleFromNowProjections($projections);
 
         $projections = $projections->filterByProjectionStatus(ProjectionStatus::Booting);
 
@@ -306,7 +312,7 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            $teardownMethod = $this->projectorResolver->resolveTeardownMethod($projector);
+            $teardownMethod = $this->resolveTeardownMethod($projector);
 
             if (!$teardownMethod) {
                 $this->projectionStore->remove($projection->id());
@@ -372,7 +378,7 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            $teardownMethod = $this->projectorResolver->resolveTeardownMethod($projector);
+            $teardownMethod = $this->resolveTeardownMethod($projector);
 
             if (!$teardownMethod) {
                 $this->projectionStore->remove($projection->id());
@@ -436,10 +442,9 @@ final class DefaultProjectionist implements Projectionist
     public function projections(): ProjectionCollection
     {
         $projections = $this->projectionStore->all();
-        $projectors = $this->projectors();
 
-        foreach ($projectors as $projector) {
-            $projectorId = $this->projectorResolver->projectorId($projector);
+        foreach ($this->projectors as $projector) {
+            $projectorId = $this->projectorId($projector);
 
             if ($projections->has($projectorId)) {
                 continue;
@@ -459,7 +464,7 @@ final class DefaultProjectionist implements Projectionist
             throw ProjectorNotFound::forProjectionId($projection->id());
         }
 
-        $subscribeMethods = $this->projectorResolver->resolveSubscribeMethods($projector, $message);
+        $subscribeMethods = $this->resolveSubscribeMethods($projector, $message);
 
         if ($subscribeMethods === []) {
             $projection->changePosition($index);
@@ -523,25 +528,17 @@ final class DefaultProjectionist implements Projectionist
 
     private function projector(string $projectorId): object|null
     {
-        $projectors = $this->projectors();
+        if ($this->projectorIndex === null) {
+            $this->projectorIndex = [];
 
-        return $projectors[$projectorId] ?? null;
-    }
+            foreach ($this->projectors as $projector) {
+                $projectorId = $this->projectorId($projector);
 
-    /** @return array<string, object> */
-    private function projectors(): array
-    {
-        if ($this->projectors === null) {
-            $this->projectors = [];
-
-            foreach ($this->projectorRepository->projectors() as $projector) {
-                $projectorId = $this->projectorResolver->projectorId($projector);
-
-                $this->projectors[$projectorId] = $projector;
+                $this->projectorIndex[$projectorId] = $projector;
             }
         }
 
-        return $this->projectors;
+        return $this->projectorIndex[$projectorId] ?? null;
     }
 
     private function handleOutdatedProjections(ProjectionCollection $projections): void
@@ -592,5 +589,93 @@ final class DefaultProjectionist implements Projectionist
                 ),
             );
         }
+    }
+
+    private function handleFromNowProjections(ProjectionCollection $projections): void
+    {
+        $latestIndex = null;
+
+        foreach ($projections->filterByProjectionStatus(ProjectionStatus::Booting) as $projection) {
+            $projector = $this->projector($projection->id());
+
+            if (!$projector) {
+                continue;
+            }
+
+            $metadata = $this->metadataFactory->metadata($projector::class);
+
+            if (!$metadata->fromNow) {
+                continue;
+            }
+
+            if ($latestIndex === null) {
+                $latestIndex = $this->latestIndex();
+            }
+
+            $projection->changePosition($latestIndex);
+            $projection->active();
+            $this->projectionStore->save($projection);
+
+            $this->logger?->info(
+                sprintf(
+                    'Projectionist: Projector "%s" for "%s" is in "from now" mode: skip past messages and set to active.',
+                    $projector::class,
+                    $projection->id(),
+                ),
+            );
+        }
+    }
+
+    private function resolveSetupMethod(object $projector): Closure|null
+    {
+        $metadata = $this->metadataFactory->metadata($projector::class);
+        $method = $metadata->setupMethod;
+
+        if ($method === null) {
+            return null;
+        }
+
+        return $projector->$method(...);
+    }
+
+    private function resolveTeardownMethod(object $projector): Closure|null
+    {
+        $metadata = $this->metadataFactory->metadata($projector::class);
+        $method = $metadata->teardownMethod;
+
+        if ($method === null) {
+            return null;
+        }
+
+        return $projector->$method(...);
+    }
+
+    /** @return iterable<Closure> */
+    private function resolveSubscribeMethods(object $projector, Message $message): iterable
+    {
+        $event = $message->event();
+        $metadata = $this->metadataFactory->metadata($projector::class);
+
+        $methods = array_merge(
+            $metadata->subscribeMethods[$event::class] ?? [],
+            $metadata->subscribeMethods[Subscribe::ALL] ?? [],
+        );
+
+        return array_map(
+            static fn (string $method) => $projector->$method(...),
+            $methods,
+        );
+    }
+
+    private function projectorId(object $projector): string
+    {
+        return $this->metadataFactory->metadata($projector::class)->id;
+    }
+
+    private function latestIndex(): int
+    {
+        $stream = $this->streamableMessageStore->load(null, 1, null, true);
+
+        return $stream->index() ?: 1;
     }
 }

@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -49,14 +48,11 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $profileProjector = new ProfileProjector($this->connection);
-        $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjector],
-        );
 
         $projectionist = new DefaultProjectionist(
             $store,
             new InMemoryStore(),
-            $projectorRepository,
+            [$profileProjector],
         );
 
         $eventBus = DefaultEventBus::create([
@@ -116,14 +112,11 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $profileProjection = new ProfileProjector($this->connection);
-        $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjection],
-        );
 
         $projectionist = new DefaultProjectionist(
             $store,
             new InMemoryStore(),
-            $projectorRepository,
+            [$profileProjection],
         );
 
         $eventBus = DefaultEventBus::create([

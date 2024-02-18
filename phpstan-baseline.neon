@@ -16,11 +16,6 @@ parameters:
 			path: src/Projection/Projection/Store/DoctrineStore.php
 
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Projection\\\\Projector\\\\InMemoryProjectorRepository\\:\\:projectors\\(\\) should return array\\<int, object\\> but returns array\\<int\\|string, object\\>\\.$#"
-			count: 1
-			path: src/Projection/Projector/InMemoryProjectorRepository.php
-
-		-
 			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\Hydrator\\\\Hydrator\\:\\:hydrate\\(\\) expects array\\<string, mixed\\>, mixed given\\.$#"
 			count: 1
 			path: src/Snapshot/DefaultSnapshotStore.php
