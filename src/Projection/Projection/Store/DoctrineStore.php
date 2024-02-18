@@ -94,7 +94,7 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         }
 
         /** @var list<Data> $result */
-        $result = $this->connection->fetchAllAssociative($qb->getSQL());
+        $result = $qb->fetchAllAssociative();
 
         return array_map(
             fn (array $data) => $this->createProjection($data),

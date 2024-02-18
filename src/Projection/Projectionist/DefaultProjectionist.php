@@ -693,6 +693,7 @@ final class DefaultProjectionist implements Projectionist
                 ));
 
                 $projection->error(ProjectionError::fromThrowable($e));
+                $projection->disallowRetry();
                 $this->projectionStore->update($projection);
 
                 if ($throwByError) {

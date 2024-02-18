@@ -300,11 +300,6 @@ final class DefaultProjectionistTest extends TestCase
                 new Projection(
                     $projectionId,
                     Projection::DEFAULT_GROUP,
-                    ProjectionStatus::Booting,
-                ),
-                new Projection(
-                    $projectionId,
-                    Projection::DEFAULT_GROUP,
                     ProjectionStatus::Error,
                     0,
                     new ProjectionError('ERROR', ErrorContext::fromThrowable($projector->exception)),

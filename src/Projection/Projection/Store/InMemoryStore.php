@@ -49,15 +49,25 @@ final class InMemoryStore implements ProjectionStore
             array_filter(
                 $projections,
                 static function (Projection $projection) use ($criteria): bool {
-                    if ($criteria->groups === null && $criteria->ids === null) {
-                        return true;
+                    if ($criteria->ids !== null) {
+                        if (!in_array($projection->id(), $criteria->ids, true)) {
+                            return false;
+                        }
                     }
 
-                    $ids = $criteria->ids ?? [];
-                    $groups = $criteria->groups ?? [];
+                    if ($criteria->groups !== null) {
+                        if (!in_array($projection->group(), $criteria->groups, true)) {
+                            return false;
+                        }
+                    }
 
-                    return in_array($projection->id(), $ids, true)
-                        || in_array($projection->group(), $groups, true);
+                    if ($criteria->status !== null) {
+                        if (!in_array($projection->status(), $criteria->status, true)) {
+                            return false;
+                        }
+                    }
+
+                    return true;
                 },
             ),
         );

@@ -15,9 +15,10 @@ final class ProjectionAlreadyExistsTest extends TestCase
         $exception = new ProjectionAlreadyExists('foo-1');
 
         self::assertSame(
-            'projection with the id "foo-1" exist already',
+            'Projection "foo-1" already exists',
             $exception->getMessage(),
         );
+
         self::assertSame(0, $exception->getCode());
     }
 }
