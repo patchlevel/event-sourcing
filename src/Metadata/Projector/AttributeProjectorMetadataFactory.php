@@ -79,6 +79,7 @@ final class AttributeProjectorMetadataFactory implements ProjectorMetadataFactor
 
         $metadata = new ProjectorMetadata(
             $projectorInfo->id,
+            $projectorInfo->group,
             $projectorInfo->fromNow,
             $subscribeMethods,
             $createMethod,

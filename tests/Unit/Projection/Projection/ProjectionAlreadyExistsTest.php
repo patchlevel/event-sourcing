@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projection;
 
-use Patchlevel\EventSourcing\Projection\Projection\DuplicateProjectionId;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionAlreadyExists;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Projection\Projection\DuplicateProjectionId */
-final class DuplicateProjectionIdTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Projection\Projection\ProjectionAlreadyExists */
+final class ProjectionAlreadyExistsTest extends TestCase
 {
     public function testCreate(): void
     {
-        $exception = new DuplicateProjectionId('foo-1');
+        $exception = new ProjectionAlreadyExists('foo-1');
 
         self::assertSame(
             'projection with the id "foo-1" exist already',

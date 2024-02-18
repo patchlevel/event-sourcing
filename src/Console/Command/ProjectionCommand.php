@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
+use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Projection\Projectionist\Projectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-
-use function array_map;
-use function array_values;
-use function is_array;
-use function is_string;
 
 /** @interal */
 abstract class ProjectionCommand extends Command
@@ -33,40 +28,20 @@ abstract class ProjectionCommand extends Command
                 null,
                 InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
                 'filter by projection id',
+            )
+            ->addOption(
+                'group',
+                null,
+                InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
+                'filter by projection group',
             );
     }
 
-    protected function projectionCriteria(InputInterface $input): ProjectionCriteria
+    protected function projectionCriteria(InputInterface $input): ProjectionistCriteria
     {
-        return new ProjectionCriteria(
-            $this->projectionIds($input),
-        );
-    }
-
-    /** @return list<string>|null */
-    private function projectionIds(InputInterface $input): array|null
-    {
-        $ids = $input->getOption('id');
-
-        if (!$ids) {
-            return null;
-        }
-
-        if (!is_array($ids)) {
-            throw new InvalidArgumentGiven($ids, 'list<string>');
-        }
-
-        return array_values(
-            array_map(
-                static function (mixed $id) use ($ids): string {
-                    if (!is_string($id)) {
-                        throw new InvalidArgumentGiven($ids, 'list<string>');
-                    }
-
-                    return $id;
-                },
-                $ids,
-            ),
+        return new ProjectionistCriteria(
+            InputHelper::nullableStringList($input->getOption('id')),
+            InputHelper::nullableStringList($input->getOption('group')),
         );
     }
 }

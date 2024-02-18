@@ -7,9 +7,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -75,7 +75,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot(new ProjectionCriteria(), null, true);
+        $projectionist->boot(new ProjectionistCriteria(), null, true);
 
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId, 'John');
@@ -139,7 +139,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot(new ProjectionCriteria(), null, true);
+        $projectionist->boot(new ProjectionistCriteria(), null, true);
 
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId, 'John');

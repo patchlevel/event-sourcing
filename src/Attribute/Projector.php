@@ -11,6 +11,7 @@ final class Projector
 {
     public function __construct(
         public readonly string $id,
+        public readonly string $group = 'default',
         public readonly bool $fromNow = false,
     ) {
     }

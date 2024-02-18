@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projectionist;
 
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
+use Patchlevel\EventSourcing\Projection\Projection\Projection;
 
 interface Projectionist
 {
@@ -14,7 +13,7 @@ interface Projectionist
      * @throws ProjectorNotFound
      */
     public function boot(
-        ProjectionCriteria $criteria = new ProjectionCriteria(),
+        ProjectionistCriteria|null $criteria = null,
         int|null $limit = null,
         bool $throwByError = false,
     ): void;
@@ -26,16 +25,17 @@ interface Projectionist
      * @throws ProjectorNotFound
      */
     public function run(
-        ProjectionCriteria $criteria = new ProjectionCriteria(),
+        ProjectionistCriteria|null $criteria = null,
         int|null $limit = null,
         bool $throwByError = false,
     ): void;
 
-    public function teardown(ProjectionCriteria $criteria = new ProjectionCriteria()): void;
+    public function teardown(ProjectionistCriteria|null $criteria = null): void;
 
-    public function remove(ProjectionCriteria $criteria = new ProjectionCriteria()): void;
+    public function remove(ProjectionistCriteria|null $criteria = null): void;
 
-    public function reactivate(ProjectionCriteria $criteria = new ProjectionCriteria()): void;
+    public function reactivate(ProjectionistCriteria|null $criteria = null): void;
 
-    public function projections(): ProjectionCollection;
+    /** @return iterable<Projection> */
+    public function projections(ProjectionistCriteria|null $criteria = null): iterable;
 }

@@ -12,20 +12,31 @@ use PHPUnit\Framework\TestCase;
 /** @covers \Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore */
 final class InMemoryStoreTest extends TestCase
 {
-    public function testSave(): void
+    public function testAdd(): void
     {
         $store = new InMemoryStore();
 
         $id = 'test';
         $projection = new Projection($id);
 
-        $store->save($projection);
+        $store->add($projection);
 
         self::assertEquals($projection, $store->get($id));
+        self::assertEquals([$projection], $store->find());
+    }
 
-        $collection = $store->all();
+    public function testUpdate(): void
+    {
 
-        self::assertTrue($collection->has($id));
+        $id = 'test';
+        $projection = new Projection($id);
+
+        $store = new InMemoryStore([$projection]);
+
+        $store->update($projection);
+
+        self::assertEquals($projection, $store->get($id));
+        self::assertEquals([$projection], $store->find());
     }
 
     public function testNotFound(): void

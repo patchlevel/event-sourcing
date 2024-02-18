@@ -6,8 +6,11 @@ namespace Patchlevel\EventSourcing\Projection\Projection;
 
 final class Projection
 {
+    public const DEFAULT_GROUP = 'default';
+
     public function __construct(
         private readonly string $id,
+        private readonly string $group = self::DEFAULT_GROUP,
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
         private ProjectionError|null $error = null,
@@ -18,6 +21,11 @@ final class Projection
     public function id(): string
     {
         return $this->id;
+    }
+
+    public function group(): string
+    {
+        return $this->group;
     }
 
     public function status(): ProjectionStatus
