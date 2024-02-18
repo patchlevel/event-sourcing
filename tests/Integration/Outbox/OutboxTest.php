@@ -5,18 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Outbox;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\EventBus\Serializer\PhpNativeMessageSerializer;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
 use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxProcessor;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
-use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
-use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
-use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -26,10 +20,7 @@ use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Processor\SendEmailProcessor;
-use Patchlevel\EventSourcing\Tests\Integration\Outbox\Projection\ProfileProjector;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\Lock\Store\InMemoryStore as LockInMemoryStore;
 
 /** @coversNothing */
 final class OutboxTest extends TestCase
@@ -65,28 +56,9 @@ final class OutboxTest extends TestCase
 
         $outboxEventBus = new OutboxEventBus($outboxStore);
 
-        $profileProjector = new ProfileProjector($this->connection);
-        $projectorRepository = new InMemoryProjectorRepository(
-            [$profileProjector],
-        );
-
-        $projectionist = new DefaultProjectionist(
-            $store,
-            new InMemoryStore(),
-            $projectorRepository,
-        );
-
         $eventBusConsumer = DefaultConsumer::create([new SendEmailProcessor()]);
 
-        $eventBus = new ChainEventBus([
-            $outboxEventBus,
-            new ProjectionistEventBus(
-                $projectionist,
-                new LockFactory(
-                    new LockInMemoryStore(),
-                ),
-            ),
-        ]);
+        $eventBus = $outboxEventBus;
 
         $repository = new DefaultRepository($store, $eventBus, Profile::metadata());
 
@@ -99,7 +71,6 @@ final class OutboxTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot(new ProjectionCriteria(), null, true);
 
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
@@ -129,12 +100,5 @@ final class OutboxTest extends TestCase
 
         self::assertSame(0, $outboxStore->countOutboxMessages());
         self::assertCount(0, $outboxStore->retrieveOutboxMessages());
-
-        $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
-
-        self::assertIsArray($result);
-        self::assertArrayHasKey('id', $result);
-        self::assertSame('1', $result['id']);
-        self::assertSame('John', $result['name']);
     }
 }

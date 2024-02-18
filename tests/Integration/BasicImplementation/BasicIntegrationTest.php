@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\EventBus\ChainEventBus;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistEventBus;
 use Patchlevel\EventSourcing\Projection\Projector\InMemoryProjectorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -25,8 +23,6 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\Sen
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjector;
 use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\Lock\Store\InMemoryStore as LockInMemoryStore;
 
 /** @coversNothing */
 final class BasicIntegrationTest extends TestCase
@@ -63,16 +59,9 @@ final class BasicIntegrationTest extends TestCase
             $projectorRepository,
         );
 
-        $eventBus = new ChainEventBus([
-            DefaultEventBus::create([
-                new SendEmailProcessor(),
-            ]),
-            new ProjectionistEventBus(
-                $projectionist,
-                new LockFactory(
-                    new LockInMemoryStore(),
-                ),
-            ),
+        $eventBus = DefaultEventBus::create([
+            new SendEmailProcessor(),
+            $profileProjector,
         ]);
 
         $manager = new DefaultRepositoryManager(
@@ -137,16 +126,9 @@ final class BasicIntegrationTest extends TestCase
             $projectorRepository,
         );
 
-        $eventBus = new ChainEventBus([
-            DefaultEventBus::create([
-                new SendEmailProcessor(),
-            ]),
-            new ProjectionistEventBus(
-                $projectionist,
-                new LockFactory(
-                    new LockInMemoryStore(),
-                ),
-            ),
+        $eventBus = DefaultEventBus::create([
+            new SendEmailProcessor(),
+            $profileProjection,
         ]);
 
         $manager = new DefaultRepositoryManager(
