@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projection\Store;
 
+use Closure;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
@@ -63,6 +65,10 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         $qb = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->projectionTable);
+
+        if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            $qb->forUpdate();
+        }
 
         if ($criteria !== null) {
             if ($criteria->ids !== null) {
@@ -147,6 +153,17 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
     public function remove(Projection $projection): void
     {
         $this->connection->delete($this->projectionTable, ['id' => $projection->id()]);
+    }
+
+    public function transactional(Closure $closure): void
+    {
+        $this->connection->beginTransaction();
+
+        try {
+            $closure();
+        } finally {
+            $this->connection->commit();
+        }
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void

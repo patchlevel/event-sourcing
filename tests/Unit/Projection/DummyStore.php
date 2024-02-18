@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
+use Closure;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
@@ -55,5 +56,10 @@ final class DummyStore implements ProjectionStore
     {
         $this->parentStore->remove($projection);
         $this->removedProjections[] = clone $projection;
+    }
+
+    public function transactional(Closure $closure): void
+    {
+        $this->parentStore->transactional($closure);
     }
 }

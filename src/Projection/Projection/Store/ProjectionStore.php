@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projection\Store;
 
+use Closure;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionAlreadyExists;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
@@ -25,4 +26,6 @@ interface ProjectionStore
 
     /** @throws ProjectionNotFound */
     public function remove(Projection $projection): void;
+
+    public function transactional(Closure $closure): void;
 }

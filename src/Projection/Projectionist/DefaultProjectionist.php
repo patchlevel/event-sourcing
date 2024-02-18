@@ -56,108 +56,110 @@ final class DefaultProjectionist implements Projectionist
 
         $this->handleNewProjections($criteria, $throwByError);
 
-        $projections = $this->projectionStore->find(
+        $this->findForUpdate(
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [ProjectionStatus::Booting],
             ),
-        );
+            function ($projections) use ($limit, $throwByError): void {
+                $projections = $this->fastForwardFromNowProjections($projections);
 
-        $projections = $this->fastForwardFromNowProjections($projections);
+                if (count($projections) === 0) {
+                    $this->logger?->info('Projectionist: No projections in booting status, finish booting.');
 
-        if (count($projections) === 0) {
-            $this->logger?->info('Projectionist: No projections in booting status, finish booting.');
-
-            return;
-        }
-
-        $startIndex = $this->lowestProjectionPosition($projections);
-
-        $this->logger?->debug(
-            sprintf(
-                'Projectionist: Event stream is processed for booting from position %s.',
-                $startIndex,
-            ),
-        );
-
-        $stream = null;
-
-        try {
-            $criteria = new Criteria(fromIndex: $startIndex);
-            $stream = $this->streamableMessageStore->load($criteria);
-
-            $messageCounter = 0;
-
-            foreach ($stream as $message) {
-                $index = $stream->index();
-
-                if ($index === null) {
-                    throw new UnexpectedError('Stream index is null, this should not happen.');
+                    return;
                 }
+
+                $startIndex = $this->lowestProjectionPosition($projections);
+
+                $this->logger?->debug(
+                    sprintf(
+                        'Projectionist: Event stream is processed for booting from position %s.',
+                        $startIndex,
+                    ),
+                );
+
+                $stream = null;
+
+                try {
+                    $stream = $this->streamableMessageStore->load(
+                        new Criteria(fromIndex: $startIndex),
+                    );
+
+                    $messageCounter = 0;
+
+                    foreach ($stream as $message) {
+                        $index = $stream->index();
+
+                        if ($index === null) {
+                            throw new UnexpectedError('Stream index is null, this should not happen.');
+                        }
+
+                        foreach ($projections as $projection) {
+                            if (!$projection->isBooting()) {
+                                continue;
+                            }
+
+                            if ($projection->position() >= $index) {
+                                $this->logger?->debug(
+                                    sprintf(
+                                        'Projectionist: Projection "%s" is farther than the current position (%d > %d), continue booting.',
+                                        $projection->id(),
+                                        $projection->position(),
+                                        $index,
+                                    ),
+                                );
+
+                                continue;
+                            }
+
+                            $this->handleMessage($index, $message, $projection, $throwByError);
+                        }
+
+                        $messageCounter++;
+
+                        $this->logger?->debug(
+                            sprintf(
+                                'Projectionist: Current event stream position for booting: %s',
+                                $index,
+                            ),
+                        );
+
+                        if ($limit !== null && $messageCounter >= $limit) {
+                            $this->logger?->info(
+                                sprintf(
+                                    'Projectionist: Message limit (%d) reached, finish booting.',
+                                    $limit,
+                                ),
+                            );
+
+                            return;
+                        }
+                    }
+                } finally {
+                    $stream?->close();
+                }
+
+                $this->logger?->debug('Projectionist: End of stream for booting has been reached.');
 
                 foreach ($projections as $projection) {
                     if (!$projection->isBooting()) {
                         continue;
                     }
 
-                    if ($projection->position() >= $index) {
-                        $this->logger?->debug(
-                            sprintf(
-                                'Projectionist: Projection "%s" is farther than the current position (%d > %d), continue booting.',
-                                $projection->id(),
-                                $projection->position(),
-                                $index,
-                            ),
-                        );
+                    $projection->active();
+                    $this->projectionStore->update($projection);
 
-                        continue;
-                    }
-
-                    $this->handleMessage($index, $message, $projection, $throwByError);
+                    $this->logger?->info(sprintf(
+                        'Projectionist: Projection "%s" has been set to active after booting.',
+                        $projection->id(),
+                    ));
                 }
 
-                $messageCounter++;
-
-                $this->logger?->debug(
-                    sprintf(
-                        'Projectionist: Current event stream position for booting: %s',
-                        $index,
-                    ),
-                );
-
-                if ($limit !== null && $messageCounter >= $limit) {
-                    $this->logger?->info(
-                        sprintf(
-                            'Projectionist: Message limit (%d) reached, finish booting.',
-                            $limit,
-                        ),
-                    );
-
-                    return;
-                }
-            }
-        } finally {
-            $stream?->close();
-        }
-
-        $this->logger?->debug('Projectionist: End of stream for booting has been reached.');
-
-        foreach ($projections as $projection) {
-            if (!$projection->isBooting()) {
-                continue;
-            }
-
-            $projection->active();
-            $this->projectionStore->update($projection);
-
-            $this->logger?->info(sprintf(
-                'Projectionist: Projection "%s" has been set to active after booting.',
-                $projection->id(),
-            ));
-        }
-
-        $this->logger?->info('Projectionist: Finish booting.');
+                $this->logger?->info('Projectionist: Finish booting.');
+            },
+        );
     }
 
     public function run(
@@ -174,89 +176,90 @@ final class DefaultProjectionist implements Projectionist
         $this->handleOutdatedProjections($criteria);
         $this->handleRetryProjections($criteria);
 
-        $projections = $this->projectionStore->find(
+        $this->findForUpdate(
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [ProjectionStatus::Active, ProjectionStatus::Error],
             ),
-        );
-
-        if (count($projections) === 0) {
-            $this->logger?->info('Projectionist: No projections to process, finish processing.');
-
-            return;
-        }
-
-        $startIndex = $this->lowestProjectionPosition($projections);
-
-        $this->logger?->debug(
-            sprintf(
-                'Projectionist: Event stream is processed from position %d.',
-                $startIndex,
-            ),
-        );
-
-        $stream = null;
-
-        try {
-            $criteria = new Criteria(fromIndex: $startIndex);
-            $stream = $this->streamableMessageStore->load($criteria);
-
-            $messageCounter = 0;
-
-            foreach ($stream as $message) {
-                $index = $stream->index();
-
-                if ($index === null) {
-                    throw new UnexpectedError('Stream index is null, this should not happen.');
-                }
-
-                foreach ($projections as $projection) {
-                    if (!$projection->isActive()) {
-                        continue;
-                    }
-
-                    if ($projection->position() >= $index) {
-                        $this->logger?->debug(
-                            sprintf(
-                                'Projectionist: Projection "%s" is farther than the current position (%d > %d), continue processing.',
-                                $projection->id(),
-                                $projection->position(),
-                                $index,
-                            ),
-                        );
-
-                        continue;
-                    }
-
-                    $this->handleMessage($index, $message, $projection, $throwByError);
-                }
-
-                $messageCounter++;
-
-                $this->logger?->debug(sprintf('Projectionist: Current event stream position: %s', $index));
-
-                if ($limit !== null && $messageCounter >= $limit) {
-                    $this->logger?->info(
-                        sprintf(
-                            'Projectionist: Message limit (%d) reached, finish processing.',
-                            $limit,
-                        ),
-                    );
+            function (array $projections) use ($limit, $throwByError): void {
+                if (count($projections) === 0) {
+                    $this->logger?->info('Projectionist: No projections to process, finish processing.');
 
                     return;
                 }
-            }
-        } finally {
-            $stream?->close();
-        }
 
-        $this->logger?->info(
-            sprintf(
-                'Projectionist: End of stream on position "%d" has been reached, finish processing.',
-                $stream->index() ?: 'unknown',
-            ),
+                $startIndex = $this->lowestProjectionPosition($projections);
+
+                $this->logger?->debug(
+                    sprintf(
+                        'Projectionist: Event stream is processed from position %d.',
+                        $startIndex,
+                    ),
+                );
+
+                $stream = null;
+
+                try {
+                    $criteria = new Criteria(fromIndex: $startIndex);
+                    $stream = $this->streamableMessageStore->load($criteria);
+
+                    $messageCounter = 0;
+
+                    foreach ($stream as $message) {
+                        $index = $stream->index();
+
+                        if ($index === null) {
+                            throw new UnexpectedError('Stream index is null, this should not happen.');
+                        }
+
+                        foreach ($projections as $projection) {
+                            if (!$projection->isActive()) {
+                                continue;
+                            }
+
+                            if ($projection->position() >= $index) {
+                                $this->logger?->debug(
+                                    sprintf(
+                                        'Projectionist: Projection "%s" is farther than the current position (%d > %d), continue processing.',
+                                        $projection->id(),
+                                        $projection->position(),
+                                        $index,
+                                    ),
+                                );
+
+                                continue;
+                            }
+
+                            $this->handleMessage($index, $message, $projection, $throwByError);
+                        }
+
+                        $messageCounter++;
+
+                        $this->logger?->debug(sprintf('Projectionist: Current event stream position: %s', $index));
+
+                        if ($limit !== null && $messageCounter >= $limit) {
+                            $this->logger?->info(
+                                sprintf(
+                                    'Projectionist: Message limit (%d) reached, finish processing.',
+                                    $limit,
+                                ),
+                            );
+
+                            return;
+                        }
+                    }
+                } finally {
+                    $stream?->close();
+                }
+
+                $this->logger?->info(
+                    sprintf(
+                        'Projectionist: End of stream on position "%d" has been reached, finish processing.',
+                        $stream->index() ?: 'unknown',
+                    ),
+                );
+            },
         );
     }
 
@@ -268,76 +271,76 @@ final class DefaultProjectionist implements Projectionist
 
         $this->logger?->info('Projectionist: Start teardown outdated projections.');
 
-        $projections = $this->projectionStore
-            ->find(
-                new ProjectionCriteria(
-                    ids: $criteria->ids,
-                    groups: $criteria->groups,
-                    status: [ProjectionStatus::Outdated],
-                ),
-            );
+        $this->findForUpdate(
+            new ProjectionCriteria(
+                ids: $criteria->ids,
+                groups: $criteria->groups,
+                status: [ProjectionStatus::Outdated],
+            ),
+            function (array $projections): void {
+                foreach ($projections as $projection) {
+                    $projector = $this->projector($projection->id());
 
-        foreach ($projections as $projection) {
-            $projector = $this->projector($projection->id());
+                    if (!$projector) {
+                        $this->logger?->warning(
+                            sprintf(
+                                'Projectionist: Projector for "%s" to teardown not found, skipped.',
+                                $projection->id(),
+                            ),
+                        );
 
-            if (!$projector) {
-                $this->logger?->warning(
-                    sprintf(
-                        'Projectionist: Projector for "%s" to teardown not found, skipped.',
-                        $projection->id(),
-                    ),
-                );
+                        continue;
+                    }
 
-                continue;
-            }
+                    $teardownMethod = $this->resolveTeardownMethod($projector);
 
-            $teardownMethod = $this->resolveTeardownMethod($projector);
+                    if (!$teardownMethod) {
+                        $this->projectionStore->remove($projection);
 
-            if (!$teardownMethod) {
-                $this->projectionStore->remove($projection);
+                        $this->logger?->info(
+                            sprintf(
+                                'Projectionist: Projector "%s" for "%s" has no teardown method and was immediately removed.',
+                                $projector::class,
+                                $projection->id(),
+                            ),
+                        );
 
-                $this->logger?->info(
-                    sprintf(
-                        'Projectionist: Projector "%s" for "%s" has no teardown method and was immediately removed.',
-                        $projector::class,
-                        $projection->id(),
-                    ),
-                );
+                        continue;
+                    }
 
-                continue;
-            }
+                    try {
+                        $teardownMethod();
 
-            try {
-                $teardownMethod();
+                        $this->logger?->debug(sprintf(
+                            'Projectionist: For Projector "%s" for "%s" the teardown method has been executed and is now prepared to be removed.',
+                            $projector::class,
+                            $projection->id(),
+                        ));
+                    } catch (Throwable $e) {
+                        $this->logger?->error(
+                            sprintf(
+                                'Projectionist: Projection "%s" for "%s" has an error in the teardown method, skipped: %s',
+                                $projector::class,
+                                $projection->id(),
+                                $e->getMessage(),
+                            ),
+                        );
+                        continue;
+                    }
 
-                $this->logger?->debug(sprintf(
-                    'Projectionist: For Projector "%s" for "%s" the teardown method has been executed and is now prepared to be removed.',
-                    $projector::class,
-                    $projection->id(),
-                ));
-            } catch (Throwable $e) {
-                $this->logger?->error(
-                    sprintf(
-                        'Projectionist: Projection "%s" for "%s" has an error in the teardown method, skipped: %s',
-                        $projector::class,
-                        $projection->id(),
-                        $e->getMessage(),
-                    ),
-                );
-                continue;
-            }
+                    $this->projectionStore->remove($projection);
 
-            $this->projectionStore->remove($projection);
+                    $this->logger?->info(
+                        sprintf(
+                            'Projectionist: Projection "%s" removed.',
+                            $projection->id(),
+                        ),
+                    );
+                }
 
-            $this->logger?->info(
-                sprintf(
-                    'Projectionist: Projection "%s" removed.',
-                    $projection->id(),
-                ),
-            );
-        }
-
-        $this->logger?->info('Projectionist: Finish teardown.');
+                $this->logger?->info('Projectionist: Finish teardown.');
+            },
+        );
     }
 
     public function remove(ProjectionistCriteria|null $criteria = null): void
@@ -346,55 +349,60 @@ final class DefaultProjectionist implements Projectionist
 
         $this->discoverNewProjections();
 
-        $projections = $this->projectionStore
-            ->find(new ProjectionCriteria(
+        $this->findForUpdate(
+            new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
-            ));
+            ),
+            function (array $projections): void {
+                foreach ($projections as $projection) {
+                    $projector = $this->projector($projection->id());
 
-        foreach ($projections as $projection) {
-            $projector = $this->projector($projection->id());
+                    if (!$projector) {
+                        $this->projectionStore->remove($projection);
 
-            if (!$projector) {
-                $this->projectionStore->remove($projection);
+                        $this->logger?->info(
+                            sprintf(
+                                'Projectionist: Projection "%s" removed without a suitable projector.',
+                                $projection->id(),
+                            ),
+                        );
 
-                $this->logger?->info(
-                    sprintf('Projectionist: Projection "%s" removed without a suitable projector.', $projection->id()),
-                );
+                        continue;
+                    }
 
-                continue;
-            }
+                    $teardownMethod = $this->resolveTeardownMethod($projector);
 
-            $teardownMethod = $this->resolveTeardownMethod($projector);
+                    if (!$teardownMethod) {
+                        $this->projectionStore->remove($projection);
 
-            if (!$teardownMethod) {
-                $this->projectionStore->remove($projection);
+                        $this->logger?->info(
+                            sprintf('Projectionist: Projection "%s" removed.', $projection->id()),
+                        );
 
-                $this->logger?->info(
-                    sprintf('Projectionist: Projection "%s" removed.', $projection->id()),
-                );
+                        continue;
+                    }
 
-                continue;
-            }
+                    try {
+                        $teardownMethod();
+                    } catch (Throwable $e) {
+                        $this->logger?->error(
+                            sprintf(
+                                'Projectionist: Projector "%s" teardown method could not be executed: %s',
+                                $projector::class,
+                                $e->getMessage(),
+                            ),
+                        );
+                    }
 
-            try {
-                $teardownMethod();
-            } catch (Throwable $e) {
-                $this->logger?->error(
-                    sprintf(
-                        'Projectionist: Projector "%s" teardown method could not be executed: %s',
-                        $projector::class,
-                        $e->getMessage(),
-                    ),
-                );
-            }
+                    $this->projectionStore->remove($projection);
 
-            $this->projectionStore->remove($projection);
-
-            $this->logger?->info(
-                sprintf('Projectionist: Projection "%s" removed.', $projection->id()),
-            );
-        }
+                    $this->logger?->info(
+                        sprintf('Projectionist: Projection "%s" removed.', $projection->id()),
+                    );
+                }
+            },
+        );
     }
 
     public function reactivate(ProjectionistCriteria|null $criteria = null): void
@@ -403,33 +411,35 @@ final class DefaultProjectionist implements Projectionist
 
         $this->discoverNewProjections();
 
-        $projections = $this->projectionStore
-            ->find(new ProjectionCriteria(
+        $this->findForUpdate(
+            new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [ProjectionStatus::Error],
-            ));
+            ),
+            function (array $projections): void {
+                foreach ($projections as $projection) {
+                    $projector = $this->projector($projection->id());
 
-        foreach ($projections as $projection) {
-            $projector = $this->projector($projection->id());
+                    if (!$projector) {
+                        $this->logger?->debug(
+                            sprintf('Projectionist: Projector for "%s" not found, skipped.', $projection->id()),
+                        );
 
-            if (!$projector) {
-                $this->logger?->debug(
-                    sprintf('Projectionist: Projector for "%s" not found, skipped.', $projection->id()),
-                );
+                        continue;
+                    }
 
-                continue;
-            }
+                    $projection->active();
+                    $this->projectionStore->update($projection);
 
-            $projection->active();
-            $this->projectionStore->update($projection);
-
-            $this->logger?->info(sprintf(
-                'Projectionist: Projector "%s" for "%s" is reactivated.',
-                $projector::class,
-                $projection->id(),
-            ));
-        }
+                    $this->logger?->info(sprintf(
+                        'Projectionist: Projector "%s" for "%s" is reactivated.',
+                        $projector::class,
+                        $projection->id(),
+                    ));
+                }
+            },
+        );
     }
 
     /** @return list<Projection> */
@@ -534,64 +544,66 @@ final class DefaultProjectionist implements Projectionist
 
     private function handleOutdatedProjections(ProjectionistCriteria $criteria): void
     {
-        $projections = $this->projectionStore->find(
+        $this->findForUpdate(
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [ProjectionStatus::Active, ProjectionStatus::Error],
             ),
+            function (array $projections): void {
+                foreach ($projections as $projection) {
+                    if ($projection->isRetryDisallowed()) {
+                        continue;
+                    }
+
+                    $projector = $this->projector($projection->id());
+
+                    if ($projector) {
+                        continue;
+                    }
+
+                    $projection->outdated();
+                    $this->projectionStore->update($projection);
+
+                    $this->logger?->info(
+                        sprintf(
+                            'Projectionist: Projector for "%s" not found and has been marked as outdated.',
+                            $projection->id(),
+                        ),
+                    );
+                }
+            },
         );
-
-        foreach ($projections as $projection) {
-            if ($projection->isRetryDisallowed()) {
-                continue;
-            }
-
-            $projector = $this->projector($projection->id());
-
-            if ($projector) {
-                continue;
-            }
-
-            $projection->outdated();
-            $this->projectionStore->update($projection);
-
-            $this->logger?->info(
-                sprintf(
-                    'Projectionist: Projector for "%s" not found and has been marked as outdated.',
-                    $projection->id(),
-                ),
-            );
-        }
     }
 
     private function handleRetryProjections(ProjectionistCriteria $criteria): void
     {
-        $projections = $this->projectionStore->find(
+        $this->findForUpdate(
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [ProjectionStatus::Error],
             ),
+            function (array $projections): void {
+                foreach ($projections as $projection) {
+                    if ($projection->retry() >= self::RETRY_LIMIT) {
+                        continue;
+                    }
+
+                    $projection->active();
+                    $this->projectionStore->update($projection);
+
+                    $this->logger?->info(
+                        sprintf(
+                            'Projectionist: Retry projection "%s" (%d/%d) and set to active.',
+                            $projection->id(),
+                            $projection->retry(),
+                            self::RETRY_LIMIT,
+                        ),
+                    );
+                }
+            },
         );
-
-        foreach ($projections as $projection) {
-            if ($projection->retry() >= self::RETRY_LIMIT) {
-                continue;
-            }
-
-            $projection->active();
-            $this->projectionStore->update($projection);
-
-            $this->logger?->info(
-                sprintf(
-                    'Projectionist: Retry projection "%s" (%d/%d) and set to active.',
-                    $projection->id(),
-                    $projection->retry(),
-                    self::RETRY_LIMIT,
-                ),
-            );
-        }
     }
 
     /**
@@ -643,92 +655,96 @@ final class DefaultProjectionist implements Projectionist
 
     private function handleNewProjections(ProjectionistCriteria $criteria, bool $throwByError): void
     {
-        $projections = $this->projectionStore->find(
+        $this->findForUpdate(
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [ProjectionStatus::New],
             ),
-        );
+            function (array $projections) use ($throwByError): void {
+                foreach ($projections as $projection) {
+                    $projector = $this->projector($projection->id());
 
-        foreach ($projections as $projection) {
-            $projector = $this->projector($projection->id());
+                    if (!$projector) {
+                        throw ProjectorNotFound::forProjectionId($projection->id());
+                    }
 
-            if (!$projector) {
-                throw ProjectorNotFound::forProjectionId($projection->id());
-            }
+                    $setupMethod = $this->resolveSetupMethod($projector);
 
-            $setupMethod = $this->resolveSetupMethod($projector);
+                    if (!$setupMethod) {
+                        $projection->booting();
+                        $this->projectionStore->update($projection);
 
-            if (!$setupMethod) {
-                $projection->booting();
-                $this->projectionStore->update($projection);
+                        $this->logger?->debug(sprintf(
+                            'Projectionist: Projector "%s" for "%s" has no setup method, continue.',
+                            $projector::class,
+                            $projection->id(),
+                        ));
 
-                $this->logger?->debug(sprintf(
-                    'Projectionist: Projector "%s" for "%s" has no setup method, continue.',
-                    $projector::class,
-                    $projection->id(),
-                ));
+                        continue;
+                    }
 
-                continue;
-            }
+                    try {
+                        $setupMethod();
 
-            try {
-                $setupMethod();
+                        $projection->booting();
+                        $this->projectionStore->update($projection);
 
-                $projection->booting();
-                $this->projectionStore->update($projection);
+                        $this->logger?->debug(sprintf(
+                            'Projectionist: For Projector "%s" for "%s" the setup method has been executed and is now prepared for data.',
+                            $projector::class,
+                            $projection->id(),
+                        ));
+                    } catch (Throwable $e) {
+                        $this->logger?->error(sprintf(
+                            'Projectionist: Projector "%s" for "%s" has an error in the setup method: %s',
+                            $projector::class,
+                            $projection->id(),
+                            $e->getMessage(),
+                        ));
 
-                $this->logger?->debug(sprintf(
-                    'Projectionist: For Projector "%s" for "%s" the setup method has been executed and is now prepared for data.',
-                    $projector::class,
-                    $projection->id(),
-                ));
-            } catch (Throwable $e) {
-                $this->logger?->error(sprintf(
-                    'Projectionist: Projector "%s" for "%s" has an error in the setup method: %s',
-                    $projector::class,
-                    $projection->id(),
-                    $e->getMessage(),
-                ));
+                        $projection->error(ProjectionError::fromThrowable($e));
+                        $projection->disallowRetry();
+                        $this->projectionStore->update($projection);
 
-                $projection->error(ProjectionError::fromThrowable($e));
-                $projection->disallowRetry();
-                $this->projectionStore->update($projection);
-
-                if ($throwByError) {
-                    throw new ProjectionistError(
-                        $projector::class,
-                        $projection->id(),
-                        $e,
-                    );
+                        if ($throwByError) {
+                            throw new ProjectionistError(
+                                $projector::class,
+                                $projection->id(),
+                                $e,
+                            );
+                        }
+                    }
                 }
-            }
-        }
+            },
+        );
     }
 
     private function discoverNewProjections(): void
     {
-        $projections = $this->projectionStore->find();
+        $this->findForUpdate(
+            null,
+            function (array $projections): void {
+                foreach ($this->projectors as $projector) {
+                    $projectorId = $this->projectorId($projector);
 
-        foreach ($this->projectors as $projector) {
-            $projectorId = $this->projectorId($projector);
+                    foreach ($projections as $projection) {
+                        if ($projection->id() === $projectorId) {
+                            continue 2;
+                        }
+                    }
 
-            foreach ($projections as $projection) {
-                if ($projection->id() === $projectorId) {
-                    continue 2;
+                    $this->projectionStore->add(new Projection($projectorId));
+
+                    $this->logger?->info(
+                        sprintf(
+                            'Projectionist: New Projector "%s" was found and added to the projection store.',
+                            $projectorId,
+                        ),
+                    );
                 }
-            }
-
-            $this->projectionStore->add(new Projection($projectorId));
-
-            $this->logger?->info(
-                sprintf(
-                    'Projectionist: New Projector "%s" was found and added to the projection store.',
-                    $projectorId,
-                ),
-            );
-        }
+            },
+        );
     }
 
     private function resolveSetupMethod(object $projector): Closure|null
@@ -802,5 +818,15 @@ final class DefaultProjectionist implements Projectionist
         }
 
         return $min;
+    }
+
+    /** @param Closure(list<Projection>):void $closure */
+    private function findForUpdate(ProjectionCriteria|null $criteria, Closure $closure): void
+    {
+        $this->projectionStore->transactional(function () use ($closure, $criteria): void {
+            $projections = $this->projectionStore->find($criteria);
+
+            $closure($projections);
+        });
     }
 }
