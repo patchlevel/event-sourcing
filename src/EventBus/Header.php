@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\EventBus;
 
-/** @psalm-immutable */
+/**
+ * @psalm-immutable
+ */
 interface Header
 {
 }

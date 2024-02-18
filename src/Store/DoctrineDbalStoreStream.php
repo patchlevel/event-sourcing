@@ -104,7 +104,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
                     $data['aggregate'],
                     $data['aggregate_id'],
                     DoctrineHelper::normalizePlayhead($data['playhead'], $platform),
-                    DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform)
+                    DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform),
                 ))
                 ->withHeader(new ArchivedHeader(DoctrineHelper::normalizeArchived($data['archived'], $platform)))
                 ->withHeader(new NewStreamStartHeader(DoctrineHelper::normalizeNewStreamStart($data['new_stream_start'], $platform)))

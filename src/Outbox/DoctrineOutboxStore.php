@@ -116,10 +116,6 @@ final class DoctrineOutboxStore implements OutboxStore, DoctrineSchemaConfigurat
             throw OutboxHeaderIssue::missingHeader(self::HEADER_OUTBOX_IDENTIFIER);
         }
 
-        if (!is_int($outboxHeader->id)) {
-            throw OutboxHeaderIssue::invalidHeaderType($outboxHeader->id);
-        }
-
         return $outboxHeader->id;
     }
 }

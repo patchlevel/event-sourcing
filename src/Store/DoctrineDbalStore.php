@@ -34,18 +34,20 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
     private const MAX_UNSIGNED_SMALL_INT = 65_535;
 
     public function __construct(
-        private readonly Connection $connection,
+        private readonly Connection      $connection,
         private readonly EventSerializer $serializer,
-        private readonly string $storeTableName = 'eventstore',
-    ) {
+        private readonly string          $storeTableName = 'eventstore',
+    )
+    {
     }
 
     public function load(
         Criteria|null $criteria = null,
-        int|null $limit = null,
-        int|null $offset = null,
-        bool $backwards = false,
-    ): DoctrineDbalStoreStream {
+        int|null      $limit = null,
+        int|null      $offset = null,
+        bool          $backwards = false,
+    ): DoctrineDbalStoreStream
+    {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->storeTableName)
@@ -192,7 +194,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                     $parameters[] = $archived;
                     $types[$offset + 7] = $booleanType;
 
-                    $parameters[] = $this->getCustomHeaders($message);
+                    $parameters[] = $this->getCustomHeaderJson($this->getCustomHeaders($message));
                     $types[$offset + 8] = $jsonType;
 
                     $position++;
@@ -306,19 +308,20 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
         $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
     }
 
-    /**
-     * @return array<Header>
-     */
-    public function getCustomHeaders(Message $message): array
+    /** @return list<Header> */
+    private function getCustomHeaders(Message $message): array
     {
-        $headers = $message->headers();
+        $filteredHeaders = [
+            AggregateHeader::class,
+            NewStreamStartHeader::class,
+            ArchivedHeader::class,
+        ];
 
-        unset(
-            $headers[AggregateHeader::class],
-            $headers[NewStreamStartHeader::class],
-            $headers[ArchivedHeader::class],
+        return array_values(
+            array_filter(
+                $message->headers(),
+                static fn(Header $header) => !in_array($header::class, $filteredHeaders, true)
+            )
         );
-
-        return $headers;
     }
 }

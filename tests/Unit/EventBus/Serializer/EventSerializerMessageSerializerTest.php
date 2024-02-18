@@ -5,13 +5,19 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus\Serializer;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\DeserializeFailed;
 use Patchlevel\EventSourcing\EventBus\Serializer\EventSerializerMessageSerializer;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
+use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
+use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use Patchlevel\Hydrator\MetadataHydrator;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -27,7 +33,8 @@ final class EventSerializerMessageSerializerTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withRecordedOn(new DateTimeImmutable('2020-01-01T20:00:00.000000+0100'));
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')))
+            ->withHeader(new ArchivedHeader(false));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($event)->shouldBeCalledOnce()->willReturn(new SerializedEvent(
@@ -37,11 +44,17 @@ final class EventSerializerMessageSerializerTest extends TestCase
 
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
+            (new AttributeMessageHeaderRegistryFactory())->create([
+                __DIR__ . '/../../../../src', # add our headers
+                __DIR__ . '/../../Fixture', # add user headers
+            ]),
+            new MetadataHydrator(),
+            new JsonEncoder(),
         );
 
         $content = $serializer->serialize($message);
 
-        self::assertEquals('YToyOntzOjE1OiJzZXJpYWxpemVkRXZlbnQiO086NTE6IlBhdGNobGV2ZWxcRXZlbnRTb3VyY2luZ1xTZXJpYWxpemVyXFNlcmlhbGl6ZWRFdmVudCI6Mjp7czo0OiJuYW1lIjtzOjE1OiJwcm9maWxlX3Zpc2l0ZWQiO3M6NzoicGF5bG9hZCI7czo5OiJ7aWQ6IGZvb30iO31zOjc6ImhlYWRlcnMiO2E6MTp7czoxMDoicmVjb3JkZWRPbiI7TzoxNzoiRGF0ZVRpbWVJbW11dGFibGUiOjM6e3M6NDoiZGF0ZSI7czoyNjoiMjAyMC0wMS0wMSAyMDowMDowMC4wMDAwMDAiO3M6MTM6InRpbWV6b25lX3R5cGUiO2k6MTtzOjg6InRpbWV6b25lIjtzOjY6IiswMTowMCI7fX19', $content);
+        self::assertEquals('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":{"aggregate":{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":{"archived":false}}}', $content);
     }
 
     public function testDeserialize(): void
@@ -49,6 +62,10 @@ final class EventSerializerMessageSerializerTest extends TestCase
         $event = new ProfileVisited(
             ProfileId::fromString('foo'),
         );
+
+        $message = Message::create($event)
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')))
+            ->withHeader(new ArchivedHeader(false));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(new SerializedEvent(
@@ -58,28 +75,17 @@ final class EventSerializerMessageSerializerTest extends TestCase
 
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
+            (new AttributeMessageHeaderRegistryFactory())->create([
+                __DIR__ . '/../../../../src', # add our headers
+                __DIR__ . '/../../Fixture', # add user headers
+            ]),
+            new MetadataHydrator(),
+            new JsonEncoder(),
         );
 
-        $message = $serializer->deserialize('YToyOntzOjE1OiJzZXJpYWxpemVkRXZlbnQiO086NTE6IlBhdGNobGV2ZWxcRXZlbnRTb3VyY2luZ1xTZXJpYWxpemVyXFNlcmlhbGl6ZWRFdmVudCI6Mjp7czo0OiJuYW1lIjtzOjE1OiJwcm9maWxlX3Zpc2l0ZWQiO3M6NzoicGF5bG9hZCI7czo5OiJ7aWQ6IGZvb30iO31zOjc6ImhlYWRlcnMiO2E6Mzp7czoxMDoicmVjb3JkZWRPbiI7TzoxNzoiRGF0ZVRpbWVJbW11dGFibGUiOjM6e3M6NDoiZGF0ZSI7czoyNjoiMjAyMC0wMS0wMSAyMDowMDowMC4wMDAwMDAiO3M6MTM6InRpbWV6b25lX3R5cGUiO2k6MTtzOjg6InRpbWV6b25lIjtzOjY6IiswMTowMCI7fXM6MTQ6Im5ld1N0cmVhbVN0YXJ0IjtiOjA7czo4OiJhcmNoaXZlZCI7YjowO319');
+        $deserializedMessage = $serializer->deserialize('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":{"aggregate":{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":{"archived":false}}}');
 
-        self::assertEquals($event, $message->event());
-        self::assertEquals([
-            'recordedOn' => new DateTimeImmutable('2020-01-01T20:00:00.000000+0100'),
-            'newStreamStart' => false,
-            'archived' => false,
-        ], $message->headers());
-    }
-
-    public function testDeserializeDecodeFailed(): void
-    {
-        $this->expectException(DeserializeFailed::class);
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $serializer = new EventSerializerMessageSerializer(
-            $eventSerializer->reveal(),
-        );
-
-        $serializer->deserialize('!@#%$^&*()');
+        self::assertEquals($message, $deserializedMessage);
     }
 
     public function testDeserializeDecodeFailedInvalidData(): void
@@ -89,9 +95,15 @@ final class EventSerializerMessageSerializerTest extends TestCase
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
+            (new AttributeMessageHeaderRegistryFactory())->create([
+                __DIR__ . '/../../../../src', # add our headers
+                __DIR__ . '/../../Fixture', # add user headers
+            ]),
+            new MetadataHydrator(),
+            new JsonEncoder(),
         );
 
-        $serializer->deserialize('');
+        $serializer->deserialize('{}');
     }
 
     public function testEquals(): void
@@ -101,7 +113,7 @@ final class EventSerializerMessageSerializerTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withRecordedOn(new DateTimeImmutable('2020-01-01T20:00:00.000000+0100'));
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($event)->shouldBeCalledOnce()->willReturn(new SerializedEvent(
@@ -115,6 +127,12 @@ final class EventSerializerMessageSerializerTest extends TestCase
 
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
+            (new AttributeMessageHeaderRegistryFactory())->create([
+                __DIR__ . '/../../../../src', # add our headers
+                __DIR__ . '/../../Fixture', # add user headers
+            ]),
+            new MetadataHydrator(),
+            new JsonEncoder(),
         );
 
         $content = $serializer->serialize($message);

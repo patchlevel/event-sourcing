@@ -43,11 +43,7 @@ final class OutputStyle extends SymfonyStyle
 
         $headers = $message->headers();
 
-        if (isset($headers['recordedOn']) && $headers['recordedOn'] instanceof DateTimeInterface) {
-            $headers['recordedOn'] = $headers['recordedOn']->format(DateTimeInterface::ATOM);
-        }
-
-        $this->horizontalTable(array_keys($headers), [array_values($headers)]);
+        $this->horizontalTable(array_keys($headers), [$headers]);
 
         $this->block($data->payload);
     }

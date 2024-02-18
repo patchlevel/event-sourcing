@@ -6,9 +6,12 @@ namespace Patchlevel\EventSourcing\EventBus\Serializer;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
+use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
+use Patchlevel\Hydrator\Hydrator;
 use function base64_decode;
 use function base64_encode;
 use function is_array;
@@ -20,6 +23,9 @@ final class EventSerializerMessageSerializer implements MessageSerializer
 {
     public function __construct(
         private readonly EventSerializer $eventSerializer,
+        private readonly MessageHeaderRegistry $messageHeaderRegistry,
+        private readonly Hydrator $hydrator,
+        private readonly Encoder $encoder,
     ) {
     }
 
@@ -27,45 +33,39 @@ final class EventSerializerMessageSerializer implements MessageSerializer
     {
         $serializedEvent = $this->eventSerializer->serialize($message->event());
 
-        return base64_encode(
-            serialize(
-                [
-                    'serializedEvent' => $serializedEvent,
-                    'headers' => $message->headers(),
-                ],
-            ),
+        $headers = [];
+        foreach ($message->headers() as $header) {
+            $headers[$this->messageHeaderRegistry->headerName($header::class)] = $this->hydrator->extract($header);
+        }
+
+        return $this->encoder->encode(
+            [
+                'serializedEvent' => $serializedEvent,
+                'headers' => $headers,
+            ],
         );
     }
 
     public function deserialize(string $content): Message
     {
-        $decodedString = base64_decode($content, true);
-
-        if (!is_string($decodedString)) {
-            throw DeserializeFailed::decodeFailed();
-        }
-
-        $data = unserialize(
-            $decodedString,
-            [
-                'allowed_classes' => [
-                    SerializedEvent::class,
-                    DateTimeImmutable::class,
-                ],
-            ],
-        );
+        $messageData = $this->encoder->decode($content);
 
         if (
-            !is_array($data)
-            || !isset($data['serializedEvent'], $data['headers'])
-            || !$data['serializedEvent'] instanceof SerializedEvent
-            || !is_array($data['headers'])
+            !is_array($messageData)
+            || !isset($messageData['serializedEvent'], $messageData['headers'])
+            || !is_array($messageData['serializedEvent'])
+            || !is_array($messageData['headers'])
         ) {
-            throw DeserializeFailed::invalidData($data);
+            throw DeserializeFailed::invalidData($messageData);
         }
 
-        $event = $this->eventSerializer->deserialize($data['serializedEvent']);
+        $event = $this->eventSerializer->deserialize(new SerializedEvent($messageData['serializedEvent']['name'], $messageData['serializedEvent']['payload']));
+        $headers = [];
 
-        return Message::createWithHeaders($event, $data['headers']);
+        foreach ($messageData['headers'] as $headerName => $headerData) {
+            $headers[] = $this->hydrator->hydrate($this->messageHeaderRegistry->headerClass($headerName), $headerData);
+        }
+
+        return Message::createWithHeaders($event, $headers);
     }
 }

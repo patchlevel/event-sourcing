@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\EventBus;
 
 use function array_key_exists;
-use function array_map;
-use function array_values;
 
 /**
  * @template-covariant T of object
@@ -21,9 +19,7 @@ final class Message
     public const HEADER_ARCHIVED = 'archived';
     public const HEADER_NEW_STREAM_START = 'newStreamStart';
 
-    /**
-     * @var class-string-map<H of Header, H>
-     */
+    /** @var array<class-string<Header>, Header> */
     private array $headers = [];
 
     /** @param T $event */
@@ -44,10 +40,8 @@ final class Message
         return new self($event);
     }
 
-    /**
-     * @param array<Header> $headers
-     */
-    public static function createWithHeaders(object $event, array $headers): self
+    /** @param iterable<Header> $headers */
+    public static function createWithHeaders(object $event, iterable $headers): self
     {
         return self::create($event)->withHeaders($headers);
     }
@@ -67,13 +61,17 @@ final class Message
      *
      * @template H1 of Header
      */
-    public function header(string $name): mixed
+    public function header(string $name): Header
     {
         if (!array_key_exists($name, $this->headers)) {
             throw HeaderNotFound::custom($name);
         }
 
-        return $this->headers[$name];
+        $header = $this->headers[$name];
+
+        assert(is_a($header, $name, true));
+
+        return $header;
     }
 
     public function withHeader(Header $header): self
@@ -84,27 +82,20 @@ final class Message
         return $message;
     }
 
-    /**
-     * @return array<class-string<Header>, Header>
-     */
+    /** @return list<Header> */
     public function headers(): array
     {
-        return $this->headers;
+        return array_values($this->headers);
     }
 
-    /**
-     * @param array<Header> $headers
-     */
-    public function withHeaders(array $headers): self
+    /** @param iterable<Header> $headers */
+    public function withHeaders(iterable $headers): self
     {
-        $newHeaders = [];
+        $message = clone $this;
 
         foreach ($headers as $header) {
-            $newHeaders[$header::class] = $header;
+            $message->headers[$header::class] = $header;
         }
-
-        $message = clone $this;
-        $message->headers = array_merge($message->headers, $newHeaders);
 
         return $message;
     }

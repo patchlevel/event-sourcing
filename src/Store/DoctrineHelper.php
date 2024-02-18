@@ -8,8 +8,9 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-
 use Patchlevel\EventSourcing\EventBus\Header;
+use RuntimeException;
+
 use function is_array;
 use function is_bool;
 use function is_int;
@@ -50,7 +51,7 @@ final class DoctrineHelper
 
         foreach ($normalizedCustomHeaders as $customHeader) {
             if (!$customHeader instanceof Header) {
-                throw new \RuntimeException();
+                throw new RuntimeException();
             }
         }
 

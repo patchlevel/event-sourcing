@@ -227,7 +227,7 @@ final class DefaultRepository implements Repository
                             $aggregateName,
                             $aggregateId,
                             ++$playhead,
-                            $clock->now()
+                            $clock->now(),
                         ));
 
                     if ($messageDecorator) {
