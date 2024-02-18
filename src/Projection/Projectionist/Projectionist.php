@@ -36,6 +36,6 @@ interface Projectionist
 
     public function reactivate(ProjectionistCriteria|null $criteria = null): void;
 
-    /** @return iterable<Projection> */
-    public function projections(ProjectionistCriteria|null $criteria = null): iterable;
+    /** @return list<Projection> */
+    public function projections(ProjectionistCriteria|null $criteria = null): array;
 }

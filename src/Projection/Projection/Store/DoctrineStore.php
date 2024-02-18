@@ -57,7 +57,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         return $this->createProjection($result);
     }
 
-    public function find(ProjectionCriteria|null $criteria = null): iterable
+    /** @return list<Projection> */
+    public function find(ProjectionCriteria|null $criteria = null): array
     {
         $qb = $this->connection->createQueryBuilder()
             ->select('*')

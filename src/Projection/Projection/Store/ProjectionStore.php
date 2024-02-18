@@ -14,8 +14,8 @@ interface ProjectionStore
     /** @throws ProjectionNotFound */
     public function get(string $projectionId): Projection;
 
-    /** @return iterable<Projection> */
-    public function find(ProjectionCriteria|null $criteria = null): iterable;
+    /** @return list<Projection> */
+    public function find(ProjectionCriteria|null $criteria = null): array;
 
     /** @throws ProjectionAlreadyExists */
     public function add(Projection $projection): void;

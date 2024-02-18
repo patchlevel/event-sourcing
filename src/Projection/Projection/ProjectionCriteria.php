@@ -8,9 +8,9 @@ namespace Patchlevel\EventSourcing\Projection\Projection;
 final class ProjectionCriteria
 {
     /**
-     * @param list<string>|null     $ids
-     * @param list<string>|null     $groups
-     * @param ProjectionStatus|null $status
+     * @param list<string>|null           $ids
+     * @param list<string>|null           $groups
+     * @param list<ProjectionStatus>|null $status
      */
     public function __construct(
         public readonly array|null $ids = null,

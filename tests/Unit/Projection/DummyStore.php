@@ -33,7 +33,8 @@ final class DummyStore implements ProjectionStore
         return $this->parentStore->get($projectionId);
     }
 
-    public function find(ProjectionCriteria|null $criteria = null): iterable
+    /** @return list<Projection> */
+    public function find(ProjectionCriteria|null $criteria = null): array
     {
         return $this->parentStore->find($criteria);
     }

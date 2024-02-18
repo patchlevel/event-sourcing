@@ -12,12 +12,14 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 use function array_filter;
 use function array_key_exists;
 use function array_values;
+use function in_array;
 
 final class InMemoryStore implements ProjectionStore
 {
     /** @var array<string, Projection> */
     private array $projections = [];
 
+    /** @param list<Projection> $projections */
     public function __construct(array $projections = [])
     {
         foreach ($projections as $projection) {
@@ -34,7 +36,8 @@ final class InMemoryStore implements ProjectionStore
         throw new ProjectionNotFound($projectionId);
     }
 
-    public function find(ProjectionCriteria|null $criteria = null): iterable
+    /** @return list<Projection> */
+    public function find(ProjectionCriteria|null $criteria = null): array
     {
         $projections = array_values($this->projections);
 
@@ -50,19 +53,11 @@ final class InMemoryStore implements ProjectionStore
                         return true;
                     }
 
-                    foreach ($criteria->ids as $id) {
-                        if ($projection->id() === $id) {
-                            return true;
-                        }
-                    }
+                    $ids = $criteria->ids ?? [];
+                    $groups = $criteria->groups ?? [];
 
-                    foreach ($criteria->groups as $id) {
-                        if ($projection->id() === $id) {
-                            return true;
-                        }
-                    }
-
-                    return false;
+                    return in_array($projection->id(), $ids, true)
+                        || in_array($projection->group(), $groups, true);
                 },
             ),
         );

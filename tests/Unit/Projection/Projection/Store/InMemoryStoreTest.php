@@ -27,7 +27,6 @@ final class InMemoryStoreTest extends TestCase
 
     public function testUpdate(): void
     {
-
         $id = 'test';
         $projection = new Projection($id);
 
@@ -49,21 +48,13 @@ final class InMemoryStoreTest extends TestCase
 
     public function testRemove(): void
     {
-        $store = new InMemoryStore();
-
         $id = 'test';
         $projection = new Projection($id);
 
-        $store->save($projection);
+        $store = new InMemoryStore([$projection]);
 
-        $collection = $store->all();
+        $store->remove($projection);
 
-        self::assertTrue($collection->has($id));
-
-        $store->remove($id);
-
-        $collection = $store->all();
-
-        self::assertFalse($collection->has($id));
+        self::assertEquals([], $store->find());
     }
 }

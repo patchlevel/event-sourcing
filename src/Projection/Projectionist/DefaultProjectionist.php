@@ -171,7 +171,6 @@ final class DefaultProjectionist implements Projectionist
 
         $this->logger?->info('Projectionist: Start processing.');
 
-
         $this->handleOutdatedProjections($criteria);
         $this->handleRetryProjections($criteria);
 
@@ -433,7 +432,8 @@ final class DefaultProjectionist implements Projectionist
         }
     }
 
-    public function projections(ProjectionistCriteria|null $criteria = null): iterable
+    /** @return list<Projection> */
+    public function projections(ProjectionistCriteria|null $criteria = null): array
     {
         $criteria ??= new ProjectionistCriteria();
 
@@ -594,7 +594,12 @@ final class DefaultProjectionist implements Projectionist
         }
     }
 
-    private function fastForwardFromNowProjections(iterable $projections): iterable
+    /**
+     * @param list<Projection> $projections
+     *
+     * @return list<Projection>
+     */
+    private function fastForwardFromNowProjections(array $projections): array
     {
         $latestIndex = null;
         $forwardedProjections = [];
@@ -778,8 +783,8 @@ final class DefaultProjectionist implements Projectionist
         return $stream->index() ?: 1;
     }
 
-    /** @param iterable<Projection> $projections */
-    private function lowestProjectionPosition(iterable $projections): int
+    /** @param list<Projection> $projections */
+    private function lowestProjectionPosition(array $projections): int
     {
         $min = null;
 
