@@ -157,9 +157,8 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
 
     public function transactional(Closure $closure): void
     {
-        $this->connection->beginTransaction();
-
         try {
+            $this->connection->beginTransaction();
             $closure();
         } finally {
             $this->connection->commit();
