@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\EventBus\Decorator;
+namespace Patchlevel\EventSourcing\Tests\Unit\Repository\MessageDecorator;
 
-use Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator;
-use Patchlevel\EventSourcing\EventBus\Decorator\MessageDecorator;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\Decorator\ChainMessageDecorator */
+/** @covers \Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator */
 final class ChainMessageDecoratorTest extends TestCase
 {
     use ProphecyTrait;
