@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projectionist;
 
+use Closure;
+use Generator;
 use Patchlevel\EventSourcing\Attribute\Projector as ProjectionAttribute;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
+use Patchlevel\EventSourcing\Projection\Projection\Store\LockableProjectionStore;
+use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
 use Patchlevel\EventSourcing\Store\ArrayStream;
@@ -21,7 +26,9 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\Tests\Unit\Projection\DummyStore;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 
@@ -688,6 +695,31 @@ final class DefaultProjectionistTest extends TestCase
         ], $projectionStore->addedProjections);
     }
 
+    public function testTeardownWithoutTeardownMethod(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $projection = new Projection($projectionId, Projection::DEFAULT_GROUP, ProjectionStatus::Outdated);
+
+        $projectionStore = new DummyStore([$projection]);
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->teardown();
+
+        self::assertEquals([], $projectionStore->updatedProjections);
+        self::assertEquals([$projection], $projectionStore->removedProjections);
+    }
+
     public function testTeardownWithProjector(): void
     {
         $projectionId = 'test';
@@ -976,6 +1008,88 @@ final class DefaultProjectionistTest extends TestCase
         self::assertEquals([
             new Projection($projectionId, Projection::DEFAULT_GROUP, ProjectionStatus::New),
         ], $projections);
+    }
+
+    #[DataProvider('methodProvider')]
+    public function testCriteria(string $method): void
+    {
+        $projector = new #[ProjectionAttribute('id1')]
+        class {
+        };
+
+        $projectionStore = $this->prophesize(ProjectionStore::class);
+        $projectionStore->find(
+            Argument::that(
+                static fn (ProjectionCriteria $criteria) => $criteria->ids === ['id1'] && $criteria->groups === ['group1']
+            ),
+        )->willReturn([])->shouldBeCalled();
+
+        $projectionStore->find(
+            new ProjectionCriteria(),
+        )->willReturn([
+            new Projection('id1'),
+        ])->shouldBeCalled();
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([]));
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore->reveal(),
+            [$projector],
+        );
+
+        $projectionistCriteria = new ProjectionistCriteria(
+            ids: ['id1'],
+            groups: ['group1'],
+        );
+
+        $projectionist->{$method}($projectionistCriteria);
+    }
+
+    #[DataProvider('methodProvider')]
+    public function testWithLockableStore(string $method): void
+    {
+        $projector = new #[ProjectionAttribute('id1')]
+        class {
+        };
+
+        $projectionStore = $this->prophesize(LockableProjectionStore::class);
+        $projectionStore->inLock(Argument::type(Closure::class))->will(
+            /** @param array{Closure} $args */
+            static fn (array $args): mixed => $args[0]()
+        )->shouldBeCalled();
+        $projectionStore->find(Argument::any())->willReturn([])->shouldBeCalled();
+
+        $projectionStore->find(
+            new ProjectionCriteria(),
+        )->willReturn([
+            new Projection('id1'),
+        ])->shouldBeCalled();
+
+        $projectionStore->remove(Argument::type(Projection::class));
+        $projectionStore->add(Argument::type(Projection::class));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([]));
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore->reveal(),
+            [$projector],
+        );
+
+        $projectionist->{$method}();
+    }
+
+    public static function methodProvider(): Generator
+    {
+        yield 'boot' => ['boot'];
+        yield 'run' => ['run'];
+        yield 'teardown' => ['teardown'];
+        yield 'remove' => ['remove'];
+        yield 'reactivate' => ['reactivate'];
+        yield 'projections' => ['projections'];
     }
 
     private function criteria(int $fromIndex = 0): Criteria
