@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Projection\Projection\Store;
 use Closure;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
@@ -33,7 +34,7 @@ use const JSON_THROW_ON_ERROR;
  *     retry: int,
  * }
  */
-final class DoctrineStore implements ProjectionStore, SchemaConfigurator
+final class DoctrineStore implements ProjectionStore, TransactionalStore, SchemaConfigurator
 {
     public function __construct(
         private readonly Connection $connection,
@@ -162,7 +163,11 @@ final class DoctrineStore implements ProjectionStore, SchemaConfigurator
         try {
             $closure();
         } finally {
-            $this->connection->commit();
+            try {
+                $this->connection->commit();
+            } catch (DriverException $e) {
+                throw new TransactionCommitNotPossible($e);
+            }
         }
     }
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projection\Store;
 
-use Closure;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionAlreadyExists;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
@@ -95,10 +94,5 @@ final class InMemoryStore implements ProjectionStore
     public function remove(Projection $projection): void
     {
         unset($this->projections[$projection->id()]);
-    }
-
-    public function transactional(Closure $closure): void
-    {
-        $closure();
     }
 }

@@ -723,7 +723,7 @@ final class DefaultProjectionist implements Projectionist
     private function discoverNewProjections(): void
     {
         $this->findForUpdate(
-            null,
+            new ProjectionCriteria(),
             function (array $projections): void {
                 foreach ($this->projectors as $projector) {
                     $projectorId = $this->projectorId($projector);
@@ -821,8 +821,14 @@ final class DefaultProjectionist implements Projectionist
     }
 
     /** @param Closure(list<Projection>):void $closure */
-    private function findForUpdate(ProjectionCriteria|null $criteria, Closure $closure): void
+    private function findForUpdate(ProjectionCriteria $criteria, Closure $closure): void
     {
+        if (!$this->projectionStore instanceof Store) {
+            $closure($this->projectionStore->find($criteria));
+
+            return;
+        }
+
         $this->projectionStore->transactional(function () use ($closure, $criteria): void {
             $projections = $this->projectionStore->find($criteria);
 
