@@ -289,6 +289,10 @@ $connection = DriverManager::getConnection([
     'url' => 'mysql://user:secret@localhost/app'
 ]);
 
+$projectionConnection = DriverManager::getConnection([
+    'url' => 'mysql://user:secret@localhost/projection'
+]);
+
 $mailer = /* your own mailer */;
 
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
@@ -300,7 +304,7 @@ $eventStore = new DoctrineDbalStore(
     $aggregateRegistry,
 );
 
-$hotelProjector = new HotelProjector($connection);
+$hotelProjector = new HotelProjector($projectionConnection);
 
 $projectorRepository = new ProjectorRepository([
     $hotelProjector,
