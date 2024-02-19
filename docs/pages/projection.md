@@ -231,16 +231,55 @@ final class ProfileProjector
 
     The default group is `default` and the projectionist takes all groups if none are given to him.
 
-### From Now Mode
+### Run Mode
 
-Certain projectors operate exclusively on post-release events, disregarding historical data. 
-Consider, for instance, the scenario of launching a fresh email service.
+The run mode determines how the projector should behave when it is booted.
+There are three different modes:
+
+#### From Beginning
+
+This is the default mode. 
+The projector will start from the beginning of the event stream and process all events.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 
-#[Projector('welcome_email', fromNow: true)]
+#[Projector('welcome_email', runMode: RunMode::FromBeginning)]
 final class WelcomeEmailProjector
+{
+   // ...
+}
+```
+
+#### From Now
+
+Certain projectors operate exclusively on post-release events, disregarding historical data.
+This is useful for projectors that are only interested in events that occur after a certain point in time.
+As example, a welcome email projector that only wants to send emails to new users.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Projection\Projection\RunMode;
+
+#[Projector('welcome_email', runMode: RunMode::FromNow)]
+final class WelcomeEmailProjector
+{
+   // ...
+}
+```
+
+#### Once
+
+This mode is useful for projectors that only need to run once.
+This is useful for projectors to create reports or to migrate data.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Projection\Projection\RunMode;
+
+#[Projector('migration', runMode: RunMode::Once)]
+final class MigrationProjector
 {
    // ...
 }
@@ -287,6 +326,8 @@ stateDiagram-v2
     Booting --> Error
     Active --> Outdated
     Active --> Error
+    Active --> Finished
+    Finished --> Outdated
     Error --> Active
     Error --> [*]
     Outdated --> Active
@@ -310,6 +351,11 @@ When the process is finished, the projection is set to active.
 
 The active status describes the projections currently being actively managed by the projectionist.
 These projections have a projector, follow the event stream and should be up-to-date.
+
+### Finished
+
+A projection is finished if the projector has the mode `RunMode::Once`.
+This means that the projection is only run once and then set to finished if it reaches the end of the event stream.
 
 ### Outdated
 

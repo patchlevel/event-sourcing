@@ -8,11 +8,13 @@ use Closure;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadata;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
+use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Projection\Projection\Store\LockableProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Store\Criteria;
@@ -146,6 +148,18 @@ final class DefaultProjectionist implements Projectionist
 
                 foreach ($projections as $projection) {
                     if (!$projection->isBooting()) {
+                        continue;
+                    }
+
+                    if ($projection->runMode() === RunMode::Once) {
+                        $projection->finished();
+                        $this->projectionStore->update($projection);
+
+                        $this->logger?->info(sprintf(
+                            'Projectionist: Projection "%s" run only once and has been set to finished.',
+                            $projection->id(),
+                        ));
+
                         continue;
                     }
 
@@ -534,7 +548,7 @@ final class DefaultProjectionist implements Projectionist
             $this->projectorIndex = [];
 
             foreach ($this->projectors as $projector) {
-                $projectorId = $this->projectorId($projector);
+                $projectorId = $this->projectorMetadata($projector)->id;
 
                 $this->projectorIndex[$projectorId] = $projector;
             }
@@ -626,9 +640,7 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            $metadata = $this->metadataFactory->metadata($projector::class);
-
-            if (!$metadata->fromNow) {
+            if ($projection->runMode() !== RunMode::FromNow) {
                 $forwardedProjections[] = $projection;
 
                 continue;
@@ -727,20 +739,24 @@ final class DefaultProjectionist implements Projectionist
             new ProjectionCriteria(),
             function (array $projections): void {
                 foreach ($this->projectors as $projector) {
-                    $projectorId = $this->projectorId($projector);
+                    $metadata = $this->projectorMetadata($projector);
 
                     foreach ($projections as $projection) {
-                        if ($projection->id() === $projectorId) {
+                        if ($projection->id() === $metadata->id) {
                             continue 2;
                         }
                     }
 
-                    $this->projectionStore->add(new Projection($projectorId));
+                    $this->projectionStore->add(new Projection(
+                        $metadata->id,
+                        $metadata->group,
+                        $metadata->runMode,
+                    ));
 
                     $this->logger?->info(
                         sprintf(
                             'Projectionist: New Projector "%s" was found and added to the projection store.',
-                            $projectorId,
+                            $metadata->id,
                         ),
                     );
                 }
@@ -789,9 +805,9 @@ final class DefaultProjectionist implements Projectionist
         );
     }
 
-    private function projectorId(object $projector): string
+    private function projectorMetadata(object $projector): ProjectorMetadata
     {
-        return $this->metadataFactory->metadata($projector::class)->id;
+        return $this->metadataFactory->metadata($projector::class);
     }
 
     private function latestIndex(): int

@@ -16,6 +16,7 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
+use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 
 use function array_map;
@@ -27,6 +28,7 @@ use const JSON_THROW_ON_ERROR;
 /** @psalm-type Data = array{
  *     id: string,
  *     group_name: string,
+ *     run_mode: string,
  *     position: int,
  *     status: string,
  *     error_message: string|null,
@@ -118,8 +120,9 @@ final class DoctrineStore implements LockableProjectionStore, SchemaConfigurator
             [
                 'id' => $projection->id(),
                 'group_name' => $projection->group(),
-                'position' => $projection->position(),
+                'run_mode' => $projection->runMode()->value,
                 'status' => $projection->status()->value,
+                'position' => $projection->position(),
                 'error_message' => $projectionError?->errorMessage,
                 'error_context' => $projectionError?->errorContext !== null ? json_encode($projectionError->errorContext, JSON_THROW_ON_ERROR) : null,
                 'retry' => $projection->retry(),
@@ -135,8 +138,9 @@ final class DoctrineStore implements LockableProjectionStore, SchemaConfigurator
             $this->projectionTable,
             [
                 'group_name' => $projection->group(),
-                'position' => $projection->position(),
+                'run_mode' => $projection->runMode()->value,
                 'status' => $projection->status()->value,
+                'position' => $projection->position(),
                 'error_message' => $projectionError?->errorMessage,
                 'error_context' => $projectionError?->errorContext !== null ? json_encode($projectionError->errorContext, JSON_THROW_ON_ERROR) : null,
                 'retry' => $projection->retry(),
@@ -181,6 +185,9 @@ final class DoctrineStore implements LockableProjectionStore, SchemaConfigurator
         $table->addColumn('group_name', Types::STRING)
             ->setLength(32)
             ->setNotnull(true);
+        $table->addColumn('run_mode', Types::STRING)
+            ->setLength(16)
+            ->setNotnull(true);
         $table->addColumn('position', Types::INTEGER)
             ->setNotnull(true);
         $table->addColumn('status', Types::STRING)
@@ -209,6 +216,7 @@ final class DoctrineStore implements LockableProjectionStore, SchemaConfigurator
         return new Projection(
             $row['id'],
             $row['group_name'],
+            RunMode::from($row['run_mode']),
             ProjectionStatus::from($row['status']),
             $row['position'],
             $row['error_message'] !== null ? new ProjectionError(
