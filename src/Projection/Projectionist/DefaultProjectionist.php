@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
+use Patchlevel\EventSourcing\Projection\Projection\Store\LockableProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
@@ -823,13 +824,13 @@ final class DefaultProjectionist implements Projectionist
     /** @param Closure(list<Projection>):void $closure */
     private function findForUpdate(ProjectionCriteria $criteria, Closure $closure): void
     {
-        if (!$this->projectionStore instanceof Store) {
+        if (!$this->projectionStore instanceof LockableProjectionStore) {
             $closure($this->projectionStore->find($criteria));
 
             return;
         }
 
-        $this->projectionStore->transactional(function () use ($closure, $criteria): void {
+        $this->projectionStore->inLock(function () use ($closure, $criteria): void {
             $projections = $this->projectionStore->find($criteria);
 
             $closure($projections);

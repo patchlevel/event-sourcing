@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Projection\Projection\Store;
 
 use Closure;
 
-interface TransactionalStore
+interface LockableProjectionStore extends ProjectionStore
 {
-    public function transactional(Closure $closure): void;
+    public function inLock(Closure $closure): void;
 }

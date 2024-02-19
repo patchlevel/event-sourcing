@@ -7,8 +7,8 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
-use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -114,6 +114,6 @@ final class ProjectionStatusCommand extends ProjectionCommand
             }
         }
 
-        throw new RuntimeException('Projection not found');
+        throw new ProjectionNotFound($id);
     }
 }

@@ -34,7 +34,7 @@ use const JSON_THROW_ON_ERROR;
  *     retry: int,
  * }
  */
-final class DoctrineStore implements ProjectionStore, TransactionalStore, SchemaConfigurator
+final class DoctrineStore implements LockableProjectionStore, SchemaConfigurator
 {
     public function __construct(
         private readonly Connection $connection,
@@ -156,7 +156,7 @@ final class DoctrineStore implements ProjectionStore, TransactionalStore, Schema
         $this->connection->delete($this->projectionTable, ['id' => $projection->id()]);
     }
 
-    public function transactional(Closure $closure): void
+    public function inLock(Closure $closure): void
     {
         $this->connection->beginTransaction();
 
