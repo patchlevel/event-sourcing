@@ -6,8 +6,12 @@ namespace Patchlevel\EventSourcing\Projection\Projection;
 
 final class Projection
 {
+    public const DEFAULT_GROUP = 'default';
+
     public function __construct(
         private readonly string $id,
+        private readonly string $group = self::DEFAULT_GROUP,
+        private readonly RunMode $runMode = RunMode::FromBeginning,
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
         private ProjectionError|null $error = null,
@@ -18,6 +22,16 @@ final class Projection
     public function id(): string
     {
         return $this->id;
+    }
+
+    public function group(): string
+    {
+        return $this->group;
+    }
+
+    public function runMode(): RunMode
+    {
+        return $this->runMode;
     }
 
     public function status(): ProjectionStatus
@@ -65,6 +79,17 @@ final class Projection
     public function isActive(): bool
     {
         return $this->status === ProjectionStatus::Active;
+    }
+
+    public function finished(): void
+    {
+        $this->status = ProjectionStatus::Finished;
+        $this->error = null;
+    }
+
+    public function isFinished(): bool
+    {
+        return $this->status === ProjectionStatus::Finished;
     }
 
     public function outdated(): void

@@ -5,15 +5,24 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection\Projection\Store;
 
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionAlreadyExists;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 
 interface ProjectionStore
 {
+    /** @throws ProjectionNotFound */
     public function get(string $projectionId): Projection;
 
-    public function all(): ProjectionCollection;
+    /** @return list<Projection> */
+    public function find(ProjectionCriteria|null $criteria = null): array;
 
-    public function save(Projection ...$projections): void;
+    /** @throws ProjectionAlreadyExists */
+    public function add(Projection $projection): void;
 
-    public function remove(string ...$projectionIds): void;
+    /** @throws ProjectionNotFound */
+    public function update(Projection $projection): void;
+
+    /** @throws ProjectionNotFound */
+    public function remove(Projection $projection): void;
 }

@@ -5,57 +5,55 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
+use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
-
-use function array_key_exists;
-use function array_values;
 
 final class DummyStore implements ProjectionStore
 {
-    /** @var array<string, Projection> */
-    private array $projections = [];
+    private InMemoryStore $parentStore;
+
     /** @var list<Projection> */
-    public array $savedProjections = [];
-    /** @var list<string> */
-    public array $removedProjectionIds = [];
+    public array $addedProjections = [];
+
+    /** @var list<Projection> */
+    public array $updatedProjections = [];
+
+    /** @var list<Projection> */
+    public array $removedProjections = [];
 
     /** @param list<Projection> $projections */
     public function __construct(array $projections = [])
     {
-        foreach ($projections as $projection) {
-            $this->projections[$projection->id()] = $projection;
-        }
+        $this->parentStore = new InMemoryStore($projections);
     }
 
     public function get(string $projectionId): Projection
     {
-        if (array_key_exists($projectionId, $this->projections)) {
-            return $this->projections[$projectionId];
-        }
-
-        throw new ProjectionNotFound($projectionId);
+        return $this->parentStore->get($projectionId);
     }
 
-    public function all(): ProjectionCollection
+    /** @return list<Projection> */
+    public function find(ProjectionCriteria|null $criteria = null): array
     {
-        return new ProjectionCollection(array_values($this->projections));
+        return $this->parentStore->find($criteria);
     }
 
-    public function save(Projection ...$projections): void
+    public function add(Projection $projection): void
     {
-        foreach ($projections as $projection) {
-            $this->projections[$projection->id()] = $projection;
-            $this->savedProjections[] = clone $projection;
-        }
+        $this->parentStore->add($projection);
+        $this->addedProjections[] = clone $projection;
     }
 
-    public function remove(string ...$projectionIds): void
+    public function update(Projection $projection): void
     {
-        foreach ($projectionIds as $projectionId) {
-            $this->removedProjectionIds[] = $projectionId;
-            unset($this->projections[$projectionId]);
-        }
+        $this->parentStore->update($projection);
+        $this->updatedProjections[] = clone $projection;
+    }
+
+    public function remove(Projection $projection): void
+    {
+        $this->parentStore->remove($projection);
+        $this->removedProjections[] = clone $projection;
     }
 }

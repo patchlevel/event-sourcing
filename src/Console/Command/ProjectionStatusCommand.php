@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
@@ -57,14 +58,14 @@ final class ProjectionStatusCommand extends ProjectionCommand
                         $projection->status()->value,
                         $projection->projectionError()?->errorMessage,
                     ],
-                    [...$projections],
+                    $projections,
                 ),
             );
 
             return 0;
         }
 
-        $projection = $projections->get($id);
+        $projection = $this->findProjection($projections, $id);
 
         $io->horizontalTable(
             [
@@ -102,5 +103,17 @@ final class ProjectionStatusCommand extends ProjectionCommand
         foreach ($context['trace'] as $trace) {
             $io->writeln(sprintf('%s: %s', $trace['file'] ?? '#unknown', $trace['line'] ?? '#unknown'));
         }
+    }
+
+    /** @param list<Projection> $projections */
+    private function findProjection(array $projections, string $id): Projection
+    {
+        foreach ($projections as $projection) {
+            if ($projection->id() === $id) {
+                return $projection;
+            }
+        }
+
+        throw new ProjectionNotFound($id);
     }
 }

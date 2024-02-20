@@ -4,26 +4,32 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projectionist;
 
+use Closure;
+use Generator;
 use Patchlevel\EventSourcing\Attribute\Projector as ProjectionAttribute;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
+use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
+use Patchlevel\EventSourcing\Projection\Projection\Store\LockableProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\Tests\Unit\Projection\DummyStore;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 
@@ -34,21 +40,66 @@ final class DefaultProjectionistTest extends TestCase
 
     public function testNothingToBoot(): void
     {
-        $projectionCollection = new ProjectionCollection();
-
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->shouldNotBeCalled();
 
-        $projectionStore = $this->prophesize(ProjectionStore::class);
-        $projectionStore->all()->willReturn($projectionCollection)->shouldBeCalledOnce();
+        $store = new DummyStore();
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
-            $projectionStore->reveal(),
+            $store,
             [],
         );
 
         $projectionist->boot();
+
+        self::assertEquals([], $store->addedProjections);
+        self::assertEquals([], $store->updatedProjections);
+    }
+
+    public function testBootDiscoverNewProjectors(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([]))->shouldBeCalledOnce();
+
+        $projectionStore = new DummyStore();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->boot();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projectionStore->addedProjections);
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+            ),
+        ], $projectionStore->updatedProjections);
     }
 
     public function testBootWithoutCreateMethod(): void
@@ -76,10 +127,27 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->boot();
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Booting),
-            new Projection($projectionId, ProjectionStatus::Booting, 1),
-            new Projection($projectionId, ProjectionStatus::Active, 1),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+                1,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
+        ], $projectionStore->updatedProjections);
     }
 
     public function testBootWithMethods(): void
@@ -119,10 +187,36 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->boot();
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Booting),
-            new Projection($projectionId, ProjectionStatus::Booting, 1),
-            new Projection($projectionId, ProjectionStatus::Active, 1),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projectionStore->addedProjections);
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+                1,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
+        ], $projectionStore->updatedProjections);
 
         self::assertTrue($projector->created);
         self::assertSame($message, $projector->message);
@@ -162,12 +256,32 @@ final class DefaultProjectionistTest extends TestCase
             [$projector],
         );
 
-        $projectionist->boot(new ProjectionCriteria(), 1);
+        $projectionist->boot(new ProjectionistCriteria(), 1);
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Booting),
-            new Projection($projectionId, ProjectionStatus::Booting, 1),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projectionStore->addedProjections);
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+                1,
+            ),
+        ], $projectionStore->updatedProjections);
 
         self::assertTrue($projector->created);
         self::assertSame($message, $projector->message);
@@ -200,8 +314,19 @@ final class DefaultProjectionistTest extends TestCase
         };
 
         $projectionStore = new DummyStore([
-            new Projection($projectionId1, ProjectionStatus::Booting),
-            new Projection($projectionId2, ProjectionStatus::Booting, 1),
+            new Projection(
+                $projectionId1,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+            ),
+            new Projection(
+                $projectionId2,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+                1,
+            ),
         ]);
 
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
@@ -218,10 +343,28 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->boot();
 
         self::assertEquals([
-            new Projection($projectionId1, ProjectionStatus::Booting, 1),
-            new Projection($projectionId1, ProjectionStatus::Active, 1),
-            new Projection($projectionId2, ProjectionStatus::Active, 1),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId1,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+                1,
+            ),
+            new Projection(
+                $projectionId1,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
+            new Projection(
+                $projectionId2,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
+        ], $projectionStore->updatedProjections);
 
         self::assertSame($message, $projector1->message);
         self::assertNull($projector2->message);
@@ -263,17 +406,15 @@ final class DefaultProjectionistTest extends TestCase
             [
                 new Projection(
                     $projectionId,
-                    ProjectionStatus::Booting,
-                ),
-                new Projection(
-                    $projectionId,
+                    Projection::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
                     ProjectionStatus::Error,
                     0,
                     new ProjectionError('ERROR', ErrorContext::fromThrowable($projector->exception)),
                     -1,
                 ),
             ],
-            $projectionStore->savedProjections,
+            $projectionStore->updatedProjections,
         );
     }
 
@@ -292,7 +433,14 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Booting)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+            ),
+        ]);
 
         $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
         $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
@@ -309,10 +457,28 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->boot();
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Booting, 1),
-            new Projection($projectionId, ProjectionStatus::Booting, 3),
-            new Projection($projectionId, ProjectionStatus::Active, 3),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+                1,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+                3,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                3,
+            ),
+        ], $projectionStore->updatedProjections);
 
         self::assertSame([$message1, $message2], $projector->messages);
     }
@@ -320,7 +486,7 @@ final class DefaultProjectionistTest extends TestCase
     public function testBootingWithFromNow(): void
     {
         $projectionId = 'test';
-        $projector = new #[ProjectionAttribute('test', fromNow: true)]
+        $projector = new #[ProjectionAttribute('test', runMode: RunMode::FromNow)]
         class {
             public Message|null $message = null;
 
@@ -331,7 +497,14 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Booting)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromNow,
+                ProjectionStatus::Booting,
+            ),
+        ]);
 
         $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
@@ -347,10 +520,100 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->boot();
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Active, 1),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromNow,
+                ProjectionStatus::Active,
+                1,
+            ),
+        ], $projectionStore->updatedProjections);
 
         self::assertNull($projector->message);
+    }
+
+    public function testBootingWithOnlyOnce(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test', runMode: RunMode::Once)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::Once,
+                ProjectionStatus::Booting,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->boot();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::Once,
+                ProjectionStatus::Booting,
+                1,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::Once,
+                ProjectionStatus::Finished,
+                1,
+            ),
+        ], $projectionStore->updatedProjections);
+
+        self::assertEquals($message1, $projector->message);
+    }
+
+    public function testRunDiscoverNewProjectors(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $streamableStore = $this->prophesize(Store::class);
+        $projectionStore = new DummyStore();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->run();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projectionStore->addedProjections);
     }
 
     public function testRunning(): void
@@ -367,7 +630,14 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Active)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+            ),
+        ]);
 
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
@@ -383,8 +653,14 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->run();
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Active, 1),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
+        ], $projectionStore->updatedProjections);
 
         self::assertSame($message, $projector->message);
     }
@@ -403,7 +679,14 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Active)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+            ),
+        ]);
 
         $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
         $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
@@ -420,11 +703,17 @@ final class DefaultProjectionistTest extends TestCase
             [$projector],
         );
 
-        $projectionist->run(new ProjectionCriteria(), 1);
+        $projectionist->run(new ProjectionistCriteria(), 1);
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Active, 1),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
+        ], $projectionStore->updatedProjections);
 
         self::assertSame($message1, $projector->message);
     }
@@ -456,8 +745,19 @@ final class DefaultProjectionistTest extends TestCase
         };
 
         $projectionStore = new DummyStore([
-            new Projection($projectionId1, ProjectionStatus::Active),
-            new Projection($projectionId2, ProjectionStatus::Active, 1),
+            new Projection(
+                $projectionId1,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+            ),
+            new Projection(
+                $projectionId2,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
         ]);
 
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
@@ -474,8 +774,14 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->run();
 
         self::assertEquals([
-            new Projection($projectionId1, ProjectionStatus::Active, 1),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId1,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
+        ], $projectionStore->updatedProjections);
 
         self::assertSame($message, $projector1->message);
         self::assertNull($projector2->message);
@@ -498,7 +804,14 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Active)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+            ),
+        ]);
 
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
@@ -517,13 +830,15 @@ final class DefaultProjectionistTest extends TestCase
             [
                 new Projection(
                     $projectionId,
+                    Projection::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
                     ProjectionStatus::Error,
                     0,
                     new ProjectionError('ERROR', ErrorContext::fromThrowable($projector->exception)),
                     1,
                 ),
             ],
-            $projectionStore->savedProjections,
+            $projectionStore->updatedProjections,
         );
     }
 
@@ -531,7 +846,14 @@ final class DefaultProjectionistTest extends TestCase
     {
         $projectionId = 'test';
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Active)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+            ),
+        ]);
 
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->shouldNotBeCalled();
@@ -545,15 +867,28 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->run();
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Outdated, 0),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Outdated,
+                0,
+            ),
+        ], $projectionStore->updatedProjections);
     }
 
     public function testRunningWithoutActiveProjectors(): void
     {
         $projectionId = 'test';
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Booting)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+            ),
+        ]);
 
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->shouldNotBeCalled();
@@ -566,7 +901,7 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->run();
 
-        self::assertEquals([], $projectionStore->savedProjections);
+        self::assertEquals([], $projectionStore->updatedProjections);
     }
 
     public function testRunningWithGabInIndex(): void
@@ -584,7 +919,14 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Active)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+            ),
+        ]);
 
         $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
         $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
@@ -601,11 +943,81 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->run();
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Active, 1),
-            new Projection($projectionId, ProjectionStatus::Active, 3),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                3,
+            ),
+        ], $projectionStore->updatedProjections);
 
         self::assertSame([$message1, $message2], $projector->messages);
+    }
+
+    public function testTeardownDiscoverNewProjectors(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $streamableStore = $this->prophesize(Store::class);
+        $projectionStore = new DummyStore();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->teardown();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projectionStore->addedProjections);
+    }
+
+    public function testTeardownWithoutTeardownMethod(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $projection = new Projection(
+            $projectionId,
+            Projection::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            ProjectionStatus::Outdated,
+        );
+
+        $projectionStore = new DummyStore([$projection]);
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->teardown();
+
+        self::assertEquals([], $projectionStore->updatedProjections);
+        self::assertEquals([$projection], $projectionStore->removedProjections);
     }
 
     public function testTeardownWithProjector(): void
@@ -623,7 +1035,14 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Outdated)]);
+        $projection = new Projection(
+            $projectionId,
+            Projection::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            ProjectionStatus::Outdated,
+        );
+
+        $projectionStore = new DummyStore([$projection]);
 
         $streamableStore = $this->prophesize(Store::class);
 
@@ -635,8 +1054,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->teardown();
 
-        self::assertEquals([], $projectionStore->savedProjections);
-        self::assertEquals([$projectionId], $projectionStore->removedProjectionIds);
+        self::assertEquals([], $projectionStore->updatedProjections);
+        self::assertEquals([$projection], $projectionStore->removedProjections);
         self::assertTrue($projector->dropped);
     }
 
@@ -655,7 +1074,14 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Outdated)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Outdated,
+            ),
+        ]);
 
         $streamableStore = $this->prophesize(Store::class);
 
@@ -667,15 +1093,22 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->teardown();
 
-        self::assertEquals([], $projectionStore->savedProjections);
-        self::assertEquals([], $projectionStore->removedProjectionIds);
+        self::assertEquals([], $projectionStore->updatedProjections);
+        self::assertEquals([], $projectionStore->removedProjections);
     }
 
     public function testTeardownWithoutProjector(): void
     {
         $projectorId = 'test';
 
-        $projectionStore = new DummyStore([new Projection($projectorId, ProjectionStatus::Outdated)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectorId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Outdated,
+            ),
+        ]);
 
         $streamableStore = $this->prophesize(Store::class);
 
@@ -687,8 +1120,36 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->teardown();
 
-        self::assertEquals([], $projectionStore->savedProjections);
-        self::assertEquals([], $projectionStore->removedProjectionIds);
+        self::assertEquals([], $projectionStore->updatedProjections);
+        self::assertEquals([], $projectionStore->removedProjections);
+    }
+
+    public function testRemoveDiscoverNewProjectors(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $streamableStore = $this->prophesize(Store::class);
+        $projectionStore = new DummyStore();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->remove();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projectionStore->addedProjections);
     }
 
     public function testRemoveWithProjector(): void
@@ -705,7 +1166,13 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Outdated)]);
+        $projection = new Projection(
+            $projectionId,
+            Projection::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            ProjectionStatus::Outdated,
+        );
+        $projectionStore = new DummyStore([$projection]);
 
         $streamableStore = $this->prophesize(Store::class);
 
@@ -717,8 +1184,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->remove();
 
-        self::assertEquals([], $projectionStore->savedProjections);
-        self::assertEquals([$projectionId], $projectionStore->removedProjectionIds);
+        self::assertEquals([], $projectionStore->updatedProjections);
+        self::assertEquals([$projection], $projectionStore->removedProjections);
         self::assertTrue($projector->dropped);
     }
 
@@ -729,7 +1196,13 @@ final class DefaultProjectionistTest extends TestCase
         class {
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Outdated)]);
+        $projection = new Projection(
+            $projectionId,
+            Projection::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            ProjectionStatus::Outdated,
+        );
+        $projectionStore = new DummyStore([$projection]);
 
         $streamableStore = $this->prophesize(Store::class);
 
@@ -741,8 +1214,8 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->remove();
 
-        self::assertEquals([], $projectionStore->savedProjections);
-        self::assertEquals([$projectionId], $projectionStore->removedProjectionIds);
+        self::assertEquals([], $projectionStore->updatedProjections);
+        self::assertEquals([$projection], $projectionStore->removedProjections);
     }
 
     public function testRemoveWithProjectorAndError(): void
@@ -759,7 +1232,13 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Outdated)]);
+        $projection = new Projection(
+            $projectionId,
+            Projection::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            ProjectionStatus::Outdated,
+        );
+        $projectionStore = new DummyStore([$projection]);
 
         $streamableStore = $this->prophesize(Store::class);
 
@@ -771,15 +1250,21 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->remove();
 
-        self::assertEquals([], $projectionStore->savedProjections);
-        self::assertEquals([$projectionId], $projectionStore->removedProjectionIds);
+        self::assertEquals([], $projectionStore->updatedProjections);
+        self::assertEquals([$projection], $projectionStore->removedProjections);
     }
 
     public function testRemoveWithoutProjector(): void
     {
         $projectorId = 'test';
 
-        $projectionStore = new DummyStore([new Projection($projectorId, ProjectionStatus::Outdated)]);
+        $projection = new Projection(
+            $projectorId,
+            Projection::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            ProjectionStatus::Outdated,
+        );
+        $projectionStore = new DummyStore([$projection]);
 
         $streamableStore = $this->prophesize(Store::class);
 
@@ -791,8 +1276,36 @@ final class DefaultProjectionistTest extends TestCase
 
         $projectionist->remove();
 
-        self::assertEquals([], $projectionStore->savedProjections);
-        self::assertEquals([$projectorId], $projectionStore->removedProjectionIds);
+        self::assertEquals([], $projectionStore->updatedProjections);
+        self::assertEquals([$projection], $projectionStore->removedProjections);
+    }
+
+    public function testReactiveDiscoverNewProjectors(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $streamableStore = $this->prophesize(Store::class);
+        $projectionStore = new DummyStore();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->reactivate();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projectionStore->addedProjections);
     }
 
     public function testReactivate(): void
@@ -802,7 +1315,14 @@ final class DefaultProjectionistTest extends TestCase
         class {
         };
 
-        $projectionStore = new DummyStore([new Projection($projectionId, ProjectionStatus::Error)]);
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Error,
+            ),
+        ]);
 
         $streamableStore = $this->prophesize(Store::class);
 
@@ -815,8 +1335,133 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->reactivate();
 
         self::assertEquals([
-            new Projection($projectionId, ProjectionStatus::Active, 0),
-        ], $projectionStore->savedProjections);
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                0,
+            ),
+        ], $projectionStore->updatedProjections);
+    }
+
+    public function testGetProjectionAndDiscoverNewProjectors(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $streamableStore = $this->prophesize(Store::class);
+        $projectionStore = new DummyStore();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projections = $projectionist->projections();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projectionStore->addedProjections);
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projections);
+    }
+
+    #[DataProvider('methodProvider')]
+    public function testCriteria(string $method): void
+    {
+        $projector = new #[ProjectionAttribute('id1')]
+        class {
+        };
+
+        $projectionStore = $this->prophesize(ProjectionStore::class);
+        $projectionStore->find(
+            Argument::that(
+                static fn (ProjectionCriteria $criteria) => $criteria->ids === ['id1'] && $criteria->groups === ['group1']
+            ),
+        )->willReturn([])->shouldBeCalled();
+
+        $projectionStore->find(
+            new ProjectionCriteria(),
+        )->willReturn([
+            new Projection('id1'),
+        ])->shouldBeCalled();
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([]));
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore->reveal(),
+            [$projector],
+        );
+
+        $projectionistCriteria = new ProjectionistCriteria(
+            ids: ['id1'],
+            groups: ['group1'],
+        );
+
+        $projectionist->{$method}($projectionistCriteria);
+    }
+
+    #[DataProvider('methodProvider')]
+    public function testWithLockableStore(string $method): void
+    {
+        $projector = new #[ProjectionAttribute('id1')]
+        class {
+        };
+
+        $projectionStore = $this->prophesize(LockableProjectionStore::class);
+        $projectionStore->inLock(Argument::type(Closure::class))->will(
+        /** @param array{Closure} $args */
+            static fn (array $args): mixed => $args[0]()
+        )->shouldBeCalled();
+        $projectionStore->find(Argument::any())->willReturn([])->shouldBeCalled();
+
+        $projectionStore->find(
+            new ProjectionCriteria(),
+        )->willReturn([
+            new Projection('id1'),
+        ])->shouldBeCalled();
+
+        $projectionStore->remove(Argument::type(Projection::class));
+        $projectionStore->add(Argument::type(Projection::class));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([]));
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore->reveal(),
+            [$projector],
+        );
+
+        $projectionist->{$method}();
+    }
+
+    public static function methodProvider(): Generator
+    {
+        yield 'boot' => ['boot'];
+        yield 'run' => ['run'];
+        yield 'teardown' => ['teardown'];
+        yield 'remove' => ['remove'];
+        yield 'reactivate' => ['reactivate'];
+        yield 'projections' => ['projections'];
     }
 
     private function criteria(int $fromIndex = 0): Criteria

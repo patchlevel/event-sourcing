@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console;
 
+use function array_map;
+use function array_values;
+use function is_array;
 use function is_bool;
 use function is_int;
 use function is_numeric;
@@ -114,5 +117,30 @@ final class InputHelper
         }
 
         return $value;
+    }
+
+    /** @return list<string>|null */
+    public static function nullableStringList(mixed $value): array|null
+    {
+        if (!$value) {
+            return null;
+        }
+
+        if (!is_array($value)) {
+            throw new InvalidArgumentGiven($value, 'list<string>|null');
+        }
+
+        return array_values(
+            array_map(
+                static function (mixed $string) use ($value): string {
+                    if (!is_string($string)) {
+                        throw new InvalidArgumentGiven($value, 'list<string>|null');
+                    }
+
+                    return $string;
+                },
+                $value,
+            ),
+        );
     }
 }

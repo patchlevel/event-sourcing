@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.21.1@8c473e2437be8b6a8fd8f630f0f11a16b114c494">
+<files psalm-version="5.22.1@e9dad66e11274315dac27e08349c628c7d6a1a43">
   <file src="src/Aggregate/AggregateRootBehaviour.php">
     <UnsafeInstantiation>
-      <code>new static()</code>
+      <code><![CDATA[new static()]]></code>
     </UnsafeInstantiation>
   </file>
   <file src="src/Clock/FrozenClock.php">
@@ -12,7 +12,7 @@
   </file>
   <file src="src/Console/DoctrineHelper.php">
     <ClassNotFinal>
-      <code>class DoctrineHelper</code>
+      <code><![CDATA[class DoctrineHelper]]></code>
     </ClassNotFinal>
   </file>
   <file src="src/EventBus/AttributeListenerProvider.php">
@@ -27,7 +27,7 @@
   </file>
   <file src="src/Metadata/AggregateRoot/AggregateRootMetadataAwareMetadataFactory.php">
     <InvalidReturnStatement>
-      <code>$aggregate::metadata()</code>
+      <code><![CDATA[$aggregate::metadata()]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
       <code><![CDATA[AggregateRootMetadata<T>]]></code>
@@ -35,7 +35,7 @@
   </file>
   <file src="src/Metadata/AggregateRoot/AttributeAggregateRootMetadataFactory.php">
     <DocblockTypeContradiction>
-      <code>$reflectionType instanceof ReflectionIntersectionType</code>
+      <code><![CDATA[$reflectionType instanceof ReflectionIntersectionType]]></code>
     </DocblockTypeContradiction>
     <InvalidReturnStatement>
       <code><![CDATA[$this->aggregateMetadata[$aggregate]]]></code>
@@ -44,20 +44,12 @@
       <code><![CDATA[AggregateRootMetadata<T>]]></code>
     </InvalidReturnType>
   </file>
-  <file src="src/Projection/Projection/ProjectionCollection.php">
-    <InvalidReturnStatement>
-      <code><![CDATA[new ArrayIterator(array_values($this->projections))]]></code>
-    </InvalidReturnStatement>
-    <InvalidReturnType>
-      <code><![CDATA[ArrayIterator<int, Projection>]]></code>
-    </InvalidReturnType>
-  </file>
   <file src="src/Projection/Projection/Store/DoctrineStore.php">
     <MixedArgument>
-      <code>$context</code>
+      <code><![CDATA[$context]]></code>
     </MixedArgument>
     <MixedAssignment>
-      <code>$context</code>
+      <code><![CDATA[$context]]></code>
     </MixedAssignment>
     <PossiblyNullPropertyFetch>
       <code><![CDATA[$projectionError->errorContext]]></code>
@@ -66,24 +58,19 @@
   </file>
   <file src="src/Projection/Projectionist/DefaultProjectionist.php">
     <MixedMethodCall>
-      <code>$method</code>
-      <code>$method</code>
-      <code>$method</code>
+      <code><![CDATA[$method]]></code>
+      <code><![CDATA[$method]]></code>
+      <code><![CDATA[$method]]></code>
     </MixedMethodCall>
-  </file>
-  <file src="src/Projection/Projector/InMemoryProjectorRepository.php">
-    <InvalidOperand>
-      <code><![CDATA[$this->projectors]]></code>
-    </InvalidOperand>
   </file>
   <file src="src/Repository/DefaultRepository.php">
     <PropertyTypeCoercion>
-      <code>new WeakMap()</code>
+      <code><![CDATA[new WeakMap()]]></code>
     </PropertyTypeCoercion>
   </file>
   <file src="src/Serializer/Upcast/Upcast.php">
     <MixedAssignment>
-      <code>$payload[$key]</code>
+      <code><![CDATA[$payload[$key]]]></code>
     </MixedAssignment>
   </file>
   <file src="src/Snapshot/DefaultSnapshotStore.php">
@@ -93,7 +80,7 @@
   </file>
   <file src="src/Store/ArrayStream.php">
     <InvalidPropertyAssignmentValue>
-      <code>$index</code>
+      <code><![CDATA[$index]]></code>
     </InvalidPropertyAssignmentValue>
   </file>
   <file src="src/Store/DoctrineDbalStoreStream.php">
@@ -103,32 +90,32 @@
   </file>
   <file src="src/Store/DoctrineHelper.php">
     <MixedReturnTypeCoercion>
-      <code>$normalizedCustomHeaders</code>
+      <code><![CDATA[$normalizedCustomHeaders]]></code>
       <code><![CDATA[array<string, mixed>]]></code>
     </MixedReturnTypeCoercion>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
-      <code>$name</code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Benchmark/SimpleSetupBench.php">
     <MissingConstructor>
-      <code>$bus</code>
-      <code>$id</code>
-      <code>$repository</code>
-      <code>$store</code>
+      <code><![CDATA[$bus]]></code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$repository]]></code>
+      <code><![CDATA[$store]]></code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SnapshotsBench.php">
     <MissingConstructor>
-      <code>$adapter</code>
-      <code>$bus</code>
-      <code>$id</code>
-      <code>$repository</code>
-      <code>$snapshotStore</code>
-      <code>$store</code>
+      <code><![CDATA[$adapter]]></code>
+      <code><![CDATA[$bus]]></code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$repository]]></code>
+      <code><![CDATA[$snapshotStore]]></code>
+      <code><![CDATA[$store]]></code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SplitStreamBench.php">
@@ -136,85 +123,76 @@
       <code><![CDATA[$this->id]]></code>
     </ArgumentTypeCoercion>
     <MissingConstructor>
-      <code>$bus</code>
-      <code>$id</code>
-      <code>$repository</code>
-      <code>$snapshotStore</code>
-      <code>$store</code>
-    </MissingConstructor>
-  </file>
-  <file src="tests/Benchmark/SyncProjectionistBench.php">
-    <MissingConstructor>
-      <code>$bus</code>
-      <code>$id</code>
-      <code>$profile</code>
-      <code>$repository</code>
-      <code>$store</code>
+      <code><![CDATA[$bus]]></code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$repository]]></code>
+      <code><![CDATA[$snapshotStore]]></code>
+      <code><![CDATA[$store]]></code>
     </MissingConstructor>
   </file>
   <file src="tests/Integration/BankAccountSplitStream/Aggregate/BankAccount.php">
     <PropertyNotSetInConstructor>
-      <code>$balanceInCents</code>
-      <code>$id</code>
-      <code>$name</code>
+      <code><![CDATA[$balanceInCents]]></code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
-      <code>$name</code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/Outbox/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
-      <code>$name</code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/Pipeline/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
-      <code>$privacy</code>
-      <code>$visited</code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$privacy]]></code>
+      <code><![CDATA[$visited]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/Projectionist/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
-      <code>$name</code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/Store/Profile.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
-      <code>$name</code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion>
-      <code>$value</code>
+      <code><![CDATA[$value]]></code>
     </MixedArgumentTypeCoercion>
   </file>
   <file src="tests/Unit/Fixture/Profile.php">
     <PropertyNotSetInConstructor>
-      <code>$email</code>
-      <code>$id</code>
+      <code><![CDATA[$email]]></code>
+      <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileInvalid.php">
     <PropertyNotSetInConstructor>
-      <code>$email</code>
-      <code>$id</code>
+      <code><![CDATA[$email]]></code>
+      <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyBothUsage.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
+      <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
+      <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
     <ReservedWord>
       <code><![CDATA[ProfileCreated&ProfileVisited $event]]></code>
@@ -222,44 +200,44 @@
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyMultipleApply.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
+      <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
-      <code>$event</code>
+      <code><![CDATA[$event]]></code>
     </MissingParamType>
     <PropertyNotSetInConstructor>
-      <code>$id</code>
+      <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithEmptyApply.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
+      <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <PropertyNotSetInConstructor>
-      <code>$email</code>
-      <code>$id</code>
-      <code>$messages</code>
+      <code><![CDATA[$email]]></code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$messages]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithSuppressAll.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
+      <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/WrongNormalizerBasicAggregate.php">
     <PropertyNotSetInConstructor>
-      <code>$id</code>
+      <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Pipeline/Source/InMemorySourceTest.php">
     <InvalidMethodCall>
-      <code>current</code>
-      <code>current</code>
-      <code>next</code>
+      <code><![CDATA[current]]></code>
+      <code><![CDATA[current]]></code>
+      <code><![CDATA[next]]></code>
     </InvalidMethodCall>
   </file>
 </files>

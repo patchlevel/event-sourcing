@@ -5,16 +5,27 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection\Projection\Store;
 
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionCollection;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionAlreadyExists;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 
+use function array_filter;
 use function array_key_exists;
 use function array_values;
+use function in_array;
 
 final class InMemoryStore implements ProjectionStore
 {
     /** @var array<string, Projection> */
     private array $projections = [];
+
+    /** @param list<Projection> $projections */
+    public function __construct(array $projections = [])
+    {
+        foreach ($projections as $projection) {
+            $this->projections[$projection->id()] = $projection;
+        }
+    }
 
     public function get(string $projectionId): Projection
     {
@@ -25,22 +36,63 @@ final class InMemoryStore implements ProjectionStore
         throw new ProjectionNotFound($projectionId);
     }
 
-    public function all(): ProjectionCollection
+    /** @return list<Projection> */
+    public function find(ProjectionCriteria|null $criteria = null): array
     {
-        return new ProjectionCollection(array_values($this->projections));
+        $projections = array_values($this->projections);
+
+        if ($criteria === null) {
+            return $projections;
+        }
+
+        return array_values(
+            array_filter(
+                $projections,
+                static function (Projection $projection) use ($criteria): bool {
+                    if ($criteria->ids !== null) {
+                        if (!in_array($projection->id(), $criteria->ids, true)) {
+                            return false;
+                        }
+                    }
+
+                    if ($criteria->groups !== null) {
+                        if (!in_array($projection->group(), $criteria->groups, true)) {
+                            return false;
+                        }
+                    }
+
+                    if ($criteria->status !== null) {
+                        if (!in_array($projection->status(), $criteria->status, true)) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+            ),
+        );
     }
 
-    public function save(Projection ...$projections): void
+    public function add(Projection $projection): void
     {
-        foreach ($projections as $projection) {
-            $this->projections[$projection->id()] = $projection;
+        if (array_key_exists($projection->id(), $this->projections)) {
+            throw new ProjectionAlreadyExists($projection->id());
         }
+
+        $this->projections[$projection->id()] = $projection;
     }
 
-    public function remove(string ...$projectionIds): void
+    public function update(Projection $projection): void
     {
-        foreach ($projectionIds as $projectionId) {
-            unset($this->projections[$projectionId]);
+        if (!array_key_exists($projection->id(), $this->projections)) {
+            throw new ProjectionNotFound($projection->id());
         }
+
+        $this->projections[$projection->id()] = $projection;
+    }
+
+    public function remove(Projection $projection): void
+    {
+        unset($this->projections[$projection->id()]);
     }
 }

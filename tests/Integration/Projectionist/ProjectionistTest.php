@@ -23,15 +23,18 @@ use PHPUnit\Framework\TestCase;
 final class ProjectionistTest extends TestCase
 {
     private Connection $connection;
+    private Connection $projectionConnection;
 
     public function setUp(): void
     {
         $this->connection = DbalManager::createConnection();
+        $this->projectionConnection = DbalManager::createConnection();
     }
 
     public function tearDown(): void
     {
         $this->connection->close();
+        $this->projectionConnection->close();
     }
 
     public function testRun(): void
@@ -68,13 +71,13 @@ final class ProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $store,
             $projectionStore,
-            [new ProfileProjector($this->connection)],
+            [new ProfileProjector($this->projectionConnection)],
         );
 
         $projectionist->boot();
         $projectionist->run();
 
-        $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile_1 WHERE id = ?', ['1']);
+        $result = $this->projectionConnection->fetchAssociative('SELECT * FROM projection_profile_1 WHERE id = ?', ['1']);
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
