@@ -640,7 +640,7 @@ final class DefaultProjectionist implements Projectionist
                 continue;
             }
 
-            if ($projection->runMode() !== RunMode::FromNow) {
+            if ($projection->runMode() === RunMode::FromBeginning || $projection->runMode() === RunMode::Once) {
                 $forwardedProjections[] = $projection;
 
                 continue;
