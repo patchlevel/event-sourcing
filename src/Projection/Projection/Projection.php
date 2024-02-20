@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projection;
 
+use Patchlevel\EventSourcing\Projection\RetryStrategy\Retry;
+use Throwable;
+
 final class Projection
 {
     public const DEFAULT_GROUP = 'default';
@@ -15,7 +18,7 @@ final class Projection
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
         private ProjectionError|null $error = null,
-        private int $retry = 0,
+        private Retry|null $retry = null,
     ) {
     }
 
@@ -52,6 +55,12 @@ final class Projection
     public function changePosition(int $position): void
     {
         $this->position = $position;
+    }
+
+    public function new(): void
+    {
+        $this->status = ProjectionStatus::New;
+        $this->error = null;
     }
 
     public function isNew(): bool
@@ -102,10 +111,18 @@ final class Projection
         return $this->status === ProjectionStatus::Outdated;
     }
 
-    public function error(ProjectionError|null $error = null): void
+    public function error(Throwable|string $error): void
     {
+        $previousStatus = $this->status;
         $this->status = ProjectionStatus::Error;
-        $this->error = $error;
+
+        if ($error instanceof Throwable) {
+            $this->error = ProjectionError::fromThrowable($previousStatus, $error);
+
+            return;
+        }
+
+        $this->error = new ProjectionError($error, $previousStatus);
     }
 
     public function isError(): bool
@@ -113,28 +130,28 @@ final class Projection
         return $this->status === ProjectionStatus::Error;
     }
 
-    public function incrementRetry(): void
+    public function updateRetry(Retry|null $retry): void
     {
-        $this->retry++;
+        $this->retry = $retry;
     }
 
-    public function retry(): int
+    public function retry(): Retry|null
     {
         return $this->retry;
     }
 
+    public function doRetry(): void
+    {
+        if ($this->error === null) {
+            return;
+        }
+
+        $this->status = $this->error->previousStatus;
+        $this->error = null;
+    }
+
     public function resetRetry(): void
     {
-        $this->retry = 0;
-    }
-
-    public function disallowRetry(): void
-    {
-        $this->retry = -1;
-    }
-
-    public function isRetryDisallowed(): bool
-    {
-        return $this->retry === -1;
+        $this->retry = null;
     }
 }

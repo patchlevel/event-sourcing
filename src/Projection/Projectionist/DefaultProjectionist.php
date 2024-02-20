@@ -12,11 +12,12 @@ use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadata;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Projection\Projection\Store\LockableProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
+use Patchlevel\EventSourcing\Projection\RetryStrategy\DefaultRetryStrategy;
+use Patchlevel\EventSourcing\Projection\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
@@ -25,12 +26,11 @@ use Throwable;
 use function array_map;
 use function array_merge;
 use function count;
+use function in_array;
 use function sprintf;
 
 final class DefaultProjectionist implements Projectionist
 {
-    private const RETRY_LIMIT = 5;
-
     /** @var array<string, object>|null */
     private array|null $projectorIndex = null;
 
@@ -39,6 +39,7 @@ final class DefaultProjectionist implements Projectionist
         private readonly Store $streamableMessageStore,
         private readonly ProjectionStore $projectionStore,
         private readonly iterable $projectors,
+        private readonly RetryStrategy $retryStrategy = new DefaultRetryStrategy(),
         private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory(),
         private readonly LoggerInterface|null $logger = null,
     ) {
@@ -47,17 +48,16 @@ final class DefaultProjectionist implements Projectionist
     public function boot(
         ProjectionistCriteria|null $criteria = null,
         int|null $limit = null,
-        bool $throwByError = false,
     ): void {
         $criteria ??= new ProjectionistCriteria();
-
-        $this->discoverNewProjections();
 
         $this->logger?->info(
             'Projectionist: Start booting.',
         );
 
-        $this->handleNewProjections($criteria, $throwByError);
+        $this->discoverNewProjections();
+        $this->handleRetryProjections($criteria);
+        $this->handleNewProjections($criteria);
 
         $this->findForUpdate(
             new ProjectionCriteria(
@@ -65,7 +65,7 @@ final class DefaultProjectionist implements Projectionist
                 groups: $criteria->groups,
                 status: [ProjectionStatus::Booting],
             ),
-            function ($projections) use ($limit, $throwByError): void {
+            function ($projections) use ($limit): void {
                 $projections = $this->fastForwardFromNowProjections($projections);
 
                 if (count($projections) === 0) {
@@ -117,7 +117,7 @@ final class DefaultProjectionist implements Projectionist
                                 continue;
                             }
 
-                            $this->handleMessage($index, $message, $projection, $throwByError);
+                            $this->handleMessage($index, $message, $projection);
                         }
 
                         $messageCounter++;
@@ -180,14 +180,12 @@ final class DefaultProjectionist implements Projectionist
     public function run(
         ProjectionistCriteria|null $criteria = null,
         int|null $limit = null,
-        bool $throwByError = false,
     ): void {
         $criteria ??= new ProjectionistCriteria();
 
-        $this->discoverNewProjections();
-
         $this->logger?->info('Projectionist: Start processing.');
 
+        $this->discoverNewProjections();
         $this->handleOutdatedProjections($criteria);
         $this->handleRetryProjections($criteria);
 
@@ -197,7 +195,7 @@ final class DefaultProjectionist implements Projectionist
                 groups: $criteria->groups,
                 status: [ProjectionStatus::Active, ProjectionStatus::Error],
             ),
-            function (array $projections) use ($limit, $throwByError): void {
+            function (array $projections) use ($limit): void {
                 if (count($projections) === 0) {
                     $this->logger?->info('Projectionist: No projections to process, finish processing.');
 
@@ -246,7 +244,7 @@ final class DefaultProjectionist implements Projectionist
                                 continue;
                             }
 
-                            $this->handleMessage($index, $message, $projection, $throwByError);
+                            $this->handleMessage($index, $message, $projection);
                         }
 
                         $messageCounter++;
@@ -430,9 +428,10 @@ final class DefaultProjectionist implements Projectionist
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
-                status: [ProjectionStatus::Error],
+                status: [ProjectionStatus::Error, ProjectionStatus::Outdated, ProjectionStatus::Finished],
             ),
             function (array $projections): void {
+                /** @var Projection $projection */
                 foreach ($projections as $projection) {
                     $projector = $this->projector($projection->id());
 
@@ -440,6 +439,23 @@ final class DefaultProjectionist implements Projectionist
                         $this->logger?->debug(
                             sprintf('Projectionist: Projector for "%s" not found, skipped.', $projection->id()),
                         );
+
+                        continue;
+                    }
+
+                    $error = $projection->projectionError();
+
+                    if ($error) {
+                        $projection->doRetry();
+                        $projection->resetRetry();
+
+                        $this->projectionStore->update($projection);
+
+                        $this->logger?->info(sprintf(
+                            'Projectionist: Projector "%s" for "%s" is reactivated.',
+                            $projector::class,
+                            $projection->id(),
+                        ));
 
                         continue;
                     }
@@ -472,7 +488,7 @@ final class DefaultProjectionist implements Projectionist
         );
     }
 
-    private function handleMessage(int $index, Message $message, Projection $projection, bool $throwByError): void
+    private function handleMessage(int $index, Message $message, Projection $projection): void
     {
         $projector = $this->projector($projection->id());
 
@@ -513,17 +529,7 @@ final class DefaultProjectionist implements Projectionist
                 ),
             );
 
-            $projection->error(ProjectionError::fromThrowable($e));
-            $projection->incrementRetry();
-            $this->projectionStore->update($projection);
-
-            if ($throwByError) {
-                throw new ProjectionistError(
-                    $projector::class,
-                    $projection->id(),
-                    $e,
-                );
-            }
+            $this->handleError($projection, $e);
 
             return;
         }
@@ -563,14 +569,10 @@ final class DefaultProjectionist implements Projectionist
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
-                status: [ProjectionStatus::Active, ProjectionStatus::Error],
+                status: [ProjectionStatus::Active, ProjectionStatus::Finished],
             ),
             function (array $projections): void {
                 foreach ($projections as $projection) {
-                    if ($projection->isRetryDisallowed()) {
-                        continue;
-                    }
-
                     $projector = $this->projector($projection->id());
 
                     if ($projector) {
@@ -600,20 +602,28 @@ final class DefaultProjectionist implements Projectionist
                 status: [ProjectionStatus::Error],
             ),
             function (array $projections): void {
+                /** @var Projection $projection */
                 foreach ($projections as $projection) {
-                    if ($projection->retry() >= self::RETRY_LIMIT) {
+                    $retry = $projection->retry();
+
+                    if (!$retry) {
                         continue;
                     }
 
-                    $projection->active();
+                    if (!$this->retryStrategy->shouldRetry($retry)) {
+                        continue;
+                    }
+
+                    $projection->doRetry();
+
                     $this->projectionStore->update($projection);
 
                     $this->logger?->info(
                         sprintf(
-                            'Projectionist: Retry projection "%s" (%d/%d) and set to active.',
+                            'Projectionist: Retry projection "%s" (%d) and set back to %s.',
                             $projection->id(),
-                            $projection->retry(),
-                            self::RETRY_LIMIT,
+                            $retry->attempt,
+                            $projection->status()->value,
                         ),
                     );
                 }
@@ -666,7 +676,7 @@ final class DefaultProjectionist implements Projectionist
         return $forwardedProjections;
     }
 
-    private function handleNewProjections(ProjectionistCriteria $criteria, bool $throwByError): void
+    private function handleNewProjections(ProjectionistCriteria $criteria): void
     {
         $this->findForUpdate(
             new ProjectionCriteria(
@@ -674,7 +684,7 @@ final class DefaultProjectionist implements Projectionist
                 groups: $criteria->groups,
                 status: [ProjectionStatus::New],
             ),
-            function (array $projections) use ($throwByError): void {
+            function (array $projections): void {
                 foreach ($projections as $projection) {
                     $projector = $this->projector($projection->id());
 
@@ -716,17 +726,7 @@ final class DefaultProjectionist implements Projectionist
                             $e->getMessage(),
                         ));
 
-                        $projection->error(ProjectionError::fromThrowable($e));
-                        $projection->disallowRetry();
-                        $this->projectionStore->update($projection);
-
-                        if ($throwByError) {
-                            throw new ProjectionistError(
-                                $projector::class,
-                                $projection->id(),
-                                $e,
-                            );
-                        }
+                        $this->handleError($projection, $e);
                     }
                 }
             },
@@ -851,5 +851,24 @@ final class DefaultProjectionist implements Projectionist
 
             $closure($projections);
         });
+    }
+
+    private function handleError(Projection $projection, Throwable $throwable): void
+    {
+        $retryable = in_array(
+            $projection->status(),
+            [ProjectionStatus::New, ProjectionStatus::Booting, ProjectionStatus::Active],
+            true,
+        );
+
+        $projection->error($throwable);
+
+        if ($retryable) {
+            $projection->updateRetry(
+                $this->retryStrategy->nextAttempt($projection->retry()),
+            );
+        }
+
+        $this->projectionStore->update($projection);
     }
 }

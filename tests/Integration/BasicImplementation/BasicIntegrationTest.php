@@ -75,7 +75,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot(new ProjectionistCriteria(), null, true);
+        $projectionist->boot(new ProjectionistCriteria());
 
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId, 'John');
@@ -139,7 +139,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot(new ProjectionistCriteria(), null, true);
+        $projectionist->boot(new ProjectionistCriteria());
 
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId, 'John');

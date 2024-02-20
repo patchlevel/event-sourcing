@@ -11,7 +11,7 @@ parameters:
 			path: src/EventBus/Message.php
 
 		-
-			message: "#^Parameter \\#2 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\ProjectionError constructor expects array\\<int, array\\{class\\: class\\-string, message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
+			message: "#^Parameter \\#3 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\ProjectionError constructor expects array\\<int, array\\{class\\: class\\-string, message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Projection/Projection/Store/DoctrineStore.php
 

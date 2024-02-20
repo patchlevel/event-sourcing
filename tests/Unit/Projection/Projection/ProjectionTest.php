@@ -7,7 +7,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
-use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
+use Patchlevel\EventSourcing\Projection\Projection\ThrowableToErrorContextTransformer;
+use Patchlevel\EventSourcing\Projection\RetryStrategy\Retry;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -69,7 +70,7 @@ final class ProjectionTest extends TestCase
 
         $exception = new RuntimeException('test');
 
-        $projection->error(ProjectionError::fromThrowable($exception));
+        $projection->error($exception);
 
         self::assertEquals(ProjectionStatus::Error, $projection->status());
         self::assertFalse($projection->isNew());
@@ -80,7 +81,8 @@ final class ProjectionTest extends TestCase
         self::assertEquals(
             new ProjectionError(
                 'test',
-                ErrorContext::fromThrowable($exception),
+                ProjectionStatus::New,
+                ThrowableToErrorContextTransformer::transform($exception),
             ),
             $projection->projectionError(),
         );
@@ -119,18 +121,16 @@ final class ProjectionTest extends TestCase
             'test',
         );
 
-        self::assertEquals(0, $projection->retry());
-        self::assertFalse($projection->isRetryDisallowed());
+        self::assertEquals(null, $projection->retry());
 
-        $projection->incrementRetry();
-        self::assertEquals(1, $projection->retry());
+        $retry = new Retry(1, null);
 
-        $projection->disallowRetry();
-        self::assertEquals(-1, $projection->retry());
-        self::assertTrue($projection->isRetryDisallowed());
+        $projection->updateRetry($retry);
+
+        self::assertEquals($retry, $projection->retry());
 
         $projection->resetRetry();
-        self::assertEquals(0, $projection->retry());
-        self::assertFalse($projection->isRetryDisallowed());
+
+        self::assertEquals(null, $projection->retry());
     }
 }

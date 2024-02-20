@@ -322,14 +322,18 @@ stateDiagram-v2
     direction LR
     [*] --> New
     New --> Booting
+    New --> Error
     Booting --> Active
+    Booting --> Finished
     Booting --> Error
+    Active --> Finished
     Active --> Outdated
     Active --> Error
-    Active --> Finished
+    Finished --> Active
     Finished --> Outdated
+    Error --> New
+    Error --> Booting
     Error --> Active
-    Error --> [*]
     Outdated --> Active
     Outdated --> [*]
 ```

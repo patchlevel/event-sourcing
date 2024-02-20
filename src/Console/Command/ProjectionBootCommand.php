@@ -26,22 +26,15 @@ final class ProjectionBootCommand extends ProjectionCommand
                 null,
                 InputOption::VALUE_REQUIRED,
                 'How many messages should be consumed in one run',
-            )
-            ->addOption(
-                'throw-by-error',
-                null,
-                InputOption::VALUE_NONE,
-                'throw exception by error',
             );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $limit = InputHelper::nullablePositiveInt($input->getOption('limit'));
-        $throwByError = InputHelper::bool($input->getOption('throw-by-error'));
 
         $criteria = $this->projectionCriteria($input);
-        $this->projectionist->boot($criteria, $limit, $throwByError);
+        $this->projectionist->boot($criteria, $limit);
 
         return 0;
     }
