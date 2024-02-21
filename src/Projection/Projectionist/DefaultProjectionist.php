@@ -193,7 +193,7 @@ final class DefaultProjectionist implements Projectionist
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
-                status: [ProjectionStatus::Active, ProjectionStatus::Error],
+                status: [ProjectionStatus::Active],
             ),
             function (array $projections) use ($limit): void {
                 if (count($projections) === 0) {

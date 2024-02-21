@@ -1477,6 +1477,109 @@ final class DefaultProjectionistTest extends TestCase
         ], $projections);
     }
 
+    public function testRetry(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function subscribe(): void
+            {
+                throw new RuntimeException('ERROR2');
+            }
+        };
+
+        $retry1 = new Retry(1, new DateTimeImmutable());
+        $retry2 = new Retry(2, new DateTimeImmutable());
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Error,
+                0,
+                new ProjectionError('ERROR', ProjectionStatus::Active),
+                $retry1,
+            ),
+        ]);
+
+        $retryStrategy = $this->prophesize(RetryStrategy::class);
+        $retryStrategy->shouldRetry($retry1)->willReturn(true);
+        $retryStrategy->nextAttempt($retry1)->willReturn($retry2);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+            $retryStrategy->reveal(),
+        );
+
+        $projectionist->run();
+
+        self::assertCount(2, $projectionStore->updatedProjections);
+
+        [$update1, $update2] = $projectionStore->updatedProjections;
+
+        self::assertEquals($update1, new Projection(
+            $projectionId,
+            Projection::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            ProjectionStatus::Active,
+            0,
+            null,
+            $retry1,
+        ));
+
+        self::assertEquals(ProjectionStatus::Error, $update2->status());
+        self::assertEquals(ProjectionStatus::Active, $update2->projectionError()?->previousStatus);
+        self::assertEquals('ERROR2', $update2->projectionError()?->errorMessage);
+        self::assertEquals($retry2, $update2->retry());
+    }
+
+    public function testShouldNotRetry(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $retry = new Retry(1, new DateTimeImmutable());
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Error,
+                0,
+                new ProjectionError('ERROR', ProjectionStatus::Active),
+                $retry,
+            ),
+        ]);
+
+        $retryStrategy = $this->prophesize(RetryStrategy::class);
+        $retryStrategy->shouldRetry($retry)->willReturn(false);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+            $retryStrategy->reveal(),
+        );
+
+        $projectionist->run();
+
+        self::assertEquals([], $projectionStore->updatedProjections);
+    }
+
     #[DataProvider('methodProvider')]
     public function testCriteria(string $method): void
     {
