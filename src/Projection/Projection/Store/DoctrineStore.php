@@ -222,7 +222,7 @@ final class DoctrineStore implements LockableProjectionStore, SchemaConfigurator
             ->setNotnull(false);
         $table->addColumn('retry_attempt', Types::INTEGER)
             ->setNotnull(false);
-        $table->addColumn('retry_next', Types::DATETIME_IMMUTABLE)
+        $table->addColumn('retry_next', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
