@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Projection\Projection\Store\LockableProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
-use Patchlevel\EventSourcing\Projection\RetryStrategy\DefaultRetryStrategy;
+use Patchlevel\EventSourcing\Projection\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Projection\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
@@ -39,7 +39,7 @@ final class DefaultProjectionist implements Projectionist
         private readonly Store $streamableMessageStore,
         private readonly ProjectionStore $projectionStore,
         private readonly iterable $projectors,
-        private readonly RetryStrategy $retryStrategy = new DefaultRetryStrategy(),
+        private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
         private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory(),
         private readonly LoggerInterface|null $logger = null,
     ) {
@@ -604,25 +604,34 @@ final class DefaultProjectionist implements Projectionist
             function (array $projections): void {
                 /** @var Projection $projection */
                 foreach ($projections as $projection) {
-                    $retry = $projection->retry();
+                    $error = $projection->projectionError();
 
-                    if (!$retry) {
+                    if ($error === null) {
                         continue;
                     }
 
-                    if (!$this->retryStrategy->shouldRetry($retry)) {
+                    $retryable = in_array(
+                        $error->previousStatus,
+                        [ProjectionStatus::New, ProjectionStatus::Booting, ProjectionStatus::Active],
+                        true,
+                    );
+
+                    if (!$retryable) {
+                        continue;
+                    }
+
+                    if (!$this->retryStrategy->shouldRetry($projection)) {
                         continue;
                     }
 
                     $projection->doRetry();
-
                     $this->projectionStore->update($projection);
 
                     $this->logger?->info(
                         sprintf(
                             'Projectionist: Retry projection "%s" (%d) and set back to %s.',
                             $projection->id(),
-                            $retry->attempt,
+                            $projection->retryAttempt(),
                             $projection->status()->value,
                         ),
                     );
@@ -855,20 +864,7 @@ final class DefaultProjectionist implements Projectionist
 
     private function handleError(Projection $projection, Throwable $throwable): void
     {
-        $retryable = in_array(
-            $projection->status(),
-            [ProjectionStatus::New, ProjectionStatus::Booting, ProjectionStatus::Active],
-            true,
-        );
-
         $projection->error($throwable);
-
-        if ($retryable) {
-            $projection->updateRetry(
-                $this->retryStrategy->nextAttempt($projection->retry()),
-            );
-        }
-
         $this->projectionStore->update($projection);
     }
 }

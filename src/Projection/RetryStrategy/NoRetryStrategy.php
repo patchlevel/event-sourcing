@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\RetryStrategy;
 
+use Patchlevel\EventSourcing\Projection\Projection\Projection;
+
 final class NoRetryStrategy implements RetryStrategy
 {
-    public function nextAttempt(Retry|null $retry): Retry|null
-    {
-        return null;
-    }
-
-    public function shouldRetry(Retry|null $retry): bool
+    public function shouldRetry(Projection $projection): bool
     {
         return false;
     }

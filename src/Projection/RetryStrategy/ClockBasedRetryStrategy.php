@@ -6,13 +6,13 @@ namespace Patchlevel\EventSourcing\Projection\RetryStrategy;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock\SystemClock;
+use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Psr\Clock\ClockInterface;
-use RuntimeException;
 
 use function round;
 use function sprintf;
 
-final class DefaultRetryStrategy implements RetryStrategy
+final class ClockBasedRetryStrategy implements RetryStrategy
 {
     public const DEFAULT_BASE_DELAY = 5;
     public const DEFAULT_DELAY_FACTOR = 2;
@@ -30,46 +30,29 @@ final class DefaultRetryStrategy implements RetryStrategy
     ) {
     }
 
-    public function nextAttempt(Retry|null $retry): Retry|null
+    public function shouldRetry(Projection $projection): bool
     {
-        if ($retry === null) {
-            return new Retry(
-                1,
-                $this->calculateNextDate(1),
-            );
-        }
-
-        if ($retry->attempt() >= $this->maxAttempts) {
-            return null;
-        }
-
-        return new Retry(
-            $retry->attempt() + 1,
-            $this->calculateNextDate($retry->attempt()),
-        );
-    }
-
-    public function shouldRetry(Retry|null $retry): bool
-    {
-        if ($retry === null) {
+        if ($projection->retryAttempt() >= $this->maxAttempts) {
             return false;
         }
 
-        $nextRetry = $retry->nextRetry();
+        $lastSavedAt = $projection->lastSavedAt();
 
-        if ($nextRetry === null) {
+        if ($lastSavedAt === null) {
             return false;
         }
 
-        return $nextRetry <= $this->clock->now();
+        $nextRetryDate = $this->calculateNextRetryDate($lastSavedAt, $projection->retryAttempt());
+
+        return $nextRetryDate <= $this->clock->now();
     }
 
-    private function calculateNextDate(int $attempt): DateTimeImmutable
+    private function calculateNextRetryDate(DateTimeImmutable $lastDate, int $attempt): DateTimeImmutable
     {
-        $nextDate = $this->clock->now()->modify(sprintf('+%d seconds', $this->calculateDelay($attempt)));
+        $nextDate = $lastDate->modify(sprintf('+%d seconds', $this->calculateDelay($attempt)));
 
         if ($nextDate === false) {
-            throw new RuntimeException('Could not calculate next date');
+            throw new UnexpectedError('Could not calculate next date');
         }
 
         return $nextDate;

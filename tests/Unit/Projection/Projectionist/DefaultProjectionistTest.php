@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projectionist;
 
 use Closure;
-use DateTimeImmutable;
 use Generator;
 use Patchlevel\EventSourcing\Attribute\Projector as ProjectionAttribute;
 use Patchlevel\EventSourcing\Attribute\Setup;
@@ -22,7 +21,6 @@ use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projection\ThrowableToErrorContextTransformer;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
-use Patchlevel\EventSourcing\Projection\RetryStrategy\Retry;
 use Patchlevel\EventSourcing\Projection\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria;
@@ -397,15 +395,10 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->shouldNotBeCalled();
 
-        $retry = new Retry(1, new DateTimeImmutable());
-        $retryStrategy = $this->prophesize(RetryStrategy::class);
-        $retryStrategy->nextAttempt(null)->willReturn($retry)->shouldBeCalledOnce();
-
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
             [$projector],
-            $retryStrategy->reveal(),
         );
 
         $projectionist->boot();
@@ -423,7 +416,6 @@ final class DefaultProjectionistTest extends TestCase
                         ProjectionStatus::New,
                         ThrowableToErrorContextTransformer::transform($projector->exception),
                     ),
-                    $retry,
                 ),
             ],
             $projectionStore->updatedProjections,
@@ -830,15 +822,10 @@ final class DefaultProjectionistTest extends TestCase
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
 
-        $retry = new Retry(1, new DateTimeImmutable());
-        $retryStrategy = $this->prophesize(RetryStrategy::class);
-        $retryStrategy->nextAttempt(null)->willReturn($retry)->shouldBeCalledOnce();
-
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
             [$projector],
-            $retryStrategy->reveal(),
         );
 
         $projectionist->run();
@@ -856,7 +843,6 @@ final class DefaultProjectionistTest extends TestCase
                         ProjectionStatus::Active,
                         ThrowableToErrorContextTransformer::transform($projector->exception),
                     ),
-                    $retry,
                 ),
             ],
             $projectionStore->updatedProjections,
@@ -1489,29 +1475,24 @@ final class DefaultProjectionistTest extends TestCase
             }
         };
 
-        $retry1 = new Retry(1, new DateTimeImmutable());
-        $retry2 = new Retry(2, new DateTimeImmutable());
-
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
 
-        $projectionStore = new DummyStore([
-            new Projection(
-                $projectionId,
-                Projection::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                ProjectionStatus::Error,
-                0,
-                new ProjectionError('ERROR', ProjectionStatus::Active),
-                $retry1,
-            ),
-        ]);
+        $projection = new Projection(
+            $projectionId,
+            Projection::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            ProjectionStatus::Error,
+            0,
+            new ProjectionError('ERROR', ProjectionStatus::Active),
+        );
+
+        $projectionStore = new DummyStore([$projection]);
 
         $retryStrategy = $this->prophesize(RetryStrategy::class);
-        $retryStrategy->shouldRetry($retry1)->willReturn(true);
-        $retryStrategy->nextAttempt($retry1)->willReturn($retry2);
+        $retryStrategy->shouldRetry($projection)->willReturn(true);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
@@ -1533,13 +1514,13 @@ final class DefaultProjectionistTest extends TestCase
             ProjectionStatus::Active,
             0,
             null,
-            $retry1,
+            1,
         ));
 
         self::assertEquals(ProjectionStatus::Error, $update2->status());
         self::assertEquals(ProjectionStatus::Active, $update2->projectionError()?->previousStatus);
         self::assertEquals('ERROR2', $update2->projectionError()?->errorMessage);
-        self::assertEquals($retry2, $update2->retry());
+        self::assertEquals(1, $update2->retryAttempt());
     }
 
     public function testShouldNotRetry(): void
@@ -1549,24 +1530,21 @@ final class DefaultProjectionistTest extends TestCase
         class {
         };
 
-        $retry = new Retry(1, new DateTimeImmutable());
-
         $streamableStore = $this->prophesize(Store::class);
 
-        $projectionStore = new DummyStore([
-            new Projection(
-                $projectionId,
-                Projection::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                ProjectionStatus::Error,
-                0,
-                new ProjectionError('ERROR', ProjectionStatus::Active),
-                $retry,
-            ),
-        ]);
+        $projection = new Projection(
+            $projectionId,
+            Projection::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            ProjectionStatus::Error,
+            0,
+            new ProjectionError('ERROR', ProjectionStatus::Active),
+        );
+
+        $projectionStore = new DummyStore([$projection]);
 
         $retryStrategy = $this->prophesize(RetryStrategy::class);
-        $retryStrategy->shouldRetry($retry)->willReturn(false);
+        $retryStrategy->shouldRetry($projection)->willReturn(false);
 
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),

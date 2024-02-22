@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projection;
 
-use Patchlevel\EventSourcing\Projection\RetryStrategy\Retry;
+use DateTimeImmutable;
 use Throwable;
 
 final class Projection
@@ -18,7 +18,8 @@ final class Projection
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
         private ProjectionError|null $error = null,
-        private Retry|null $retry = null,
+        private int $retryAttempt = 0,
+        private DateTimeImmutable|null $lastSavedAt = null,
     ) {
     }
 
@@ -130,28 +131,34 @@ final class Projection
         return $this->status === ProjectionStatus::Error;
     }
 
-    public function updateRetry(Retry|null $retry): void
+    public function retryAttempt(): int
     {
-        $this->retry = $retry;
-    }
-
-    public function retry(): Retry|null
-    {
-        return $this->retry;
+        return $this->retryAttempt;
     }
 
     public function doRetry(): void
     {
         if ($this->error === null) {
-            return;
+            throw new NoErrorToRetry();
         }
 
+        $this->retryAttempt++;
         $this->status = $this->error->previousStatus;
         $this->error = null;
     }
 
     public function resetRetry(): void
     {
-        $this->retry = null;
+        $this->retryAttempt = 0;
+    }
+
+    public function lastSavedAt(): DateTimeImmutable|null
+    {
+        return $this->lastSavedAt;
+    }
+
+    public function updateLastSavedAt(DateTimeImmutable $lastSavedAt): void
+    {
+        $this->lastSavedAt = $lastSavedAt;
     }
 }

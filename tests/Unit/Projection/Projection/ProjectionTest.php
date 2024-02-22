@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projection;
 
+use Patchlevel\EventSourcing\Projection\Projection\NoErrorToRetry;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
+use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Projection\Projection\ThrowableToErrorContextTransformer;
-use Patchlevel\EventSourcing\Projection\RetryStrategy\Retry;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -115,22 +116,34 @@ final class ProjectionTest extends TestCase
         self::assertEquals(10, $projection->position());
     }
 
-    public function testRetry(): void
+    public function testCanNotRetry(): void
     {
+        $this->expectException(NoErrorToRetry::class);
+
         $projection = new Projection(
             'test',
         );
 
-        self::assertEquals(null, $projection->retry());
+        $projection->doRetry();
+    }
 
-        $retry = new Retry(1, null);
+    public function testDoRetry(): void
+    {
+        $projection = new Projection(
+            'test',
+            'default',
+            RunMode::FromBeginning,
+            ProjectionStatus::Error,
+            0,
+            new ProjectionError('test', ProjectionStatus::New, []),
+        );
 
-        $projection->updateRetry($retry);
+        self::assertEquals(null, $projection->retryAttempt());
+        $projection->doRetry();
 
-        self::assertEquals($retry, $projection->retry());
-
+        self::assertEquals(1, $projection->retryAttempt());
         $projection->resetRetry();
 
-        self::assertEquals(null, $projection->retry());
+        self::assertEquals(null, $projection->retryAttempt());
     }
 }

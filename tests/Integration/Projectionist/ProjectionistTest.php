@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
-use Patchlevel\EventSourcing\Projection\RetryStrategy\DefaultRetryStrategy;
+use Patchlevel\EventSourcing\Projection\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -53,7 +53,12 @@ final class ProjectionistTest extends TestCase
             'eventstore',
         );
 
-        $projectionStore = new DoctrineStore($this->connection);
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $projectionStore = new DoctrineStore(
+            $this->connection,
+            $clock,
+        );
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
@@ -80,7 +85,7 @@ final class ProjectionistTest extends TestCase
         );
 
         self::assertEquals(
-            [new Projection('profile_1')],
+            [new Projection('profile_1', lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'))],
             $projectionist->projections(),
         );
 
@@ -93,6 +98,7 @@ final class ProjectionistTest extends TestCase
                     Projection::DEFAULT_GROUP,
                     RunMode::FromBeginning,
                     ProjectionStatus::Active,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
             ],
             $projectionist->projections(),
@@ -111,6 +117,7 @@ final class ProjectionistTest extends TestCase
                     RunMode::FromBeginning,
                     ProjectionStatus::Active,
                     1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
             ],
             $projectionist->projections(),
@@ -132,6 +139,7 @@ final class ProjectionistTest extends TestCase
                     Projection::DEFAULT_GROUP,
                     RunMode::FromBeginning,
                     ProjectionStatus::New,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
             ],
             $projectionist->projections(),
@@ -144,13 +152,18 @@ final class ProjectionistTest extends TestCase
 
     public function testErrorHandling(): void
     {
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             'eventstore',
         );
 
-        $projectionStore = new DoctrineStore($this->connection);
+        $projectionStore = new DoctrineStore(
+            $this->connection,
+            $clock,
+        );
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
@@ -169,16 +182,15 @@ final class ProjectionistTest extends TestCase
         );
 
         $projector = new ErrorProducerProjector();
-        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
 
         $projectionist = new DefaultProjectionist(
             $store,
             $projectionStore,
             [$projector],
-            new DefaultRetryStrategy(
+            new ClockBasedRetryStrategy(
                 $clock,
-                DefaultRetryStrategy::DEFAULT_BASE_DELAY,
-                DefaultRetryStrategy::DEFAULT_DELAY_FACTOR,
+                ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
+                ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
                 2,
             ),
         );
@@ -189,7 +201,7 @@ final class ProjectionistTest extends TestCase
 
         self::assertEquals(ProjectionStatus::Active, $projection->status());
         self::assertEquals(null, $projection->projectionError());
-        self::assertEquals(null, $projection->retry());
+        self::assertEquals(0, $projection->retryAttempt());
 
         $repository = $manager->get(Profile::class);
 
@@ -204,8 +216,7 @@ final class ProjectionistTest extends TestCase
         self::assertEquals(ProjectionStatus::Error, $projection->status());
         self::assertEquals('subscribe error', $projection->projectionError()?->errorMessage);
         self::assertEquals(ProjectionStatus::Active, $projection->projectionError()?->previousStatus);
-        self::assertEquals(1, $projection->retry()?->attempt);
-        self::assertEquals(new DateTimeImmutable('2021-01-01T00:00:10'), $projection->retry()?->nextRetry);
+        self::assertEquals(0, $projection->retryAttempt());
 
         $projectionist->run();
 
@@ -214,8 +225,18 @@ final class ProjectionistTest extends TestCase
         self::assertEquals(ProjectionStatus::Error, $projection->status());
         self::assertEquals('subscribe error', $projection->projectionError()?->errorMessage);
         self::assertEquals(ProjectionStatus::Active, $projection->projectionError()?->previousStatus);
-        self::assertEquals(1, $projection->retry()?->attempt);
-        self::assertEquals(new DateTimeImmutable('2021-01-01T00:00:10'), $projection->retry()?->nextRetry);
+        self::assertEquals(0, $projection->retryAttempt());
+
+        $clock->sleep(5);
+
+        $projectionist->run();
+
+        $projection = self::findProjection($projectionist->projections(), 'error_producer');
+
+        self::assertEquals(ProjectionStatus::Error, $projection->status());
+        self::assertEquals('subscribe error', $projection->projectionError()?->errorMessage);
+        self::assertEquals(ProjectionStatus::Active, $projection->projectionError()?->previousStatus);
+        self::assertEquals(1, $projection->retryAttempt());
 
         $clock->sleep(10);
 
@@ -226,19 +247,7 @@ final class ProjectionistTest extends TestCase
         self::assertEquals(ProjectionStatus::Error, $projection->status());
         self::assertEquals('subscribe error', $projection->projectionError()?->errorMessage);
         self::assertEquals(ProjectionStatus::Active, $projection->projectionError()?->previousStatus);
-        self::assertEquals(2, $projection->retry()?->attempt);
-        self::assertEquals(new DateTimeImmutable('2021-01-01T00:00:20'), $projection->retry()?->nextRetry);
-
-        $clock->sleep(20);
-
-        $projectionist->run();
-
-        $projection = self::findProjection($projectionist->projections(), 'error_producer');
-
-        self::assertEquals(ProjectionStatus::Error, $projection->status());
-        self::assertEquals('subscribe error', $projection->projectionError()?->errorMessage);
-        self::assertEquals(ProjectionStatus::Active, $projection->projectionError()?->previousStatus);
-        self::assertEquals(null, $projection->retry());
+        self::assertEquals(2, $projection->retryAttempt());
 
         $projectionist->reactivate(new ProjectionistCriteria(
             ids: ['error_producer'],
@@ -248,7 +257,7 @@ final class ProjectionistTest extends TestCase
 
         self::assertEquals(ProjectionStatus::Active, $projection->status());
         self::assertEquals(null, $projection->projectionError());
-        self::assertEquals(null, $projection->retry());
+        self::assertEquals(0, $projection->retryAttempt());
 
         $projectionist->run();
 
@@ -257,10 +266,9 @@ final class ProjectionistTest extends TestCase
         self::assertEquals(ProjectionStatus::Error, $projection->status());
         self::assertEquals('subscribe error', $projection->projectionError()?->errorMessage);
         self::assertEquals(ProjectionStatus::Active, $projection->projectionError()?->previousStatus);
-        self::assertEquals(1, $projection->retry()?->attempt);
-        self::assertEquals(new DateTimeImmutable('2021-01-01T00:00:40'), $projection->retry()?->nextRetry);
+        self::assertEquals(0, $projection->retryAttempt());
 
-        $clock->sleep(10);
+        $clock->sleep(5);
         $projector->subscribeError = false;
 
         $projectionist->run();
@@ -269,7 +277,7 @@ final class ProjectionistTest extends TestCase
 
         self::assertEquals(ProjectionStatus::Active, $projection->status());
         self::assertEquals(null, $projection->projectionError());
-        self::assertEquals(null, $projection->retry());
+        self::assertEquals(0, $projection->retryAttempt());
     }
 
     /** @param list<Projection> $projections */

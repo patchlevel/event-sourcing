@@ -442,9 +442,9 @@ Our default strategy can be configured with the following parameters:
 * `maxAttempts` - The maximum number of attempts.
 
 ```php
-use Patchlevel\EventSourcing\Projection\RetryStrategy\DefaultRetryStrategy;
+use Patchlevel\EventSourcing\Projection\RetryStrategy\ClockBasedRetryStrategy;
 
-$retryStrategy = new DefaultRetryStrategy(
+$retryStrategy = new ClockBasedRetryStrategy(
     baseDelay: 5,
     delayFactor: 2,
     maxAttempts: 5,
