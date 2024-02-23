@@ -1,9 +1,13 @@
 # CLI
 
-The library also offers `symfony` cli commands to create or delete `databases`. 
-It is also possible to manage the `schema` and `projections`. 
-These commands are `optional` and only wrap existing functionalities 
-that are also available in this way.
+This library provides a `cli` to manage the `event-sourcing` functionalities.
+
+You can:
+
+* Create and delete `databases`
+* Create, update and delete `schemas`
+* Manage `projections`
+* Consume `outbox` messages
 
 ## Database commands
 
@@ -22,35 +26,23 @@ The database schema can also be created, updated and dropped.
 
 !!! note
 
-    You can also register doctrine migration commands,
-    see the [store](./store.md) documentation for this.
+    You can also register doctrine migration commands.
 
 ## Projection commands
 
-The creation, deletion and rebuilding of the projections is also possible via the cli.
-
-* ProjectionCreateCommand: `event-sourcing:projection:create`
-* ProjectionDropCommand: `event-sourcing:projection:drop`
-* ProjectionRebuildCommand: `event-sourcing:projection:rebuild`
-
-!!! note
-
-    The [pipeline](./pipeline.md) will be used to rebuild the projection.
-
-## Projectionist commands
-
 To manage your projectors there are the following cli commands.
 
-* ProjectionistBootCommand: `event-sourcing:projectionist:boot`
-* ProjectionistReactiveCommand: `event-sourcing:projectionist:reactive`
-* ProjectionistRemoveCommand: `event-sourcing:projectionist:remove`
-* ProjectionistRunCommand: `event-sourcing:projectionist:run`
-* ProjectionistStatusCommand: `event-sourcing:projectionist:status`
-* ProjectionistTeardownCommand: `event-sourcing:projectionist:teardown`
+* ProjectionBootCommand: `event-sourcing:projection:boot`
+* ProjectionReactiveCommand: `event-sourcing:projection:reactive`
+* ProjectionRebuildCommand: `event-sourcing:projection:rebuild`
+* ProjectionRemoveCommand: `event-sourcing:projection:remove`
+* ProjectionRunCommand: `event-sourcing:projection:run`
+* ProjectionStatusCommand: `event-sourcing:projection:status`
+* ProjectionTeardownCommand: `event-sourcing:projection:teardown`
 
 !!! note
 
-    You can find out more about projectionist [here](projectionist.md).
+    You can find out more about projections [here](projection.md).
 
 ## Outbox commands
 
@@ -74,7 +66,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Symfony\Component\Console\Application;
 
 $store = /* define your doctrine store */;
-$projectionRepository = /* create a project repository */;
+$projectionist = /* create projectionist */;
 
 $cli = new Application('Event-Sourcing CLI');
 $cli->setCatchExceptions(true);
@@ -85,9 +77,13 @@ $schemaManager = new DoctrineSchemaManager();
 $cli->addCommands(array(
     new Command\DatabaseCreateCommand($store, $doctrineHelper),
     new Command\DatabaseDropCommand($store, $doctrineHelper),
-    new Command\ProjectionCreateCommand($projectionRepository),
-    new Command\ProjectionDropCommand($projectionRepository),
-    new Command\ProjectionRebuildCommand($store, $projectionRepository),
+    new Command\ProjectionBootCommand($projectionist),
+    new Command\ProjectionRunCommand($projectionist),
+    new Command\ProjectionTeardownCommand($projectionist),
+    new Command\ProjectionRemoveCommand($projectionist),
+    new Command\ProjectionReactivateCommand($projectionist),
+    new Command\ProjectionRebuildCommand($projectionist),
+    new Command\ProjectionStatusCommand($projectionist),
     new Command\SchemaCreateCommand($store, $schemaManager),
     new Command\SchemaDropCommand($store, $schemaManager),
     new Command\SchemaUpdateCommand($store, $schemaManager),
@@ -96,7 +92,55 @@ $cli->addCommands(array(
 $cli->run();
 ```
 
+### Doctrine Migrations
+
+If you want to use doctrine migrations, you can register the commands like this:
+
+```php
+use Doctrine\DBAL\DriverManager;
+use Doctrine\Migrations\DependencyFactory;
+use Doctrine\Migrations\Configuration\Migration\PhpFile;
+use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
+use Doctrine\Migrations\Tools\Console\Command;
+use Symfony\Component\Console\Application;
+use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+
+$connection = /* create connection */
+$store = /* define your doctrine store */;
+
+$schemaDirector = new DoctrineSchemaDirector(
+    $store,
+    $connection
+);
+
+$migrationConfig = /* define your migration config */;
+
+
+$dependencyFactory = DependencyFactory::fromConnection(
+    $migrationConfig, 
+    new ExistingConnection($connection)
+);
+
+
+$dependencyFactory->setService(
+    SchemaProvider::class, 
+    new DoctrineMigrationSchemaProvider($schemaDirector)
+);
+
+$cli->addCommands([    
+    new Command\ExecuteCommand($dependencyFactory, 'event-sourcing:migrations:execute'),
+    new Command\GenerateCommand($dependencyFactory, 'event-sourcing:migrations:generate'),
+    new Command\LatestCommand($dependencyFactory, 'event-sourcing:migrations:latest'),
+    new Command\ListCommand($dependencyFactory, 'event-sourcing:migrations:list'),
+    new Command\MigrateCommand($dependencyFactory, 'event-sourcing:migrations:migrate'),
+    new Command\DiffCommand($dependencyFactory, 'event-sourcing:migrations:diff'),
+    new Command\StatusCommand($dependencyFactory, 'event-sourcing:migrations:status'),
+    new Command\VersionCommand($dependencyFactory, 'event-sourcing:migrations:version'),
+]);
+```
+
 !!! note
 
-    You can also register doctrine migration commands, 
-    see the [store](./store.md) documentation for this.
+    Here you can find more information on how to 
+    [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).

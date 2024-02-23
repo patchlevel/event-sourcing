@@ -256,7 +256,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
         $table->addColumn('payload', Types::JSON)
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
-            ->setNotnull(false);
+            ->setNotnull(true);
         $table->addColumn('new_stream_start', Types::BOOLEAN)
             ->setNotnull(true)
             ->setDefault(false);

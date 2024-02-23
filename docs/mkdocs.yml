@@ -98,5 +98,4 @@ nav:
     - Testing: testing.md
   - Other / Tools:
     - CLI: cli.md
-    - Schema Migration: migration.md
     - Watch Server: watch_server.md
