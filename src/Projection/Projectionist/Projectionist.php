@@ -11,7 +11,6 @@ interface Projectionist
     /**
      * @param positive-int|null $limit
      *
-     * @throws ProjectionistError
      * @throws ProjectorNotFound
      */
     public function boot(
@@ -22,7 +21,6 @@ interface Projectionist
     /**
      * @param positive-int|null $limit
      *
-     * @throws ProjectionistError
      * @throws ProjectorNotFound
      */
     public function run(
