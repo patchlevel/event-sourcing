@@ -247,3 +247,10 @@ class ProfileRepository
     }
 }
 ```
+## Learn more
+
+* [How to create an aggregate](aggregate.md)
+* [How to create an event](events.md)
+* [How to work with the store](store.md)
+* [How to use snapshots](snapshots.md)
+* [How to split streams](split_stream.md)

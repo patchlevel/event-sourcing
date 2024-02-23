@@ -344,3 +344,10 @@ $store->transactional(static function () use ($command, $bankAccountRepository):
     $bankAccountRepository->save($accountTo);
 });
 ```
+## Learn more
+
+* [How to create events](events.md)
+* [How to use repositories](repository.md)
+* [How to dispatch events](event_bus.md)
+* [How to upcast events](upcasting.md)
+* [How configure cli commands](cli.md)
