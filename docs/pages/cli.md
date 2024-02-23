@@ -55,6 +55,14 @@ Interacting with the outbox store is also possible via the cli.
 
     You can find out more about outbox [here](outbox.md).
 
+## Inspector commands
+
+The inspector is a tool to inspect the event streams.
+
+* ShowCommand: `event-sourcing:show`
+* ShowAggregateCommand: `event-sourcing:show-aggregate`
+* WatchCommand: `event-sourcing:watch`
+
 ## CLI example
 
 A cli php file can look like this:
