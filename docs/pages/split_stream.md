@@ -17,12 +17,16 @@ loaded anymore for building the aggregate. This means that all needed data has t
 should trigger the event split.
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Attribute\SplitStream;
+use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
+
 #[Event('bank_account.month_passed')]
 #[SplitStream]
 final class MonthPassed
 {
     public function __construct(
-        #[Normalize(new AccountIdNormalizer())]
+        #[IdNormalizer]
         public AccountId $accountId,
         public string $name,
         public int $balanceInCents,

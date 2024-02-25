@@ -189,7 +189,17 @@ final class DTO {
 ### Enum
 
 Backed enums can also be normalized. 
-For this, the enum FQCN must also be pass so that the `EnumNormalizer` knows which enum it is.
+
+```php
+use Patchlevel\Hydrator\Normalizer\EnumNormalizer;
+
+final class DTO {
+    #[EnumNormalizer]
+    public Status $status;
+}
+```
+
+You can also specify the enum class.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\EnumNormalizer;
@@ -203,7 +213,18 @@ final class DTO {
 ### Id
 
 If you have your own AggregateRootId, you can use the `IdNormalizer`.
-the `IdNormalizer` needs the FQCN of the AggregateRootId as a parameter.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\Hydrator\Normalizer\IdNormalizer;
+
+final class DTO {
+    #[IdNormalizer]
+    public Uuid $id;
+}
+```
+
+Optional you can also define the type of the id.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
@@ -212,6 +233,31 @@ use Patchlevel\Hydrator\Normalizer\IdNormalizer;
 final class DTO {
     #[IdNormalizer(Uuid::class)]
     public Uuid $id;
+}
+```
+
+### Object
+
+If you have a complex object that you want to normalize, you can use the `ObjectNormalizer`.
+Internally, it uses the `Hydrator` to normalize and denormalize the object.
+
+```php
+use Patchlevel\Hydrator\Normalizer\ObjectNormalizer;
+
+final class DTO {
+    #[ObjectNormalizer]
+    public ComplexObject $object;
+}
+```
+
+Optional you can also define the type of the object.
+
+```php
+use Patchlevel\Hydrator\Normalizer\ObjectNormalizer;
+
+final class DTO {
+    #[ObjectNormalizer(ComplexObject::class)]
+    public object $object;
 }
 ```
 

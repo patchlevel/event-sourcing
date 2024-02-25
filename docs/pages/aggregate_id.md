@@ -26,7 +26,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer(Uuid::class)]
+    #[IdNormalizer]
     private Uuid $id;
 }
 ```
@@ -68,7 +68,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer(CustomId::class)]
+    #[IdNormalizer]
     private CustomId $id;
 }
 ```
@@ -127,7 +127,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer(ProfileId::class)]
+    #[IdNormalizer]
     private ProfileId $id;
 }
 ```

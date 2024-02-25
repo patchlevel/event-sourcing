@@ -73,7 +73,7 @@ use Patchlevel\Hydrator\Normalizer\IdNormalizer;
 final class ProfileCreated
 {
     public function __construct(
-        #[IdNormalizer(Uuid::class)]
+        #[IdNormalizer]
         public readonly Uuid $id,
         #[NameNormalizer]
         public readonly Name $name,

@@ -105,7 +105,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 final class ProfileRegistered
 {
     public function __construct(
-        #[IdNormalizer(Uuid::class)]
+        #[IdNormalizer]
         public readonly Uuid $profileId,
         public readonly string $name
     ) {}

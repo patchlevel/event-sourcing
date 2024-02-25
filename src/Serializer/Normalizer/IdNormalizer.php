@@ -7,16 +7,20 @@ namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 use Attribute;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\Hydrator\Normalizer\InvalidArgument;
+use Patchlevel\Hydrator\Normalizer\InvalidType;
 use Patchlevel\Hydrator\Normalizer\Normalizer;
+use Patchlevel\Hydrator\Normalizer\ReflectionTypeAwareNormalizer;
+use Patchlevel\Hydrator\Normalizer\ReflectionTypeUtil;
+use ReflectionType;
 
 use function is_string;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-final class IdNormalizer implements Normalizer
+final class IdNormalizer implements Normalizer, ReflectionTypeAwareNormalizer
 {
     public function __construct(
-        /** @var class-string<AggregateRootId> */
-        private readonly string $aggregateIdClass,
+        /** @var class-string<AggregateRootId>|null */
+        private string|null $aggregateIdClass = null,
     ) {
     }
 
@@ -26,8 +30,10 @@ final class IdNormalizer implements Normalizer
             return null;
         }
 
+        $class = $this->aggregateIdClass();
+
         if (!$value instanceof AggregateRootId) {
-            throw InvalidArgument::withWrongType($this->aggregateIdClass, $value);
+            throw InvalidArgument::withWrongType($class, $value);
         }
 
         return $value->toString();
@@ -43,8 +49,30 @@ final class IdNormalizer implements Normalizer
             throw InvalidArgument::withWrongType('string', $value);
         }
 
-        $class = $this->aggregateIdClass;
+        $class = $this->aggregateIdClass();
 
         return $class::fromString($value);
+    }
+
+    public function handleReflectionType(ReflectionType|null $reflectionType): void
+    {
+        if ($this->aggregateIdClass !== null || $reflectionType === null) {
+            return;
+        }
+
+        $this->aggregateIdClass = ReflectionTypeUtil::classStringInstanceOf(
+            $reflectionType,
+            AggregateRootId::class,
+        );
+    }
+
+    /** @return class-string<AggregateRootId> */
+    public function aggregateIdClass(): string
+    {
+        if ($this->aggregateIdClass === null) {
+            throw InvalidType::missingType();
+        }
+
+        return $this->aggregateIdClass;
     }
 }
