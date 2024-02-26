@@ -96,6 +96,4 @@ nav:
     - Split Stream: split_stream.md
     - Time / Clock: clock.md
     - Testing: testing.md
-  - Other / Tools:
     - CLI: cli.md
-    - Watch Server: watch_server.md

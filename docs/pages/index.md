@@ -13,7 +13,6 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * Versioned and managed lifecycle of [projections](projection.md)
 * Smooth [upcasting](upcasting.md) of old events
 * Simple setup with [scheme management](store.md) and [doctrine migration](migration.md)
-* Dev [tools](watch_server.md) like realtime event watcher
 * Built in [cli commands](cli.md) with [symfony](https://symfony.com/)
 * and much more...
 

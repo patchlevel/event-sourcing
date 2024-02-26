@@ -18,7 +18,6 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * Versioned and managed lifecycle of [projections](https://patchlevel.github.io/event-sourcing-docs/latest/projection/)
 * Smooth [upcasting](https://patchlevel.github.io/event-sourcing-docs/latest/upcasting/) of old events
 * Simple setup with [scheme management](https://patchlevel.github.io/event-sourcing-docs/latest/store/) and [doctrine migration](https://patchlevel.github.io/event-sourcing-docs/latest/migration/)
-* Dev [tools](https://patchlevel.github.io/event-sourcing-docs/latest/watch_server/) like realtime event watcher
 * Built in [cli commands](https://patchlevel.github.io/event-sourcing-docs/latest/cli/) with [symfony](https://symfony.com/)
 * and much more...
 

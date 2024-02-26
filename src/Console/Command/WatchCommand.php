@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
-use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
-use Patchlevel\EventSourcing\WatchServer\WatchServer;
+use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function sprintf;
 
 #[AsCommand(
     'event-sourcing:watch',
@@ -22,27 +23,83 @@ use function sprintf;
 final class WatchCommand extends Command
 {
     public function __construct(
-        private readonly WatchServer $server,
+        private readonly Store $store,
         private readonly EventSerializer $serializer,
     ) {
         parent::__construct();
+    }
+
+    protected function configure(): void
+    {
+        $this
+            ->addOption(
+                'sleep',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'How much time should elapse before the next job is executed in milliseconds',
+                1000,
+            )
+            ->addOption(
+                'aggregate',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'filter aggregate name',
+            )
+            ->addOption(
+                'aggregate-id',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'filter aggregate id',
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $console = new OutputStyle($input, $output);
 
-        $this->server->start();
+        $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
+        $aggregate = InputHelper::nullableString($input->getOption('aggregate'));
+        $aggregateId = InputHelper::nullableString($input->getOption('aggregate-id'));
 
-        $console->success(sprintf('Server listening on %s', $this->server->host()));
-        $console->comment('Quit the server with CONTROL-C.');
+        $index = $this->currentIndex();
 
-        $this->server->listen(
-            function (Message $message) use ($console): void {
-                $console->message($this->serializer, $message);
+        $worker = DefaultWorker::create(
+            function () use ($console, &$index, $aggregate, $aggregateId): void {
+                $stream = $this->store->load(
+                    new Criteria(
+                        $aggregate,
+                        $aggregateId,
+                        $index,
+                    ),
+                );
+
+                foreach ($stream as $message) {
+                    $console->message($this->serializer, $message);
+                }
+
+                $index = $stream->index();
+
+                $stream->close();
             },
+            [],
         );
 
+        $worker->run($sleep);
+
         return 0;
+    }
+
+    private function currentIndex(): int
+    {
+        $stream = $this->store->load(
+            limit: 1,
+            backwards: true,
+        );
+
+        $index = $stream->index() ?? 0;
+
+        $stream->close();
+
+        return $index;
     }
 }
