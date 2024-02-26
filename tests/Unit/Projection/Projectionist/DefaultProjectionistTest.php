@@ -1390,6 +1390,42 @@ final class DefaultProjectionistTest extends TestCase
         ], $projectionStore->updatedProjections);
     }
 
+    public function testReactivatePaused(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Paused,
+            ),
+        ]);
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->reactivate();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+            ),
+        ], $projectionStore->updatedProjections);
+    }
+
     public function testReactivateFinished(): void
     {
         $projectionId = 'test';
@@ -1422,6 +1458,146 @@ final class DefaultProjectionistTest extends TestCase
                 Projection::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 ProjectionStatus::Active,
+            ),
+        ], $projectionStore->updatedProjections);
+    }
+
+    public function testPauseDiscoverNewProjectors(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $streamableStore = $this->prophesize(Store::class);
+        $projectionStore = new DummyStore();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->pause();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::New,
+            ),
+        ], $projectionStore->addedProjections);
+    }
+
+    public function testPauseBooting(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+            ),
+        ]);
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->pause();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Paused,
+            ),
+        ], $projectionStore->updatedProjections);
+    }
+
+    public function testPauseActive(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+            ),
+        ]);
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->pause();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Paused,
+            ),
+        ], $projectionStore->updatedProjections);
+    }
+
+    public function testPauseError(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test')]
+        class {
+        };
+
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Error,
+                0,
+                new ProjectionError('ERROR', ProjectionStatus::New),
+            ),
+        ]);
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->pause();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Paused,
+                0,
+                new ProjectionError('ERROR', ProjectionStatus::New),
             ),
         ], $projectionStore->updatedProjections);
     }

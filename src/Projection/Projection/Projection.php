@@ -91,6 +91,16 @@ final class Projection
         return $this->status === ProjectionStatus::Active;
     }
 
+    public function pause(): void
+    {
+        $this->status = ProjectionStatus::Paused;
+    }
+
+    public function isPaused(): bool
+    {
+        return $this->status === ProjectionStatus::Paused;
+    }
+
     public function finished(): void
     {
         $this->status = ProjectionStatus::Finished;

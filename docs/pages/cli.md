@@ -33,6 +33,7 @@ The database schema can also be created, updated and dropped.
 To manage your projectors there are the following cli commands.
 
 * ProjectionBootCommand: `event-sourcing:projection:boot`
+* ProjectionPauseCommand: `event-sourcing:projection:pause`
 * ProjectionReactiveCommand: `event-sourcing:projection:reactive`
 * ProjectionRebuildCommand: `event-sourcing:projection:rebuild`
 * ProjectionRemoveCommand: `event-sourcing:projection:remove`
@@ -86,6 +87,7 @@ $cli->addCommands(array(
     new Command\DatabaseCreateCommand($store, $doctrineHelper),
     new Command\DatabaseDropCommand($store, $doctrineHelper),
     new Command\ProjectionBootCommand($projectionist),
+    new Command\ProjectionPauseCommand($projectionist),
     new Command\ProjectionRunCommand($projectionist),
     new Command\ProjectionTeardownCommand($projectionist),
     new Command\ProjectionRemoveCommand($projectionist),

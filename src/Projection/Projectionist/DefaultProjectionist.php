@@ -428,7 +428,12 @@ final class DefaultProjectionist implements Projectionist
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
-                status: [ProjectionStatus::Error, ProjectionStatus::Outdated, ProjectionStatus::Finished],
+                status: [
+                    ProjectionStatus::Error,
+                    ProjectionStatus::Outdated,
+                    ProjectionStatus::Paused,
+                    ProjectionStatus::Finished,
+                ],
             ),
             function (array $projections): void {
                 /** @var Projection $projection */
@@ -465,6 +470,48 @@ final class DefaultProjectionist implements Projectionist
 
                     $this->logger?->info(sprintf(
                         'Projectionist: Projector "%s" for "%s" is reactivated.',
+                        $projector::class,
+                        $projection->id(),
+                    ));
+                }
+            },
+        );
+    }
+
+    public function pause(ProjectionistCriteria|null $criteria = null): void
+    {
+        $criteria ??= new ProjectionistCriteria();
+
+        $this->discoverNewProjections();
+
+        $this->findForUpdate(
+            new ProjectionCriteria(
+                ids: $criteria->ids,
+                groups: $criteria->groups,
+                status: [
+                    ProjectionStatus::Active,
+                    ProjectionStatus::Booting,
+                    ProjectionStatus::Error,
+                ],
+            ),
+            function (array $projections): void {
+                /** @var Projection $projection */
+                foreach ($projections as $projection) {
+                    $projector = $this->projector($projection->id());
+
+                    if (!$projector) {
+                        $this->logger?->debug(
+                            sprintf('Projectionist: Projector for "%s" not found, skipped.', $projection->id()),
+                        );
+
+                        continue;
+                    }
+
+                    $projection->pause();
+                    $this->projectionStore->update($projection);
+
+                    $this->logger?->info(sprintf(
+                        'Projectionist: Projector "%s" for "%s" is paused.',
                         $projector::class,
                         $projection->id(),
                     ));
@@ -569,7 +616,7 @@ final class DefaultProjectionist implements Projectionist
             new ProjectionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
-                status: [ProjectionStatus::Active, ProjectionStatus::Finished],
+                status: [ProjectionStatus::Active, ProjectionStatus::Paused, ProjectionStatus::Finished],
             ),
             function (array $projections): void {
                 foreach ($projections as $projection) {
