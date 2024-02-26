@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection\Projection;
 
+use DateTimeImmutable;
+use Throwable;
+
 final class Projection
 {
     public const DEFAULT_GROUP = 'default';
@@ -15,7 +18,8 @@ final class Projection
         private ProjectionStatus $status = ProjectionStatus::New,
         private int $position = 0,
         private ProjectionError|null $error = null,
-        private int $retry = 0,
+        private int $retryAttempt = 0,
+        private DateTimeImmutable|null $lastSavedAt = null,
     ) {
     }
 
@@ -52,6 +56,12 @@ final class Projection
     public function changePosition(int $position): void
     {
         $this->position = $position;
+    }
+
+    public function new(): void
+    {
+        $this->status = ProjectionStatus::New;
+        $this->error = null;
     }
 
     public function isNew(): bool
@@ -102,10 +112,18 @@ final class Projection
         return $this->status === ProjectionStatus::Outdated;
     }
 
-    public function error(ProjectionError|null $error = null): void
+    public function error(Throwable|string $error): void
     {
+        $previousStatus = $this->status;
         $this->status = ProjectionStatus::Error;
-        $this->error = $error;
+
+        if ($error instanceof Throwable) {
+            $this->error = ProjectionError::fromThrowable($previousStatus, $error);
+
+            return;
+        }
+
+        $this->error = new ProjectionError($error, $previousStatus);
     }
 
     public function isError(): bool
@@ -113,28 +131,34 @@ final class Projection
         return $this->status === ProjectionStatus::Error;
     }
 
-    public function incrementRetry(): void
+    public function retryAttempt(): int
     {
-        $this->retry++;
+        return $this->retryAttempt;
     }
 
-    public function retry(): int
+    public function doRetry(): void
     {
-        return $this->retry;
+        if ($this->error === null) {
+            throw new NoErrorToRetry();
+        }
+
+        $this->retryAttempt++;
+        $this->status = $this->error->previousStatus;
+        $this->error = null;
     }
 
     public function resetRetry(): void
     {
-        $this->retry = 0;
+        $this->retryAttempt = 0;
     }
 
-    public function disallowRetry(): void
+    public function lastSavedAt(): DateTimeImmutable|null
     {
-        $this->retry = -1;
+        return $this->lastSavedAt;
     }
 
-    public function isRetryDisallowed(): bool
+    public function updateLastSavedAt(DateTimeImmutable $lastSavedAt): void
     {
-        return $this->retry === -1;
+        $this->lastSavedAt = $lastSavedAt;
     }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projection;
 
 use Patchlevel\EventSourcing\Aggregate\CustomId;
-use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
+use Patchlevel\EventSourcing\Projection\Projection\ThrowableToErrorContextTransformer;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -18,7 +18,7 @@ final class ErrorContextTest extends TestCase
     public function testErrorContext(): void
     {
         $resource = fopen('php://memory', 'r');
-        $result = ErrorContext::fromThrowable(
+        $result = ThrowableToErrorContextTransformer::transform(
             $this->createException(
                 'test',
                 new CustomId('test'),

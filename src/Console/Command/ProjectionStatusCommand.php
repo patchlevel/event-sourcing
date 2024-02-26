@@ -7,8 +7,8 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
-use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,7 +18,7 @@ use function array_map;
 use function is_array;
 use function sprintf;
 
-/** @psalm-import-type Context from ErrorContext */
+/** @psalm-import-type Context from ProjectionError */
 #[AsCommand(
     'event-sourcing:projection:status',
     'View the current status of the projections',

@@ -56,12 +56,6 @@ final class ProjectionRunCommand extends ProjectionCommand
                 1000,
             )
             ->addOption(
-                'throw-by-error',
-                null,
-                InputOption::VALUE_NONE,
-                'throw exception by error',
-            )
-            ->addOption(
                 'rebuild',
                 null,
                 InputOption::VALUE_NONE,
@@ -76,7 +70,6 @@ final class ProjectionRunCommand extends ProjectionCommand
         $memoryLimit = InputHelper::nullableString($input->getOption('memory-limit'));
         $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
-        $throwByError = InputHelper::bool($input->getOption('throw-by-error'));
         $rebuild = InputHelper::bool($input->getOption('rebuild'));
 
         $criteria = $this->projectionCriteria($input);
@@ -84,8 +77,8 @@ final class ProjectionRunCommand extends ProjectionCommand
         $logger = new ConsoleLogger($output);
 
         $worker = DefaultWorker::create(
-            function () use ($criteria, $messageLimit, $throwByError): void {
-                $this->projectionist->run($criteria, $messageLimit, $throwByError);
+            function () use ($criteria, $messageLimit): void {
+                $this->projectionist->run($criteria, $messageLimit);
             },
             [
                 'runLimit' => $runLimit,
@@ -97,7 +90,7 @@ final class ProjectionRunCommand extends ProjectionCommand
 
         if ($rebuild) {
             $this->projectionist->remove($criteria);
-            $this->projectionist->boot($criteria, null, $throwByError);
+            $this->projectionist->boot($criteria);
         }
 
         $worker->run($sleep);

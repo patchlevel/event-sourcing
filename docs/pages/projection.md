@@ -322,12 +322,17 @@ stateDiagram-v2
     direction LR
     [*] --> New
     New --> Booting
+    New --> Error
     Booting --> Active
+    Booting --> Finished
     Booting --> Error
+    Active --> Finished
     Active --> Outdated
     Active --> Error
-    Active --> Finished
+    Finished --> Active
     Finished --> Outdated
+    Error --> New
+    Error --> Booting
     Error --> Active
     Error --> [*]
     Outdated --> Active
@@ -356,10 +361,11 @@ These projections have a projector, follow the event stream and should be up-to-
 
 A projection is finished if the projector has the mode `RunMode::Once`.
 This means that the projection is only run once and then set to finished if it reaches the end of the event stream.
+You can also reactivate the projection if you want so that it continues.
 
 ### Outdated
 
-If a projection exists in the projection store
+If an active or finished projection exists in the projection store
 that does not have a projector in the source code with a corresponding projector ID,
 then this projection is marked as outdated.
 This happens when either the projector has been deleted
@@ -377,10 +383,16 @@ There are two options to reactivate the projection:
 ### Error
 
 If an error occurs in a projector, then the target projection is set to Error.
-This projection will then no longer run until the projection is activated again.
+This can happen in the create process, in the boot process or in the run process.
+This projection will then no longer boot/run until the projection is reactivate or retried.
+
+The projectionist has a retry strategy to retry projections that have failed.
+It tries to reactivate the projection after a certain time and a certain number of attempts.
+If this does not work, the projection is set to error and must be manually reactivated.
+
 There are two options here:
 
-* Reactivate the projection, so that the projection is active again.
+* Reactivate the projection, so that the projection is in the previous state again.
 * Remove the projection and rebuild it from scratch.
 
 ## Setup
@@ -420,11 +432,34 @@ $schemaDirector = new DoctrineSchemaDirector(
 
     You can find more about schema configurator [here](./store.md) 
 
+### Retry Strategy
+
+The projectionist uses a retry strategy to retry projections that have failed.
+Our default strategy can be configured with the following parameters:
+
+* `baseDelay` - The base delay in seconds.
+* `delayFactor` - The factor by which the delay is multiplied after each attempt.
+* `maxAttempts` - The maximum number of attempts.
+
+```php
+use Patchlevel\EventSourcing\Projection\RetryStrategy\ClockBasedRetryStrategy;
+
+$retryStrategy = new ClockBasedRetryStrategy(
+    baseDelay: 5,
+    delayFactor: 2,
+    maxAttempts: 5,
+);
+```
+
+!!! tip
+
+    You can reactivate the projection manually or remove it and rebuild it from scratch.
+
 ### Projectionist
 
 Now we can create the projectionist and plug together the necessary services.
 The event store is needed to load the events, the Projection Store to store the projection state 
-and the respective projectors.
+and the respective projectors. Optionally, we can also pass a retry strategy.
 
 ```php
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
@@ -432,7 +467,8 @@ use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 $projectionist = new DefaultProjectionist(
     $eventStore,
     $projectionStore,
-    [$projector1, $projector2, $projector3]
+    [$projector1, $projector2, $projector3],
+    $retryStrategy,
 );
 ```
 
@@ -512,6 +548,9 @@ foreach ($projections as $projection) {
 }
 ```
 
-!!! note
+## Learn more
 
-    There are also [cli commands](./cli.md) for all commands.
+* [How to use CLI commands](./cli.md)
+* [How to use Pipeline](./pipeline.md)
+* [How to use Event Bus](./event_bus.md)
+* [How to Test](./testing.md)

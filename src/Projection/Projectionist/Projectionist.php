@@ -9,25 +9,23 @@ use Patchlevel\EventSourcing\Projection\Projection\Projection;
 interface Projectionist
 {
     /**
-     * @throws ProjectionistError
+     * @param positive-int|null $limit
+     *
      * @throws ProjectorNotFound
      */
     public function boot(
         ProjectionistCriteria|null $criteria = null,
         int|null $limit = null,
-        bool $throwByError = false,
     ): void;
 
     /**
-     * @param positive-int $limit
+     * @param positive-int|null $limit
      *
-     * @throws ProjectionistError
      * @throws ProjectorNotFound
      */
     public function run(
         ProjectionistCriteria|null $criteria = null,
         int|null $limit = null,
-        bool $throwByError = false,
     ): void;
 
     public function teardown(ProjectionistCriteria|null $criteria = null): void;

@@ -77,7 +77,7 @@ final class IntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot(new ProjectionistCriteria(), null, true);
+        $projectionist->boot(new ProjectionistCriteria());
 
         $bankAccountId = AccountId::fromString('1');
         $bankAccount = BankAccount::create($bankAccountId, 'John');

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection\Projection\Store;
 
-use Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext;
+use Patchlevel\EventSourcing\Projection\Projection\ThrowableToErrorContextTransformer;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-/** @covers \Patchlevel\EventSourcing\Projection\Projection\Store\ErrorContext */
+/** @covers \Patchlevel\EventSourcing\Projection\Projection\ThrowableToErrorContextTransformer */
 final class ErrorContextTest extends TestCase
 {
     public function testWithoutPrevious(): void
     {
         $error = new RuntimeException('foo');
 
-        $result = ErrorContext::fromThrowable($error);
+        $result = ThrowableToErrorContextTransformer::transform($error);
 
         self::assertCount(1, $result);
         self::assertSame('foo', $result[0]['message']);
@@ -27,7 +27,7 @@ final class ErrorContextTest extends TestCase
     {
         $error = new RuntimeException('foo', 0, new RuntimeException('bar'));
 
-        $result = ErrorContext::fromThrowable($error);
+        $result = ThrowableToErrorContextTransformer::transform($error);
 
         self::assertCount(2, $result);
         self::assertSame('foo', $result[0]['message']);

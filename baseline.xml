@@ -240,4 +240,9 @@
       <code><![CDATA[next]]></code>
     </InvalidMethodCall>
   </file>
+  <file src="tests/Unit/Projection/Projectionist/DefaultProjectionistTest.php">
+    <PossiblyUndefinedArrayOffset>
+      <code><![CDATA[$update1]]></code>
+    </PossiblyUndefinedArrayOffset>
+  </file>
 </files>
