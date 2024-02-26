@@ -23,7 +23,7 @@ final class EventSerializerMessageSerializer implements MessageSerializer
 {
     public function __construct(
         private readonly EventSerializer $eventSerializer,
-        private readonly MessageHeaderRegistry $messageHeaderRegistry,
+        private readonly HeadersSerializer $headersSerializer,
         private readonly Hydrator $hydrator,
         private readonly Encoder $encoder,
     ) {
@@ -31,17 +31,10 @@ final class EventSerializerMessageSerializer implements MessageSerializer
 
     public function serialize(Message $message): string
     {
-        $serializedEvent = $this->eventSerializer->serialize($message->event());
-
-        $headers = [];
-        foreach ($message->headers() as $header) {
-            $headers[$this->messageHeaderRegistry->headerName($header::class)] = $this->hydrator->extract($header);
-        }
-
         return $this->encoder->encode(
             [
-                'serializedEvent' => $serializedEvent,
-                'headers' => $headers,
+                'serializedEvent' => $this->eventSerializer->serialize($message->event()),
+                'headers' => $this->headersSerializer->serialize($message->headers()),
             ],
         );
     }
@@ -60,11 +53,7 @@ final class EventSerializerMessageSerializer implements MessageSerializer
         }
 
         $event = $this->eventSerializer->deserialize(new SerializedEvent($messageData['serializedEvent']['name'], $messageData['serializedEvent']['payload']));
-        $headers = [];
-
-        foreach ($messageData['headers'] as $headerName => $headerData) {
-            $headers[] = $this->hydrator->hydrate($this->messageHeaderRegistry->headerClass($headerName), $headerData);
-        }
+        $headers = $this->headersSerializer->deserialize(array_map(fn (array $headerData) => new SerializedHeader($headerData['name'], $headerData['payload']), $messageData['headers']));
 
         return Message::createWithHeaders($event, $headers);
     }

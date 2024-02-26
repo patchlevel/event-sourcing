@@ -9,6 +9,8 @@ use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\DeserializeFailed;
 use Patchlevel\EventSourcing\EventBus\Serializer\EventSerializerMessageSerializer;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
@@ -42,26 +44,27 @@ final class EventSerializerMessageSerializerTest extends TestCase
             '{id: foo}',
         ));
 
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize($message->headers())->shouldBeCalledOnce()->willReturn([
+            new SerializedHeader('aggregate', '{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}'),
+            new SerializedHeader('archived', '{archived:false}'),
+        ]);
+
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../../../src', # add our headers
-                __DIR__ . '/../../Fixture', # add user headers
-            ]),
+            $headersSerializer->reveal(),
             new MetadataHydrator(),
             new JsonEncoder(),
         );
 
         $content = $serializer->serialize($message);
 
-        self::assertEquals('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":{"aggregate":{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":{"archived":false}}}', $content);
+        self::assertEquals('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":[{"name":"aggregate","payload":"{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}"},{"name":"archived","payload":"{archived:false}"}]}', $content);
     }
 
     public function testDeserialize(): void
     {
-        $event = new ProfileVisited(
-            ProfileId::fromString('foo'),
-        );
+        $event = new ProfileVisited(ProfileId::fromString('foo'));
 
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')))
@@ -73,17 +76,20 @@ final class EventSerializerMessageSerializerTest extends TestCase
             '{id: foo}',
         ))->shouldBeCalledOnce()->willReturn($event);
 
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->deserialize([
+            new SerializedHeader('aggregate', '{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}'),
+            new SerializedHeader('archived', '{archived:false}'),
+        ])->shouldBeCalledOnce()->willReturn($message->headers());
+
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../../../src', # add our headers
-                __DIR__ . '/../../Fixture', # add user headers
-            ]),
+            $headersSerializer->reveal(),
             new MetadataHydrator(),
             new JsonEncoder(),
         );
 
-        $deserializedMessage = $serializer->deserialize('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":{"aggregate":{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":{"archived":false}}}');
+        $deserializedMessage = $serializer->deserialize('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":[{"name":"aggregate","payload": "{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}"}, {"name": "archived", "payload":"{archived:false}"}]}');
 
         self::assertEquals($message, $deserializedMessage);
     }
@@ -93,12 +99,10 @@ final class EventSerializerMessageSerializerTest extends TestCase
         $this->expectException(DeserializeFailed::class);
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../../../src', # add our headers
-                __DIR__ . '/../../Fixture', # add user headers
-            ]),
+            $headersSerializer->reveal(),
             new MetadataHydrator(),
             new JsonEncoder(),
         );
@@ -125,12 +129,17 @@ final class EventSerializerMessageSerializerTest extends TestCase
             '{id: foo}',
         ))->shouldBeCalledOnce()->willReturn($event);
 
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize($message->headers())->shouldBeCalledOnce()->willReturn([
+            new SerializedHeader('aggregate', '{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}'),
+        ]);
+        $headersSerializer->deserialize([
+            new SerializedHeader('aggregate', '{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}'),
+        ])->shouldBeCalledOnce()->willReturn($message->headers());
+
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../../../src', # add our headers
-                __DIR__ . '/../../Fixture', # add user headers
-            ]),
+            $headersSerializer->reveal(),
             new MetadataHydrator(),
             new JsonEncoder(),
         );

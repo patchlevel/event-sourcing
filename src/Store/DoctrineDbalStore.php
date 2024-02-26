@@ -16,6 +16,7 @@ use Patchlevel\EventSourcing\EventBus\Header;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 
 use function array_fill;
@@ -35,7 +36,8 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
 
     public function __construct(
         private readonly Connection      $connection,
-        private readonly EventSerializer $serializer,
+        private readonly EventSerializer $eventSerializer,
+        private readonly HeadersSerializer $headersSerializer,
         private readonly string          $storeTableName = 'eventstore',
     )
     {
@@ -64,7 +66,8 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                 $builder->getParameters(),
                 $builder->getParameterTypes(),
             ),
-            $this->serializer,
+            $this->eventSerializer,
+            $this->headersSerializer,
             $this->connection->getDatabasePlatform(),
         );
     }
@@ -159,7 +162,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                     $offset = $position * $columnsLength;
                     $placeholders[] = $placeholder;
 
-                    $data = $this->serializer->serialize($message->event());
+                    $data = $this->eventSerializer->serialize($message->event());
 
                     try {
                         $aggregateHeader = $message->header(AggregateHeader::class);
@@ -194,7 +197,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                     $parameters[] = $archived;
                     $types[$offset + 7] = $booleanType;
 
-                    $parameters[] = $this->getCustomHeaderJson($this->getCustomHeaders($message));
+                    $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
                     $types[$offset + 8] = $jsonType;
 
                     $position++;
