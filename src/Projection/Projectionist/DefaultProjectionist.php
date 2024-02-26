@@ -548,7 +548,7 @@ final class DefaultProjectionist implements Projectionist
         );
     }
 
-    private function projector(string $projectorId): object|null
+    private function projector(string $projectionId): object|null
     {
         if ($this->projectorIndex === null) {
             $this->projectorIndex = [];
@@ -560,7 +560,7 @@ final class DefaultProjectionist implements Projectionist
             }
         }
 
-        return $this->projectorIndex[$projectorId] ?? null;
+        return $this->projectorIndex[$projectionId] ?? null;
     }
 
     private function handleOutdatedProjections(ProjectionistCriteria $criteria): void
