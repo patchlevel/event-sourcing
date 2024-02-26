@@ -14,7 +14,7 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 final class Reborn
 {
     public function __construct(
-        #[IdNormalizer(ProfileId::class)]
+        #[IdNormalizer]
         public ProfileId $profileId,
         public string $name,
     ) {

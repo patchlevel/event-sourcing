@@ -20,7 +20,7 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer(ProfileId::class)]
+    #[IdNormalizer]
     private ProfileId $id;
     private string $name;
 

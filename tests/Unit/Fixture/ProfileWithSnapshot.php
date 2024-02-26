@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\Hydrator\Normalizer\ArrayNormalizer;
 
 #[Aggregate('profile_with_snapshot')]
@@ -17,8 +18,8 @@ use Patchlevel\Hydrator\Normalizer\ArrayNormalizer;
 #[SuppressMissingApply([ProfileVisited::class])]
 final class ProfileWithSnapshot extends BasicAggregateRoot
 {
-    #[ProfileIdNormalizer]
     #[Id]
+    #[IdNormalizer]
     private ProfileId $id;
     #[EmailNormalizer]
     private Email $email;

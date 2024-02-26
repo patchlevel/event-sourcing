@@ -5,6 +5,11 @@ For example DateTime, enums or value objects. You can do that too.
 However, you must define a normalizer for this so that the library knows
 how to write this data to the database and load it again.
 
+!!! note
+
+    The underlying system called hydrator exists as a library. 
+    You can find out more details [here](https://github.com/patchlevel/hydrator).
+
 ## Usage
 
 You have to set the normalizer to the properties using the specific normalizer class.
@@ -19,7 +24,7 @@ final class DTO
 }
 ```
 
-The whole thing also works with property promotion.
+The whole thing also works with property promotion and readonly properties.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
@@ -180,7 +185,8 @@ To normalize a `DateTimeZone` one can use the `DateTimeZoneNormalizer`.
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeZoneNormalizer;
 
-final class DTO {
+final class DTO 
+{
     #[DateTimeZoneNormalizer]
     public DateTimeZone $timeZone;
 }
@@ -189,12 +195,24 @@ final class DTO {
 ### Enum
 
 Backed enums can also be normalized. 
-For this, the enum FQCN must also be pass so that the `EnumNormalizer` knows which enum it is.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\EnumNormalizer;
 
-final class DTO {
+final class DTO 
+{
+    #[EnumNormalizer]
+    public Status $status;
+}
+```
+
+You can also specify the enum class.
+
+```php
+use Patchlevel\Hydrator\Normalizer\EnumNormalizer;
+
+final class DTO 
+{
     #[EnumNormalizer(Status::class)]
     public Status $status;
 }
@@ -203,15 +221,55 @@ final class DTO {
 ### Id
 
 If you have your own AggregateRootId, you can use the `IdNormalizer`.
-the `IdNormalizer` needs the FQCN of the AggregateRootId as a parameter.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\Hydrator\Normalizer\IdNormalizer;
 
-final class DTO {
+final class DTO 
+{
+    #[IdNormalizer]
+    public Uuid $id;
+}
+```
+
+Optional you can also define the type of the id.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\Hydrator\Normalizer\IdNormalizer;
+
+final class DTO 
+{
     #[IdNormalizer(Uuid::class)]
     public Uuid $id;
+}
+```
+
+### Object
+
+If you have a complex object that you want to normalize, you can use the `ObjectNormalizer`.
+Internally, it uses the `Hydrator` to normalize and denormalize the object.
+
+```php
+use Patchlevel\Hydrator\Normalizer\ObjectNormalizer;
+
+final class DTO 
+{
+    #[ObjectNormalizer]
+    public ComplexObject $object;
+}
+```
+
+Optional you can also define the type of the object.
+
+```php
+use Patchlevel\Hydrator\Normalizer\ObjectNormalizer;
+
+final class DTO 
+{
+    #[ObjectNormalizer(ComplexObject::class)]
+    public object $object;
 }
 ```
 
@@ -329,3 +387,25 @@ The whole thing looks like this
     NormalizedName also works for snapshots. 
     But since a snapshot is just a cache, you can also just invalidate it, 
     if you have backwards compatibility break in the property name
+
+## Ignore
+
+You can also ignore properties with the `Ignore` attribute.
+
+```php
+use Patchlevel\Hydrator\Attribute\Ignore;
+
+final class DTO
+{
+    #[Ignore]
+    public string $name
+}
+```
+
+## Learn more
+
+* [How to use the Hydrator](https://github.com/patchlevel/hydrator)
+* [How to define aggregates](aggregate.md)
+* [How to snapshot aggregates](snapshots.md)
+* [How to create own aggregate id](aggregate_id.md)
+* [How to define events](events.md)

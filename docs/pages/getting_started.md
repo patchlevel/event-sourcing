@@ -17,7 +17,7 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 final class HotelCreated
 {
     public function __construct(
-        #[IdNormalizer(Uuid::class)]
+        #[IdNormalizer]
         public readonly Uuid $hotelId,
         public readonly string $hotelName
     ) {

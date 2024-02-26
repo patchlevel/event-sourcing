@@ -8,15 +8,15 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Normalizer\ProfileIdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\ProfileId;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[ProfileIdNormalizer]
+    #[IdNormalizer]
     private ProfileId $id;
     private string $name;
 

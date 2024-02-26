@@ -6,15 +6,15 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Even
 
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\SplitStream;
+use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\AccountId;
-use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Normalizer\AccountIdNormalizer;
 
 #[Event('bank_account.month_passed')]
 #[SplitStream]
 final class MonthPassed
 {
     public function __construct(
-        #[AccountIdNormalizer]
+        #[IdNormalizer]
         public AccountId $accountId,
         public string $name,
         public int $balanceInCents,

@@ -8,10 +8,16 @@ use Attribute;
 use Patchlevel\EventSourcing\Aggregate\CustomId;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\Hydrator\Normalizer\InvalidArgument;
+use Patchlevel\Hydrator\Normalizer\InvalidType;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Ramsey\Uuid\Exception\InvalidUuidStringException;
+use ReflectionClass;
+use ReflectionType;
+use RuntimeException;
 
 /** @covers \Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer */
 #[Attribute(Attribute::TARGET_PROPERTY)]
@@ -66,5 +72,46 @@ final class IdNormalizerTest extends TestCase
 
         $this->expectException(InvalidArgument::class);
         $normalizer->denormalize(123);
+    }
+
+    public function testAutoDetect(): void
+    {
+        $normalizer = new IdNormalizer();
+        $normalizer->handleReflectionType($this->reflectionType(ProfileCreated::class, 'profileId'));
+
+        self::assertEquals(ProfileId::class, $normalizer->aggregateIdClass());
+    }
+
+    public function testAutoDetectMissingType(): void
+    {
+        $this->expectException(InvalidType::class);
+
+        $normalizer = new IdNormalizer();
+        $normalizer->aggregateIdClass();
+    }
+
+    public function testAutoDetectMissingTypeBecauseNull(): void
+    {
+        $this->expectException(InvalidType::class);
+
+        $normalizer = new IdNormalizer();
+        $normalizer->handleReflectionType(null);
+
+        $normalizer->aggregateIdClass();
+    }
+
+    /** @param class-string $class */
+    private function reflectionType(string $class, string $property): ReflectionType
+    {
+        $reflection = new ReflectionClass($class);
+        $property = $reflection->getProperty($property);
+
+        $type = $property->getType();
+
+        if (!$type instanceof ReflectionType) {
+            throw new RuntimeException('no type');
+        }
+
+        return $type;
     }
 }
