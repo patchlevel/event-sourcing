@@ -140,7 +140,6 @@ final class OutboxTest extends TestCase
             new EventSerializerMessageSerializer(
                 $eventSerializer,
                 $headerSerializer,
-                new MetadataHydrator(),
                 new JsonEncoder(),
             ),
             'outbox',

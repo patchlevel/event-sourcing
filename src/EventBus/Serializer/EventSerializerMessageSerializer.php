@@ -44,9 +44,6 @@ final class EventSerializerMessageSerializer implements MessageSerializer
             || !isset($messageData['serializedEvent']['name'], $messageData['serializedEvent']['payload'])
             || !is_string($messageData['serializedEvent']['name'])
             || !is_string($messageData['serializedEvent']['payload'])
-            || !isset($messageData['headers']['name'], $messageData['headers']['payload'])
-            || !is_string($messageData['headers']['name'])
-            || !is_string($messageData['headers']['payload'])
         ) {
             throw DeserializeFailed::invalidData($messageData);
         }
