@@ -6,9 +6,7 @@ namespace Integration\BasicImplementation\Header;
 
 use Patchlevel\EventSourcing\EventBus\Header;
 
-/**
- * @psalm-immutable
- */
+/** @psalm-immutable */
 #[\Patchlevel\EventSourcing\Attribute\Header('baz')]
 final class BazHeader implements Header
 {

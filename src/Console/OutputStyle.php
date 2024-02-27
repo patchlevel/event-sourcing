@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console;
 
-use DateTimeInterface;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
@@ -12,7 +11,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 use function array_keys;
-use function array_values;
 use function sprintf;
 
 final class OutputStyle extends SymfonyStyle

@@ -6,9 +6,7 @@ namespace Integration\BasicImplementation\Header;
 
 use Patchlevel\EventSourcing\EventBus\Header;
 
-/**
- * @psalm-immutable
- */
+/** @psalm-immutable */
 #[\Patchlevel\EventSourcing\Attribute\Header('foo')]
 final class FooHeader implements Header
 {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Message;
 
 use Patchlevel\EventSourcing\EventBus\Header;
+
 use function array_flip;
 use function array_key_exists;
 

@@ -4,24 +4,16 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\EventBus\Serializer;
 
-use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
-use Patchlevel\Hydrator\Hydrator;
-use function base64_decode;
-use function base64_encode;
+use function array_map;
 use function is_array;
 use function is_string;
-use function serialize;
-use function unserialize;
 
-/**
- * @psalm-type EncodedData array{serializedEvent: array{name: string, payload: string}, headers: array{name: string, payload: string}}
- */
+/** @psalm-type EncodedData array{serializedEvent: array{name: string, payload: string}, headers: array{name: string, payload: string}} */
 final class EventSerializerMessageSerializer implements MessageSerializer
 {
     public function __construct(
@@ -62,8 +54,8 @@ final class EventSerializerMessageSerializer implements MessageSerializer
         $event = $this->eventSerializer->deserialize(new SerializedEvent($messageData['serializedEvent']['name'], $messageData['serializedEvent']['payload']));
         $headers = $this->headersSerializer->deserialize(array_map(
             /** @param array{name: string, payload: string} $headerData */
-            fn (array $headerData) => new SerializedHeader($headerData['name'], $headerData['payload']),
-            $messageData['headers']
+            static fn (array $headerData) => new SerializedHeader($headerData['name'], $headerData['payload']),
+            $messageData['headers'],
         ));
 
         return Message::createWithHeaders($event, $headers);

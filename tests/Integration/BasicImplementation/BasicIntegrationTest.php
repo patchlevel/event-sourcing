@@ -47,7 +47,7 @@ final class BasicIntegrationTest extends TestCase
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             DefaultHeadersSerializer::createFromPaths([
                 __DIR__ . '/../../../src',
-                __DIR__
+                __DIR__,
             ]),
             'eventstore',
         );
@@ -115,7 +115,7 @@ final class BasicIntegrationTest extends TestCase
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             DefaultHeadersSerializer::createFromPaths([
                 __DIR__ . '/../../../src',
-                __DIR__
+                __DIR__,
             ]),
             'eventstore',
         );

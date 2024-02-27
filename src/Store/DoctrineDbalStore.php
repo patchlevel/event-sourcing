@@ -20,9 +20,12 @@ use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 
 use function array_fill;
+use function array_filter;
+use function array_values;
 use function count;
 use function floor;
 use function implode;
+use function in_array;
 use function is_int;
 use function is_string;
 use function sprintf;
@@ -35,21 +38,19 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
     private const MAX_UNSIGNED_SMALL_INT = 65_535;
 
     public function __construct(
-        private readonly Connection      $connection,
+        private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
         private readonly HeadersSerializer $headersSerializer,
-        private readonly string          $storeTableName = 'eventstore',
-    )
-    {
+        private readonly string $storeTableName = 'eventstore',
+    ) {
     }
 
     public function load(
         Criteria|null $criteria = null,
-        int|null      $limit = null,
-        int|null      $offset = null,
-        bool          $backwards = false,
-    ): DoctrineDbalStoreStream
-    {
+        int|null $limit = null,
+        int|null $offset = null,
+        bool $backwards = false,
+    ): DoctrineDbalStoreStream {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->storeTableName)
@@ -323,8 +324,8 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
         return array_values(
             array_filter(
                 $message->headers(),
-                static fn(Header $header) => !in_array($header::class, $filteredHeaders, true)
-            )
+                static fn (Header $header) => !in_array($header::class, $filteredHeaders, true)
+            ),
         );
     }
 }

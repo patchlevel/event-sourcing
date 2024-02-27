@@ -8,8 +8,6 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-use Patchlevel\EventSourcing\EventBus\Header;
-use RuntimeException;
 
 use function is_array;
 use function is_bool;
@@ -49,7 +47,6 @@ final class DoctrineHelper
             throw new InvalidType('custom_headers', 'array');
         }
 
-        /** @var array<array{name: string, payload: string}> $normalizedCustomHeaders */
         return $normalizedCustomHeaders;
     }
 

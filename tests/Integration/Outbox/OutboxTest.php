@@ -48,7 +48,7 @@ final class OutboxTest extends TestCase
         $eventSerializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
         $headerSerializer = DefaultHeadersSerializer::createFromPaths([
             __DIR__ . '/../../../src',
-            __DIR__
+            __DIR__,
         ]);
 
         $store = new DoctrineDbalStore(
@@ -56,7 +56,7 @@ final class OutboxTest extends TestCase
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             DefaultHeadersSerializer::createFromPaths([
                 __DIR__ . '/../../../src',
-                __DIR__
+                __DIR__,
             ]),
             'eventstore',
         );
@@ -122,7 +122,7 @@ final class OutboxTest extends TestCase
         $eventSerializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
         $headerSerializer = DefaultHeadersSerializer::createFromPaths([
             __DIR__ . '/../../../src',
-            __DIR__
+            __DIR__,
         ]);
 
         $store = new DoctrineDbalStore(
@@ -130,7 +130,7 @@ final class OutboxTest extends TestCase
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             DefaultHeadersSerializer::createFromPaths([
                 __DIR__ . '/../../../src',
-                __DIR__
+                __DIR__,
             ]),
             'eventstore',
         );
@@ -141,7 +141,7 @@ final class OutboxTest extends TestCase
                 $eventSerializer,
                 $headerSerializer,
                 new MetadataHydrator(),
-                new JsonEncoder()
+                new JsonEncoder(),
             ),
             'outbox',
         );

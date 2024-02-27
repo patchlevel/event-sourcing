@@ -6,9 +6,7 @@ namespace Patchlevel\EventSourcing\Store;
 
 use Patchlevel\EventSourcing\EventBus\Header;
 
-/**
- * @psalm-immutable
- */
+/** @psalm-immutable */
 #[\Patchlevel\EventSourcing\Attribute\Header('archived')]
 final class ArchivedHeader implements Header
 {

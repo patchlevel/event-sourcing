@@ -8,9 +8,7 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\Header;
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
-/**
- * @psalm-immutable
- */
+/** @psalm-immutable */
 #[\Patchlevel\EventSourcing\Attribute\Header('aggregate')]
 final class AggregateHeader implements Header
 {

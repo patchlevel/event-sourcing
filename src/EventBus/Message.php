@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\EventBus;
 
 use function array_key_exists;
+use function array_values;
+use function assert;
+use function is_a;
 
 /**
  * @template-covariant T of object

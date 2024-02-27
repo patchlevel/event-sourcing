@@ -6,9 +6,7 @@ namespace Patchlevel\EventSourcing\Outbox;
 
 use Patchlevel\EventSourcing\EventBus\Header;
 
-/**
- * @psalm-immutable
- */
+/** @psalm-immutable */
 #[\Patchlevel\EventSourcing\Attribute\Header('outbox')]
 final class OutboxHeader implements Header
 {
