@@ -536,6 +536,55 @@ final class DefaultProjectionistTest extends TestCase
         self::assertNull($projector->message);
     }
 
+    public function testBootingWithFromNowWithEmtpyStream(): void
+    {
+        $projectionId = 'test';
+        $projector = new #[ProjectionAttribute('test', runMode: RunMode::FromNow)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $projectionStore = new DummyStore([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromNow,
+                ProjectionStatus::Booting,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([]))->shouldBeCalledOnce();
+
+        $projectionist = new DefaultProjectionist(
+            $streamableStore->reveal(),
+            $projectionStore,
+            [$projector],
+        );
+
+        $projectionist->boot();
+
+        self::assertEquals([
+            new Projection(
+                $projectionId,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromNow,
+                ProjectionStatus::Active,
+                0,
+            ),
+        ], $projectionStore->updatedProjections);
+
+        self::assertNull($projector->message);
+    }
+
     public function testBootingWithOnlyOnce(): void
     {
         $projectionId = 'test';
