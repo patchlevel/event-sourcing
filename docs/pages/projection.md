@@ -324,16 +324,24 @@ stateDiagram-v2
     New --> Booting
     New --> Error
     Booting --> Active
+    Booting --> Paused
     Booting --> Finished
     Booting --> Error
+    Active --> Paused
     Active --> Finished
     Active --> Outdated
     Active --> Error
+    Paused --> New
+    Paused --> Booting
+    Paused --> Active
+    Paused --> Outdated
+    Paused --> [*]
     Finished --> Active
     Finished --> Outdated
     Error --> New
     Error --> Booting
     Error --> Active
+    Error --> Paused
     Error --> [*]
     Outdated --> Active
     Outdated --> [*]
@@ -356,6 +364,12 @@ When the process is finished, the projection is set to active.
 
 The active status describes the projections currently being actively managed by the projectionist.
 These projections have a projector, follow the event stream and should be up-to-date.
+
+## Paused
+
+A projection can manually be paused. It will then no longer be updated by the projectionist.
+This can be useful if you want to pause a projection for a certain period of time.
+You can also reactivate the projection if you want so that it continues.
 
 ### Finished
 
@@ -534,6 +548,16 @@ As a result, the projection gets the status active again and is then kept up-to-
 
 ```php
 $projectionist->reactivate($criteria);
+```
+
+### Pause
+
+Pausing a projection is also possible.
+The projection will then no longer be updated by the projectionist.
+You can reactivate the projection if you want so that it continues.
+
+```php
+$projectionist->pause($criteria);
 ```
 
 ### Status
