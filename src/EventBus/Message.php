@@ -67,7 +67,7 @@ final class Message
     public function header(string $name): Header
     {
         if (!array_key_exists($name, $this->headers)) {
-            throw HeaderNotFound::custom($name);
+            throw new HeaderNotFound($name);
         }
 
         $header = $this->headers[$name];

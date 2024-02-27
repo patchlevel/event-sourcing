@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
 use DateTimeImmutable;
 use Generator;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -35,7 +36,7 @@ final class MessageTest extends TestCase
         })
             ->withAggregateName('profile');
 
-        self::assertSame('profile', $message->aggregateName());
+        self::assertSame('profile', $message->header(AggregateHeader::class)->aggregateName);
     }
 
     public function testCreateMessageWithAggregateIdHeader(): void
@@ -44,7 +45,7 @@ final class MessageTest extends TestCase
         })
             ->withAggregateId('1');
 
-        self::assertSame('1', $message->aggregateId());
+        self::assertSame('1', $message->header(AggregateHeader::class)->aggregateId);
     }
 
     public function testCreateMessageWithPlayheadHeader(): void
@@ -53,7 +54,7 @@ final class MessageTest extends TestCase
         })
             ->withPlayhead(1);
 
-        self::assertSame(1, $message->playhead());
+        self::assertSame(1, $message->header(AggregateHeader::class)->playhead);
     }
 
     public function testCreateMessageWithRecordedOnHeader(): void
@@ -64,7 +65,7 @@ final class MessageTest extends TestCase
         })
             ->withRecordedOn($recordedAt);
 
-        self::assertEquals($recordedAt, $message->recordedOn());
+        self::assertEquals($recordedAt, $message->header(AggregateHeader::class)->recordedOn);
     }
 
     public function testCreateMessageWithCustomHeader(): void
@@ -116,10 +117,10 @@ final class MessageTest extends TestCase
         $message = Message::create(new class {
         })
             ->withPlayhead(1);
-        self::assertSame(1, $message->playhead());
+        self::assertSame(1, $message->header(AggregateHeader::class)->playhead);
 
         $message = $message->withPlayhead(2);
-        self::assertSame(2, $message->playhead());
+        self::assertSame(2, $message->header(AggregateHeader::class)->playhead);
     }
 
     public function testEmptyAllHeaders(): void
@@ -197,35 +198,13 @@ final class MessageTest extends TestCase
         );
     }
 
-    #[DataProvider('provideHeaderNotFound')]
-    public function testHeaderNotFound(string $headerName): void
+    public function testHeaderNotFound(): void
     {
         $message = Message::create(new class {
         });
 
         $this->expectException(HeaderNotFound::class);
         /** @psalm-suppress UnusedMethodCall */
-        $message->{$headerName}();
-    }
-
-    /** @return Generator<string, array{string}> */
-    public static function provideHeaderNotFound(): Generator
-    {
-        yield 'aggregateName' => ['aggregateName'];
-        yield 'aggregateId' => ['aggregateId'];
-        yield 'playhead' => ['playhead'];
-        yield 'recordedOn' => ['recordedOn'];
-        yield 'archived' => ['archived'];
-        yield 'newStreamStart' => ['newStreamStart'];
-    }
-
-    public function testCustomHeaderNotFound(): void
-    {
-        $message = Message::create(new class {
-        });
-
-        $this->expectException(HeaderNotFound::class);
-        /** @psalm-suppress UnusedMethodCall */
-        $message->header('foo');
+        $message->header('Foo');
     }
 }

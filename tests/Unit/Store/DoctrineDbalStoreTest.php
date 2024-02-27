@@ -17,9 +17,13 @@ use Doctrine\DBAL\Statement;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use EmptyIterator;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -67,11 +71,13 @@ final class DoctrineDbalStoreTest extends TestCase
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
 
-        $serializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
 
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
-            $serializer->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
             'eventstore',
         );
 
@@ -135,14 +141,18 @@ final class DoctrineDbalStoreTest extends TestCase
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
 
-        $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->deserialize(
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer->deserialize(
             new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'),
         )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->deserialize([])->willReturn([]);
+
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
-            $serializer->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
             'eventstore',
         );
 
@@ -165,9 +175,9 @@ final class DoctrineDbalStoreTest extends TestCase
 
         self::assertInstanceOf(Message::class, $message);
         self::assertInstanceOf(ProfileCreated::class, $message->event());
-        self::assertSame('1', $message->aggregateId());
-        self::assertSame(1, $message->playhead());
-        self::assertEquals(new DateTimeImmutable('2021-02-17 10:00:00'), $message->recordedOn());
+        self::assertSame('1', $message->header(AggregateHeader::class)->aggregateId);
+        self::assertSame(1, $message->header(AggregateHeader::class)->playhead);
+        self::assertEquals(new DateTimeImmutable('2021-02-17 10:00:00'), $message->header(AggregateHeader::class)->recordedOn);
 
         iterator_to_array($stream);
 
@@ -183,11 +193,13 @@ final class DoctrineDbalStoreTest extends TestCase
         $connection = $this->prophesize(Connection::class);
         $connection->transactional($callback)->willReturn(null)->shouldBeCalled();
 
-        $serializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
 
         $store = new DoctrineDbalStore(
             $connection->reveal(),
-            $serializer->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
             'eventstore',
         );
 
@@ -198,10 +210,12 @@ final class DoctrineDbalStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(1)
-            ->withRecordedOn($recordedOn);
+            ->withHeader(new AggregateHeader(
+                'profile',
+                '1',
+                1,
+                $recordedOn
+            ));
 
         $innerMockedConnection = $this->prophesize(Connection::class);
 
@@ -219,8 +233,11 @@ final class DoctrineDbalStoreTest extends TestCase
         $driver = $this->prophesize(Driver::class);
         $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
 
-        $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
+
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize([])->willReturn([]);
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
@@ -230,7 +247,8 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
-            $serializer->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
             'eventstore',
         );
         $singleTableStore->save($message);
@@ -239,7 +257,8 @@ final class DoctrineDbalStoreTest extends TestCase
     #[RequiresPhp('>= 8.2')]
     public function testArchiveMessages(): void
     {
-        $serializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
 
         $statement = $this->prophesize(Statement::class);
         $statement->bindValue('aggregate', 'profile')->shouldBeCalledOnce();
@@ -259,7 +278,8 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
-            $serializer->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
             'eventstore',
         );
         $singleTableStore->archiveMessages('profile', '1', 1);
