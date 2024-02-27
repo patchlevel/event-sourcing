@@ -40,7 +40,7 @@ final class DoctrineHelper
         return $normalizedPlayhead;
     }
 
-    /** @return array<array> */
+    /** @return array<array{name: string, payload: string}> */
     public static function normalizeCustomHeaders(string $customHeaders, AbstractPlatform $platform): array
     {
         $normalizedCustomHeaders = Type::getType(Types::JSON)->convertToPHPValue($customHeaders, $platform);
@@ -49,7 +49,7 @@ final class DoctrineHelper
             throw new InvalidType('custom_headers', 'array');
         }
 
-        /** @var array<array>> $normalizedCustomHeaders */
+        /** @var array<array{name: string, payload: string}> $normalizedCustomHeaders */
         return $normalizedCustomHeaders;
     }
 

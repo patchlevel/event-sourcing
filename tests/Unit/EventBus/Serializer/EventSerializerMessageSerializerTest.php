@@ -11,8 +11,6 @@ use Patchlevel\EventSourcing\EventBus\Serializer\DeserializeFailed;
 use Patchlevel\EventSourcing\EventBus\Serializer\EventSerializerMessageSerializer;
 use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
-use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
@@ -54,7 +52,6 @@ final class EventSerializerMessageSerializerTest extends TestCase
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
             new MetadataHydrator(),
-            new JsonEncoder(),
         );
 
         $content = $serializer->serialize($message);
@@ -86,7 +83,6 @@ final class EventSerializerMessageSerializerTest extends TestCase
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
             new MetadataHydrator(),
-            new JsonEncoder(),
         );
 
         $deserializedMessage = $serializer->deserialize('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":[{"name":"aggregate","payload": "{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}"}, {"name": "archived", "payload":"{archived:false}"}]}');
@@ -141,7 +137,6 @@ final class EventSerializerMessageSerializerTest extends TestCase
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
             new MetadataHydrator(),
-            new JsonEncoder(),
         );
 
         $content = $serializer->serialize($message);

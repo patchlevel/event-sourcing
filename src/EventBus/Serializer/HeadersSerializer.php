@@ -9,14 +9,14 @@ use Patchlevel\EventSourcing\EventBus\Header;
 interface HeadersSerializer
 {
     /**
-     * @param array<string, Header> $headers
+     * @param list<Header> $headers
      * @return array<SerializedHeader>
      */
     public function serialize(array $headers): array;
 
     /**
      * @param array<SerializedHeader> $serializedHeaders
-     * @return array<string, Header>
+     * @return list<Header>
      */
     public function deserialize(array $serializedHeaders): array;
 }

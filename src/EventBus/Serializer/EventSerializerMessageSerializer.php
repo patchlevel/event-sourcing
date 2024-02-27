@@ -19,12 +19,14 @@ use function is_string;
 use function serialize;
 use function unserialize;
 
+/**
+ * @psalm-type EncodedData array{serializedEvent: array{name: string, payload: string}, headers: array{name: string, payload: string}}
+ */
 final class EventSerializerMessageSerializer implements MessageSerializer
 {
     public function __construct(
         private readonly EventSerializer $eventSerializer,
         private readonly HeadersSerializer $headersSerializer,
-        private readonly Hydrator $hydrator,
         private readonly Encoder $encoder,
     ) {
     }
@@ -44,16 +46,25 @@ final class EventSerializerMessageSerializer implements MessageSerializer
         $messageData = $this->encoder->decode($content);
 
         if (
-            !is_array($messageData)
-            || !isset($messageData['serializedEvent'], $messageData['headers'])
+            !isset($messageData['serializedEvent'], $messageData['headers'])
             || !is_array($messageData['serializedEvent'])
             || !is_array($messageData['headers'])
+            || !isset($messageData['serializedEvent']['name'], $messageData['serializedEvent']['payload'])
+            || !is_string($messageData['serializedEvent']['name'])
+            || !is_string($messageData['serializedEvent']['payload'])
+            || !isset($messageData['headers']['name'], $messageData['headers']['payload'])
+            || !is_string($messageData['headers']['name'])
+            || !is_string($messageData['headers']['payload'])
         ) {
             throw DeserializeFailed::invalidData($messageData);
         }
 
         $event = $this->eventSerializer->deserialize(new SerializedEvent($messageData['serializedEvent']['name'], $messageData['serializedEvent']['payload']));
-        $headers = $this->headersSerializer->deserialize(array_map(fn (array $headerData) => new SerializedHeader($headerData['name'], $headerData['payload']), $messageData['headers']));
+        $headers = $this->headersSerializer->deserialize(array_map(
+            /** @param array{name: string, payload: string} $headerData */
+            fn (array $headerData) => new SerializedHeader($headerData['name'], $headerData['payload']),
+            $messageData['headers']
+        ));
 
         return Message::createWithHeaders($event, $headers);
     }

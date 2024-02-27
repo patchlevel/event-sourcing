@@ -104,6 +104,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
             $event = $eventSerializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
             $customHeaders = $headersSerializer->deserialize(array_map(
+                /** @param array{name: string, payload: string} $customHeader */
                 fn (array $customHeader) => new SerializedHeader($customHeader['name'], $customHeader['payload']),
                 DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform)
             ));

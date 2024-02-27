@@ -6,11 +6,6 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Property Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\<T of object\\>\\:\\:\\$headers \\(array\\{aggregateName\\?\\: string, aggregateId\\?\\: string, playhead\\?\\: int\\<1, max\\>, recordedOn\\?\\: DateTimeImmutable, newStreamStart\\?\\: bool, archived\\?\\: bool\\}\\) does not accept non\\-empty\\-array\\<string, mixed\\>\\.$#"
-			count: 1
-			path: src/EventBus/Message.php
-
-		-
 			message: "#^Parameter \\#3 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\ProjectionError constructor expects array\\<int, array\\{class\\: class\\-string, message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Projection/Projection/Store/DoctrineStore.php
@@ -29,11 +24,6 @@ parameters:
 			message: "#^Ternary operator condition is always true\\.$#"
 			count: 1
 			path: src/Store/ArrayStream.php
-
-		-
-			message: "#^Parameter \\#1 \\$headers of method Patchlevel\\\\EventSourcing\\\\EventBus\\\\Message\\<object\\>\\:\\:withHeaders\\(\\) expects array\\{aggregateName\\?\\: string, aggregateId\\?\\: string, playhead\\?\\: int\\<1, max\\>, recordedOn\\?\\: DateTimeImmutable, newStreamStart\\?\\: bool, archived\\?\\: bool\\}, array\\<string, mixed\\> given\\.$#"
-			count: 1
-			path: src/Store/DoctrineDbalStoreStream.php
 
 		-
 			message: "#^Ternary operator condition is always true\\.$#"
