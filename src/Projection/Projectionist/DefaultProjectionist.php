@@ -870,7 +870,7 @@ final class DefaultProjectionist implements Projectionist
     {
         $stream = $this->streamableMessageStore->load(null, 1, null, true);
 
-        return $stream->index() ?: 1;
+        return $stream->index() ?: 0;
     }
 
     /** @param list<Projection> $projections */
