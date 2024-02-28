@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
-use function array_keys;
+use function array_map;
 use function sprintf;
 
 final class OutputStyle extends SymfonyStyle
@@ -20,7 +20,7 @@ final class OutputStyle extends SymfonyStyle
     public function message(
         EventSerializer $eventSerializer,
         HeadersSerializer $headersSerializer,
-        Message $message
+        Message $message,
     ): void {
         $event = $message->event();
 
@@ -63,12 +63,12 @@ final class OutputStyle extends SymfonyStyle
 
         $this->horizontalTable(
             array_map(
-                fn (SerializedHeader $serializedHeader) => $serializedHeader->name,
-                $headers
+                static fn (SerializedHeader $serializedHeader) => $serializedHeader->name,
+                $headers,
             ),
             array_map(
-                fn (SerializedHeader $serializedHeader) => [$serializedHeader->payload],
-                $headers
+                static fn (SerializedHeader $serializedHeader) => [$serializedHeader->payload],
+                $headers,
             ),
         );
 

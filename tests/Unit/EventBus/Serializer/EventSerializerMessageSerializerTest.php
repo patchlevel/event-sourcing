@@ -11,15 +11,12 @@ use Patchlevel\EventSourcing\EventBus\Serializer\DeserializeFailed;
 use Patchlevel\EventSourcing\EventBus\Serializer\EventSerializerMessageSerializer;
 use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
-use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
-use Patchlevel\Hydrator\MetadataHydrator;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 

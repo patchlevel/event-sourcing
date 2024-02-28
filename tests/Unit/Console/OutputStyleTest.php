@@ -47,16 +47,18 @@ final class OutputStyleTest extends TestCase
         ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn([new SerializedHeader(
-            'aggregate',
-            '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
-        )]);
+        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn([
+            new SerializedHeader(
+                'aggregate',
+                '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+            ),
+        ]);
         $console = new OutputStyle($input, $output);
 
         $console->message(
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            $message
+            $message,
         );
 
         $content = $output->fetch();
@@ -95,7 +97,7 @@ final class OutputStyleTest extends TestCase
         $console->message(
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            $message
+            $message,
         );
 
         $content = $output->fetch();
@@ -132,7 +134,7 @@ final class OutputStyleTest extends TestCase
         $console->message(
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            $message
+            $message,
         );
 
         $content = $output->fetch();

@@ -30,7 +30,7 @@ final class PhpNativeMessageSerializerTest extends TestCase
                 'profile',
                 '1',
                 1,
-                new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')
+                new DateTimeImmutable('2020-01-01T20:00:00.000000+0100'),
             ));
 
         $nativeSerializer = new PhpNativeMessageSerializer();
@@ -54,7 +54,7 @@ final class PhpNativeMessageSerializerTest extends TestCase
                     'profile',
                     '1',
                     1,
-                    new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')
+                    new DateTimeImmutable('2020-01-01T20:00:00.000000+0100'),
                 ),
             ],
             $message->headers(),
@@ -90,7 +90,7 @@ final class PhpNativeMessageSerializerTest extends TestCase
                 'profile',
                 '1',
                 1,
-                new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')
+                new DateTimeImmutable('2020-01-01T20:00:00.000000+0100'),
             ));
 
         $nativeSerializer = new PhpNativeMessageSerializer();

@@ -20,10 +20,8 @@ use EmptyIterator;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
-use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
-use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -214,7 +212,7 @@ final class DoctrineDbalStoreTest extends TestCase
                 'profile',
                 '1',
                 1,
-                $recordedOn
+                $recordedOn,
             ));
 
         $innerMockedConnection = $this->prophesize(Connection::class);

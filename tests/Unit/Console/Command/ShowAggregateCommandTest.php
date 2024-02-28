@@ -41,9 +41,7 @@ final class ShowAggregateCommandTest extends TestCase
 
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(Profile::class, '1'))->willReturn(
-            new ArrayStream([
-                $message,
-            ]),
+            new ArrayStream([$message]),
         );
 
         $serializer = $this->prophesize(EventSerializer::class);
@@ -230,9 +228,7 @@ final class ShowAggregateCommandTest extends TestCase
 
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(Profile::class, '1'))->willReturn(
-            new ArrayStream([
-                $message,
-            ]),
+            new ArrayStream([$message]),
         );
 
         $eventSerializer = $this->prophesize(EventSerializer::class);

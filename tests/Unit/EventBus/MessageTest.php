@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
 use DateTimeImmutable;
-use Generator;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
@@ -14,7 +13,6 @@ use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\EventBus\Message */
@@ -50,7 +48,7 @@ final class MessageTest extends TestCase
                 'profile',
                 '1',
                 3,
-                $recordedAt
+                $recordedAt,
             ))
             ->withHeader(new NewStreamStartHeader(true))
             ->withHeader(new ArchivedHeader(true));
@@ -61,7 +59,7 @@ final class MessageTest extends TestCase
                     'profile',
                     '1',
                     3,
-                    $recordedAt
+                    $recordedAt,
                 ),
                 new NewStreamStartHeader(true),
                 new ArchivedHeader(true),
@@ -85,7 +83,7 @@ final class MessageTest extends TestCase
                 'profile',
                 '1',
                 3,
-                new DateTimeImmutable('2020-05-06 13:34:24')
+                new DateTimeImmutable('2020-05-06 13:34:24'),
             ),
             new NewStreamStartHeader(true),
             new ArchivedHeader(true),
@@ -94,7 +92,7 @@ final class MessageTest extends TestCase
         $message = Message::createWithHeaders(
             new class {
             },
-            $headers
+            $headers,
         );
 
         self::assertSame($headers, $message->headers());
@@ -107,7 +105,7 @@ final class MessageTest extends TestCase
             'profile',
             '1',
             1,
-            new DateTimeImmutable('2020-05-06 13:34:24')
+            new DateTimeImmutable('2020-05-06 13:34:24'),
         ));
         self::assertSame(1, $message->header(AggregateHeader::class)->playhead);
 
@@ -115,7 +113,7 @@ final class MessageTest extends TestCase
             'profile',
             '1',
             2,
-            new DateTimeImmutable('2020-05-06 13:34:24')
+            new DateTimeImmutable('2020-05-06 13:34:24'),
         ));
         self::assertSame(2, $message->header(AggregateHeader::class)->playhead);
     }

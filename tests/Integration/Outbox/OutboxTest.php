@@ -24,7 +24,6 @@ use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Processor\SendEmailProcessor;
-use Patchlevel\Hydrator\MetadataHydrator;
 use PHPUnit\Framework\TestCase;
 
 /** @coversNothing */

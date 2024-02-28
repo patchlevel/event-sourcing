@@ -22,7 +22,7 @@ final class DefaultHeadersSerializer implements HeadersSerializer
     }
 
     /**
-     * @param list<Header> $headers
+     * @param list<Header>         $headers
      * @param array<string, mixed> $options
      *
      * @return array<SerializedHeader>

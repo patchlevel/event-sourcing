@@ -54,7 +54,7 @@ final class OutboxInfoCommandTest extends TestCase
         $command = new OutboxInfoCommand(
             $store->reveal(),
             $serializer->reveal(),
-            $headersSerializer->reveal()
+            $headersSerializer->reveal(),
         );
 
         $input = new ArrayInput([]);
@@ -97,7 +97,7 @@ final class OutboxInfoCommandTest extends TestCase
         $command = new OutboxInfoCommand(
             $store->reveal(),
             $serializer->reveal(),
-            $headersSerializer->reveal()
+            $headersSerializer->reveal(),
         );
 
         $input = new ArrayInput(['--limit' => 100]);
