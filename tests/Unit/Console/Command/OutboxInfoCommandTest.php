@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Console\Command\OutboxInfoCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Outbox\OutboxStore;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
@@ -26,15 +29,11 @@ final class OutboxInfoCommandTest extends TestCase
     public function testSuccessful(): void
     {
         $event = new ProfileVisited(ProfileId::fromString('1'));
+        $message = Message::create($event)
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
         $store = $this->prophesize(OutboxStore::class);
-        $store->retrieveOutboxMessages(null)->willReturn([
-            Message::create($event)
-                ->withAggregateName('profile')
-                ->withAggregateId('1')
-                ->withPlayhead(1)
-                ->withRecordedOn(new DateTimeImmutable()),
-        ]);
+        $store->retrieveOutboxMessages(null)->willReturn([$message]);
 
         $serializer = $this->prophesize(EventSerializer::class);
         $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
@@ -44,9 +43,18 @@ final class OutboxInfoCommandTest extends TestCase
             ),
         );
 
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn([
+            new SerializedHeader(
+                'aggregate',
+                '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+            ),
+        ]);
+
         $command = new OutboxInfoCommand(
             $store->reveal(),
             $serializer->reveal(),
+            $headersSerializer->reveal()
         );
 
         $input = new ArrayInput([]);
@@ -64,15 +72,11 @@ final class OutboxInfoCommandTest extends TestCase
     public function testSuccessfulWithLimit(): void
     {
         $event = new ProfileVisited(ProfileId::fromString('1'));
+        $message = Message::create($event)
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
         $store = $this->prophesize(OutboxStore::class);
-        $store->retrieveOutboxMessages(100)->willReturn([
-            Message::create($event)
-                ->withAggregateName('profile')
-                ->withAggregateId('1')
-                ->withPlayhead(1)
-                ->withRecordedOn(new DateTimeImmutable()),
-        ]);
+        $store->retrieveOutboxMessages(100)->willReturn([$message]);
 
         $serializer = $this->prophesize(EventSerializer::class);
         $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
@@ -82,9 +86,18 @@ final class OutboxInfoCommandTest extends TestCase
             ),
         );
 
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn([
+            new SerializedHeader(
+                'aggregate',
+                '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+            ),
+        ]);
+
         $command = new OutboxInfoCommand(
             $store->reveal(),
             $serializer->reveal(),
+            $headersSerializer->reveal()
         );
 
         $input = new ArrayInput(['--limit' => 100]);

@@ -6,8 +6,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Console\Command\ShowAggregateCommand;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
@@ -33,15 +36,13 @@ final class ShowAggregateCommandTest extends TestCase
     public function testSuccessful(): void
     {
         $event = new ProfileVisited(ProfileId::fromString('1'));
+        $message = Message::create($event)
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(Profile::class, '1'))->willReturn(
             new ArrayStream([
-                Message::create($event)
-                    ->withAggregateName('profile')
-                    ->withAggregateId('1')
-                    ->withPlayhead(1)
-                    ->withRecordedOn(new DateTimeImmutable()),
+                $message,
             ]),
         );
 
@@ -53,9 +54,18 @@ final class ShowAggregateCommandTest extends TestCase
             ),
         );
 
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn([
+            new SerializedHeader(
+                'aggregate',
+                '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+            ),
+        ]);
+
         $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
+            $headersSerializer->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -83,6 +93,7 @@ final class ShowAggregateCommandTest extends TestCase
         $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
+            $this->prophesize(HeadersSerializer::class)->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -105,6 +116,7 @@ final class ShowAggregateCommandTest extends TestCase
         $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
+            $this->prophesize(HeadersSerializer::class)->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -127,6 +139,7 @@ final class ShowAggregateCommandTest extends TestCase
         $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
+            $this->prophesize(HeadersSerializer::class)->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -156,6 +169,7 @@ final class ShowAggregateCommandTest extends TestCase
         $command = new ShowAggregateCommand(
             $store->reveal(),
             $serializer->reveal(),
+            $this->prophesize(HeadersSerializer::class)->reveal(),
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -181,6 +195,7 @@ final class ShowAggregateCommandTest extends TestCase
             new ShowAggregateCommand(
                 $this->prophesize(Store::class)->reveal(),
                 $this->prophesize(EventSerializer::class)->reveal(),
+                $this->prophesize(HeadersSerializer::class)->reveal(),
                 new AggregateRootRegistry(['test' => Profile::class]),
             ),
         );
@@ -195,6 +210,7 @@ final class ShowAggregateCommandTest extends TestCase
             new ShowAggregateCommand(
                 $this->prophesize(Store::class)->reveal(),
                 $this->prophesize(EventSerializer::class)->reveal(),
+                $this->prophesize(HeadersSerializer::class)->reveal(),
                 new AggregateRootRegistry(['test' => Profile::class]),
             ),
         );
@@ -209,30 +225,37 @@ final class ShowAggregateCommandTest extends TestCase
     public function testInteractiveSuccessful(): void
     {
         $event = new ProfileVisited(ProfileId::fromString('1'));
+        $message = Message::create($event)
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(Profile::class, '1'))->willReturn(
             new ArrayStream([
-                Message::create($event)
-                    ->withAggregateName('profile')
-                    ->withAggregateId('1')
-                    ->withPlayhead(1)
-                    ->withRecordedOn(new DateTimeImmutable()),
+                $message,
             ]),
         );
 
-        $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
             new SerializedEvent(
                 'profile.visited',
                 '{"visitorId": "1"}',
             ),
         );
 
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn([
+            new SerializedHeader(
+                'aggregate',
+                '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+            ),
+        ]);
+
         $commandTest = new CommandTester(
             new ShowAggregateCommand(
                 $store->reveal(),
-                $serializer->reveal(),
+                $eventSerializer->reveal(),
+                $headersSerializer->reveal(),
                 new AggregateRootRegistry(['profile' => Profile::class]),
             ),
         );
@@ -245,5 +268,7 @@ final class ShowAggregateCommandTest extends TestCase
         self::assertStringContainsString('Choose the aggregate', $display);
         self::assertStringContainsString('Enter the aggregate id', $display);
         self::assertStringContainsString('"visitorId": "1"', $display);
+        self::assertStringContainsString('aggregate', $display);
+        self::assertStringContainsString('{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}', $display);
     }
 }

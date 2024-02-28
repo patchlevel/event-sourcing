@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -26,7 +27,7 @@ final class UntilEventMiddlewareTest extends TestCase
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de'),
             ),
-        )->withRecordedOn(new DateTimeImmutable('2020-02-01 00:00:00'));
+        )->withHeader(new AggregateHeader('pofile', '1', 1, new DateTimeImmutable('2020-02-01 00:00:00')));
 
         $result = $middleware($message);
 
@@ -44,7 +45,7 @@ final class UntilEventMiddlewareTest extends TestCase
                 ProfileId::fromString('1'),
                 Email::fromString('info@patchlevel.de'),
             ),
-        )->withRecordedOn(new DateTimeImmutable('2020-02-01 00:00:00'));
+        )->withHeader(new AggregateHeader('pofile', '1', 1, new DateTimeImmutable('2020-02-01 00:00:00')));
 
         $result = $middleware($message);
 

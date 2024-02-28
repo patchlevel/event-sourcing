@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
+use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -24,15 +26,13 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(5);
+            ->withHeader(new AggregateHeader('profile', '1', 5, new DateTimeImmutable()));
 
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->aggregateName());
-        self::assertSame(1, $result[0]->playhead());
+        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
+        self::assertSame(1, $result[0]->header(AggregateHeader::class)->playhead);
     }
 
     public function testRecalculatePlayheadWithSamePlayhead(): void
@@ -45,9 +45,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(1);
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
         $result = $middleware($message);
 
@@ -64,25 +62,21 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(5);
+            ->withHeader(new AggregateHeader('profile', '1', 5, new DateTimeImmutable()));
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->aggregateName());
-        self::assertSame(1, $result[0]->playhead());
+        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
+        self::assertSame(1, $result[0]->header(AggregateHeader::class)->playhead);
 
         $message = Message::create($event)
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(8);
+            ->withHeader(new AggregateHeader('profile', '1', 8, new DateTimeImmutable()));
 
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->aggregateName());
-        self::assertSame(2, $result[0]->playhead());
+        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
+        self::assertSame(2, $result[0]->header(AggregateHeader::class)->playhead);
     }
 
     public function testReset(): void
@@ -95,25 +89,21 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(5);
+            ->withHeader(new AggregateHeader('profile', '1', 5, new DateTimeImmutable()));
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->aggregateName());
-        self::assertSame(1, $result[0]->playhead());
+        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
+        self::assertSame(1, $result[0]->header(AggregateHeader::class)->playhead);
 
         $message = Message::create($event)
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(8);
+            ->withHeader(new AggregateHeader('profile', '1', 8, new DateTimeImmutable()));
 
         $middleware->reset();
         $result = $middleware($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->aggregateName());
-        self::assertSame(1, $result[0]->playhead());
+        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
+        self::assertSame(1, $result[0]->header(AggregateHeader::class)->playhead);
     }
 }
