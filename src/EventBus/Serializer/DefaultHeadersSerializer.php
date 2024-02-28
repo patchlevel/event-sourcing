@@ -23,16 +23,17 @@ final class DefaultHeadersSerializer implements HeadersSerializer
 
     /**
      * @param list<Header> $headers
+     * @param array<string, mixed> $options
      *
      * @return array<SerializedHeader>
      */
-    public function serialize(array $headers): array
+    public function serialize(array $headers, array $options = []): array
     {
         $serializedHeaders = [];
         foreach ($headers as $header) {
             $serializedHeaders[] = new SerializedHeader(
                 $this->messageHeaderRegistry->headerName($header::class),
-                $this->encoder->encode($this->hydrator->extract($header)),
+                $this->encoder->encode($this->hydrator->extract($header), $options),
             );
         }
 

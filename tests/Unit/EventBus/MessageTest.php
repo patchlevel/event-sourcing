@@ -127,6 +127,6 @@ final class MessageTest extends TestCase
 
         $this->expectException(HeaderNotFound::class);
         /** @psalm-suppress UnusedMethodCall */
-        $message->header('Foo');
+        $message->header(AggregateHeader::class);
     }
 }
