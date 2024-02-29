@@ -30,8 +30,15 @@ psalm-baseline: vendor                                                          
 	vendor/bin/psalm --update-baseline --set-baseline=baseline.xml
 
 .PHONY: phpunit
-phpunit: vendor                                                                 ## run phpunit tests
-	XDEBUG_MODE=coverage vendor/bin/phpunit
+phpunit: vendor phpunit-unit phpunit-integration                              	## run phpunit tests
+
+.PHONY: phpunit-integration
+phpunit-integration: vendor                                                    	## run phpunit integration tests
+	vendor/bin/phpunit --testsuite=integration
+
+.PHONY: phpunit-unit
+phpunit-unit: vendor                                             				## run phpunit unit tests
+	XDEBUG_MODE=coverage vendor/bin/phpunit --testsuite=unit
 
 .PHONY: infection
 infection: vendor                                                               ## run infection

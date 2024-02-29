@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection\Projectionist;
 
 use Closure;
-use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
-use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadata;
-use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionCriteria;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Projection\Projection\Store\LockableProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorAccessor;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorAccessorRepository;
 use Patchlevel\EventSourcing\Projection\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Projection\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Store\Criteria;
@@ -23,24 +21,17 @@ use Patchlevel\EventSourcing\Store\Store;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-use function array_map;
-use function array_merge;
 use function count;
 use function in_array;
 use function sprintf;
 
 final class DefaultProjectionist implements Projectionist
 {
-    /** @var array<string, object>|null */
-    private array|null $projectorIndex = null;
-
-    /** @param iterable<object> $projectors */
     public function __construct(
         private readonly Store $messageStore,
         private readonly ProjectionStore $projectionStore,
-        private readonly iterable $projectors,
+        private readonly ProjectorAccessorRepository $projectorRepository,
         private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
-        private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory(),
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -323,7 +314,7 @@ final class DefaultProjectionist implements Projectionist
                         continue;
                     }
 
-                    $teardownMethod = $this->resolveTeardownMethod($projector);
+                    $teardownMethod = $projector->teardownMethod();
 
                     if (!$teardownMethod) {
                         $this->projectionStore->remove($projection);
@@ -402,7 +393,7 @@ final class DefaultProjectionist implements Projectionist
                         continue;
                     }
 
-                    $teardownMethod = $this->resolveTeardownMethod($projector);
+                    $teardownMethod = $projector->teardownMethod();
 
                     if (!$teardownMethod) {
                         $this->projectionStore->remove($projection);
@@ -561,7 +552,7 @@ final class DefaultProjectionist implements Projectionist
             throw ProjectorNotFound::forProjectionId($projection->id());
         }
 
-        $subscribeMethods = $this->resolveSubscribeMethods($projector, $message);
+        $subscribeMethods = $projector->subscribeMethods($message->event()::class);
 
         if ($subscribeMethods === []) {
             $projection->changePosition($index);
@@ -611,19 +602,9 @@ final class DefaultProjectionist implements Projectionist
         );
     }
 
-    private function projector(string $projectionId): object|null
+    private function projector(string $projectionId): ProjectorAccessor|null
     {
-        if ($this->projectorIndex === null) {
-            $this->projectorIndex = [];
-
-            foreach ($this->projectors as $projector) {
-                $projectorId = $this->projectorMetadata($projector)->id;
-
-                $this->projectorIndex[$projectorId] = $projector;
-            }
-        }
-
-        return $this->projectorIndex[$projectionId] ?? null;
+        return $this->projectorRepository->get($projectionId);
     }
 
     private function handleOutdatedProjections(ProjectionistCriteria $criteria): void
@@ -764,7 +745,7 @@ final class DefaultProjectionist implements Projectionist
                         throw ProjectorNotFound::forProjectionId($projection->id());
                     }
 
-                    $setupMethod = $this->resolveSetupMethod($projector);
+                    $setupMethod = $projector->setupMethod();
 
                     if (!$setupMethod) {
                         $projection->booting();
@@ -810,76 +791,31 @@ final class DefaultProjectionist implements Projectionist
         $this->findForUpdate(
             new ProjectionCriteria(),
             function (array $projections): void {
-                foreach ($this->projectors as $projector) {
-                    $metadata = $this->projectorMetadata($projector);
+                foreach ($this->projectorRepository->all() as $projector) {
 
                     foreach ($projections as $projection) {
-                        if ($projection->id() === $metadata->id) {
+                        if ($projection->id() === $projector->id()) {
                             continue 2;
                         }
                     }
 
-                    $this->projectionStore->add(new Projection(
-                        $metadata->id,
-                        $metadata->group,
-                        $metadata->runMode,
-                    ));
+                    $this->projectionStore->add(
+                        new Projection(
+                            $projector->id(),
+                            $projector->group(),
+                            $projector->runMode(),
+                        )
+                    );
 
                     $this->logger?->info(
                         sprintf(
                             'Projectionist: New Projector "%s" was found and added to the projection store.',
-                            $metadata->id,
+                            $projector->id(),
                         ),
                     );
                 }
             },
         );
-    }
-
-    private function resolveSetupMethod(object $projector): Closure|null
-    {
-        $metadata = $this->metadataFactory->metadata($projector::class);
-        $method = $metadata->setupMethod;
-
-        if ($method === null) {
-            return null;
-        }
-
-        return $projector->$method(...);
-    }
-
-    private function resolveTeardownMethod(object $projector): Closure|null
-    {
-        $metadata = $this->metadataFactory->metadata($projector::class);
-        $method = $metadata->teardownMethod;
-
-        if ($method === null) {
-            return null;
-        }
-
-        return $projector->$method(...);
-    }
-
-    /** @return iterable<Closure> */
-    private function resolveSubscribeMethods(object $projector, Message $message): iterable
-    {
-        $event = $message->event();
-        $metadata = $this->metadataFactory->metadata($projector::class);
-
-        $methods = array_merge(
-            $metadata->subscribeMethods[$event::class] ?? [],
-            $metadata->subscribeMethods[Subscribe::ALL] ?? [],
-        );
-
-        return array_map(
-            static fn (string $method) => $projector->$method(...),
-            $methods,
-        );
-    }
-
-    private function projectorMetadata(object $projector): ProjectorMetadata
-    {
-        return $this->metadataFactory->metadata($projector::class);
     }
 
     private function latestIndex(): int

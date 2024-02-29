@@ -16,14 +16,19 @@ use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
+use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepository;
+use Patchlevel\EventSourcing\Projection\Projector\TraceableProjectorAccessorRepository;
 use Patchlevel\EventSourcing\Projection\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceDecorator;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Aggregate\Profile;
+use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ChangeNameProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ErrorProducerProjector;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProjector;
 use PHPUnit\Framework\TestCase;
@@ -86,7 +91,7 @@ final class ProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $store,
             $projectionStore,
-            [new ProfileProjector($this->projectionConnection)],
+            new MetadataProjectorAccessorRepository([new ProfileProjector($this->projectionConnection)]),
         );
 
         self::assertEquals(
@@ -128,7 +133,8 @@ final class ProjectionistTest extends TestCase
             $projectionist->projections(),
         );
 
-        $result = $this->projectionConnection->fetchAssociative('SELECT * FROM projection_profile_1 WHERE id = ?', ['1']);
+        $result = $this->projectionConnection->fetchAssociative('SELECT * FROM projection_profile_1 WHERE id = ?',
+            ['1']);
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
@@ -195,7 +201,7 @@ final class ProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $store,
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
             new ClockBasedRetryStrategy(
                 $clock,
                 ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
@@ -287,6 +293,101 @@ final class ProjectionistTest extends TestCase
         self::assertEquals(ProjectionStatus::Active, $projection->status());
         self::assertEquals(null, $projection->projectionError());
         self::assertEquals(0, $projection->retryAttempt());
+    }
+
+
+    public function testProcessor(): void
+    {
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            'eventstore',
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $projectionStore = new DoctrineStore(
+            $this->connection,
+            $clock,
+        );
+
+        $traceStack = new TraceStack();
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            DefaultEventBus::create(),
+            null,
+            new TraceDecorator($traceStack)
+        );
+
+        $projectorAccessorRepository = new TraceableProjectorAccessorRepository(
+            new MetadataProjectorAccessorRepository([
+                new ChangeNameProcessor($manager)
+            ]),
+            $traceStack
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $projectionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $projectionist = new DefaultProjectionist(
+            $store,
+            $projectionStore,
+            $projectorAccessorRepository,
+        );
+
+        self::assertEquals(
+            [new Projection('profile_change_name', lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'))],
+            $projectionist->projections(),
+        );
+
+        $projectionist->boot();
+
+        self::assertEquals(
+            [
+                new Projection(
+                    'profile_change_name',
+                    Projection::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    ProjectionStatus::Active,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $projectionist->projections(),
+        );
+
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $repository->save($profile);
+
+        $projectionist->run();
+
+        self::assertEquals(
+            [
+                new Projection(
+                    'profile_change_name',
+                    Projection::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    ProjectionStatus::Active,
+                    2,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $projectionist->projections(),
+        );
+
+        $events = $store->load();
+
+        dd(iterator_to_array($events));
     }
 
     /** @param list<Projection> $projections */
