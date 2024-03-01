@@ -12,7 +12,6 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\EventBus\Header;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
@@ -312,7 +311,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
         $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
     }
 
-    /** @return list<Header> */
+    /** @return list<object> */
     private function getCustomHeaders(Message $message): array
     {
         $filteredHeaders = [
@@ -324,7 +323,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
         return array_values(
             array_filter(
                 $message->headers(),
-                static fn (Header $header) => !in_array($header::class, $filteredHeaders, true)
+                static fn (object $header) => !in_array($header::class, $filteredHeaders, true)
             ),
         );
     }

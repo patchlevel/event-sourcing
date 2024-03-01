@@ -4,27 +4,25 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Message;
 
-use Patchlevel\EventSourcing\EventBus\Header;
-
 use function array_flip;
 use function array_key_exists;
 
 final class MessageHeaderRegistry
 {
-    /** @var array<string, class-string<Header>> */
+    /** @var array<string, class-string> */
     private array $nameToClassMap;
 
-    /** @var array<class-string<Header>, string> */
+    /** @var array<class-string, string> */
     private array $classToNameMap;
 
-    /** @param array<string, class-string<Header>> $headerNameToClassMap */
+    /** @param array<string, class-string> $headerNameToClassMap */
     public function __construct(array $headerNameToClassMap)
     {
         $this->nameToClassMap = $headerNameToClassMap;
         $this->classToNameMap = array_flip($headerNameToClassMap);
     }
 
-    /** @param class-string<Header> $headerClass */
+    /** @param class-string $headerClass */
     public function headerName(string $headerClass): string
     {
         if (!array_key_exists($headerClass, $this->classToNameMap)) {
@@ -34,7 +32,7 @@ final class MessageHeaderRegistry
         return $this->classToNameMap[$headerClass];
     }
 
-    /** @return class-string<Header> */
+    /** @return class-string */
     public function headerClass(string $headerName): string
     {
         if (!array_key_exists($headerName, $this->nameToClassMap)) {
@@ -54,13 +52,13 @@ final class MessageHeaderRegistry
         return array_key_exists($headerName, $this->nameToClassMap);
     }
 
-    /** @return array<string, class-string<Header>> */
+    /** @return array<string, class-string> */
     public function headerClasses(): array
     {
         return $this->nameToClassMap;
     }
 
-    /** @return array<class-string<Header>, string> */
+    /** @return array<class-string, string> */
     public function headerNames(): array
     {
         return $this->classToNameMap;

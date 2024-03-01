@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\EventBus\Serializer;
 
-use Patchlevel\EventSourcing\EventBus\Header;
-
 interface HeadersSerializer
 {
     /**
-     * @param list<Header>         $headers
+     * @param list<object>         $headers
      * @param array<string, mixed> $options
      *
      * @return array<SerializedHeader>
@@ -19,7 +17,7 @@ interface HeadersSerializer
     /**
      * @param array<SerializedHeader> $serializedHeaders
      *
-     * @return list<Header>
+     * @return list<object>
      */
     public function deserialize(array $serializedHeaders): array;
 }

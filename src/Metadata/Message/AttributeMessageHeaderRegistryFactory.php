@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Message;
 
 use Patchlevel\EventSourcing\Attribute\HeaderIdentifier;
-use Patchlevel\EventSourcing\EventBus\Header;
 use Patchlevel\EventSourcing\Metadata\ClassFinder;
 use ReflectionClass;
 
 use function count;
-use function is_subclass_of;
 
 final class AttributeMessageHeaderRegistryFactory implements MessageHeaderRegistryFactory
 {
@@ -29,12 +27,7 @@ final class AttributeMessageHeaderRegistryFactory implements MessageHeaderRegist
                 continue;
             }
 
-            if (!is_subclass_of($class, Header::class)) {
-                throw new NotAHeaderClass($class);
-            }
-
             $aggregateName = $attributes[0]->newInstance()->name;
-
             $result[$aggregateName] = $class;
         }
 

@@ -15,14 +15,7 @@ use function is_a;
  */
 final class Message
 {
-    public const HEADER_AGGREGATE_NAME = 'aggregateName';
-    public const HEADER_AGGREGATE_ID = 'aggregateId';
-    public const HEADER_PLAYHEAD = 'playhead';
-    public const HEADER_RECORDED_ON = 'recordedOn';
-    public const HEADER_ARCHIVED = 'archived';
-    public const HEADER_NEW_STREAM_START = 'newStreamStart';
-
-    /** @var array<class-string<Header>, Header> */
+    /** @var array<class-string, object> */
     private array $headers = [];
 
     /** @param T $event */
@@ -43,7 +36,7 @@ final class Message
         return new self($event);
     }
 
-    /** @param iterable<Header> $headers */
+    /** @param iterable<object> $headers */
     public static function createWithHeaders(object $event, iterable $headers): self
     {
         return self::create($event)->withHeaders($headers);
@@ -62,9 +55,9 @@ final class Message
      *
      * @throws HeaderNotFound
      *
-     * @template H1 of Header
+     * @template H1 of object
      */
-    public function header(string $name): Header
+    public function header(string $name): object
     {
         if (!array_key_exists($name, $this->headers)) {
             throw new HeaderNotFound($name);
@@ -77,7 +70,7 @@ final class Message
         return $header;
     }
 
-    public function withHeader(Header $header): self
+    public function withHeader(object $header): self
     {
         $message = clone $this;
         $message->headers[$header::class] = $header;
@@ -85,13 +78,13 @@ final class Message
         return $message;
     }
 
-    /** @return list<Header> */
+    /** @return list<object> */
     public function headers(): array
     {
         return array_values($this->headers);
     }
 
-    /** @param iterable<Header> $headers */
+    /** @param iterable<object> $headers */
     public function withHeaders(iterable $headers): self
     {
         $message = clone $this;
