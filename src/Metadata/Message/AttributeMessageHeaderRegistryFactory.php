@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Message;
 
-use Patchlevel\EventSourcing\Attribute\HeaderIdentifier;
+use Patchlevel\EventSourcing\Attribute\Header;
 use Patchlevel\EventSourcing\Metadata\ClassFinder;
 use ReflectionClass;
 
@@ -21,7 +21,7 @@ final class AttributeMessageHeaderRegistryFactory implements MessageHeaderRegist
 
         foreach ($classes as $class) {
             $reflection = new ReflectionClass($class);
-            $attributes = $reflection->getAttributes(HeaderIdentifier::class);
+            $attributes = $reflection->getAttributes(Header::class);
 
             if (count($attributes) === 0) {
                 continue;

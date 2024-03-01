@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Integration\BasicImplementation\Header;
 
-use Patchlevel\EventSourcing\Attribute\HeaderIdentifier;
+use Patchlevel\EventSourcing\Attribute\Header;
 
 /** @psalm-immutable */
-#[HeaderIdentifier('baz')]
+#[Header('baz')]
 final class BazHeader
 {
     public function __construct(

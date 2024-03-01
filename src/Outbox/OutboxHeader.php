@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Outbox;
 
-use Patchlevel\EventSourcing\Attribute\HeaderIdentifier;
+use Patchlevel\EventSourcing\Attribute\Header;
 
 /** @psalm-immutable */
-#[HeaderIdentifier('outbox')]
+#[Header('outbox')]
 final class OutboxHeader
 {
     public function __construct(

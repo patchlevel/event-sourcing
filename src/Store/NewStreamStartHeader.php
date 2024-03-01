@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use Patchlevel\EventSourcing\Attribute\HeaderIdentifier;
+use Patchlevel\EventSourcing\Attribute\Header;
 
 /** @psalm-immutable */
-#[HeaderIdentifier('newStreamStart')]
+#[Header('newStreamStart')]
 final class NewStreamStartHeader
 {
     public function __construct(

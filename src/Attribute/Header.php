@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-final class HeaderIdentifier
+final class Header
 {
     public function __construct(
         public readonly string $name,

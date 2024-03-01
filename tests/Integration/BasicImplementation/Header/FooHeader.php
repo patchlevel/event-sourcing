@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Integration\BasicImplementation\Header;
 
-use Patchlevel\EventSourcing\Attribute\HeaderIdentifier;
+use Patchlevel\EventSourcing\Attribute\Header;
 
 /** @psalm-immutable */
-#[HeaderIdentifier('foo')]
+#[Header('foo')]
 final class FooHeader
 {
     public function __construct(
