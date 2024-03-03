@@ -69,14 +69,14 @@ final class SnapshotsBench
         $this->snapshotStore->save($profile);
     }
 
-    #[Bench\Revs(20)]
+    #[Bench\Revs(10)]
     public function benchLoad10000EventsMissingSnapshot(): void
     {
         $this->adapter->clear();
         $this->repository->load($this->id);
     }
 
-    #[Bench\Revs(20)]
+    #[Bench\Revs(10)]
     public function benchLoad10000Events(): void
     {
         $this->repository->load($this->id);

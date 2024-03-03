@@ -80,14 +80,14 @@ final class SplitStreamBench
         $this->repository->save($profile);
     }
 
-    #[Bench\Revs(20)]
+    #[Bench\Revs(10)]
     #[Bench\BeforeMethods('provideData')]
     public function benchLoad10000Events(): void
     {
         $this->repository->load($this->id);
     }
 
-    #[Bench\Revs(20)]
+    #[Bench\Revs(10)]
     public function benchSave10000Events(): void
     {
         $profile = Profile::create(ProfileId::v7(), 'Peter');

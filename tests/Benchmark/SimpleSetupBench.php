@@ -59,20 +59,20 @@ final class SimpleSetupBench
         $this->repository->save($profile);
     }
 
-    #[Bench\Revs(20)]
+    #[Bench\Revs(10)]
     public function benchLoad10000Events(): void
     {
         $this->repository->load($this->id);
     }
 
-    #[Bench\Revs(20)]
+    #[Bench\Revs(10)]
     public function benchSave1Event(): void
     {
         $profile = Profile::create(ProfileId::v7(), 'Peter');
         $this->repository->save($profile);
     }
 
-    #[Bench\Revs(20)]
+    #[Bench\Revs(10)]
     public function benchSave10000Events(): void
     {
         $profile = Profile::create(ProfileId::v7(), 'Peter');
@@ -93,7 +93,7 @@ final class SimpleSetupBench
         }
     }
 
-    #[Bench\Revs(20)]
+    #[Bench\Revs(10)]
     public function benchSave10000AggregatesTransaction(): void
     {
         $this->store->transactional(function (): void {

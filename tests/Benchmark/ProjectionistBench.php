@@ -83,7 +83,7 @@ final class ProjectionistBench
         );
     }
 
-    #[Bench\Revs(20)]
+    #[Bench\Revs(10)]
     public function benchHandle10000Events(): void
     {
         $this->projectionist->boot();
