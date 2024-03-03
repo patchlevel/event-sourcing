@@ -36,7 +36,7 @@ final class DefaultProjectionist implements Projectionist
 
     /** @param iterable<object> $projectors */
     public function __construct(
-        private readonly Store $streamableMessageStore,
+        private readonly Store $messageStore,
         private readonly ProjectionStore $projectionStore,
         private readonly iterable $projectors,
         private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
@@ -86,7 +86,7 @@ final class DefaultProjectionist implements Projectionist
                 $stream = null;
 
                 try {
-                    $stream = $this->streamableMessageStore->load(
+                    $stream = $this->messageStore->load(
                         new Criteria(fromIndex: $startIndex),
                     );
 
@@ -215,7 +215,7 @@ final class DefaultProjectionist implements Projectionist
 
                 try {
                     $criteria = new Criteria(fromIndex: $startIndex);
-                    $stream = $this->streamableMessageStore->load($criteria);
+                    $stream = $this->messageStore->load($criteria);
 
                     $messageCounter = 0;
 
@@ -868,7 +868,7 @@ final class DefaultProjectionist implements Projectionist
 
     private function latestIndex(): int
     {
-        $stream = $this->streamableMessageStore->load(null, 1, null, true);
+        $stream = $this->messageStore->load(null, 1, null, true);
 
         return $stream->index() ?: 0;
     }
