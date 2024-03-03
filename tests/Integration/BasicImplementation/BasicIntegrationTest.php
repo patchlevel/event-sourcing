@@ -16,11 +16,11 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjector;
-use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
 use PHPUnit\Framework\TestCase;
 
 /** @coversNothing */

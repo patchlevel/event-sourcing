@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
-use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
-use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
@@ -23,16 +21,12 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profi
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection\ProfileProjector;
+use Patchlevel\EventSourcing\Tests\DbalManager;
 use PhpBench\Attributes as Bench;
-
-use function file_exists;
-use function unlink;
 
 #[Bench\BeforeMethods('setUp')]
 final class ProjectionistBench
 {
-    private const DB_PATH = __DIR__ . '/BasicImplementation/data/db.sqlite3';
-
     private Store $store;
     private EventBus $bus;
     private Repository $repository;
@@ -43,14 +37,7 @@ final class ProjectionistBench
 
     public function setUp(): void
     {
-        if (file_exists(self::DB_PATH)) {
-            unlink(self::DB_PATH);
-        }
-
-        $connection = DriverManager::getConnection([
-            'driverClass' => Driver::class,
-            'path' => self::DB_PATH,
-        ]);
+        $connection = DbalManager::createConnection();
 
         $this->bus = DefaultEventBus::create();
 
