@@ -1,6 +1,6 @@
 # Repository
 
-A `repository` takes care of storing and loading the `aggregates`.
+A `repository` takes care of storing and loading the `aggregates` in the [event store](store.md).
 He is also responsible for building [messages](event_bus.md) from the events and then dispatching them to the event bus.
 
 Every aggregate needs a repository to be stored. 
@@ -199,3 +199,11 @@ class ProfileRepository
     }
 }
 ```
+
+## Learn more
+
+* [How to create an aggregate](aggregate.md)
+* [How to create an event](events.md)
+* [How to work with the store](store.md)
+* [How to use snapshots](snapshots.md)
+* [How to split streams](split_stream.md)
