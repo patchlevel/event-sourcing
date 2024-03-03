@@ -87,6 +87,26 @@ final class StoreTest extends TestCase
         self::assertEquals(['profileId' => 'test', 'name' => 'test'], json_decode($result1['payload'], true));
     }
 
+    public function testSave10000Messages(): void
+    {
+        $messages = [];
+
+        for ($i = 1; $i <= 10000; $i++) {
+            $messages[] = Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
+                ->withAggregateName('profile')
+                ->withAggregateId('test')
+                ->withPlayhead($i)
+                ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'));
+        }
+
+        $this->store->save(...$messages);
+
+        /** @var int $result */
+        $result = $this->connection->fetchFirstColumn('SELECT COUNT(*) FROM eventstore')[0];
+
+        self::assertEquals(10000, $result);
+    }
+
     public function testLoad(): void
     {
         $message = Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
