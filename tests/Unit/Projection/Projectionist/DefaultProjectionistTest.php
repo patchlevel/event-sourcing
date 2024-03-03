@@ -352,6 +352,13 @@ final class DefaultProjectionistTest extends TestCase
                 1,
             ),
             new Projection(
+                $projectionId2,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Booting,
+                1,
+            ),
+            new Projection(
                 $projectionId1,
                 Projection::DEFAULT_GROUP,
                 RunMode::FromBeginning,
@@ -461,13 +468,6 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->boot();
 
         self::assertEquals([
-            new Projection(
-                $projectionId,
-                Projection::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                ProjectionStatus::Booting,
-                1,
-            ),
             new Projection(
                 $projectionId,
                 Projection::DEFAULT_GROUP,
@@ -834,6 +834,13 @@ final class DefaultProjectionistTest extends TestCase
                 ProjectionStatus::Active,
                 1,
             ),
+            new Projection(
+                $projectionId2,
+                Projection::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                ProjectionStatus::Active,
+                1,
+            ),
         ], $projectionStore->updatedProjections);
 
         self::assertSame($message, $projector1->message);
@@ -999,13 +1006,6 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist->run();
 
         self::assertEquals([
-            new Projection(
-                $projectionId,
-                Projection::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                ProjectionStatus::Active,
-                1,
-            ),
             new Projection(
                 $projectionId,
                 Projection::DEFAULT_GROUP,
