@@ -13,7 +13,7 @@ use function class_exists;
 final class DoctrineSchemaSubscriber implements EventSubscriber
 {
     public function __construct(
-        private readonly SchemaConfigurator $schemaConfigurator,
+        private readonly DoctrineSchemaConfigurator $schemaConfigurator,
     ) {
     }
 

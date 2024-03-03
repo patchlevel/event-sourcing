@@ -21,7 +21,7 @@ use Patchlevel\EventSourcing\Projection\Projection\ProjectionError;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionNotFound;
 use Patchlevel\EventSourcing\Projection\Projection\ProjectionStatus;
 use Patchlevel\EventSourcing\Projection\Projection\RunMode;
-use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Psr\Clock\ClockInterface;
 
 use function array_map;
@@ -44,7 +44,7 @@ use const JSON_THROW_ON_ERROR;
  *     last_saved_at: string,
  * }
  */
-final class DoctrineStore implements LockableProjectionStore, SchemaConfigurator
+final class DoctrineStore implements LockableProjectionStore, DoctrineSchemaConfigurator
 {
     public function __construct(
         private readonly Connection $connection,

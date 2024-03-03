@@ -8,8 +8,8 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Event\GenerateSchemaEventArgs;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaSubscriber;
-use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -25,7 +25,7 @@ final class DoctrineSchemaSubscriberTest extends TestCase
         $em->getConnection()->willReturn($connection);
         $expectedSchema = new Schema();
 
-        $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
+        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
         $schemaConfigurator->configureSchema($expectedSchema, $connection)->shouldBeCalled();
 
         $event = new GenerateSchemaEventArgs($em->reveal(), $expectedSchema);
@@ -36,7 +36,7 @@ final class DoctrineSchemaSubscriberTest extends TestCase
 
     public function testGetSubscribedEvents(): void
     {
-        $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
+        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
 
         $doctrineSchemaSubscriber = new DoctrineSchemaSubscriber($schemaConfigurator->reveal());
         $events = $doctrineSchemaSubscriber->getSubscribedEvents();

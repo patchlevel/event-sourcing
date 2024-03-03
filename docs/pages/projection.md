@@ -430,12 +430,12 @@ Using `ChainSchemaConfigurator` we can add multiple schema configurators.
 In our case they need the `SchemaConfigurator` from the event store and projection store.
 
 ```php
-use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
 $schemaDirector = new DoctrineSchemaDirector(
     $connection
-    new ChainSchemaConfigurator([
+    new ChainDoctrineSchemaConfigurator([
         $eventStore,
         $projectionStore
     ]),

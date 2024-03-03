@@ -10,14 +10,14 @@ use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\MessageSerializer;
-use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
 
 use function array_map;
 use function is_int;
 use function is_string;
 
-final class DoctrineOutboxStore implements OutboxStore, SchemaConfigurator
+final class DoctrineOutboxStore implements OutboxStore, DoctrineSchemaConfigurator
 {
     public const HEADER_OUTBOX_IDENTIFIER = 'outboxIdentifier';
 

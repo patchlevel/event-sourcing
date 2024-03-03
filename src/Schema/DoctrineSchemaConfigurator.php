@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Schema;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 
-interface SchemaConfigurator
+interface DoctrineSchemaConfigurator
 {
     public function configureSchema(Schema $schema, Connection $connection): void;
 }
