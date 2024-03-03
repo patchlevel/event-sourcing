@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
-use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
+use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\NewVisited;
 use Patchlevel\EventSourcing\Tests\Integration\Pipeline\Events\OldVisited;

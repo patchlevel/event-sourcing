@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
-use Patchlevel\EventSourcing\Tests\Integration\DbalManager;
+use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Outbox\Processor\SendEmailProcessor;
