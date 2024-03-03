@@ -11,6 +11,19 @@ jobs:
 
     runs-on: ${{ matrix.operating-system }}
 
+    services:
+      postgres:
+        # Docker Hub image
+        image: "postgres:16.1"
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: eventstore
+        options: >-
+          --health-cmd "pg_isready"
+        ports:
+          - "5432:5432"
+
     strategy:
       matrix:
         dependencies:
@@ -19,6 +32,9 @@ jobs:
           - "8.3"
         operating-system:
           - "ubuntu-latest"
+
+    env:
+      DB_URL: 'pdo-pgsql://postgres:postgres@localhost:5432/eventstore?charset=utf8'
 
     steps:
       - name: "Install PHP"

@@ -145,6 +145,8 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 $batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
                 $placeholder = implode(', ', array_fill(0, $columnsLength, '?'));
 
+                $batchSize = 1000;
+
                 $parameters = [];
                 $placeholders = [];
                 /** @var array<int<0, max>, Type> $types */
