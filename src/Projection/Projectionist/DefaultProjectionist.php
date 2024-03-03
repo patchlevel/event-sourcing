@@ -84,13 +84,12 @@ final class DefaultProjectionist implements Projectionist
                 );
 
                 $stream = null;
+                $messageCounter = 0;
 
                 try {
                     $stream = $this->messageStore->load(
                         new Criteria(fromIndex: $startIndex),
                     );
-
-                    $messageCounter = 0;
 
                     foreach ($stream as $message) {
                         $index = $stream->index();
@@ -141,6 +140,16 @@ final class DefaultProjectionist implements Projectionist
                         }
                     }
                 } finally {
+                    if ($messageCounter > 0) {
+                        foreach ($projections as $projection) {
+                            if (!$projection->isBooting()) {
+                                continue;
+                            }
+
+                            $this->projectionStore->update($projection);
+                        }
+                    }
+
                     $stream?->close();
                 }
 
@@ -212,12 +221,11 @@ final class DefaultProjectionist implements Projectionist
                 );
 
                 $stream = null;
+                $messageCounter = 0;
 
                 try {
                     $criteria = new Criteria(fromIndex: $startIndex);
                     $stream = $this->messageStore->load($criteria);
-
-                    $messageCounter = 0;
 
                     foreach ($stream as $message) {
                         $index = $stream->index();
@@ -263,6 +271,16 @@ final class DefaultProjectionist implements Projectionist
                         }
                     }
                 } finally {
+                    if ($messageCounter > 0) {
+                        foreach ($projections as $projection) {
+                            if (!$projection->isActive()) {
+                                continue;
+                            }
+
+                            $this->projectionStore->update($projection);
+                        }
+                    }
+
                     $stream?->close();
                 }
 
@@ -547,7 +565,6 @@ final class DefaultProjectionist implements Projectionist
 
         if ($subscribeMethods === []) {
             $projection->changePosition($index);
-            $this->projectionStore->update($projection);
 
             $this->logger?->debug(
                 sprintf(
@@ -583,7 +600,6 @@ final class DefaultProjectionist implements Projectionist
 
         $projection->changePosition($index);
         $projection->resetRetry();
-        $this->projectionStore->update($projection);
 
         $this->logger?->debug(
             sprintf(
