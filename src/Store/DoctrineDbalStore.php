@@ -18,6 +18,7 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 
 use function array_fill;
 use function count;
+use function floor;
 use function implode;
 use function is_int;
 use function is_string;
@@ -25,6 +26,11 @@ use function sprintf;
 
 final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigurator
 {
+    /**
+     * PostgreSQL has a limit of 65535 parameters in a single query.
+     */
+    private const MAX_UNSIGNED_SMALL_INT = 65_535;
+
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $serializer,
@@ -123,12 +129,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 $jsonType = Type::getType(Types::JSON);
                 $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
-                $parameters = [];
-                $placeholders = [];
-
-                /** @var array<int<0, max>, Type> $types */
-                $types = [];
-
                 $columns = [
                     'aggregate',
                     'aggregate_id',
@@ -142,11 +142,17 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
                 ];
 
                 $columnsLength = count($columns);
+                $batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
                 $placeholder = implode(', ', array_fill(0, $columnsLength, '?'));
 
-                foreach ($messages as $position => $message) {
+                $parameters = [];
+                $placeholders = [];
+                /** @var array<int<0, max>, Type> $types */
+                $types = [];
+                $position = 0;
+                foreach ($messages as $message) {
                     /** @var int<0, max> $offset */
-                    $offset = (int)$position * $columnsLength;
+                    $offset = $position * $columnsLength;
                     $placeholders[] = $placeholder;
 
                     $data = $this->serializer->serialize($message->event());
@@ -184,6 +190,31 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigura
 
                     $parameters[] = $message->customHeaders();
                     $types[$offset + 8] = $jsonType;
+
+                    $position++;
+
+                    if ($position !== $batchSize) {
+                        continue;
+                    }
+
+                    $query = sprintf(
+                        "INSERT INTO %s (%s) VALUES\n(%s)",
+                        $this->storeTableName,
+                        implode(', ', $columns),
+                        implode("),\n(", $placeholders),
+                    );
+
+                    $connection->executeStatement($query, $parameters, $types);
+
+                    $parameters = [];
+                    $placeholders = [];
+                    $types = [];
+
+                    $position = 0;
+                }
+
+                if ($position === 0) {
+                    return;
                 }
 
                 $query = sprintf(
