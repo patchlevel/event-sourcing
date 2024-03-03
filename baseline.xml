@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.22.1@e9dad66e11274315dac27e08349c628c7d6a1a43">
+<files psalm-version="5.22.2@d768d914152dbbf3486c36398802f74e80cfde48">
   <file src="src/Aggregate/AggregateRootBehaviour.php">
     <UnsafeInstantiation>
       <code><![CDATA[new static()]]></code>
@@ -99,6 +99,15 @@
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Benchmark/ProjectionistBench.php">
+    <MissingConstructor>
+      <code><![CDATA[$bus]]></code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$projectionist]]></code>
+      <code><![CDATA[$repository]]></code>
+      <code><![CDATA[$store]]></code>
+    </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SimpleSetupBench.php">
     <MissingConstructor>

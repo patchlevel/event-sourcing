@@ -10,13 +10,17 @@ use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 
 use function assert;
 
-#[Projector('dummy_1')]
+#[Projector('profile')]
 final class ProfileProjector
 {
+    use ProjectorUtil;
+
     public function __construct(
         private Connection $connection,
     ) {
@@ -25,28 +29,47 @@ final class ProfileProjector
     #[Setup]
     public function create(): void
     {
-        $this->connection->executeStatement('CREATE TABLE IF NOT EXISTS projection_profile (id VARCHAR PRIMARY KEY, name VARCHAR);');
+        $this->connection->executeStatement("CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR);");
     }
 
     #[Teardown]
     public function drop(): void
     {
-        $this->connection->executeStatement('DROP TABLE IF EXISTS projection_profile;');
+        $this->connection->executeStatement("DROP TABLE IF EXISTS {$this->table()};");
     }
 
     #[Subscribe(ProfileCreated::class)]
-    public function handleProfileCreated(Message $message): void
+    public function onProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();
 
         assert($profileCreated instanceof ProfileCreated);
 
-        $this->connection->executeStatement(
-            'INSERT INTO projection_profile (`id`, `name`) VALUES(:id, :name);',
+        $this->connection->insert(
+            $this->table(),
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
             ],
         );
+    }
+
+    #[Subscribe(NameChanged::class)]
+    public function onNameChanged(Message $message): void
+    {
+        $nameChanged = $message->event();
+
+        assert($nameChanged instanceof NameChanged);
+
+        $this->connection->update(
+            $this->table(),
+            ['name' => $nameChanged->name],
+            ['id' => $message->aggregateId()],
+        );
+    }
+
+    public function table(): string
+    {
+        return 'projection_' . $this->projectorId();
     }
 }

@@ -69,7 +69,7 @@ final class ProfileProjector
         $profileCreated = $message->event();
     
         $this->connection->executeStatement(
-            "INSERT INTO ${this->table()} (id, name) VALUES(?, ?);",
+            "INSERT INTO {$this->table()} (id, name) VALUES(?, ?);",
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name
@@ -123,14 +123,14 @@ final class ProfileProjector
     public function create(): void
     {
         $this->connection->executeStatement(
-            "CREATE TABLE IF NOT EXISTS ${this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);"
+            "CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);"
         );
     }
 
     #[Teardown]
     public function drop(): void
     {
-        $this->connection->executeStatement("DROP TABLE IF EXISTS ${this->table()};");
+        $this->connection->executeStatement("DROP TABLE IF EXISTS {$this->table()};");
     }
 
     private function table(): string 
@@ -175,7 +175,7 @@ final class ProfileProjector
      */
     public function getProfiles(): array 
     {
-        return $this->connection->fetchAllAssociative("SELECT id, name FROM ${this->table()};");
+        return $this->connection->fetchAllAssociative("SELECT id, name FROM {$this->table()};");
     }
     
     private function table(): string 

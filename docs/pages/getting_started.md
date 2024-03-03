@@ -181,7 +181,7 @@ final class HotelProjector
      */
     public function getHotels(): array 
     {
-        return $this->db->fetchAllAssociative("SELECT id, name, guests FROM ${this->table()};");
+        return $this->db->fetchAllAssociative("SELECT id, name, guests FROM {$this->table()};");
     }
 
     #[Subscribe(HotelCreated::class)]
@@ -203,7 +203,7 @@ final class HotelProjector
     public function handleGuestIsCheckedIn(Message $message): void
     {
         $this->db->executeStatement(
-            "UPDATE ${this->table()} SET guests = guests + 1 WHERE id = ?;",
+            "UPDATE {$this->table()} SET guests = guests + 1 WHERE id = ?;",
             [$message->aggregateId()]
         );
     }
@@ -212,7 +212,7 @@ final class HotelProjector
     public function handleGuestIsCheckedOut(Message $message): void
     {
         $this->db->executeStatement(
-            "UPDATE ${this->table()} SET guests = guests - 1 WHERE id = ?;",
+            "UPDATE {$this->table()} SET guests = guests - 1 WHERE id = ?;",
             [$message->aggregateId()]
         );
     }
@@ -220,13 +220,13 @@ final class HotelProjector
     #[Setup]
     public function create(): void
     {
-        $this->db->executeStatement("CREATE TABLE IF NOT EXISTS ${this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);");
+        $this->db->executeStatement("CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);");
     }
 
     #[Teardown]
     public function drop(): void
     {
-        $this->db->executeStatement("DROP TABLE IF EXISTS ${this->table()};");
+        $this->db->executeStatement("DROP TABLE IF EXISTS {$this->table()};");
     }
     
     private function table(): string
