@@ -13,7 +13,7 @@ final class DoctrineSchemaDirector implements DryRunSchemaDirector, DoctrineSche
 {
     public function __construct(
         private readonly Connection $connection,
-        private readonly SchemaConfigurator $schemaConfigurator,
+        private readonly DoctrineSchemaConfigurator $schemaConfigurator,
     ) {
     }
 

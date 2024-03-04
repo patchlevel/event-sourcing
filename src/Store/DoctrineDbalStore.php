@@ -13,7 +13,7 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 
 use function array_fill;
@@ -24,7 +24,7 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class DoctrineDbalStore implements Store, ArchivableStore, SchemaConfigurator
+final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaConfigurator
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.

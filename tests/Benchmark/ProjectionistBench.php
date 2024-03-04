@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\Projectionist;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
-use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -55,7 +55,7 @@ final class ProjectionistBench
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,
-            new ChainSchemaConfigurator([
+            new ChainDoctrineSchemaConfigurator([
                 $this->store,
                 $projectionStore,
             ]),

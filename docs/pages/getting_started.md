@@ -341,12 +341,12 @@ So that we can actually write the data to a database,
 we need the associated schema and databases.
 
 ```php
-use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
-    new ChainSchemaConfigurator([
+    new ChainDoctrineSchemaConfigurator([
         $eventStore,
         $projectionStore
     ])

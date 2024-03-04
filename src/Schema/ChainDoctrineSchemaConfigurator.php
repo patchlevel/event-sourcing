@@ -7,9 +7,9 @@ namespace Patchlevel\EventSourcing\Schema;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 
-final class ChainSchemaConfigurator implements SchemaConfigurator
+final class ChainDoctrineSchemaConfigurator implements DoctrineSchemaConfigurator
 {
-    /** @param iterable<SchemaConfigurator> $schemaConfigurator */
+    /** @param iterable<DoctrineSchemaConfigurator> $schemaConfigurator */
     public function __construct(
         private readonly iterable $schemaConfigurator,
     ) {

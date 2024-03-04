@@ -17,7 +17,7 @@ use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
 use Patchlevel\EventSourcing\Projection\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -70,7 +70,7 @@ final class ProjectionistTest extends TestCase
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            new ChainSchemaConfigurator([
+            new ChainDoctrineSchemaConfigurator([
                 $store,
                 $projectionStore,
             ]),
@@ -167,7 +167,7 @@ final class ProjectionistTest extends TestCase
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            new ChainSchemaConfigurator([
+            new ChainDoctrineSchemaConfigurator([
                 $store,
                 $projectionStore,
             ]),

@@ -11,8 +11,8 @@ use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaConfig;
 use Doctrine\DBAL\Schema\SchemaDiff;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
-use Patchlevel\EventSourcing\Schema\SchemaConfigurator;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -36,7 +36,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $connection->getDatabasePlatform()->willReturn($platform->reveal());
         $connection->executeStatement('this is sql!')->shouldBeCalledOnce();
 
-        $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
+        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
         $schemaConfigurator->configureSchema(Argument::type(Schema::class), $connection->reveal())->shouldBeCalledOnce();
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
@@ -60,7 +60,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
         $connection->getDatabasePlatform()->willReturn($platform->reveal());
 
-        $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
+        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
         $schemaConfigurator->configureSchema(Argument::type(Schema::class), $connection->reveal())->shouldBeCalledOnce();
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
@@ -96,7 +96,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $connection->executeStatement('x')->shouldBeCalledOnce();
         $connection->executeStatement('y')->shouldBeCalledOnce();
 
-        $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
+        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
         $schemaConfigurator->configureSchema(Argument::type(Schema::class), $connection->reveal())->shouldBeCalledOnce();
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
@@ -128,7 +128,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
         $connection->getDatabasePlatform()->willReturn($platform->reveal());
 
-        $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
+        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
         $schemaConfigurator->configureSchema(Argument::type(Schema::class), $connection->reveal())->shouldBeCalledOnce();
 
         $doctrineSchemaManager = new DoctrineSchemaDirector(
@@ -157,7 +157,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $connection->executeStatement('DROP TABLE foo;')->shouldBeCalled();
         $connection->executeStatement('DROP TABLE bar;')->shouldNotBeCalled();
 
-        $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
+        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
         $schemaConfigurator->configureSchema(Argument::that(static function (Schema $schema) {
             $schema->createTable('foo');
             $schema->createTable('bar');
@@ -186,7 +186,7 @@ final class DoctrineSchemaDirectorTest extends TestCase
         $schemaManager->introspectSchema()->willReturn($currentSchema->reveal());
         $connection->createSchemaManager()->willReturn($schemaManager->reveal());
 
-        $schemaConfigurator = $this->prophesize(SchemaConfigurator::class);
+        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
         $schemaConfigurator->configureSchema(Argument::that(static function (Schema $schema) {
             $schema->createTable('foo');
             $schema->createTable('bar');

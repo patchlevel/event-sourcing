@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxProcessor;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
-use Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -64,7 +64,7 @@ final class OutboxTest extends TestCase
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            new ChainSchemaConfigurator([
+            new ChainDoctrineSchemaConfigurator([
                 $store,
                 $outboxStore,
             ]),
