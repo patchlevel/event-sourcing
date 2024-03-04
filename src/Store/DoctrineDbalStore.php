@@ -276,7 +276,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
         $table->addColumn('aggregate', Types::STRING)
             ->setLength(255)
             ->setNotnull(true);
-        $table->addColumn('aggregate_id', Types::STRING)
+        $table->addColumn('aggregate_id', Types::GUID)
             ->setLength(36)
             ->setNotnull(true);
         $table->addColumn('playhead', Types::INTEGER)
