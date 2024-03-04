@@ -281,6 +281,7 @@ use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
+use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -306,7 +307,7 @@ $eventStore = new DoctrineDbalStore(
 
 $hotelProjector = new HotelProjector($projectionConnection);
 
-$projectorRepository = new ProjectorRepository([
+$projectorRepository = new MetadataProjectorAccessorRepository([
     $hotelProjector,
 ]);
 
