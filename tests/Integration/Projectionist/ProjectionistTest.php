@@ -28,7 +28,7 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Aggregate\Profile;
-use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ChangeNameProcessor;
+use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ErrorProducerProjector;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProjector;
 use PHPUnit\Framework\TestCase;
@@ -323,7 +323,7 @@ final class ProjectionistTest extends TestCase
 
         $projectorAccessorRepository = new TraceableProjectorAccessorRepository(
             new MetadataProjectorAccessorRepository([
-                new ChangeNameProcessor($manager)
+                new ProfileProcessor($manager)
             ]),
             $traceStack
         );
@@ -378,7 +378,7 @@ final class ProjectionistTest extends TestCase
                     Projection::DEFAULT_GROUP,
                     RunMode::FromBeginning,
                     ProjectionStatus::Active,
-                    2,
+                    3,
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
             ],

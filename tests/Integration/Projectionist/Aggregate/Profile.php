@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\Reborned;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\ProfileId;
 
 #[Aggregate('profile')]
@@ -34,6 +35,11 @@ final class Profile extends BasicAggregateRoot
         $this->recordThat(new NameChanged($name));
     }
 
+    public function reborn(string $name): void
+    {
+        $this->recordThat(new Reborned($name));
+    }
+
     #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
@@ -43,6 +49,12 @@ final class Profile extends BasicAggregateRoot
 
     #[Apply]
     protected function applyNameChanged(NameChanged $event): void
+    {
+        $this->name = $event->name;
+    }
+
+    #[Apply]
+    protected function applyReborned(Reborned $event): void
     {
         $this->name = $event->name;
     }
