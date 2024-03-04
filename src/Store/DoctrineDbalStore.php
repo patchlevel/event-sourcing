@@ -299,6 +299,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
 
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
-        $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
+        //$table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
     }
 }
