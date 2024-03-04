@@ -15,21 +15,17 @@ use Patchlevel\Hydrator\MetadataHydrator;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\Serializer\EventSerializerMessageSerializer */
+/** @covers \Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer */
 final class HeadersSerializerTest extends TestCase
 {
     use ProphecyTrait;
 
     public function testSerialize(): void
     {
-        $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../../../src', // add our headers
-                __DIR__ . '/../../Fixture', // add user headers
-            ]),
-            new MetadataHydrator(),
-            new JsonEncoder(),
-        );
+        $serializer = DefaultHeadersSerializer::createFromPaths([
+            __DIR__ . '/../../../../src', // add our headers
+            __DIR__ . '/../../Fixture', // add user headers
+        ]);
 
         $content = $serializer->serialize([
             new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')),
