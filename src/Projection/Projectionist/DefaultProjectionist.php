@@ -792,7 +792,6 @@ final class DefaultProjectionist implements Projectionist
             new ProjectionCriteria(),
             function (array $projections): void {
                 foreach ($this->projectorRepository->all() as $projector) {
-
                     foreach ($projections as $projection) {
                         if ($projection->id() === $projector->id()) {
                             continue 2;
@@ -804,7 +803,7 @@ final class DefaultProjectionist implements Projectionist
                             $projector->id(),
                             $projector->group(),
                             $projector->runMode(),
-                        )
+                        ),
                     );
 
                     $this->logger?->info(

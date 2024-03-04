@@ -1,15 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use Closure;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\RunMode;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\Trace;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack;
 
+use function array_map;
+
+/** @experimental */
 final class TraceableProjectorAccessor implements ProjectorAccessor
 {
     public function __construct(
         private readonly ProjectorAccessor $parent,
-        private readonly Closure $wrapper
+        private readonly TraceStack $traceStack,
     ) {
     }
 
@@ -41,13 +49,31 @@ final class TraceableProjectorAccessor implements ProjectorAccessor
     /**
      * @param class-string $eventClass
      *
-     * @return iterable<Closure>
+     * @return list<Closure(Message):void>
      */
-    public function subscribeMethods(string $eventClass): iterable
+    public function subscribeMethods(string $eventClass): array
     {
         return array_map(
-            fn(Closure $closure) => ($this->wrapper)($this, $closure),
-            $this->parent->subscribeMethods($eventClass)
+            /**
+             * @param Closure(Message):void $closure
+             *
+             * @return Closure(Message):void
+             */
+            fn (Closure $closure) => function (Message $message) use ($closure): void {
+                $trace = new Trace(
+                    $this->id(),
+                    'event_sourcing/projector/' . $this->group(),
+                );
+
+                $this->traceStack->add($trace);
+
+                try {
+                    $closure($message);
+                } finally {
+                    $this->traceStack->remove($trace);
+                }
+            },
+            $this->parent->subscribeMethods($eventClass),
         );
     }
 }

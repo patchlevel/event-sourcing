@@ -1,19 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Projection\Projector;
 
-use Closure;
-use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Repository\MessageDecorator\Trace;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack;
 
+use function array_values;
+
+/** @experimental */
 final class TraceableProjectorAccessorRepository implements ProjectorAccessorRepository
 {
-    private bool $init = false;
-
-    /**
-     * @var array<string, TraceableProjectorAccessor>
-     */
+    /** @var array<string, TraceableProjectorAccessor> */
     private array $projectorsMap = [];
 
     public function __construct(
@@ -22,53 +20,33 @@ final class TraceableProjectorAccessorRepository implements ProjectorAccessorRep
     ) {
     }
 
-    /**
-     * @return iterable<ProjectorAccessor>
-     */
+    /** @return iterable<TraceableProjectorAccessor> */
     public function all(): iterable
     {
-        if ($this->init === false) {
-            $this->init();
-        }
-
-        return array_values($this->projectorsMap);
+        return array_values($this->projectorAccessorMap());
     }
 
-    public function get(string $id): ProjectorAccessor|null
+    public function get(string $id): TraceableProjectorAccessor|null
     {
-        if ($this->init === false) {
-            $this->init();
-        }
+        $map = $this->projectorAccessorMap();
 
-        return $this->projectorsMap[$id] ?? null;
+        return $map[$id] ?? null;
     }
 
-    private function init(): void
+    /** @return array<string, TraceableProjectorAccessor> */
+    private function projectorAccessorMap(): array
     {
-        $this->init = true;
+        if ($this->projectorsMap !== []) {
+            return $this->projectorsMap;
+        }
 
         foreach ($this->parent->all() as $projectorAccessor) {
             $this->projectorsMap[$projectorAccessor->id()] = new TraceableProjectorAccessor(
                 $projectorAccessor,
-                $this->wrapper(...)
+                $this->traceStack,
             );
         }
-    }
 
-    public function wrapper($projectorAccessor, Closure $closure): Closure
-    {
-        return function (Message $message) use ($projectorAccessor, $closure) {
-            $trace = new Trace(
-                $projectorAccessor->id(),
-                'event_sourcing:' . $projectorAccessor->group()
-            );
-
-            $this->traceStack->add($trace);
-            try {
-                return $closure($message);
-            } finally {
-                $this->traceStack->remove($trace);
-            }
-        };
+        return $this->projectorsMap;
     }
 }

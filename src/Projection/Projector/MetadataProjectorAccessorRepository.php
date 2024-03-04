@@ -1,53 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use Patchlevel\EventSourcing\Metadata\Projector\AttributeProjectorMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadataFactory;
 
+use function array_values;
+
 final class MetadataProjectorAccessorRepository implements ProjectorAccessorRepository
 {
-    private bool $init = false;
-
-    /**
-     * @var array<string, ProjectorAccessor>
-     */
+    /** @var array<string, ProjectorAccessor> */
     private array $projectorsMap = [];
 
+    /** @param iterable<object> $projectors */
     public function __construct(
         private readonly iterable $projectors,
-        private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory()
+        private readonly ProjectorMetadataFactory $metadataFactory = new AttributeProjectorMetadataFactory(),
     ) {
     }
 
-    /**
-     * @return iterable<ProjectorAccessor>
-     */
+    /** @return iterable<ProjectorAccessor> */
     public function all(): iterable
     {
-        if ($this->init === false) {
-            $this->init();
-        }
-
-        return array_values($this->projectorsMap);
+        return array_values($this->projectorAccessorMap());
     }
 
     public function get(string $id): ProjectorAccessor|null
     {
-        if ($this->init === false) {
-            $this->init();
-        }
+        $map = $this->projectorAccessorMap();
 
-        return $this->projectorsMap[$id] ?? null;
+        return $map[$id] ?? null;
     }
 
-    private function init(): void
+    /** @return array<string, ProjectorAccessor> */
+    private function projectorAccessorMap(): array
     {
-        $this->init = true;
+        if ($this->projectorsMap !== []) {
+            return $this->projectorsMap;
+        }
 
         foreach ($this->projectors as $projector) {
             $metadata = $this->metadataFactory->metadata($projector::class);
             $this->projectorsMap[$metadata->id] = new MetadataProjectorAccessor($projector, $metadata);
         }
+
+        return $this->projectorsMap;
     }
 }

@@ -9,13 +9,11 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Aggregate\Profile;
-use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
 
-use Patchlevel\EventSourcing\Tests\Integration\Projectionist\ProfileId;
 use function assert;
 
-#[Projector('profile_change_name')]
+#[Projector('profile')]
 final class ProfileProcessor
 {
     public function __construct(
@@ -35,20 +33,6 @@ final class ProfileProcessor
         $profile = $repository->load($profileCreated->profileId);
 
         $profile->changeName('new name');
-
-        $repository->save($profile);
-    }
-
-    #[Subscribe(NameChanged::class)]
-    public function handleNameChanged(Message $message)
-    {
-        $id = ProfileId::fromString($message->aggregateId());
-
-        $repository = $this->repositoryManager->get(Profile::class);
-
-        $profile = $repository->load($id);
-
-        $profile->reborn('neo');
 
         $repository->save($profile);
     }

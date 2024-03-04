@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use Closure;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 
 interface ProjectorAccessor
@@ -12,6 +15,7 @@ interface ProjectorAccessor
     public function group(): string;
 
     public function runMode(): RunMode;
+
     public function setupMethod(): Closure|null;
 
     public function teardownMethod(): Closure|null;
@@ -19,7 +23,7 @@ interface ProjectorAccessor
     /**
      * @param class-string $eventClass
      *
-     * @return iterable<Closure>
+     * @return list<Closure(Message):void>
      */
-    public function subscribeMethods(string $eventClass): iterable;
+    public function subscribeMethods(string $eventClass): array;
 }

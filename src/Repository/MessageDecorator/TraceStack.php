@@ -1,21 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Repository\MessageDecorator;
+
+use function array_values;
+
+/** @experimental */
 final class TraceStack
 {
-    /**
-     * @var array<string, Trace>
-     */
+    /** @var array<string, Trace> */
     private array $traces = [];
 
     public function add(Trace $trace): void
     {
-        $this->traces[$trace->name] = $trace;
+        $this->traces[self::key($trace)] = $trace;
     }
 
-    /**
-     * @return iterable<Trace>
-     */
+    /** @return list<Trace> */
     public function get(): array
     {
         return array_values($this->traces);
@@ -23,7 +25,7 @@ final class TraceStack
 
     public function remove(Trace $trace): void
     {
-        unset($this->traces[$trace->name]);
+        unset($this->traces[self::key($trace)]);
     }
 
     private static function key(Trace $trace): string

@@ -56,12 +56,16 @@
       <code><![CDATA[$projectionError->errorContext]]></code>
     </PossiblyNullPropertyFetch>
   </file>
-  <file src="src/Projection/Projectionist/DefaultProjectionist.php">
+  <file src="src/Projection/Projector/MetadataProjectorAccessor.php">
     <MixedMethodCall>
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$method]]></code>
     </MixedMethodCall>
+    <MixedReturnTypeCoercion>
+      <code><![CDATA[$this->projector->$method(...)]]></code>
+      <code><![CDATA[Closure(Message):void]]></code>
+    </MixedReturnTypeCoercion>
   </file>
   <file src="src/Repository/DefaultRepository.php">
     <PropertyTypeCoercion>

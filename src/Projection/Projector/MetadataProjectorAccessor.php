@@ -1,17 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Projection\Projector;
 
 use Closure;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Projector\ProjectorMetadata;
 use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 
+use function array_key_exists;
+use function array_map;
+use function array_merge;
+
 final class MetadataProjectorAccessor implements ProjectorAccessor
 {
-    /**
-     * @var array<class-string, iterable<Closure>>
-     */
+    /** @var array<class-string, list<Closure(Message):void>> */
     private array $subscribeCache = [];
 
     public function __construct(
@@ -60,9 +65,9 @@ final class MetadataProjectorAccessor implements ProjectorAccessor
     /**
      * @param class-string $eventClass
      *
-     * @return iterable<Closure>
+     * @return list<Closure(Message):void>
      */
-    public function subscribeMethods(string $eventClass): iterable
+    public function subscribeMethods(string $eventClass): array
     {
         if (array_key_exists($eventClass, $this->subscribeCache)) {
             return $this->subscribeCache[$eventClass];
@@ -74,7 +79,8 @@ final class MetadataProjectorAccessor implements ProjectorAccessor
         );
 
         $this->subscribeCache[$eventClass] = array_map(
-            fn(string $method) => $this->projector->$method(...),
+            /** @return Closure(Message):void */
+            fn (string $method) => $this->projector->$method(...),
             $methods,
         );
 

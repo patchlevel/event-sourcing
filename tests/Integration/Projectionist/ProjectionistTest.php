@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Projection\Projection\Projection;
@@ -20,18 +21,21 @@ use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepos
 use Patchlevel\EventSourcing\Projection\Projector\TraceableProjectorAccessorRepository;
 use Patchlevel\EventSourcing\Projection\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceDecorator;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceHeader;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack;
+use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Aggregate\Profile;
-use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ErrorProducerProjector;
+use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Projection\ProfileProjector;
 use PHPUnit\Framework\TestCase;
+
+use function iterator_to_array;
 
 /** @coversNothing */
 final class ProjectionistTest extends TestCase
@@ -133,8 +137,10 @@ final class ProjectionistTest extends TestCase
             $projectionist->projections(),
         );
 
-        $result = $this->projectionConnection->fetchAssociative('SELECT * FROM projection_profile_1 WHERE id = ?',
-            ['1']);
+        $result = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_profile_1 WHERE id = ?',
+            ['1'],
+        );
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
@@ -295,12 +301,15 @@ final class ProjectionistTest extends TestCase
         self::assertEquals(0, $projection->retryAttempt());
     }
 
-
     public function testProcessor(): void
     {
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            DefaultHeadersSerializer::createFromPaths([
+                __DIR__ . '/../../../src',
+                __DIR__,
+            ]),
             'eventstore',
         );
 
@@ -318,14 +327,12 @@ final class ProjectionistTest extends TestCase
             $store,
             DefaultEventBus::create(),
             null,
-            new TraceDecorator($traceStack)
+            new TraceDecorator($traceStack),
         );
 
         $projectorAccessorRepository = new TraceableProjectorAccessorRepository(
-            new MetadataProjectorAccessorRepository([
-                new ProfileProcessor($manager)
-            ]),
-            $traceStack
+            new MetadataProjectorAccessorRepository([new ProfileProcessor($manager)]),
+            $traceStack,
         );
 
         $repository = $manager->get(Profile::class);
@@ -347,7 +354,7 @@ final class ProjectionistTest extends TestCase
         );
 
         self::assertEquals(
-            [new Projection('profile_change_name', lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'))],
+            [new Projection('profile', lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'))],
             $projectionist->projections(),
         );
 
@@ -356,7 +363,7 @@ final class ProjectionistTest extends TestCase
         self::assertEquals(
             [
                 new Projection(
-                    'profile_change_name',
+                    'profile',
                     Projection::DEFAULT_GROUP,
                     RunMode::FromBeginning,
                     ProjectionStatus::Active,
@@ -371,23 +378,32 @@ final class ProjectionistTest extends TestCase
 
         $projectionist->run();
 
+        $projections = $projectionist->projections();
+
+        self::assertCount(1, $projections);
+        self::assertArrayHasKey(0, $projections);
+
+        $projection = $projections[0];
+
+        self::assertEquals('profile', $projection->id());
+
+        self::assertEquals(ProjectionStatus::Active, $projection->status());
+
+        /** @var list<Message> $messages */
+        $messages = iterator_to_array($store->load());
+
+        self::assertCount(2, $messages);
+        self::assertArrayHasKey(1, $messages);
+
         self::assertEquals(
-            [
-                new Projection(
-                    'profile_change_name',
-                    Projection::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    ProjectionStatus::Active,
-                    3,
-                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
-                ),
-            ],
-            $projectionist->projections(),
+            new TraceHeader([
+                [
+                    'name' => 'profile',
+                    'category' => 'event_sourcing/projector/default',
+                ],
+            ]),
+            $messages[1]->header(TraceHeader::class),
         );
-
-        $events = $store->load();
-
-        dd(iterator_to_array($events));
     }
 
     /** @param list<Projection> $projections */
