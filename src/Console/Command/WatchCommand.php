@@ -75,9 +75,8 @@ final class WatchCommand extends Command
 
                 foreach ($stream as $message) {
                     $console->message($this->serializer, $message);
+                    $index = $stream->index();
                 }
-
-                $index = $stream->index();
 
                 $stream->close();
             },
