@@ -60,7 +60,7 @@ final class DoctrineOutboxStore implements OutboxStore, DoctrineSchemaConfigurat
             function (array $data) {
                 $message = $this->messageSerializer->deserialize($data['message']);
 
-                return $message->withHeader(self::HEADER_OUTBOX_IDENTIFIER, $data['id']);
+                return $message->withHeader(new OutboxHeader($data['id']));
             },
             $result,
         );
@@ -111,15 +111,11 @@ final class DoctrineOutboxStore implements OutboxStore, DoctrineSchemaConfigurat
     private function extractId(Message $message): int
     {
         try {
-            $value = $message->header(self::HEADER_OUTBOX_IDENTIFIER);
+            $outboxHeader = $message->header(OutboxHeader::class);
         } catch (HeaderNotFound) {
             throw OutboxHeaderIssue::missingHeader(self::HEADER_OUTBOX_IDENTIFIER);
         }
 
-        if (!is_int($value)) {
-            throw OutboxHeaderIssue::invalidHeaderType($value);
-        }
-
-        return $value;
+        return $outboxHeader->id;
     }
 }

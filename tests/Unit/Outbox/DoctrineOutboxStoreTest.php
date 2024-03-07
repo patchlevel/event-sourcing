@@ -10,9 +10,11 @@ use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\MessageSerializer;
 use Patchlevel\EventSourcing\Outbox\DoctrineOutboxStore;
+use Patchlevel\EventSourcing\Outbox\OutboxHeader;
 use Patchlevel\EventSourcing\Outbox\OutboxHeaderIssue;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -31,10 +33,7 @@ final class DoctrineOutboxStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(1)
-            ->withRecordedOn($recordedOn);
+            ->withHeader(new AggregateHeader('profile', '1', 1, $recordedOn));
 
         $innerMockedConnection = $this->prophesize(Connection::class);
         $innerMockedConnection->insert(
@@ -66,11 +65,8 @@ final class DoctrineOutboxStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(1)
-            ->withRecordedOn($recordedOn)
-            ->withHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
+            ->withHeader(new AggregateHeader('profile', '1', 1, $recordedOn))
+            ->withHeader(new OutboxHeader(42));
 
         $innerMockedConnection = $this->prophesize(Connection::class);
         $innerMockedConnection->delete(
@@ -101,10 +97,7 @@ final class DoctrineOutboxStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(1)
-            ->withRecordedOn($recordedOn);
+            ->withHeader(new AggregateHeader('profile', '1', 1, $recordedOn));
 
         $innerMockedConnection = $this->prophesize(Connection::class);
         $innerMockedConnection->delete(
@@ -130,43 +123,6 @@ final class DoctrineOutboxStoreTest extends TestCase
 
         $this->expectException(OutboxHeaderIssue::class);
         $this->expectExceptionMessage('missing header "outboxIdentifier"');
-        $doctrineOutboxStore->markOutboxMessageConsumed($message);
-    }
-
-    public function testMarkOutboxMessageConsumedHeaderInvalid(): void
-    {
-        $recordedOn = new DateTimeImmutable();
-        $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(1)
-            ->withRecordedOn($recordedOn)
-            ->withHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 'asd');
-
-        $innerMockedConnection = $this->prophesize(Connection::class);
-        $innerMockedConnection->delete(
-            'outbox',
-            ['id' => 42],
-        )->shouldNotBeCalled();
-
-        $driver = $this->prophesize(Driver::class);
-        $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
-        );
-
-        $serializer = $this->prophesize(MessageSerializer::class);
-
-        $doctrineOutboxStore = new DoctrineOutboxStore(
-            $mockedConnection->reveal(),
-            $serializer->reveal(),
-        );
-
-        $this->expectException(OutboxHeaderIssue::class);
-        $this->expectExceptionMessage('Invalid header given: need type "int" got "string"');
         $doctrineOutboxStore->markOutboxMessageConsumed($message);
     }
 
@@ -242,11 +198,8 @@ final class DoctrineOutboxStoreTest extends TestCase
         $recordedOn = new DateTimeImmutable();
         $event = new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s'));
         $message = Message::create($event)
-            ->withAggregateName('profile')
-            ->withAggregateId('1')
-            ->withPlayhead(1)
-            ->withRecordedOn($recordedOn)
-            ->withHeader(DoctrineOutboxStore::HEADER_OUTBOX_IDENTIFIER, 42);
+            ->withHeader(new AggregateHeader('profile', '1', 1, $recordedOn))
+            ->withHeader(new OutboxHeader(42));
 
         $queryBuilder = $this->prophesize(QueryBuilder::class);
         $queryBuilder->select('*')->shouldBeCalledOnce()->willReturn($queryBuilder->reveal());

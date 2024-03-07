@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\OnlyArchivedEventMiddleware;
+use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -23,7 +24,7 @@ final class OnlyArchivedEventMiddlewareTest extends TestCase
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de'),
             ),
-        )->withArchived(false);
+        )->withHeader(new ArchivedHeader(false));
 
         $result = $middleware($message);
 
@@ -39,7 +40,7 @@ final class OnlyArchivedEventMiddlewareTest extends TestCase
                 ProfileId::fromString('1'),
                 Email::fromString('hallo@patchlevel.de'),
             ),
-        )->withArchived(true);
+        )->withHeader(new ArchivedHeader(true));
 
         $result = $middleware($message);
 

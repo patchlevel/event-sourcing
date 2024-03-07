@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
@@ -24,7 +25,8 @@ final class WatchCommand extends Command
 {
     public function __construct(
         private readonly Store $store,
-        private readonly EventSerializer $serializer,
+        private readonly EventSerializer $eventSerializer,
+        private readonly HeadersSerializer $headersSerializer,
     ) {
         parent::__construct();
     }
@@ -74,7 +76,7 @@ final class WatchCommand extends Command
                 );
 
                 foreach ($stream as $message) {
-                    $console->message($this->serializer, $message);
+                    $console->message($this->eventSerializer, $this->headersSerializer, $message);
                     $index = $stream->index();
                 }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
+use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
@@ -19,6 +21,7 @@ use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\ArchivableStore;
+use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
@@ -45,26 +48,26 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 2;
+                return $message->header(AggregateHeader::class)->playhead === 2;
             }),
         )->shouldBeCalled();
 
@@ -76,26 +79,26 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 2;
+                return $message->header(AggregateHeader::class)->playhead === 2;
             }),
         )->shouldBeCalled();
 
@@ -120,29 +123,29 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
         )->shouldBeCalled();
 
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 2;
+                return $message->header(AggregateHeader::class)->playhead === 2;
             }),
         )->shouldBeCalled();
 
@@ -154,29 +157,29 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
         )->shouldBeCalled();
 
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 2;
+                return $message->header(AggregateHeader::class)->playhead === 2;
             }),
         )->shouldBeCalled();
 
@@ -203,19 +206,19 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                if ($message->header('test') !== 'foo') {
+                if ($message->header(ArchivedHeader::class)->archived !== false) {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
         )->shouldBeCalled();
 
@@ -227,26 +230,26 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                if ($message->header('test') !== 'foo') {
+                if ($message->header(ArchivedHeader::class)->archived !== false) {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
         )->shouldBeCalled();
 
         $decorator = new class implements MessageDecorator {
             public function __invoke(Message $message): Message
             {
-                return $message->withHeader('test', 'foo');
+                return $message->withHeader(new ArchivedHeader(false));
             }
         };
 
@@ -293,15 +296,15 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
         )->shouldBeCalledOnce();
 
@@ -313,15 +316,15 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
         )->shouldBeCalledOnce();
 
@@ -446,13 +449,13 @@ final class DefaultRepositoryTest extends TestCase
 
         $store->save(
             Argument::that(static function (Message $message) {
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
         )->shouldBeCalled();
 
         $store->save(
             Argument::that(static function (Message $message) {
-                return $message->playhead() === 2;
+                return $message->header(AggregateHeader::class)->playhead === 2;
             }),
         )->willThrow(new UniqueConstraintViolation());
 
@@ -488,37 +491,37 @@ final class DefaultRepositoryTest extends TestCase
         $store->willImplement(ArchivableStore::class);
         $store->save(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 2;
+                return $message->header(AggregateHeader::class)->playhead === 2;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 3;
+                return $message->header(AggregateHeader::class)->playhead === 3;
             }),
         )->shouldBeCalled();
         $store->archiveMessages('profile', '1', 3)->shouldBeCalledOnce();
@@ -530,37 +533,37 @@ final class DefaultRepositoryTest extends TestCase
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 1;
+                return $message->header(AggregateHeader::class)->playhead === 1;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 2;
+                return $message->header(AggregateHeader::class)->playhead === 2;
             }),
             Argument::that(static function (Message $message) {
-                if ($message->aggregateName() !== 'profile') {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
 
-                if ($message->aggregateId() !== '1') {
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
                     return false;
                 }
 
-                return $message->playhead() === 3;
+                return $message->header(AggregateHeader::class)->playhead === 3;
             }),
         )->shouldBeCalled();
 
@@ -594,7 +597,7 @@ final class DefaultRepositoryTest extends TestCase
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de'),
                 ),
-            )->withPlayhead(1),
+            )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
         ]));
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -626,7 +629,7 @@ final class DefaultRepositoryTest extends TestCase
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de'),
                     ),
-                )->withPlayhead(1),
+                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
             ]),
             new ArrayStream([
                 Message::create(
@@ -634,7 +637,7 @@ final class DefaultRepositoryTest extends TestCase
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de'),
                     ),
-                )->withPlayhead(1),
+                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
             ]),
         );
 
@@ -767,17 +770,17 @@ final class DefaultRepositoryTest extends TestCase
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de'),
                     ),
-                )->withPlayhead(1),
+                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
                 Message::create(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
                     ),
-                )->withPlayhead(2),
+                )->withHeader(new AggregateHeader('profile', '1', 2, new DateTimeImmutable())),
                 Message::create(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
                     ),
-                )->withPlayhead(3),
+                )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
             ]),
         );
 
@@ -826,17 +829,17 @@ final class DefaultRepositoryTest extends TestCase
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 ),
-            )->withPlayhead(1),
+            )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 ),
-            )->withPlayhead(2),
+            )->withHeader(new AggregateHeader('profile', '1', 2, new DateTimeImmutable())),
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 ),
-            )->withPlayhead(3),
+            )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
         ]));
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -874,7 +877,7 @@ final class DefaultRepositoryTest extends TestCase
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de'),
                     ),
-                )->withPlayhead(1),
+                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
             ]));
 
         $eventBus = $this->prophesize(EventBus::class);

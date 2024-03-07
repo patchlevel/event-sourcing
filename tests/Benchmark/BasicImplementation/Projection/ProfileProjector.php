@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection;
 
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -64,7 +65,7 @@ final class ProfileProjector
         $this->connection->update(
             $this->table(),
             ['name' => $nameChanged->name],
-            ['id' => $message->aggregateId()],
+            ['id' => $message->header(AggregateHeader::class)->aggregateId],
         );
     }
 

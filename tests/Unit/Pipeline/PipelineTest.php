@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
 
+use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
@@ -83,16 +85,16 @@ final class PipelineTest extends TestCase
         self::assertCount(3, $resultMessages);
 
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[0]->event());
-        self::assertSame('1', $resultMessages[0]->aggregateId());
-        self::assertSame(1, $resultMessages[0]->playhead());
+        self::assertSame('1', $resultMessages[0]->header(AggregateHeader::class)->aggregateId);
+        self::assertSame(1, $resultMessages[0]->header(AggregateHeader::class)->playhead);
 
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[1]->event());
-        self::assertSame('1', $resultMessages[1]->aggregateId());
-        self::assertSame(2, $resultMessages[1]->playhead());
+        self::assertSame('1', $resultMessages[1]->header(AggregateHeader::class)->aggregateId);
+        self::assertSame(2, $resultMessages[1]->header(AggregateHeader::class)->playhead);
 
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[2]->event());
-        self::assertSame('2', $resultMessages[2]->aggregateId());
-        self::assertSame(1, $resultMessages[2]->playhead());
+        self::assertSame('2', $resultMessages[2]->header(AggregateHeader::class)->aggregateId);
+        self::assertSame(1, $resultMessages[2]->header(AggregateHeader::class)->playhead);
     }
 
     /** @return list<Message> */
@@ -104,47 +106,32 @@ final class PipelineTest extends TestCase
                     ProfileId::fromString('1'),
                     Email::fromString('hallo@patchlevel.de'),
                 ),
-            )
-                ->withAggregateName('profile')
-                ->withAggregateId('1')
-                ->withPlayhead(1),
+            )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
 
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 ),
-            )
-                ->withAggregateName('profile')
-                ->withAggregateId('1')
-                ->withPlayhead(2),
+            )->withHeader(new AggregateHeader('profile', '1', 2, new DateTimeImmutable())),
 
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 ),
-            )
-                ->withAggregateName('profile')
-                ->withAggregateId('1')
-                ->withPlayhead(3),
+            )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
 
             Message::create(
                 new ProfileCreated(
                     ProfileId::fromString('2'),
                     Email::fromString('hallo@patchlevel.de'),
                 ),
-            )
-                ->withAggregateName('profile')
-                ->withAggregateId('2')
-                ->withPlayhead(1),
+            )->withHeader(new AggregateHeader('profile', '2', 1, new DateTimeImmutable())),
 
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('2'),
                 ),
-            )
-                ->withAggregateName('profile')
-                ->withAggregateId('2')
-                ->withPlayhead(2),
+            )->withHeader(new AggregateHeader('profile', '2', 2, new DateTimeImmutable())),
         ];
     }
 }

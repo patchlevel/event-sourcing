@@ -22,7 +22,7 @@
   </file>
   <file src="src/EventBus/Serializer/EventSerializerMessageSerializer.php">
     <MixedArgumentTypeCoercion>
-      <code><![CDATA[$data['headers']]]></code>
+      <code><![CDATA[$messageData['headers']]]></code>
     </MixedArgumentTypeCoercion>
   </file>
   <file src="src/Metadata/AggregateRoot/AggregateRootMetadataAwareMetadataFactory.php">
@@ -83,15 +83,10 @@
       <code><![CDATA[$index]]></code>
     </InvalidPropertyAssignmentValue>
   </file>
-  <file src="src/Store/DoctrineDbalStoreStream.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform)]]></code>
-    </ArgumentTypeCoercion>
-  </file>
   <file src="src/Store/DoctrineHelper.php">
     <MixedReturnTypeCoercion>
       <code><![CDATA[$normalizedCustomHeaders]]></code>
-      <code><![CDATA[array<string, mixed>]]></code>
+      <code><![CDATA[array<string, string>]]></code>
     </MixedReturnTypeCoercion>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
@@ -135,7 +130,6 @@
       <code><![CDATA[$bus]]></code>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$repository]]></code>
-      <code><![CDATA[$snapshotStore]]></code>
       <code><![CDATA[$store]]></code>
     </MissingConstructor>
   </file>

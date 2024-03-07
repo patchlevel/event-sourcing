@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -24,7 +25,8 @@ final class ShowCommand extends Command
 {
     public function __construct(
         private readonly Store $store,
-        private readonly EventSerializer $serializer,
+        private readonly EventSerializer $eventSerializer,
+        private readonly HeadersSerializer $headersSerializer,
     ) {
         parent::__construct();
     }
@@ -72,7 +74,7 @@ final class ShowCommand extends Command
                     break 2;
                 }
 
-                $console->message($this->serializer, $message);
+                $console->message($this->eventSerializer, $this->headersSerializer, $message);
 
                 $stream->next();
 

@@ -6,7 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -30,6 +32,10 @@ final class StoreTest extends TestCase
         $this->store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            DefaultHeadersSerializer::createFromPaths([
+                __DIR__ . '/../../../src',
+                __DIR__,
+            ]),
             'eventstore',
         );
 
@@ -50,15 +56,19 @@ final class StoreTest extends TestCase
     {
         $messages = [
             Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
-                ->withAggregateName('profile')
-                ->withAggregateId('test')
-                ->withPlayhead(1)
-                ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00')),
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    'test',
+                    1,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
             Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
-                ->withAggregateName('profile')
-                ->withAggregateId('test')
-                ->withPlayhead(2)
-                ->withRecordedOn(new DateTimeImmutable('2020-01-02 00:00:00')),
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    'test',
+                    2,
+                    new DateTimeImmutable('2020-01-02 00:00:00'),
+                )),
         ];
 
         $this->store->save(...$messages);
@@ -93,10 +103,7 @@ final class StoreTest extends TestCase
 
         for ($i = 1; $i <= 10000; $i++) {
             $messages[] = Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
-                ->withAggregateName('profile')
-                ->withAggregateId('test')
-                ->withPlayhead($i)
-                ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'));
+                ->withHeader(new AggregateHeader('profile', 'test', $i, new DateTimeImmutable('2020-01-01 00:00:00')));
         }
 
         $this->store->save(...$messages);
@@ -110,10 +117,12 @@ final class StoreTest extends TestCase
     public function testLoad(): void
     {
         $message = Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
-            ->withAggregateName('profile')
-            ->withAggregateId('test')
-            ->withPlayhead(1)
-            ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'));
+            ->withHeader(new AggregateHeader(
+                'profile',
+                'test',
+                1,
+                new DateTimeImmutable('2020-01-01 00:00:00'),
+            ));
 
         $this->store->save($message);
 
@@ -126,10 +135,10 @@ final class StoreTest extends TestCase
 
         self::assertInstanceOf(Message::class, $loadedMessage);
         self::assertNotSame($message, $loadedMessage);
-        self::assertEquals($message->aggregateId(), $loadedMessage->aggregateId());
-        self::assertEquals($message->aggregateName(), $loadedMessage->aggregateName());
-        self::assertEquals($message->playhead(), $loadedMessage->playhead());
         self::assertEquals($message->event(), $loadedMessage->event());
-        self::assertEquals($message->recordedOn(), $loadedMessage->recordedOn());
+        self::assertEquals($message->header(AggregateHeader::class)->aggregateId, $loadedMessage->header(AggregateHeader::class)->aggregateId);
+        self::assertEquals($message->header(AggregateHeader::class)->aggregateName, $loadedMessage->header(AggregateHeader::class)->aggregateName);
+        self::assertEquals($message->header(AggregateHeader::class)->playhead, $loadedMessage->header(AggregateHeader::class)->playhead);
+        self::assertEquals($message->header(AggregateHeader::class)->recordedOn, $loadedMessage->header(AggregateHeader::class)->recordedOn);
     }
 }

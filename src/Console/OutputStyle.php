@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console;
 
-use DateTimeInterface;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -17,12 +17,15 @@ use function sprintf;
 
 final class OutputStyle extends SymfonyStyle
 {
-    public function message(EventSerializer $serializer, Message $message): void
-    {
+    public function message(
+        EventSerializer $eventSerializer,
+        HeadersSerializer $headersSerializer,
+        Message $message,
+    ): void {
         $event = $message->event();
 
         try {
-            $data = $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true]);
+            $data = $eventSerializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true]);
         } catch (Throwable $error) {
             $this->error(
                 sprintf(
@@ -39,16 +42,25 @@ final class OutputStyle extends SymfonyStyle
             return;
         }
 
-        $this->title($data->name);
+        try {
+            $headers = $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true]);
+        } catch (Throwable $error) {
+            $this->error(
+                sprintf(
+                    'Error while serializing headers: %s',
+                    $error->getMessage(),
+                ),
+            );
 
-        $headers = $message->headers();
+            if ($this->isVeryVerbose()) {
+                $this->throwable($error);
+            }
 
-        if (isset($headers['recordedOn']) && $headers['recordedOn'] instanceof DateTimeInterface) {
-            $headers['recordedOn'] = $headers['recordedOn']->format(DateTimeInterface::ATOM);
+            return;
         }
 
+        $this->title($data->name);
         $this->horizontalTable(array_keys($headers), [array_values($headers)]);
-
         $this->block($data->payload);
     }
 

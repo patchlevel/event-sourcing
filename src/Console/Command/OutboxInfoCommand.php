@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Outbox\OutboxStore;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -22,7 +23,8 @@ final class OutboxInfoCommand extends Command
 {
     public function __construct(
         private readonly OutboxStore $store,
-        private readonly EventSerializer $serializer,
+        private readonly EventSerializer $eventSerializer,
+        private readonly HeadersSerializer $headersSerializer,
     ) {
         parent::__construct();
     }
@@ -42,7 +44,7 @@ final class OutboxInfoCommand extends Command
         $messages = $this->store->retrieveOutboxMessages($limit);
 
         foreach ($messages as $message) {
-            $console->message($this->serializer, $message);
+            $console->message($this->eventSerializer, $this->headersSerializer, $message);
         }
 
         return 0;

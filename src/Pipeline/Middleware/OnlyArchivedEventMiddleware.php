@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Store\ArchivedHeader;
 
 final class OnlyArchivedEventMiddleware implements Middleware
 {
@@ -13,9 +14,9 @@ final class OnlyArchivedEventMiddleware implements Middleware
     public function __invoke(Message $message): array
     {
         try {
-            $archived = $message->archived();
+            $archivedHeader = $message->header(ArchivedHeader::class);
 
-            if ($archived) {
+            if ($archivedHeader->archived) {
                 return [$message];
             }
         } catch (HeaderNotFound) {

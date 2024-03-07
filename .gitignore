@@ -6,3 +6,5 @@ phpunit.xml
 phpstan.neon
 infection.log
 .phpbench/
+infection.html
+*.sqlite3

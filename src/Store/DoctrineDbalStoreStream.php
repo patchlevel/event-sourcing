@@ -8,7 +8,9 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Result;
 use Generator;
 use IteratorAggregate;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
@@ -27,10 +29,11 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
 
     public function __construct(
         private readonly Result $result,
-        EventSerializer $serializer,
+        EventSerializer $eventSerializer,
+        HeadersSerializer $headersSerializer,
         AbstractPlatform $platform,
     ) {
-        $this->generator = $this->buildGenerator($result, $serializer, $platform);
+        $this->generator = $this->buildGenerator($result, $eventSerializer, $headersSerializer, $platform);
         $this->position = null;
         $this->index = null;
     }
@@ -84,7 +87,8 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     /** @return Generator<Message> */
     private function buildGenerator(
         Result $result,
-        EventSerializer $serializer,
+        EventSerializer $eventSerializer,
+        HeadersSerializer $headersSerializer,
         AbstractPlatform $platform,
     ): Generator {
         /** @var array{id: positive-int, aggregate: string, aggregate_id: string, playhead: int|string, event: string, payload: string, recorded_on: string, archived: int|string, new_stream_start: int|string, custom_headers: string} $data */
@@ -96,16 +100,20 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
             }
 
             $this->index = $data['id'];
-            $event = $serializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
+            $event = $eventSerializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
+
+            $customHeaders = $headersSerializer->deserialize(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
 
             yield Message::create($event)
-                ->withAggregateName($data['aggregate'])
-                ->withAggregateId($data['aggregate_id'])
-                ->withPlayhead(DoctrineHelper::normalizePlayhead($data['playhead'], $platform))
-                ->withRecordedOn(DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform))
-                ->withArchived(DoctrineHelper::normalizeArchived($data['archived'], $platform))
-                ->withNewStreamStart(DoctrineHelper::normalizeNewStreamStart($data['new_stream_start'], $platform))
-                ->withHeaders(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
+                ->withHeader(new AggregateHeader(
+                    $data['aggregate'],
+                    $data['aggregate_id'],
+                    DoctrineHelper::normalizePlayhead($data['playhead'], $platform),
+                    DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform),
+                ))
+                ->withHeader(new ArchivedHeader(DoctrineHelper::normalizeArchived($data['archived'], $platform)))
+                ->withHeader(new NewStreamStartHeader(DoctrineHelper::normalizeNewStreamStart($data['new_stream_start'], $platform)))
+                ->withHeaders($customHeaders);
         }
     }
 }
