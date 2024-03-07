@@ -1,0 +1,44 @@
+# https://help.github.com/en/categories/automating-your-workflow-with-github-actions
+
+name: "Static Analysis by Deptrac"
+
+on:
+    pull_request:
+    push:
+        branches:
+            - "[0-9]+.[0-9]+.x"
+            - "renovate/*"
+
+jobs:
+    static-analysis-deptrac:
+        name: "Static Analysis by Deptrac"
+
+        runs-on: ${{ matrix.operating-system }}
+
+        strategy:
+            matrix:
+                dependencies:
+                    - "locked"
+                php-version:
+                    - "8.3"
+                operating-system:
+                    - "ubuntu-latest"
+
+        steps:
+            - name: "Checkout"
+              uses: actions/checkout@v4
+
+            - name: "Install PHP"
+              uses: "shivammathur/setup-php@2.29.0"
+              with:
+                  coverage: "pcov"
+                  php-version: "${{ matrix.php-version }}"
+                  ini-values: memory_limit=-1
+                  extensions: pdo_sqlite
+
+            - uses: ramsey/composer-install@2.2.0
+              with:
+                dependency-versions: ${{ matrix.dependencies }}
+
+            - name: "deptrac"
+              run: "vendor/bin/deptrac"
