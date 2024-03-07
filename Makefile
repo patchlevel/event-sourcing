@@ -10,7 +10,7 @@ cs-check: vendor                                                                
 
 .PHONY: cs
 cs: vendor                                                                      ## run phpcs fixer
-	vendor/bin/phpcbf
+	vendor/bin/phpcbf || true
 	vendor/bin/phpcs
 
 .PHONY: phpstan

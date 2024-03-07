@@ -11,7 +11,8 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
-use function array_map;
+use function array_keys;
+use function array_values;
 use function sprintf;
 
 final class OutputStyle extends SymfonyStyle
@@ -59,18 +60,7 @@ final class OutputStyle extends SymfonyStyle
         }
 
         $this->title($data->name);
-
-        $this->horizontalTable(
-            array_map(
-                static fn (array $serializedHeader) => $serializedHeader['name'],
-                $headers,
-            ),
-            array_map(
-                static fn (array $serializedHeader) => [$serializedHeader['payload']],
-                $headers,
-            ),
-        );
-
+        $this->horizontalTable(array_keys($headers), [array_values($headers)]);
         $this->block($data->payload);
     }
 

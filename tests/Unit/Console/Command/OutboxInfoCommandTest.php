@@ -43,12 +43,9 @@ final class OutboxInfoCommandTest extends TestCase
         );
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn([
-            [
-                'name' => 'aggregate',
-                'payload' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
-            ],
-        ]);
+        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
+            ['aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}'],
+        );
 
         $command = new OutboxInfoCommand(
             $store->reveal(),
@@ -86,12 +83,9 @@ final class OutboxInfoCommandTest extends TestCase
         );
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn([
-            [
-                'name' => 'aggregate',
-                'payload' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
-            ],
-        ]);
+        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
+            ['aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}'],
+        );
 
         $command = new OutboxInfoCommand(
             $store->reveal(),

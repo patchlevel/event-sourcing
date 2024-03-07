@@ -20,6 +20,11 @@
       <code><![CDATA[$method->getName()]]></code>
     </MixedMethodCall>
   </file>
+  <file src="src/EventBus/Serializer/EventSerializerMessageSerializer.php">
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$messageData['headers']]]></code>
+    </MixedArgumentTypeCoercion>
+  </file>
   <file src="src/Metadata/AggregateRoot/AggregateRootMetadataAwareMetadataFactory.php">
     <InvalidReturnStatement>
       <code><![CDATA[$aggregate::metadata()]]></code>
@@ -81,7 +86,7 @@
   <file src="src/Store/DoctrineHelper.php">
     <MixedReturnTypeCoercion>
       <code><![CDATA[$normalizedCustomHeaders]]></code>
-      <code><![CDATA[array<array{name: string, payload: string}>]]></code>
+      <code><![CDATA[array<string, string>]]></code>
     </MixedReturnTypeCoercion>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
@@ -125,7 +130,6 @@
       <code><![CDATA[$bus]]></code>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$repository]]></code>
-      <code><![CDATA[$snapshotStore]]></code>
       <code><![CDATA[$store]]></code>
     </MissingConstructor>
   </file>

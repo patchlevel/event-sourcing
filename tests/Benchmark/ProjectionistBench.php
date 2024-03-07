@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\Projectionist;
@@ -44,6 +45,12 @@ final class ProjectionistBench
         $this->store = new DoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
+            DefaultHeadersSerializer::createFromPaths(
+                [
+                    __DIR__ . '/BasicImplementation/Events',
+                    __DIR__ . '/../../src',
+                ],
+            ),
             'eventstore',
         );
 
