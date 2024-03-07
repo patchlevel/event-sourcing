@@ -7,7 +7,6 @@ You can:
 * Create and delete `databases`
 * Create, update and delete `schemas`
 * Manage `projections`
-* Consume `outbox` messages
 
 ## Database commands
 
@@ -44,17 +43,6 @@ To manage your projectors there are the following cli commands.
 !!! note
 
     You can find out more about projections [here](projection.md).
-
-## Outbox commands
-
-Interacting with the outbox store is also possible via the cli.
-
-* OutboxInfoCommand: `event-sourcing:outbox:info`
-* OutboxConsumeCommand: `event-sourcing:outbox:consume`
-
-!!! note
-
-    You can find out more about outbox [here](outbox.md).
 
 ## Inspector commands
 
