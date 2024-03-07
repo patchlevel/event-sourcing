@@ -9,11 +9,10 @@ use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 
-use function array_map;
 use function is_array;
 use function is_string;
 
-/** @psalm-type EncodedData array{serializedEvent: array{name: string, payload: string}, headers: array{name: string, payload: string}} */
+/** @psalm-type EncodedData array{serializedEvent: array{name: string, payload: string}, headers: array<string, string>} */
 final class EventSerializerMessageSerializer implements MessageSerializer
 {
     public function __construct(
@@ -49,11 +48,7 @@ final class EventSerializerMessageSerializer implements MessageSerializer
         }
 
         $event = $this->eventSerializer->deserialize(new SerializedEvent($messageData['serializedEvent']['name'], $messageData['serializedEvent']['payload']));
-        $headers = $this->headersSerializer->deserialize(array_map(
-            /** @param array{name: string, payload: string} $headerData */
-            static fn (array $headerData) => new SerializedHeader($headerData['name'], $headerData['payload']),
-            $messageData['headers'],
-        ));
+        $headers = $this->headersSerializer->deserialize($messageData['headers']);
 
         return Message::createWithHeaders($event, $headers);
     }

@@ -11,12 +11,9 @@ use IteratorAggregate;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
-use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
-
-use function array_map;
 
 /** @implements IteratorAggregate<Message> */
 final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
@@ -105,11 +102,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
             $this->index = $data['id'];
             $event = $eventSerializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
-            $customHeaders = $headersSerializer->deserialize(array_map(
-                /** @param array{name: string, payload: string} $customHeader */
-                static fn (array $customHeader) => new SerializedHeader($customHeader['name'], $customHeader['payload']),
-                DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform),
-            ));
+            $customHeaders = $headersSerializer->deserialize(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
 
             yield Message::create($event)
                 ->withHeader(new AggregateHeader(

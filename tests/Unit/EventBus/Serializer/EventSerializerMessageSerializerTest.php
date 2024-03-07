@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\DeserializeFailed;
 use Patchlevel\EventSourcing\EventBus\Serializer\EventSerializerMessageSerializer;
 use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
-use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
@@ -42,10 +41,12 @@ final class EventSerializerMessageSerializerTest extends TestCase
         ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers())->shouldBeCalledOnce()->willReturn([
-            new SerializedHeader('aggregate', '{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}'),
-            new SerializedHeader('archived', '{archived:false}'),
-        ]);
+        $headersSerializer->serialize($message->headers())->shouldBeCalledOnce()->willReturn(
+            [
+                'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+                'archived' => '{"archived":false}',
+            ],
+        );
 
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
@@ -55,7 +56,10 @@ final class EventSerializerMessageSerializerTest extends TestCase
 
         $content = $serializer->serialize($message);
 
-        self::assertEquals('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":[{"name":"aggregate","payload":"{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}"},{"name":"archived","payload":"{archived:false}"}]}', $content);
+        self::assertEquals(
+            '{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":{"aggregate":"{\"aggregateName\":\"profile\",\"aggregateId\":\"1\",\"playhead\":1,\"recordedOn\":\"2020-01-01T20:00:00+01:00\"}","archived":"{\"archived\":false}"}}',
+            $content,
+        );
     }
 
     public function testDeserialize(): void
@@ -73,10 +77,12 @@ final class EventSerializerMessageSerializerTest extends TestCase
         ))->shouldBeCalledOnce()->willReturn($event);
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize([
-            new SerializedHeader('aggregate', '{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}'),
-            new SerializedHeader('archived', '{archived:false}'),
-        ])->shouldBeCalledOnce()->willReturn($message->headers());
+        $headersSerializer->deserialize(
+            [
+                'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+                'archived' => '{"archived":false}',
+            ],
+        )->shouldBeCalledOnce()->willReturn($message->headers());
 
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),
@@ -84,7 +90,7 @@ final class EventSerializerMessageSerializerTest extends TestCase
             new JsonEncoder(),
         );
 
-        $deserializedMessage = $serializer->deserialize('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":[{"name":"aggregate","payload": "{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}"}, {"name": "archived", "payload":"{archived:false}"}]}');
+        $deserializedMessage = $serializer->deserialize('{"serializedEvent":{"name":"profile_visited","payload":"{id: foo}"},"headers":{"aggregate":"{\"aggregateName\":\"profile\",\"aggregateId\":\"1\",\"playhead\":1,\"recordedOn\":\"2020-01-01T20:00:00+01:00\"}","archived":"{\"archived\":false}"}}');
 
         self::assertEquals($message, $deserializedMessage);
     }
@@ -124,12 +130,18 @@ final class EventSerializerMessageSerializerTest extends TestCase
         ))->shouldBeCalledOnce()->willReturn($event);
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers())->shouldBeCalledOnce()->willReturn([
-            new SerializedHeader('aggregate', '{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}'),
-        ]);
-        $headersSerializer->deserialize([
-            new SerializedHeader('aggregate', '{aggregateName:profile,aggregateId:1,playhead:1,recordedOn:2020-01-01T20:00:00+01:00}'),
-        ])->shouldBeCalledOnce()->willReturn($message->headers());
+        $headersSerializer->serialize($message->headers())->shouldBeCalledOnce()->willReturn(
+            [
+                'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+                'archived' => '{"archived":false}',
+            ],
+        );
+        $headersSerializer->deserialize(
+            [
+                'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+                'archived' => '{"archived":false}',
+            ],
+        )->shouldBeCalledOnce()->willReturn($message->headers());
 
         $serializer = new EventSerializerMessageSerializer(
             $eventSerializer->reveal(),

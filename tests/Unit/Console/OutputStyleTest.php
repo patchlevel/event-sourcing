@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
-use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
@@ -48,10 +47,10 @@ final class OutputStyleTest extends TestCase
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
         $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn([
-            new SerializedHeader(
-                'aggregate',
-                '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
-            ),
+            [
+                'name' => 'aggregate',
+                'payload' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+            ],
         ]);
         $console = new OutputStyle($input, $output);
 

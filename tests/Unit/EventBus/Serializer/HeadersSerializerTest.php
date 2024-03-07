@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\EventBus\Serializer;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
-use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
@@ -34,8 +33,8 @@ final class HeadersSerializerTest extends TestCase
 
         self::assertEquals(
             [
-                new SerializedHeader('aggregate', '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}'),
-                new SerializedHeader('archived', '{"archived":false}'),
+                'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+                'archived' => '{"archived":false}',
             ],
             $content,
         );
@@ -54,8 +53,8 @@ final class HeadersSerializerTest extends TestCase
 
         $deserializedMessage = $serializer->deserialize(
             [
-                new SerializedHeader('aggregate', '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}'),
-                new SerializedHeader('archived', '{"archived":false}'),
+                'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
+                'archived' => '{"archived":false}',
             ],
         );
 

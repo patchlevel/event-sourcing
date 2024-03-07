@@ -103,10 +103,7 @@ final class StoreTest extends TestCase
 
         for ($i = 1; $i <= 10000; $i++) {
             $messages[] = Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
-                ->withAggregateName('profile')
-                ->withAggregateId('test')
-                ->withPlayhead($i)
-                ->withRecordedOn(new DateTimeImmutable('2020-01-01 00:00:00'));
+                ->withHeader(new AggregateHeader('profile', 'test', $i, new DateTimeImmutable('2020-01-01 00:00:00')));
         }
 
         $this->store->save(...$messages);

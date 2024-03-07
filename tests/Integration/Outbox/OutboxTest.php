@@ -154,7 +154,7 @@ final class OutboxTest extends TestCase
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
-            new ChainSchemaConfigurator([
+            new ChainDoctrineSchemaConfigurator([
                 $store,
                 $outboxStore,
             ]),

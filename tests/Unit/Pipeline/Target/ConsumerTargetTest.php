@@ -40,6 +40,7 @@ final class ConsumerTargetTest extends TestCase
 
         $listener = new class {
             public int $count = 0;
+
             #[Subscribe(Subscribe::ALL)]
             public function consumeAll(Message $message): void
             {

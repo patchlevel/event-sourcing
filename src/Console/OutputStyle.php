@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Console;
 
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
-use Patchlevel\EventSourcing\EventBus\Serializer\SerializedHeader;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -63,11 +62,11 @@ final class OutputStyle extends SymfonyStyle
 
         $this->horizontalTable(
             array_map(
-                static fn (SerializedHeader $serializedHeader) => $serializedHeader->name,
+                static fn (array $serializedHeader) => $serializedHeader['name'],
                 $headers,
             ),
             array_map(
-                static fn (SerializedHeader $serializedHeader) => [$serializedHeader->payload],
+                static fn (array $serializedHeader) => [$serializedHeader['payload']],
                 $headers,
             ),
         );
