@@ -87,11 +87,13 @@ deptrac:
       - Aggregate
       - Attribute
       - Metadata
+      - Serializer
     Lock:
       - Schema
     Metadata:
       - Aggregate
       - Attribute
+      - Projection
     Outbox:
       - EventBus
       - Metadata
@@ -104,6 +106,8 @@ deptrac:
       - Projection
       - Store
     Projection:
+      - Attribute
+      - Clock
       - Metadata
       - EventBus
       - Schema
@@ -124,6 +128,7 @@ deptrac:
       - Metadata
     Store:
       - Aggregate
+      - Attribute
       - Metadata
       - EventBus
       - Schema
