@@ -36,6 +36,10 @@ phpunit: vendor phpunit-unit phpunit-integration                              	#
 phpunit-integration: vendor                                                    	## run phpunit integration tests
 	vendor/bin/phpunit --testsuite=integration
 
+.PHONY: phpunit-integration-postgres
+phpunit-integration-postgres: vendor                                            ## run phpunit integration tests on postgres
+	DB_URL="pdo-pgsql://postgres:postgres@localhost:5432/eventstore?charset=utf8" vendor/bin/phpunit --testsuite=integration
+
 .PHONY: phpunit-unit
 phpunit-unit: vendor                                             				## run phpunit unit tests
 	XDEBUG_MODE=coverage vendor/bin/phpunit --testsuite=unit

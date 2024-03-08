@@ -18,8 +18,10 @@ use Traversable;
 /** @implements IteratorAggregate<Message> */
 final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
 {
+    private Result|null $result;
+
     /** @var Generator<Message> */
-    private readonly Generator $generator;
+    private Generator|null $generator;
 
     /** @var positive-int|0|null */
     private int|null $position;
@@ -28,11 +30,12 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     private int|null $index;
 
     public function __construct(
-        private readonly Result $result,
+        Result $result,
         EventSerializer $eventSerializer,
         HeadersSerializer $headersSerializer,
         AbstractPlatform $platform,
     ) {
+        $this->result = $result;
         $this->generator = $this->buildGenerator($result, $eventSerializer, $headersSerializer, $platform);
         $this->position = null;
         $this->index = null;
@@ -40,27 +43,46 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
 
     public function close(): void
     {
-        $this->result->free();
+        $this->result?->free();
+
+        $this->result = null;
+        $this->generator = null;
     }
 
     public function next(): void
     {
+        if ($this->result === null || $this->generator === null) {
+            throw new StreamClosed();
+        }
+
         $this->generator->next();
     }
 
     public function end(): bool
     {
+        if ($this->result === null || $this->generator === null) {
+            throw new StreamClosed();
+        }
+
         return !$this->generator->valid();
     }
 
     public function current(): Message|null
     {
+        if ($this->result === null || $this->generator === null) {
+            throw new StreamClosed();
+        }
+
         return $this->generator->current() ?: null;
     }
 
     /** @return positive-int|0|null */
     public function position(): int|null
     {
+        if ($this->result === null || $this->generator === null) {
+            throw new StreamClosed();
+        }
+
         if ($this->position === null) {
             $this->generator->key();
         }
@@ -71,6 +93,10 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     /** @return positive-int|null */
     public function index(): int|null
     {
+        if ($this->result === null || $this->generator === null) {
+            throw new StreamClosed();
+        }
+
         if ($this->index === null) {
             $this->generator->key();
         }
@@ -81,6 +107,10 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     /** @return Traversable<Message> */
     public function getIterator(): Traversable
     {
+        if ($this->result === null || $this->generator === null) {
+            throw new StreamClosed();
+        }
+
         return $this->generator;
     }
 
