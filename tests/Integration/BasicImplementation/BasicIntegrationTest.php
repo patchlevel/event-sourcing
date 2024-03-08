@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
+use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -57,7 +58,7 @@ final class BasicIntegrationTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $store,
             new InMemoryStore(),
-            [$profileProjector],
+            new MetadataProjectorAccessorRepository([$profileProjector]),
         );
 
         $eventBus = DefaultEventBus::create([
@@ -125,7 +126,7 @@ final class BasicIntegrationTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $store,
             new InMemoryStore(),
-            [$profileProjection],
+            new MetadataProjectorAccessorRepository([$profileProjection]),
         );
 
         $eventBus = DefaultEventBus::create([

@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\Projectionist;
+use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
@@ -83,10 +84,12 @@ final class ProjectionistBench
         $this->projectionist = new DefaultProjectionist(
             $this->store,
             $projectionStore,
-            [
-                new ProfileProjector($connection),
-                new SendEmailProcessor(),
-            ],
+            new MetadataProjectorAccessorRepository(
+                [
+                    new ProfileProjector($connection),
+                    new SendEmailProcessor(),
+                ],
+            ),
         );
     }
 

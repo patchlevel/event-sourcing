@@ -469,6 +469,17 @@ $retryStrategy = new ClockBasedRetryStrategy(
 
     You can reactivate the projection manually or remove it and rebuild it from scratch.
 
+### Projector Accessor
+
+The projector accessor is responsible for providing the projectors to the projectionist.
+We provide a metadata projector accessor repository by default.
+
+```php
+use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepository;
+
+$projectorAccessorRepository = new MetadataProjectorAccessorRepository([$projector1, $projector2, $projector3]);
+```
+
 ### Projectionist
 
 Now we can create the projectionist and plug together the necessary services.
@@ -481,7 +492,7 @@ use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 $projectionist = new DefaultProjectionist(
     $eventStore,
     $projectionStore,
-    [$projector1, $projector2, $projector3],
+    $projectorAccessorRepository,
     $retryStrategy,
 );
 ```

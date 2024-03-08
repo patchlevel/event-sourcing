@@ -21,6 +21,7 @@ use Patchlevel\EventSourcing\Projection\Projection\Store\ProjectionStore;
 use Patchlevel\EventSourcing\Projection\Projection\ThrowableToErrorContextTransformer;
 use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
 use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
+use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepository;
 use Patchlevel\EventSourcing\Projection\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria;
@@ -49,7 +50,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $store,
-            [],
+            new MetadataProjectorAccessorRepository([]),
         );
 
         $projectionist->boot();
@@ -73,7 +74,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->boot();
@@ -122,7 +123,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->boot();
@@ -182,7 +183,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->boot();
@@ -254,7 +255,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->boot(new ProjectionistCriteria(), 1);
@@ -338,7 +339,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector1, $projector2],
+            new MetadataProjectorAccessorRepository([$projector1, $projector2]),
         );
 
         $projectionist->boot();
@@ -405,7 +406,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->boot();
@@ -462,7 +463,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->boot();
@@ -518,7 +519,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->boot();
@@ -567,7 +568,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->boot();
@@ -616,7 +617,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->boot();
@@ -654,7 +655,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->run();
@@ -700,7 +701,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->run();
@@ -753,7 +754,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->run(new ProjectionistCriteria(), 1);
@@ -821,7 +822,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector1, $projector2],
+            new MetadataProjectorAccessorRepository([$projector1, $projector2]),
         );
 
         $projectionist->run();
@@ -881,7 +882,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->run();
@@ -924,7 +925,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [],
+            new MetadataProjectorAccessorRepository([]),
         );
 
         $projectionist->run();
@@ -959,7 +960,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [],
+            new MetadataProjectorAccessorRepository([]),
         );
 
         $projectionist->run();
@@ -1000,7 +1001,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->run();
@@ -1031,7 +1032,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->teardown();
@@ -1067,7 +1068,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->teardown();
@@ -1105,7 +1106,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->teardown();
@@ -1144,7 +1145,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->teardown();
@@ -1171,7 +1172,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [],
+            new MetadataProjectorAccessorRepository([]),
         );
 
         $projectionist->teardown();
@@ -1193,7 +1194,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->remove();
@@ -1235,7 +1236,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->remove();
@@ -1265,7 +1266,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->remove();
@@ -1301,7 +1302,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->remove();
@@ -1327,7 +1328,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [],
+            new MetadataProjectorAccessorRepository([]),
         );
 
         $projectionist->remove();
@@ -1349,7 +1350,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->reactivate();
@@ -1387,7 +1388,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->reactivate();
@@ -1424,7 +1425,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->reactivate();
@@ -1460,7 +1461,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->reactivate();
@@ -1496,7 +1497,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->reactivate();
@@ -1524,7 +1525,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->pause();
@@ -1560,7 +1561,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->pause();
@@ -1596,7 +1597,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->pause();
@@ -1634,7 +1635,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->pause();
@@ -1664,7 +1665,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projections = $projectionist->projections();
@@ -1722,7 +1723,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
             $retryStrategy->reveal(),
         );
 
@@ -1774,7 +1775,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore,
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
             $retryStrategy->reveal(),
         );
 
@@ -1809,7 +1810,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore->reveal(),
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionistCriteria = new ProjectionistCriteria(
@@ -1849,7 +1850,7 @@ final class DefaultProjectionistTest extends TestCase
         $projectionist = new DefaultProjectionist(
             $streamableStore->reveal(),
             $projectionStore->reveal(),
-            [$projector],
+            new MetadataProjectorAccessorRepository([$projector]),
         );
 
         $projectionist->{$method}();
