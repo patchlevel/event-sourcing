@@ -167,7 +167,7 @@ final class Message
 
     public function customHeader(string $name): mixed
     {
-        if (array_keys($this->customHeaders, $name)) {
+        if (!array_key_exists($name, $this->customHeaders)) {
             throw HeaderNotFound::custom($name);
         }
 
