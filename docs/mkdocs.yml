@@ -83,8 +83,7 @@ nav:
     - Repository: repository.md
     - Store: store.md
     - Event Bus:  event_bus.md
-    - Processor: processor.md
-    - Projection: projection.md
+    - Subscription: subscription.md
   - Advanced:
     - Aggregate ID: aggregate_id.md
     - Normalizer: normalizer.md

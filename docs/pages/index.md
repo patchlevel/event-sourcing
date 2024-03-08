@@ -10,7 +10,7 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * Automatic [snapshot](snapshots.md)-system to boost your performance
 * [Split](split_stream.md) big aggregates into multiple streams
 * Build-in [pipeline](pipeline.md) to export, import and migrate event streams
-* Versioned and managed lifecycle of [projections](projection.md)
+* Versioned and managed lifecycle of [subscriptions](subscription.md) like projections and processors
 * Smooth [upcasting](upcasting.md) of old events
 * Simple setup with [scheme management](store.md) and [doctrine migration](migration.md)
 * Built in [cli commands](cli.md) with [symfony](https://symfony.com/)

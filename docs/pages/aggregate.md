@@ -321,7 +321,7 @@ final class Profile extends BasicAggregateRoot
 ## Suppress missing apply methods
 
 Sometimes you have events that do not change the state of the aggregate itself, 
-but are still recorded for the future, to listen on it or to create a projection. 
+but are still recorded for the future or to subscribe for processor and projection. 
 So that you are not forced to write an apply method for it, 
 you can suppress the missing apply exceptions these events with the `SuppressMissingApply` attribute.
 
@@ -518,8 +518,8 @@ This is not a problem, as the `apply` methods are always executed immediately.
 
 In the next case we throw an exception if the hotel is already overbooked.
 Besides that, we record another event `FullyBooked`, if the hotel is fully booked with the last booking. 
-With this event we could [notify](./processor.md) external systems 
-or fill a [projection](./projection.md) with fully booked hotels.
+With this event we could [notify](./subscription.md) external systems 
+or fill a [projection](./subscription.md) with fully booked hotels.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -660,5 +660,5 @@ $aggregateRegistry = (new AttributeEventRegistryFactory())->create($paths);
 * [How to create own aggregate id](aggregate_id.md)
 * [How to store and load aggregates](repository.md)
 * [How to snapshot aggregates](snapshots.md)
-* [How to create Projections](projection.md)
+* [How to create Projections](subscription.md)
 * [How to split streams](split_stream.md)

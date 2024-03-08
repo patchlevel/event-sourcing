@@ -233,6 +233,5 @@ $eventBus = new Psr14EventBus($psr14EventDispatcher);
 
 * [How to decorate messages](message_decorator.md)
 * [How to use outbox pattern](outbox.md)
-* [How to use processor](processor.md)
-* [How to use projections](projection.md)
-* [How to debug messages with the watch server](watch_server.md)
+* [How to use processor](subscription.md)
+* [How to use subscriptions](subscription.md)

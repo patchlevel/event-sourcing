@@ -6,9 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Proj
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
-use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\Ban
 
 use function assert;
 
-#[Projector('dummy-1')]
+#[Subscriber('dummy-1')]
 final class BankAccountProjector
 {
     public function __construct(

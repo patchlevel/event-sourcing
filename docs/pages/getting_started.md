@@ -154,22 +154,21 @@ final class Hotel extends BasicAggregateRoot
 
 So that we can see all the hotels on our website and also see how many guests are currently visiting the hotels,
 we need a projection for it. To create a projection we need a projector. 
-Each projector is then responsible for a specific projection and version.
+Each subscriber is then responsible for a specific projection.
 
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection\ProjectionId;
-use Patchlevel\EventSourcing\Projection\Projector\ProjectorUtil;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
-#[Projector('hotel')]
+#[Subscriber('hotel')]
 final class HotelProjector
 {
-    use ProjectorUtil;
+    use SubscriberUtil;
 
     public function __construct(
         private readonly Connection $db
@@ -231,14 +230,14 @@ final class HotelProjector
     
     private function table(): string
     {
-        return 'projection_' . $this->projectorId();
+        return 'projection_' . $this->subscriberId();
     }
 }
 ```
 
 !!! note
 
-    You can find out more about projections [here](projection.md).
+    You can find out more about subscriptions [here](subscription.md).
 
 ## Processor
 
@@ -270,7 +269,7 @@ final class SendCheckInEmailProcessor
 
 !!! note
 
-    You can find out more about processor [here](processor.md).
+    You can find out more about processor [here](subscription.md).
 
 ## Configuration
 
@@ -279,9 +278,9 @@ After we have defined everything, we still have to plug the whole thing together
 ```php
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Projection\Projection\Store\DoctrineStore;
-use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepository;
+use Patchlevel\EventSourcing\Projection\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Projection\Subscriber\MetadataSubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Projection\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -307,13 +306,13 @@ $eventStore = new DoctrineDbalStore(
 
 $hotelProjector = new HotelProjector($projectionConnection);
 
-$projectorRepository = new MetadataProjectorAccessorRepository([
+$projectorRepository = new MetadataSubscriberAccessorRepository([
     $hotelProjector,
 ]);
 
-$projectionStore = new DoctrineStore($connection);
+$projectionStore = new DoctrineSubscriptionStore($connection);
 
-$projectionist = new DefaultProjectionist(
+$projectionist = new DefaultSubscriptionEngine(
     $eventStore,
     $projectionStore,
     $projectorRepository,
@@ -407,6 +406,6 @@ $hotels = $hotelProjection->getHotels();
 * [How to create an aggregate](aggregate.md)
 * [How to create an event](events.md)
 * [How to store aggregates](repository.md)
-* [How to process events](processor.md)
-* [How to create a projection](projection.md)
+* [How to process events](subscription.md)
+* [How to create a projection](subscription.md)
 * [How to setup the database](store.md)
