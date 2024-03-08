@@ -6,11 +6,6 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Parameter \\#3 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Projection\\\\Projection\\\\ProjectionError constructor expects array\\<int, array\\{class\\: class\\-string, message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
-			count: 1
-			path: src/Projection/Projection/Store/DoctrineStore.php
-
-		-
 			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\Hydrator\\\\Hydrator\\:\\:hydrate\\(\\) expects array\\<string, mixed\\>, mixed given\\.$#"
 			count: 1
 			path: src/Snapshot/DefaultSnapshotStore.php
@@ -29,3 +24,8 @@ parameters:
 			message: "#^Ternary operator condition is always true\\.$#"
 			count: 1
 			path: src/Store/DoctrineDbalStoreStream.php
+
+		-
+			message: "#^Parameter \\#3 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Subscription\\\\SubscriptionError constructor expects array\\<int, array\\{class\\: class\\-string, message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Subscription/Store/DoctrineSubscriptionStore.php

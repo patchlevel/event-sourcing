@@ -9,16 +9,16 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
-use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
-use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
-use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Aggregate\BankAccount;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
@@ -58,10 +58,10 @@ final class IntegrationTest extends TestCase
 
         $bankAccountProjector = new BankAccountProjector($this->connection);
 
-        $projectionist = new DefaultProjectionist(
+        $engine = new DefaultSubscriptionEngine(
             $store,
-            new InMemoryStore(),
-            new MetadataProjectorAccessorRepository([$bankAccountProjector]),
+            new InMemorySubscriptionStore(),
+            new MetadataSubscriberAccessorRepository([$bankAccountProjector]),
         );
 
         $eventBus = DefaultEventBus::create([$bankAccountProjector]);
@@ -83,7 +83,7 @@ final class IntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot(new ProjectionistCriteria());
+        $engine->boot(new SubscriptionEngineCriteria());
 
         $bankAccountId = AccountId::fromString('1');
         $bankAccount = BankAccount::create($bankAccountId, 'John');

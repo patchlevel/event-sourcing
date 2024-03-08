@@ -9,8 +9,8 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
-use Patchlevel\EventSourcing\Tests\Integration\Projectionist\Events\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Integration\Projectionist\ProfileId;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\ProfileId;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot

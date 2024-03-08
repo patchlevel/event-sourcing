@@ -8,16 +8,15 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Projection\Projection\Store\InMemoryStore;
-use Patchlevel\EventSourcing\Projection\Projectionist\DefaultProjectionist;
-use Patchlevel\EventSourcing\Projection\Projectionist\ProjectionistCriteria;
-use Patchlevel\EventSourcing\Projection\Projector\MetadataProjectorAccessorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
@@ -55,10 +54,10 @@ final class BasicIntegrationTest extends TestCase
 
         $profileProjector = new ProfileProjector($this->connection);
 
-        $projectionist = new DefaultProjectionist(
+        $engine = new DefaultSubscriptionEngine(
             $store,
-            new InMemoryStore(),
-            new MetadataProjectorAccessorRepository([$profileProjector]),
+            new InMemorySubscriptionStore(),
+            new MetadataSubscriberAccessorRepository([$profileProjector]),
         );
 
         $eventBus = DefaultEventBus::create([
@@ -81,7 +80,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot(new ProjectionistCriteria());
+        $engine->boot();
 
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId, 'John');
@@ -123,10 +122,10 @@ final class BasicIntegrationTest extends TestCase
 
         $profileProjection = new ProfileProjector($this->connection);
 
-        $projectionist = new DefaultProjectionist(
+        $engine = new DefaultSubscriptionEngine(
             $store,
-            new InMemoryStore(),
-            new MetadataProjectorAccessorRepository([$profileProjection]),
+            new InMemorySubscriptionStore(),
+            new MetadataSubscriberAccessorRepository([$profileProjection]),
         );
 
         $eventBus = DefaultEventBus::create([
@@ -149,7 +148,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $projectionist->boot(new ProjectionistCriteria());
+        $engine->boot();
 
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId, 'John');

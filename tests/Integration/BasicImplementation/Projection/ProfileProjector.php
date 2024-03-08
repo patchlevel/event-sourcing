@@ -6,16 +6,16 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Project
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
-use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
 use function assert;
 
-#[Projector('profile-1')]
+#[Subscriber('profile-1')]
 final class ProfileProjector
 {
     public function __construct(

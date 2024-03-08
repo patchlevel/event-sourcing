@@ -6,7 +6,7 @@ You can:
 
 * Create and delete `databases`
 * Create, update and delete `schemas`
-* Manage `projections`
+* Manage `subscriptions`
 
 ## Database commands
 
@@ -27,22 +27,21 @@ The database schema can also be created, updated and dropped.
 
     You can also register doctrine migration commands.
 
-## Projection commands
+## Subscription commands
 
-To manage your projectors there are the following cli commands.
+To manage your subscriptions there are the following cli commands.
 
-* ProjectionBootCommand: `event-sourcing:projection:boot`
-* ProjectionPauseCommand: `event-sourcing:projection:pause`
-* ProjectionReactiveCommand: `event-sourcing:projection:reactive`
-* ProjectionRebuildCommand: `event-sourcing:projection:rebuild`
-* ProjectionRemoveCommand: `event-sourcing:projection:remove`
-* ProjectionRunCommand: `event-sourcing:projection:run`
-* ProjectionStatusCommand: `event-sourcing:projection:status`
-* ProjectionTeardownCommand: `event-sourcing:projection:teardown`
+* SubscriptionBootCommand: `event-sourcing:subscription:boot`
+* SubscriptionPauseCommand: `event-sourcing:subscription:pause`
+* SubscriptionReactiveCommand: `event-sourcing:subscription:reactive`
+* SubscriptionRemoveCommand: `event-sourcing:subscription:remove`
+* SubscriptionRunCommand: `event-sourcing:subscription:run`
+* SubscriptionStatusCommand: `event-sourcing:subscription:status`
+* SubscriptionTeardownCommand: `event-sourcing:subscription:teardown`
 
 !!! note
 
-    You can find out more about projections [here](projection.md).
+    You can find out more about subscriptions [here](subscription.md).
 
 ## Inspector commands
 
@@ -74,14 +73,14 @@ $schemaManager = new DoctrineSchemaManager();
 $cli->addCommands(array(
     new Command\DatabaseCreateCommand($store, $doctrineHelper),
     new Command\DatabaseDropCommand($store, $doctrineHelper),
-    new Command\ProjectionBootCommand($projectionist),
-    new Command\ProjectionPauseCommand($projectionist),
-    new Command\ProjectionRunCommand($projectionist),
-    new Command\ProjectionTeardownCommand($projectionist),
-    new Command\ProjectionRemoveCommand($projectionist),
-    new Command\ProjectionReactivateCommand($projectionist),
-    new Command\ProjectionRebuildCommand($projectionist),
-    new Command\ProjectionStatusCommand($projectionist),
+    new Command\SubscriptionBootCommand($projectionist),
+    new Command\SubscriptionPauseCommand($projectionist),
+    new Command\SubscriptionRunCommand($projectionist),
+    new Command\SubscriptionTeardownCommand($projectionist),
+    new Command\SubscriptionRemoveCommand($projectionist),
+    new Command\SubscriptionReactivateCommand($projectionist),
+    new Command\SubscriptionRebuildCommand($projectionist),
+    new Command\SubscriptionStatusCommand($projectionist),
     new Command\SchemaCreateCommand($store, $schemaManager),
     new Command\SchemaDropCommand($store, $schemaManager),
     new Command\SchemaUpdateCommand($store, $schemaManager),
