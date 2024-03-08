@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber;
 
+use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Aggregate\Profile;
@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreate
 
 use function assert;
 
-#[Subscriber('profile')]
+#[Processor('profile')]
 final class ProfileProcessor
 {
     public function __construct(

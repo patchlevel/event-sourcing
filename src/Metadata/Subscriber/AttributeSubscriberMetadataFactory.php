@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
+use ReflectionAttribute;
 use ReflectionClass;
 
 use function array_key_exists;
@@ -26,7 +27,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
 
         $reflector = new ReflectionClass($subscriber);
 
-        $attributes = $reflector->getAttributes(Subscriber::class);
+        $attributes = $reflector->getAttributes(Subscriber::class, ReflectionAttribute::IS_INSTANCEOF);
 
         if ($attributes === []) {
             throw new ClassIsNotASubscriber($subscriber);

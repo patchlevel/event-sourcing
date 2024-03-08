@@ -62,7 +62,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootDiscoverNewSubscribers(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -107,7 +107,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootWithoutCreateMethod(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -155,7 +155,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootWithMethods(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
             public bool $created = false;
@@ -227,7 +227,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootWithLimit(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
             public bool $created = false;
@@ -292,7 +292,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootingWithSkip(): void
     {
         $subscriptionId1 = 'test1';
-        $subscriber1 = new #[Subscriber('test1')]
+        $subscriber1 = new #[Subscriber('test1', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
 
@@ -304,7 +304,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         };
 
         $subscriptionId2 = 'test2';
-        $subscriber2 = new #[Subscriber('test2')]
+        $subscriber2 = new #[Subscriber('test2', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
 
@@ -382,7 +382,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootWithCreateError(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public function __construct(
                 public readonly RuntimeException $exception = new RuntimeException('ERROR'),
@@ -433,7 +433,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootingWithGabInIndex(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             /** @var list<Message> */
             public array $messages = [];
@@ -491,7 +491,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootingWithFromNow(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test', runMode: RunMode::FromNow)]
+        $subscriber = new #[Subscriber('test', RunMode::FromNow)]
         class {
             public Message|null $message = null;
 
@@ -540,7 +540,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootingWithFromNowWithEmtpyStream(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test', runMode: RunMode::FromNow)]
+        $subscriber = new #[Subscriber('test', RunMode::FromNow)]
         class {
             public Message|null $message = null;
 
@@ -589,7 +589,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testBootingWithOnlyOnce(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test', runMode: RunMode::Once)]
+        $subscriber = new #[Subscriber('test', RunMode::Once)]
         class {
             public Message|null $message = null;
 
@@ -645,7 +645,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRunDiscoverNewSubscribers(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -673,7 +673,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRunning(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
 
@@ -722,7 +722,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRunningWithLimit(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
 
@@ -775,7 +775,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRunningWithSkip(): void
     {
         $subscriptionId1 = 'test1';
-        $subscriber1 = new #[Subscriber('test1')]
+        $subscriber1 = new #[Subscriber('test1', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
 
@@ -787,7 +787,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         };
 
         $subscriptionId2 = 'test2';
-        $subscriber2 = new #[Subscriber('test2')]
+        $subscriber2 = new #[Subscriber('test2', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
 
@@ -851,7 +851,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRunningWithError(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public function __construct(
                 public readonly RuntimeException $exception = new RuntimeException('ERROR'),
@@ -971,7 +971,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRunningWithGabInIndex(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             /** @var list<Message> */
             public array $messages = [];
@@ -1022,7 +1022,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testTeardownDiscoverNewSubscribers(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1050,7 +1050,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testTeardownWithoutTeardownMethod(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1080,7 +1080,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testTeardownWithSubscriber(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
             public bool $dropped = false;
@@ -1119,7 +1119,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testTeardownWithSubscriberAndError(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
             public bool $dropped = false;
@@ -1184,7 +1184,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRemoveDiscoverNewSubscribers(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1212,7 +1212,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRemoveWithSubscriber(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public bool $dropped = false;
 
@@ -1249,7 +1249,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRemoveWithoutDropMethod(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1278,7 +1278,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRemoveWithSubscriberAndError(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public bool $dropped = false;
 
@@ -1340,7 +1340,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testReactiveDiscoverNewSubscribers(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1368,7 +1368,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testReactivateError(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1407,7 +1407,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testReactivateOutdated(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1443,7 +1443,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testReactivatePaused(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1479,7 +1479,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testReactivateFinished(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1515,7 +1515,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testPauseDiscoverNewSubscribers(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1543,7 +1543,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testPauseBooting(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1579,7 +1579,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testPauseActive(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1615,7 +1615,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testPauseError(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1655,7 +1655,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testGetSubscriptionAndDiscoverNewSubscribers(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1692,7 +1692,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testRetry(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             #[Subscribe(ProfileVisited::class)]
             public function subscribe(): void
@@ -1752,7 +1752,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     public function testShouldNotRetry(): void
     {
         $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test')]
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
         };
 
@@ -1787,7 +1787,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     #[DataProvider('methodProvider')]
     public function testCriteria(string $method): void
     {
-        $subscriber = new #[Subscriber('id1')]
+        $subscriber = new #[Subscriber('id1', RunMode::FromBeginning)]
         class {
         };
 
@@ -1824,7 +1824,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     #[DataProvider('methodProvider')]
     public function testWithLockableStore(string $method): void
     {
-        $subscriber = new #[Subscriber('id1')]
+        $subscriber = new #[Subscriber('id1', RunMode::FromNow)]
         class {
         };
 

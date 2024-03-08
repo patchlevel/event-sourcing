@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber;
 
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +26,7 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
 
     public function testWithSubscriber(): void
     {
-        $subscriber = new #[Subscriber('foo')]
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {
         };
         $metadataFactory = new AttributeSubscriberMetadataFactory();

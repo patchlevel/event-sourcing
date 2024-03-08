@@ -6,9 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projectio
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
@@ -17,7 +17,7 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileC
 
 use function assert;
 
-#[Subscriber('profile')]
+#[Projector('profile')]
 final class ProfileProjector
 {
     use SubscriberUtil;

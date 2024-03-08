@@ -99,7 +99,13 @@ final class SubscriptionTest extends TestCase
         );
 
         self::assertEquals(
-            [new Subscription('profile_1', lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'))],
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
             $engine->subscriptions(),
         );
 
@@ -109,7 +115,7 @@ final class SubscriptionTest extends TestCase
             [
                 new Subscription(
                     'profile_1',
-                    Subscription::DEFAULT_GROUP,
+                    'projector',
                     RunMode::FromBeginning,
                     Status::Active,
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
@@ -127,7 +133,7 @@ final class SubscriptionTest extends TestCase
             [
                 new Subscription(
                     'profile_1',
-                    Subscription::DEFAULT_GROUP,
+                    'projector',
                     RunMode::FromBeginning,
                     Status::Active,
                     1,
@@ -153,7 +159,7 @@ final class SubscriptionTest extends TestCase
             [
                 new Subscription(
                     'profile_1',
-                    Subscription::DEFAULT_GROUP,
+                    'projector',
                     RunMode::FromBeginning,
                     Status::New,
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
@@ -354,7 +360,14 @@ final class SubscriptionTest extends TestCase
         );
 
         self::assertEquals(
-            [new Subscription('profile', lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'))],
+            [
+                new Subscription(
+                    'profile',
+                    'processor',
+                    RunMode::FromNow,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
             $engine->subscriptions(),
         );
 
@@ -364,8 +377,8 @@ final class SubscriptionTest extends TestCase
             [
                 new Subscription(
                     'profile',
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
+                    'processor',
+                    RunMode::FromNow,
                     Status::Active,
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
@@ -399,7 +412,7 @@ final class SubscriptionTest extends TestCase
             new TraceHeader([
                 [
                     'name' => 'profile',
-                    'category' => 'event_sourcing/subscriber/default',
+                    'category' => 'event_sourcing/subscriber/processor',
                 ],
             ]),
             $messages[1]->header(TraceHeader::class),

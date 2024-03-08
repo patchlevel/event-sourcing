@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
+use Cspray\Phinal\AllowInheritance;
 use Patchlevel\EventSourcing\Subscription\RunMode;
-use Patchlevel\EventSourcing\Subscription\Subscription;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-final class Subscriber
+#[AllowInheritance('You can create specific attributes with default group and run mode')]
+class Subscriber
 {
     public function __construct(
         public readonly string $id,
-        public readonly string $group = Subscription::DEFAULT_GROUP,
-        public readonly RunMode $runMode = RunMode::FromBeginning,
+        public readonly RunMode $runMode,
+        public readonly string $group = 'default',
     ) {
     }
 }

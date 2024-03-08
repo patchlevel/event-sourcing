@@ -9,9 +9,10 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 use RuntimeException;
 
-#[Subscriber('error_producer')]
+#[Subscriber('error_producer', RunMode::FromBeginning)]
 final class ErrorProducerSubscriber
 {
     public bool $setupError = false;

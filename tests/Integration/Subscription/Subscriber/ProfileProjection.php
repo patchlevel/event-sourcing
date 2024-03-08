@@ -6,9 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreate
 
 use function assert;
 
-#[Subscriber('profile_1')]
+#[Projector('profile_1')]
 final class ProfileProjection
 {
     use SubscriberUtil;

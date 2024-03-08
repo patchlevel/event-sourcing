@@ -20,7 +20,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 {
     public function testId(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
         };
 
@@ -34,7 +34,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
     public function testGroup(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
         };
 
@@ -48,7 +48,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
     public function testRunMode(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
         };
 
@@ -62,7 +62,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
     public function testSubscribeMethod(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
             #[Subscribe(ProfileCreated::class)]
             public function onProfileCreated(Message $message): void
@@ -84,7 +84,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
     public function testMultipleSubscribeMethod(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
             #[Subscribe(ProfileCreated::class)]
             public function onProfileCreated(Message $message): void
@@ -112,7 +112,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
     public function testSubscribeAllMethod(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
             #[Subscribe('*')]
             public function onProfileCreated(Message $message): void
@@ -134,7 +134,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
     public function testSetupMethod(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
             #[Setup]
             public function method(): void
@@ -154,7 +154,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
     public function testNotSetupMethod(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
         };
 
@@ -170,7 +170,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
     public function testTeardownMethod(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
             #[Teardown]
             public function method(): void
@@ -190,7 +190,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
     public function testNotTeardownMethod(): void
     {
-        $subscriber = new #[Subscriber('profile')]
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
         };
 

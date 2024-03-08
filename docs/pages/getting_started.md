@@ -154,18 +154,18 @@ final class Hotel extends BasicAggregateRoot
 
 So that we can see all the hotels on our website and also see how many guests are currently visiting the hotels,
 we need a projection for it. To create a projection we need a projector. 
-Each subscriber is then responsible for a specific projection.
+Each projector is then responsible for a specific projection.
 
 ```php
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
-use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
-#[Subscriber('hotel')]
+#[Projector('hotel')]
 final class HotelProjector
 {
     use SubscriberUtil;
@@ -237,17 +237,18 @@ final class HotelProjector
 
 !!! note
 
-    You can find out more about subscriptions [here](subscription.md).
+    You can find out more about projector [here](subscription.md).
 
 ## Processor
 
 In our example we also want to email the head office as soon as a guest is checked in.
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\EventBus\Subscriber;
 
+#[Processor('admin_emails')]
 final class SendCheckInEmailProcessor
 {
     public function __construct(
@@ -308,6 +309,7 @@ $hotelProjector = new HotelProjector($projectionConnection);
 
 $projectorRepository = new MetadataSubscriberAccessorRepository([
     $hotelProjector,
+    new SendCheckInEmailProcessor($mailer),
 ]);
 
 $projectionStore = new DoctrineSubscriptionStore($connection);
@@ -318,9 +320,7 @@ $projectionist = new DefaultSubscriptionEngine(
     $projectorRepository,
 );
 
-$eventBus = DefaultEventBus::create([
-    new SendCheckInEmailProcessor($mailer),
-]);
+$eventBus = DefaultEventBus::create();
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRegistry,

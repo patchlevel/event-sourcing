@@ -19,7 +19,7 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
-#[Subscriber('profile_1')]
+#[Subscriber('profile_1', RunMode::FromBeginning)]
 final class ProfileSubscriber
 {
     use SubscriberUtil;
