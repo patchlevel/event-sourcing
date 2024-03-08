@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
 use function array_key_exists;
-use function array_keys;
 
 /**
  * @template-covariant T of object

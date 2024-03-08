@@ -120,8 +120,7 @@ final class MessageTest extends TestCase
             ->withPlayhead(1)
             ->withRecordedOn($recordedAt)
             ->withCustomHeader('custom-field', 'foo-bar')
-            ->withCustomHeader('valueiskey', 'valueiskey')
-        ;
+            ->withCustomHeader('valueiskey', 'valueiskey');
 
         self::assertEquals(
             ['custom-field' => 'foo-bar', 'valueiskey' => 'valueiskey'],
