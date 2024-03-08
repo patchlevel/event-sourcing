@@ -6,6 +6,9 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Closure;
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\SubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -20,6 +23,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class SubscriptionBootCommand extends SubscriptionCommand
 {
+    public function __construct(
+        SubscriptionEngine $engine,
+        private readonly Store $store,
+    ) {
+        parent::__construct($engine);
+    }
+
     public function configure(): void
     {
         parent::configure();
@@ -76,6 +86,10 @@ final class SubscriptionBootCommand extends SubscriptionCommand
         $criteria = $this->subscriptionEngineCriteria($input);
         $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
+        if ($this->store instanceof SubscriptionStore) {
+            $this->store->setupSubscription();
+        }
+
         if ($setup) {
             $this->engine->setup($criteria);
         }
@@ -85,15 +99,21 @@ final class SubscriptionBootCommand extends SubscriptionCommand
         $finished = false;
 
         $worker = DefaultWorker::create(
-            function (Closure $stop) use ($criteria, $messageLimit, &$finished): void {
+            function (Closure $stop) use ($criteria, $messageLimit, &$finished, $sleep): void {
                 $this->engine->boot($criteria, $messageLimit);
 
-                if (!$this->isBootingFinished($criteria)) {
+                if ($this->isBootingFinished($criteria)) {
+                    $finished = true;
+                    $stop();
+
                     return;
                 }
 
-                $finished = true;
-                $stop();
+                if (!$this->store instanceof SubscriptionStore) {
+                    return;
+                }
+
+                $this->store->wait($sleep);
             },
             [
                 'runLimit' => $runLimit,
@@ -103,7 +123,8 @@ final class SubscriptionBootCommand extends SubscriptionCommand
             $logger,
         );
 
-        $worker->run($sleep);
+        $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();
+        $worker->run($supportSubscription ? 0 : $sleep);
 
         return $finished ? 0 : 1;
     }
