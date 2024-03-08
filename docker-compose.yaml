@@ -1,0 +1,8 @@
+services:
+  postgres:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=eventstore
+    expose:
+      - 5432

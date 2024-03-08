@@ -12,15 +12,26 @@ interface Stream extends Traversable
 {
     public function close(): void;
 
+    /** @throws StreamClosed */
     public function next(): void;
 
+    /** @throws StreamClosed */
     public function current(): Message|null;
 
+    /** @throws StreamClosed */
     public function end(): bool;
 
-    /** @return positive-int|0|null */
+    /**
+     * @return positive-int|0|null
+     *
+     * @throws StreamClosed
+     */
     public function position(): int|null;
 
-    /** @return positive-int|null */
+    /**
+     * @return positive-int|null
+     *
+     * @throws StreamClosed
+     */
     public function index(): int|null;
 }

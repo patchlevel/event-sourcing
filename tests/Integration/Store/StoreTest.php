@@ -126,19 +126,25 @@ final class StoreTest extends TestCase
 
         $this->store->save($message);
 
-        $stream = $this->store->load();
+        $stream = null;
 
-        self::assertSame(1, $stream->index());
-        self::assertSame(0, $stream->position());
+        try {
+            $stream = $this->store->load();
 
-        $loadedMessage = $stream->current();
+            self::assertSame(1, $stream->index());
+            self::assertSame(0, $stream->position());
 
-        self::assertInstanceOf(Message::class, $loadedMessage);
-        self::assertNotSame($message, $loadedMessage);
-        self::assertEquals($message->event(), $loadedMessage->event());
-        self::assertEquals($message->header(AggregateHeader::class)->aggregateId, $loadedMessage->header(AggregateHeader::class)->aggregateId);
-        self::assertEquals($message->header(AggregateHeader::class)->aggregateName, $loadedMessage->header(AggregateHeader::class)->aggregateName);
-        self::assertEquals($message->header(AggregateHeader::class)->playhead, $loadedMessage->header(AggregateHeader::class)->playhead);
-        self::assertEquals($message->header(AggregateHeader::class)->recordedOn, $loadedMessage->header(AggregateHeader::class)->recordedOn);
+            $loadedMessage = $stream->current();
+
+            self::assertInstanceOf(Message::class, $loadedMessage);
+            self::assertNotSame($message, $loadedMessage);
+            self::assertEquals($message->event(), $loadedMessage->event());
+            self::assertEquals($message->header(AggregateHeader::class)->aggregateId, $loadedMessage->header(AggregateHeader::class)->aggregateId);
+            self::assertEquals($message->header(AggregateHeader::class)->aggregateName, $loadedMessage->header(AggregateHeader::class)->aggregateName);
+            self::assertEquals($message->header(AggregateHeader::class)->playhead, $loadedMessage->header(AggregateHeader::class)->playhead);
+            self::assertEquals($message->header(AggregateHeader::class)->recordedOn, $loadedMessage->header(AggregateHeader::class)->recordedOn);
+        } finally {
+            $stream?->close();
+        }
     }
 }
