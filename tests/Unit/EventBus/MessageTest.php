@@ -119,11 +119,15 @@ final class MessageTest extends TestCase
             ->withAggregateId('1')
             ->withPlayhead(1)
             ->withRecordedOn($recordedAt)
-            ->withCustomHeader('custom-field', 'foo-bar');
+            ->withCustomHeader('custom-field', 'foo-bar')
+            ->withCustomHeader('valueiskey', 'valueiskey');
 
         self::assertEquals(
-            ['custom-field' => 'foo-bar'],
+            ['custom-field' => 'foo-bar', 'valueiskey' => 'valueiskey'],
             $message->customHeaders(),
         );
+
+        self::assertEquals('foo-bar', $message->customHeader('custom-field'));
+        self::assertEquals('valueiskey', $message->customHeader('valueiskey'));
     }
 }
