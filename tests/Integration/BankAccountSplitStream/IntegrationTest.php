@@ -16,7 +16,6 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -83,7 +82,8 @@ final class IntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->boot(new SubscriptionEngineCriteria());
+        $engine->setup();
+        $engine->boot();
 
         $bankAccountId = AccountId::fromString('1');
         $bankAccount = BankAccount::create($bankAccountId, 'John');

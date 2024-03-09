@@ -96,6 +96,7 @@ final class SubscriptionEngineBench
     #[Bench\Revs(10)]
     public function benchHandle10000Events(): void
     {
+        $this->subscriptionEngine->setup();
         $this->subscriptionEngine->boot();
         $this->subscriptionEngine->remove();
     }

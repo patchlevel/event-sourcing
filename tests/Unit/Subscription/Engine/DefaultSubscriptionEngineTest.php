@@ -40,6 +40,286 @@ final class DefaultSubscriptionEngineTest extends TestCase
 {
     use ProphecyTrait;
 
+    public function testNothingToSetup(): void
+    {
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->shouldNotBeCalled();
+
+        $store = new DummySubscriptionStore();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $store,
+            new MetadataSubscriberAccessorRepository([]),
+        );
+
+        $engine->setup();
+
+        self::assertEquals([], $store->addedSubscriptions);
+        self::assertEquals([], $store->updatedSubscriptions);
+    }
+
+    public function testSetupWithoutCreateMethod(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+        };
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $subscriptionStore = new DummySubscriptionStore();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+        );
+
+        $engine->setup();
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::New,
+            ),
+        ], $subscriptionStore->addedSubscriptions);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+    }
+
+    public function testSetupWithCreateMethod(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public bool $created = false;
+
+            #[Setup]
+            public function create(): void
+            {
+                $this->created = true;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore();
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+        );
+
+        $engine->setup();
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::New,
+            ),
+        ], $subscriptionStore->addedSubscriptions);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+
+        self::assertTrue($subscriber->created);
+    }
+
+    public function testSetupWithCreateError(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
+
+            #[Setup]
+            public function create(): void
+            {
+                throw $this->exception;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription($subscriptionId),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+        );
+
+        $engine->setup();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriptionId,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::New,
+                        ThrowableToErrorContextTransformer::transform($subscriber->exception),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
+    }
+
+    public function testSetupWithSkipBooting(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::New,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+        );
+
+        $engine->setup(null, true);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+    }
+
+    public function testSetupWithFromNow(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromNow)]
+        class {
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromNow,
+                Status::New,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+        );
+
+        $engine->setup();
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromNow,
+                Status::Active,
+                1,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+    }
+
+    public function testSetupWithFromNowWithEmtpyStream(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromNow)]
+        class {
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromNow,
+                Status::New,
+            ),
+        ]);
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+        );
+
+        $engine->setup();
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromNow,
+                Status::Active,
+                0,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+    }
+
     public function testNothingToBoot(): void
     {
         $streamableStore = $this->prophesize(Store::class);
@@ -67,7 +347,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         };
 
         $streamableStore = $this->prophesize(Store::class);
-        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([]))->shouldBeCalledOnce();
+        $streamableStore->load($this->criteria())->shouldNotBeCalled();
 
         $subscriptionStore = new DummySubscriptionStore();
 
@@ -88,31 +368,30 @@ final class DefaultSubscriptionEngineTest extends TestCase
             ),
         ], $subscriptionStore->addedSubscriptions);
 
-        self::assertEquals([
+        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
+    }
+
+    public function testBootWithSubscriber(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::Booting,
             ),
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Active,
-            ),
-        ], $subscriptionStore->updatedSubscriptions);
-    }
-
-    public function testBootWithoutCreateMethod(): void
-    {
-        $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
-        class {
-        };
-
-        $subscriptionStore = new DummySubscriptionStore([
-            new Subscription($subscriptionId),
         ]);
 
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
@@ -128,82 +407,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         $engine->boot();
 
-        self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Booting,
-            ),
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Booting,
-                1,
-            ),
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Active,
-                1,
-            ),
-        ], $subscriptionStore->updatedSubscriptions);
-    }
-
-    public function testBootWithMethods(): void
-    {
-        $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
-        class {
-            public Message|null $message = null;
-            public bool $created = false;
-
-            #[Setup]
-            public function create(): void
-            {
-                $this->created = true;
-            }
-
-            #[Subscribe(ProfileVisited::class)]
-            public function handle(Message $message): void
-            {
-                $this->message = $message;
-            }
-        };
-
-        $subscriptionStore = new DummySubscriptionStore();
-
-        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
-
-        $streamableStore = $this->prophesize(Store::class);
-        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
-
-        $engine = new DefaultSubscriptionEngine(
-            $streamableStore->reveal(),
-            $subscriptionStore,
-            new MetadataSubscriberAccessorRepository([$subscriber]),
-        );
-
-        $engine->boot();
+        self::assertEquals([], $subscriptionStore->addedSubscriptions);
 
         self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::New,
-            ),
-        ], $subscriptionStore->addedSubscriptions);
-
-        self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Booting,
-            ),
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -220,7 +426,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
             ),
         ], $subscriptionStore->updatedSubscriptions);
 
-        self::assertTrue($subscriber->created);
         self::assertSame($message, $subscriber->message);
     }
 
@@ -230,13 +435,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
             public Message|null $message = null;
-            public bool $created = false;
-
-            #[Setup]
-            public function create(): void
-            {
-                $this->created = true;
-            }
 
             #[Subscribe(ProfileVisited::class)]
             public function handle(Message $message): void
@@ -245,7 +443,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
             }
         };
 
-        $subscriptionStore = new DummySubscriptionStore();
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
 
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
@@ -260,22 +465,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         $engine->boot(new SubscriptionEngineCriteria(), 1);
 
-        self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::New,
-            ),
-        ], $subscriptionStore->addedSubscriptions);
+        self::assertEquals([], $subscriptionStore->addedSubscriptions);
 
         self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Booting,
-            ),
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -285,7 +477,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
             ),
         ], $subscriptionStore->updatedSubscriptions);
 
-        self::assertTrue($subscriber->created);
         self::assertSame($message, $subscriber->message);
     }
 
@@ -379,57 +570,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertNull($subscriber2->message);
     }
 
-    public function testBootWithCreateError(): void
-    {
-        $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
-        class {
-            public function __construct(
-                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
-            ) {
-            }
-
-            #[Setup]
-            public function create(): void
-            {
-                throw $this->exception;
-            }
-        };
-
-        $subscriptionStore = new DummySubscriptionStore([
-            new Subscription($subscriptionId),
-        ]);
-
-        $streamableStore = $this->prophesize(Store::class);
-        $streamableStore->load($this->criteria())->shouldNotBeCalled();
-
-        $engine = new DefaultSubscriptionEngine(
-            $streamableStore->reveal(),
-            $subscriptionStore,
-            new MetadataSubscriberAccessorRepository([$subscriber]),
-        );
-
-        $engine->boot();
-
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriptionId,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::New,
-                        ThrowableToErrorContextTransformer::transform($subscriber->exception),
-                    ),
-                ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
-        );
-    }
-
     public function testBootingWithGabInIndex(): void
     {
         $subscriptionId = 'test';
@@ -486,104 +626,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
         ], $subscriptionStore->updatedSubscriptions);
 
         self::assertSame([$message1, $message2], $subscriber->messages);
-    }
-
-    public function testBootingWithFromNow(): void
-    {
-        $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test', RunMode::FromNow)]
-        class {
-            public Message|null $message = null;
-
-            #[Subscribe(ProfileVisited::class)]
-            public function handle(Message $message): void
-            {
-                $this->message = $message;
-            }
-        };
-
-        $subscriptionStore = new DummySubscriptionStore([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromNow,
-                Status::Booting,
-            ),
-        ]);
-
-        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
-
-        $streamableStore = $this->prophesize(Store::class);
-        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
-
-        $engine = new DefaultSubscriptionEngine(
-            $streamableStore->reveal(),
-            $subscriptionStore,
-            new MetadataSubscriberAccessorRepository([$subscriber]),
-        );
-
-        $engine->boot();
-
-        self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromNow,
-                Status::Active,
-                1,
-            ),
-        ], $subscriptionStore->updatedSubscriptions);
-
-        self::assertNull($subscriber->message);
-    }
-
-    public function testBootingWithFromNowWithEmtpyStream(): void
-    {
-        $subscriptionId = 'test';
-        $subscriber = new #[Subscriber('test', RunMode::FromNow)]
-        class {
-            public Message|null $message = null;
-
-            #[Subscribe(ProfileVisited::class)]
-            public function handle(Message $message): void
-            {
-                $this->message = $message;
-            }
-        };
-
-        $subscriptionStore = new DummySubscriptionStore([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromNow,
-                Status::Booting,
-            ),
-        ]);
-
-        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
-
-        $streamableStore = $this->prophesize(Store::class);
-        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([]))->shouldBeCalledOnce();
-
-        $engine = new DefaultSubscriptionEngine(
-            $streamableStore->reveal(),
-            $subscriptionStore,
-            new MetadataSubscriberAccessorRepository([$subscriber]),
-        );
-
-        $engine->boot();
-
-        self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromNow,
-                Status::Active,
-                0,
-            ),
-        ], $subscriptionStore->updatedSubscriptions);
-
-        self::assertNull($subscriber->message);
     }
 
     public function testBootingWithOnlyOnce(): void
@@ -1017,6 +1059,62 @@ final class DefaultSubscriptionEngineTest extends TestCase
         ], $subscriptionStore->updatedSubscriptions);
 
         self::assertSame([$message1, $message2], $subscriber->messages);
+    }
+
+    public function testRunnningWithOnlyOnce(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::Once)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::Once,
+                Status::Active,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+        );
+
+        $engine->run();
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::Once,
+                Status::Active,
+                1,
+            ),
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::Once,
+                Status::Finished,
+                1,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+
+        self::assertEquals($message1, $subscriber->message);
     }
 
     public function testTeardownDiscoverNewSubscribers(): void
@@ -1794,7 +1892,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $subscriptionStore = $this->prophesize(SubscriptionStore::class);
         $subscriptionStore->find(
             Argument::that(
-                static fn (SubscriptionCriteria $criteria) => $criteria->ids === ['id1'] && $criteria->groups === ['group1']
+                static fn (SubscriptionCriteria $criteria) => $criteria->ids === ['id1'] && $criteria->groups === ['group1'],
             ),
         )->willReturn([])->shouldBeCalled();
 
@@ -1831,7 +1929,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $subscriptionStore = $this->prophesize(LockableSubscriptionStore::class);
         $subscriptionStore->inLock(Argument::type(Closure::class))->will(
         /** @param array{Closure} $args */
-            static fn (array $args): mixed => $args[0]()
+            static fn (array $args): mixed => $args[0](),
         )->shouldBeCalled();
         $subscriptionStore->find(Argument::any())->willReturn([])->shouldBeCalled();
 
@@ -1858,6 +1956,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
     public static function methodProvider(): Generator
     {
+        yield 'setup' => ['setup'];
         yield 'boot' => ['boot'];
         yield 'run' => ['run'];
         yield 'teardown' => ['teardown'];

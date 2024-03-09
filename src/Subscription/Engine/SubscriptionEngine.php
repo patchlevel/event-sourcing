@@ -8,6 +8,8 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 
 interface SubscriptionEngine
 {
+    public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): void;
+
     /**
      * @param positive-int|null $limit
      *
