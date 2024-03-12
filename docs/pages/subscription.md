@@ -1,29 +1,57 @@
 # Subscriptions
 
-With `subscriptions` you can transform your data optimized for reading.
-Subscriptions can be adjusted, deleted or rebuilt at any time.
-This is possible because the event store remains untouched
-and everything can always be reproduced from the events.
+One core concept of event sourcing is the ability to react and process events in a different way.
+This is where subscriptions and the subscription engine come into play.
 
-A subscription can be anything.
-Either a file, a relational database, a no-sql database like mongodb or an elasticsearch.
+There are different types of subscriptions. In most cases, we are talking about projector and processor.
+But you can use it for anything like migration, report or something else.
+
+For this, we use the event store to get the events and process them.
+The event store remains untouched and everything can always be reproduced from the events.
+
+The subscription engine manages individual subscribers and keeps the subscriptions running.
+Internally, the subscription engine does this by tracking where each subscriber is in the event stream.
 
 ## Subscriber
 
-To create a subscription you need a subscriber with a unique ID named `subscriberId`.
-This subscriber is responsible for a specific subscription.
-To do this, you can use the `Subscriber` attribute.
+If you want to react to events, you have to create a subscriber.
+Each subscriber need a unique ID and a run mode.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+
+#[Subscriber('do_stuff', RunMode::Once)]
+final class DoStuffSubscriber
+{
+}
+```
+
+!!! note
+
+    For each subsciber ID, the engine will create a subscription.
+    If the subscriber ID changes, a new subscription will be created.
+    In some cases like projections, you want to change the subscriber ID to rebuild the projection.
+
+!!! tip
+
+    You can use specific attributes for specific subscribers like `Projector` or `Processor`.
+    So you don't have to define the group and run mode every time.
+
+### Projector
+
+You can create projections and read models with a subscriber.
+We named this type of subscriber `projector`. But in the end it's the same.
 
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 
-#[Subscriber('profile_1')]
-final class ProfileSubscriber
+#[Subscriber('profile_1', RunMode::FromBeginning)]
+final class ProfileProjector
 {
-    use SubscriberUtil;
-
     public function __construct(
         private readonly Connection $connection
     ) {
@@ -31,20 +59,88 @@ final class ProfileSubscriber
 }
 ```
 
-!!! tip
+Mostly you want process the events from the beginning.
+For this reason, it is also possible to use the `Projector` attribute.
+It extends the `Subscriber` attribute with a default group and run mode.
 
-    Add a version as suffix to the `subscriberId`, 
-    so you can increment it when the subscription changes.
-    Like `profile_1` to `profile_2`.
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
+
+#[Projector('profile_1')]
+final class ProfileProjector
+{
+    public function __construct(
+        private readonly Connection $connection
+    ) {
+    }
+}
+```
 
 !!! warning
 
     MySQL and MariaDB don't support transactions for DDL statements.
     So you must use a different database connection for your subscriptions.
 
+!!! note
+
+    More about the projector and projections can be found [here](projection.md).
+
+!!! tip
+
+    Add a version as suffix to the subscriber id
+    so you can increment it when the subscription changes.
+    Like `profile_1` to `profile_2`.
+
+### Processor
+
+The other way to react to events is to take actions like sending an email, dispatch commands or change other aggregates.
+We named this type of subscriber `processor`.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+
+#[Subscriber('welcome_email', RunMode::FromNow)]
+final class WelcomeEmailProcessor
+{
+    public function __construct(
+        private readonly Mailer $mailer
+    ) {
+    }
+}
+```
+
+Mostly you want process the events from now, 
+because you don't want to email users who already have an account since a long time.
+
+For this reason, it is also possible to use the `Processor` attribute.
+It extends the `Subscriber` attribute with a default group and run mode.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Processor;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
+
+#[Processor('welcome_email')]
+final class WelcomeEmailProcessor
+{
+    public function __construct(
+        private readonly Connection $connection
+    ) {
+    }
+}
+```
+
+!!! note
+
+    More about the processor can be found [here](processor.md).
+
 ### Subscribe
 
-A subscriber can subscribe any number of events.
+A subscriber (projector/processor) can subscribe any number of events.
 In order to say which method is responsible for which event, you need the `Subscribe` attribute.
 There you can pass the event class to which the reaction should then take place.
 The method itself must expect a `Message`, which then contains the event. 
@@ -54,40 +150,19 @@ The method name itself doesn't matter.
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
-#[Subscriber('profile_1')]
-final class ProfileSubscriber
+#[Subscriber('do_stuff', RunMode::Once)]
+final class DoStuffSubscriber
 {
-    use SubscriberUtil;
-    
-    // ...
-    
     #[Subscribe(ProfileCreated::class)]
-    public function handleProfileCreated(Message $message): void
+    public function onProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();
     
-        $this->connection->executeStatement(
-            "INSERT INTO {$this->table()} (id, name) VALUES(?, ?);",
-            [
-                'id' => $profileCreated->profileId->toString(),
-                'name' => $profileCreated->name
-            ]
-        );
-    }
-    
-    private function table(): string 
-    {
-        return 'subscription_' . $this->subscriptionId();
+        // do something
     }
 }
 ```
-
-!!! warning
-
-    You have to be careful with actions because in default it will be executed from the start of the event stream.
-    Even if you change the SubscriptionId, it will run again from the start.
 
 !!! note
 
@@ -103,17 +178,16 @@ final class ProfileSubscriber
 
 Subscribers can have one `setup` and `teardown` method that is executed when the subscription is created or deleted.
 For this there are the attributes `Setup` and `Teardown`. The method name itself doesn't matter.
-In some cases it may be that no schema has to be created for the subscription,
-as the target does it automatically, so you can skip this.
+This is especially helpful for projectors, as they can create the necessary structures for the projection here.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
-#[Subscriber('profile_1')]
-final class ProfileSubscriber
+#[Projector('profile_1')]
+final class ProfileProjector
 {
     use SubscriberUtil;
     
@@ -135,72 +209,40 @@ final class ProfileSubscriber
 
     private function table(): string 
     {
-        return 'subscription_' . $this->subscriptionId();
+        return 'projection_' . $this->subscriberId();
     }
 }
 ```
 
+!!! danger
+
+    MySQL and MariaDB don't support transactions for DDL statements.
+    So you must use a different database connection in your projectors, 
+    otherwise you will get an error when the subscription tries to create the table.
+
 !!! warning
 
-    If you change the `subscriberID`, you must also change the table/collection name.
-    Otherwise the table/collection will conflict with the old subscription.
+    If you change the subscriber id, you must also change the table/collection name.
+    The subscription engine will create a new subscription with the new subscriber id.
+    That means the setup method will be called again and the table/collection will conflict with the old existing projection.
+    You can use the `SubscriberUtil` to build the table/collection name.
 
 !!! note
 
     Most databases have a limit on the length of the table/collection name.
     The limit is usually 64 characters.
 
-!!! tip
-
-    You can also use the `SubscriberUtil` to build the table/collection name.
-
-### Read Model
-
-You can also implement your read model here. 
-You can offer methods that then read the data and put it into a specific format.
-
-```php
-use Patchlevel\EventSourcing\Attribute\Subscriber;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
-
-#[Subscriber('profile_1')]
-final class ProfileSubscriber
-{
-    use SubscriberUtil;
-
-    // ...
-
-    /**
-     * @return list<array{id: string, name: string}>
-     */
-    public function getProfiles(): array 
-    {
-        return $this->connection->fetchAllAssociative("SELECT id, name FROM {$this->table()};");
-    }
-    
-    private function table(): string 
-    {
-        return 'subscription_' . $this->subscriptionId();
-    }
-}
-```
-
-!!! tip
-
-    You can also use the `SubscriberUtil` to build the table/collection name.
-
 ### Versioning
 
-As soon as the structure of a subscription changes, or you need other events from the past,
-the `subscriberId` must be change or increment.
-
-Otherwise, the subscription engine will not recognize that the subscription has changed and will not rebuild it.
-To do this, you can add a version to the `subscriberId`:
+As soon as the structure of a projection changes, or you need other events from the past,
+you can change the subscriber ID to rebuild the projection.
+This will trigger the subscription engine to create a new subscription and boot the projection from the beginning.
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 
-#[Subscriber('profile_2')]
+#[Projector('profile_2')]
 final class ProfileSubscriber
 {
    // ...
@@ -212,9 +254,15 @@ final class ProfileSubscriber
     If you change the `subscriberID`, you must also change the table/collection name.
     Otherwise the table/collection will conflict with the old subscription.
 
+!!! tip
+
+    Add a version as suffix to the subscriber id
+    so you can increment it when the subscription changes.
+    Like `profile_1` to `profile_2`.
+
 ### Grouping
 
-You can also group subscribers and address these to the subscription engine.
+You can also group subscribers together and filter them in the subscription engine.
 This is useful if you want to run subscribers in different processes or on different servers.
 
 ```php
@@ -229,7 +277,11 @@ final class ProfileSubscriber
 
 !!! note
 
-    The default group is `default` and the subscription engine takes all groups if none are given to him.
+    The different attributes has different default group.
+
+    * `Subscriber` - `default`
+    * `Projector` - `projector`
+    * `Processor` - `processor`
 
 ### Run Mode
 
@@ -238,18 +290,23 @@ There are three different modes:
 
 #### From Beginning
 
-This is the default mode. 
 The subscriber will start from the beginning of the event stream and process all events.
+This is useful for subscribers that need to build up a projection from scratch.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Subscriber;use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 
-#[Subscriber('welcome_email', runMode: RunMode::FromBeginning)]
+#[Subscriber('welcome_email', RunMode::FromBeginning)]
 final class WelcomeEmailSubscriber
 {
    // ...
 }
 ```
+
+!!! tip
+
+    If you want create projections and run from the beginning, you can use the `Projector` attribute.
 
 #### From Now
 
@@ -260,12 +317,16 @@ As example, a welcome email subscriber that only wants to send emails to new use
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscriber;use Patchlevel\EventSourcing\Subscription\RunMode;
 
-#[Subscriber('welcome_email', runMode: RunMode::FromNow)]
+#[Subscriber('welcome_email', RunMode::FromNow)]
 final class WelcomeEmailSubscriber
 {
    // ...
 }
 ```
+
+!!! tip
+
+    If you want process events from now, you can use the `Processor` attribute.
 
 #### Once
 
@@ -273,9 +334,10 @@ This mode is useful for subscribers that only need to run once.
 This is useful for subscribers to create reports or to migrate data.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Subscriber;use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 
-#[Subscriber('migration', runMode: RunMode::Once)]
+#[Subscriber('migration', RunMode::Once)]
 final class MigrationSubscriber
 {
    // ...
@@ -287,8 +349,9 @@ final class MigrationSubscriber
 The subscription engine manages individual subscribers and keeps the subscriptions running.
 Internally, the subscription engine does this by tracking where each subscriber is in the event stream
 and keeping all subscriptions up to date.
+
 He also takes care that new subscribers are booted and old ones are removed again.
-If something breaks, the subscription engine marks the individual subscriptions as faulty.
+If something breaks, the subscription engine marks the individual subscriptions as faulty and retries them.
 
 !!! tip
 
@@ -347,7 +410,7 @@ stateDiagram-v2
 ### New
 
 A subscription is created and "new" if a subscriber exists with an ID that is not yet tracked.
-This can happen when either a new subscriber has been added, the `subscriber id` has changed
+This can happen when either a new subscriber has been added, the subscriber ID has changed
 or the subscription has been manually deleted from the subscription store.
 
 ### Booting
@@ -355,7 +418,7 @@ or the subscription has been manually deleted from the subscription store.
 Booting status is reached when the boot process is invoked.
 In this step, the "setup" method is called on the subscription, if available.
 And the subscription is brought up to date, depending on the mode.
-When the process is finished, the subscription is set to active.
+When the process is finished, the subscription is set to active or finished.
 
 ### Active
 
@@ -393,7 +456,7 @@ There are two options to reactivate the subscription:
 
 ### Error
 
-If an error occurs in a subscriber, then the target subscription is set to Error.
+If an error occurs in a subscriber, then the subscription is set to Error.
 This can happen in the create process, in the boot process or in the run process.
 This subscription will then no longer boot/run until the subscription is reactivate or retried.
 
@@ -422,9 +485,9 @@ $subscriptionStore = new DoctrineSubscriptionStore($connection);
 ```
 
 So that the schema for the subscription store can also be created,
-we have to tell the `SchemaDirector` our schema configuration.
-Using `ChainSchemaConfigurator` we can add multiple schema configurators.
-In our case they need the `SchemaConfigurator` from the event store and subscription store.
+we have to tell the `DoctrineSchemaDirector` our schema configuration.
+Using `ChainDoctrineSchemaConfigurator` we can add multiple schema configurators.
+In our case they need the `DoctrineSchemaDirector` from the event store and subscription store.
 
 ```php
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
@@ -468,7 +531,7 @@ $retryStrategy = new ClockBasedRetryStrategy(
 
 ### Subscriber Accessor
 
-The subscriber accessor is responsible for providing the subscribers to the subscription engine.
+The subscriber accessor repository is responsible for providing the subscribers to the subscription engine.
 We provide a metadata subscriber accessor repository by default.
 
 ```php
@@ -481,7 +544,7 @@ $subscriberAccessorRepository = new MetadataSubscriberAccessorRepository([$subsc
 
 Now we can create the subscription engine and plug together the necessary services.
 The event store is needed to load the events, the Subscription Store to store the subscription state 
-and the respective subscribers. Optionally, we can also pass a retry strategy.
+and we need the subscriber accessor repository. Optionally, we can also pass a retry strategy.
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
@@ -497,7 +560,7 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
 ## Usage
 
 The Subscription Engine has a few methods needed to use it effectively.
-A `SubscriptionEngineCriteria` can be passed to all of these methods to filter the respective subscribers.
+A `SubscriptionEngineCriteria` can be passed to all of these methods to filter the respective subscriptions.
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
@@ -515,9 +578,9 @@ $criteria = new SubscriptionEngineCriteria(
 ### Boot
 
 So that the subscription engine can manage the subscriptions, they must be booted.
-In this step, the structures are created for all new subscriptions.
-The subscriptions then catch up with the current position of the event stream.
-When the subscriptions are finished, they switch to the active state.
+In this step, the `setup` will be called if available.
+Then the subscriptions then catch up with the current position of the event stream.
+When the subscriptions are finished, they switch to the active or finished state.
 
 ```php
 $subscriptionEngine->boot($criteria);
@@ -534,7 +597,7 @@ $subscriptionEngine->run($criteria);
 ### Teardown
 
 If subscriptions are outdated, they can be cleaned up here.
-The subscription engine also tries to remove the structures created for the subscription.
+The subscription engine also tries to call the `teardown` method if available.
 
 ```php
 $subscriptionEngine->teardown($criteria);
@@ -543,7 +606,8 @@ $subscriptionEngine->teardown($criteria);
 ### Remove
 
 You can also directly remove a subscription regardless of its status.
-An attempt is made to remove the structures, but the entry will still be removed if it doesn't work.
+An attempt is made to call the `teardown` method if available.
+But the entry will still be removed if it doesn't work.
 
 ```php
 $subscriptionEngine->remove($criteria);
@@ -551,8 +615,8 @@ $subscriptionEngine->remove($criteria);
 
 ### Reactivate
 
-If a subscription had an error, you can reactivate it.
-As a result, the subscription gets the status active again and is then kept up-to-date again by the subscription engine.
+If a subscription had an error or is outdated, you can reactivate it.
+As a result, the subscription gets in the last status again.
 
 ```php
 $subscriptionEngine->reactivate($criteria);
@@ -561,7 +625,7 @@ $subscriptionEngine->reactivate($criteria);
 ### Pause
 
 Pausing a subscription is also possible.
-The subscription will then no longer be updated by the subscription engine.
+The subscription will then no longer be managed by the subscription engine.
 You can reactivate the subscription if you want so that it continues.
 
 ```php
