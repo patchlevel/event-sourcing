@@ -11,6 +11,6 @@ enum Status: string
     case Active = 'active';
     case Paused = 'paused';
     case Finished = 'finished';
-    case Outdated = 'outdated';
+    case Detached = 'detached';
     case Error = 'error';
 }

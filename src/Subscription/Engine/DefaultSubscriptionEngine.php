@@ -271,7 +271,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->logger?->info('Subscription Engine: Start processing.');
 
         $this->discoverNewSubscriptions();
-        $this->markOutdatedSubscriptions($criteria);
+        $this->markDetachedSubscriptions($criteria);
         $this->retrySubscriptions($criteria);
 
         $this->findForUpdate(
@@ -394,13 +394,13 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->discoverNewSubscriptions();
 
-        $this->logger?->info('Subscription Engine: Start teardown outdated subscriptions.');
+        $this->logger?->info('Subscription Engine: Start teardown detached subscriptions.');
 
         $this->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
-                status: [Status::Outdated],
+                status: [Status::Detached],
             ),
             function (array $subscriptions): void {
                 foreach ($subscriptions as $subscription) {
@@ -542,7 +542,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 groups: $criteria->groups,
                 status: [
                     Status::Error,
-                    Status::Outdated,
+                    Status::Detached,
                     Status::Paused,
                     Status::Finished,
                 ],
@@ -710,7 +710,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         return $this->subscriberRepository->get($subscriberId);
     }
 
-    private function markOutdatedSubscriptions(SubscriptionEngineCriteria $criteria): void
+    private function markDetachedSubscriptions(SubscriptionEngineCriteria $criteria): void
     {
         $this->findForUpdate(
             new SubscriptionCriteria(
@@ -726,12 +726,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         continue;
                     }
 
-                    $subscription->outdated();
+                    $subscription->detached();
                     $this->subscriptionStore->update($subscription);
 
                     $this->logger?->info(
                         sprintf(
-                            'Subscription Engine: Subscriber for "%s" not found and has been marked as outdated.',
+                            'Subscription Engine: Subscriber for "%s" not found and has been marked as detached.',
                             $subscription->id(),
                         ),
                     );

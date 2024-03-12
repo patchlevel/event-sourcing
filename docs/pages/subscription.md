@@ -390,21 +390,20 @@ stateDiagram-v2
     Booting --> Error
     Active --> Paused
     Active --> Finished
-    Active --> Outdated
+    Active --> Detached
     Active --> Error
-    Paused --> New
     Paused --> Booting
     Paused --> Active
-    Paused --> Outdated
+    Paused --> Detached
     Finished --> Active
-    Finished --> Outdated
+    Finished --> Detached
     Error --> New
     Error --> Booting
     Error --> Active
     Error --> Paused
     Error --> [*]
-    Outdated --> Active
-    Outdated --> [*]
+    Detached --> Active
+    Detached --> [*]
 ```
 
 ### New
@@ -438,16 +437,16 @@ A subscription is finished if the subscriber has the mode `RunMode::Once`.
 This means that the subscription is only run once and then set to finished if it reaches the end of the event stream.
 You can also reactivate the subscription if you want so that it continues.
 
-### Outdated
+### Detached
 
 If an active or finished subscription exists in the subscription store
 that does not have a subscriber in the source code with a corresponding subscriber ID,
-then this subscription is marked as outdated.
+then this subscription is marked as detached.
 This happens when either the subscriber has been deleted
 or the subscriber ID of a subscriber has changed.
 In the last case there should be a new subscription with the new subscriber ID.
 
-An outdated subscription does not automatically become active again when the subscriber exists again.
+A detached subscription does not automatically become active again when the subscriber exists again.
 This happens, for example, when an old version was deployed again during a rollback.
 
 There are two options to reactivate the subscription:
@@ -610,7 +609,7 @@ $subscriptionEngine->run($criteria);
 
 ### Teardown
 
-If subscriptions are outdated, they can be cleaned up here.
+If subscriptions are detached, they can be cleaned up here.
 The subscription engine also tries to call the `teardown` method if available.
 
 ```php
