@@ -73,7 +73,7 @@ final class SubscriptionBootCommand extends SubscriptionCommand
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
         $setup = InputHelper::bool($input->getOption('setup'));
 
-        $criteria = $this->subscriptionEngineCriteria($input);
+        $criteria = $this->staticSubscriptionEngineCriteria($input);
 
         if ($setup) {
             $this->engine->setup($criteria);

@@ -72,7 +72,7 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
         $rebuild = InputHelper::bool($input->getOption('rebuild'));
 
-        $criteria = $this->subscriptionEngineCriteria($input);
+        $criteria = $this->staticSubscriptionEngineCriteria($input);
 
         $logger = new ConsoleLogger($output);
 

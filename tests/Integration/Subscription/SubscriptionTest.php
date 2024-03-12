@@ -31,6 +31,7 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerSubscriber;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNewProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
 use PHPUnit\Framework\TestCase;
@@ -419,6 +420,389 @@ final class SubscriptionTest extends TestCase
                 ],
             ]),
             $messages[1]->header(TraceHeader::class),
+        );
+    }
+
+    public function testBlueGreenDeployment(): void
+    {
+        // Test Setup
+
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            DefaultHeadersSerializer::createFromPaths([
+                __DIR__ . '/../../../src',
+                __DIR__,
+            ]),
+            'eventstore',
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            DefaultEventBus::create(),
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $firstEngine = new DefaultSubscriptionEngine(
+            $store,
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]),
+        );
+
+        // Deploy first version
+
+        $firstEngine->setup();
+        $firstEngine->boot();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $firstEngine->subscriptions(),
+        );
+
+        // Run first version
+
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $repository->save($profile);
+
+        $firstEngine->run();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $firstEngine->subscriptions(),
+        );
+
+        // deploy second version
+
+        $secondEngine = new DefaultSubscriptionEngine(
+            $store,
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
+        );
+
+        $secondEngine->setup();
+        $secondEngine->boot();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+                new Subscription(
+                    'profile_2',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $firstEngine->subscriptions(),
+        );
+
+        // switch traffic
+
+        $secondEngine->run();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Detached,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+                new Subscription(
+                    'profile_2',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $secondEngine->subscriptions(),
+        );
+
+        // shutdown first version
+
+        $firstEngine->teardown();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_2',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $secondEngine->subscriptions(),
+        );
+    }
+
+    public function testBlueGreenDeploymentRollback(): void
+    {
+        // Test Setup
+
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            DefaultHeadersSerializer::createFromPaths([
+                __DIR__ . '/../../../src',
+                __DIR__,
+            ]),
+            'eventstore',
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            DefaultEventBus::create(),
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $firstEngine = new DefaultSubscriptionEngine(
+            $store,
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]),
+        );
+
+        // Deploy first version
+
+        $firstEngine->setup();
+        $firstEngine->boot();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $firstEngine->subscriptions(),
+        );
+
+        // Run first version
+
+        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $repository->save($profile);
+
+        $firstEngine->run();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $firstEngine->subscriptions(),
+        );
+
+        // deploy second version
+
+        $secondEngine = new DefaultSubscriptionEngine(
+            $store,
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
+        );
+
+        $secondEngine->setup();
+        $secondEngine->boot();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+                new Subscription(
+                    'profile_2',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $firstEngine->subscriptions(),
+        );
+
+        // switch traffic
+
+        $secondEngine->run();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Detached,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+                new Subscription(
+                    'profile_2',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $secondEngine->subscriptions(),
+        );
+
+        // rollback
+
+        $firstEngine->setup();
+        $firstEngine->boot();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Detached,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+                new Subscription(
+                    'profile_2',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $firstEngine->subscriptions(),
+        );
+
+        // reactivating detached subscription
+
+        $firstEngine->reactivate(new SubscriptionEngineCriteria(
+            ids: ['profile_1'],
+        ));
+
+        // switch traffic
+
+        $firstEngine->run();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+                new Subscription(
+                    'profile_2',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Detached,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $firstEngine->subscriptions(),
+        );
+
+        // shutdown second version
+
+        $secondEngine->teardown();
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $firstEngine->subscriptions(),
         );
     }
 
