@@ -47,10 +47,9 @@ abstract class SubscriptionCommand extends Command
         );
     }
 
-    protected function staticSubscriptionEngineCriteria(InputInterface $input): SubscriptionEngineCriteria
-    {
-        $criteria = $this->subscriptionEngineCriteria($input);
-
+    protected function resolveCriteriaIntoCriteriaWithOnlyIds(
+        SubscriptionEngineCriteria $criteria,
+    ): SubscriptionEngineCriteria {
         $subscriptions = $this->engine->subscriptions($criteria);
 
         return new SubscriptionEngineCriteria(

@@ -36,6 +36,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfilePr
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
 use PHPUnit\Framework\TestCase;
 
+use function gc_collect_cycles;
 use function iterator_to_array;
 
 /** @coversNothing */
@@ -54,6 +55,8 @@ final class SubscriptionTest extends TestCase
     {
         $this->connection->close();
         $this->projectionConnection->close();
+
+        gc_collect_cycles();
     }
 
     public function testHappyPath(): void
