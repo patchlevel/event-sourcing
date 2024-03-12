@@ -112,14 +112,14 @@ final class Subscription
         return $this->status === Status::Finished;
     }
 
-    public function outdated(): void
+    public function detached(): void
     {
-        $this->status = Status::Outdated;
+        $this->status = Status::Detached;
     }
 
-    public function isOutdated(): bool
+    public function isDetached(): bool
     {
-        return $this->status === Status::Outdated;
+        return $this->status === Status::Detached;
     }
 
     public function error(Throwable|string $error): void

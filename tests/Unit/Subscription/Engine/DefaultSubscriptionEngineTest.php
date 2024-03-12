@@ -977,7 +977,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
-                Status::Outdated,
+                Status::Detached,
                 0,
             ),
         ], $subscriptionStore->updatedSubscriptions);
@@ -1156,7 +1156,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $subscriptionId,
             Subscription::DEFAULT_GROUP,
             RunMode::FromBeginning,
-            Status::Outdated,
+            Status::Detached,
         );
 
         $subscriptionStore = new DummySubscriptionStore([$subscription]);
@@ -1194,7 +1194,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $subscriptionId,
             Subscription::DEFAULT_GROUP,
             RunMode::FromBeginning,
-            Status::Outdated,
+            Status::Detached,
         );
 
         $subscriptionStore = new DummySubscriptionStore([$subscription]);
@@ -1234,7 +1234,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
-                Status::Outdated,
+                Status::Detached,
             ),
         ]);
 
@@ -1261,7 +1261,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 $subscriberId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
-                Status::Outdated,
+                Status::Detached,
             ),
         ]);
 
@@ -1325,7 +1325,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $subscriptionId,
             Subscription::DEFAULT_GROUP,
             RunMode::FromBeginning,
-            Status::Outdated,
+            Status::Detached,
         );
         $subscriptionStore = new DummySubscriptionStore([$subscription]);
 
@@ -1355,7 +1355,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $subscriptionId,
             Subscription::DEFAULT_GROUP,
             RunMode::FromBeginning,
-            Status::Outdated,
+            Status::Detached,
         );
         $subscriptionStore = new DummySubscriptionStore([$subscription]);
 
@@ -1391,7 +1391,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $subscriptionId,
             Subscription::DEFAULT_GROUP,
             RunMode::FromBeginning,
-            Status::Outdated,
+            Status::Detached,
         );
         $subscriptionStore = new DummySubscriptionStore([$subscription]);
 
@@ -1417,7 +1417,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $subscriberId,
             Subscription::DEFAULT_GROUP,
             RunMode::FromBeginning,
-            Status::Outdated,
+            Status::Detached,
         );
         $subscriptionStore = new DummySubscriptionStore([$subscription]);
 
@@ -1514,7 +1514,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
-                Status::Outdated,
+                Status::Detached,
             ),
         ]);
 

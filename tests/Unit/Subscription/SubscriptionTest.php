@@ -28,7 +28,7 @@ final class SubscriptionTest extends TestCase
         self::assertFalse($subscription->isBooting());
         self::assertFalse($subscription->isActive());
         self::assertFalse($subscription->isError());
-        self::assertFalse($subscription->isOutdated());
+        self::assertFalse($subscription->isDetached());
     }
 
     public function testBooting(): void
@@ -44,7 +44,7 @@ final class SubscriptionTest extends TestCase
         self::assertTrue($subscription->isBooting());
         self::assertFalse($subscription->isActive());
         self::assertFalse($subscription->isError());
-        self::assertFalse($subscription->isOutdated());
+        self::assertFalse($subscription->isDetached());
     }
 
     public function testActive(): void
@@ -60,7 +60,7 @@ final class SubscriptionTest extends TestCase
         self::assertFalse($subscription->isBooting());
         self::assertTrue($subscription->isActive());
         self::assertFalse($subscription->isError());
-        self::assertFalse($subscription->isOutdated());
+        self::assertFalse($subscription->isDetached());
     }
 
     public function testError(): void
@@ -78,7 +78,7 @@ final class SubscriptionTest extends TestCase
         self::assertFalse($subscription->isBooting());
         self::assertFalse($subscription->isActive());
         self::assertTrue($subscription->isError());
-        self::assertFalse($subscription->isOutdated());
+        self::assertFalse($subscription->isDetached());
         self::assertEquals(
             new SubscriptionError(
                 'test',
@@ -95,14 +95,14 @@ final class SubscriptionTest extends TestCase
             'test',
         );
 
-        $subscription->outdated();
+        $subscription->detached();
 
-        self::assertEquals(Status::Outdated, $subscription->status());
+        self::assertEquals(Status::Detached, $subscription->status());
         self::assertFalse($subscription->isNew());
         self::assertFalse($subscription->isBooting());
         self::assertFalse($subscription->isActive());
         self::assertFalse($subscription->isError());
-        self::assertTrue($subscription->isOutdated());
+        self::assertTrue($subscription->isDetached());
     }
 
     public function testChangePosition(): void
