@@ -1,7 +1,7 @@
 # Subscriptions
 
 One core concept of event sourcing is the ability to react and process events in a different way.
-This is where subscriptions and subscription engine come into play.
+This is where subscriptions and the subscription engine come into play.
 
 There are different types of subscriptions. In most cases, we are talking about projector and processor.
 But you can use it for anything like migration, report or something else.
