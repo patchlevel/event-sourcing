@@ -1,3 +1,6 @@
+imports:
+  - deptrac-baseline.yaml
+
 deptrac:
   paths:
     - ./src
@@ -22,18 +25,37 @@ deptrac:
       collectors:
         - type: directory
           value: src/EventBus/.*
-    - name: Lock
+    - name: MetadataAggregate
       collectors:
         - type: directory
-          value: src/Lock/.*
+          value: src/Metadata/AggregateRoot/.*
+    - name: MetadataEvent
+      collectors:
+        - type: directory
+          value: src/Metadata/Event/.*
+    - name: MetadataMessage
+      collectors:
+        - type: directory
+          value: src/Metadata/Message/.*
+    - name: MetadataProjector
+      collectors:
+        - type: directory
+          value: src/Metadata/Projector/.*
     - name: Metadata
       collectors:
-        - type: directory
-          value: src/Metadata/.*
-    - name: Outbox
-      collectors:
-        - type: directory
-          value: src/Outbox/.*
+        - type: bool
+          must:
+            - type: directory
+              value: src/Metadata/.*
+          must_not:
+            - type: layer
+              value: MetadataAggregate
+            - type: layer
+              value: MetadataEvent
+            - type: layer
+              value: MetadataMessage
+            - type: layer
+              value: MetadataProjector
     - name: Pipeline
       collectors:
         - type: directory
@@ -62,20 +84,17 @@ deptrac:
       collectors:
         - type: directory
           value: src/Store/.*
-    - name: WatchServer
-      collectors:
-        - type: directory
-          value: src/WatchServer/.*
 
   ruleset:
     Aggregate:
       - Attribute
-      - Metadata
+      - MetadataAggregate
     Attribute:
     Clock:
     Console:
       - EventBus
-      - Metadata
+      - MetadataAggregate
+      - MetadataEvent
       - Outbox
       - Pipeline
       - Projection
@@ -86,20 +105,23 @@ deptrac:
     EventBus:
       - Aggregate
       - Attribute
-      - Metadata
+      - MetadataMessage
       - Serializer
-    Lock:
-      - Schema
     Metadata:
+    MetadataAggregate:
       - Aggregate
       - Attribute
-      - Projection
-    Outbox:
-      - EventBus
       - Metadata
-      - Schema
-      - Serializer
-      - Store
+    MetadataEvent:
+      - Attribute
+      - Metadata
+    MetadataMessage:
+      - Attribute
+      - Metadata
+    MetadataProjector:
+      - Attribute
+      - Metadata
+      - Projection
     Pipeline:
       - Aggregate
       - EventBus
@@ -108,32 +130,29 @@ deptrac:
     Projection:
       - Attribute
       - Clock
-      - Metadata
+      - MetadataProjector
       - EventBus
       - Schema
       - Store
     Repository:
       - Aggregate
       - Clock
-      - Metadata
+      - MetadataAggregate
+      - MetadataEvent
       - EventBus
       - Snapshot
       - Store
     Schema:
     Serializer:
       - Aggregate
-      - Metadata
+      - MetadataEvent
     Snapshot:
       - Aggregate
-      - Metadata
+      - MetadataAggregate
     Store:
       - Aggregate
       - Attribute
       - Metadata
       - EventBus
       - Schema
-      - Serializer
-    WatchServer:
-      - Attribute
-      - EventBus
       - Serializer

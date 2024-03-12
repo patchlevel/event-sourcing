@@ -48,6 +48,10 @@ phpunit-unit: vendor                                             				## run phpu
 infection: vendor                                                               ## run infection
 	vendor/bin/infection
 
+.PHONY: deptrac
+deptrac: tools/vendor                                                               ## run infection
+	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml
+
 .PHONY: static
 static: psalm phpstan phpcs-check                                               ## run static analyser
 

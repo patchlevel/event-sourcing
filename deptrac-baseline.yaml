@@ -1,0 +1,12 @@
+deptrac:
+  skip_violations:
+    Patchlevel\EventSourcing\Attribute\Projector:
+      - Patchlevel\EventSourcing\Projection\Projection\Projection
+      - Patchlevel\EventSourcing\Projection\Projection\RunMode
+    Patchlevel\EventSourcing\Projection\Projector\TraceableProjectorAccessor:
+      - Patchlevel\EventSourcing\Repository\MessageDecorator\Trace
+      - Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack
+    Patchlevel\EventSourcing\Projection\Projector\TraceableProjectorAccessorRepository:
+      - Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack
+    Patchlevel\EventSourcing\Repository\MessageDecorator\TraceHeader:
+      - Patchlevel\EventSourcing\Attribute\Header
