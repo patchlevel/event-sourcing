@@ -36,6 +36,7 @@ To manage your subscriptions there are the following cli commands.
 * SubscriptionReactiveCommand: `event-sourcing:subscription:reactive`
 * SubscriptionRemoveCommand: `event-sourcing:subscription:remove`
 * SubscriptionRunCommand: `event-sourcing:subscription:run`
+* SubscriptionSetupCommand: `event-sourcing:subscription:setup`
 * SubscriptionStatusCommand: `event-sourcing:subscription:status`
 * SubscriptionTeardownCommand: `event-sourcing:subscription:teardown`
 
@@ -80,6 +81,7 @@ $cli->addCommands(array(
     new Command\SubscriptionRemoveCommand($projectionist),
     new Command\SubscriptionReactivateCommand($projectionist),
     new Command\SubscriptionRebuildCommand($projectionist),
+    new Command\SubscriptionSetupCommand($projectionist),
     new Command\SubscriptionStatusCommand($projectionist),
     new Command\SchemaCreateCommand($store, $schemaManager),
     new Command\SchemaDropCommand($store, $schemaManager),

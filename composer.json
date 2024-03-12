@@ -23,7 +23,7 @@
     "doctrine/dbal": "^3.8.1|^4.0.0",
     "doctrine/migrations": "^3.3.2",
     "patchlevel/hydrator": "^1.2.0",
-    "patchlevel/worker": "^1.1.1",
+    "patchlevel/worker": "^1.2.0",
     "psr/cache": "^2.0.0|^3.0.0",
     "psr/clock": "^1.0",
     "psr/event-dispatcher": "^1.0",

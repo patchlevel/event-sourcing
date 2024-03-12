@@ -240,7 +240,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal())
+            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
         );
 
         $singleTableStore = new DoctrineDbalStore(

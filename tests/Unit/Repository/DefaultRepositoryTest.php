@@ -73,7 +73,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]()
+            static fn (array $args): mixed => $args[0](),
         );
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -151,7 +151,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]()
+            static fn (array $args): mixed => $args[0](),
         );
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -224,7 +224,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]()
+            static fn (array $args): mixed => $args[0](),
         );
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -310,7 +310,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]()
+            static fn (array $args): mixed => $args[0](),
         );
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -352,7 +352,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]()
+            static fn (array $args): mixed => $args[0](),
         );
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -421,7 +421,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]()
+            static fn (array $args): mixed => $args[0](),
         );
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -461,7 +461,7 @@ final class DefaultRepositoryTest extends TestCase
 
         $store->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]()
+            static fn (array $args): mixed => $args[0](),
         );
 
         $eventBus = $this->prophesize(EventBus::class);
@@ -527,7 +527,7 @@ final class DefaultRepositoryTest extends TestCase
         $store->archiveMessages('profile', '1', 3)->shouldBeCalledOnce();
         $store->transactional(Argument::any())->will(
             /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]()
+            static fn (array $args): mixed => $args[0](),
         );
 
         $eventBus = $this->prophesize(EventBus::class);

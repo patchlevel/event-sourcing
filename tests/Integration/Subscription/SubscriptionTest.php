@@ -109,6 +109,7 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
+        $engine->setup();
         $engine->boot();
 
         self::assertEquals(
@@ -222,6 +223,7 @@ final class SubscriptionTest extends TestCase
             ),
         );
 
+        $engine->setup();
         $engine->boot();
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -371,6 +373,7 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
+        $engine->setup();
         $engine->boot();
 
         self::assertEquals(

@@ -80,6 +80,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
+        $engine->setup();
         $engine->boot();
 
         $profileId = ProfileId::fromString('1');
@@ -148,6 +149,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
+        $engine->setup();
         $engine->boot();
 
         $profileId = ProfileId::fromString('1');

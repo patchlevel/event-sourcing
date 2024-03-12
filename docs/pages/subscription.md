@@ -285,7 +285,7 @@ final class ProfileSubscriber
 
 ### Run Mode
 
-The run mode determines how the subscriber should behave when it is booted.
+The run mode determines how the subscriber should behave.
 There are three different modes:
 
 #### From Beginning
@@ -382,6 +382,7 @@ stateDiagram-v2
     direction LR
     [*] --> New
     New --> Booting
+    New --> Active
     New --> Error
     Booting --> Active
     Booting --> Paused
@@ -395,7 +396,6 @@ stateDiagram-v2
     Paused --> Booting
     Paused --> Active
     Paused --> Outdated
-    Paused --> [*]
     Finished --> Active
     Finished --> Outdated
     Error --> New
@@ -412,12 +412,13 @@ stateDiagram-v2
 A subscription is created and "new" if a subscriber exists with an ID that is not yet tracked.
 This can happen when either a new subscriber has been added, the subscriber ID has changed
 or the subscription has been manually deleted from the subscription store.
+You can then set up the subscription so that it is booting or active.
+In this step, the subscription engine also tries to call the `setup` method if available.
 
 ### Booting
 
-Booting status is reached when the boot process is invoked.
-In this step, the "setup" method is called on the subscription, if available.
-And the subscription is brought up to date, depending on the mode.
+Booting status is reached when the setup process is finished.
+In this step the subscription engine tries to catch up to the current event stream.
 When the process is finished, the subscription is set to active or finished.
 
 ### Active
@@ -575,12 +576,25 @@ $criteria = new SubscriptionEngineCriteria(
 
     An `OR` check is made for the respective criteria and all criteria are checked with an `AND`.
 
+### Setup
+
+New subscriptions need to be set up before they can be used.
+In this step, the subscription engine also tries to call the `setup` method if available.
+After the setup process, the subscription is set to booting or active.
+
+```php
+$subscriptionEngine->setup($criteria);
+```
+
+!!! tip
+
+    You can skip the booting step with the second boolean parameter named `skipBooting`.
+
 ### Boot
 
-So that the subscription engine can manage the subscriptions, they must be booted.
-In this step, the `setup` will be called if available.
-Then the subscriptions then catch up with the current position of the event stream.
-When the subscriptions are finished, they switch to the active or finished state.
+You can boot the subscriptions with the `boot` method.
+All booting subscriptions will catch up to the current event stream.
+After the boot process, the subscription is set to active or finished.
 
 ```php
 $subscriptionEngine->boot($criteria);

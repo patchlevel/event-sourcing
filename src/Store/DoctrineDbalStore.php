@@ -323,7 +323,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
         return array_values(
             array_filter(
                 $message->headers(),
-                static fn (object $header) => !in_array($header::class, $filteredHeaders, true)
+                static fn (object $header) => !in_array($header::class, $filteredHeaders, true),
             ),
         );
     }

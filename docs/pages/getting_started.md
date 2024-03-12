@@ -353,7 +353,7 @@ $schemaDirector = new DoctrineSchemaDirector(
 );
 
 $schemaDirector->create();
-$projectionist->boot();
+$projectionist->setup(skipBooting: true);
 ```
 
 !!! note

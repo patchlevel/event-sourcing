@@ -36,6 +36,94 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     ) {
     }
 
+    public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): void
+    {
+        $criteria ??= new SubscriptionEngineCriteria();
+
+        $this->logger?->info(
+            'Subscription Engine: Start to setup.',
+        );
+
+        $this->discoverNewSubscriptions();
+        $this->retrySubscriptions($criteria);
+
+        $this->findForUpdate(
+            new SubscriptionCriteria(
+                ids: $criteria->ids,
+                groups: $criteria->groups,
+                status: [Status::New],
+            ),
+            function (array $subscriptions) use ($skipBooting): void {
+                if (count($subscriptions) === 0) {
+                    $this->logger?->info('Subscription Engine: No subscriptions to setup, finish setup.');
+
+                    return;
+                }
+
+                $latestIndex = $this->latestIndex();
+
+                foreach ($subscriptions as $subscription) {
+                    $subscriber = $this->subscriber($subscription->id());
+
+                    if (!$subscriber) {
+                        throw SubscriberNotFound::forSubscriptionId($subscription->id());
+                    }
+
+                    $setupMethod = $subscriber->setupMethod();
+
+                    if (!$setupMethod) {
+                        if ($subscription->runMode() === RunMode::FromNow) {
+                            $subscription->changePosition($latestIndex);
+                            $subscription->active();
+                        } else {
+                            $skipBooting ? $subscription->active() : $subscription->booting();
+                        }
+
+                        $this->subscriptionStore->update($subscription);
+
+                        $this->logger?->debug(sprintf(
+                            'Subscription Engine: Subscriber "%s" for "%s" has no setup method, set to %s.',
+                            $subscriber::class,
+                            $subscription->id(),
+                            $subscription->runMode() === RunMode::FromNow || $skipBooting ? 'active' : 'booting',
+                        ));
+
+                        continue;
+                    }
+
+                    try {
+                        $setupMethod();
+
+                        if ($subscription->runMode() === RunMode::FromNow) {
+                            $subscription->changePosition($latestIndex);
+                            $subscription->active();
+                        } else {
+                            $skipBooting ? $subscription->active() : $subscription->booting();
+                        }
+
+                        $this->subscriptionStore->update($subscription);
+
+                        $this->logger?->debug(sprintf(
+                            'Subscription Engine: For Subscriber "%s" for "%s" the setup method has been executed, set to %s.',
+                            $subscriber::class,
+                            $subscription->id(),
+                            $subscription->runMode() === RunMode::FromNow || $skipBooting ? 'active' : 'booting',
+                        ));
+                    } catch (Throwable $e) {
+                        $this->logger?->error(sprintf(
+                            'Subscription Engine: Subscriber "%s" for "%s" has an error in the setup method: %s',
+                            $subscriber::class,
+                            $subscription->id(),
+                            $e->getMessage(),
+                        ));
+
+                        $this->handleError($subscription, $e);
+                    }
+                }
+            },
+        );
+    }
+
     public function boot(
         SubscriptionEngineCriteria|null $criteria = null,
         int|null $limit = null,
@@ -48,7 +136,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->discoverNewSubscriptions();
         $this->retrySubscriptions($criteria);
-        $this->setupNewSubscriptions($criteria);
 
         $this->findForUpdate(
             new SubscriptionCriteria(
@@ -57,8 +144,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 status: [Status::Booting],
             ),
             function ($subscriptions) use ($limit): void {
-                $subscriptions = $this->fastForwardFromNowSubscriptions($subscriptions);
-
                 if (count($subscriptions) === 0) {
                     $this->logger?->info('Subscription Engine: No subscriptions in booting status, finish booting.');
 
@@ -131,6 +216,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         }
                     }
                 } finally {
+                    $stream?->close();
+
                     if ($messageCounter > 0) {
                         foreach ($subscriptions as $subscription) {
                             if (!$subscription->isBooting()) {
@@ -140,8 +227,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             $this->subscriptionStore->update($subscription);
                         }
                     }
-
-                    $stream?->close();
                 }
 
                 $this->logger?->debug('Subscription Engine: End of stream for booting has been reached.');
@@ -262,6 +347,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         }
                     }
                 } finally {
+                    $stream?->close();
+
                     if ($messageCounter > 0) {
                         foreach ($subscriptions as $subscription) {
                             if (!$subscription->isActive()) {
@@ -271,8 +358,24 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             $this->subscriptionStore->update($subscription);
                         }
                     }
+                }
 
-                    $stream?->close();
+                foreach ($subscriptions as $subscription) {
+                    if (!$subscription->isActive()) {
+                        continue;
+                    }
+
+                    if ($subscription->runMode() !== RunMode::Once) {
+                        continue;
+                    }
+
+                    $subscription->finished();
+                    $this->subscriptionStore->update($subscription);
+
+                    $this->logger?->info(sprintf(
+                        'Subscription Engine: Subscription "%s" run only once and has been set to finished.',
+                        $subscription->id(),
+                    ));
                 }
 
                 $this->logger?->info(
@@ -679,108 +782,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             $subscription->status()->value,
                         ),
                     );
-                }
-            },
-        );
-    }
-
-    /**
-     * @param list<Subscription> $subscriptions
-     *
-     * @return list<Subscription>
-     */
-    private function fastForwardFromNowSubscriptions(array $subscriptions): array
-    {
-        $latestIndex = null;
-        $forwardedSubscriptions = [];
-
-        foreach ($subscriptions as $subscription) {
-            $subscriber = $this->subscriber($subscription->id());
-
-            if (!$subscriber) {
-                $forwardedSubscriptions[] = $subscription;
-
-                continue;
-            }
-
-            if ($subscription->runMode() === RunMode::FromBeginning || $subscription->runMode() === RunMode::Once) {
-                $forwardedSubscriptions[] = $subscription;
-
-                continue;
-            }
-
-            if ($latestIndex === null) {
-                $latestIndex = $this->latestIndex();
-            }
-
-            $subscription->changePosition($latestIndex);
-            $subscription->active();
-            $this->subscriptionStore->update($subscription);
-
-            $this->logger?->info(
-                sprintf(
-                    'Subscription Engine: Subscriber "%s" for "%s" is in "from now" mode: skip past messages and set to active.',
-                    $subscriber::class,
-                    $subscription->id(),
-                ),
-            );
-        }
-
-        return $forwardedSubscriptions;
-    }
-
-    private function setupNewSubscriptions(SubscriptionEngineCriteria $criteria): void
-    {
-        $this->findForUpdate(
-            new SubscriptionCriteria(
-                ids: $criteria->ids,
-                groups: $criteria->groups,
-                status: [Status::New],
-            ),
-            function (array $subscriptions): void {
-                foreach ($subscriptions as $subscription) {
-                    $subscriber = $this->subscriber($subscription->id());
-
-                    if (!$subscriber) {
-                        throw SubscriberNotFound::forSubscriptionId($subscription->id());
-                    }
-
-                    $setupMethod = $subscriber->setupMethod();
-
-                    if (!$setupMethod) {
-                        $subscription->booting();
-                        $this->subscriptionStore->update($subscription);
-
-                        $this->logger?->debug(sprintf(
-                            'Subscription Engine: Subscriber "%s" for "%s" has no setup method, continue.',
-                            $subscriber::class,
-                            $subscription->id(),
-                        ));
-
-                        continue;
-                    }
-
-                    try {
-                        $setupMethod();
-
-                        $subscription->booting();
-                        $this->subscriptionStore->update($subscription);
-
-                        $this->logger?->debug(sprintf(
-                            'Subscription Engine: For Subscriber "%s" for "%s" the setup method has been executed and is now prepared for data.',
-                            $subscriber::class,
-                            $subscription->id(),
-                        ));
-                    } catch (Throwable $e) {
-                        $this->logger?->error(sprintf(
-                            'Subscription Engine: Subscriber "%s" for "%s" has an error in the setup method: %s',
-                            $subscriber::class,
-                            $subscription->id(),
-                            $e->getMessage(),
-                        ));
-
-                        $this->handleError($subscription, $e);
-                    }
                 }
             },
         );
