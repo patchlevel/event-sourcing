@@ -12,9 +12,9 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
-use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Message\HeaderNotFound;
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 

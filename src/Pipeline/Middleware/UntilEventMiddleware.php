@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
 final class UntilEventMiddleware implements Middleware
 {

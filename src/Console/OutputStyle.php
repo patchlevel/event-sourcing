@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console;
 
-use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\EventBus\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;

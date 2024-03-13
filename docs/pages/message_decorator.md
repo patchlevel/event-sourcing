@@ -68,7 +68,7 @@ You can also use this feature to add your own metadata to your events. For this 
 to add data `withHeader` and to read this data later on `header`.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 
 final class OnSystemRecordedDecorator implements MessageDecorator

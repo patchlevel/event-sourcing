@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message;
 
-use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
+use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\HeaderNotFound */
+/** @covers \Patchlevel\EventSourcing\Message\HeaderNotFound */
 final class HeaderNotFoundTest extends TestCase
 {
     public function testNotFound(): void

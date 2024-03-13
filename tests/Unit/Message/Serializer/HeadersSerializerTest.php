@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\EventBus\Serializer;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message\Serializer;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
@@ -14,7 +14,7 @@ use Patchlevel\Hydrator\MetadataHydrator;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer */
+/** @covers \Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer */
 final class HeadersSerializerTest extends TestCase
 {
     use ProphecyTrait;

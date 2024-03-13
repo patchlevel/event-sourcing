@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Subscription\Subscriber;
 
 use Closure;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 

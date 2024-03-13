@@ -72,7 +72,7 @@ $source = new StoreSource($store);
 There is an `InMemorySource` that receives the messages in an array. This source can be used to write pipeline tests.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\InMemorySource;
 
 $source = new InMemorySource([
@@ -92,7 +92,7 @@ You can also create your own source class. It has to inherit from `Source`.
 Here you can, for example, create a migration from another event sourcing system or similar system.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\Source;
 
 $source = new class implements Source {
@@ -178,7 +178,7 @@ $messages = $target->messages();
 You can also define your own target. To do this, you need to implement the `Target` interface.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
 final class OtherStoreTarget implements Target
 {
@@ -366,7 +366,7 @@ Now we have a `ProfileRegistered` and a `ProfileActivated` event,
 which should replace the `ProfileCreated` event.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
 
 final class SplitProfileCreatedMiddleware implements Middleware

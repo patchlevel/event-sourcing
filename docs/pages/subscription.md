@@ -149,7 +149,7 @@ The method name itself doesn't matter.
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
 #[Subscriber('do_stuff', RunMode::Once)]
 final class DoStuffSubscriber

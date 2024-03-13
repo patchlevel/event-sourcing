@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber;
 
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;

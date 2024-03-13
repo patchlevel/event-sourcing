@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\HeaderNotFound;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\Message */
+/** @covers \Patchlevel\EventSourcing\Message\Message */
 final class MessageTest extends TestCase
 {
     public function testEmptyMessage(): void

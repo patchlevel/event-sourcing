@@ -21,9 +21,9 @@ Each event is packed into a message and dispatched using the event bus.
 
 ```php
 use Patchlevel\EventSourcing\Clock\SystemClock;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
-$clock = SystemClock();
+$clock = new SystemClock();
 $message = Message::create(new NameChanged('foo'))
     ->withAggregateName('profile')
     ->withAggregateId('bca7576c-536f-4428-b694-7b1f00c714b7')
@@ -46,7 +46,7 @@ As already mentioned, you can enrich the `Message` with your own meta informatio
 message object and is also stored in the database.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
 $message = Message::create(new NameChanged('foo'))
     // ...
@@ -61,8 +61,6 @@ You can also access your custom headers. For this case there is also a method to
 used internally.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Message;
-
 $message->header('application-id'); // app
 $message->customHeaders(); // ['application-id' => 'app']
 ```
@@ -70,8 +68,6 @@ $message->customHeaders(); // ['application-id' => 'app']
 If you want *all* the headers you can also retrieve them.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\Message;
-
 $message->headers(); 
 // results in:
 [
@@ -177,7 +173,7 @@ This listener is then called for all saved events / messages.
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Listener;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
 final class WelcomeSubscriber 
 {
@@ -200,7 +196,7 @@ If you want to listen on all events, you can pass `*` or `Subscribe::ALL` instea
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Listener;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
 final class WelcomeSubscriber 
 {

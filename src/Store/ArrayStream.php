@@ -8,7 +8,7 @@ use ArrayIterator;
 use Generator;
 use Iterator;
 use IteratorAggregate;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Traversable;
 
 /** @implements IteratorAggregate<Message> */
