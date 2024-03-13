@@ -6,10 +6,3 @@ deptrac:
       - Patchlevel\EventSourcing\Subscription\RunMode
     Patchlevel\EventSourcing\Attribute\Subscriber:
       - Patchlevel\EventSourcing\Subscription\RunMode
-    Patchlevel\EventSourcing\Repository\MessageDecorator\TraceHeader:
-      - Patchlevel\EventSourcing\Attribute\Header
-    Patchlevel\EventSourcing\Subscription\Subscriber\TraceableSubscriberAccessor:
-      - Patchlevel\EventSourcing\Repository\MessageDecorator\Trace
-      - Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack
-    Patchlevel\EventSourcing\Subscription\Subscriber\TraceableSubscriberAccessorRepository:
-      - Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack

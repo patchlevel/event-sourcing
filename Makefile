@@ -4,6 +4,9 @@ help:                                                                           
 vendor: composer.lock
 	composer install
 
+vendor-tools: tools/composer.lock
+	cd tools && composer install
+
 .PHONY: cs-check
 cs-check: vendor                                                                ## run phpcs
 	vendor/bin/phpcs
@@ -49,11 +52,11 @@ infection: vendor                                                               
 	vendor/bin/infection
 
 .PHONY: deptrac
-deptrac: tools/vendor                                                           ## run deptrac
+deptrac: vendor-tools                                                           ## run deptrac
 	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml
 
 .PHONY: deptrac-baseline
-deptrac-baseline: tools/vendor                                                  ## run deptrac and update baseline
+deptrac-baseline: vendor-tools                                                 ## run deptrac and update baseline
 	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml --formatter=baseline --output=../deptrac-baseline.yaml
 
 .PHONY: static
