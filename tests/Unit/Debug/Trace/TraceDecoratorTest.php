@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Repository\MessageDecorator;
+namespace Patchlevel\EventSourcing\Tests\Unit\Debug\Trace;
 
+use Patchlevel\EventSourcing\Debug\Trace\Trace;
+use Patchlevel\EventSourcing\Debug\Trace\TraceDecorator;
+use Patchlevel\EventSourcing\Debug\Trace\TraceHeader;
+use Patchlevel\EventSourcing\Debug\Trace\TraceStack;
 use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Repository\MessageDecorator\Trace;
-use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceDecorator;
-use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceHeader;
-use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use stdClass;
 
-/** @covers \Patchlevel\EventSourcing\Repository\MessageDecorator\TraceDecorator */
+/** @covers \Patchlevel\EventSourcing\Debug\Trace\TraceDecorator */
 final class TraceDecoratorTest extends TestCase
 {
     use ProphecyTrait;

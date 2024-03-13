@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Subscription\Subscriber;
+namespace Patchlevel\EventSourcing\Debug\Trace;
 
 use Closure;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Repository\MessageDecorator\Trace;
-use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack;
 use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor;
 
 use function array_map;
 

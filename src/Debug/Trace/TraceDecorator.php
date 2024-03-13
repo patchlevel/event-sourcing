@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Repository\MessageDecorator;
+namespace Patchlevel\EventSourcing\Debug\Trace;
 
 use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 
 use function array_map;
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Repository\MessageDecorator;
+namespace Patchlevel\EventSourcing\Debug\Trace;
 
 /** @experimental */
 final class Trace

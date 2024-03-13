@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Repository\MessageDecorator;
+namespace Patchlevel\EventSourcing\Tests\Unit\Debug\Trace;
 
-use Patchlevel\EventSourcing\Repository\MessageDecorator\Trace;
-use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack;
+use Patchlevel\EventSourcing\Debug\Trace\Trace;
+use Patchlevel\EventSourcing\Debug\Trace\TraceStack;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack */
+/** @covers \Patchlevel\EventSourcing\Debug\Trace\TraceStack */
 final class TraceStackTest extends TestCase
 {
     use ProphecyTrait;

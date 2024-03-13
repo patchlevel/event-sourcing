@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Subscription\Subscriber;
+namespace Patchlevel\EventSourcing\Debug\Trace;
 
-use Patchlevel\EventSourcing\Repository\MessageDecorator\TraceStack;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 
 use function array_values;
 

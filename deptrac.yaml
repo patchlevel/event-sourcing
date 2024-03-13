@@ -21,6 +21,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/Console/.*
+    - name: Debug
+      collectors:
+        - type: directory
+          value: src/Debug/.*
     - name: EventBus
       collectors:
         - type: directory
@@ -99,6 +103,11 @@ deptrac:
       - Schema
       - Serializer
       - Store
+      - Subscription
+    Debug:
+      - Attribute
+      - EventBus
+      - Repository
       - Subscription
     EventBus:
       - Aggregate
