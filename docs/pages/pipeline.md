@@ -10,12 +10,7 @@ whether the migration worked.
 In this example the event `PrivacyAdded` is removed and the event `OldVisited` is replaced by `NewVisited`:
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Pipeline;
-use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
+use Patchlevel\EventSourcing\Message\Middleware\ExcludeEventMiddleware;use Patchlevel\EventSourcing\Message\Middleware\RecalculatePlayheadMiddleware;use Patchlevel\EventSourcing\Message\Middleware\ReplaceEventMiddleware;use Patchlevel\EventSourcing\Pipeline\Pipeline;use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 
 $pipeline = new Pipeline(
     new StoreSource($oldStore),
@@ -197,7 +192,7 @@ Middelwares can be used to manipulate, delete or expand messages or events durin
 With this middleware you can exclude certain events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
+use Patchlevel\EventSourcing\Message\Middleware\ExcludeEventMiddleware;
 
 $middleware = new ExcludeEventMiddleware([EmailChanged::class]);
 ```
@@ -210,7 +205,7 @@ $middleware = new ExcludeEventMiddleware([EmailChanged::class]);
 With this middleware you can only allow certain events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware;
+use Patchlevel\EventSourcing\Message\Middleware\IncludeEventMiddleware;
 
 $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
 ```
@@ -225,8 +220,7 @@ you can also write your own filter.
 This middleware expects a callback that returns either true to allow events or false to not allow them.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Pipeline\Middleware\FilterEventMiddleware;
+use Patchlevel\EventSourcing\Aggregate\AggregateChanged;use Patchlevel\EventSourcing\Message\Middleware\FilterEventMiddleware;
 
 $middleware = new FilterEventMiddleware(static function (AggregateChanged $event) {
     if (!$event instanceof ProfileCreated) {
@@ -245,7 +239,7 @@ $middleware = new FilterEventMiddleware(static function (AggregateChanged $event
 With this middleware you can exclude archived events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeArchivedEventMiddleware;
+use Patchlevel\EventSourcing\Message\Middleware\ExcludeArchivedEventMiddleware;
 
 $middleware = new ExcludeArchivedEventMiddleware();
 ```
@@ -258,7 +252,7 @@ $middleware = new ExcludeArchivedEventMiddleware();
 With this middleware you can only allow archived events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\OnlyArchivedEventMiddleware;
+use Patchlevel\EventSourcing\Message\Middleware\OnlyArchivedEventMiddleware;
 
 $middleware = new OnlyArchivedEventMiddleware();
 ```
@@ -273,7 +267,7 @@ The first parameter you have to define is the event class that you want to repla
 And as a second parameter a callback, that the old event awaits and a new event returns.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
+use Patchlevel\EventSourcing\Message\Middleware\ReplaceEventMiddleware;
 
 $middleware = new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
     return new NewVisited($oldVisited->profileId());
@@ -302,7 +296,7 @@ The playhead must always be in ascending order so that the data is valid.
 Some middleware can break this order and the middleware `RecalculatePlayheadMiddleware` can fix this problem.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
+use Patchlevel\EventSourcing\Message\Middleware\RecalculatePlayheadMiddleware;
 
 $middleware = new RecalculatePlayheadMiddleware();
 ```
@@ -315,9 +309,7 @@ $middleware = new RecalculatePlayheadMiddleware();
 If you want to group your middleware, you can use one or more `ChainMiddleware`.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
+use Patchlevel\EventSourcing\Message\Middleware\ChainMiddleware;use Patchlevel\EventSourcing\Message\Middleware\ExcludeEventMiddleware;use Patchlevel\EventSourcing\Message\Middleware\RecalculatePlayheadMiddleware;
 
 $middleware = new ChainMiddleware([
     new ExcludeEventMiddleware([EmailChanged::class]),
@@ -340,8 +332,7 @@ Now we have a `ProfileRegistered` and a `ProfileActivated` event,
 which should replace the `ProfileCreated` event.
 
 ```php
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
+use Patchlevel\EventSourcing\Message\Message;use Patchlevel\EventSourcing\Message\Middleware\Middleware;
 
 final class SplitProfileCreatedMiddleware implements Middleware
 {

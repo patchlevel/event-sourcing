@@ -64,10 +64,6 @@ deptrac:
               value: MetadataMessage
             - type: layer
               value: MetadataSubscriber
-    - name: Pipeline
-      collectors:
-        - type: directory
-          value: src/Pipeline/.*
     - name: Repository
       collectors:
         - type: directory
@@ -117,8 +113,10 @@ deptrac:
       - Attribute
       - Message
     Message:
+      - Aggregate
       - MetadataMessage
       - Serializer
+      - Store
     Metadata:
     MetadataAggregate:
       - Aggregate
@@ -136,12 +134,6 @@ deptrac:
     MetadataSubscriber:
       - Attribute
       - Metadata
-      - Subscription
-    Pipeline:
-      - Aggregate
-      - EventBus
-      - Message
-      - Store
       - Subscription
     Subscription:
       - Attribute
