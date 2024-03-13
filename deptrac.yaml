@@ -37,10 +37,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/Metadata/Message/.*
-    - name: MetadataProjector
+    - name: MetadataSubscriber
       collectors:
         - type: directory
-          value: src/Metadata/Projector/.*
+          value: src/Metadata/Subscriber/.*
     - name: Metadata
       collectors:
         - type: bool
@@ -55,15 +55,11 @@ deptrac:
             - type: layer
               value: MetadataMessage
             - type: layer
-              value: MetadataProjector
+              value: MetadataSubscriber
     - name: Pipeline
       collectors:
         - type: directory
           value: src/Pipeline/.*
-    - name: Projection
-      collectors:
-        - type: directory
-          value: src/Projection/.*
     - name: Repository
       collectors:
         - type: directory
@@ -84,6 +80,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/Store/.*
+    - name: Subscription
+      collectors:
+        - type: directory
+          value: src/Subscription/.*
 
   ruleset:
     Aggregate:
@@ -95,13 +95,11 @@ deptrac:
       - EventBus
       - MetadataAggregate
       - MetadataEvent
-      - Outbox
       - Pipeline
-      - Projection
       - Schema
       - Serializer
       - Store
-      - WatchServer
+      - Subscription
     EventBus:
       - Aggregate
       - Attribute
@@ -118,19 +116,19 @@ deptrac:
     MetadataMessage:
       - Attribute
       - Metadata
-    MetadataProjector:
+    MetadataSubscriber:
       - Attribute
       - Metadata
-      - Projection
+      - Subscription
     Pipeline:
       - Aggregate
       - EventBus
-      - Projection
       - Store
-    Projection:
+      - Subscription
+    Subscription:
       - Attribute
       - Clock
-      - MetadataProjector
+      - MetadataSubscriber
       - EventBus
       - Schema
       - Store

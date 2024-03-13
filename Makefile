@@ -49,8 +49,12 @@ infection: vendor                                                               
 	vendor/bin/infection
 
 .PHONY: deptrac
-deptrac: tools/vendor                                                               ## run infection
+deptrac: tools/vendor                                                           ## run deptrac
 	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml
+
+.PHONY: deptrac-baseline
+deptrac-baseline: tools/vendor                                                  ## run deptrac and update baseline
+	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml --formatter=baseline --output=../deptrac-baseline.yaml
 
 .PHONY: static
 static: psalm phpstan phpcs-check                                               ## run static analyser

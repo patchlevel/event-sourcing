@@ -41,4 +41,4 @@ jobs:
                 dependency-versions: ${{ matrix.dependencies }}
 
             - name: "deptrac"
-              run: "vendor/bin/deptrac"
+              run: "tools/vendor/bin/deptrac -c ../deptrac.yaml"
