@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\EventBus;
 
+use Patchlevel\EventSourcing\Message\Message;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
 final class Psr14EventBus implements EventBus

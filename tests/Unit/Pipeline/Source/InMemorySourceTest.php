@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Source;
 
 use ArrayIterator;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\InMemorySource;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;

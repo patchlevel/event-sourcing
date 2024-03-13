@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
 use function array_key_exists;
 

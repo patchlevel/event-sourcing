@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Traversable;
 
 /** @extends Traversable<Message> */

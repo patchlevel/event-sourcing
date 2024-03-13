@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Source;
 
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria;

@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Message
 
 use Integration\BasicImplementation\Header\BazHeader;
 use Integration\BasicImplementation\Header\FooHeader;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 
 final class FooMessageDecorator implements MessageDecorator

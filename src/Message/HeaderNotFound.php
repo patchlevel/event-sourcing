@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\EventBus;
+namespace Patchlevel\EventSourcing\Message;
+
+use RuntimeException;
 
 use function sprintf;
 
-final class HeaderNotFound extends EventBusException
+final class HeaderNotFound extends RuntimeException
 {
     public function __construct(
         public readonly string $name,

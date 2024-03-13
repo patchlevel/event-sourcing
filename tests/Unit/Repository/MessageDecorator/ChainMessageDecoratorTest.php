@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository\MessageDecorator;
 
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;

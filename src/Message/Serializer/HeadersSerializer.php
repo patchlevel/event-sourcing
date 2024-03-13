@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\EventBus\Serializer;
+namespace Patchlevel\EventSourcing\Message\Serializer;
 
 interface HeadersSerializer
 {

@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;

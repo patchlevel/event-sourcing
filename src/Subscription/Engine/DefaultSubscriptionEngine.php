@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use Closure;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;

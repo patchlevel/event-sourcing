@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Debug\Trace;
 
 use Closure;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor;
 

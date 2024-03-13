@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\EventBus\Serializer;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message\Serializer;
 
-use Patchlevel\EventSourcing\EventBus\Serializer\DeserializeFailed;
+use Patchlevel\EventSourcing\Message\Serializer\DeserializeFailed;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\Serializer\DeserializeFailed */
+/** @covers \Patchlevel\EventSourcing\Message\Serializer\DeserializeFailed */
 final class DeserializeFailedTest extends TestCase
 {
     public function testDecodeFailed(): void

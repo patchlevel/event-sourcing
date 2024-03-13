@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;

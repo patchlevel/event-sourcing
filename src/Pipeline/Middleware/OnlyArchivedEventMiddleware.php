@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\EventBus\HeaderNotFound;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\HeaderNotFound;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 
 final class OnlyArchivedEventMiddleware implements Middleware

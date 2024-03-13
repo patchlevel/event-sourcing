@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Target;
 
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Consumer;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Target\ConsumerTarget;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;

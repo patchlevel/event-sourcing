@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;

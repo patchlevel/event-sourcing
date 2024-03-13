@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 

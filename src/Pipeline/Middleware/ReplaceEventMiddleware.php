@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
 /** @template T of object */
 final class ReplaceEventMiddleware implements Middleware

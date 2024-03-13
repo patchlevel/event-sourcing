@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
 
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\OnlyArchivedEventMiddleware;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;

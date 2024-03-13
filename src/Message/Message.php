@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\EventBus;
+namespace Patchlevel\EventSourcing\Message;
 
 use function array_key_exists;
 use function array_values;

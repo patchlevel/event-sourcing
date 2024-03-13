@@ -29,6 +29,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/EventBus/.*
+    - name: Message
+      collectors:
+        - type: directory
+          value: src/Message/.*
     - name: MetadataAggregate
       collectors:
         - type: directory
@@ -96,7 +100,7 @@ deptrac:
     Attribute:
     Clock:
     Console:
-      - EventBus
+      - Message
       - MetadataAggregate
       - MetadataEvent
       - Pipeline
@@ -106,12 +110,13 @@ deptrac:
       - Subscription
     Debug:
       - Attribute
-      - EventBus
+      - Message
       - Repository
       - Subscription
     EventBus:
-      - Aggregate
       - Attribute
+      - Message
+    Message:
       - MetadataMessage
       - Serializer
     Metadata:
@@ -132,18 +137,20 @@ deptrac:
     Pipeline:
       - Aggregate
       - EventBus
+      - Message
       - Store
       - Subscription
     Subscription:
       - Attribute
       - Clock
+      - Message
       - MetadataSubscriber
-      - EventBus
       - Schema
       - Store
     Repository:
       - Aggregate
       - Clock
+      - Message
       - MetadataAggregate
       - MetadataEvent
       - EventBus
@@ -159,7 +166,7 @@ deptrac:
     Store:
       - Aggregate
       - Attribute
+      - Message
       - Metadata
-      - EventBus
       - Schema
       - Serializer

@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
 use Patchlevel\EventSourcing\EventBus\ListenerProvider;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;

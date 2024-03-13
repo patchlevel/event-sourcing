@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Pipeline\Target;
 
 use Patchlevel\EventSourcing\EventBus\Consumer;
 use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
-use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Message;
 
 final class ConsumerTarget implements Target
 {
