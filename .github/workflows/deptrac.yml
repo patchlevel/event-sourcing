@@ -40,5 +40,10 @@ jobs:
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
+            - uses: ramsey/composer-install@2.2.0
+              with:
+                  dependency-versions: ${{ matrix.dependencies }}
+                  working-directory: 'tools'
+
             - name: "deptrac"
               run: "tools/vendor/bin/deptrac -c ../deptrac.yaml"
