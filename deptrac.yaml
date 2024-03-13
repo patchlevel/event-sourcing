@@ -1,0 +1,156 @@
+imports:
+  - deptrac-baseline.yaml
+
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Aggregate
+      collectors:
+        - type: directory
+          value: src/Aggregate/.*
+    - name: Attribute
+      collectors:
+        - type: directory
+          value: src/Attribute/.*
+    - name: Clock
+      collectors:
+        - type: directory
+          value: src/Clock/.*
+    - name: Console
+      collectors:
+        - type: directory
+          value: src/Console/.*
+    - name: EventBus
+      collectors:
+        - type: directory
+          value: src/EventBus/.*
+    - name: MetadataAggregate
+      collectors:
+        - type: directory
+          value: src/Metadata/AggregateRoot/.*
+    - name: MetadataEvent
+      collectors:
+        - type: directory
+          value: src/Metadata/Event/.*
+    - name: MetadataMessage
+      collectors:
+        - type: directory
+          value: src/Metadata/Message/.*
+    - name: MetadataSubscriber
+      collectors:
+        - type: directory
+          value: src/Metadata/Subscriber/.*
+    - name: Metadata
+      collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: src/Metadata/.*
+          must_not:
+            - type: layer
+              value: MetadataAggregate
+            - type: layer
+              value: MetadataEvent
+            - type: layer
+              value: MetadataMessage
+            - type: layer
+              value: MetadataSubscriber
+    - name: Pipeline
+      collectors:
+        - type: directory
+          value: src/Pipeline/.*
+    - name: Repository
+      collectors:
+        - type: directory
+          value: src/Repository/.*
+    - name: Schema
+      collectors:
+        - type: directory
+          value: src/Schema/.*
+    - name: Serializer
+      collectors:
+        - type: directory
+          value: src/Serializer/.*
+    - name: Snapshot
+      collectors:
+        - type: directory
+          value: src/Snapshot/.*
+    - name: Store
+      collectors:
+        - type: directory
+          value: src/Store/.*
+    - name: Subscription
+      collectors:
+        - type: directory
+          value: src/Subscription/.*
+
+  ruleset:
+    Aggregate:
+      - Attribute
+      - MetadataAggregate
+    Attribute:
+    Clock:
+    Console:
+      - EventBus
+      - MetadataAggregate
+      - MetadataEvent
+      - Pipeline
+      - Schema
+      - Serializer
+      - Store
+      - Subscription
+    EventBus:
+      - Aggregate
+      - Attribute
+      - MetadataMessage
+      - Serializer
+    Metadata:
+    MetadataAggregate:
+      - Aggregate
+      - Attribute
+      - Metadata
+    MetadataEvent:
+      - Attribute
+      - Metadata
+    MetadataMessage:
+      - Attribute
+      - Metadata
+    MetadataSubscriber:
+      - Attribute
+      - Metadata
+      - Subscription
+    Pipeline:
+      - Aggregate
+      - EventBus
+      - Store
+      - Subscription
+    Subscription:
+      - Attribute
+      - Clock
+      - MetadataSubscriber
+      - EventBus
+      - Schema
+      - Store
+    Repository:
+      - Aggregate
+      - Clock
+      - MetadataAggregate
+      - MetadataEvent
+      - EventBus
+      - Snapshot
+      - Store
+    Schema:
+    Serializer:
+      - Aggregate
+      - MetadataEvent
+    Snapshot:
+      - Aggregate
+      - MetadataAggregate
+    Store:
+      - Aggregate
+      - Attribute
+      - Metadata
+      - EventBus
+      - Schema
+      - Serializer
