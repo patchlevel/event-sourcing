@@ -73,6 +73,7 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $rebuild = InputHelper::bool($input->getOption('rebuild'));
 
         $criteria = $this->subscriptionEngineCriteria($input);
+        $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
         $logger = new ConsoleLogger($output);
 

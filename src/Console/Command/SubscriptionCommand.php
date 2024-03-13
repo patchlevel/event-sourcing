@@ -11,6 +11,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 
+use function array_map;
+
 /** @interal */
 abstract class SubscriptionCommand extends Command
 {
@@ -42,6 +44,19 @@ abstract class SubscriptionCommand extends Command
         return new SubscriptionEngineCriteria(
             InputHelper::nullableStringList($input->getOption('id')),
             InputHelper::nullableStringList($input->getOption('group')),
+        );
+    }
+
+    protected function resolveCriteriaIntoCriteriaWithOnlyIds(
+        SubscriptionEngineCriteria $criteria,
+    ): SubscriptionEngineCriteria {
+        $subscriptions = $this->engine->subscriptions($criteria);
+
+        return new SubscriptionEngineCriteria(
+            array_map(
+                static fn ($subscription) => $subscription->id(),
+                $subscriptions,
+            ),
         );
     }
 }

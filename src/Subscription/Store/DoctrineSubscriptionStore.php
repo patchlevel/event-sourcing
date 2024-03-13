@@ -74,7 +74,8 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
     {
         $qb = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->tableName);
+            ->from($this->tableName)
+            ->orderBy('id');
 
         if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
             $qb->forUpdate();

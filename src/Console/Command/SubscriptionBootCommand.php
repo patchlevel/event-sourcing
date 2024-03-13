@@ -74,6 +74,7 @@ final class SubscriptionBootCommand extends SubscriptionCommand
         $setup = InputHelper::bool($input->getOption('setup'));
 
         $criteria = $this->subscriptionEngineCriteria($input);
+        $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
         if ($setup) {
             $this->engine->setup($criteria);
