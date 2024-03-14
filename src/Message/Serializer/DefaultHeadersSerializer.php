@@ -60,4 +60,13 @@ final class DefaultHeadersSerializer implements HeadersSerializer
             new JsonEncoder(),
         );
     }
+
+    public static function createDefault(): static
+    {
+        return new self(
+            MessageHeaderRegistry::createWithInternalHeaders(),
+            new MetadataHydrator(),
+            new JsonEncoder(),
+        );
+    }
 }

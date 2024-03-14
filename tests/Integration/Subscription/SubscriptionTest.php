@@ -13,7 +13,6 @@ use Patchlevel\EventSourcing\Debug\Trace\TraceHeader;
 use Patchlevel\EventSourcing\Debug\Trace\TraceStack;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
@@ -64,10 +63,7 @@ final class SubscriptionTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../../src',
-                __DIR__,
-            ]),
+            null,
             'eventstore',
         );
 
@@ -185,10 +181,7 @@ final class SubscriptionTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../../src',
-                __DIR__,
-            ]),
+            null,
             'eventstore',
         );
 
@@ -318,10 +311,7 @@ final class SubscriptionTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../../src',
-                __DIR__,
-            ]),
+            null,
             'eventstore',
         );
 
@@ -433,10 +423,7 @@ final class SubscriptionTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../../src',
-                __DIR__,
-            ]),
+            null,
             'eventstore',
         );
 
@@ -595,10 +582,7 @@ final class SubscriptionTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../../src',
-                __DIR__,
-            ]),
+            null,
             'eventstore',
         );
 

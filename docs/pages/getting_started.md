@@ -297,12 +297,10 @@ $projectionConnection = DriverManager::getConnection([
 $mailer = /* your own mailer */;
 
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
-$aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
 
 $eventStore = new DoctrineDbalStore(
     $connection,
     $serializer,
-    $aggregateRegistry,
 );
 
 $hotelProjector = new HotelProjector($projectionConnection);

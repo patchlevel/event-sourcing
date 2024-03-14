@@ -22,8 +22,7 @@ final class HeadersSerializerTest extends TestCase
     public function testSerialize(): void
     {
         $serializer = DefaultHeadersSerializer::createFromPaths([
-            __DIR__ . '/../../../../src', // add our headers
-            __DIR__ . '/../../Fixture', // add user headers
+            __DIR__ . '/../../Fixture',
         ]);
 
         $content = $serializer->serialize([
@@ -44,8 +43,7 @@ final class HeadersSerializerTest extends TestCase
     {
         $serializer = new DefaultHeadersSerializer(
             (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../../../src', // add our headers
-                __DIR__ . '/../../Fixture', // add user headers
+                __DIR__ . '/../../Fixture',
             ]),
             new MetadataHydrator(),
             new JsonEncoder(),

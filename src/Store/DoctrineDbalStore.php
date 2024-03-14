@@ -14,6 +14,7 @@ use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
@@ -36,12 +37,15 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
      */
     private const MAX_UNSIGNED_SMALL_INT = 65_535;
 
+    private readonly HeadersSerializer $headersSerializer;
+
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
-        private readonly HeadersSerializer $headersSerializer,
+        HeadersSerializer|null $headersSerializer = null,
         private readonly string $storeTableName = 'eventstore',
     ) {
+        $this->headersSerializer = $headersSerializer ?? DefaultHeadersSerializer::createDefault();
     }
 
     public function load(
