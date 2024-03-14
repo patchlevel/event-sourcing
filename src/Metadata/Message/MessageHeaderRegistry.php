@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Message;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Debug\Trace\TraceHeader;
+use Patchlevel\EventSourcing\Store\ArchivedHeader;
+use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
+
 use function array_flip;
 use function array_key_exists;
 
@@ -62,5 +67,18 @@ final class MessageHeaderRegistry
     public function headerNames(): array
     {
         return $this->classToNameMap;
+    }
+
+    /** @param array<string, class-string> $headerNameToClassMap */
+    public static function createWithInternalHeaders(array $headerNameToClassMap = []): self
+    {
+        $internalHeaders = [
+            'aggregate' => AggregateHeader::class,
+            'trace' => TraceHeader::class,
+            'archived' => ArchivedHeader::class,
+            'newStreamStart' => NewStreamStartHeader::class,
+        ];
+
+        return new self($headerNameToClassMap + $internalHeaders);
     }
 }

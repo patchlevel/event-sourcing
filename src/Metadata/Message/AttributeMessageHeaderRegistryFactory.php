@@ -31,6 +31,6 @@ final class AttributeMessageHeaderRegistryFactory implements MessageHeaderRegist
             $result[$aggregateName] = $class;
         }
 
-        return new MessageHeaderRegistry($result);
+        return MessageHeaderRegistry::createWithInternalHeaders($result);
     }
 }

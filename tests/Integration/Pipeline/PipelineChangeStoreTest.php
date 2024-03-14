@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
@@ -44,16 +43,10 @@ final class PipelineChangeStoreTest extends TestCase
     public function testSuccessful(): void
     {
         $eventSerializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
-        $headersSerializer = DefaultHeadersSerializer::createFromPaths([
-            __DIR__ . '/../../../src',
-            __DIR__,
-        ]);
 
         $oldStore = new DoctrineDbalStore(
             $this->connectionOld,
             $eventSerializer,
-            $headersSerializer,
-            'eventstore',
         );
 
         $oldSchemaDirector = new DoctrineSchemaDirector(
@@ -66,8 +59,6 @@ final class PipelineChangeStoreTest extends TestCase
         $newStore = new DoctrineDbalStore(
             $this->connectionNew,
             $eventSerializer,
-            $headersSerializer,
-            'eventstore',
         );
 
         $newSchemaDirector = new DoctrineSchemaDirector(

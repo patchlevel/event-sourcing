@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -38,11 +37,6 @@ final class SnapshotsBench
         $this->store = new DoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../src',
-                __DIR__ . '/BasicImplementation/Events',
-            ]),
-            'eventstore',
         );
 
         $this->adapter = new InMemorySnapshotAdapter();
