@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Middleware;
+namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
 use function array_values;
 
-final class ChainMiddleware implements Middleware
+final class ChainTranslator implements Translator
 {
-    /** @param iterable<Middleware> $middlewares */
+    /** @param iterable<Translator> $translators */
     public function __construct(
-        private readonly iterable $middlewares,
+        private readonly iterable $translators,
     ) {
     }
 
@@ -21,8 +21,8 @@ final class ChainMiddleware implements Middleware
     {
         $messages = [$message];
 
-        foreach ($this->middlewares as $middleware) {
-            $messages = $this->processMiddleware($middleware, $messages);
+        foreach ($this->translators as $middleware) {
+            $messages = $this->process($middleware, $messages);
         }
 
         return $messages;
@@ -33,12 +33,12 @@ final class ChainMiddleware implements Middleware
      *
      * @return list<Message>
      */
-    private function processMiddleware(Middleware $middleware, array $messages): array
+    private function process(Translator $translator, array $messages): array
     {
         $result = [];
 
         foreach ($messages as $message) {
-            $result += $middleware($message);
+            $result += $translator($message);
         }
 
         return array_values($result);

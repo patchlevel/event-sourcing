@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Middleware;
+namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 
-final class OnlyArchivedEventMiddleware implements Middleware
+final class OnlyArchivedEventTranslator implements Translator
 {
     /** @return list<Message> */
     public function __invoke(Message $message): array

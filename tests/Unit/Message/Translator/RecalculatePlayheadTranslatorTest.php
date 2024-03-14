@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Message\Middleware;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message\Translator;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Middleware\RecalculatePlayheadMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Middleware\RecalculatePlayheadMiddleware */
-final class RecalculatePlayheadMiddlewareTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator */
+final class RecalculatePlayheadTranslatorTest extends TestCase
 {
     public function testRecalculatePlayhead(): void
     {
-        $middleware = new RecalculatePlayheadMiddleware();
+        $translator = new RecalculatePlayheadTranslator();
 
         $event =  new ProfileCreated(
             ProfileId::fromString('1'),
@@ -28,7 +28,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 5, new DateTimeImmutable()));
 
-        $result = $middleware($message);
+        $result = $translator($message);
 
         self::assertCount(1, $result);
         self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
@@ -37,7 +37,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
 
     public function testRecalculatePlayheadWithSamePlayhead(): void
     {
-        $middleware = new RecalculatePlayheadMiddleware();
+        $translator = new RecalculatePlayheadTranslator();
 
         $event =  new ProfileCreated(
             ProfileId::fromString('1'),
@@ -47,14 +47,14 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
-        $result = $middleware($message);
+        $result = $translator($message);
 
         self::assertSame([$message], $result);
     }
 
     public function testRecalculateMultipleMessages(): void
     {
-        $middleware = new RecalculatePlayheadMiddleware();
+        $translator = new RecalculatePlayheadTranslator();
 
         $event =  new ProfileCreated(
             ProfileId::fromString('1'),
@@ -63,7 +63,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
 
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 5, new DateTimeImmutable()));
-        $result = $middleware($message);
+        $result = $translator($message);
 
         self::assertCount(1, $result);
         self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
@@ -72,7 +72,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 8, new DateTimeImmutable()));
 
-        $result = $middleware($message);
+        $result = $translator($message);
 
         self::assertCount(1, $result);
         self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
@@ -81,7 +81,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
 
     public function testReset(): void
     {
-        $middleware = new RecalculatePlayheadMiddleware();
+        $translator = new RecalculatePlayheadTranslator();
 
         $event =  new ProfileCreated(
             ProfileId::fromString('1'),
@@ -90,7 +90,7 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
 
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 5, new DateTimeImmutable()));
-        $result = $middleware($message);
+        $result = $translator($message);
 
         self::assertCount(1, $result);
         self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
@@ -99,8 +99,8 @@ final class RecalculatePlayheadMiddlewareTest extends TestCase
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 8, new DateTimeImmutable()));
 
-        $middleware->reset();
-        $result = $middleware($message);
+        $translator->reset();
+        $result = $translator($message);
 
         self::assertCount(1, $result);
         self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);

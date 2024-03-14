@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Middleware;
+namespace Patchlevel\EventSourcing\Message\Translator;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 
-final class UntilEventMiddleware implements Middleware
+final class UntilEventTranslator implements Translator
 {
     public function __construct(
         private readonly DateTimeImmutable $until,

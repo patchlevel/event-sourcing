@@ -2,38 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Message\Middleware;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Middleware\OnlyArchivedEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\ExcludeArchivedEventTranslator;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Middleware\OnlyArchivedEventMiddleware */
-final class OnlyArchivedEventMiddlewareTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Message\Translator\ExcludeArchivedEventTranslator */
+final class ExcludeArchivedEventTranslatorTest extends TestCase
 {
     public function testExcludedEvent(): void
     {
-        $middleware = new OnlyArchivedEventMiddleware();
-
-        $message = Message::create(
-            new ProfileCreated(
-                ProfileId::fromString('1'),
-                Email::fromString('hallo@patchlevel.de'),
-            ),
-        )->withHeader(new ArchivedHeader(false));
-
-        $result = $middleware($message);
-
-        self::assertSame([], $result);
-    }
-
-    public function testIncludeEvent(): void
-    {
-        $middleware = new OnlyArchivedEventMiddleware();
+        $translator = new ExcludeArchivedEventTranslator();
 
         $message = Message::create(
             new ProfileCreated(
@@ -42,14 +26,30 @@ final class OnlyArchivedEventMiddlewareTest extends TestCase
             ),
         )->withHeader(new ArchivedHeader(true));
 
-        $result = $middleware($message);
+        $result = $translator($message);
+
+        self::assertSame([], $result);
+    }
+
+    public function testIncludeEvent(): void
+    {
+        $translator = new ExcludeArchivedEventTranslator();
+
+        $message = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('hallo@patchlevel.de'),
+            ),
+        )->withHeader(new ArchivedHeader(false));
+
+        $result = $translator($message);
 
         self::assertSame([$message], $result);
     }
 
     public function testHeaderNotSet(): void
     {
-        $middleware = new OnlyArchivedEventMiddleware();
+        $translator = new ExcludeArchivedEventTranslator();
 
         $message = Message::create(
             new ProfileCreated(
@@ -58,8 +58,8 @@ final class OnlyArchivedEventMiddlewareTest extends TestCase
             ),
         );
 
-        $result = $middleware($message);
+        $result = $translator($message);
 
-        self::assertSame([], $result);
+        self::assertSame([$message], $result);
     }
 }

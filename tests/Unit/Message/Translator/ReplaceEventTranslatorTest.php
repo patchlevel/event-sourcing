@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Message\Middleware;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Middleware\ReplaceEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\ReplaceEventTranslator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessagePublished;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -13,12 +13,12 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Middleware\ReplaceEventMiddleware */
-final class ReplaceEventMiddlewareTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Message\Translator\ReplaceEventTranslator */
+final class ReplaceEventTranslatorTest extends TestCase
 {
     public function testReplace(): void
     {
-        $middleware = new ReplaceEventMiddleware(
+        $translator = new ReplaceEventTranslator(
             ProfileCreated::class,
             static function (ProfileCreated $event) {
                 return new ProfileVisited(
@@ -34,7 +34,7 @@ final class ReplaceEventMiddlewareTest extends TestCase
             ),
         );
 
-        $result = $middleware($message);
+        $result = $translator($message);
 
         self::assertCount(1, $result);
 
@@ -46,7 +46,7 @@ final class ReplaceEventMiddlewareTest extends TestCase
     public function testReplaceInvalidClass(): void
     {
         /** @psalm-suppress InvalidArgument */
-        $middleware = new ReplaceEventMiddleware(
+        $translator = new ReplaceEventTranslator(
             MessagePublished::class,
             static function (ProfileCreated $event) {
                 return new ProfileVisited(
@@ -62,7 +62,7 @@ final class ReplaceEventMiddlewareTest extends TestCase
             ),
         );
 
-        $result = $middleware($message);
+        $result = $translator($message);
 
         self::assertCount(1, $result);
 

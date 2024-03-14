@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Message\Middleware;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Middleware\ChainMiddleware;
-use Patchlevel\EventSourcing\Message\Middleware\Middleware;
+use Patchlevel\EventSourcing\Message\Translator\ChainTranslator;
+use Patchlevel\EventSourcing\Message\Translator\Translator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Message\Middleware\ChainMiddleware */
-final class ChainMiddlewareTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Message\Translator\ChainTranslator */
+final class ChainTranslatorTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -27,17 +27,17 @@ final class ChainMiddlewareTest extends TestCase
             ),
         );
 
-        $child1 = $this->prophesize(Middleware::class);
+        $child1 = $this->prophesize(Translator::class);
         $child1->__invoke($message)->willReturn([$message])->shouldBeCalled();
 
-        $child2 = $this->prophesize(Middleware::class);
+        $child2 = $this->prophesize(Translator::class);
         $child2->__invoke($message)->willReturn([$message])->shouldBeCalled();
 
-        $middleware = new ChainMiddleware([
+        $translator = new ChainTranslator([
             $child1->reveal(),
             $child2->reveal(),
         ]);
 
-        $middleware($message);
+        $translator($message);
     }
 }

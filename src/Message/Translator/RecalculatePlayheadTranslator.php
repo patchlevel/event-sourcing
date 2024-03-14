@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Middleware;
+namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 
 use function array_key_exists;
 
-final class RecalculatePlayheadMiddleware implements Middleware
+final class RecalculatePlayheadTranslator implements Translator
 {
     /** @var array<string, array<string, positive-int>> */
     private array $index = [];

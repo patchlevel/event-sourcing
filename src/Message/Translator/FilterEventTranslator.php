@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Middleware;
+namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-final class FilterEventMiddleware implements Middleware
+final class FilterEventTranslator implements Translator
 {
     /** @var callable(object $event):bool */
     private $callable;

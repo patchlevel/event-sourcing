@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Middleware;
+namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-interface Middleware
+interface Translator
 {
     /** @return list<Message> */
     public function __invoke(Message $message): array;

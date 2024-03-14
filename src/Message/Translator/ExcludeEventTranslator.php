@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Middleware;
+namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-final class IncludeEventMiddleware implements Middleware
+final class ExcludeEventTranslator implements Translator
 {
     /** @param list<class-string> $classes */
     public function __construct(
@@ -19,10 +19,10 @@ final class IncludeEventMiddleware implements Middleware
     {
         foreach ($this->classes as $class) {
             if ($message->event() instanceof $class) {
-                return [$message];
+                return [];
             }
         }
 
-        return [];
+        return [$message];
     }
 }

@@ -2,22 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Message\Middleware;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Middleware\IncludeEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\FilterEventTranslator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Middleware\IncludeEventMiddleware */
-final class IncludeEventMiddlewareTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Message\Translator\FilterEventTranslator */
+final class FilterEventTranslatorTest extends TestCase
 {
-    public function testFilterEvent(): void
+    public function testPositive(): void
     {
-        $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
+        $translator = new FilterEventTranslator(static function (object $event) {
+            return $event instanceof ProfileCreated;
+        });
 
         $message = new Message(
             new ProfileCreated(
@@ -26,14 +28,16 @@ final class IncludeEventMiddlewareTest extends TestCase
             ),
         );
 
-        $result = $middleware($message);
+        $result = $translator($message);
 
         self::assertSame([$message], $result);
     }
 
-    public function testSkipEvent(): void
+    public function testNegative(): void
     {
-        $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
+        $translator = new FilterEventTranslator(static function (object $event) {
+            return $event instanceof ProfileCreated;
+        });
 
         $message = new Message(
             new ProfileVisited(
@@ -41,7 +45,7 @@ final class IncludeEventMiddlewareTest extends TestCase
             ),
         );
 
-        $result = $middleware($message);
+        $result = $translator($message);
 
         self::assertSame([], $result);
     }

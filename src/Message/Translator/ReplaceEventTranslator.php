@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Middleware;
+namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
 /** @template T of object */
-final class ReplaceEventMiddleware implements Middleware
+final class ReplaceEventTranslator implements Translator
 {
     /** @var callable(T $event):object */
     private $callable;
