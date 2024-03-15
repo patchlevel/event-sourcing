@@ -38,7 +38,6 @@ final class SimpleSetupBench
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
             DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../src',
                 __DIR__ . '/BasicImplementation/Events',
             ]),
             'eventstore',

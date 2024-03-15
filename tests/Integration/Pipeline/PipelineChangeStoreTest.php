@@ -46,7 +46,6 @@ final class PipelineChangeStoreTest extends TestCase
     {
         $eventSerializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
         $headersSerializer = DefaultHeadersSerializer::createFromPaths([
-            __DIR__ . '/../../../src',
             __DIR__,
         ]);
 
