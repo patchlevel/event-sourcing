@@ -42,7 +42,7 @@
     "phpspec/prophecy-phpunit": "^2.0.1",
     "phpstan/phpstan": "^1.9.14",
     "phpunit/phpunit": "^10.5.2",
-    "psalm/plugin-phpunit": "^0.18.4",
+    "psalm/plugin-phpunit": "^0.19.0",
     "roave/infection-static-analysis-plugin": "^1.32.0",
     "symfony/messenger": "^5.4.31|^6.4.0|^7.0.1",
     "symfony/var-dumper": "^5.4.29|^6.4.0|^7.0.0",
