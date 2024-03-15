@@ -58,7 +58,7 @@ final class SimpleSetupBench
         $profile = Profile::create($this->id, 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
-            $profile->changeName('Peter');
+            $profile->changeName('Peter ' . $i);
         }
 
         $this->repository->save($profile);
@@ -83,7 +83,7 @@ final class SimpleSetupBench
         $profile = Profile::create(ProfileId::v7(), 'Peter');
 
         for ($i = 1; $i < 10_000; $i++) {
-            $profile->changeName('Peter');
+            $profile->changeName('Peter ' . $i);
         }
 
         $this->repository->save($profile);
@@ -93,7 +93,7 @@ final class SimpleSetupBench
     public function benchSave10000Aggregates(): void
     {
         for ($i = 1; $i < 10_000; $i++) {
-            $profile = Profile::create(ProfileId::v7(), 'Peter');
+            $profile = Profile::create(ProfileId::v7(), 'Peter ' . $i);
             $this->repository->save($profile);
         }
     }
@@ -103,7 +103,7 @@ final class SimpleSetupBench
     {
         $this->store->transactional(function (): void {
             for ($i = 1; $i < 10_000; $i++) {
-                $profile = Profile::create(ProfileId::v7(), 'Peter');
+                $profile = Profile::create(ProfileId::v7(), 'Peter ' . $i);
                 $this->repository->save($profile);
             }
         });
