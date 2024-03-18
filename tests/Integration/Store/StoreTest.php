@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
@@ -32,10 +31,7 @@ final class StoreTest extends TestCase
         $this->store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../../src',
-                __DIR__,
-            ]),
+            null,
             'eventstore',
         );
 

@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
-use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria;
@@ -31,7 +30,6 @@ final class ShowAggregateCommand extends Command
     public function __construct(
         private readonly Store $store,
         private readonly EventSerializer $eventSerializer,
-        private readonly HeadersSerializer $headersSerializer,
         private readonly AggregateRootRegistry $aggregateRootRegistry,
     ) {
         parent::__construct();
@@ -78,7 +76,7 @@ final class ShowAggregateCommand extends Command
         $hasMessage = false;
         foreach ($stream as $message) {
             $hasMessage = true;
-            $console->message($this->eventSerializer, $this->headersSerializer, $message);
+            $console->message($this->eventSerializer, $message);
         }
 
         $stream->close();

@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\EventBus\EventBus;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
@@ -41,10 +40,7 @@ final class SplitStreamBench
         $this->store = new DoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../src',
-                __DIR__ . '/BasicImplementation/Events',
-            ]),
+            null,
             'eventstore',
         );
 

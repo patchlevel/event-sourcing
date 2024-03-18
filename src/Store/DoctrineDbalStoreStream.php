@@ -10,7 +10,7 @@ use Generator;
 use IteratorAggregate;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Message\MessageHeaderRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
@@ -32,11 +32,11 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     public function __construct(
         Result $result,
         EventSerializer $eventSerializer,
-        HeadersSerializer $headersSerializer,
+        MessageHeaderRegistry $headerRegistry,
         AbstractPlatform $platform,
     ) {
         $this->result = $result;
-        $this->generator = $this->buildGenerator($result, $eventSerializer, $headersSerializer, $platform);
+        $this->generator = $this->buildGenerator($result, $eventSerializer, $headerRegistry, $platform);
         $this->position = null;
         $this->index = null;
     }
@@ -118,7 +118,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     private function buildGenerator(
         Result $result,
         EventSerializer $eventSerializer,
-        HeadersSerializer $headersSerializer,
+        MessageHeaderRegistry $headerRegistry,
         AbstractPlatform $platform,
     ): Generator {
         /** @var array{id: positive-int, aggregate: string, aggregate_id: string, playhead: int|string, event: string, payload: string, recorded_on: string, archived: int|string, new_stream_start: int|string, custom_headers: string} $data */
@@ -132,7 +132,12 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
             $this->index = $data['id'];
             $event = $eventSerializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
-            $customHeaders = $headersSerializer->deserialize(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
+            $headerData = DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform);
+            $customHeaders = [];
+            foreach ($headerData as $name => $value) {
+                $headerClass = $headerRegistry->headerClass($name);
+                $customHeaders[] = $headerClass::fromJsonSerialize($value);
+            }
 
             yield Message::create($event)
                 ->withHeader(new AggregateHeader(
