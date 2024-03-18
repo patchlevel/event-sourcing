@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Message\MessageHeaderRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -19,6 +19,8 @@ use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Header\BazHeader;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Header\FooHeader;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjector;
@@ -45,8 +47,9 @@ final class BasicIntegrationTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/Header',
+            MessageHeaderRegistry::createWithInternalHeaders([
+                BazHeader::class,
+                FooHeader::class,
             ]),
             'eventstore',
         );
@@ -113,8 +116,9 @@ final class BasicIntegrationTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/Header',
+            MessageHeaderRegistry::createWithInternalHeaders([
+                BazHeader::class,
+                FooHeader::class,
             ]),
             'eventstore',
         );

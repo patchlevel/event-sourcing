@@ -41,10 +41,6 @@ deptrac:
       collectors:
         - type: directory
           value: src/Metadata/Event/.*
-    - name: MetadataMessage
-      collectors:
-        - type: directory
-          value: src/Metadata/Message/.*
     - name: MetadataSubscriber
       collectors:
         - type: directory
@@ -60,8 +56,6 @@ deptrac:
               value: MetadataAggregate
             - type: layer
               value: MetadataEvent
-            - type: layer
-              value: MetadataMessage
             - type: layer
               value: MetadataSubscriber
     - name: Pipeline
@@ -96,6 +90,7 @@ deptrac:
   ruleset:
     Aggregate:
       - Attribute
+      - Message
       - MetadataAggregate
     Attribute:
     Clock:
@@ -117,8 +112,9 @@ deptrac:
       - Attribute
       - Message
     Message:
-      - MetadataMessage
-      - Serializer
+      - Aggregate
+      - Debug
+      - Store
     Metadata:
     MetadataAggregate:
       - Aggregate
@@ -127,12 +123,6 @@ deptrac:
     MetadataEvent:
       - Attribute
       - Metadata
-    MetadataMessage:
-      - Aggregate
-      - Attribute
-      - Debug
-      - Metadata
-      - Store
     MetadataSubscriber:
       - Attribute
       - Metadata

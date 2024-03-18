@@ -2,32 +2,34 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Metadata\Message;
+namespace Patchlevel\EventSourcing\Message;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Debug\Trace\TraceHeader;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
 
-use function array_flip;
 use function array_key_exists;
+use function array_merge;
 
 final class MessageHeaderRegistry
 {
-    /** @var array<string, class-string> */
-    private array $nameToClassMap;
+    /** @var array<string, class-string<Header>> */
+    private array $nameToClassMap = [];
 
-    /** @var array<class-string, string> */
-    private array $classToNameMap;
+    /** @var array<class-string<Header>, string> */
+    private array $classToNameMap = [];
 
-    /** @param array<string, class-string> $headerNameToClassMap */
-    public function __construct(array $headerNameToClassMap)
+    /** @param list<class-string<Header>> $headers */
+    public function __construct(array $headers)
     {
-        $this->nameToClassMap = $headerNameToClassMap;
-        $this->classToNameMap = array_flip($headerNameToClassMap);
+        foreach ($headers as $header) {
+            $this->nameToClassMap[$header::name()] = $header;
+            $this->classToNameMap[$header] = $header::name();
+        }
     }
 
-    /** @param class-string $headerClass */
+    /** @param class-string<Header> $headerClass */
     public function headerName(string $headerClass): string
     {
         if (!array_key_exists($headerClass, $this->classToNameMap)) {
@@ -37,7 +39,7 @@ final class MessageHeaderRegistry
         return $this->classToNameMap[$headerClass];
     }
 
-    /** @return class-string */
+    /** @return class-string<Header> */
     public function headerClass(string $headerName): string
     {
         if (!array_key_exists($headerName, $this->nameToClassMap)) {
@@ -57,28 +59,31 @@ final class MessageHeaderRegistry
         return array_key_exists($headerName, $this->nameToClassMap);
     }
 
-    /** @return array<string, class-string> */
+    /** @return array<string, class-string<Header>> */
     public function headerClasses(): array
     {
         return $this->nameToClassMap;
     }
 
-    /** @return array<class-string, string> */
+    /** @return array<class-string<Header>, string> */
     public function headerNames(): array
     {
         return $this->classToNameMap;
     }
 
-    /** @param array<string, class-string> $headerNameToClassMap */
-    public static function createWithInternalHeaders(array $headerNameToClassMap = []): self
+    /** @param list<class-string<Header>> $headers */
+    public static function createWithInternalHeaders(array $headers = []): self
     {
-        $internalHeaders = [
-            'aggregate' => AggregateHeader::class,
-            'trace' => TraceHeader::class,
-            'archived' => ArchivedHeader::class,
-            'newStreamStart' => NewStreamStartHeader::class,
-        ];
-
-        return new self($headerNameToClassMap + $internalHeaders);
+        return new self(
+            array_merge(
+                $headers,
+                [
+                    AggregateHeader::class,
+                    TraceHeader::class,
+                    ArchivedHeader::class,
+                    NewStreamStartHeader::class,
+                ],
+            ),
+        );
     }
 }

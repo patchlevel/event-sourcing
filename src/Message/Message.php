@@ -15,7 +15,7 @@ use function is_a;
  */
 final class Message
 {
-    /** @var array<class-string, object> */
+    /** @var array<class-string, Header> */
     private array $headers = [];
 
     /** @param T $event */
@@ -36,7 +36,7 @@ final class Message
         return new self($event);
     }
 
-    /** @param iterable<object> $headers */
+    /** @param iterable<Header> $headers */
     public static function createWithHeaders(object $event, iterable $headers): self
     {
         return self::create($event)->withHeaders($headers);
@@ -55,7 +55,7 @@ final class Message
      *
      * @throws HeaderNotFound
      *
-     * @template H1 of object
+     * @template H1 of Header
      */
     public function header(string $name): object
     {
@@ -78,13 +78,13 @@ final class Message
         return $message;
     }
 
-    /** @return list<object> */
+    /** @return list<Header> */
     public function headers(): array
     {
         return array_values($this->headers);
     }
 
-    /** @param iterable<object> $headers */
+    /** @param iterable<Header> $headers */
     public function withHeaders(iterable $headers): self
     {
         $message = clone $this;

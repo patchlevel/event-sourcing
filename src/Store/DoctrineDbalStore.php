@@ -14,14 +14,11 @@ use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
-use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Message\MessageHeaderRegistry;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 
 use function array_fill;
-use function array_filter;
-use function array_values;
 use function count;
 use function floor;
 use function implode;
@@ -37,15 +34,15 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
      */
     private const MAX_UNSIGNED_SMALL_INT = 65_535;
 
-    private readonly HeadersSerializer $headersSerializer;
+    private readonly MessageHeaderRegistry $headerRegistry;
 
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
-        HeadersSerializer|null $headersSerializer = null,
+        MessageHeaderRegistry|null $headerRegistry = null,
         private readonly string $storeTableName = 'eventstore',
     ) {
-        $this->headersSerializer = $headersSerializer ?? DefaultHeadersSerializer::createDefault();
+        $this->headerRegistry = $headerRegistry ?? MessageHeaderRegistry::createWithInternalHeaders();
     }
 
     public function load(
@@ -71,7 +68,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                 $builder->getParameterTypes(),
             ),
             $this->eventSerializer,
-            $this->headersSerializer,
+            $this->headerRegistry,
             $this->connection->getDatabasePlatform(),
         );
     }
@@ -201,7 +198,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                     $parameters[] = $archived;
                     $types[$offset + 7] = $booleanType;
 
-                    $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
+                    $parameters[] = $this->extractCustomHeaders($message);
                     $types[$offset + 8] = $jsonType;
 
                     $position++;
@@ -315,8 +312,8 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
         $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
     }
 
-    /** @return list<object> */
-    private function getCustomHeaders(Message $message): array
+    /** @return array<string, mixed> */
+    private function extractCustomHeaders(Message $message): array
     {
         $filteredHeaders = [
             AggregateHeader::class,
@@ -324,11 +321,16 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
             ArchivedHeader::class,
         ];
 
-        return array_values(
-            array_filter(
-                $message->headers(),
-                static fn (object $header) => !in_array($header::class, $filteredHeaders, true),
-            ),
-        );
+        $result = [];
+
+        foreach ($message->headers() as $header) {
+            if (in_array($header::class, $filteredHeaders, true)) {
+                continue;
+            }
+
+            $result[$header::name()] = $header->jsonSerialize();
+        }
+
+        return $result;
     }
 }

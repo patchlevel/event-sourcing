@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -13,13 +12,16 @@ use Throwable;
 
 use function array_keys;
 use function array_values;
+use function json_encode;
 use function sprintf;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
 
 final class OutputStyle extends SymfonyStyle
 {
     public function message(
         EventSerializer $eventSerializer,
-        HeadersSerializer $headersSerializer,
         Message $message,
     ): void {
         $event = $message->event();
@@ -42,21 +44,8 @@ final class OutputStyle extends SymfonyStyle
             return;
         }
 
-        try {
-            $headers = $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true]);
-        } catch (Throwable $error) {
-            $this->error(
-                sprintf(
-                    'Error while serializing headers: %s',
-                    $error->getMessage(),
-                ),
-            );
-
-            if ($this->isVeryVerbose()) {
-                $this->throwable($error);
-            }
-
-            return;
+        foreach ($message->headers() as $header) {
+            $headers[$header::name()] = json_encode($header, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
         }
 
         $this->title($data->name);

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Metadata\Message;
+namespace Patchlevel\EventSourcing\Message;
 
-use Patchlevel\EventSourcing\Metadata\MetadataException;
+use RuntimeException;
 
 use function sprintf;
 
-final class HeaderNameNotRegistered extends MetadataException
+final class HeaderNameNotRegistered extends RuntimeException
 {
     public function __construct(string $name)
     {
