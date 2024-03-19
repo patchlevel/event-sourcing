@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Aggregate\Profile;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use PhpBench\Attributes as Bench;

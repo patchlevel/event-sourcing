@@ -10,14 +10,13 @@ use Patchlevel\EventSourcing\Attribute\PersonalData;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
-#[Event('profile.created')]
-final class ProfileCreated
+#[Event('profile.email_changed')]
+final class EmailChanged
 {
     public function __construct(
         #[IdNormalizer]
         #[DataSubjectId]
         public ProfileId $profileId,
-        public string $name,
         #[PersonalData]
         public string|null $email,
     ) {

@@ -24,6 +24,34 @@
       <code><![CDATA[class DoctrineHelper]]></code>
     </ClassNotFinal>
   </file>
+  <file src="src/Cryptography/Cipher/OpensslCipherKeyFactory.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[openssl_random_pseudo_bytes($this->ivLength)]]></code>
+      <code><![CDATA[openssl_random_pseudo_bytes($this->keyLength)]]></code>
+    </ArgumentTypeCoercion>
+    <LessSpecificReturnStatement>
+      <code><![CDATA[openssl_get_cipher_methods(true)]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[list<string>]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Cryptography/DefaultEventPayloadCryptographer.php">
+    <MixedArgument>
+      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
+      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
+      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
+    </MixedAssignment>
+  </file>
+  <file src="src/Cryptography/Store/DoctrineCipherKeyStore.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[base64_decode($result['crypto_iv'])]]></code>
+      <code><![CDATA[base64_decode($result['crypto_key'])]]></code>
+    </ArgumentTypeCoercion>
+  </file>
   <file src="src/EventBus/AttributeListenerProvider.php">
     <MixedMethodCall>
       <code><![CDATA[$method->getName()]]></code>
@@ -97,11 +125,20 @@
       <code><![CDATA[Closure(Message):void]]></code>
     </MixedReturnTypeCoercion>
   </file>
-  <file src="tests/Benchmark/BasicImplementation/Aggregate/Profile.php">
+  <file src="tests/Benchmark/BasicImplementation/Profile.php">
     <PropertyNotSetInConstructor>
+      <code><![CDATA[$email]]></code>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Benchmark/PersonalDataBench.php">
+    <MissingConstructor>
+      <code><![CDATA[$bus]]></code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$repository]]></code>
+      <code><![CDATA[$store]]></code>
+    </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SimpleSetupBench.php">
     <MissingConstructor>
@@ -154,6 +191,17 @@
       <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="tests/Integration/PersonalData/PersonalDataTest.php">
+    <MixedArgument>
+      <code><![CDATA[$row['payload']]]></code>
+    </MixedArgument>
+  </file>
+  <file src="tests/Integration/PersonalData/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$name]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="tests/Integration/Pipeline/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>
       <code><![CDATA[$id]]></code>
@@ -172,6 +220,11 @@
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Unit/Cryptography/Cipher/OpensslCipherTest.php">
+    <MixedAssignment>
+      <code><![CDATA[$return]]></code>
+    </MixedAssignment>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion>
