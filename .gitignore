@@ -9,3 +9,4 @@ infection.log
 infection.html
 *.sqlite3
 .deptrac.cache
+docs_php/
