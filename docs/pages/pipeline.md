@@ -109,7 +109,7 @@ $source = new class implements Source {
     {
         return 1;
     }
-}
+};
 ```
 ## Target
 

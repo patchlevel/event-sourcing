@@ -184,8 +184,8 @@ The load method also has a few parameters to filter, limit and sort the events.
 use Patchlevel\EventSourcing\Store\Criteria;
 
 $stream = $store->load(
-    new Criteria() // filter criteria
-    100 // limit
+    new Criteria(), // filter criteria
+    100, // limit
     50, // offset
     true,  // latest first
 );

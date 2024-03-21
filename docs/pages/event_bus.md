@@ -65,14 +65,16 @@ $message->customHeaders(); // ['application-id' => 'app']
 If you want *all* the headers you can also retrieve them.
 
 ```php
-$message->headers(); 
-// results in:
+$message->headers();
+
+/*
 [
     'aggregateName' => 'profile', 
     'aggregateId' => '1', 
     // {...}, 
     'application-id' => 'app'
 ]
+*/
 ```
 !!! warning
 
@@ -105,7 +107,7 @@ use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 
 $consumer = DefaultConsumer::create([
     $mailListener,
-];
+]);
 
 $consumer->consume($message);
 ```

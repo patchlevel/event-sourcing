@@ -136,7 +136,7 @@ final class Hotel extends BasicAggregateRoot
         $this->guests = array_values(
             array_filter(
                 $this->guests,
-                fn ($name) => $name !== $event->guestName;
+                fn ($name) => $name !== $event->guestName
             )
         );
     }
@@ -288,7 +288,7 @@ $projectionConnection = DriverManager::getConnection([
     'url' => 'mysql://user:secret@localhost/projection'
 ]);
 
-$mailer = /* your own mailer */;
+$mailer;
 
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);

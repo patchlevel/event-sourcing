@@ -70,9 +70,9 @@ use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 #[Snapshot('default')]
 final class Hotel extends BasicAggregateRoot
 {
-    private string $name,
+    private string $name;
     #[DateTimeImmutableNormalizer]
-    private DateTimeImmutable $createAt
+    private DateTimeImmutable $createAt;
 
     // ...
 }
@@ -329,7 +329,7 @@ Now we can also use the normalizer directly.
 final class DTO
 {
     #[NameNormalizer]
-    public Name $name
+    public Name $name;
 }
 ```
 !!! tip
@@ -347,15 +347,15 @@ use Patchlevel\Hydrator\Attribute\NormalizedName;
 final class DTO
 {
     #[NormalizedName('profile_name')]
-    public string $name
+    public string $name;
 }
 ```
 The whole thing looks like this
 
-```php
-[
-  'profile_name': 'David'
-]
+```json
+{
+  "profile_name": "David"
+}
 ```
 !!! tip
 
@@ -377,7 +377,7 @@ use Patchlevel\Hydrator\Attribute\Ignore;
 final class DTO
 {
     #[Ignore]
-    public string $name
+    public string $name;
 }
 ```
 ## Learn more

@@ -16,8 +16,8 @@ $clock = new SystemClock();
 $date = $clock->now(); // get the actual datetime 
 $date2 = $clock->now();
 
-$date == $date2 // false
-$date === $date2 // false
+$date == $date2; // false
+$date === $date2; // false
 ```
 ## FrozenClock
 
@@ -32,8 +32,8 @@ $date = new DateTimeImmutable();
 $clock = new FrozenClock($date);
 $frozenDate = $clock->now(); // gets the date provided before 
 
-$date == $frozenDate // true
-$date === $frozenDate // false
+$date == $frozenDate; // true
+$date === $frozenDate; // false
 ```
 The `FrozenClock` can also be updated with a new date, so you can test a jump in time.
 
@@ -48,8 +48,8 @@ $clock->update($secondDate);
 
 $frozenDate = $clock->now();
 
-$firstDate == $frozenDate // false
-$secondDate == $frozenDate // true
+$firstDate == $frozenDate; // false
+$secondDate == $frozenDate; // true
 ```
 Or you can use the `sleep` method to simulate a time jump.
 

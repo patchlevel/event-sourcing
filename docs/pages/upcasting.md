@@ -24,7 +24,7 @@ final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
             return $upcast;
         }
         
-        return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']);
+        return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']));
     }
 }
 ```
@@ -89,20 +89,23 @@ final class EventStreamCleanupCommand extends Command
     protected static $defaultDescription = 'rebuild event stream';
 
     public function __construct(
-        private readonly Store $sourceStore, 
-        private readonly Store $targetStore, 
-    ){
+        private readonly Store $sourceStore,
+        private readonly Store $targetStore,
+    ) {
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $pipeline = new Pipeline(
-            new StoreSource($sourceStore), 
+            new StoreSource($sourceStore),
             new StoreTarget($targetStore)
         );
-        
+
         $pipeline->run();
+
+        return 0;
     }
+}
 ```
 !!! danger
 

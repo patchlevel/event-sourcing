@@ -75,7 +75,7 @@ $store->saveOutboxMessage($message);
 $store->markOutboxMessageConsumed($message);
 
 $store->retrieveOutboxMessages(); 
-$store->countOutboxMessages()
+$store->countOutboxMessages();
 ```
 !!! note
 

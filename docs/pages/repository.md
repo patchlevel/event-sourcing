@@ -184,7 +184,7 @@ class ProfileRepository
     
     public function save(Profile $profile): void 
     {
-        return $this->repository->save($profile);
+        $this->repository->save($profile);
     }
     
     public function has(ProfileId $id): bool 

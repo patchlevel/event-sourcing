@@ -82,7 +82,7 @@ final class Profile extends BasicAggregateRoot
     #[Id]
     #[IdNormalizer]
     public Uuid $id;
-    public string $name,
+    public string $name;
     #[Normalize(new DateTimeImmutableNormalizer())]
     public DateTimeImmutable $createdAt;
     

@@ -396,6 +396,7 @@ stateDiagram-v2
 
 
 
+
 ```
 ### New
 
@@ -484,7 +485,7 @@ use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
 $schemaDirector = new DoctrineSchemaDirector(
-    $connection
+    $connection,
     new ChainDoctrineSchemaConfigurator([
         $eventStore,
         $subscriptionStore
