@@ -1,10 +1,8 @@
 # Repository
 
 A `repository` takes care of storing and loading the `aggregates`.
-He is also responsible for building [messages](event_bus.md) from the events and then dispatching them to the event bus.
-
-Every aggregate needs a repository to be stored.
-And each repository is only responsible for one aggregate.
+He is also responsible for building [messages](event_bus.md) from the events
+and optionally dispatching them to the event bus.
 
 ## Create a repository
 
@@ -13,8 +11,7 @@ This helps to build the repository correctly.
 
 The `DefaultRepositoryManager` needs some services to work.
 For one, it needs [AggregateRootRegistry](aggregate.md#aggregate-root-registry) so that it knows which aggregates exist.
-The [store](store.md), which is then given to the repository so that it can save and load the events at the end.
-And the [EventBus](event_bus.md) to publish the new events.
+And the [store](store.md), which is then given to the repository so that it can save and load the events at the end.
 
 After plugging the `DefaultRepositoryManager` together, you can create the repository associated with the aggregate.
 
@@ -24,7 +21,6 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
-    $eventBus,
 );
 
 $repository = $repositoryManager->get(Profile::class);
@@ -32,6 +28,40 @@ $repository = $repositoryManager->get(Profile::class);
 !!! note
 
     The same repository instance is always returned for a specific aggregate.
+    
+### Event Bus
+
+You can pass an event bus to the `DefaultRepositoryManager` to dispatch events synchronously.
+This is useful if you want to react to events in the same transaction.
+
+```php
+use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+
+$eventBus = DefaultEventBus::create([/* listeners */]);
+
+$repositoryManager = new DefaultRepositoryManager(
+    $aggregateRootRegistry,
+    $store,
+    $eventBus,
+);
+
+$repository = $repositoryManager->get(Profile::class);
+```
+!!! warning
+
+    If you use the event bus, you should be aware that the events are dispatched synchronously.
+    You may encounter "at least once" problems.
+    
+!!! note
+
+    You can find out more about event bus [here](event_bus.md).
+    
+!!! tip
+
+    In most cases it is better to react to events asynchronously, 
+    that's why we recommend the subscription engine.
+    More information can be found [here](subscription.md).
     
 ### Snapshots
 
@@ -51,7 +81,7 @@ $snapshotStore = new DefaultSnapshotStore(['default' => $adapter]);
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
-    $eventBus,
+    null,
     $snapshotStore,
 );
 
@@ -73,7 +103,7 @@ $decorator = new ApplicationIdDecorator();
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
-    $eventBus,
+    null,
     null,
     $decorator,
 );
@@ -94,8 +124,6 @@ saving it or checking whether it exists.
 An `aggregate` can be `saved`.
 All new events that have not yet been written to the database are fetched from the aggregate.
 These events are then also append to the database.
-After the events have been written,
-the new events are dispatched on the [event bus](./event_bus.md).
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
@@ -108,11 +136,6 @@ $repository->save($profile);
 !!! note
 
     All events are written to the database with one transaction in order to ensure data consistency.
-    
-!!! tip
-
-    If you want to make sure that dispatching events and storing events is transaction safe, 
-    then you should look at the [outbox](outbox.md) pattern.
     
 ### Load an aggregate
 

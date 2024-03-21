@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
@@ -23,7 +21,6 @@ use PhpBench\Attributes as Bench;
 final class SimpleSetupBench
 {
     private Store $store;
-    private EventBus $bus;
     private Repository $repository;
 
     private AggregateRootId $id;
@@ -31,8 +28,6 @@ final class SimpleSetupBench
     public function setUp(): void
     {
         $connection = DbalManager::createConnection();
-
-        $this->bus = DefaultEventBus::create();
 
         $this->store = new DoctrineDbalStore(
             $connection,
@@ -44,7 +39,7 @@ final class SimpleSetupBench
             'eventstore',
         );
 
-        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata());
+        $this->repository = new DefaultRepository($this->store, Profile::metadata());
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,

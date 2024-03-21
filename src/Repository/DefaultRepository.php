@@ -49,8 +49,8 @@ final class DefaultRepository implements Repository
     /** @param AggregateRootMetadata<T> $metadata */
     public function __construct(
         private Store $store,
-        private EventBus $eventBus,
         private readonly AggregateRootMetadata $metadata,
+        private EventBus|null $eventBus = null,
         private SnapshotStore|null $snapshotStore = null,
         private MessageDecorator|null $messageDecorator = null,
         ClockInterface|null $clock = null,
@@ -267,7 +267,7 @@ final class DefaultRepository implements Repository
                 }
 
                 $this->archive(...$messages);
-                $this->eventBus->dispatch(...$messages);
+                $this->eventBus?->dispatch(...$messages);
             });
 
             $this->aggregateIsValid[$aggregate] = true;

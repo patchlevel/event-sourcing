@@ -32,7 +32,7 @@ final class DefaultRepositoryManager implements RepositoryManager
     public function __construct(
         private AggregateRootRegistry $aggregateRootRegistry,
         private Store $store,
-        private EventBus $eventBus,
+        private EventBus|null $eventBus = null,
         private SnapshotStore|null $snapshotStore = null,
         private MessageDecorator|null $messageDecorator = null,
         ClockInterface|null $clock = null,
@@ -66,8 +66,8 @@ final class DefaultRepositoryManager implements RepositoryManager
 
         return $this->instances[$aggregateClass] = new DefaultRepository(
             $this->store,
-            $this->eventBus,
             $this->metadataFactory->metadata($aggregateClass),
+            $this->eventBus,
             $this->snapshotStore,
             $this->messageDecorator,
             $this->clock,
