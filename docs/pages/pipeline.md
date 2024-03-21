@@ -29,12 +29,11 @@ $pipeline = new Pipeline(
     ]
 );
 ```
-
 !!! danger
 
     Under no circumstances may the same store be used that is used for the source.
     Otherwise the store will be broken afterwards!
-
+    
 The pipeline can also be used to create or rebuild a projection:
 
 ```php
@@ -47,8 +46,7 @@ $pipeline = new Pipeline(
     ConsumerTarget::create([$projection]),
 );
 ```
-
-The principle remains the same. 
+The principle remains the same.
 There is a source where the data comes from.
 A target where the data should flow.
 And any number of middlewares to do something with the data beforehand.
@@ -66,7 +64,6 @@ use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 
 $source = new StoreSource($store);
 ```
-
 ### In Memory
 
 There is an `InMemorySource` that receives the messages in an array. This source can be used to write pipeline tests.
@@ -85,10 +82,9 @@ $source = new InMemorySource([
     // ...
 ]);
 ```
-
 ### Custom Source
 
-You can also create your own source class. It has to inherit from `Source`. 
+You can also create your own source class. It has to inherit from `Source`.
 Here you can, for example, create a migration from another event sourcing system or similar system.
 
 ```php
@@ -115,7 +111,6 @@ $source = new class implements Source {
     }
 }
 ```
-
 ## Target
 
 After you have a source, you still need the destination of the pipeline.
@@ -129,17 +124,16 @@ use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 
 $target = new StoreTarget($store);
 ```
-
 !!! danger
 
     Under no circumstances may the same store be used that is used for the source. 
     Otherwise the store will be broken afterwards!
-
+    
 !!! note
 
     It does not matter whether the previous store was a SingleTable or a MultiTable.
     You can switch back and forth between both store types using the pipeline.
-
+    
 ### Consumer
 
 A consumer can also be used as a target.
@@ -149,15 +143,14 @@ use Patchlevel\EventSourcing\Pipeline\Target\ConsumerTarget;
 
 $target = new ConsumerTarget($consumer);
 ```
-
 !!! tip
 
     You can also use it to build a new projection from scratch.
-
+    
 !!! note
 
     More about the consumer can be found [here](event_bus.md).
-
+    
 ### In Memory
 
 There is also an in-memory variant for the target. This target can also be used for tests.
@@ -172,7 +165,6 @@ $target = new InMemoryTarget();
 
 $messages = $target->messages();
 ```
-
 ### Custom Target
 
 You can also define your own target. To do this, you need to implement the `Target` interface.
@@ -195,7 +187,6 @@ final class OtherStoreTarget implements Target
     }
 }
 ```
-
 ## Middlewares
 
 Middelwares can be used to manipulate, delete or expand messages or events during the process.
@@ -205,7 +196,7 @@ Middelwares can be used to manipulate, delete or expand messages or events durin
     It is important to know that some middlewares require recalculation from the playhead,
     if the target is a store. This is a numbering of the events that must be in ascending order.
     A corresponding note is supplied with every middleware.
-
+    
 ### Exclude
 
 With this middleware you can exclude certain events.
@@ -215,13 +206,11 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 
 $middleware = new ExcludeEventMiddleware([EmailChanged::class]);
 ```
-
 !!! warning
 
     After this middleware, the playhead must be recalculated!
-
+    
 ### Include
-
 
 With this middleware you can only allow certain events.
 
@@ -230,15 +219,14 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware;
 
 $middleware = new IncludeEventMiddleware([ProfileCreated::class]);
 ```
-
 !!! warning
 
     After this middleware, the playhead must be recalculated!
-
+    
 ### Filter
 
-If the middlewares `ExcludeEventMiddleware` and `IncludeEventMiddleware` are not sufficient, 
-you can also write your own filter. 
+If the middlewares `ExcludeEventMiddleware` and `IncludeEventMiddleware` are not sufficient,
+you can also write your own filter.
 This middleware expects a callback that returns either true to allow events or false to not allow them.
 
 ```php
@@ -253,11 +241,10 @@ $middleware = new FilterEventMiddleware(function (AggregateChanged $event) {
     return $event->allowNewsletter();
 });
 ```
-
 !!! warning
 
     After this middleware, the playhead must be recalculated!
-
+    
 ### Exclude Archived Events
 
 With this middleware you can exclude archived events.
@@ -267,11 +254,10 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeArchivedEventMiddleware;
 
 $middleware = new ExcludeArchivedEventMiddleware();
 ```
-
 !!! warning
 
     After this middleware, the playhead must be recalculated!
-
+    
 ### Only Archived Events
 
 With this middleware you can only allow archived events.
@@ -281,11 +267,10 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\OnlyArchivedEventMiddleware;
 
 $middleware = new OnlyArchivedEventMiddleware();
 ```
-
 !!! warning
 
     After this middleware, the playhead must be recalculated!
-
+    
 ### Replace
 
 If you want to replace an event, you can use the `ReplaceEventMiddleware`.
@@ -299,11 +284,10 @@ $middleware = new ReplaceEventMiddleware(OldVisited::class, static function (Old
     return new NewVisited($oldVisited->profileId());
 });
 ```
-
 !!! note
 
     The middleware takes over the playhead and recordedAt information.
-
+    
 ### Until
 
 A use case could also be that you want to look at the projection from a previous point in time.
@@ -314,15 +298,14 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
 
 $middleware = new UntilEventMiddleware(new DateTimeImmutable('2020-01-01 12:00:00'));
 ```
-
 !!! warning
 
     After this middleware, the playhead must be recalculated!
-
+    
 ### Recalculate playhead
 
 This middleware can be used to recalculate the playhead.
-The playhead must always be in ascending order so that the data is valid. 
+The playhead must always be in ascending order so that the data is valid.
 Some middleware can break this order and the middleware `RecalculatePlayheadMiddleware` can fix this problem.
 
 ```php
@@ -330,11 +313,10 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 
 $middleware = new RecalculatePlayheadMiddleware();
 ```
-
 !!! note
 
     You only need to add this middleware once at the end of the pipeline.
-
+    
 ### Chain
 
 If you want to group your middleware, you can use one or more `ChainMiddleware`.
@@ -349,10 +331,9 @@ $middleware = new ChainMiddleware([
     new RecalculatePlayheadMiddleware()
 ]);
 ```
-
 ### Custom middleware
 
-You can also write a custom middleware. The middleware gets a message and can return `N` messages. 
+You can also write a custom middleware. The middleware gets a message and can return `N` messages.
 There are the following possibilities:
 
 * Return only the message to an array to leave it unchanged.
@@ -360,9 +341,9 @@ There are the following possibilities:
 * Return an empty array to remove the message.
 * Or return multiple messages to enrich the stream.
 
-In our case, the domain has changed a bit. 
-In the beginning we had a `ProfileCreated` event that just created a profile. 
-Now we have a `ProfileRegistered` and a `ProfileActivated` event, 
+In our case, the domain has changed a bit.
+In the beginning we had a `ProfileCreated` event that just created a profile.
+Now we have a `ProfileRegistered` and a `ProfileActivated` event,
 which should replace the `ProfileCreated` event.
 
 ```php
@@ -393,11 +374,11 @@ final class SplitProfileCreatedMiddleware implements Middleware
     }    
 }
 ```
-
 !!! warning
 
     Since we changed the number of messages, we have to recalculate the playhead.
-
+    
 !!! note
 
     You can find more about messages [here](event_bus.md).
+    

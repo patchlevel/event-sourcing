@@ -41,7 +41,7 @@ jobs:
                 dependency-versions: ${{ matrix.dependencies }}
 
             - name: "extract php code"
-              run: "bin/extract-php-code-from-docs"
+              run: "bin/docs-extract-php-code"
 
             - name: "lint php"
               run: "php -l docs_php/*.php"

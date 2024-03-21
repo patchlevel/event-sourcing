@@ -26,7 +26,7 @@ The database schema can also be created, updated and dropped.
 !!! note
 
     You can also register doctrine migration commands.
-
+    
 ## Subscription commands
 
 To manage your subscriptions there are the following cli commands.
@@ -43,7 +43,7 @@ To manage your subscriptions there are the following cli commands.
 !!! note
 
     You can find out more about subscriptions [here](subscription.md).
-
+    
 ## Inspector commands
 
 The inspector is a tool to inspect the event streams.
@@ -90,7 +90,6 @@ $cli->addCommands(array(
 
 $cli->run();
 ```
-
 ### Doctrine Migrations
 
 If you want to use doctrine migrations, you can register the commands like this:
@@ -138,8 +137,8 @@ $cli->addCommands([
     new Command\VersionCommand($dependencyFactory, 'event-sourcing:migrations:version'),
 ]);
 ```
-
 !!! note
 
     Here you can find more information on how to 
     [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
+    

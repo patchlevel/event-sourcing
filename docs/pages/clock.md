@@ -19,7 +19,6 @@ $date2 = $clock->now();
 $date == $date2 // false
 $date === $date2 // false
 ```
-
 ## FrozenClock
 
 This implementation should only be used for the tests. This enables you to freeze the time and with that to have
@@ -36,7 +35,6 @@ $frozenDate = $clock->now(); // gets the date provided before
 $date == $frozenDate // true
 $date === $frozenDate // false
 ```
-
 The `FrozenClock` can also be updated with a new date, so you can test a jump in time.
 
 ```php
@@ -53,7 +51,6 @@ $frozenDate = $clock->now();
 $firstDate == $frozenDate // false
 $secondDate == $frozenDate // true
 ```
-
 Or you can use the `sleep` method to simulate a time jump.
 
 ```php
@@ -64,11 +61,10 @@ $clock = new FrozenClock($firstDate);
 
 $clock->sleep(10); // sleep 10 seconds
 ```
-
 !!! note
 
     The instance of the frozen datetime will be cloned internally, so the it's not the same instance but equals.
-
+    
 ## Learn more
 
 * [How to test with datetime](testing.md)

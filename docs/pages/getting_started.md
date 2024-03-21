@@ -24,7 +24,6 @@ final class HotelCreated
     }
 }
 ```
-
 A guest can check in by `name`:
 
 ```php
@@ -37,7 +36,6 @@ final class GuestIsCheckedIn
     }
 }
 ```
-
 And also check out again:
 
 ```php
@@ -50,14 +48,13 @@ final class GuestIsCheckedOut
     }
 }
 ```
-
 !!! note
 
     You can find out more about events [here](events.md).    
-
+    
 ## Define aggregates
 
-Next we need to define the hotel aggregate. 
+Next we need to define the hotel aggregate.
 How you can interact with it, which events happen and what the business rules are.
 For this we create the methods `create`, `checkIn` and `checkOut`.
 In these methods the business checks are made and the events are recorded.
@@ -145,15 +142,14 @@ final class Hotel extends BasicAggregateRoot
     }
 }
 ```
-
 !!! note
 
     You can find out more about aggregates [here](aggregate.md).
-
+    
 ## Define projections
 
 So that we can see all the hotels on our website and also see how many guests are currently visiting the hotels,
-we need a projection for it. To create a projection we need a projector. 
+we need a projection for it. To create a projection we need a projector.
 Each projector is then responsible for a specific projection.
 
 ```php
@@ -234,11 +230,10 @@ final class HotelProjector
     }
 }
 ```
-
 !!! note
 
     You can find out more about projector [here](subscription.md).
-
+    
 ## Processor
 
 In our example we also want to email the head office as soon as a guest is checked in.
@@ -267,11 +262,10 @@ final class SendCheckInEmailProcessor
     }
 }
 ```
-
 !!! note
 
     You can find out more about processor [here](subscription.md).
-
+    
 ## Configuration
 
 After we have defined everything, we still have to plug the whole thing together:
@@ -330,11 +324,10 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $hotelRepository = $repositoryManager->get(Hotel::class);
 ```
-
 !!! note
 
     You can find out more about stores [here](store.md).
-
+    
 ## Database setup
 
 So that we can actually write the data to a database,
@@ -355,11 +348,10 @@ $schemaDirector = new DoctrineSchemaDirector(
 $schemaDirector->create();
 $projectionist->setup(skipBooting: true);
 ```
-
 !!! note
 
     you can use the predefined [cli commands](cli.md) for this.
-
+    
 ## Usage
 
 We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
@@ -382,25 +374,24 @@ $projectionist->run();
 
 $hotels = $hotelProjection->getHotels();
 ```
-
 !!! warning
 
     You need to run the projectionist to update the projections.
-
+    
 !!! note
 
     You can also use other forms of IDs such as uuid version 6 or a custom format. 
     You can find more about this [here](aggregate_id.md).
-
+    
 ## Result
 
 !!! success
 
     We have successfully implemented and used event sourcing.
-
+    
     Feel free to browse further in the documentation for more detailed information. 
     If there are still open questions, create a ticket on Github and we will try to help you.
-
+    
 ## Learn more
 
 * [How to create an aggregate](aggregate.md)
