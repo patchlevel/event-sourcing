@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Store;
 use Closure;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
@@ -17,11 +18,14 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use PDO;
 
 use function array_fill;
 use function array_filter;
 use function array_values;
+use function class_exists;
 use function count;
+use function explode;
 use function floor;
 use function implode;
 use function in_array;
@@ -29,7 +33,7 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaConfigurator
+final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionStore, DoctrineSchemaConfigurator
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.
@@ -326,5 +330,60 @@ final class DoctrineDbalStore implements Store, ArchivableStore, DoctrineSchemaC
                 static fn (object $header) => !in_array($header::class, $filteredHeaders, true),
             ),
         );
+    }
+
+    public function supportSubscription(): bool
+    {
+        return $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform && class_exists(PDO::class);
+    }
+
+    public function wait(int $timeoutMilliseconds): void
+    {
+        if (!$this->supportSubscription()) {
+            return;
+        }
+
+        $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->storeTableName));
+
+        /** @var PDO $nativeConnection */
+        $nativeConnection = $this->connection->getNativeConnection();
+
+        $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+    }
+
+    public function setupSubscription(): void
+    {
+        if (!$this->supportSubscription()) {
+            return;
+        }
+
+        $functionName = $this->createTriggerFunctionName();
+
+        $this->connection->executeStatement(sprintf(
+            <<<'SQL'
+                CREATE OR REPLACE FUNCTION %1$s() RETURNS TRIGGER AS $$
+                    BEGIN
+                        PERFORM pg_notify('%2$s');
+                        RETURN NEW;
+                    END;
+                $$ LANGUAGE plpgsql;
+                SQL,
+            $functionName,
+            $this->storeTableName,
+        ));
+
+        $this->connection->executeStatement(sprintf('DROP TRIGGER IF EXISTS notify_trigger ON %s;', $this->storeTableName));
+        $this->connection->executeStatement(sprintf('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON %1$s FOR EACH ROW EXECUTE PROCEDURE %2$s();', $this->storeTableName, $functionName));
+    }
+
+    private function createTriggerFunctionName(): string
+    {
+        $tableConfig = explode('.', $this->storeTableName);
+
+        if (count($tableConfig) === 1) {
+            return sprintf('notify_%1$s', $tableConfig[0]);
+        }
+
+        return sprintf('%1$s.notify_%2$s', $tableConfig[0], $tableConfig[1]);
     }
 }

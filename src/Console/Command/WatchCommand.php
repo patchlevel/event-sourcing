@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\SubscriptionStore;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -65,8 +66,12 @@ final class WatchCommand extends Command
 
         $index = $this->currentIndex();
 
+        if ($this->store instanceof SubscriptionStore) {
+            $this->store->setupSubscription();
+        }
+
         $worker = DefaultWorker::create(
-            function () use ($console, &$index, $aggregate, $aggregateId): void {
+            function () use ($console, &$index, $aggregate, $aggregateId, $sleep): void {
                 $stream = $this->store->load(
                     new Criteria(
                         $aggregate,
@@ -81,11 +86,17 @@ final class WatchCommand extends Command
                 }
 
                 $stream->close();
+
+                if (!$this->store instanceof SubscriptionStore) {
+                    return;
+                }
+
+                $this->store->wait($sleep);
             },
-            [],
         );
 
-        $worker->run($sleep);
+        $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();
+        $worker->run($supportSubscription ? 0 : $sleep);
 
         return 0;
     }

@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\SubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,6 +21,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class SubscriptionRunCommand extends SubscriptionCommand
 {
+    public function __construct(
+        SubscriptionEngine $engine,
+        private readonly Store $store,
+    ) {
+        parent::__construct($engine);
+    }
+
     protected function configure(): void
     {
         parent::configure();
@@ -75,11 +85,21 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $criteria = $this->subscriptionEngineCriteria($input);
         $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
+        if ($this->store instanceof SubscriptionStore) {
+            $this->store->setupSubscription();
+        }
+
         $logger = new ConsoleLogger($output);
 
         $worker = DefaultWorker::create(
-            function () use ($criteria, $messageLimit): void {
+            function () use ($criteria, $messageLimit, $sleep): void {
                 $this->engine->run($criteria, $messageLimit);
+
+                if (!$this->store instanceof SubscriptionStore) {
+                    return;
+                }
+
+                $this->store->wait($sleep);
             },
             [
                 'runLimit' => $runLimit,
@@ -94,7 +114,8 @@ final class SubscriptionRunCommand extends SubscriptionCommand
             $this->engine->boot($criteria);
         }
 
-        $worker->run($sleep);
+        $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();
+        $worker->run($supportSubscription ? 0 : $sleep);
 
         return 0;
     }
