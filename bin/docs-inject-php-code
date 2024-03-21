@@ -42,6 +42,7 @@ foreach ($finder as $file) {
      */
     foreach ($result as $node) {
         if ($node->getInfo() !== 'php') {
+            $node->setLiteral(trim($node->getLiteral()));
             continue;
         }
 

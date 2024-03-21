@@ -20,11 +20,6 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 
 ```bash
 composer require patchlevel/event-sourcing
-
-
-
-
-
 ```
 ## Integration
 

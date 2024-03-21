@@ -82,3 +82,11 @@ docs: mkdocs                                                                    
 
 mkdocs:                                                                         ## run mkdocs
 	cd docs && pip3 install -r requirements.txt
+
+docs-extract-php:
+	bin/docs-extract-php-code
+
+docs-inject-php:
+	bin/docs-inject-php-code
+
+docs-format: docs-extract-php docs-inject-php

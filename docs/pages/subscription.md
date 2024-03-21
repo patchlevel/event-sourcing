@@ -392,11 +392,6 @@ stateDiagram-v2
     Error --> [*]
     Detached --> Active
     Detached --> [*]
-
-
-
-
-
 ```
 ### New
 

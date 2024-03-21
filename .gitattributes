@@ -14,3 +14,4 @@
 /psalm-baseline.xml export-ignore
 /test/ export-ignore
 /tools/ export-ignore
+/bin/ export-ignore
