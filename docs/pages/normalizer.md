@@ -288,12 +288,33 @@ You also need to implement a `normalize` and `denormalize` method.
 Finally, you have to allow the normalizer to be used as an attribute.
 
 ```php
-use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
+use Patchlevel\Hydrator\Normalizer\InvalidArgument;
+use Patchlevel\Hydrator\Normalizer\Normalizer;
 
-final class DTO
+#[Attribute(Attribute::TARGET_PROPERTY)]
+class NameNormalizer implements Normalizer
 {
-    #[DateTimeImmutableNormalizer]
-    public DateTimeImmutable $date;
+    public function normalize(mixed $value): string
+    {
+        if (!$value instanceof Name) {
+            throw InvalidArgument::withWrongType(Name::class, $value);
+        }
+
+        return $value->toString();
+    }
+
+    public function denormalize(mixed $value): Name|null
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!is_string($value)) {
+            throw InvalidArgument::withWrongType('string', $value);
+        }
+
+        return new Name($value);
+    }
 }
 ```
 !!! warning

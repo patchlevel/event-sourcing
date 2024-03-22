@@ -95,6 +95,10 @@ docs-inject-php:
 .PHONY: docs-format
 docs-format: docs-phpcs docs-inject-php
 
+.PHONY: docs-php-lint
+docs-php-lint: docs-extract-php
+	php -l docs_php/*.php | grep 'Parse error: '
+
 .PHONY: docs-phpcs
 docs-phpcs: docs-extract-php
 	vendor/bin/phpcbf docs_php --exclude=SlevomatCodingStandard.TypeHints.DeclareStrictTypes || true

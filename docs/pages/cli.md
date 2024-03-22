@@ -62,10 +62,11 @@ use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Symfony\Component\Console\Application;
 
-$store;
 /* define your doctrine store */
-$projectionist;
+$store;
+
 /* create projectionist */
+$projectionist;
 
 $cli = new Application('Event-Sourcing CLI');
 $cli->setCatchExceptions(true);
@@ -103,15 +104,18 @@ use Doctrine\Migrations\Tools\Console\Command;
 use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
-$connection; /* create connection */
-$store; /* define your doctrine store */
+/* create connection */
+$connection;
+/* define your doctrine store */
+$store;
 
 $schemaDirector = new DoctrineSchemaDirector(
     $store,
     $connection,
 );
 
-$migrationConfig; /* define your migration config */
+/* define your migration config */
+$migrationConfig;
 
 
 $dependencyFactory = DependencyFactory::fromConnection(

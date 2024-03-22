@@ -275,7 +275,14 @@ There is also the possibility of executing a function in a transaction.
 Then dbal takes care of starting a transaction, committing it and then possibly rollback it again.
 
 ```php
-use Doctrine\DBAL\DriverManager;
+$store->transactional(static function () use ($command, $bankAccountRepository): void {
+    $accountFrom = $bankAccountRepository->get($command->from());
+    $accountTo = $bankAccountRepository->get($command->to());
 
-$connection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/app']);
+    $accountFrom->transferMoney($command->to(), $command->amount());
+    $accountTo->receiveMoney($command->from(), $command->amount());
+
+    $bankAccountRepository->save($accountFrom);
+    $bankAccountRepository->save($accountTo);
+});
 ```

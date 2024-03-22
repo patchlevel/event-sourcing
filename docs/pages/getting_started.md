@@ -279,6 +279,7 @@ $connection = DriverManager::getConnection(['url' => 'mysql://user:secret@localh
 
 $projectionConnection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/projection']);
 
+/* your own mailer */
 $mailer;
 
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);

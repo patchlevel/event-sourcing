@@ -104,7 +104,7 @@ final class EventStreamCleanupCommand extends Command
 
         $pipeline->run();
 
-        return 0;
+        return Command::SUCCESS;
     }
 }
 ```

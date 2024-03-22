@@ -572,13 +572,7 @@ All booting subscriptions will catch up to the current event stream.
 After the boot process, the subscription is set to active or finished.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Subscriber;
-use Patchlevel\EventSourcing\Subscription\RunMode;
-
-#[Subscriber('do_stuff', RunMode::Once)]
-final class DoStuffSubscriber
-{
-}
+$subscriptionEngine->boot($criteria);
 ```
 ### Run
 

@@ -65,8 +65,7 @@ $message->customHeaders(); // ['application-id' => 'app']
 If you want *all* the headers you can also retrieve them.
 
 ```php
-$message->headers();
-
+$headers = $message->headers();
 /*
 [
     'aggregateName' => 'profile',

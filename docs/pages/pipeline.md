@@ -245,24 +245,9 @@ $middleware = new FilterEventMiddleware(static function (AggregateChanged $event
 With this middleware you can exclude archived events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Pipeline;
-use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
+use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeArchivedEventMiddleware;
 
-$pipeline = new Pipeline(
-    new StoreSource($oldStore),
-    new StoreTarget($newStore),
-    [
-        new ExcludeEventMiddleware([PrivacyAdded::class]),
-        new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
-            return new NewVisited($oldVisited->profileId());
-        }),
-        new RecalculatePlayheadMiddleware(),
-    ],
-);
+$middleware = new ExcludeArchivedEventMiddleware();
 ```
 !!! warning
 
