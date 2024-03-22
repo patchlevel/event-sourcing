@@ -22,8 +22,9 @@ final class ProfileCreated
 {
     public function __construct(
         public readonly string $profileId,
-        public readonly string $name
-    ) {}
+        public readonly string $name,
+    ) {
+    }
 }
 ```
 !!! warning
@@ -76,8 +77,9 @@ final class ProfileCreated
         #[NameNormalizer]
         public readonly Name $name,
         #[DateTimeImmutableNormalizer]
-        public readonly DateTimeImmutable $createdAt
-    ) {}
+        public readonly DateTimeImmutable $createdAt,
+    ) {
+    }
 }
 ```
 !!! note
@@ -94,7 +96,7 @@ There is an EventRegistry for this purpose. The registry is a simple hashmap bet
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 
 $eventRegistry = new EventRegistry([
-    'profile.created' => ProfileCreated::class
+    'profile.created' => ProfileCreated::class,
 ]);
 ```
 So that you don't have to create it by hand, you can use a factory.
@@ -104,7 +106,6 @@ and the `EventRegistry` is built up.
 
 ```php
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
-use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 
 $eventRegistry = (new AttributeEventRegistryFactory())->create($paths);
 ```

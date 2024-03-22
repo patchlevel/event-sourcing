@@ -19,7 +19,6 @@ First of all you have to define a snapshot store. This store may have multiple a
 These caches also need a name so that you can determine which aggregates should be stored in which cache.
 
 ```php
-use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 
@@ -39,7 +38,7 @@ $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
     $eventBus,
-    $snapshotStore
+    $snapshotStore,
 );
 ```
 !!! note
@@ -85,7 +84,7 @@ final class Profile extends BasicAggregateRoot
     public string $name;
     #[Normalize(new DateTimeImmutableNormalizer())]
     public DateTimeImmutable $createdAt;
-    
+
     // ...
 }
 ```

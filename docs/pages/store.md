@@ -17,9 +17,7 @@ The first thing we need for our store is a DBAL connection:
 ```php
 use Doctrine\DBAL\DriverManager;
 
-$connection = DriverManager::getConnection([
-    'url' => 'mysql://user:secret@localhost/app'
-]);
+$connection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/app']);
 ```
 !!! note
 
@@ -40,9 +38,9 @@ $store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths(['src/Event']),
     new AggregateRootRegistry([
-        'profile' => Profile::class
+        'profile' => Profile::class,
     ]),
-    'eventstore'
+    'eventstore',
 );
 ```
 ## Schema
@@ -79,7 +77,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
-    $store
+    $store,
 );
 ```
 !!! note
@@ -140,7 +138,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
 $schemaDirector = new DoctrineSchemaDirector(
     $store,
-    $connection
+    $connection,
 );
 
 $schemaProvider = new DoctrineMigrationSchemaProvider($schemaDirector);
@@ -148,13 +146,13 @@ $schemaProvider = new DoctrineMigrationSchemaProvider($schemaDirector);
 // doctrine migration configuration
 
 $dependencyFactory = DependencyFactory::fromConnection(
-    $config, 
-    new ExistingConnection($connection)
+    $config,
+    new ExistingConnection($connection),
 );
 
 $dependencyFactory->setService(
-    SchemaProvider::class, 
-    $schemaProvider
+    SchemaProvider::class,
+    $schemaProvider,
 );
 ```
 !!! note
@@ -250,7 +248,7 @@ The count method also has the possibility to filter the events.
 use Patchlevel\EventSourcing\Store\Criteria;
 
 $count = $store->count(
-    new Criteria() // filter criteria
+    new Criteria(), // filter criteria
 );
 ```
 ### Save
@@ -277,14 +275,7 @@ There is also the possibility of executing a function in a transaction.
 Then dbal takes care of starting a transaction, committing it and then possibly rollback it again.
 
 ```php
-$store->transactional(function () use ($command, $bankAccountRepository) {
-    $accountFrom = $bankAccountRepository->get($command->from());
-    $accountTo = $bankAccountRepository->get($command->to());
-    
-    $accountFrom->transferMoney($command->to(), $command->amount());
-    $accountTo->receiveMoney($command->from(), $command->amount());
-    
-    $bankAccountRepository->save($accountFrom);
-    $bankAccountRepository->save($accountTo);
-});
+use Doctrine\DBAL\DriverManager;
+
+$connection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/app']);
 ```

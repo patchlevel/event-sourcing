@@ -45,3 +45,6 @@ jobs:
 
             - name: "lint php"
               run: "php -l docs_php/*.php"
+
+            - name: "docs code style"
+              run: "vendor/bin/phpcbf docs_php --exclude=SlevomatCodingStandard.TypeHints.DeclareStrictTypes"

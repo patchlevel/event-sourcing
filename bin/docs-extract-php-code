@@ -38,16 +38,16 @@ foreach ($finder as $file) {
     /**
      * @var FencedCode $node
      */
-    foreach ($result as $node) {
+    foreach ($result as $i => $node) {
         if ($node->getInfo() !== 'php') {
             continue;
         }
 
         $source = sprintf('%s:%s', $file->getRealPath(), $node->getStartLine());
 
-        $code = "<?php // " . $source . " \n\n" . $node->getLiteral() . "\n";
+        $code = "<?php\n // " . $source . "\n\n" . $node->getLiteral();
 
-        $targetPath = $targetDir . '/' . $fileName . '_' . $node->getStartLine() . '.php';
+        $targetPath = $targetDir . '/' . $fileName . '_' . $i . '.php';
         file_put_contents($targetPath, $code);
     }
 }

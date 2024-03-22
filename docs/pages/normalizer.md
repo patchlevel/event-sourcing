@@ -17,7 +17,7 @@ You have to set the normalizer to the properties using the specific normalizer c
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeImmutableNormalizer]
     public DateTimeImmutable $date;
@@ -28,12 +28,13 @@ The whole thing also works with property promotion and readonly properties.
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     public function __construct(
         #[DateTimeImmutableNormalizer]
-        public readonly DateTimeImmutable $date
-    ) {}
+        public readonly DateTimeImmutable $date,
+    ) {
+    }
 }
 ```
 ### Event
@@ -51,8 +52,9 @@ final class CreateHotel
     public function __construct(
         public readonly string $name,
         #[DateTimeImmutableNormalizer]
-        public readonly DateTimeImmutable $createAt
-    ) {}
+        public readonly DateTimeImmutable $createAt,
+    ) {
+    }
 }
 ```
 ### Aggregate
@@ -96,7 +98,7 @@ objects. Internally, it basically does an `array_map` and then runs the specifie
 use Patchlevel\Hydrator\Normalizer\ArrayNormalizer;
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[ArrayNormalizer(new DateTimeImmutableNormalizer())]
     public array $dates;
@@ -114,7 +116,7 @@ you can convert DateTimeImmutable objects to a String and back again.
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeImmutableNormalizer]
     public DateTimeImmutable $date;
@@ -126,7 +128,7 @@ The default is `DateTimeImmutable::ATOM`.
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeImmutableNormalizer(format: DateTimeImmutable::RFC3339_EXTENDED)]
     public DateTimeImmutable $date;
@@ -143,7 +145,7 @@ The `DateTime` Normalizer works exactly like the DateTimeNormalizer. Only for Da
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeNormalizer]
     public DateTime $date;
@@ -154,7 +156,7 @@ You can also specify the format here. The default is `DateTime::ATOM`.
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeNormalizer(format: DateTime::RFC3339_EXTENDED)]
     public DateTime $date;
@@ -176,7 +178,7 @@ To normalize a `DateTimeZone` one can use the `DateTimeZoneNormalizer`.
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeZoneNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[DateTimeZoneNormalizer]
     public DateTimeZone $timeZone;
@@ -189,7 +191,7 @@ Backed enums can also be normalized.
 ```php
 use Patchlevel\Hydrator\Normalizer\EnumNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[EnumNormalizer]
     public Status $status;
@@ -200,7 +202,7 @@ You can also specify the enum class.
 ```php
 use Patchlevel\Hydrator\Normalizer\EnumNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[EnumNormalizer(Status::class)]
     public Status $status;
@@ -214,7 +216,7 @@ If you have your own AggregateRootId, you can use the `IdNormalizer`.
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\Hydrator\Normalizer\IdNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[IdNormalizer]
     public Uuid $id;
@@ -226,7 +228,7 @@ Optional you can also define the type of the id.
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\Hydrator\Normalizer\IdNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[IdNormalizer(Uuid::class)]
     public Uuid $id;
@@ -240,7 +242,7 @@ Internally, it uses the `Hydrator` to normalize and denormalize the object.
 ```php
 use Patchlevel\Hydrator\Normalizer\ObjectNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[ObjectNormalizer]
     public ComplexObject $object;
@@ -251,7 +253,7 @@ Optional you can also define the type of the object.
 ```php
 use Patchlevel\Hydrator\Normalizer\ObjectNormalizer;
 
-final class DTO 
+final class DTO
 {
     #[ObjectNormalizer(ComplexObject::class)]
     public object $object;
@@ -267,18 +269,14 @@ In our example we have built a value object that should hold a name.
 ```php
 final class Name
 {
-    private string $value;
-    
-    public function __construct(string $value) 
+    public function __construct(private string $value)
     {
         if (strlen($value) < 3) {
             throw new NameIsToShortException($value);
         }
-        
-        $this->value = $value;
     }
-    
-    public function toString(): string 
+
+    public function toString(): string
     {
         return $this->value;
     }
@@ -290,33 +288,12 @@ You also need to implement a `normalize` and `denormalize` method.
 Finally, you have to allow the normalizer to be used as an attribute.
 
 ```php
-use Patchlevel\Hydrator\Normalizer\Normalizer;
-use Patchlevel\Hydrator\Normalizer\InvalidArgument;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
-class NameNormalizer implements Normalizer
+final class DTO
 {
-    public function normalize(mixed $value): string
-    {
-        if (!$value instanceof Name) {
-            throw InvalidArgument::withWrongType(Name::class, $value);
-        }
-
-        return $value->toString();
-    }
-
-    public function denormalize(mixed $value): ?Name
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        if (!is_string($value)) {
-            throw InvalidArgument::withWrongType('string', $value);
-        }
-
-        return new Name($value);
-    }
+    #[DateTimeImmutableNormalizer]
+    public DateTimeImmutable $date;
 }
 ```
 !!! warning

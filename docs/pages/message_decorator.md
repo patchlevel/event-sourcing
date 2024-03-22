@@ -41,16 +41,14 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 
-$decorator = new ChainMessageDecorator([
-    new SplitStreamDecorator($eventMetadataFactory)  
-]);
+$decorator = new ChainMessageDecorator([new SplitStreamDecorator($eventMetadataFactory)]);
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
     $eventBus,
     null,
-    $decorator
+    $decorator,
 );
 
 $repository = $repositoryManager->get(Profile::class);

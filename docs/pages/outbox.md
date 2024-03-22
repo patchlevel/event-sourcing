@@ -20,15 +20,15 @@ First you have to replace the correct event bus with an outbox event bus.
 This stores the events to be dispatched in the database.
 
 ```php
-use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Outbox\OutboxEventBus;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 
 $eventBus = new OutboxEventBus($store);
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
-    $eventBus
+    $eventBus,
 );
 ```
 And then you have to define the consumer. This gets the right event bus.
@@ -39,13 +39,11 @@ use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\Outbox\EventBusPublisher;
 use Patchlevel\EventSourcing\Outbox\StoreOutboxProcessor;
 
-$consumer = DefaultConsumer::create([
-    $mailListener,
-]);
+$consumer = DefaultConsumer::create([$mailListener]);
 
 $processor = new StoreOutboxProcessor(
-    $store, 
-    new EventBusPublisher($consumer)
+    $store,
+    new EventBusPublisher($consumer),
 );
 
 $processor->process();
@@ -55,12 +53,12 @@ $processor->process();
 So that this is also executed in a transaction, you have to make sure that a transaction has also been started.
 
 ```php
-$store->transactional(function () use ($command, $profileRepository) {
+$store->transactional(static function () use ($command, $profileRepository): void {
     $profile = Profile::register(
         $command->id(),
-        $command->email()
+        $command->email(),
     );
-    
+
     $profileRepository->save($profile);
 });
 ```
@@ -74,7 +72,7 @@ You can also interact directly with the outbox store.
 $store->saveOutboxMessage($message);
 $store->markOutboxMessageConsumed($message);
 
-$store->retrieveOutboxMessages(); 
+$store->retrieveOutboxMessages();
 $store->countOutboxMessages();
 ```
 !!! note

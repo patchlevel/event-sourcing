@@ -45,14 +45,13 @@ We named this type of subscriber `projector`. But in the end it's the same.
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 
 #[Subscriber('profile_1', RunMode::FromBeginning)]
 final class ProfileProjector
 {
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
     ) {
     }
 }
@@ -64,13 +63,12 @@ It extends the `Subscriber` attribute with a default group and run mode.
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Projector;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
 #[Projector('profile_1')]
 final class ProfileProjector
 {
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
     ) {
     }
 }
@@ -97,14 +95,13 @@ We named this type of subscriber `processor`.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscriber;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 
 #[Subscriber('welcome_email', RunMode::FromNow)]
 final class WelcomeEmailProcessor
 {
     public function __construct(
-        private readonly Mailer $mailer
+        private readonly Mailer $mailer,
     ) {
     }
 }
@@ -118,13 +115,12 @@ It extends the `Subscriber` attribute with a default group and run mode.
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Processor;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
 #[Processor('welcome_email')]
 final class WelcomeEmailProcessor
 {
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
     ) {
     }
 }
@@ -153,7 +149,7 @@ final class DoStuffSubscriber
     public function onProfileCreated(Message $message): void
     {
         $profileCreated = $message->event();
-    
+
         // do something
     }
 }
@@ -175,23 +171,23 @@ For this there are the attributes `Setup` and `Teardown`. The method name itself
 This is especially helpful for projectors, as they can create the necessary structures for the projection here.
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
 #[Projector('profile_1')]
 final class ProfileProjector
 {
     use SubscriberUtil;
-    
+
     // ...
 
     #[Setup]
     public function create(): void
     {
         $this->connection->executeStatement(
-            "CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);"
+            "CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);",
         );
     }
 
@@ -201,7 +197,7 @@ final class ProfileProjector
         $this->connection->executeStatement("DROP TABLE IF EXISTS {$this->table()};");
     }
 
-    private function table(): string 
+    private function table(): string
     {
         return 'projection_' . $this->subscriberId();
     }
@@ -233,7 +229,6 @@ This will trigger the subscription engine to create a new subscription and boot 
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Projector;
-use Patchlevel\EventSourcing\Attribute\Subscriber;
 
 #[Projector('profile_2')]
 final class ProfileSubscriber
@@ -305,7 +300,8 @@ This is useful for subscribers that are only interested in events that occur aft
 As example, a welcome email subscriber that only wants to send emails to new users.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Subscriber;use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 
 #[Subscriber('welcome_email', RunMode::FromNow)]
 final class WelcomeEmailSubscriber
@@ -483,7 +479,7 @@ $schemaDirector = new DoctrineSchemaDirector(
     $connection,
     new ChainDoctrineSchemaConfigurator([
         $eventStore,
-        $subscriptionStore
+        $subscriptionStore,
     ]),
 );
 ```
@@ -549,7 +545,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 $criteria = new SubscriptionEngineCriteria(
     ids: ['profile_1', 'welcome_email'],
-    groups: ['default']
+    groups: ['default'],
 );
 ```
 !!! note
@@ -576,7 +572,13 @@ All booting subscriptions will catch up to the current event stream.
 After the boot process, the subscription is set to active or finished.
 
 ```php
-$subscriptionEngine->boot($criteria);
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+
+#[Subscriber('do_stuff', RunMode::Once)]
+final class DoStuffSubscriber
+{
+}
 ```
 ### Run
 

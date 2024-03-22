@@ -23,7 +23,7 @@ final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
         if ($upcast->eventName !== 'profile_created') {
             return $upcast;
         }
-        
+
         return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']));
     }
 }
@@ -40,19 +40,20 @@ the upgrade path.
 
 ```php
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
-use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
 
 final class LegacyEventNameUpaster implements Upcaster
 {
     public function __construct(
-        private readonly EventRegistry $eventRegistry
-    ){}
-    
+        private readonly EventRegistry $eventRegistry,
+    ) {
+    }
+
     public function __invoke(Upcast $upcast): Upcast
     {
         return $upcast->replaceEventName(
-            $this->eventRegistry->eventName($upcast->eventName)
+            $this->eventRegistry->eventName($upcast->eventName),
         );
     }
 }
@@ -68,12 +69,12 @@ use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
 
 $upcaster = new UpcasterChain([
     new ProfileCreatedEmailLowerCastUpcaster(),
-    new LegacyEventNameUpaster($eventRegistry)
+    new LegacyEventNameUpaster($eventRegistry),
 ]);
 
 $serializer = DefaultEventSerializer::createFromPaths(
     ['src/Domain'],
-    $upcaster
+    $upcaster,
 );
 ```
 ## Update event stream
@@ -98,7 +99,7 @@ final class EventStreamCleanupCommand extends Command
     {
         $pipeline = new Pipeline(
             new StoreSource($sourceStore),
-            new StoreTarget($targetStore)
+            new StoreTarget($targetStore),
         );
 
         $pipeline->run();

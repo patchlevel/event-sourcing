@@ -34,12 +34,12 @@ final class Profile extends BasicAggregateRoot
     #[Id]
     private Uuid $id;
 
-    public static function register(Uuid $id): self 
+    public static function register(Uuid $id): self
     {
         $self = new self();
-        
+
         $self->id = $id; // we need to set the id temporary here for the basic example and will be replaced later.
-        
+
         return $self;
     }
 }
@@ -64,13 +64,14 @@ use Patchlevel\EventSourcing\Repository\Repository;
 final class CreateProfileHandler
 {
     public function __construct(
-        private readonly Repository $profileRepository
-    ) {}
-    
+        private readonly Repository $profileRepository,
+    ) {
+    }
+
     public function __invoke(CreateProfile $command): void
     {
         $profile = Profile::register($command->id());
-        
+
         $this->profileRepository->save($profile);
     }
 }
@@ -105,8 +106,9 @@ final class ProfileRegistered
     public function __construct(
         #[IdNormalizer]
         public readonly Uuid $profileId,
-        public readonly string $name
-    ) {}
+        public readonly string $name,
+    ) {
+    }
 }
 ```
 !!! note
@@ -120,8 +122,8 @@ After we have defined the event, we have to adapt the profile aggregate:
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -129,8 +131,8 @@ final class Profile extends BasicAggregateRoot
     #[Id]
     private Uuid $id;
     private string $name;
-    
-    public function name(): string 
+
+    public function name(): string
     {
         return $this->name;
     }
@@ -142,9 +144,9 @@ final class Profile extends BasicAggregateRoot
 
         return $self;
     }
-    
+
     #[Apply]
-    protected function applyProfileRegistered(ProfileRegistered $event): void 
+    protected function applyProfileRegistered(ProfileRegistered $event): void
     {
         $this->id = $event->profileId;
         $this->name = $event->name;
@@ -179,7 +181,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 final class NameChanged
 {
     public function __construct(
-        public readonly string $name
+        public readonly string $name,
     ) {
     }
 }
@@ -195,8 +197,8 @@ This method then creates the event `NameChanged` and records it:
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -205,7 +207,7 @@ final class Profile extends BasicAggregateRoot
     private Uuid $id;
     private string $name;
 
-    public function name(): string 
+    public function name(): string
     {
         return $this->name;
     }
@@ -217,19 +219,19 @@ final class Profile extends BasicAggregateRoot
 
         return $self;
     }
-    
-    public function changeName(string $name): void 
+
+    public function changeName(string $name): void
     {
         $this->recordThat(new NameChanged($name));
     }
-    
+
     #[Apply]
     protected function applyProfileRegistered(ProfileRegistered $event): void
     {
         $this->id = $event->profileId;
         $this->name = $event->name;
     }
-    
+
     #[Apply]
     protected function applyNameChanged(NameChanged $event): void
     {
@@ -243,23 +245,19 @@ where we change the name depending on the value in the event.
 When using it, it can look like this:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Repository\Repository;
 
 final class ChangeNameHandler
 {
-    private Repository $profileRepository;
-
-    public function __construct(Repository $profileRepository) 
+    public function __construct(private Repository $profileRepository)
     {
-        $this->profileRepository = $profileRepository;
     }
-    
+
     public function __invoke(ChangeName $command): void
     {
         $profile = $this->profileRepository->load($command->id());
         $profile->changeName($command->name());
-    
+
         $this->profileRepository->save($profile);
     }
 }
@@ -297,7 +295,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 final class Profile extends BasicAggregateRoot
 {
     // ...
-    
+
     #[Apply(ProfileCreated::class)]
     #[Apply(NameChanged::class)]
     protected function applyProfileCreated(ProfileCreated|NameChanged $event): void
@@ -305,7 +303,7 @@ final class Profile extends BasicAggregateRoot
         if ($event instanceof ProfileCreated) {
             $this->id = $event->profileId;
         }
-        
+
         $this->name = $event->name;
     }
 }
@@ -328,7 +326,7 @@ use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 final class Profile extends BasicAggregateRoot
 {
     // ...
-    
+
     #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
@@ -352,7 +350,7 @@ use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 final class Profile extends BasicAggregateRoot
 {
     // ...
-    
+
     #[Apply]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
@@ -386,18 +384,18 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 final class Profile extends BasicAggregateRoot
 {
     // ...
-    
-    public function changeName(string $name): void 
+
+    public function changeName(string $name): void
     {
         if (strlen($name) < 3) {
             throw new NameIsToShortException($name);
         }
-    
+
         $this->recordThat(new NameChanged($name));
     }
-    
+
     #[Apply]
-    protected function applyNameChanged(NameChanged $event): void 
+    protected function applyNameChanged(NameChanged $event): void
     {
         $this->name = $event->name();
     }
@@ -416,18 +414,14 @@ Here we show how we can do it all with a value object:
 ```php
 final class Name
 {
-    private string $value;
-    
-    public function __construct(string $value) 
+    public function __construct(private string $value)
     {
         if (strlen($value) < 3) {
             throw new NameIsToShortException($value);
         }
-        
-        $this->value = $value;
     }
-    
-    public function toString(): string 
+
+    public function toString(): string
     {
         return $this->value;
     }
@@ -439,8 +433,8 @@ We can now use the value object `Name` in our aggregate:
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -448,7 +442,7 @@ final class Profile extends BasicAggregateRoot
     #[Id]
     private Uuid $id;
     private Name $name;
-    
+
     public static function register(Uuid $id, Name $name): static
     {
         $self = new static();
@@ -456,21 +450,21 @@ final class Profile extends BasicAggregateRoot
 
         return $self;
     }
-    
+
     // ...
-    
-    public function name(): Name 
+
+    public function name(): Name
     {
         return $this->name;
     }
-    
-    public function changeName(Name $name): void 
+
+    public function changeName(Name $name): void
     {
         $this->recordThat(new NameChanged($name));
     }
-    
+
     #[Apply]
-    protected function applyNameChanged(NameChanged $event): void 
+    protected function applyNameChanged(NameChanged $event): void
     {
         $this->name = $event->name;
     }
@@ -487,8 +481,9 @@ final class NameChanged
 {
     public function __construct(
         #[NameNormalizer]
-        public readonly Name $name
-    ) {}
+        public readonly Name $name,
+    ) {
+    }
 }
 ```
 !!! warning
@@ -521,24 +516,26 @@ final class Hotel extends BasicAggregateRoot
     private const SIZE = 5;
 
     private int $people;
-    
+
     // ...
-    
-    public function book(string $name): void 
+
+    public function book(string $name): void
     {
         if ($this->people === self::SIZE) {
             throw new NoPlaceException($name);
         }
-        
+
         $this->recordThat(new RoomBocked($name));
-        
-        if ($this->people === self::SIZE) {
-            $this->recordThat(new FullyBooked());
+
+        if ($this->people !== self::SIZE) {
+            return;
         }
+
+        $this->recordThat(new FullyBooked());
     }
-    
+
     #[Apply]
-    protected function applyRoomBocked(RoomBocked $event): void 
+    protected function applyRoomBocked(RoomBocked $event): void
     {
         $this->people++;
     }
@@ -557,7 +554,6 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
-use Patchlevel\EventSourcing\Attribute\Apply;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -566,7 +562,7 @@ final class Profile extends BasicAggregateRoot
     private Uuid $id;
     private Name $name;
     private DateTimeImmutable $registeredAt;
-    
+
     public static function register(Uuid $id, string $name, DateTimeImmutable $registeredAt): static
     {
         $self = new static();
@@ -574,7 +570,7 @@ final class Profile extends BasicAggregateRoot
 
         return $self;
     }
-    
+
     // ...
 }
 ```
@@ -585,7 +581,6 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
-use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Clock\Clock;
 
 #[Aggregate('profile')]
@@ -595,7 +590,7 @@ final class Profile extends BasicAggregateRoot
     private Uuid $id;
     private Name $name;
     private DateTimeImmutable $registeredAt;
-    
+
     public static function register(Uuid $id, string $name, Clock $clock): static
     {
         $self = new static();
@@ -603,7 +598,7 @@ final class Profile extends BasicAggregateRoot
 
         return $self;
     }
-    
+
     // ...
 }
 ```
@@ -623,7 +618,7 @@ There is an `AggregateRootRegistry` for this purpose. The registry is a simple h
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 
 $aggregateRegistry = new AggregateRootRegistry([
-    'profile' => Profile::class
+    'profile' => Profile::class,
 ]);
 ```
 So that you don't have to create it by hand, you can use a factory.
@@ -632,9 +627,6 @@ There, with the help of paths, all classes with the attribute `Aggregate` are se
 and the `AggregateRootRegistry` is built up.
 
 ```php
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-
 $aggregateRegistry = (new AttributeEventRegistryFactory())->create($paths);
 ```
 ## Learn more

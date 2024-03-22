@@ -69,9 +69,9 @@ $message->headers();
 
 /*
 [
-    'aggregateName' => 'profile', 
-    'aggregateId' => '1', 
-    // {...}, 
+    'aggregateName' => 'profile',
+    'aggregateId' => '1',
+    // {...},
     'application-id' => 'app'
 ]
 */
@@ -88,9 +88,7 @@ The library also delivers a light-weight event bus for which you can register li
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 
-$eventBus = DefaultEventBus::create([
-    $mailListener,
-]);
+$eventBus = DefaultEventBus::create([$mailListener]);
 ```
 !!! note
 
@@ -105,9 +103,7 @@ The consumer is responsible for consuming the messages and calling the listeners
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 
-$consumer = DefaultConsumer::create([
-    $mailListener,
-]);
+$consumer = DefaultConsumer::create([$mailListener]);
 
 $consumer->consume($message);
 ```
@@ -119,16 +115,14 @@ The listener provider is responsible for finding all listeners for a specific ev
 The default listener provider uses attributes to find the listeners.
 
 ```php
+use Patchlevel\EventSourcing\EventBus\AttributeListenerProvider;
 use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\AttributeListenerProvider;
 
-$listenerProvider = new AttributeListenerProvider([
-    $mailListener,
-]);
+$listenerProvider = new AttributeListenerProvider([$mailListener]);
 
 $eventBus = new DefaultEventBus(
-    new DefaultConsumer($listenerProvider)
+    new DefaultConsumer($listenerProvider),
 );
 ```
 !!! tip
@@ -140,9 +134,8 @@ $eventBus = new DefaultEventBus(
 You can also use your own listener provider.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\ListenerProvider;
 use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
+use Patchlevel\EventSourcing\EventBus\ListenerProvider;
 
 $listenerProvider = new class implements ListenerProvider {
     public function listenersForEvent(string $eventClass): iterable
@@ -166,10 +159,9 @@ This listener is then called for all saved events / messages.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\Message\Message;
 
-final class WelcomeSubscriber 
+final class WelcomeSubscriber
 {
     #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(Message $message): void
@@ -188,10 +180,9 @@ If you want to listen on all events, you can pass `*` or `Subscribe::ALL` instea
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\Message\Message;
 
-final class WelcomeSubscriber 
+final class WelcomeSubscriber
 {
     #[Subscribe('*')]
     public function onProfileCreated(Message $message): void

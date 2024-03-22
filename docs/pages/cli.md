@@ -62,8 +62,10 @@ use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Symfony\Component\Console\Application;
 
-$store;/* define your doctrine store */;
-$projectionist;/* create projectionist */;
+$store;
+/* define your doctrine store */
+$projectionist;
+/* create projectionist */
 
 $cli = new Application('Event-Sourcing CLI');
 $cli->setCatchExceptions(true);
@@ -71,7 +73,7 @@ $cli->setCatchExceptions(true);
 $doctrineHelper = new DoctrineHelper();
 $schemaManager = new DoctrineSchemaManager();
 
-$cli->addCommands(array(
+$cli->addCommands([
     new Command\DatabaseCreateCommand($store, $doctrineHelper),
     new Command\DatabaseDropCommand($store, $doctrineHelper),
     new Command\SubscriptionBootCommand($projectionist),
@@ -86,7 +88,7 @@ $cli->addCommands(array(
     new Command\SchemaCreateCommand($store, $schemaManager),
     new Command\SchemaDropCommand($store, $schemaManager),
     new Command\SchemaUpdateCommand($store, $schemaManager),
-));
+]);
 
 $cli->run();
 ```
@@ -95,12 +97,9 @@ $cli->run();
 If you want to use doctrine migrations, you can register the commands like this:
 
 ```php
-use Doctrine\DBAL\DriverManager;
-use Doctrine\Migrations\DependencyFactory;
-use Doctrine\Migrations\Configuration\Migration\PhpFile;
 use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
+use Doctrine\Migrations\DependencyFactory;
 use Doctrine\Migrations\Tools\Console\Command;
-use Symfony\Component\Console\Application;
 use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
@@ -109,24 +108,24 @@ $store; /* define your doctrine store */
 
 $schemaDirector = new DoctrineSchemaDirector(
     $store,
-    $connection
+    $connection,
 );
 
 $migrationConfig; /* define your migration config */
 
 
 $dependencyFactory = DependencyFactory::fromConnection(
-    $migrationConfig, 
-    new ExistingConnection($connection)
+    $migrationConfig,
+    new ExistingConnection($connection),
 );
 
 
 $dependencyFactory->setService(
-    SchemaProvider::class, 
-    new DoctrineMigrationSchemaProvider($schemaDirector)
+    SchemaProvider::class,
+    new DoctrineMigrationSchemaProvider($schemaDirector),
 );
 
-$cli->addCommands([    
+$cli->addCommands([
     new Command\ExecuteCommand($dependencyFactory, 'event-sourcing:migrations:execute'),
     new Command\GenerateCommand($dependencyFactory, 'event-sourcing:migrations:generate'),
     new Command\LatestCommand($dependencyFactory, 'event-sourcing:migrations:latest'),

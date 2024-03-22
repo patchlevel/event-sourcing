@@ -40,13 +40,19 @@ foreach ($finder as $file) {
     /**
      * @var FencedCode $node
      */
-    foreach ($result as $node) {
+    foreach ($result as $i => $node) {
         if ($node->getInfo() !== 'php') {
             $node->setLiteral(trim($node->getLiteral()));
             continue;
         }
 
-        $targetPath = $targetDir . '/' . $fileName . '_' . $node->getStartLine() . '.php';
+        $targetPath = $targetDir . '/' . $fileName . '_' . $i . '.php';
+
+        if (!file_exists($targetPath)) {
+            $node->setLiteral(trim($node->getLiteral()));
+            continue;
+        }
+
         $code = file_get_contents($targetPath);
 
         $lines = explode("\n", $code);

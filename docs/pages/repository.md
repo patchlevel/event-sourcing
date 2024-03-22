@@ -24,7 +24,7 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
-    $eventBus
+    $eventBus,
 );
 
 $repository = $repositoryManager->get(Profile::class);
@@ -46,15 +46,13 @@ use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 
 $adapter = new Psr16SnapshotAdapter($cache);
-$snapshotStore = new DefaultSnapshotStore([
-    'default' => $adapter
-]);
+$snapshotStore = new DefaultSnapshotStore(['default' => $adapter]);
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
     $eventBus,
-    $snapshotStore
+    $snapshotStore,
 );
 
 $repository = $repositoryManager->get(Profile::class);
@@ -77,7 +75,7 @@ $repositoryManager = new DefaultRepositoryManager(
     $store,
     $eventBus,
     null,
-    $decorator
+    $decorator,
 );
 
 $repository = $repositoryManager->get(Profile::class);
@@ -144,7 +142,7 @@ It is checked whether any event with this id exists in the database.
 ```php
 $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
 
-if($repository->has($id)) {
+if ($repository->has($id)) {
     // ...
 }
 ```
@@ -167,27 +165,27 @@ This also gives you more type security.
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 
-class ProfileRepository 
+class ProfileRepository
 {
     /** @var Repository<Profile>  */
     private Repository $repository;
 
-    public function __construct(RepositoryManager $repositoryManager) 
+    public function __construct(RepositoryManager $repositoryManager)
     {
         $this->repository = $repositoryManager->get(Profile::class);
     }
-    
-    public function load(ProfileId $id): Profile 
+
+    public function load(ProfileId $id): Profile
     {
         return $this->repository->load($id);
     }
-    
-    public function save(Profile $profile): void 
+
+    public function save(Profile $profile): void
     {
         $this->repository->save($profile);
     }
-    
-    public function has(ProfileId $id): bool 
+
+    public function has(ProfileId $id): bool
     {
         return $this->repository->has($id);
     }

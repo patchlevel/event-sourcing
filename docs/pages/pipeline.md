@@ -26,7 +26,7 @@ $pipeline = new Pipeline(
             return new NewVisited($oldVisited->profileId());
         }),
         new RecalculatePlayheadMiddleware(),
-    ]
+    ],
 );
 ```
 !!! danger
@@ -92,16 +92,14 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Source\Source;
 
 $source = new class implements Source {
-    /**
-     * @return Generator<Message>
-     */
+    /** @return Generator<Message> */
     public function load(): Generator
     {
         yield new Message(
             Profile::class,
             '1',
-            0, 
-            new ProfileCreated('1', ['name' => 'David'])
+            0,
+            new ProfileCreated('1', ['name' => 'David']),
         );
     }
 
@@ -174,11 +172,8 @@ use Patchlevel\EventSourcing\Message\Message;
 
 final class OtherStoreTarget implements Target
 {
-    private OtherStore $store;
-
-    public function __construct(OtherStore $store)
+    public function __construct(private OtherStore $store)
     {
-        $this->store = $store;
     }
 
     public function save(Message $message): void
@@ -233,11 +228,11 @@ This middleware expects a callback that returns either true to allow events or f
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Pipeline\Middleware\FilterEventMiddleware;
 
-$middleware = new FilterEventMiddleware(function (AggregateChanged $event) {
+$middleware = new FilterEventMiddleware(static function (AggregateChanged $event) {
     if (!$event instanceof ProfileCreated) {
         return true;
     }
-    
+
     return $event->allowNewsletter();
 });
 ```
@@ -250,9 +245,24 @@ $middleware = new FilterEventMiddleware(function (AggregateChanged $event) {
 With this middleware you can exclude archived events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeArchivedEventMiddleware;
+use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
+use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
+use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
+use Patchlevel\EventSourcing\Pipeline\Pipeline;
+use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
+use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 
-$middleware = new ExcludeArchivedEventMiddleware();
+$pipeline = new Pipeline(
+    new StoreSource($oldStore),
+    new StoreTarget($newStore),
+    [
+        new ExcludeEventMiddleware([PrivacyAdded::class]),
+        new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
+            return new NewVisited($oldVisited->profileId());
+        }),
+        new RecalculatePlayheadMiddleware(),
+    ],
+);
 ```
 !!! warning
 
@@ -294,8 +304,6 @@ A use case could also be that you want to look at the projection from a previous
 You can use the `UntilEventMiddleware` to only allow events that were `recorded` before this point in time.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ClassRenameMiddleware;
-
 $middleware = new UntilEventMiddleware(new DateTimeImmutable('2020-01-01 12:00:00'));
 ```
 !!! warning
@@ -328,7 +336,7 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 
 $middleware = new ChainMiddleware([
     new ExcludeEventMiddleware([EmailChanged::class]),
-    new RecalculatePlayheadMiddleware()
+    new RecalculatePlayheadMiddleware(),
 ]);
 ```
 ### Custom middleware
@@ -355,23 +363,23 @@ final class SplitProfileCreatedMiddleware implements Middleware
     public function __invoke(Message $message): array
     {
         $event = $message->event();
-        
+
         if (!$event instanceof ProfileCreated) {
             return [$message];
         }
-        
+
         $profileRegisteredMessage = Message::createWithHeaders(
-            new ProfileRegistered($event->id(), $event->name()), 
-            $message->headers()
+            new ProfileRegistered($event->id(), $event->name()),
+            $message->headers(),
         );
-        
+
         $profileActivatedMessage = Message::createWithHeaders(
-            new ProfileActivated($event->id()), 
-            $message->headers()
+            new ProfileActivated($event->id()),
+            $message->headers(),
         );
 
         return [$profileRegisteredMessage, $profileActivatedMessage];
-    }    
+    }
 }
 ```
 !!! warning

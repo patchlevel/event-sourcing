@@ -18,7 +18,6 @@ You can use it like this:
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
@@ -58,7 +57,6 @@ This is a value object that holds any string.
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\CustomId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
@@ -94,16 +92,16 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 class ProfileId implements AggregateRootId
 {
     private function __construct(
-        private readonly string $id
-    ){
+        private readonly string $id,
+    ) {
     }
 
-    public function toString(): string 
+    public function toString(): string
     {
         return $this->id;
     }
 
-    public static function fromString(string $id): self 
+    public static function fromString(string $id): self
     {
         return new self($id);
     }
@@ -114,7 +112,6 @@ So you can use it like this:
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
@@ -137,7 +134,6 @@ Here for the uuid:
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Aggregate\RamseyUuidBehaviour;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 
 class ProfileId implements AggregateRootId
 {

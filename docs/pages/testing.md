@@ -15,30 +15,30 @@ final class ProfileTest extends TestCase
         $profile = Profile::createProfile($id, Email::fromString('foo@email.com'));
 
         self::assertEquals(
-            $profile->releaseEvents(), 
+            $profile->releaseEvents(),
             [
-                new ProfileCreated($id, Email::fromString('foo@email.com')),        
-            ]
+                new ProfileCreated($id, Email::fromString('foo@email.com')),
+            ],
         );
 
         self::assertEquals('foo@email.com', $profile->email()->toString());
     }
-    
+
     public function testChangeName(): void
     {
         $id = ProfileId::generate();
-        
+
         $profile = Profile::createFromEvents([
             new ProfileCreated($id, Email::fromString('foo@email.com')),
         ]);
-        
+
         $profile->changeEmail(Email::fromString('bar@email.com'));
-        
+
         self::assertEquals(
-            $profile->releaseEvents(), 
+            $profile->releaseEvents(),
             [
-                new EmailChanged(Email::fromString('bar@email.com')),        
-            ]
+                new EmailChanged(Email::fromString('bar@email.com')),
+            ],
         );
 
         self::assertEquals('bar@email.com', $profile->email()->toString());

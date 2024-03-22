@@ -19,7 +19,7 @@ final class HotelCreated
     public function __construct(
         #[IdNormalizer]
         public readonly Uuid $hotelId,
-        public readonly string $hotelName
+        public readonly string $hotelName,
     ) {
     }
 }
@@ -31,7 +31,7 @@ A guest can check in by `name`:
 final class GuestIsCheckedIn
 {
     public function __construct(
-        public readonly string $guestName
+        public readonly string $guestName,
     ) {
     }
 }
@@ -43,7 +43,7 @@ And also check out again:
 final class GuestIsCheckedOut
 {
     public function __construct(
-        public readonly string $guestName
+        public readonly string $guestName,
     ) {
     }
 }
@@ -61,12 +61,11 @@ In these methods the business checks are made and the events are recorded.
 Last but not least, we need the associated apply methods to change the state.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
 
 #[Aggregate('hotel')]
 final class Hotel extends BasicAggregateRoot
@@ -74,10 +73,8 @@ final class Hotel extends BasicAggregateRoot
     #[Id]
     private Uuid $id;
     private string $name;
-    
-    /**
-     * @var list<string>
-     */
+
+    /** @var list<string> */
     private array $guests;
 
     public function name(): string
@@ -103,41 +100,41 @@ final class Hotel extends BasicAggregateRoot
         if (in_array($guestName, $this->guests, true)) {
             throw new GuestHasAlreadyCheckedIn($guestName);
         }
-    
+
         $this->recordThat(new GuestIsCheckedIn($guestName));
     }
-    
+
     public function checkOut(string $guestName): void
     {
         if (!in_array($guestName, $this->guests, true)) {
             throw new IsNotAGuest($guestName);
         }
-    
+
         $this->recordThat(new GuestIsCheckedOut($guestName));
     }
-    
+
     #[Apply]
-    protected function applyHotelCreated(HotelCreated $event): void 
+    protected function applyHotelCreated(HotelCreated $event): void
     {
         $this->id = $event->hotelId;
         $this->name = $event->hotelName;
-        $this->guests = [];    
+        $this->guests = [];
     }
-    
+
     #[Apply]
-    protected function applyGuestIsCheckedIn(GuestIsCheckedIn $event): void 
+    protected function applyGuestIsCheckedIn(GuestIsCheckedIn $event): void
     {
         $this->guests[] = $event->guestName;
     }
-    
+
     #[Apply]
-    protected function applyGuestIsCheckedOut(GuestIsCheckedOut $event): void 
+    protected function applyGuestIsCheckedOut(GuestIsCheckedOut $event): void
     {
         $this->guests = array_values(
             array_filter(
                 $this->guests,
-                fn ($name) => $name !== $event->guestName
-            )
+                static fn ($name) => $name !== $event->guestName,
+            ),
         );
     }
 }
@@ -167,14 +164,12 @@ final class HotelProjector
     use SubscriberUtil;
 
     public function __construct(
-        private readonly Connection $db
+        private readonly Connection $db,
     ) {
     }
-    
-    /**
-     * @return list<array{id: string, name: string, guests: int}>
-     */
-    public function getHotels(): array 
+
+    /** @return list<array{id: string, name: string, guests: int}> */
+    public function getHotels(): array
     {
         return $this->db->fetchAllAssociative("SELECT id, name, guests FROM {$this->table()};");
     }
@@ -183,35 +178,35 @@ final class HotelProjector
     public function handleHotelCreated(Message $message): void
     {
         $event = $message->event();
-    
+
         $this->db->insert(
-            $this->table(), 
+            $this->table(),
             [
-                'id' => $message->aggregateId(), 
+                'id' => $message->aggregateId(),
                 'name' => $event->hotelName,
-                'guests' => 0
-            ]
+                'guests' => 0,
+            ],
         );
     }
-    
+
     #[Subscribe(GuestIsCheckedIn::class)]
     public function handleGuestIsCheckedIn(Message $message): void
     {
         $this->db->executeStatement(
             "UPDATE {$this->table()} SET guests = guests + 1 WHERE id = ?;",
-            [$message->aggregateId()]
+            [$message->aggregateId()],
         );
     }
-    
+
     #[Subscribe(GuestIsCheckedOut::class)]
     public function handleGuestIsCheckedOut(Message $message): void
     {
         $this->db->executeStatement(
             "UPDATE {$this->table()} SET guests = guests - 1 WHERE id = ?;",
-            [$message->aggregateId()]
+            [$message->aggregateId()],
         );
     }
-    
+
     #[Setup]
     public function create(): void
     {
@@ -223,7 +218,7 @@ final class HotelProjector
     {
         $this->db->executeStatement("DROP TABLE IF EXISTS {$this->table()};");
     }
-    
+
     private function table(): string
     {
         return 'projection_' . $this->subscriberId();
@@ -247,7 +242,7 @@ use Patchlevel\EventSourcing\Message\Message;
 final class SendCheckInEmailProcessor
 {
     public function __construct(
-        private readonly Mailer $mailer
+        private readonly Mailer $mailer,
     ) {
     }
 
@@ -257,7 +252,7 @@ final class SendCheckInEmailProcessor
         $this->mailer->send(
             'hq@patchlevel.de',
             'Guest is checked in',
-            sprintf('A new guest named "%s" is checked in', $message->event()->guestName)
+            sprintf('A new guest named "%s" is checked in', $message->event()->guestName),
         );
     }
 }
@@ -274,24 +269,20 @@ After we have defined everything, we still have to plug the whole thing together
 use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Projection\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Projection\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Projection\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 
-$connection = DriverManager::getConnection([
-    'url' => 'mysql://user:secret@localhost/app'
-]);
+$connection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/app']);
 
-$projectionConnection = DriverManager::getConnection([
-    'url' => 'mysql://user:secret@localhost/projection'
-]);
+$projectionConnection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/projection']);
 
 $mailer;
 
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
-$aggregateRegistry = (new AttributeAggregateRootRegistryFactory)->create(['src/Domain/Hotel']);
+$aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create(['src/Domain/Hotel']);
 
 $eventStore = new DoctrineDbalStore(
     $connection,
@@ -341,8 +332,8 @@ $schemaDirector = new DoctrineSchemaDirector(
     $connection,
     new ChainDoctrineSchemaConfigurator([
         $eventStore,
-        $projectionStore
-    ])
+        $projectionStore,
+    ]),
 );
 
 $schemaDirector->create();
