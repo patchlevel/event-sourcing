@@ -32,11 +32,10 @@ $message = Message::create(new NameChanged('foo'))
 
 $eventBus->dispatch($message);
 ```
-
 !!! note
 
     The message object is immutable.
-
+    
 You don't have to create the message yourself, it is automatically created, saved and dispatched in
 the [repository](repository.md).
 
@@ -52,11 +51,10 @@ $message = Message::create(new NameChanged('foo'))
     // ...
     ->withHeader('application-id', 'app');
 ```
-
 !!! note
 
     You can read about how to pass additional headers to the message object in the [message decorator](message_decorator.md) docs.
-
+    
 You can also access your custom headers. For this case there is also a method to only retrieve the headers which are not
 used internally.
 
@@ -64,24 +62,23 @@ used internally.
 $message->header('application-id'); // app
 $message->customHeaders(); // ['application-id' => 'app']
 ```
-
 If you want *all* the headers you can also retrieve them.
 
 ```php
-$message->headers(); 
-// results in:
+$headers = $message->headers();
+/*
 [
-    'aggregateName' => 'profile', 
-    'aggregateId' => '1', 
-    // {...}, 
+    'aggregateName' => 'profile',
+    'aggregateId' => '1',
+    // {...},
     'application-id' => 'app'
 ]
+*/
 ```
-
 !!! warning
 
     Relying on internal meta data could be dangerous as they could be changed. So be cautios if you want to implement logic on them.
-
+    
 ## Event Bus
 
 The event bus is responsible for dispatching the messages to the listeners.
@@ -90,15 +87,12 @@ The library also delivers a light-weight event bus for which you can register li
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 
-$eventBus = DefaultEventBus::create([
-    $mailListener,
-]);
+$eventBus = DefaultEventBus::create([$mailListener]);
 ```
-
 !!! note
 
     The order in which the listeners are executed is determined by the order in which they are passed to the factory.
-
+    
 Internally, the event bus uses the `Consumer` to consume the messages and call the listeners.
 
 ## Consumer
@@ -108,13 +102,10 @@ The consumer is responsible for consuming the messages and calling the listeners
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 
-$consumer = DefaultConsumer::create([
-    $mailListener,
-];
+$consumer = DefaultConsumer::create([$mailListener]);
 
 $consumer->consume($message);
 ```
-
 Internally, the consumer uses the `ListenerProvider` to find the listeners for the message.
 
 ## Listener provider
@@ -123,31 +114,27 @@ The listener provider is responsible for finding all listeners for a specific ev
 The default listener provider uses attributes to find the listeners.
 
 ```php
+use Patchlevel\EventSourcing\EventBus\AttributeListenerProvider;
 use Patchlevel\EventSourcing\EventBus\DefaultConsumer;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\AttributeListenerProvider;
 
-$listenerProvider = new AttributeListenerProvider([
-    $mailListener,
-]);
+$listenerProvider = new AttributeListenerProvider([$mailListener]);
 
 $eventBus = new DefaultEventBus(
-    new DefaultConsumer($listenerProvider)
+    new DefaultConsumer($listenerProvider),
 );
 ```
-
 !!! tip
 
     The `DefaultEventBus::create` method uses the `DefaultConsumer` and `AttributeListenerProvider` by default.
-
+    
 ### Custom listener provider
 
 You can also use your own listener provider.
 
 ```php
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\ListenerProvider;
 use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
+use Patchlevel\EventSourcing\EventBus\ListenerProvider;
 
 $listenerProvider = new class implements ListenerProvider {
     public function listenersForEvent(string $eventClass): iterable
@@ -160,11 +147,10 @@ $listenerProvider = new class implements ListenerProvider {
     }
 };
 ```
-
 !!! tip
 
     You can use `$listenerDiscriptor->name()` to get the name of the listener.
-
+    
 ## Listener
 
 You can listen for specific events with the attribute `Subscribe`.
@@ -172,10 +158,9 @@ This listener is then called for all saved events / messages.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\Message\Message;
 
-final class WelcomeSubscriber 
+final class WelcomeSubscriber
 {
     #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(Message $message): void
@@ -184,21 +169,19 @@ final class WelcomeSubscriber
     }
 }
 ```
-
 !!! tip
 
     If you use psalm, you can use the [event sourcing plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) for better type support.
-
+    
 ### Listen on all events
 
 If you want to listen on all events, you can pass `*` or `Subscribe::ALL` instead of the event class.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\EventBus\Listener;
 use Patchlevel\EventSourcing\Message\Message;
 
-final class WelcomeSubscriber 
+final class WelcomeSubscriber
 {
     #[Subscribe('*')]
     public function onProfileCreated(Message $message): void
@@ -207,7 +190,6 @@ final class WelcomeSubscriber
     }
 }
 ```
-
 ## Psr-14 Event Bus
 
 You can also use a [psr-14](https://www.php-fig.org/psr/psr-14/) compatible event bus.
@@ -219,12 +201,10 @@ use Patchlevel\EventSourcing\EventBus\Psr14EventBus;
 
 $eventBus = new Psr14EventBus($psr14EventDispatcher);
 ```
-
 !!! warning
 
     You can't use the `Subscribe` attribute with the psr-14 event bus.
-
-
+    
 ## Learn more
 
 * [How to decorate messages](message_decorator.md)

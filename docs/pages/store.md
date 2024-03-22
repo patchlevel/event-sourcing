@@ -6,7 +6,7 @@ Each message contains an event and the associated headers.
 !!! note
 
     More information about the message can be found [here](event_bus.md).
-
+    
 The store is optimized to efficiently store and load events for aggregates.
 We currently only offer one [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html) store.
 
@@ -17,16 +17,13 @@ The first thing we need for our store is a DBAL connection:
 ```php
 use Doctrine\DBAL\DriverManager;
 
-$connection = DriverManager::getConnection([
-    'url' => 'mysql://user:secret@localhost/app'
-]);
+$connection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/app']);
 ```
-
 !!! note
 
     You can find out more about how to create a connection 
     [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
-
+    
 ## Configure Store
 
 You can create a store with the `DoctrineDbalStore` class.
@@ -41,12 +38,11 @@ $store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths(['src/Event']),
     new AggregateRootRegistry([
-        'profile' => Profile::class
+        'profile' => Profile::class,
     ]),
-    'eventstore'
+    'eventstore',
 );
 ```
-
 ## Schema
 
 The table structure of the `DoctrineDbalStore` looks like this:
@@ -69,7 +65,7 @@ With the help of the `SchemaDirector`, the database structure can be created, up
 !!! tip
 
     You can also use doctrine [migration](migration.md) to create and keep your schema in sync.
-
+    
 ### Schema Director
 
 The `SchemaDirector` is responsible for creating, updating and deleting the database schema.
@@ -81,14 +77,13 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
-    $store
+    $store,
 );
 ```
-
 !!! note
 
     How to setup cli commands for schema director can be found [here](cli.md).
-
+    
 #### Create schema
 
 You can create the table from scratch using the `create` method.
@@ -96,14 +91,12 @@ You can create the table from scratch using the `create` method.
 ```php
 $schemaDirector->create();
 ```
-
 Or can give you back which SQL statements would be necessary for this.
 Either for a dry run, or to define your own migrations.
 
 ```php
 $sql = $schemaDirector->dryRunCreate();
 ```
-
 #### Update schema
 
 The update method compares the current state in the database and how the table should be structured.
@@ -112,13 +105,11 @@ As a result, the diff is executed to bring the table to the desired state.
 ```php
 $schemaDirector->update();
 ```
-
 Or can give you back which SQL statements would be necessary for this.
 
 ```php
 $sql = $schemaDirector->dryRunUpdate();
 ```
-
 #### Drop schema
 
 You can also delete the table with the `drop` method.
@@ -126,13 +117,11 @@ You can also delete the table with the `drop` method.
 ```php
 $schemaDirector->drop();
 ```
-
 Or can give you back which SQL statements would be necessary for this.
 
 ```php
 $sql = $schemaDirector->dryRunDrop();
 ```
-
 ### Doctrine Migrations
 
 You can use [doctrine migration](https://www.doctrine-project.org/projects/migrations.html),
@@ -149,7 +138,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
 $schemaDirector = new DoctrineSchemaDirector(
     $store,
-    $connection
+    $connection,
 );
 
 $schemaProvider = new DoctrineMigrationSchemaProvider($schemaDirector);
@@ -157,25 +146,24 @@ $schemaProvider = new DoctrineMigrationSchemaProvider($schemaDirector);
 // doctrine migration configuration
 
 $dependencyFactory = DependencyFactory::fromConnection(
-    $config, 
-    new ExistingConnection($connection)
+    $config,
+    new ExistingConnection($connection),
 );
 
 $dependencyFactory->setService(
-    SchemaProvider::class, 
-    $schemaProvider
+    SchemaProvider::class,
+    $schemaProvider,
 );
 ```
-
 !!! note
 
     Here you can find more information on how to 
     [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
-
+    
 !!! note
 
     How to setup cli commands for doctrine migration can be found [here](cli.md).
-
+    
 ## Usage
 
 The store has a few methods to interact with the database.
@@ -188,20 +176,18 @@ This method returns a `Stream` object, which is a collection of events.
 ```php
 $stream = $store->load();
 ```
-
 The load method also has a few parameters to filter, limit and sort the events.
 
 ```php
 use Patchlevel\EventSourcing\Store\Criteria;
 
 $stream = $store->load(
-    new Criteria() // filter criteria
-    100 // limit
+    new Criteria(), // filter criteria
+    100, // limit
     50, // offset
     true,  // latest first
 );
 ```
-
 #### Criteria
 
 The `Criteria` object is used to filter the events.
@@ -217,11 +203,10 @@ $criteria = new Criteria(
     archived: true,
 );
 ```
-
 !!! note
 
     The individual criteria must all apply, but not all of them have to be set.
-
+    
 #### Stream
 
 The load method returns a `Stream` object and is a generator.
@@ -241,16 +226,15 @@ foreach ($stream as $message) {
     $message->event(); // get the event
 }
 ```
-
 !!! note
 
     You can find more information about the `Message` object [here](event_bus.md).
-
+    
 !!! warning
 
     The stream cannot rewind, so you can only iterate over it once.
     If you want to iterate over it again, you have to call the `load` method again.
-
+    
 ### Count
 
 You can count the number of events in the store with the `count` method.
@@ -258,17 +242,15 @@ You can count the number of events in the store with the `count` method.
 ```php
 $count = $store->count();
 ```
-
 The count method also has the possibility to filter the events.
 
 ```php
 use Patchlevel\EventSourcing\Store\Criteria;
 
 $count = $store->count(
-    new Criteria() // filter criteria
+    new Criteria(), // filter criteria
 );
 ```
-
 ### Save
 
 You can save a message with the `save` method.
@@ -278,11 +260,10 @@ $store->save($message);
 $store->save($message1, $message2, $message3);
 $store->save(...$messages);
 ```
-
 !!! note
 
     The saving happens in a transaction, so all messages are saved or none.    
-
+    
 ### Delete & Update
 
 It is not possible to delete or update events.
@@ -294,15 +275,14 @@ There is also the possibility of executing a function in a transaction.
 Then dbal takes care of starting a transaction, committing it and then possibly rollback it again.
 
 ```php
-$store->transactional(function () use ($command, $bankAccountRepository) {
+$store->transactional(static function () use ($command, $bankAccountRepository): void {
     $accountFrom = $bankAccountRepository->get($command->from());
     $accountTo = $bankAccountRepository->get($command->to());
-    
+
     $accountFrom->transferMoney($command->to(), $command->amount());
     $accountTo->receiveMoney($command->from(), $command->amount());
-    
+
     $bankAccountRepository->save($accountFrom);
     $bankAccountRepository->save($accountTo);
 });
 ```
-

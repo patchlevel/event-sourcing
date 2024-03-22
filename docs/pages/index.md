@@ -21,7 +21,6 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 ```bash
 composer require patchlevel/event-sourcing
 ```
-
 ## Integration
 
 * [Symfony](https://github.com/patchlevel/event-sourcing-bundle)
@@ -30,3 +29,4 @@ composer require patchlevel/event-sourcing
 !!! tip
 
     Start with the [quickstart](./getting_started.md) to get a feeling for the library.
+    

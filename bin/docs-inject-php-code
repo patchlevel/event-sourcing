@@ -1,0 +1,70 @@
+#!/usr/bin/env php
+<?php
+
+use League\CommonMark\Environment\Environment;
+use League\CommonMark\Extension\CommonMark\Node\Block\FencedCode;
+use League\CommonMark\Node\Query;
+use League\CommonMark\Parser\MarkdownParser;
+use Wnx\CommonmarkMarkdownRenderer\MarkdownRendererExtension;
+use Wnx\CommonmarkMarkdownRenderer\Renderer\MarkdownRenderer;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+
+
+$environment = new Environment([]);
+$environment->addExtension(new MarkdownRendererExtension());
+
+$parser = new MarkdownParser($environment);
+$markdownRenderer = new MarkdownRenderer($environment);
+
+$targetDir = __DIR__ . '/../docs_php';
+
+if (!file_exists($targetDir)) {
+    exit(1);
+}
+
+$finder = new Symfony\Component\Finder\Finder();
+$finder->files()->in(__DIR__ . '/../docs/pages')->name('*.md');
+
+foreach ($finder as $file) {
+    $fileName = pathinfo($file->getBasename(), PATHINFO_FILENAME);
+
+    $content = file_get_contents($file->getPathname());
+    $document = $parser->parse($content);
+
+    $result = (new Query())
+        ->where(Query::type(FencedCode::class))
+        ->findAll($document);
+
+    /**
+     * @var FencedCode $node
+     */
+    foreach ($result as $i => $node) {
+        if ($node->getInfo() !== 'php') {
+            $node->setLiteral(trim($node->getLiteral()));
+            continue;
+        }
+
+        $targetPath = $targetDir . '/' . $fileName . '_' . $i . '.php';
+
+        if (!file_exists($targetPath)) {
+            $node->setLiteral(trim($node->getLiteral()));
+            continue;
+        }
+
+        $code = file_get_contents($targetPath);
+
+        $lines = explode("\n", $code);
+        array_splice($lines, 0, 2);
+        $code = implode("\n", $lines);
+
+        $node->setLiteral(trim($code));
+    }
+
+    file_put_contents($file->getPathname(), $markdownRenderer->renderDocument($document));
+}
+
+if (file_exists($targetDir)) {
+    exec('rm -rf ' . $targetDir);
+}

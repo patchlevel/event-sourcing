@@ -23,16 +23,15 @@ final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
         if ($upcast->eventName !== 'profile_created') {
             return $upcast;
         }
-        
-        return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']);
+
+        return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']));
     }
 }
 ```
-
 !!! warning
 
     You need to consider that other events are passed to the Upcaster. So and early out is here endorsed.
-
+    
 ## Adjust event name
 
 For the upgrade to 2.0.0 this feature is also really handy since we adjusted the event value from FQCN to an unique
@@ -41,27 +40,27 @@ the upgrade path.
 
 ```php
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
-use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
 
 final class LegacyEventNameUpaster implements Upcaster
 {
     public function __construct(
-        private readonly EventRegistry $eventRegistry
-    ){}
-    
+        private readonly EventRegistry $eventRegistry,
+    ) {
+    }
+
     public function __invoke(Upcast $upcast): Upcast
     {
         return $upcast->replaceEventName(
-            $this->eventRegistry->eventName($upcast->eventName)
+            $this->eventRegistry->eventName($upcast->eventName),
         );
     }
 }
 ```
-
 ## Use upcasting
 
-After we have defined the upcasting rules, we also have to pass the whole thing to the serializer. 
+After we have defined the upcasting rules, we also have to pass the whole thing to the serializer.
 Since we have multiple upcasters, we use a chain here.
 
 ```php
@@ -70,15 +69,14 @@ use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
 
 $upcaster = new UpcasterChain([
     new ProfileCreatedEmailLowerCastUpcaster(),
-    new LegacyEventNameUpaster($eventRegistry)
+    new LegacyEventNameUpaster($eventRegistry),
 ]);
 
 $serializer = DefaultEventSerializer::createFromPaths(
     ['src/Domain'],
-    $upcaster
+    $upcaster,
 );
 ```
-
 ## Update event stream
 
 But what if we need it also in our stream because some other applications has also access on it? Or want to cleanup our
@@ -92,27 +90,30 @@ final class EventStreamCleanupCommand extends Command
     protected static $defaultDescription = 'rebuild event stream';
 
     public function __construct(
-        private readonly Store $sourceStore, 
-        private readonly Store $targetStore, 
-    ){
+        private readonly Store $sourceStore,
+        private readonly Store $targetStore,
+    ) {
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $pipeline = new Pipeline(
-            new StoreSource($sourceStore), 
-            new StoreTarget($targetStore)
+            new StoreSource($sourceStore),
+            new StoreTarget($targetStore),
         );
-        
-        $pipeline->run();
-    }
-```
 
+        $pipeline->run();
+
+        return Command::SUCCESS;
+    }
+}
+```
 !!! danger
 
     Under no circumstances may the same store be used that is used for the source. 
     Otherwise the store will be broken afterwards!
-
+    
 !!! note
 
     You can find out more about the pipeline [here](pipeline.md).
+    

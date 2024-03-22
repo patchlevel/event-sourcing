@@ -2,7 +2,7 @@
 
 There are use-cases where you want to add some extra context to your events like metadata which is not directly relevant
 for your domain. With `MessageDecorator` we are providing a solution to add this metadata to your events. The metadata
-will also be persisted in the database and can be retrieved later on. 
+will also be persisted in the database and can be retrieved later on.
 
 ## Built-in decorator
 
@@ -19,7 +19,6 @@ use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 $eventMetadataFactory = new AttributeEventMetadataFactory();
 $decorator = new SplitStreamDecorator($eventMetadataFactory);
 ```
-
 ### ChainMessageDecorator
 
 To use multiple decorators at the same time, you can use the `ChainMessageDecorator`.
@@ -32,10 +31,9 @@ $decorator = new ChainMessageDecorator([
     $decorator2,
 ]);
 ```
-
 ## Use decorator
 
-To use the message decorator, you have to pass it to the `DefaultRepositoryManager`, 
+To use the message decorator, you have to pass it to the `DefaultRepositoryManager`,
 which will then pass it to all Repositories.
 
 ```php
@@ -43,25 +41,22 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 
-$decorator = new ChainMessageDecorator([
-    new SplitStreamDecorator($eventMetadataFactory)  
-]);
+$decorator = new ChainMessageDecorator([new SplitStreamDecorator($eventMetadataFactory)]);
 
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
     $eventBus,
     null,
-    $decorator
+    $decorator,
 );
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-
 !!! note
 
     You can find out more about repository [here](repository).
-
+    
 ## Create own decorator
 
 You can also use this feature to add your own metadata to your events. For this the have an extra methods on `Message`
@@ -77,17 +72,16 @@ final class OnSystemRecordedDecorator implements MessageDecorator
     {
         return $message->withHeader('system', 'accounting_system');
     }
-} 
+}
 ```
-
 !!! note
 
     The Message is immutable, for more information look up [here](event_bus.md#message).
-
+    
 !!! tip
 
     You can also set multiple headers with `withHeaders` which expects an hashmap.
-
+    
 ## Learn more
 
 * [How to define events](events.md)

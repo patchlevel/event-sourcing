@@ -26,7 +26,7 @@ The database schema can also be created, updated and dropped.
 !!! note
 
     You can also register doctrine migration commands.
-
+    
 ## Subscription commands
 
 To manage your subscriptions there are the following cli commands.
@@ -43,7 +43,7 @@ To manage your subscriptions there are the following cli commands.
 !!! note
 
     You can find out more about subscriptions [here](subscription.md).
-
+    
 ## Inspector commands
 
 The inspector is a tool to inspect the event streams.
@@ -62,8 +62,11 @@ use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
 use Symfony\Component\Console\Application;
 
-$store = /* define your doctrine store */;
-$projectionist = /* create projectionist */;
+/* define your doctrine store */
+$store;
+
+/* create projectionist */
+$projectionist;
 
 $cli = new Application('Event-Sourcing CLI');
 $cli->setCatchExceptions(true);
@@ -71,7 +74,7 @@ $cli->setCatchExceptions(true);
 $doctrineHelper = new DoctrineHelper();
 $schemaManager = new DoctrineSchemaManager();
 
-$cli->addCommands(array(
+$cli->addCommands([
     new Command\DatabaseCreateCommand($store, $doctrineHelper),
     new Command\DatabaseDropCommand($store, $doctrineHelper),
     new Command\SubscriptionBootCommand($projectionist),
@@ -86,48 +89,47 @@ $cli->addCommands(array(
     new Command\SchemaCreateCommand($store, $schemaManager),
     new Command\SchemaDropCommand($store, $schemaManager),
     new Command\SchemaUpdateCommand($store, $schemaManager),
-));
+]);
 
 $cli->run();
 ```
-
 ### Doctrine Migrations
 
 If you want to use doctrine migrations, you can register the commands like this:
 
 ```php
-use Doctrine\DBAL\DriverManager;
-use Doctrine\Migrations\DependencyFactory;
-use Doctrine\Migrations\Configuration\Migration\PhpFile;
 use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
+use Doctrine\Migrations\DependencyFactory;
 use Doctrine\Migrations\Tools\Console\Command;
-use Symfony\Component\Console\Application;
 use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 
-$connection = /* create connection */
-$store = /* define your doctrine store */;
+/* create connection */
+$connection;
+/* define your doctrine store */
+$store;
 
 $schemaDirector = new DoctrineSchemaDirector(
     $store,
-    $connection
+    $connection,
 );
 
-$migrationConfig = /* define your migration config */;
+/* define your migration config */
+$migrationConfig;
 
 
 $dependencyFactory = DependencyFactory::fromConnection(
-    $migrationConfig, 
-    new ExistingConnection($connection)
+    $migrationConfig,
+    new ExistingConnection($connection),
 );
 
 
 $dependencyFactory->setService(
-    SchemaProvider::class, 
-    new DoctrineMigrationSchemaProvider($schemaDirector)
+    SchemaProvider::class,
+    new DoctrineMigrationSchemaProvider($schemaDirector),
 );
 
-$cli->addCommands([    
+$cli->addCommands([
     new Command\ExecuteCommand($dependencyFactory, 'event-sourcing:migrations:execute'),
     new Command\GenerateCommand($dependencyFactory, 'event-sourcing:migrations:generate'),
     new Command\LatestCommand($dependencyFactory, 'event-sourcing:migrations:latest'),
@@ -138,8 +140,8 @@ $cli->addCommands([
     new Command\VersionCommand($dependencyFactory, 'event-sourcing:migrations:version'),
 ]);
 ```
-
 !!! note
 
     Here you can find more information on how to 
     [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
+    

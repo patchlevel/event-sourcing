@@ -1,0 +1,49 @@
+# https://help.github.com/en/categories/automating-your-workflow-with-github-actions
+
+name: "Check Docs"
+
+on:
+    pull_request:
+    push:
+        branches:
+            - "[0-9]+.[0-9]+.x"
+
+jobs:
+    checkdocs:
+        name: "Check Docs"
+
+        runs-on: ${{ matrix.operating-system }}
+
+        strategy:
+            matrix:
+                dependencies:
+                    - "locked"
+                php-version:
+                    - "8.3"
+                operating-system:
+                    - "ubuntu-latest"
+
+        steps:
+            - name: "Checkout"
+              uses: actions/checkout@v4
+
+            - name: "Install PHP"
+              uses: "shivammathur/setup-php@2.29.0"
+              with:
+                  coverage: "pcov"
+                  php-version: "${{ matrix.php-version }}"
+                  ini-values: memory_limit=-1
+                  extensions: pdo_sqlite
+
+            - uses: ramsey/composer-install@2.2.0
+              with:
+                dependency-versions: ${{ matrix.dependencies }}
+
+            - name: "extract php code"
+              run: "bin/docs-extract-php-code"
+
+            - name: "lint php"
+              run: "php -l docs_php/*.php"
+
+            - name: "docs code style"
+              run: "vendor/bin/phpcbf docs_php --exclude=SlevomatCodingStandard.TypeHints.DeclareStrictTypes"
