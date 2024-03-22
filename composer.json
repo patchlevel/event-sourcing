@@ -37,7 +37,7 @@
     "ext-pdo_sqlite": "~8.1.0 || ~8.2.0 || ~8.3.0",
     "cspray/phinal": "^2.0.0",
     "doctrine/orm": "^2.18.0|^3.0.0",
-    "infection/infection": "^0.27.0",
+    "infection/infection": "^0.27.10",
     "league/commonmark": "^2.4",
     "patchlevel/coding-standard": "^1.3.0",
     "patchlevel/event-sourcing-psalm-plugin": "^2.1.0",
