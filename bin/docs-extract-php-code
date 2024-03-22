@@ -45,7 +45,7 @@ foreach ($finder as $file) {
 
         $source = sprintf('%s:%s', $file->getRealPath(), $node->getStartLine());
 
-        $code = "<?php\n // " . $source . "\n\n" . $node->getLiteral();
+        $code = "<?php\n// " . $source . "\n\n" . $node->getLiteral();
 
         $targetPath = $targetDir . '/' . $fileName . '_' . $i . '.php';
         file_put_contents($targetPath, $code);

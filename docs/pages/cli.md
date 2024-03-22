@@ -57,38 +57,40 @@ The inspector is a tool to inspect the event streams.
 A cli php file can look like this:
 
 ```php
+use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaManager;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Symfony\Component\Console\Application;
-
-/* define your doctrine store */
-$store;
-
-/* create projectionist */
-$projectionist;
 
 $cli = new Application('Event-Sourcing CLI');
 $cli->setCatchExceptions(true);
 
 $doctrineHelper = new DoctrineHelper();
-$schemaManager = new DoctrineSchemaManager();
 
+/**
+ * @var Connection $connection
+ * @var Store $store
+ */
+$schemaDirector = new DoctrineSchemaDirector($connection, $store);
+
+/** @var SubscriptionEngine $subscriptionEngine */
 $cli->addCommands([
-    new Command\DatabaseCreateCommand($store, $doctrineHelper),
-    new Command\DatabaseDropCommand($store, $doctrineHelper),
-    new Command\SubscriptionBootCommand($projectionist),
-    new Command\SubscriptionPauseCommand($projectionist),
-    new Command\SubscriptionRunCommand($projectionist),
-    new Command\SubscriptionTeardownCommand($projectionist),
-    new Command\SubscriptionRemoveCommand($projectionist),
-    new Command\SubscriptionReactivateCommand($projectionist),
-    new Command\SubscriptionRebuildCommand($projectionist),
-    new Command\SubscriptionSetupCommand($projectionist),
-    new Command\SubscriptionStatusCommand($projectionist),
-    new Command\SchemaCreateCommand($store, $schemaManager),
-    new Command\SchemaDropCommand($store, $schemaManager),
-    new Command\SchemaUpdateCommand($store, $schemaManager),
+    new Command\DatabaseCreateCommand($connection, $doctrineHelper),
+    new Command\DatabaseDropCommand($connection, $doctrineHelper),
+    new Command\SubscriptionBootCommand($subscriptionEngine, $store),
+    new Command\SubscriptionPauseCommand($subscriptionEngine),
+    new Command\SubscriptionRunCommand($subscriptionEngine, $store),
+    new Command\SubscriptionTeardownCommand($subscriptionEngine),
+    new Command\SubscriptionRemoveCommand($subscriptionEngine),
+    new Command\SubscriptionReactivateCommand($subscriptionEngine),
+    new Command\SubscriptionSetupCommand($subscriptionEngine),
+    new Command\SubscriptionStatusCommand($subscriptionEngine),
+    new Command\SchemaCreateCommand($schemaDirector),
+    new Command\SchemaDropCommand($schemaDirector),
+    new Command\SchemaUpdateCommand($schemaDirector),
 ]);
 
 $cli->run();
@@ -98,26 +100,24 @@ $cli->run();
 If you want to use doctrine migrations, you can register the commands like this:
 
 ```php
+use Doctrine\DBAL\Connection;
 use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
+use Doctrine\Migrations\Configuration\Migration\ConfigurationLoader;
 use Doctrine\Migrations\DependencyFactory;
+use Doctrine\Migrations\Provider\SchemaProvider;
 use Doctrine\Migrations\Tools\Console\Command;
 use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Store\Store;
+use Symfony\Component\Console\Application;
 
-/* create connection */
-$connection;
-/* define your doctrine store */
-$store;
+/**
+ * @var Connection $connection
+ * @var Store $store
+ */
+$schemaDirector = new DoctrineSchemaDirector($connection, $store);
 
-$schemaDirector = new DoctrineSchemaDirector(
-    $store,
-    $connection,
-);
-
-/* define your migration config */
-$migrationConfig;
-
-
+/** @var ConfigurationLoader $migrationConfig */
 $dependencyFactory = DependencyFactory::fromConnection(
     $migrationConfig,
     new ExistingConnection($connection),
@@ -129,6 +129,7 @@ $dependencyFactory->setService(
     new DoctrineMigrationSchemaProvider($schemaDirector),
 );
 
+/** @var Application $cli */
 $cli->addCommands([
     new Command\ExecuteCommand($dependencyFactory, 'event-sourcing:migrations:execute'),
     new Command\GenerateCommand($dependencyFactory, 'event-sourcing:migrations:generate'),

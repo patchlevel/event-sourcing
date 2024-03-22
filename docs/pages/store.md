@@ -30,16 +30,15 @@ You can create a store with the `DoctrineDbalStore` class.
 The store needs a dbal connection, an event serializer, an aggregate registry and a table name.
 
 ```php
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 
+/** @var Connection $connection */
 $store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths(['src/Event']),
-    new AggregateRootRegistry([
-        'profile' => Profile::class,
-    ]),
+    null,
     'eventstore',
 );
 ```
@@ -73,8 +72,14 @@ The `DoctrineSchemaDirector` is a concrete implementation of the `SchemaDirector
 Additionally, it implements the `DryRunSchemaDirector` interface, to show the sql statements that would be executed.
 
 ```php
+use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 
+/**
+ * @var Connection $connection
+ * @var DoctrineDbalStore $store
+ */
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
     $store,
@@ -89,12 +94,18 @@ $schemaDirector = new DoctrineSchemaDirector(
 You can create the table from scratch using the `create` method.
 
 ```php
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+
+/** @var DoctrineSchemaDirector $schemaDirector */
 $schemaDirector->create();
 ```
 Or can give you back which SQL statements would be necessary for this.
 Either for a dry run, or to define your own migrations.
 
 ```php
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+
+/** @var DoctrineSchemaDirector $schemaDirector */
 $sql = $schemaDirector->dryRunCreate();
 ```
 #### Update schema
@@ -103,11 +114,17 @@ The update method compares the current state in the database and how the table s
 As a result, the diff is executed to bring the table to the desired state.
 
 ```php
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+
+/** @var DoctrineSchemaDirector $schemaDirector */
 $schemaDirector->update();
 ```
 Or can give you back which SQL statements would be necessary for this.
 
 ```php
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+
+/** @var DoctrineSchemaDirector $schemaDirector */
 $sql = $schemaDirector->dryRunUpdate();
 ```
 #### Drop schema
@@ -115,11 +132,17 @@ $sql = $schemaDirector->dryRunUpdate();
 You can also delete the table with the `drop` method.
 
 ```php
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+
+/** @var DoctrineSchemaDirector $schemaDirector */
 $schemaDirector->drop();
 ```
 Or can give you back which SQL statements would be necessary for this.
 
 ```php
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+
+/** @var DoctrineSchemaDirector $schemaDirector */
 $sql = $schemaDirector->dryRunDrop();
 ```
 ### Doctrine Migrations
@@ -131,22 +154,33 @@ We have added a `DoctrineMigrationSchemaProvider` for doctrine migrations so tha
 together.
 
 ```php
+use Doctrine\DBAL\Connection;
+use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
+use Doctrine\Migrations\Configuration\Migration\ConfigurationLoader;
+use Doctrine\Migrations\DependencyFactory;
+use Doctrine\Migrations\Provider\SchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 
 // event sourcing schema director configuration
 
+/**
+ * @var Connection $connection
+ * @var DoctrineDbalStore $store
+ */
 $schemaDirector = new DoctrineSchemaDirector(
-    $store,
     $connection,
+    $store,
 );
 
 $schemaProvider = new DoctrineMigrationSchemaProvider($schemaDirector);
 
 // doctrine migration configuration
 
+/** @var ConfigurationLoader $configLoader */
 $dependencyFactory = DependencyFactory::fromConnection(
-    $config,
+    $configLoader,
     new ExistingConnection($connection),
 );
 
@@ -174,13 +208,18 @@ You can load all events from an aggregate with the `load` method.
 This method returns a `Stream` object, which is a collection of events.
 
 ```php
+use Patchlevel\EventSourcing\Store\Store;
+
+/** @var Store $store */
 $stream = $store->load();
 ```
 The load method also has a few parameters to filter, limit and sort the events.
 
 ```php
 use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Store;
 
+/** @var Store $store */
 $stream = $store->load(
     new Criteria(), // filter criteria
     100, // limit
@@ -240,13 +279,18 @@ foreach ($stream as $message) {
 You can count the number of events in the store with the `count` method.
 
 ```php
+use Patchlevel\EventSourcing\Store\Store;
+
+/** @var Store $store */
 $count = $store->count();
 ```
 The count method also has the possibility to filter the events.
 
 ```php
 use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Store;
 
+/** @var Store $store */
 $count = $store->count(
     new Criteria(), // filter criteria
 );
@@ -256,6 +300,17 @@ $count = $store->count(
 You can save a message with the `save` method.
 
 ```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Store;
+
+/**
+ * @var Store $store
+ * @var Message $message
+ * @var Message $message1
+ * @var Message $message2
+ * @var Message $message3
+ * @var list<Message> $messages
+ */
 $store->save($message);
 $store->save($message1, $message2, $message3);
 $store->save(...$messages);
@@ -275,6 +330,9 @@ There is also the possibility of executing a function in a transaction.
 Then dbal takes care of starting a transaction, committing it and then possibly rollback it again.
 
 ```php
+use Patchlevel\EventSourcing\Store\Store;
+
+/** @var Store $store */
 $store->transactional(static function () use ($command, $bankAccountRepository): void {
     $accountFrom = $bankAccountRepository->get($command->from());
     $accountTo = $bankAccountRepository->get($command->to());

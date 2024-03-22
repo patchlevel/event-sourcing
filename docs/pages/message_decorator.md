@@ -25,7 +25,12 @@ To use multiple decorators at the same time, you can use the `ChainMessageDecora
 
 ```php
 use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 
+/**
+ * @var MessageDecorator $decorator1
+ * @var MessageDecorator $decorator2
+ */
 $decorator = new ChainMessageDecorator([
     $decorator1,
     $decorator2,
@@ -37,16 +42,24 @@ To use the message decorator, you have to pass it to the `DefaultRepositoryManag
 which will then pass it to all Repositories.
 
 ```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
+use Patchlevel\EventSourcing\Store\Store;
 
+/** @var EventMetadataFactory $eventMetadataFactory */
 $decorator = new ChainMessageDecorator([new SplitStreamDecorator($eventMetadataFactory)]);
 
+/**
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var Store $store
+ */
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
-    $eventBus,
+    null,
     null,
     $decorator,
 );
@@ -63,14 +76,24 @@ You can also use this feature to add your own metadata to your events. For this 
 to add data `withHeader` and to read this data later on `header`.
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Header;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
+
+#[Header('system')]
+final class SystemHeader
+{
+    public function __construct(
+        public string $system,
+    ) {
+    }
+}
 
 final class OnSystemRecordedDecorator implements MessageDecorator
 {
     public function __invoke(Message $message): Message
     {
-        return $message->withHeader('system', 'accounting_system');
+        return $message->withHeader(new SystemHeader('system'));
     }
 }
 ```

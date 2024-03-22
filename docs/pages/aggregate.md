@@ -397,7 +397,7 @@ final class Profile extends BasicAggregateRoot
     #[Apply]
     protected function applyNameChanged(NameChanged $event): void
     {
-        $this->name = $event->name();
+        $this->name = $event->name;
     }
 }
 ```
@@ -581,7 +581,7 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
-use Patchlevel\EventSourcing\Clock\Clock;
+use Psr\Clock\ClockInterface;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -591,7 +591,7 @@ final class Profile extends BasicAggregateRoot
     private Name $name;
     private DateTimeImmutable $registeredAt;
 
-    public static function register(Uuid $id, string $name, Clock $clock): static
+    public static function register(Uuid $id, string $name, ClockInterface $clock): static
     {
         $self = new static();
         $self->recordThat(new ProfileRegistered($id, $name, $clock->now()));
@@ -627,7 +627,9 @@ There, with the help of paths, all classes with the attribute `Aggregate` are se
 and the `AggregateRootRegistry` is built up.
 
 ```php
-$aggregateRegistry = (new AttributeEventRegistryFactory())->create($paths);
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
+
+$aggregateRegistry = (new AttributeEventRegistryFactory())->create([/* paths... */]);
 ```
 ## Learn more
 

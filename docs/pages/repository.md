@@ -16,8 +16,14 @@ And the [store](store.md), which is then given to the repository so that it can 
 After plugging the `DefaultRepositoryManager` together, you can create the repository associated with the aggregate.
 
 ```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Store\Store;
 
+/**
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var Store $store
+ */
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
@@ -36,10 +42,16 @@ This is useful if you want to react to events in the same transaction.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Store\Store;
 
 $eventBus = DefaultEventBus::create([/* listeners */]);
 
+/**
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var Store $store
+ */
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
@@ -71,13 +83,19 @@ You can have thousands of events in the database that load in a few milliseconds
 But at some point you realize that it takes time. To counteract this there is a snapshot store.
 
 ```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\EventSourcing\Store\Store;
 
 $adapter = new Psr16SnapshotAdapter($cache);
 $snapshotStore = new DefaultSnapshotStore(['default' => $adapter]);
 
+/**
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var Store $store
+ */
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
@@ -96,10 +114,16 @@ $repository = $repositoryManager->get(Profile::class);
 If you want to add more metadata to the message, like e.g. an application id, then you can use decorators.
 
 ```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Store\Store;
 
 $decorator = new ApplicationIdDecorator();
 
+/**
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var Store $store
+ */
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
@@ -127,10 +151,12 @@ These events are then also append to the database.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Repository\Repository;
 
 $id = Uuid::v7();
 $profile = Profile::create($id, 'david.badura@patchlevel.de');
 
+/** @var Repository $repository */
 $repository->save($profile);
 ```
 !!! note
@@ -144,8 +170,11 @@ All events for the aggregate are loaded from the database and the current state 
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Repository\Repository;
 
 $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
+
+/** @var Repository $repository */
 $profile = $repository->load($id);
 ```
 !!! warning
@@ -163,8 +192,12 @@ You can also check whether an `aggregate` with a certain id exists.
 It is checked whether any event with this id exists in the database.
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Repository\Repository;
+
 $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
 
+/** @var Repository $repository */
 if ($repository->has($id)) {
     // ...
 }
