@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
@@ -27,7 +25,6 @@ use function sprintf;
 final class SplitStreamBench
 {
     private Store $store;
-    private EventBus $bus;
     private Repository $repository;
 
     private AggregateRootId $id;
@@ -35,8 +32,6 @@ final class SplitStreamBench
     public function setUp(): void
     {
         $connection = DbalManager::createConnection();
-
-        $this->bus = DefaultEventBus::create();
 
         $this->store = new DoctrineDbalStore(
             $connection,
@@ -50,8 +45,8 @@ final class SplitStreamBench
 
         $this->repository = new DefaultRepository(
             $this->store,
-            $this->bus,
             Profile::metadata(),
+            null,
             null,
             new SplitStreamDecorator(
                 new AttributeEventMetadataFactory(),

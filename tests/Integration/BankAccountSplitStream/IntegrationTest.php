@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
@@ -63,12 +62,10 @@ final class IntegrationTest extends TestCase
             new MetadataSubscriberAccessorRepository([$bankAccountProjector]),
         );
 
-        $eventBus = DefaultEventBus::create([$bankAccountProjector]);
-
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
             $store,
-            $eventBus,
+            null,
             null,
             new ChainMessageDecorator([
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
@@ -91,6 +88,8 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(500);
         $repository->save($bankAccount);
 
+        $engine->run();
+
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_bank_account WHERE id = ?', ['1']);
 
         self::assertIsArray($result);
@@ -102,7 +101,7 @@ final class IntegrationTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
             $store,
-            $eventBus,
+            null,
             null,
             new ChainMessageDecorator([
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),
@@ -125,6 +124,8 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(200);
         $repository->save($bankAccount);
 
+        $engine->run();
+
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_bank_account WHERE id = ?', ['1']);
 
         self::assertIsArray($result);
@@ -136,7 +137,7 @@ final class IntegrationTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
             $store,
-            $eventBus,
+            null,
             null,
             new ChainMessageDecorator([
                 new SplitStreamDecorator(new AttributeEventMetadataFactory()),

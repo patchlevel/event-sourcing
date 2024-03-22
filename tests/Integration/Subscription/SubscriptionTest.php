@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\Debug\Trace\TraceableSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Debug\Trace\TraceDecorator;
 use Patchlevel\EventSourcing\Debug\Trace\TraceHeader;
 use Patchlevel\EventSourcing\Debug\Trace\TraceStack;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
@@ -81,7 +80,6 @@ final class SubscriptionTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            DefaultEventBus::create(),
         );
 
         $repository = $manager->get(Profile::class);
@@ -210,7 +208,6 @@ final class SubscriptionTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            DefaultEventBus::create(),
         );
 
         $subscriber = new ErrorProducerSubscriber();
@@ -337,7 +334,7 @@ final class SubscriptionTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            DefaultEventBus::create(),
+            null,
             null,
             new TraceDecorator($traceStack),
         );
@@ -450,7 +447,6 @@ final class SubscriptionTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            DefaultEventBus::create(),
         );
 
         $repository = $manager->get(Profile::class);
@@ -612,7 +608,6 @@ final class SubscriptionTest extends TestCase
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            DefaultEventBus::create(),
         );
 
         $repository = $manager->get(Profile::class);

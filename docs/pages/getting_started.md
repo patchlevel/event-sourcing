@@ -267,7 +267,6 @@ After we have defined everything, we still have to plug the whole thing together
 
 ```php
 use Doctrine\DBAL\DriverManager;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Projection\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Projection\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Projection\Subscriber\MetadataSubscriberAccessorRepository;
@@ -306,12 +305,9 @@ $projectionist = new DefaultSubscriptionEngine(
     $projectorRepository,
 );
 
-$eventBus = DefaultEventBus::create();
-
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRegistry,
     $eventStore,
-    $eventBus,
 );
 
 $hotelRepository = $repositoryManager->get(Hotel::class);

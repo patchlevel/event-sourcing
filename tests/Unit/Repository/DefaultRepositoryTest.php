@@ -76,35 +76,8 @@ final class DefaultRepositoryTest extends TestCase
             static fn (array $args): mixed => $args[0](),
         );
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 2;
-            }),
-        )->shouldBeCalled();
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -154,6 +127,59 @@ final class DefaultRepositoryTest extends TestCase
             static fn (array $args): mixed => $args[0](),
         );
 
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            Profile::metadata(),
+        );
+
+        $aggregate = Profile::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de'),
+        );
+
+        $repository->save($aggregate);
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+
+        $repository->save($aggregate);
+    }
+
+    public function testEventBus(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->save(
+            Argument::that(static function (Message $message) {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
+                    return false;
+                }
+
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
+                    return false;
+                }
+
+                return $message->header(AggregateHeader::class)->playhead === 1;
+            }),
+        )->shouldBeCalled();
+
+        $store->save(
+            Argument::that(static function (Message $message) {
+                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
+                    return false;
+                }
+
+                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
+                    return false;
+                }
+
+                return $message->header(AggregateHeader::class)->playhead === 2;
+            }),
+        )->shouldBeCalled();
+
+        $store->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        );
+
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
             Argument::that(static function (Message $message) {
@@ -185,8 +211,8 @@ final class DefaultRepositoryTest extends TestCase
 
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
+            $eventBus->reveal(),
         );
 
         $aggregate = Profile::createProfile(
@@ -227,25 +253,6 @@ final class DefaultRepositoryTest extends TestCase
             static fn (array $args): mixed => $args[0](),
         );
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                if ($message->header(ArchivedHeader::class)->archived !== false) {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-        )->shouldBeCalled();
-
         $decorator = new class implements MessageDecorator {
             public function __invoke(Message $message): Message
             {
@@ -255,8 +262,8 @@ final class DefaultRepositoryTest extends TestCase
 
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
+            null,
             null,
             $decorator,
         );
@@ -272,11 +279,9 @@ final class DefaultRepositoryTest extends TestCase
     public function testSaveWrongAggregate(): void
     {
         $store = $this->prophesize(Store::class);
-        $eventBus = $this->prophesize(EventBus::class);
 
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -313,24 +318,8 @@ final class DefaultRepositoryTest extends TestCase
             static fn (array $args): mixed => $args[0](),
         );
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-        )->shouldBeCalledOnce();
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -355,12 +344,8 @@ final class DefaultRepositoryTest extends TestCase
             static fn (array $args): mixed => $args[0](),
         );
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type('object'))->shouldNotBeCalled();
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -389,12 +374,8 @@ final class DefaultRepositoryTest extends TestCase
             Argument::type(Message::class),
         )->shouldNotBeCalled();
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type('object'))->shouldNotBeCalled();
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -424,12 +405,8 @@ final class DefaultRepositoryTest extends TestCase
             static fn (array $args): mixed => $args[0](),
         );
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type('object'))->shouldNotBeCalled();
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -464,12 +441,8 @@ final class DefaultRepositoryTest extends TestCase
             static fn (array $args): mixed => $args[0](),
         );
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(Argument::type('object'))->shouldBeCalled();
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -530,47 +503,10 @@ final class DefaultRepositoryTest extends TestCase
             static fn (array $args): mixed => $args[0](),
         );
 
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 2;
-            }),
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 3;
-            }),
-        )->shouldBeCalled();
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
+            null,
             null,
             new SplitStreamDecorator(new AttributeEventMetadataFactory()),
         );
@@ -600,11 +536,8 @@ final class DefaultRepositoryTest extends TestCase
             )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
         ]));
 
-        $eventBus = $this->prophesize(EventBus::class);
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -641,11 +574,8 @@ final class DefaultRepositoryTest extends TestCase
             ]),
         );
 
-        $eventBus = $this->prophesize(EventBus::class);
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -666,11 +596,8 @@ final class DefaultRepositoryTest extends TestCase
             '1',
         ))->willReturn(new ArrayStream());
 
-        $eventBus = $this->prophesize(EventBus::class);
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -685,11 +612,8 @@ final class DefaultRepositoryTest extends TestCase
             '1',
         ))->willReturn(1);
 
-        $eventBus = $this->prophesize(EventBus::class);
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -704,11 +628,8 @@ final class DefaultRepositoryTest extends TestCase
             '1',
         ))->willReturn(0);
 
-        $eventBus = $this->prophesize(EventBus::class);
-
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             Profile::metadata(),
         );
 
@@ -732,8 +653,6 @@ final class DefaultRepositoryTest extends TestCase
             1,
         ))->willReturn(new ArrayStream());
 
-        $eventBus = $this->prophesize(EventBus::class);
-
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(
             ProfileWithSnapshot::class,
@@ -742,8 +661,8 @@ final class DefaultRepositoryTest extends TestCase
 
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             ProfileWithSnapshot::metadata(),
+            null,
             $snapshotStore->reveal(),
         );
 
@@ -784,8 +703,6 @@ final class DefaultRepositoryTest extends TestCase
             ]),
         );
 
-        $eventBus = $this->prophesize(EventBus::class);
-
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(
             ProfileWithSnapshot::class,
@@ -796,8 +713,8 @@ final class DefaultRepositoryTest extends TestCase
 
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             ProfileWithSnapshot::metadata(),
+            null,
             $snapshotStore->reveal(),
         );
 
@@ -842,8 +759,6 @@ final class DefaultRepositoryTest extends TestCase
             )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
         ]));
 
-        $eventBus = $this->prophesize(EventBus::class);
-
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(
             ProfileWithSnapshot::class,
@@ -854,8 +769,8 @@ final class DefaultRepositoryTest extends TestCase
 
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             ProfileWithSnapshot::metadata(),
+            null,
             $snapshotStore->reveal(),
         );
 
@@ -880,16 +795,14 @@ final class DefaultRepositoryTest extends TestCase
                 )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
             ]));
 
-        $eventBus = $this->prophesize(EventBus::class);
-
         $snapshotStore = $this->prophesize(SnapshotStore::class);
         $snapshotStore->load(ProfileWithSnapshot::class, ProfileId::fromString('1'))
             ->willThrow(SnapshotNotFound::class);
 
         $repository = new DefaultRepository(
             $store->reveal(),
-            $eventBus->reveal(),
             ProfileWithSnapshot::metadata(),
+            null,
             $snapshotStore->reveal(),
         );
 

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
@@ -26,7 +24,6 @@ use PhpBench\Attributes as Bench;
 final class SnapshotsBench
 {
     private Store $store;
-    private EventBus $bus;
     private SnapshotStore $snapshotStore;
     private Repository $repository;
 
@@ -37,8 +34,6 @@ final class SnapshotsBench
     public function setUp(): void
     {
         $connection = DbalManager::createConnection();
-
-        $this->bus = DefaultEventBus::create();
 
         $this->store = new DoctrineDbalStore(
             $connection,
@@ -54,7 +49,7 @@ final class SnapshotsBench
 
         $this->snapshotStore = new DefaultSnapshotStore(['default' => $this->adapter]);
 
-        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata(), $this->snapshotStore);
+        $this->repository = new DefaultRepository($this->store, Profile::metadata(), null, $this->snapshotStore);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,

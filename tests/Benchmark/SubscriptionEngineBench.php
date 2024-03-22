@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
-use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
@@ -30,7 +28,6 @@ use PhpBench\Attributes as Bench;
 final class SubscriptionEngineBench
 {
     private Store $store;
-    private EventBus $bus;
     private Repository $repository;
 
     private SubscriptionEngine $subscriptionEngine;
@@ -40,8 +37,6 @@ final class SubscriptionEngineBench
     public function setUp(): void
     {
         $connection = DbalManager::createConnection();
-
-        $this->bus = DefaultEventBus::create();
 
         $this->store = new DoctrineDbalStore(
             $connection,
@@ -55,7 +50,7 @@ final class SubscriptionEngineBench
             'eventstore',
         );
 
-        $this->repository = new DefaultRepository($this->store, $this->bus, Profile::metadata());
+        $this->repository = new DefaultRepository($this->store, Profile::metadata());
 
         $subscriptionStore = new DoctrineSubscriptionStore(
             $connection,

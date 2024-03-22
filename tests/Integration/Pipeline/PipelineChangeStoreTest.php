@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Pipeline;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
@@ -78,8 +77,8 @@ final class PipelineChangeStoreTest extends TestCase
 
         $newSchemaDirector->create();
 
-        $oldRepository = new DefaultRepository($oldStore, DefaultEventBus::create(), Profile::metadata());
-        $newRepository = new DefaultRepository($newStore, DefaultEventBus::create(), Profile::metadata());
+        $oldRepository = new DefaultRepository($oldStore, Profile::metadata());
+        $newRepository = new DefaultRepository($newStore, Profile::metadata());
 
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId);

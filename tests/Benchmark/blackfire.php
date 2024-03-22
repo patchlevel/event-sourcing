@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\DBAL\DriverManager;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -26,8 +25,6 @@ $connection = DriverManager::getConnection([
     'path' => DB_PATH,
 ]);
 
-$bus = DefaultEventBus::create();
-
 $store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
@@ -38,7 +35,7 @@ $store = new DoctrineDbalStore(
     'eventstore',
 );
 
-$repository = new DefaultRepository($store, $bus, Profile::metadata());
+$repository = new DefaultRepository($store, Profile::metadata());
 
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
