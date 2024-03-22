@@ -141,6 +141,7 @@ The method name itself doesn't matter.
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 
 #[Subscriber('do_stuff', RunMode::Once)]
 final class DoStuffSubscriber
@@ -171,6 +172,7 @@ For this there are the attributes `Setup` and `Teardown`. The method name itself
 This is especially helpful for projectors, as they can create the necessary structures for the projection here.
 
 ```php
+use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Teardown;
@@ -181,7 +183,7 @@ final class ProfileProjector
 {
     use SubscriberUtil;
 
-    // ...
+    private Connection $connection;
 
     #[Setup]
     public function create(): void
@@ -254,8 +256,9 @@ This is useful if you want to run subscribers in different processes or on diffe
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 
-#[Subscriber('profile_1', group: 'a')]
+#[Subscriber('profile_1', runMode: RunMode::Once, group: 'a')]
 final class ProfileSubscriber
 {
    // ...
@@ -462,8 +465,10 @@ The Subscription Engine uses a subscription store to store the status of each su
 We provide a Doctrine implementation of this by default.
 
 ```php
+use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 
+/** @var Connection $connection */
 $subscriptionStore = new DoctrineSubscriptionStore($connection);
 ```
 So that the schema for the subscription store can also be created,
@@ -472,9 +477,17 @@ Using `ChainDoctrineSchemaConfigurator` we can add multiple schema configurators
 In our case they need the `DoctrineSchemaDirector` from the event store and subscription store.
 
 ```php
+use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 
+/**
+ * @var Connection $connection
+ * @var Store $eventStore
+ * @var DoctrineSubscriptionStore $subscriptionStore
+ */
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
     new ChainDoctrineSchemaConfigurator([
@@ -517,7 +530,16 @@ We provide a metadata subscriber accessor repository by default.
 ```php
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 
-$subscriberAccessorRepository = new MetadataSubscriberAccessorRepository([$subscriber1, $subscriber2, $subscriber3]);
+/**
+ * @var object $subscriber1
+ * @var object $subscriber2
+ * @var object $subscriber3
+ */
+$subscriberAccessorRepository = new MetadataSubscriberAccessorRepository([
+    $subscriber1,
+    $subscriber2,
+    $subscriber3,
+]);
 ```
 ### Subscription Engine
 
@@ -526,8 +548,18 @@ The event store is needed to load the events, the Subscription Store to store th
 and we need the subscriber accessor repository. Optionally, we can also pass a retry strategy.
 
 ```php
+use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 
+/**
+ * @var Store $eventStore
+ * @var DoctrineSubscriptionStore $subscriptionStore
+ * @var MetadataSubscriberAccessorRepository $subscriberAccessorRepository
+ * @var NoRetryStrategy $retryStrategy
+ */
 $subscriptionEngine = new DefaultSubscriptionEngine(
     $eventStore,
     $subscriptionStore,
@@ -559,7 +591,11 @@ In this step, the subscription engine also tries to call the `setup` method if a
 After the setup process, the subscription is set to booting or active.
 
 ```php
-$subscriptionEngine->setup($criteria);
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->setup(new SubscriptionEngineCriteria());
 ```
 !!! tip
 
@@ -572,14 +608,22 @@ All booting subscriptions will catch up to the current event stream.
 After the boot process, the subscription is set to active or finished.
 
 ```php
-$subscriptionEngine->boot($criteria);
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->boot(new SubscriptionEngineCriteria());
 ```
 ### Run
 
 All active subscriptions are continued and updated here.
 
 ```php
-$subscriptionEngine->run($criteria);
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->run(new SubscriptionEngineCriteria());
 ```
 ### Teardown
 
@@ -587,7 +631,11 @@ If subscriptions are detached, they can be cleaned up here.
 The subscription engine also tries to call the `teardown` method if available.
 
 ```php
-$subscriptionEngine->teardown($criteria);
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->teardown(new SubscriptionEngineCriteria());
 ```
 ### Remove
 
@@ -596,7 +644,11 @@ An attempt is made to call the `teardown` method if available.
 But the entry will still be removed if it doesn't work.
 
 ```php
-$subscriptionEngine->remove($criteria);
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->remove(new SubscriptionEngineCriteria());
 ```
 ### Reactivate
 
@@ -604,7 +656,11 @@ If a subscription had an error or is outdated, you can reactivate it.
 As a result, the subscription gets in the last status again.
 
 ```php
-$subscriptionEngine->reactivate($criteria);
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->reactivate(new SubscriptionEngineCriteria());
 ```
 ### Pause
 
@@ -613,17 +669,25 @@ The subscription will then no longer be managed by the subscription engine.
 You can reactivate the subscription if you want so that it continues.
 
 ```php
-$subscriptionEngine->pause($criteria);
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->pause(new SubscriptionEngineCriteria());
 ```
 ### Status
 
 To get the current status of all subscriptions, you can get them using the `subscriptions` method.
 
 ```php
-$subscriptions = $subscriptionEngine->subscriptions($criteria);
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptions = $subscriptionEngine->subscriptions(new SubscriptionEngineCriteria());
 
 foreach ($subscriptions as $subscription) {
-    echo $subscription->status();
+    echo $subscription->status()->value;
 }
 ```
 ## Learn more

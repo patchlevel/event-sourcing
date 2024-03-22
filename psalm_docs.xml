@@ -20,5 +20,14 @@
         <DuplicateClass errorLevel="suppress" />
         <UnusedVariable errorLevel="suppress" />
         <UndefinedGlobalVariable errorLevel="suppress" />
+        <UndefinedClass>
+            <errorLevel type="suppress">
+                <referencedClass name="Email" />
+                <referencedClass name="EmailChanged" />
+                <referencedClass name="ComplexObject" />
+                <referencedClass name="Status" />
+                <referencedClass name="NameIsToShortException" />
+            </errorLevel>
+        </UndefinedClass>
     </issueHandlers>
 </psalm>

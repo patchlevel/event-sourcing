@@ -30,14 +30,20 @@ $snapshotStore = new DefaultSnapshotStore([
 After creating the snapshot store, you need to pass that store to the DefaultRepositoryManager.
 
 ```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
+use Patchlevel\EventSourcing\Store\Store;
 
-$snapshotStore = // ...
-
+/**
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var Store $store
+ * @var SnapshotStore $snapshotStore
+ */
 $repositoryManager = new DefaultRepositoryManager(
     $aggregateRootRegistry,
     $store,
-    $eventBus,
+    null,
     $snapshotStore,
 );
 ```
@@ -73,6 +79,7 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
+use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
@@ -82,7 +89,7 @@ final class Profile extends BasicAggregateRoot
     #[IdNormalizer]
     public Uuid $id;
     public string $name;
-    #[Normalize(new DateTimeImmutableNormalizer())]
+    #[DateTimeImmutableNormalizer]
     public DateTimeImmutable $createdAt;
 
     // ...
@@ -168,7 +175,9 @@ A `Psr6SnapshotAdapter`, the associated documentation can be found [here](https:
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
+use Psr\Cache\CacheItemPoolInterface;
 
+/** @var CacheItemPoolInterface $cache */
 $adapter = new Psr6SnapshotAdapter($cache);
 ```
 ### psr16
@@ -177,7 +186,9 @@ A `Psr16SnapshotAdapter`, the associated documentation can be found [here](https
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
+use Psr\SimpleCache\CacheInterface;
 
+/** @var CacheInterface $cache */
 $adapter = new Psr16SnapshotAdapter($cache);
 ```
 ### in memory
@@ -199,6 +210,13 @@ But you can also use the snapshot store yourself.
 This allows you to save the aggregate as a snapshot:
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
+
+/**
+ * @var SnapshotStore $snapshotStore
+ * @var AggregateRoot $aggregate
+ */
 $snapshotStore->save($aggregate);
 ```
 !!! danger
@@ -212,8 +230,11 @@ You can also load an aggregate from the snapshot store:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 
 $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
+
+/** @var SnapshotStore $snapshotStore */
 $aggregate = $snapshotStore->load(Profile::class, $id);
 ```
 The method returns the Aggregate if it was loaded successfully.

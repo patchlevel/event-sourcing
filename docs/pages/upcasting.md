@@ -24,6 +24,10 @@ final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
             return $upcast;
         }
 
+        if (!array_key_exists('email', $upcast->payload) || !is_string($upcast->payload['email'])) {
+            return $upcast;
+        }
+
         return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']));
     }
 }
@@ -39,22 +43,24 @@ name which the user needs to choose. This opens up for moving or renaming the ev
 the upgrade path.
 
 ```php
-use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
 
 final class LegacyEventNameUpaster implements Upcaster
 {
+    /** @param array<string, string> $eventNameMap */
     public function __construct(
-        private readonly EventRegistry $eventRegistry,
+        private readonly array $eventNameMap,
     ) {
     }
 
     public function __invoke(Upcast $upcast): Upcast
     {
-        return $upcast->replaceEventName(
-            $this->eventRegistry->eventName($upcast->eventName),
-        );
+        if (array_key_exists($upcast->eventName, $this->eventNameMap)) {
+            return $upcast->replaceEventName($this->eventNameMap[$upcast->eventName]);
+        }
+
+        return $upcast;
     }
 }
 ```
@@ -64,12 +70,14 @@ After we have defined the upcasting rules, we also have to pass the whole thing 
 Since we have multiple upcasters, we use a chain here.
 
 ```php
+use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
 
+/** @var EventRegistry $eventRegistry */
 $upcaster = new UpcasterChain([
     new ProfileCreatedEmailLowerCastUpcaster(),
-    new LegacyEventNameUpaster($eventRegistry),
+    new LegacyEventNameUpaster(['old_event_name' => 'new_event_name']),
 ]);
 
 $serializer = DefaultEventSerializer::createFromPaths(
@@ -84,22 +92,33 @@ Upcasters since we have collected alot of them over the time? Then we can use ou
 middlewares to achive a complete rebuild of our stream with adjusted event data.
 
 ```php
+use Patchlevel\EventSourcing\Pipeline\Pipeline;
+use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
+use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
+use Patchlevel\EventSourcing\Store\Store;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+#[AsCommand(
+    name: 'event-stream:cleanup',
+    description: 'rebuild event stream',
+)]
 final class EventStreamCleanupCommand extends Command
 {
-    protected static $defaultName = 'event-stream:cleanup';
-    protected static $defaultDescription = 'rebuild event stream';
-
     public function __construct(
         private readonly Store $sourceStore,
         private readonly Store $targetStore,
     ) {
+        parent::__construct();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $pipeline = new Pipeline(
-            new StoreSource($sourceStore),
-            new StoreTarget($targetStore),
+            new StoreSource($this->sourceStore),
+            new StoreTarget($this->targetStore),
         );
 
         $pipeline->run();

@@ -11,6 +11,7 @@ A hotel can be created with a `name` and a `id`:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 #[Event('hotel.created')]
@@ -27,6 +28,8 @@ final class HotelCreated
 A guest can check in by `name`:
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Event;
+
 #[Event('hotel.guest_checked_in')]
 final class GuestIsCheckedIn
 {
@@ -39,6 +42,8 @@ final class GuestIsCheckedIn
 And also check out again:
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Event;
+
 #[Event('hotel.guest_checked_out')]
 final class GuestIsCheckedOut
 {
@@ -82,7 +87,8 @@ final class Hotel extends BasicAggregateRoot
         return $this->name;
     }
 
-    public function guests(): int
+    /** @return list<string> */
+    public function guests(): array
     {
         return $this->guests;
     }
@@ -151,6 +157,7 @@ Each projector is then responsible for a specific projection.
 
 ```php
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -182,7 +189,7 @@ final class HotelProjector
         $this->db->insert(
             $this->table(),
             [
-                'id' => $message->aggregateId(),
+                'id' => $message->header(AggregateHeader::class)->aggregateId,
                 'name' => $event->hotelName,
                 'guests' => 0,
             ],
@@ -194,7 +201,7 @@ final class HotelProjector
     {
         $this->db->executeStatement(
             "UPDATE {$this->table()} SET guests = guests + 1 WHERE id = ?;",
-            [$message->aggregateId()],
+            [$message->header(AggregateHeader::class)->aggregateId],
         );
     }
 
@@ -203,7 +210,7 @@ final class HotelProjector
     {
         $this->db->executeStatement(
             "UPDATE {$this->table()} SET guests = guests - 1 WHERE id = ?;",
-            [$message->aggregateId()],
+            [$message->header(AggregateHeader::class)->aggregateId],
         );
     }
 
@@ -267,12 +274,13 @@ After we have defined everything, we still have to plug the whole thing together
 
 ```php
 use Doctrine\DBAL\DriverManager;
-use Patchlevel\EventSourcing\Projection\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Projection\Store\DoctrineSubscriptionStore;
-use Patchlevel\EventSourcing\Projection\Subscriber\MetadataSubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 
 $connection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/app']);
 
@@ -287,7 +295,6 @@ $aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create(['src
 $eventStore = new DoctrineDbalStore(
     $connection,
     $serializer,
-    $aggregateRegistry,
 );
 
 $hotelProjector = new HotelProjector($projectionConnection);
@@ -322,19 +329,30 @@ So that we can actually write the data to a database,
 we need the associated schema and databases.
 
 ```php
+use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 
+/**
+ * @var Connection $connection
+ * @var Store $eventStore
+ * @var SubscriptionStore $subscriptionStore
+ */
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
     new ChainDoctrineSchemaConfigurator([
         $eventStore,
-        $projectionStore,
+        $subscriptionStore,
     ]),
 );
 
 $schemaDirector->create();
-$projectionist->setup(skipBooting: true);
+
+/** @var SubscriptionEngine $engine */
+$engine->setup(skipBooting: true);
 ```
 !!! note
 
@@ -346,19 +364,23 @@ We are now ready to use the Event Sourcing System. We can load, change and save 
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 
 $hotel1 = Hotel::create(Uuid::v7(), 'HOTEL');
 $hotel1->checkIn('David');
 $hotel1->checkIn('Daniel');
 $hotel1->checkOut('David');
 
+/** @var Repository $hotelRepository */
 $hotelRepository->save($hotel1);
 
 $hotel2 = $hotelRepository->load(Uuid::fromString('d0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0'));
 $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 
-$projectionist->run();
+/** @var SubscriptionEngine $engine */
+$engine->run();
 
 $hotels = $hotelProjection->getHotels();
 ```
