@@ -1,17 +1,13 @@
 # https://help.github.com/en/categories/automating-your-workflow-with-github-actions
 
-name: "Mutation tests"
+name: "Mutation tests on diff"
 
 on:
     pull_request:
-    push:
-        branches:
-            - "[0-9]+.[0-9]+.x"
-            - "renovate/*"
 
 jobs:
-    mutation-tests:
-        name: "Mutation tests"
+    mutation-tests-diff:
+        name: "Mutation tests on diff"
 
         runs-on: ${{ matrix.operating-system }}
 
@@ -27,6 +23,8 @@ jobs:
         steps:
             - name: "Checkout"
               uses: actions/checkout@v4
+              with:
+                fetch-depth: 0
 
             - name: "Install PHP"
               uses: "shivammathur/setup-php@2.29.0"
@@ -38,9 +36,7 @@ jobs:
 
             - uses: ramsey/composer-install@2.2.0
               with:
-                dependency-versions: ${{ matrix.dependencies }}
+                  dependency-versions: ${{ matrix.dependencies }}
 
             - name: "Infection"
-              run: "vendor/bin/roave-infection-static-analysis-plugin"
-              env:
-                  STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+              run: "vendor/bin/roave-infection-static-analysis-plugin --git-diff-lines --git-diff-base=origin/$GITHUB_BASE_REF --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=100"
