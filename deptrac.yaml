@@ -128,8 +128,11 @@ deptrac:
       - Attribute
       - Metadata
     MetadataMessage:
+      - Aggregate
       - Attribute
+      - Debug
       - Metadata
+      - Store
     MetadataSubscriber:
       - Attribute
       - Metadata

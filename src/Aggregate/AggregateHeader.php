@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Aggregate;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Attribute\Header;
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 /** @psalm-immutable */
-#[Header('aggregate')]
 final class AggregateHeader
 {
     /** @param positive-int $playhead */
