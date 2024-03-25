@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFact
 use Patchlevel\EventSourcing\Metadata\Subscriber\ClassIsNotASubscriber;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSetupMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateTeardownMethod;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -106,7 +107,11 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $metadata = $metadataFactory->metadata($subscriber::class);
 
         self::assertEquals(
-            [ProfileVisited::class => ['handle']],
+            [
+                ProfileVisited::class => [
+                    new SubscribeMethodMetadata('handle', []),
+                ],
+            ],
             $metadata->subscribeMethods,
         );
 
@@ -130,8 +135,8 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => ['handle'],
-                ProfileCreated::class => ['handle'],
+                ProfileVisited::class => [new SubscribeMethodMetadata('handle', [])],
+                ProfileCreated::class => [new SubscribeMethodMetadata('handle', [])],
             ],
             $metadata->subscribeMethods,
         );
@@ -152,7 +157,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                '*' => ['handle'],
+                '*' => [new SubscribeMethodMetadata('handle', [])],
             ],
             $metadata->subscribeMethods,
         );

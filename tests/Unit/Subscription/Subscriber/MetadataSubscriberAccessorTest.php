@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         self::assertEquals('profile', $accessor->id());
@@ -41,6 +43,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         self::assertEquals('default', $accessor->group());
@@ -55,6 +58,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         self::assertEquals(RunMode::FromBeginning, $accessor->runMode());
@@ -73,6 +77,9 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [
+                new MessageArgumentResolver(),
+            ],
         );
 
         $result = $accessor->subscribeMethods(ProfileCreated::class);
@@ -100,6 +107,9 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [
+                new MessageArgumentResolver(),
+            ],
         );
 
         $result = $accessor->subscribeMethods(ProfileCreated::class);
@@ -123,6 +133,9 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [
+                new MessageArgumentResolver(),
+            ],
         );
 
         $result = $accessor->subscribeMethods(ProfileCreated::class);
@@ -145,6 +158,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         $result = $accessor->setupMethod();
@@ -161,6 +175,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         $result = $accessor->setupMethod();
@@ -181,6 +196,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         $result = $accessor->teardownMethod();
@@ -197,6 +213,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         $result = $accessor->teardownMethod();

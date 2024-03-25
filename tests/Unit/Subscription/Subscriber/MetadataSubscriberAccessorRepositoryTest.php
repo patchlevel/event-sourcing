@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use PHPUnit\Framework\TestCase;
@@ -39,6 +40,12 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             $metadataFactory->metadata($subscriber::class),
+            [
+                new ArgumentResolver\MessageArgumentResolver(),
+                new ArgumentResolver\EventArgumentResolver(),
+                new ArgumentResolver\AggregateIdArgumentResolver(),
+                new ArgumentResolver\RecordedOnArgumentResolver(),
+            ],
         );
 
         self::assertEquals([$accessor], $repository->all());

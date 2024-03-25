@@ -7,8 +7,10 @@ namespace Patchlevel\EventSourcing\Subscription\Subscriber;
 use Closure;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
 
 use function array_key_exists;
 use function array_map;
@@ -19,9 +21,11 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor
     /** @var array<class-string, list<Closure(Message):void>> */
     private array $subscribeCache = [];
 
+    /** @param list<ArgumentResolver> $argumentResolvers */
     public function __construct(
         private readonly object $subscriber,
         private readonly SubscriberMetadata $metadata,
+        private readonly array $argumentResolvers,
     ) {
     }
 
@@ -79,11 +83,59 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor
         );
 
         $this->subscribeCache[$eventClass] = array_map(
-            /** @return Closure(Message):void */
-            fn (string $method) => $this->subscriber->$method(...),
+            fn (SubscribeMethodMetadata $method): Closure => $this->createClosure($eventClass, $method),
             $methods,
         );
 
         return $this->subscribeCache[$eventClass];
+    }
+
+    /**
+     * @param class-string $eventClass
+     *
+     * @return Closure(Message):void
+     */
+    private function createClosure(string $eventClass, SubscribeMethodMetadata $method): Closure
+    {
+        $resolvers = $this->resolvers($eventClass, $method);
+        $methodName = $method->name;
+
+        return function (Message $message) use ($methodName, $resolvers): void {
+            $arguments = [];
+
+            foreach ($resolvers as $resolver) {
+                $arguments[] = $resolver($message);
+            }
+
+            $this->subscriber->$methodName(...$arguments);
+        };
+    }
+
+    /**
+     * @param class-string $eventClass
+     *
+     * @return list<Closure(Message):mixed>
+     */
+    private function resolvers(string $eventClass, SubscribeMethodMetadata $method): array
+    {
+        $resolvers = [];
+
+        foreach ($method->arguments as $argument) {
+            foreach ($this->argumentResolvers as $resolver) {
+                if (!$resolver->support($argument, $eventClass)) {
+                    continue;
+                }
+
+                $resolvers[] = static function (Message $message) use ($resolver, $argument): mixed {
+                    return $resolver->resolve($argument, $message);
+                };
+
+                continue 2;
+            }
+
+            throw new NoSuitableResolver($this->subscriber::class, $method->name, $argument->name);
+        }
+
+        return $resolvers;
     }
 }

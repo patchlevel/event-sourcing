@@ -143,6 +143,7 @@ deptrac:
       - Metadata
       - Subscription
     Subscription:
+      - Aggregate
       - Attribute
       - Clock
       - Message

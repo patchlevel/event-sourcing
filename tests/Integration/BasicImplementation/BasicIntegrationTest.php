@@ -19,8 +19,8 @@ use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate\Profile;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Listener\SendEmailListener;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjector;
 use PHPUnit\Framework\TestCase;
 
@@ -59,8 +59,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $eventBus = DefaultEventBus::create([
-            new SendEmailProcessor(),
-            $profileProjector,
+            new SendEmailListener(),
         ]);
 
         $manager = new DefaultRepositoryManager(
@@ -84,6 +83,8 @@ final class BasicIntegrationTest extends TestCase
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
+
+        $engine->run();
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
 
@@ -126,8 +127,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $eventBus = DefaultEventBus::create([
-            new SendEmailProcessor(),
-            $profileProjection,
+            new SendEmailListener(),
         ]);
 
         $manager = new DefaultRepositoryManager(
@@ -151,6 +151,8 @@ final class BasicIntegrationTest extends TestCase
         $profileId = ProfileId::fromString('1');
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
+
+        $engine->run();
 
         $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
 

@@ -10,6 +10,9 @@ use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use ReflectionAttribute;
 use ReflectionClass;
+use ReflectionMethod;
+use ReflectionNamedType;
+use RuntimeException;
 
 use function array_key_exists;
 
@@ -48,7 +51,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 $instance = $attribute->newInstance();
                 $eventClass = $instance->eventClass;
 
-                $subscribeMethods[$eventClass][] = $method->getName();
+                $subscribeMethods[$eventClass][] = $this->subscribeMethod($method);
             }
 
             if ($method->getAttributes(Setup::class)) {
@@ -90,5 +93,28 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $this->subscriberMetadata[$subscriber] = $metadata;
 
         return $metadata;
+    }
+
+    private function subscribeMethod(ReflectionMethod $method): SubscribeMethodMetadata
+    {
+        $arguments = [];
+
+        foreach ($method->getParameters() as $parameter) {
+            $type = $parameter->getType();
+
+            if (!$type instanceof ReflectionNamedType) {
+                throw new RuntimeException('parameter type is required');
+            }
+
+            $arguments[] = new ArgumentMetadata(
+                $parameter->getName(),
+                $type->getName(),
+            );
+        }
+
+        return new SubscribeMethodMetadata(
+            $method->getName(),
+            $arguments,
+        );
     }
 }
