@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Serializer;
+namespace Patchlevel\EventSourcing\Tests\Unit\Cryptography;
 
+use Patchlevel\EventSourcing\Cryptography\CryptographicHydrator;
 use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
-use Patchlevel\EventSourcing\Serializer\CryptographicHydrator;
 use Patchlevel\Hydrator\Hydrator;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use stdClass;
 
-/** @covers \Patchlevel\EventSourcing\Serializer\CryptographicHydrator */
+/** @covers \Patchlevel\EventSourcing\Cryptography\CryptographicHydrator */
 final class CryptographicHydratorTest extends TestCase
 {
     use ProphecyTrait;

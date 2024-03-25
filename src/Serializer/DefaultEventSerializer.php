@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer;
 
+use Patchlevel\EventSourcing\Cryptography\CryptographicHydrator;
 use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;

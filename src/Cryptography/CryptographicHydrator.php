@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Serializer;
+namespace Patchlevel\EventSourcing\Cryptography;
 
-use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
 use Patchlevel\Hydrator\Hydrator;
 
 final class CryptographicHydrator implements Hydrator
