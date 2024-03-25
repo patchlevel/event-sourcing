@@ -10,9 +10,9 @@ whether the migration worked.
 In this example the event `PrivacyAdded` is removed and the event `OldVisited` is replaced by `NewVisited`:
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\ExcludeEventTranslator;
+use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
+use Patchlevel\EventSourcing\Message\Translator\ReplaceEventTranslator;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
@@ -21,11 +21,11 @@ $pipeline = new Pipeline(
     new StoreSource($oldStore),
     new StoreTarget($newStore),
     [
-        new ExcludeEventMiddleware([PrivacyAdded::class]),
-        new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
+        new ExcludeEventTranslator([PrivacyAdded::class]),
+        new ReplaceEventTranslator(OldVisited::class, static function (OldVisited $oldVisited) {
             return new NewVisited($oldVisited->profileId());
         }),
-        new RecalculatePlayheadMiddleware(),
+        new RecalculatePlayheadTranslator(),
     ],
 );
 ```
@@ -197,9 +197,9 @@ Middelwares can be used to manipulate, delete or expand messages or events durin
 With this middleware you can exclude certain events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\ExcludeEventTranslator;
 
-$middleware = new ExcludeEventMiddleware([EmailChanged::class]);
+$middleware = new ExcludeEventTranslator([EmailChanged::class]);
 ```
 !!! warning
 
@@ -210,9 +210,9 @@ $middleware = new ExcludeEventMiddleware([EmailChanged::class]);
 With this middleware you can only allow certain events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\IncludeEventTranslator;
 
-$middleware = new IncludeEventMiddleware([ProfileCreated::class]);
+$middleware = new IncludeEventTranslator([ProfileCreated::class]);
 ```
 !!! warning
 
@@ -226,9 +226,9 @@ This middleware expects a callback that returns either true to allow events or f
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateChanged;
-use Patchlevel\EventSourcing\Pipeline\Middleware\FilterEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\FilterEventTranslator;
 
-$middleware = new FilterEventMiddleware(static function (AggregateChanged $event) {
+$middleware = new FilterEventTranslator(static function (AggregateChanged $event) {
     if (!$event instanceof ProfileCreated) {
         return true;
     }
@@ -245,9 +245,9 @@ $middleware = new FilterEventMiddleware(static function (AggregateChanged $event
 With this middleware you can exclude archived events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeArchivedEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\ExcludeArchivedEventTranslator;
 
-$middleware = new ExcludeArchivedEventMiddleware();
+$middleware = new ExcludeArchivedEventTranslator();
 ```
 !!! warning
 
@@ -258,9 +258,9 @@ $middleware = new ExcludeArchivedEventMiddleware();
 With this middleware you can only allow archived events.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\OnlyArchivedEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\OnlyArchivedEventTranslator;
 
-$middleware = new OnlyArchivedEventMiddleware();
+$middleware = new OnlyArchivedEventTranslator();
 ```
 !!! warning
 
@@ -273,9 +273,9 @@ The first parameter you have to define is the event class that you want to repla
 And as a second parameter a callback, that the old event awaits and a new event returns.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\ReplaceEventTranslator;
 
-$middleware = new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
+$middleware = new ReplaceEventTranslator(OldVisited::class, static function (OldVisited $oldVisited) {
     return new NewVisited($oldVisited->profileId());
 });
 ```
@@ -302,9 +302,9 @@ The playhead must always be in ascending order so that the data is valid.
 Some middleware can break this order and the middleware `RecalculatePlayheadMiddleware` can fix this problem.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 
-$middleware = new RecalculatePlayheadMiddleware();
+$middleware = new RecalculatePlayheadTranslator();
 ```
 !!! note
 
@@ -315,13 +315,13 @@ $middleware = new RecalculatePlayheadMiddleware();
 If you want to group your middleware, you can use one or more `ChainMiddleware`.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\ChainTranslator;
+use Patchlevel\EventSourcing\Message\Translator\ExcludeEventTranslator;
+use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 
-$middleware = new ChainMiddleware([
-    new ExcludeEventMiddleware([EmailChanged::class]),
-    new RecalculatePlayheadMiddleware(),
+$middleware = new ChainTranslator([
+    new ExcludeEventTranslator([EmailChanged::class]),
+    new RecalculatePlayheadTranslator(),
 ]);
 ```
 ### Custom middleware
@@ -341,9 +341,9 @@ which should replace the `ProfileCreated` event.
 
 ```php
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
+use Patchlevel\EventSourcing\Message\Translator\Translator;
 
-final class SplitProfileCreatedMiddleware implements Middleware
+final class SplitProfileCreatedMiddleware implements Translator
 {
     public function __invoke(Message $message): array
     {
