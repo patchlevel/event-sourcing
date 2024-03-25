@@ -88,6 +88,7 @@ nav:
     - Aggregate ID: aggregate_id.md
     - Normalizer: normalizer.md
     - Snapshots: snapshots.md
+    - Personal Data: personal_data.md
     - Upcasting: upcasting.md
     - Outbox: outbox.md
     - Pipeline: pipeline.md

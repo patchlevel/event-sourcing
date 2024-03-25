@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer;
 
+use Patchlevel\EventSourcing\Cryptography\CryptographicHydrator;
+use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
@@ -53,11 +55,20 @@ final class DefaultEventSerializer implements EventSerializer
     }
 
     /** @param list<string> $paths */
-    public static function createFromPaths(array $paths, Upcaster|null $upcaster = null): static
-    {
+    public static function createFromPaths(
+        array $paths,
+        Upcaster|null $upcaster = null,
+        EventPayloadCryptographer|null $cryptographer = null,
+    ): static {
+        $hydrator = new MetadataHydrator();
+
+        if ($cryptographer) {
+            $hydrator = new CryptographicHydrator($hydrator, $cryptographer);
+        }
+
         return new self(
             (new AttributeEventRegistryFactory())->create($paths),
-            new MetadataHydrator(),
+            $hydrator,
             new JsonEncoder(),
             $upcaster,
         );

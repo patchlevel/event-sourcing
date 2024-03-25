@@ -21,6 +21,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/Console/.*
+    - name: Cryptography
+      collectors:
+        - type: directory
+          value: src/Cryptography/.*
     - name: Debug
       collectors:
         - type: directory
@@ -104,6 +108,9 @@ deptrac:
       - Serializer
       - Store
       - Subscription
+    Cryptography:
+      - MetadataEvent
+      - Schema
     Debug:
       - Attribute
       - Message
@@ -154,6 +161,7 @@ deptrac:
     Schema:
     Serializer:
       - Aggregate
+      - Cryptography
       - MetadataEvent
     Snapshot:
       - Aggregate
