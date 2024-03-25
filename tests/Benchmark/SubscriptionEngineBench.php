@@ -44,7 +44,6 @@ final class SubscriptionEngineBench
             DefaultHeadersSerializer::createFromPaths(
                 [
                     __DIR__ . '/BasicImplementation/Events',
-                    __DIR__ . '/../../src',
                 ],
             ),
             'eventstore',
