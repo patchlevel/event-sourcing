@@ -12,7 +12,6 @@ use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
-use RuntimeException;
 
 use function array_key_exists;
 
@@ -102,8 +101,20 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         foreach ($method->getParameters() as $parameter) {
             $type = $parameter->getType();
 
+            if ($type === null) {
+                throw ArgumentTypeNotSupported::missingType(
+                    $method->getDeclaringClass()->getName(),
+                    $method->getName(),
+                    $parameter->getName(),
+                );
+            }
+
             if (!$type instanceof ReflectionNamedType) {
-                throw new RuntimeException('parameter type is required');
+                throw ArgumentTypeNotSupported::onlyNamedTypeSupported(
+                    $method->getDeclaringClass()->getName(),
+                    $method->getName(),
+                    $parameter->getName(),
+                );
             }
 
             $arguments[] = new ArgumentMetadata(

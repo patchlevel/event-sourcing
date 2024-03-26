@@ -121,7 +121,7 @@
     <MixedMethodCall>
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$method]]></code>
-      <code><![CDATA[$method]]></code>
+      <code><![CDATA[$methodName]]></code>
     </MixedMethodCall>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Profile.php">
@@ -277,6 +277,14 @@
     <PropertyNotSetInConstructor>
       <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php">
+    <MissingParamType>
+      <code><![CDATA[$message]]></code>
+    </MissingParamType>
+    <ReservedWord>
+      <code><![CDATA[ProfileVisited&ProfileCreated $event]]></code>
+    </ReservedWord>
   </file>
   <file src="tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php">
     <PossiblyUndefinedArrayOffset>

@@ -8,7 +8,7 @@ use RuntimeException;
 
 use function sprintf;
 
-class NoSuitableResolver extends RuntimeException
+final class NoSuitableResolver extends RuntimeException
 {
     public function __construct(string $class, string $methodName, string $argumentName)
     {
