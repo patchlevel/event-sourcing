@@ -41,6 +41,6 @@ jobs:
                 dependency-versions: ${{ matrix.dependencies }}
 
             - name: "Infection"
-              run: "vendor/bin/roave-infection-static-analysis-plugin"
+              run: "vendor/bin/roave-infection-static-analysis-plugin --threads=max"
               env:
                   STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
