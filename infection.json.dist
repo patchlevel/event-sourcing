@@ -6,7 +6,6 @@
   },
   "logs": {
     "text": "infection.log",
-    "html": "infection.html",
     "stryker": {
       "report": "3.0.x"
     }
