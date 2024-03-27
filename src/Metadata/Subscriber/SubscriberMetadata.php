@@ -13,7 +13,7 @@ final class SubscriberMetadata
         public readonly string $id,
         public readonly string $group = Subscription::DEFAULT_GROUP,
         public readonly RunMode $runMode = RunMode::FromBeginning,
-        /** @var array<class-string|"*", list<string>> */
+        /** @var array<class-string|"*", list<SubscribeMethodMetadata>> */
         public readonly array $subscribeMethods = [],
         public readonly string|null $setupMethod = null,
         public readonly string|null $teardownMethod = null,

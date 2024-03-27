@@ -115,15 +115,14 @@
     </PossiblyNullPropertyFetch>
   </file>
   <file src="src/Subscription/Subscriber/MetadataSubscriberAccessor.php">
+    <MixedAssignment>
+      <code><![CDATA[$arguments[]]]></code>
+    </MixedAssignment>
     <MixedMethodCall>
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$method]]></code>
-      <code><![CDATA[$method]]></code>
+      <code><![CDATA[$methodName]]></code>
     </MixedMethodCall>
-    <MixedReturnTypeCoercion>
-      <code><![CDATA[$this->subscriber->$method(...)]]></code>
-      <code><![CDATA[Closure(Message):void]]></code>
-    </MixedReturnTypeCoercion>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Profile.php">
     <PropertyNotSetInConstructor>
@@ -134,7 +133,6 @@
   </file>
   <file src="tests/Benchmark/PersonalDataBench.php">
     <MissingConstructor>
-      <code><![CDATA[$bus]]></code>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$repository]]></code>
       <code><![CDATA[$store]]></code>
@@ -142,7 +140,6 @@
   </file>
   <file src="tests/Benchmark/SimpleSetupBench.php">
     <MissingConstructor>
-      <code><![CDATA[$bus]]></code>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$repository]]></code>
       <code><![CDATA[$store]]></code>
@@ -151,7 +148,6 @@
   <file src="tests/Benchmark/SnapshotsBench.php">
     <MissingConstructor>
       <code><![CDATA[$adapter]]></code>
-      <code><![CDATA[$bus]]></code>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$repository]]></code>
       <code><![CDATA[$snapshotStore]]></code>
@@ -163,7 +159,6 @@
       <code><![CDATA[$this->id]]></code>
     </ArgumentTypeCoercion>
     <MissingConstructor>
-      <code><![CDATA[$bus]]></code>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$repository]]></code>
       <code><![CDATA[$store]]></code>
@@ -171,7 +166,6 @@
   </file>
   <file src="tests/Benchmark/SubscriptionEngineBench.php">
     <MissingConstructor>
-      <code><![CDATA[$bus]]></code>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$repository]]></code>
       <code><![CDATA[$store]]></code>
@@ -200,13 +194,6 @@
     <PropertyNotSetInConstructor>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$name]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Integration/Pipeline/Aggregate/Profile.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$privacy]]></code>
-      <code><![CDATA[$visited]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/Store/Profile.php">
@@ -291,12 +278,13 @@
       <code><![CDATA[$id]]></code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="tests/Unit/Pipeline/Source/InMemorySourceTest.php">
-    <InvalidMethodCall>
-      <code><![CDATA[current]]></code>
-      <code><![CDATA[current]]></code>
-      <code><![CDATA[next]]></code>
-    </InvalidMethodCall>
+  <file src="tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php">
+    <MissingParamType>
+      <code><![CDATA[$message]]></code>
+    </MissingParamType>
+    <ReservedWord>
+      <code><![CDATA[ProfileVisited&ProfileCreated $event]]></code>
+    </ReservedWord>
   </file>
   <file src="tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php">
     <PossiblyUndefinedArrayOffset>

@@ -10,10 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
-
-use function assert;
 
 #[Projector('profile-1')]
 final class ProfileProjector
@@ -41,12 +38,8 @@ final class ProfileProjector
     }
 
     #[Subscribe(ProfileCreated::class)]
-    public function handleProfileCreated(Message $message): void
+    public function handleProfileCreated(ProfileCreated $profileCreated): void
     {
-        $profileCreated = $message->event();
-
-        assert($profileCreated instanceof ProfileCreated);
-
         $this->connection->executeStatement(
             'INSERT INTO projection_profile (id, name) VALUES(:id, :name);',
             [

@@ -11,8 +11,13 @@ use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
+use Patchlevel\EventSourcing\Subscription\Subscriber\NoSuitableResolver;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor */
@@ -27,6 +32,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         self::assertEquals('profile', $accessor->id());
@@ -41,6 +47,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         self::assertEquals('default', $accessor->group());
@@ -55,6 +62,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         self::assertEquals(RunMode::FromBeginning, $accessor->runMode());
@@ -64,22 +72,32 @@ final class MetadataSubscriberAccessorTest extends TestCase
     {
         $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
-            #[Subscribe(ProfileCreated::class)]
-            public function onProfileCreated(Message $message): void
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(Message $message): void
             {
+                $this->message = $message;
             }
         };
 
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [
+                new MessageArgumentResolver(),
+            ],
         );
 
-        $result = $accessor->subscribeMethods(ProfileCreated::class);
+        $result = $accessor->subscribeMethods(ProfileVisited::class);
 
-        self::assertEquals([
-            $subscriber->onProfileCreated(...),
-        ], $result);
+        self::assertArrayHasKey(0, $result);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
+
+        $result[0]($message);
+
+        self::assertSame($message, $subscriber->message);
     }
 
     public function testMultipleSubscribeMethod(): void
@@ -100,9 +118,14 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [
+                new MessageArgumentResolver(),
+            ],
         );
 
         $result = $accessor->subscribeMethods(ProfileCreated::class);
+
+        self::assertCount(2, $result);
 
         self::assertEquals([
             $subscriber->onProfileCreated(...),
@@ -114,8 +137,42 @@ final class MetadataSubscriberAccessorTest extends TestCase
     {
         $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
         class {
+            public Message|null $message = null;
+
             #[Subscribe('*')]
-            public function onProfileCreated(Message $message): void
+            public function on(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $accessor = new MetadataSubscriberAccessor(
+            $subscriber,
+            (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [
+                new MessageArgumentResolver(),
+            ],
+        );
+
+        $result = $accessor->subscribeMethods(ProfileVisited::class);
+
+        self::assertArrayHasKey(0, $result);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
+
+        $result[0]($message);
+
+        self::assertSame($message, $subscriber->message);
+    }
+
+    public function testNoResolver(): void
+    {
+        $this->expectException(NoSuitableResolver::class);
+
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function on(Message $message): void
             {
             }
         };
@@ -123,13 +180,43 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
-        $result = $accessor->subscribeMethods(ProfileCreated::class);
+        $accessor->subscribeMethods(ProfileVisited::class);
+    }
 
-        self::assertEquals([
-            $subscriber->onProfileCreated(...),
-        ], $result);
+    public function testMultipleResolver(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function on(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $accessor = new MetadataSubscriberAccessor(
+            $subscriber,
+            (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [
+                new EventArgumentResolver(),
+                new MessageArgumentResolver(),
+            ],
+        );
+
+        $result = $accessor->subscribeMethods(ProfileVisited::class);
+
+        self::assertArrayHasKey(0, $result);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
+
+        $result[0]($message);
+
+        self::assertSame($message, $subscriber->message);
     }
 
     public function testSetupMethod(): void
@@ -145,6 +232,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         $result = $accessor->setupMethod();
@@ -161,6 +249,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         $result = $accessor->setupMethod();
@@ -181,6 +270,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         $result = $accessor->teardownMethod();
@@ -197,6 +287,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $accessor = new MetadataSubscriberAccessor(
             $subscriber,
             (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
         );
 
         $result = $accessor->teardownMethod();

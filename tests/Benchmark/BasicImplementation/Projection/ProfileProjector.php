@@ -5,17 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
-
-use function assert;
 
 #[Projector('profile')]
 final class ProfileProjector
@@ -40,12 +36,8 @@ final class ProfileProjector
     }
 
     #[Subscribe(ProfileCreated::class)]
-    public function onProfileCreated(Message $message): void
+    public function onProfileCreated(ProfileCreated $profileCreated): void
     {
-        $profileCreated = $message->event();
-
-        assert($profileCreated instanceof ProfileCreated);
-
         $this->connection->insert(
             $this->table(),
             [
@@ -56,16 +48,12 @@ final class ProfileProjector
     }
 
     #[Subscribe(NameChanged::class)]
-    public function onNameChanged(Message $message): void
+    public function onNameChanged(NameChanged $nameChanged, string $aggregateRootId): void
     {
-        $nameChanged = $message->event();
-
-        assert($nameChanged instanceof NameChanged);
-
         $this->connection->update(
             $this->table(),
             ['name' => $nameChanged->name],
-            ['id' => $message->header(AggregateHeader::class)->aggregateId],
+            ['id' => $aggregateRootId],
         );
     }
 
