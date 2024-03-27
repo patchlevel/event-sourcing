@@ -33,6 +33,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
+use Psr\Log\NullLogger;
 use RuntimeException;
 
 /** @covers \Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine */
@@ -51,6 +52,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $store,
             new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
         );
 
         $engine->setup();
@@ -77,6 +79,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->setup();
@@ -125,6 +128,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->setup();
@@ -180,6 +184,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->setup();
@@ -228,6 +233,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->setup(null, true);
@@ -267,6 +273,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->setup();
@@ -305,6 +312,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->setup();
@@ -331,6 +339,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $store,
             new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
         );
 
         $engine->boot();
@@ -355,6 +364,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->boot();
@@ -403,6 +413,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->boot();
@@ -461,6 +472,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->boot(new SubscriptionEngineCriteria(), 1);
@@ -531,6 +543,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber1, $subscriber2]),
+            logger: new NullLogger(),
         );
 
         $engine->boot();
@@ -604,6 +617,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->boot();
@@ -660,6 +674,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->boot();
@@ -698,6 +713,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->run();
@@ -744,6 +760,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->run();
@@ -797,6 +814,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->run(new SubscriptionEngineCriteria(), 1);
@@ -865,6 +883,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber1, $subscriber2]),
+            logger: new NullLogger(),
         );
 
         $engine->run();
@@ -925,6 +944,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->run();
@@ -968,6 +988,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
         );
 
         $engine->run();
@@ -1003,6 +1024,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
         );
 
         $engine->run();
@@ -1044,6 +1066,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->run();
@@ -1093,6 +1116,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->run();
@@ -1131,6 +1155,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->teardown();
@@ -1167,6 +1192,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->teardown();
@@ -1205,6 +1231,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->teardown();
@@ -1244,6 +1271,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->teardown();
@@ -1271,6 +1299,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
         );
 
         $engine->teardown();
@@ -1293,6 +1322,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->remove();
@@ -1335,6 +1365,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->remove();
@@ -1365,6 +1396,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->remove();
@@ -1401,6 +1433,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->remove();
@@ -1427,6 +1460,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
         );
 
         $engine->remove();
@@ -1449,6 +1483,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->reactivate();
@@ -1487,6 +1522,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->reactivate();
@@ -1524,6 +1560,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->reactivate();
@@ -1560,6 +1597,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->reactivate();
@@ -1596,6 +1634,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->reactivate();
@@ -1624,6 +1663,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->pause();
@@ -1660,6 +1700,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->pause();
@@ -1696,6 +1737,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->pause();
@@ -1734,6 +1776,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->pause();
@@ -1764,6 +1807,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $subscriptions = $engine->subscriptions();
@@ -1823,6 +1867,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
             $retryStrategy->reveal(),
+            new NullLogger(),
         );
 
         $engine->run();
@@ -1875,6 +1920,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
             $retryStrategy->reveal(),
+            new NullLogger(),
         );
 
         $engine->run();
@@ -1909,6 +1955,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore->reveal(),
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engineCriteria = new SubscriptionEngineCriteria(
@@ -1949,6 +1996,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore->reveal(),
             new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
         );
 
         $engine->{$method}();

@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArrayStream;
+use Patchlevel\EventSourcing\Store\StreamClosed;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -139,6 +140,8 @@ final class ArrayStreamTest extends TestCase
 
     public function testClose(): void
     {
+        $this->expectException(StreamClosed::class);
+
         $message = Message::create(
             new ProfileCreated(
                 ProfileId::fromString('foo'),
@@ -156,10 +159,6 @@ final class ArrayStreamTest extends TestCase
         self::assertSame(false, $stream->end());
 
         $stream->close();
-
-        self::assertSame(1, $stream->index());
-        self::assertSame(0, $stream->position());
-        self::assertSame($message, $stream->current());
-        self::assertSame(false, $stream->end());
+        $stream->index();
     }
 }
