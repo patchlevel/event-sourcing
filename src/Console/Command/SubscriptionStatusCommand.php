@@ -47,6 +47,8 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
             $io->table(
                 [
                     'id',
+                    'group',
+                    'run mode',
                     'position',
                     'status',
                     'error message',
@@ -54,6 +56,8 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
                 array_map(
                     static fn (Subscription $subscription) => [
                         $subscription->id(),
+                        $subscription->group(),
+                        $subscription->runMode()->value,
                         $subscription->position(),
                         $subscription->status()->value,
                         $subscription->subscriptionError()?->errorMessage,
@@ -70,6 +74,8 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
         $io->horizontalTable(
             [
                 'id',
+                'group',
+                'run mode',
                 'position',
                 'status',
                 'error message',
@@ -77,6 +83,8 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
             [
                 [
                     $subscription->id(),
+                    $subscription->group(),
+                    $subscription->runMode()->value,
                     $subscription->position(),
                     $subscription->status()->value,
                     $subscription->subscriptionError()?->errorMessage,
