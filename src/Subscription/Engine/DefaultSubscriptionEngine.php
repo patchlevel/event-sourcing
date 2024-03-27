@@ -347,7 +347,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         }
                     }
                 } finally {
-                    $endIndex = $stream?->index();
+                    $endIndex = $stream?->index() ?: $startIndex;
                     $stream?->close();
 
                     if ($messageCounter > 0) {
@@ -382,7 +382,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $this->logger?->info(
                     sprintf(
                         'Subscription Engine: End of stream on position "%d" has been reached, finish processing.',
-                        $endIndex ?: 'unknown',
+                        $endIndex,
                     ),
                 );
             },
