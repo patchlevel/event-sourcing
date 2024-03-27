@@ -161,4 +161,29 @@ final class ArrayStreamTest extends TestCase
         $stream->close();
         $stream->index();
     }
+
+    public function testPositionEmpty(): void
+    {
+        $stream = new ArrayStream([]);
+        $position = $stream->position();
+
+        self::assertNull($position);
+    }
+
+    public function testPosition(): void
+    {
+        $message = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('foo'),
+                Email::fromString('info@patchlevel.de'),
+            ),
+        );
+
+        $messages = [$message];
+
+        $stream = new ArrayStream($messages);
+        $position = $stream->position();
+
+        self::assertSame(0, $position);
+    }
 }
