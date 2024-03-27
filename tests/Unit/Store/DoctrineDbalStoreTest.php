@@ -36,6 +36,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileEmailChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PDO;
+use PHPUnit\Framework\Attributes\RequiresMethod;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
@@ -143,6 +144,7 @@ final class DoctrineDbalStoreTest extends TestCase
         self::assertSame(null, $stream->position());
     }
 
+    #[RequiresMethod(AbstractPlatform::class, 'supportsLimitOffset')]
     public function testLoadWithOffset(): void
     {
         $connection = $this->prophesize(Connection::class);
@@ -233,7 +235,7 @@ final class DoctrineDbalStoreTest extends TestCase
                 ->fromPlayhead(0)
                 ->archived(false)
                 ->fromIndex(1)
-                ->build()
+                ->build(),
         );
 
         self::assertSame(null, $stream->index());
