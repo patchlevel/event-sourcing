@@ -95,14 +95,110 @@ final class DoctrineDbalStoreTest extends TestCase
         self::assertSame(null, $stream->position());
     }
 
-    public function testLoadWithLimitAndOffsetAndIndex(): void
+    public function testLoadWithLimit(): void
     {
         $connection = $this->prophesize(Connection::class);
         $result = $this->prophesize(Result::class);
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) AND (id > :index) ORDER BY id ASC LIMIT 10 OFFSET 5',
+            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC LIMIT 10',
+            [
+                'aggregate' => 'profile',
+                'id' => '1',
+                'playhead' => 0,
+                'archived' => false,
+            ],
+            Argument::type('array'),
+        )->willReturn($result->reveal());
+
+        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+
+        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
+        $connection->createQueryBuilder()->willReturn($queryBuilder);
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $doctrineDbalStore = new DoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+            'eventstore',
+        );
+
+        $stream = $doctrineDbalStore->load(
+            (new CriteriaBuilder())
+                ->aggregateName('profile')
+                ->aggregateId('1')
+                ->fromPlayhead(0)
+                ->archived(false)
+                ->build(),
+            10,
+        );
+
+        self::assertSame(null, $stream->index());
+        self::assertSame(null, $stream->position());
+    }
+
+    public function testLoadWithOffset(): void
+    {
+        $connection = $this->prophesize(Connection::class);
+        $result = $this->prophesize(Result::class);
+        $result->iterateAssociative()->willReturn(new EmptyIterator());
+
+        $connection->executeQuery(
+            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC OFFSET 5',
+            [
+                'aggregate' => 'profile',
+                'id' => '1',
+                'playhead' => 0,
+                'archived' => false,
+            ],
+            Argument::type('array'),
+        )->willReturn($result->reveal());
+
+        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+
+        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
+        $connection->createQueryBuilder()->willReturn($queryBuilder);
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $doctrineDbalStore = new DoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+            'eventstore',
+        );
+
+        $stream = $doctrineDbalStore->load(
+            (new CriteriaBuilder())
+                ->aggregateName('profile')
+                ->aggregateId('1')
+                ->fromPlayhead(0)
+                ->archived(false)
+                ->build(),
+            offset: 5,
+        );
+
+        self::assertSame(null, $stream->index());
+        self::assertSame(null, $stream->position());
+    }
+
+    public function testLoadWithIndex(): void
+    {
+        $connection = $this->prophesize(Connection::class);
+        $result = $this->prophesize(Result::class);
+        $result->iterateAssociative()->willReturn(new EmptyIterator());
+
+        $connection->executeQuery(
+            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) AND (id > :index) ORDER BY id ASC',
             [
                 'aggregate' => 'profile',
                 'id' => '1',
@@ -137,9 +233,7 @@ final class DoctrineDbalStoreTest extends TestCase
                 ->fromPlayhead(0)
                 ->archived(false)
                 ->fromIndex(1)
-                ->build(),
-            10,
-            5,
+                ->build()
         );
 
         self::assertSame(null, $stream->index());
