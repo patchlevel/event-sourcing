@@ -367,7 +367,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
             <<<'SQL'
                 CREATE OR REPLACE FUNCTION %1$s() RETURNS TRIGGER AS $$
                     BEGIN
-                        PERFORM pg_notify('%2$s');
+                        PERFORM pg_notify('%2$s', 'update');
                         RETURN NEW;
                     END;
                 $$ LANGUAGE plpgsql;
