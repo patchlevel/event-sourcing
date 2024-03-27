@@ -297,6 +297,8 @@
       <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
       <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
       <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
+      <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
+      <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
     </InternalMethod>
   </file>
   <file src="tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php">
