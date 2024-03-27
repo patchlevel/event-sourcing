@@ -14,8 +14,8 @@ use Traversable;
 /** @implements IteratorAggregate<Message> */
 final class ArrayStream implements Stream, IteratorAggregate
 {
-    /** @var Iterator<Message> $iterator */
-    private readonly Iterator $iterator;
+    /** @var Iterator<Message>|null $iterator */
+    private Iterator|null $iterator;
 
     /** @var positive-int|0|null */
     private int|null $position;
@@ -33,17 +33,26 @@ final class ArrayStream implements Stream, IteratorAggregate
 
     public function close(): void
     {
+        $this->iterator = null;
     }
 
     /** @return Traversable<Message> */
     public function getIterator(): Traversable
     {
+        if ($this->iterator === null) {
+            throw new StreamClosed();
+        }
+
         return $this->iterator;
     }
 
     /** @return positive-int|0|null */
     public function position(): int|null
     {
+        if ($this->iterator === null) {
+            throw new StreamClosed();
+        }
+
         if ($this->position === null) {
             $this->iterator->key();
         }
@@ -58,6 +67,10 @@ final class ArrayStream implements Stream, IteratorAggregate
      */
     public function index(): int|null
     {
+        if ($this->iterator === null) {
+            throw new StreamClosed();
+        }
+
         if ($this->index === null) {
             $this->iterator->key();
         }
@@ -67,16 +80,28 @@ final class ArrayStream implements Stream, IteratorAggregate
 
     public function next(): void
     {
+        if ($this->iterator === null) {
+            throw new StreamClosed();
+        }
+
         $this->iterator->next();
     }
 
     public function end(): bool
     {
+        if ($this->iterator === null) {
+            throw new StreamClosed();
+        }
+
         return !$this->iterator->valid();
     }
 
     public function current(): Message|null
     {
+        if ($this->iterator === null) {
+            throw new StreamClosed();
+        }
+
         return $this->iterator->current() ?: null;
     }
 
