@@ -12,13 +12,9 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Doctrine\DBAL\Query\SelectQuery;
 use Doctrine\DBAL\Result;
-use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\SQL\Builder\DefaultSelectSQLBuilder;
-use Doctrine\DBAL\SQL\Builder\SelectSQLBuilder;
 use Doctrine\DBAL\Statement;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
@@ -34,7 +30,6 @@ use Patchlevel\EventSourcing\Store\MissingDataForStorage;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\EmailChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\BazHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -144,7 +139,7 @@ final class DoctrineDbalStoreTest extends TestCase
                 ->fromIndex(1)
                 ->build(),
             10,
-            5
+            5,
         );
 
         self::assertSame(null, $stream->index());
@@ -482,8 +477,24 @@ final class DoctrineDbalStoreTest extends TestCase
         $innerMockedConnection->executeStatement(
             "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
-                'profile', '1', 1, 'profile_created', '', $recordedOn, false, false, [],
-                'profile', '1', 2, 'profile_email_changed', '', $recordedOn, false, false, [],
+                'profile',
+                '1',
+                1,
+                'profile_created',
+                '',
+                $recordedOn,
+                false,
+                false,
+                [],
+                'profile',
+                '1',
+                2,
+                'profile_email_changed',
+                '',
+                $recordedOn,
+                false,
+                false,
+                [],
             ],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
@@ -544,8 +555,24 @@ final class DoctrineDbalStoreTest extends TestCase
         $innerMockedConnection->executeStatement(
             "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
-                'profile', '1', 1, 'profile_created', '', $recordedOn, false, false, [],
-                'profile', '1', 1, 'profile_created', '', $recordedOn, false, false, [],
+                'profile',
+                '1',
+                1,
+                'profile_created',
+                '',
+                $recordedOn,
+                false,
+                false,
+                [],
+                'profile',
+                '1',
+                1,
+                'profile_created',
+                '',
+                $recordedOn,
+                false,
+                false,
+                [],
             ],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
@@ -631,7 +658,7 @@ final class DoctrineDbalStoreTest extends TestCase
     {
         $customHeaders = [
             new FooHeader('foo'),
-            new BazHeader('baz')
+            new BazHeader('baz'),
         ];
 
         $recordedOn = new DateTimeImmutable();
@@ -642,8 +669,7 @@ final class DoctrineDbalStoreTest extends TestCase
                 1,
                 $recordedOn,
             ))
-            ->withHeaders($customHeaders)
-        ;
+            ->withHeaders($customHeaders);
 
         $innerMockedConnection = $this->prophesize(Connection::class);
 
@@ -709,7 +735,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $eventSerializer->reveal(),
-            $headersSerializer->reveal()
+            $headersSerializer->reveal(),
         );
 
         $count = $doctrineDbalStore->count(
@@ -751,9 +777,8 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $eventSerializer->reveal(),
-            $headersSerializer->reveal()
+            $headersSerializer->reveal(),
         );
-
 
         $this->expectException(WrongQueryResult::class);
         $doctrineDbalStore->count(
@@ -779,9 +804,9 @@ final class DoctrineDbalStoreTest extends TestCase
                 $$ LANGUAGE plpgsql;
                 SQL,
         )->shouldBeCalledOnce()->willReturn(1);
-        $connection->executeStatement("DROP TRIGGER IF EXISTS notify_trigger ON eventstore;")
+        $connection->executeStatement('DROP TRIGGER IF EXISTS notify_trigger ON eventstore;')
             ->shouldBeCalledOnce()->willReturn(1);
-        $connection->executeStatement("CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON eventstore FOR EACH ROW EXECUTE PROCEDURE notify_eventstore();")
+        $connection->executeStatement('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON eventstore FOR EACH ROW EXECUTE PROCEDURE notify_eventstore();')
             ->shouldBeCalledOnce()->willReturn(1);
 
         $abstractPlatform = $this->prophesize(PostgreSQLPlatform::class);
@@ -793,10 +818,9 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $eventSerializer->reveal(),
-            $headersSerializer->reveal()
+            $headersSerializer->reveal(),
         );
         $doctrineDbalStore->setupSubscription();
-
     }
 
     public function testSetupSubscriptionWithOtherStoreTableName(): void
@@ -812,9 +836,9 @@ final class DoctrineDbalStoreTest extends TestCase
                 $$ LANGUAGE plpgsql;
                 SQL,
         )->shouldBeCalledOnce()->willReturn(1);
-        $connection->executeStatement("DROP TRIGGER IF EXISTS notify_trigger ON new.eventstore;")
+        $connection->executeStatement('DROP TRIGGER IF EXISTS notify_trigger ON new.eventstore;')
             ->shouldBeCalledOnce()->willReturn(1);
-        $connection->executeStatement("CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON new.eventstore FOR EACH ROW EXECUTE PROCEDURE new.notify_eventstore();")
+        $connection->executeStatement('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON new.eventstore FOR EACH ROW EXECUTE PROCEDURE new.notify_eventstore();')
             ->shouldBeCalledOnce()->willReturn(1);
 
         $abstractPlatform = $this->prophesize(PostgreSQLPlatform::class);
@@ -827,11 +851,11 @@ final class DoctrineDbalStoreTest extends TestCase
             $connection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'new.eventstore'
+            'new.eventstore',
         );
         $doctrineDbalStore->setupSubscription();
-
     }
+
     public function testSetupSubscriptionNotPostgres(): void
     {
         $connection = $this->prophesize(Connection::class);
@@ -845,9 +869,9 @@ final class DoctrineDbalStoreTest extends TestCase
                 $$ LANGUAGE plpgsql;
                 SQL,
         )->shouldNotBeCalled();
-        $connection->executeStatement("DROP TRIGGER IF EXISTS notify_trigger ON eventstore;")
+        $connection->executeStatement('DROP TRIGGER IF EXISTS notify_trigger ON eventstore;')
             ->shouldNotBeCalled();
-        $connection->executeStatement("CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON eventstore FOR EACH ROW EXECUTE PROCEDURE notify_eventstore();")
+        $connection->executeStatement('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON eventstore FOR EACH ROW EXECUTE PROCEDURE notify_eventstore();')
             ->shouldNotBeCalled();
 
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
@@ -859,10 +883,9 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $eventSerializer->reveal(),
-            $headersSerializer->reveal()
+            $headersSerializer->reveal(),
         );
         $doctrineDbalStore->setupSubscription();
-
     }
 
     public function testWait(): void
@@ -894,7 +917,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $eventSerializer->reveal(),
-            $headersSerializer->reveal()
+            $headersSerializer->reveal(),
         );
         $doctrineDbalStore->wait(100);
     }
@@ -908,7 +931,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $eventSerializer->reveal(),
-            $headersSerializer->reveal()
+            $headersSerializer->reveal(),
         );
         $schema = new Schema();
         $doctrineDbalStore->configureSchema($schema, $this->prophesize(Connection::class)->reveal());
@@ -925,7 +948,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
             $eventSerializer->reveal(),
-            $headersSerializer->reveal()
+            $headersSerializer->reveal(),
         );
 
         $expectedSchema = new Schema();
@@ -961,13 +984,11 @@ final class DoctrineDbalStoreTest extends TestCase
         $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
         $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
 
-
         $schema = new Schema();
         $doctrineDbalStore->configureSchema($schema, $connection->reveal());
 
         self::assertEquals($expectedSchema, $schema);
     }
-
 
     #[RequiresPhp('>= 8.2')]
     public function testArchiveMessages(): void

@@ -286,6 +286,19 @@
       <code><![CDATA[ProfileVisited&ProfileCreated $event]]></code>
     </ReservedWord>
   </file>
+  <file src="tests/Unit/Store/DoctrineDbalStoreTest.php">
+    <DeprecatedMethod>
+      <code><![CDATA[addMethods]]></code>
+    </DeprecatedMethod>
+    <InternalMethod>
+      <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
+      <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
+      <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
+      <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
+      <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
+      <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
+    </InternalMethod>
+  </file>
   <file src="tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php">
     <PossiblyUndefinedArrayOffset>
       <code><![CDATA[$update1]]></code>

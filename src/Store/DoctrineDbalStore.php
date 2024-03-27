@@ -372,6 +372,12 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
         return sprintf('%1$s.notify_%2$s', $tableConfig[0], $tableConfig[1]);
     }
 
+    /**
+     * @param array<string>               $columns
+     * @param array<string>               $placeholders
+     * @param list<mixed>                 $parameters
+     * @param array<0|positive-int, Type> $types
+     */
     private function executeSave(array $columns, array $placeholders, array $parameters, array $types, Connection $connection): void
     {
         $query = sprintf(
