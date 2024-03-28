@@ -49,7 +49,7 @@ phpunit-unit: vendor                                             				## run phpu
 
 .PHONY: infection
 infection: vendor                                                               ## run infection
-	vendor/bin/infection
+	php -d memory_limit=312M vendor/bin/roave-infection-static-analysis-plugin --threads=max
 
 .PHONY: deptrac
 deptrac: vendor-tools                                                           ## run deptrac

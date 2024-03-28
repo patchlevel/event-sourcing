@@ -39,4 +39,4 @@ jobs:
                   dependency-versions: ${{ matrix.dependencies }}
 
             - name: "Infection"
-              run: "vendor/bin/roave-infection-static-analysis-plugin --git-diff-lines --git-diff-base=origin/$GITHUB_BASE_REF --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=95"
+              run: "vendor/bin/roave-infection-static-analysis-plugin --threads=max --git-diff-lines --git-diff-base=origin/$GITHUB_BASE_REF --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=95"

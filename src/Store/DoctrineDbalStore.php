@@ -214,14 +214,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
                         continue;
                     }
 
-                    $query = sprintf(
-                        "INSERT INTO %s (%s) VALUES\n(%s)",
-                        $this->storeTableName,
-                        implode(', ', $columns),
-                        implode("),\n(", $placeholders),
-                    );
-
-                    $connection->executeStatement($query, $parameters, $types);
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
 
                     $parameters = [];
                     $placeholders = [];
@@ -234,18 +227,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
                     return;
                 }
 
-                $query = sprintf(
-                    "INSERT INTO %s (%s) VALUES\n(%s)",
-                    $this->storeTableName,
-                    implode(', ', $columns),
-                    implode("),\n(", $placeholders),
-                );
-
-                try {
-                    $connection->executeStatement($query, $parameters, $types);
-                } catch (UniqueConstraintViolationException $e) {
-                    throw new UniqueConstraintViolation($e);
-                }
+                $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
             },
         );
     }
@@ -288,8 +270,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
         $table = $schema->createTable($this->storeTableName);
 
         $table->addColumn('id', Types::BIGINT)
-            ->setAutoincrement(true)
-            ->setNotnull(true);
+            ->setAutoincrement(true);
         $table->addColumn('aggregate', Types::STRING)
             ->setLength(255)
             ->setNotnull(true);
@@ -389,5 +370,27 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
         }
 
         return sprintf('%1$s.notify_%2$s', $tableConfig[0], $tableConfig[1]);
+    }
+
+    /**
+     * @param array<string>               $columns
+     * @param array<string>               $placeholders
+     * @param list<mixed>                 $parameters
+     * @param array<0|positive-int, Type> $types
+     */
+    private function executeSave(array $columns, array $placeholders, array $parameters, array $types, Connection $connection): void
+    {
+        $query = sprintf(
+            "INSERT INTO %s (%s) VALUES\n(%s)",
+            $this->storeTableName,
+            implode(', ', $columns),
+            implode("),\n(", $placeholders),
+        );
+
+        try {
+            $connection->executeStatement($query, $parameters, $types);
+        } catch (UniqueConstraintViolationException $e) {
+            throw new UniqueConstraintViolation($e);
+        }
     }
 }
