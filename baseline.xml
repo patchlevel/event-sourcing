@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.23.1@8471a896ccea3526b26d082f4461eeea467f10a4">
+<files psalm-version="5.17.0@c620f6e80d0abfca532b00bda366062aaedf6e5d">
   <file src="src/Aggregate/AggregateRootBehaviour.php">
     <UnsafeInstantiation>
-      <code><![CDATA[new static()]]></code>
+      <code>new static()</code>
     </UnsafeInstantiation>
   </file>
   <file src="src/Clock/FrozenClock.php">
@@ -12,16 +12,16 @@
   </file>
   <file src="src/Console/Command/SubscriptionBootCommand.php">
     <RedundantCondition>
-      <code><![CDATA[1]]></code>
+      <code>1</code>
     </RedundantCondition>
     <TypeDoesNotContainType>
-      <code><![CDATA[$finished]]></code>
-      <code><![CDATA[$finished]]></code>
+      <code>$finished</code>
+      <code>$finished</code>
     </TypeDoesNotContainType>
   </file>
   <file src="src/Console/DoctrineHelper.php">
     <ClassNotFinal>
-      <code><![CDATA[class DoctrineHelper]]></code>
+      <code>class DoctrineHelper</code>
     </ClassNotFinal>
   </file>
   <file src="src/Cryptography/Cipher/OpensslCipherKeyFactory.php">
@@ -30,7 +30,7 @@
       <code><![CDATA[openssl_random_pseudo_bytes($this->keyLength)]]></code>
     </ArgumentTypeCoercion>
     <LessSpecificReturnStatement>
-      <code><![CDATA[openssl_get_cipher_methods(true)]]></code>
+      <code>openssl_get_cipher_methods(true)</code>
     </LessSpecificReturnStatement>
     <MoreSpecificReturnType>
       <code><![CDATA[list<string>]]></code>
@@ -45,6 +45,9 @@
       <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
       <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
     </MixedAssignment>
+    <PossiblyNullArgument>
+      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
+    </PossiblyNullArgument>
   </file>
   <file src="src/Cryptography/Store/DoctrineCipherKeyStore.php">
     <ArgumentTypeCoercion>
@@ -59,7 +62,7 @@
   </file>
   <file src="src/Metadata/AggregateRoot/AggregateRootMetadataAwareMetadataFactory.php">
     <InvalidReturnStatement>
-      <code><![CDATA[$aggregate::metadata()]]></code>
+      <code>$aggregate::metadata()</code>
     </InvalidReturnStatement>
     <InvalidReturnType>
       <code><![CDATA[AggregateRootMetadata<T>]]></code>
@@ -67,7 +70,7 @@
   </file>
   <file src="src/Metadata/AggregateRoot/AttributeAggregateRootMetadataFactory.php">
     <DocblockTypeContradiction>
-      <code><![CDATA[$reflectionType instanceof ReflectionIntersectionType]]></code>
+      <code>$reflectionType instanceof ReflectionIntersectionType</code>
     </DocblockTypeContradiction>
     <InvalidReturnStatement>
       <code><![CDATA[$this->aggregateMetadata[$aggregate]]]></code>
@@ -78,12 +81,12 @@
   </file>
   <file src="src/Repository/DefaultRepository.php">
     <PropertyTypeCoercion>
-      <code><![CDATA[new WeakMap()]]></code>
+      <code>new WeakMap()</code>
     </PropertyTypeCoercion>
   </file>
   <file src="src/Serializer/Upcast/Upcast.php">
     <MixedAssignment>
-      <code><![CDATA[$payload[$key]]]></code>
+      <code>$payload[$key]</code>
     </MixedAssignment>
   </file>
   <file src="src/Snapshot/DefaultSnapshotStore.php">
@@ -93,21 +96,24 @@
   </file>
   <file src="src/Store/ArrayStream.php">
     <InvalidPropertyAssignmentValue>
-      <code><![CDATA[$index]]></code>
+      <code>$index</code>
     </InvalidPropertyAssignmentValue>
   </file>
   <file src="src/Store/DoctrineHelper.php">
     <MixedReturnTypeCoercion>
-      <code><![CDATA[$normalizedCustomHeaders]]></code>
+      <code>$normalizedCustomHeaders</code>
       <code><![CDATA[array<string, string>]]></code>
     </MixedReturnTypeCoercion>
   </file>
   <file src="src/Subscription/Store/DoctrineSubscriptionStore.php">
+    <InvalidClass>
+      <code>SQLitePlatform</code>
+    </InvalidClass>
     <MixedArgument>
-      <code><![CDATA[$context]]></code>
+      <code>$context</code>
     </MixedArgument>
     <MixedAssignment>
-      <code><![CDATA[$context]]></code>
+      <code>$context</code>
     </MixedAssignment>
     <PossiblyNullPropertyFetch>
       <code><![CDATA[$subscriptionError->errorContext]]></code>
@@ -116,42 +122,42 @@
   </file>
   <file src="src/Subscription/Subscriber/MetadataSubscriberAccessor.php">
     <MixedAssignment>
-      <code><![CDATA[$arguments[]]]></code>
+      <code>$arguments[]</code>
     </MixedAssignment>
     <MixedMethodCall>
-      <code><![CDATA[$method]]></code>
-      <code><![CDATA[$method]]></code>
-      <code><![CDATA[$methodName]]></code>
+      <code>$method</code>
+      <code>$method</code>
+      <code>$methodName</code>
     </MixedMethodCall>
   </file>
   <file src="tests/Benchmark/BasicImplementation/Profile.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$email]]></code>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
+      <code>$email</code>
+      <code>$id</code>
+      <code>$name</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Benchmark/PersonalDataBench.php">
     <MissingConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$repository]]></code>
-      <code><![CDATA[$store]]></code>
+      <code>$id</code>
+      <code>$repository</code>
+      <code>$store</code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SimpleSetupBench.php">
     <MissingConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$repository]]></code>
-      <code><![CDATA[$store]]></code>
+      <code>$id</code>
+      <code>$repository</code>
+      <code>$store</code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SnapshotsBench.php">
     <MissingConstructor>
-      <code><![CDATA[$adapter]]></code>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$repository]]></code>
-      <code><![CDATA[$snapshotStore]]></code>
-      <code><![CDATA[$store]]></code>
+      <code>$adapter</code>
+      <code>$id</code>
+      <code>$repository</code>
+      <code>$snapshotStore</code>
+      <code>$store</code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SplitStreamBench.php">
@@ -159,30 +165,30 @@
       <code><![CDATA[$this->id]]></code>
     </ArgumentTypeCoercion>
     <MissingConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$repository]]></code>
-      <code><![CDATA[$store]]></code>
+      <code>$id</code>
+      <code>$repository</code>
+      <code>$store</code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SubscriptionEngineBench.php">
     <MissingConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$repository]]></code>
-      <code><![CDATA[$store]]></code>
-      <code><![CDATA[$subscriptionEngine]]></code>
+      <code>$id</code>
+      <code>$repository</code>
+      <code>$store</code>
+      <code>$subscriptionEngine</code>
     </MissingConstructor>
   </file>
   <file src="tests/Integration/BankAccountSplitStream/Aggregate/BankAccount.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$balanceInCents]]></code>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
+      <code>$balanceInCents</code>
+      <code>$id</code>
+      <code>$name</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
+      <code>$id</code>
+      <code>$name</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/PersonalData/PersonalDataTest.php">
@@ -192,52 +198,57 @@
   </file>
   <file src="tests/Integration/PersonalData/Profile.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
+      <code>$id</code>
+      <code>$name</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/Store/Profile.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
+      <code>$id</code>
+      <code>$name</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/Subscription/Aggregate/Profile.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
+      <code>$id</code>
+      <code>$name</code>
     </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Integration/Subscription/SubscriptionTest.php">
+    <UndefinedMethod>
+      <code>tableExists</code>
+    </UndefinedMethod>
   </file>
   <file src="tests/Unit/Cryptography/Cipher/OpensslCipherTest.php">
     <MixedAssignment>
-      <code><![CDATA[$return]]></code>
+      <code>$return</code>
     </MixedAssignment>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion>
-      <code><![CDATA[$value]]></code>
+      <code>$value</code>
     </MixedArgumentTypeCoercion>
   </file>
   <file src="tests/Unit/Fixture/Profile.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$email]]></code>
-      <code><![CDATA[$id]]></code>
+      <code>$email</code>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileInvalid.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$email]]></code>
-      <code><![CDATA[$id]]></code>
+      <code>$email</code>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyBothUsage.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
     <ReservedWord>
       <code><![CDATA[ProfileCreated&ProfileVisited $event]]></code>
@@ -245,42 +256,42 @@
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyMultipleApply.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
-      <code><![CDATA[$event]]></code>
+      <code>$event</code>
     </MissingParamType>
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithEmptyApply.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$email]]></code>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$messages]]></code>
+      <code>$email</code>
+      <code>$id</code>
+      <code>$messages</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithSuppressAll.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/WrongNormalizerBasicAggregate.php">
     <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
+      <code>$id</code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php">
     <MissingParamType>
-      <code><![CDATA[$message]]></code>
+      <code>$message</code>
     </MissingParamType>
     <ReservedWord>
       <code><![CDATA[ProfileVisited&ProfileCreated $event]]></code>
@@ -288,7 +299,7 @@
   </file>
   <file src="tests/Unit/Store/DoctrineDbalStoreTest.php">
     <DeprecatedMethod>
-      <code><![CDATA[addMethods]]></code>
+      <code>addMethods</code>
     </DeprecatedMethod>
     <InternalMethod>
       <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
@@ -310,6 +321,11 @@
                 return '';
             }
 
+            public function getName(): string
+            {
+                return 'needed for older dbal versions';
+            }
+
             public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
             {
                 return 'not a datetime';
@@ -319,7 +335,7 @@
   </file>
   <file src="tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php">
     <PossiblyUndefinedArrayOffset>
-      <code><![CDATA[$update1]]></code>
+      <code>$update1</code>
     </PossiblyUndefinedArrayOffset>
   </file>
 </files>
