@@ -39,9 +39,7 @@ final class ArrayStream implements Stream, IteratorAggregate
     /** @return Traversable<Message> */
     public function getIterator(): Traversable
     {
-        if ($this->iterator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         return $this->iterator;
     }
@@ -49,9 +47,7 @@ final class ArrayStream implements Stream, IteratorAggregate
     /** @return positive-int|0|null */
     public function position(): int|null
     {
-        if ($this->iterator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         if ($this->position === null) {
             $this->iterator->key();
@@ -67,9 +63,7 @@ final class ArrayStream implements Stream, IteratorAggregate
      */
     public function index(): int|null
     {
-        if ($this->iterator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         if ($this->index === null) {
             $this->iterator->key();
@@ -80,27 +74,21 @@ final class ArrayStream implements Stream, IteratorAggregate
 
     public function next(): void
     {
-        if ($this->iterator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         $this->iterator->next();
     }
 
     public function end(): bool
     {
-        if ($this->iterator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         return !$this->iterator->valid();
     }
 
     public function current(): Message|null
     {
-        if ($this->iterator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         return $this->iterator->current() ?: null;
     }
@@ -132,6 +120,14 @@ final class ArrayStream implements Stream, IteratorAggregate
             }
 
             yield $message;
+        }
+    }
+
+    /** @psalm-assert !null $this->iterator */
+    private function assertNotClosed(): void
+    {
+        if ($this->iterator === null) {
+            throw new StreamClosed();
         }
     }
 }

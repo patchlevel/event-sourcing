@@ -51,27 +51,21 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
 
     public function next(): void
     {
-        if ($this->result === null || $this->generator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         $this->generator->next();
     }
 
     public function end(): bool
     {
-        if ($this->result === null || $this->generator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         return !$this->generator->valid();
     }
 
     public function current(): Message|null
     {
-        if ($this->result === null || $this->generator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         return $this->generator->current() ?: null;
     }
@@ -79,9 +73,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     /** @return positive-int|0|null */
     public function position(): int|null
     {
-        if ($this->result === null || $this->generator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         if ($this->position === null) {
             $this->generator->key();
@@ -93,9 +85,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     /** @return positive-int|null */
     public function index(): int|null
     {
-        if ($this->result === null || $this->generator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         if ($this->index === null) {
             $this->generator->key();
@@ -107,9 +97,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
     /** @return Traversable<Message> */
     public function getIterator(): Traversable
     {
-        if ($this->result === null || $this->generator === null) {
-            throw new StreamClosed();
-        }
+        $this->assertNotClosed();
 
         return $this->generator;
     }
@@ -144,6 +132,17 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
                 ->withHeader(new ArchivedHeader(DoctrineHelper::normalizeArchived($data['archived'], $platform)))
                 ->withHeader(new NewStreamStartHeader(DoctrineHelper::normalizeNewStreamStart($data['new_stream_start'], $platform)))
                 ->withHeaders($customHeaders);
+        }
+    }
+
+    /**
+     * @psalm-assert !null $this->result
+     * @psalm-assert !null $this->generator
+     */
+    private function assertNotClosed(): void
+    {
+        if ($this->result === null || $this->generator === null) {
+            throw new StreamClosed();
         }
     }
 }
