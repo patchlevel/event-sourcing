@@ -36,13 +36,13 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileEmailChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PDO;
-use PHPUnit\Framework\Attributes\RequiresMethod;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 use function iterator_to_array;
+use function method_exists;
 
 /** @covers \Patchlevel\EventSourcing\Store\DoctrineDbalStore */
 final class DoctrineDbalStoreTest extends TestCase
@@ -144,9 +144,12 @@ final class DoctrineDbalStoreTest extends TestCase
         self::assertSame(null, $stream->position());
     }
 
-    #[RequiresMethod(AbstractPlatform::class, 'supportsLimitOffset')]
     public function testLoadWithOffset(): void
     {
+        if (method_exists(AbstractPlatform::class, 'supportsLimitOffset')) {
+            $this->markTestSkipped('In older DBAL versions platforms did not need to support this');
+        }
+
         $connection = $this->prophesize(Connection::class);
         $result = $this->prophesize(Result::class);
         $result->iterateAssociative()->willReturn(new EmptyIterator());
