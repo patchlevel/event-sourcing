@@ -89,6 +89,11 @@ final class DoctrineHelperTest extends TestCase
                 return '';
             }
 
+            public function getName(): string
+            {
+                return 'needed for older dbal versions';
+            }
+
             public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
             {
                 return 'not a datetime';
