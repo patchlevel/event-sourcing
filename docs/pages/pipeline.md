@@ -245,9 +245,9 @@ $middleware = new FilterEventTranslator(static function (AggregateChanged $event
 With this middleware you can exclude archived events.
 
 ```php
-use Patchlevel\EventSourcing\Message\Translator\ExcludeArchivedEventTranslator;
+use Patchlevel\EventSourcing\Message\Translator\ExcludeEventWithHeaderTranslator;
 
-$middleware = new ExcludeArchivedEventTranslator();
+$middleware = new ExcludeEventWithHeaderTranslator();
 ```
 !!! warning
 
@@ -258,9 +258,9 @@ $middleware = new ExcludeArchivedEventTranslator();
 With this middleware you can only allow archived events.
 
 ```php
-use Patchlevel\EventSourcing\Message\Translator\OnlyArchivedEventTranslator;
+use Patchlevel\EventSourcing\Message\Translator\IncludeEventWithHeaderTranslator;
 
-$middleware = new OnlyArchivedEventTranslator();
+$middleware = new IncludeEventWithHeaderTranslator();
 ```
 !!! warning
 

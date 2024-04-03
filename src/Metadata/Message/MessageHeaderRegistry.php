@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Metadata\Message;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Debug\Trace\TraceHeader;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
-use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
+use Patchlevel\EventSourcing\Store\StreamStartHeader;
 
 use function array_flip;
 use function array_key_exists;
@@ -76,7 +76,7 @@ final class MessageHeaderRegistry
             'aggregate' => AggregateHeader::class,
             'trace' => TraceHeader::class,
             'archived' => ArchivedHeader::class,
-            'newStreamStart' => NewStreamStartHeader::class,
+            'newStreamStart' => StreamStartHeader::class,
         ];
 
         return new self($headerNameToClassMap + $internalHeaders);

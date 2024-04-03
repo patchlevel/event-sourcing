@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Repository\MessageDecorator;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
-use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
+use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -32,7 +32,7 @@ final class SplitStreamDecoratorTest extends TestCase
         $decorator = new SplitStreamDecorator(new AttributeEventMetadataFactory());
         $decoratedMessage = $decorator($message);
 
-        self::assertFalse($decoratedMessage->header(NewStreamStartHeader::class)->newStreamStart);
+        self::assertFalse($decoratedMessage->hasHeader(StreamStartHeader::class));
     }
 
     public function testSplittingStream(): void
@@ -47,6 +47,6 @@ final class SplitStreamDecoratorTest extends TestCase
         $decorator = new SplitStreamDecorator(new AttributeEventMetadataFactory());
         $decoratedMessage = $decorator($message);
 
-        self::assertTrue($decoratedMessage->header(NewStreamStartHeader::class)->newStreamStart);
+        self::assertTrue($decoratedMessage->hasHeader(StreamStartHeader::class));
     }
 }

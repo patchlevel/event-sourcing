@@ -70,6 +70,12 @@ final class Message
         return $header;
     }
 
+    /** @param class-string $name */
+    public function hasHeader(string $name): bool
+    {
+        return array_key_exists($name, $this->headers);
+    }
+
     public function withHeader(object $header): self
     {
         $message = clone $this;

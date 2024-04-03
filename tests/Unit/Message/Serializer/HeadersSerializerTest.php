@@ -27,13 +27,13 @@ final class HeadersSerializerTest extends TestCase
 
         $content = $serializer->serialize([
             new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')),
-            new ArchivedHeader(false),
+            new ArchivedHeader(),
         ]);
 
         self::assertEquals(
             [
                 'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
-                'archived' => '{"archived":false}',
+                'archived' => '[]',
             ],
             $content,
         );
@@ -52,14 +52,14 @@ final class HeadersSerializerTest extends TestCase
         $deserializedMessage = $serializer->deserialize(
             [
                 'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
-                'archived' => '{"archived":false}',
+                'archived' => '[]',
             ],
         );
 
         self::assertEquals(
             [
                 new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')),
-                new ArchivedHeader(false),
+                new ArchivedHeader(),
             ],
             $deserializedMessage,
         );

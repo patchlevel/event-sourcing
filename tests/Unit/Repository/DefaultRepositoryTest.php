@@ -240,7 +240,7 @@ final class DefaultRepositoryTest extends TestCase
                     return false;
                 }
 
-                if ($message->header(ArchivedHeader::class)->archived !== false) {
+                if (!$message->hasHeader(ArchivedHeader::class)) {
                     return false;
                 }
 
@@ -256,7 +256,7 @@ final class DefaultRepositoryTest extends TestCase
         $decorator = new class implements MessageDecorator {
             public function __invoke(Message $message): Message
             {
-                return $message->withHeader(new ArchivedHeader(false));
+                return $message->withHeader(new ArchivedHeader());
             }
         };
 

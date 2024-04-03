@@ -10,7 +10,6 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 
 use function is_array;
-use function is_bool;
 use function is_int;
 
 final class DoctrineHelper
@@ -48,27 +47,5 @@ final class DoctrineHelper
         }
 
         return $normalizedCustomHeaders;
-    }
-
-    public static function normalizeArchived(mixed $value, AbstractPlatform $platform): bool
-    {
-        $normalizedValue = Type::getType(Types::BOOLEAN)->convertToPHPValue($value, $platform);
-
-        if (!is_bool($normalizedValue)) {
-            throw new InvalidType('archived', 'boolean');
-        }
-
-        return $normalizedValue;
-    }
-
-    public static function normalizeNewStreamStart(mixed $value, AbstractPlatform $platform): bool
-    {
-        $normalizedValue = Type::getType(Types::BOOLEAN)->convertToPHPValue($value, $platform);
-
-        if (!is_bool($normalizedValue)) {
-            throw new InvalidType('new_stream_start', 'boolean');
-        }
-
-        return $normalizedValue;
     }
 }
