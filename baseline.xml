@@ -57,6 +57,11 @@
       <code><![CDATA[$method->getName()]]></code>
     </MixedMethodCall>
   </file>
+  <file src="src/Message/Serializer/DefaultHeadersSerializer.php">
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$headerPayload]]></code>
+    </MixedArgumentTypeCoercion>
+  </file>
   <file src="src/Metadata/AggregateRoot/AggregateRootMetadataAwareMetadataFactory.php">
     <InvalidReturnStatement>
       <code><![CDATA[$aggregate::metadata()]]></code>

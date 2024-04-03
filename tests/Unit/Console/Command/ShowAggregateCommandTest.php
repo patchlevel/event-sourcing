@@ -52,8 +52,8 @@ final class ShowAggregateCommandTest extends TestCase
         );
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
-            ['aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}'],
+        $headersSerializer->serialize($message->headers())->willReturn(
+            ['aggregate' => ['aggregateName' => 'profile', 'aggregateId' => '1', 'playhead' => 1, 'recordedOn' => '2020-01-01T20:00:00+01:00']],
         );
 
         $command = new ShowAggregateCommand(
@@ -236,9 +236,6 @@ final class ShowAggregateCommandTest extends TestCase
         );
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
-            ['aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}'],
-        );
 
         $commandTest = new CommandTester(
             new ShowAggregateCommand(
@@ -258,6 +255,6 @@ final class ShowAggregateCommandTest extends TestCase
         self::assertStringContainsString('Enter the aggregate id', $display);
         self::assertStringContainsString('"visitorId": "1"', $display);
         self::assertStringContainsString('aggregate', $display);
-        self::assertStringContainsString('{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}', $display);
+        self::assertStringContainsString('profile', $display);
     }
 }

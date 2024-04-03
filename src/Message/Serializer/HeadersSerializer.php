@@ -9,15 +9,13 @@ interface HeadersSerializer
     /**
      * @param list<object>         $headers
      * @param array<string, mixed> $options
-     *
-     * @return array<string, string>
      */
-    public function serialize(array $headers, array $options = []): array;
+    public function serialize(array $headers, array $options = []): string;
 
     /**
-     * @param array<string, string> $serializedHeaders
+     * @param array<string, mixed> $options
      *
      * @return list<object>
      */
-    public function deserialize(array $serializedHeaders): array;
+    public function deserialize(string $string, array $options = []): array;
 }

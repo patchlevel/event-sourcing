@@ -293,7 +293,7 @@ final class DoctrineDbalStoreTest extends TestCase
         )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize([])->willReturn([]);
+        $headersSerializer->deserialize('[]')->willReturn([]);
 
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
@@ -393,7 +393,7 @@ final class DoctrineDbalStoreTest extends TestCase
         )->willReturn(new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('d')));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize([])->willReturn([]);
+        $headersSerializer->deserialize('[]')->willReturn([]);
 
         $doctrineDbalStore = new DoctrineDbalStore(
             $connection->reveal(),
@@ -474,12 +474,11 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $innerMockedConnection->executeStatement(
             "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, []],
+            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, '[]'],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
                 7 => Type::getType(Types::BOOLEAN),
-                8 => Type::getType(Types::JSON),
             ],
         )->shouldBeCalledOnce();
 
@@ -490,7 +489,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn([]);
+        $headersSerializer->serialize([])->willReturn('[]');
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
@@ -521,7 +520,6 @@ final class DoctrineDbalStoreTest extends TestCase
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
                 7 => Type::getType(Types::BOOLEAN),
-                8 => Type::getType(Types::JSON),
             ],
         )->shouldNotBeCalled();
 
@@ -532,7 +530,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn([]);
+        $headersSerializer->serialize([])->willReturn('[]');
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
@@ -582,7 +580,7 @@ final class DoctrineDbalStoreTest extends TestCase
                 $recordedOn,
                 false,
                 false,
-                [],
+                '[]',
                 'profile',
                 '1',
                 2,
@@ -591,17 +589,15 @@ final class DoctrineDbalStoreTest extends TestCase
                 $recordedOn,
                 false,
                 false,
-                [],
+                '[]',
             ],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
                 7 => Type::getType(Types::BOOLEAN),
-                8 => Type::getType(Types::JSON),
                 14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 15 => Type::getType(Types::BOOLEAN),
                 16 => Type::getType(Types::BOOLEAN),
-                17 => Type::getType(Types::JSON),
             ],
         )->shouldBeCalledOnce();
 
@@ -613,7 +609,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_email_changed', ''));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn([]);
+        $headersSerializer->serialize([])->willReturn('[]');
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
@@ -660,7 +656,7 @@ final class DoctrineDbalStoreTest extends TestCase
                 $recordedOn,
                 false,
                 false,
-                [],
+                '[]',
                 'profile',
                 '1',
                 1,
@@ -669,17 +665,15 @@ final class DoctrineDbalStoreTest extends TestCase
                 $recordedOn,
                 false,
                 false,
-                [],
+                '[]',
             ],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
                 7 => Type::getType(Types::BOOLEAN),
-                8 => Type::getType(Types::JSON),
                 14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 15 => Type::getType(Types::BOOLEAN),
                 16 => Type::getType(Types::BOOLEAN),
-                17 => Type::getType(Types::JSON),
             ],
         )->shouldBeCalledOnce()->willThrow(UniqueConstraintViolationException::class);
 
@@ -690,7 +684,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $eventSerializer->serialize($message1->event())->shouldBeCalledTimes(2)->willReturn(new SerializedEvent('profile_created', ''));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn([]);
+        $headersSerializer->serialize([])->willReturn('[]');
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
@@ -735,7 +729,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $eventSerializer->serialize($messages[0]->event())->shouldBeCalledTimes(10000)->willReturn(new SerializedEvent('profile_email_changed', ''));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn([]);
+        $headersSerializer->serialize([])->willReturn('[]');
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(
@@ -772,12 +766,11 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $innerMockedConnection->executeStatement(
             "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, []],
+            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, '{foo: "foo", baz: "baz"}'],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
                 7 => Type::getType(Types::BOOLEAN),
-                8 => Type::getType(Types::JSON),
             ],
         )->shouldBeCalledOnce();
 
@@ -788,7 +781,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($customHeaders)->willReturn([]);
+        $headersSerializer->serialize($customHeaders)->willReturn('{foo: "foo", baz: "baz"}');
 
         $mockedConnection = $this->prophesize(Connection::class);
         $mockedConnection->transactional(Argument::any())->will(

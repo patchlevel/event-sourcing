@@ -136,7 +136,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
                 $message = $message->withHeader(new StreamStartHeader());
             }
 
-            $customHeaders = $headersSerializer->deserialize(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
+            $customHeaders = $headersSerializer->deserialize($data['custom_headers']);
 
             yield $message->withHeaders($customHeaders);
         }

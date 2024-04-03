@@ -11,6 +11,8 @@ use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\Hydrator\Hydrator;
 use Patchlevel\Hydrator\MetadataHydrator;
 
+use function is_array;
+
 final class DefaultHeadersSerializer implements HeadersSerializer
 {
     public function __construct(
@@ -23,29 +25,36 @@ final class DefaultHeadersSerializer implements HeadersSerializer
     /**
      * @param list<object>         $headers
      * @param array<string, mixed> $options
-     *
-     * @return array<string, string>
      */
-    public function serialize(array $headers, array $options = []): array
+    public function serialize(array $headers, array $options = []): string
     {
         $serializedHeaders = [];
         foreach ($headers as $header) {
-            $serializedHeaders[$this->messageHeaderRegistry->headerName($header::class)] = $this->encoder->encode($this->hydrator->extract($header), $options);
+            $serializedHeaders[$this->messageHeaderRegistry->headerName($header::class)] = $this->hydrator->extract($header);
         }
 
-        return $serializedHeaders;
+        return $this->encoder->encode($serializedHeaders, $options);
     }
 
     /**
-     * @param array<string, string> $serializedHeaders
+     * @param array<string, mixed> $options
      *
      * @return list<object>
      */
-    public function deserialize(array $serializedHeaders): array
+    public function deserialize(string $string, array $options = []): array
     {
+        $serializedHeaders = $this->encoder->decode($string, $options);
+
         $headers = [];
         foreach ($serializedHeaders as $headerName => $headerPayload) {
-            $headers[] = $this->hydrator->hydrate($this->messageHeaderRegistry->headerClass($headerName), $this->encoder->decode($headerPayload));
+            if (!is_array($headerPayload)) {
+                throw new InvalidArgument('header payload must be an array');
+            }
+
+            $headers[] = $this->hydrator->hydrate(
+                $this->messageHeaderRegistry->headerClass($headerName),
+                $headerPayload,
+            );
         }
 
         return $headers;

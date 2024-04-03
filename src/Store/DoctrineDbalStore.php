@@ -141,7 +141,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
                 $booleanType = Type::getType(Types::BOOLEAN);
-                $jsonType = Type::getType(Types::JSON);
                 $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
                 $columns = [
@@ -194,7 +193,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
                     $types[$offset + 7] = $booleanType;
 
                     $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
-                    $types[$offset + 8] = $jsonType;
 
                     $position++;
 

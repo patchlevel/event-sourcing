@@ -13,11 +13,12 @@ use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
+use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
-use RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -46,9 +47,8 @@ final class OutputStyleTest extends TestCase
         ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
-            ['aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}'],
-        );
+        $headersSerializer->serialize(Argument::any())->shouldNotBeCalled();
+
         $console = new OutputStyle($input, $output);
 
         $console->message(
@@ -63,10 +63,10 @@ final class OutputStyleTest extends TestCase
         self::assertStringContainsString('profile', $content);
         self::assertStringContainsString('{"id":"1","email":"foo@bar.com"}', $content);
         self::assertStringContainsString('aggregate', $content);
-        self::assertStringContainsString('{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}', $content);
+        self::assertStringContainsString('profile', $content);
     }
 
-    public function testMessageWithErrorAtEventSerialization(): void
+    public function testMessageWithCustomHeaders(): void
     {
         $input = new ArrayInput([]);
         $output = new BufferedOutput();
@@ -76,44 +76,11 @@ final class OutputStyleTest extends TestCase
             Email::fromString('foo@bar.com'),
         );
 
-        $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer
-            ->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])
-            ->willThrow(new RuntimeException('Unknown Error'));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])
-            ->shouldNotBeCalled();
-
-        $console = new OutputStyle($input, $output);
-
-        $console->message(
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-            $message,
-        );
-
-        $content = $output->fetch();
-
-        self::assertStringContainsString('Unknown Error', $content);
-        self::assertStringContainsString(ProfileCreated::class, $content);
-    }
-
-    public function testMessageWithErrorAtHeadersSerialization(): void
-    {
-        $input = new ArrayInput([]);
-        $output = new BufferedOutput();
-
-        $event = new ProfileCreated(
-            ProfileId::fromString('1'),
-            Email::fromString('foo@bar.com'),
-        );
+        $fooHeader = new FooHeader('foo');
 
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()))
+            ->withHeader($fooHeader);
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
@@ -122,8 +89,9 @@ final class OutputStyleTest extends TestCase
         ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers(), [Encoder::OPTION_PRETTY_PRINT => true])
-            ->willThrow(new RuntimeException('Unknown Error'));
+        $headersSerializer->serialize([$fooHeader])->willReturn(
+            '{"aggregate":{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":[]}',
+        )->shouldBeCalled();
 
         $console = new OutputStyle($input, $output);
 
@@ -135,6 +103,10 @@ final class OutputStyleTest extends TestCase
 
         $content = $output->fetch();
 
-        self::assertStringContainsString('Unknown Error', $content);
+        self::assertStringContainsString('profile.created', $content);
+        self::assertStringContainsString('profile', $content);
+        self::assertStringContainsString('{"id":"1","email":"foo@bar.com"}', $content);
+        self::assertStringContainsString('aggregate', $content);
+        self::assertStringContainsString('profile', $content);
     }
 }
