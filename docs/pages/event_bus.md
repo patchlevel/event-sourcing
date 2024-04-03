@@ -1,15 +1,19 @@
 # Event Bus
 
-This library uses the core principle called [event bus](https://martinfowler.com/articles/201701-event-driven.html).
+Optionally you can use an event bus to dispatch events to listeners.
 
 For all events that are persisted (when the `save` method has been executed on the [repository](./repository.md)),
-the event wrapped in a message will be dispatched to the `event bus`. All listeners are then called for each
-message.
+the event wrapped in a message will be dispatched to the `event bus`.
+All listeners are then called for each message.
 
+!!! tip
+
+    It is recommended to use the [subscription engine](subscription.md) to process the messages.
+    It is more powerful and flexible than the event bus.
+    
 ## Event Bus
 
-The event bus is responsible for dispatching the messages to the listeners.
-The library also delivers a light-weight event bus for which you can register listeners and dispatch events.
+The library delivers a light-weight event bus for which you can register listeners and dispatch events.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
@@ -134,7 +138,7 @@ $eventBus = new Psr14EventBus($psr14EventDispatcher);
     
 ## Learn more
 
-* [How to decorate messages](message_decorator.md)
-* [How to use outbox pattern](outbox.md)
-* [How to use processor](subscription.md)
-* [How to use subscriptions](subscription.md)
+* [How to use messages](message.md)
+* [How to use the subscription engine](subscription.md)
+* [How to use repositories](repository.md)
+* [How to use decorate messages](message_decorator.md)
