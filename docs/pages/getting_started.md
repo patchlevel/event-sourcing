@@ -306,7 +306,7 @@ $projectorRepository = new MetadataSubscriberAccessorRepository([
 
 $projectionStore = new DoctrineSubscriptionStore($connection);
 
-$projectionist = new DefaultSubscriptionEngine(
+$engine = new DefaultSubscriptionEngine(
     $eventStore,
     $projectionStore,
     $projectorRepository,
@@ -386,7 +386,7 @@ $hotels = $hotelProjection->getHotels();
 ```
 !!! warning
 
-    You need to run the projectionist to update the projections.
+    You need to run the subscription engine to update the projections.
     
 !!! note
 

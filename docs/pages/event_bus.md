@@ -4,81 +4,8 @@ This library uses the core principle called [event bus](https://martinfowler.com
 
 For all events that are persisted (when the `save` method has been executed on the [repository](./repository.md)),
 the event wrapped in a message will be dispatched to the `event bus`. All listeners are then called for each
-event/message.
+message.
 
-## Message
-
-A `Message` contains the event and related meta information as headers. A `Message` contains only two properties, first
-the `event` and second the `headers`. Internally we are also using the `headers` to store meta information for
-the `Message` for example:
-
-* aggregate name
-* aggregate id
-* playhead
-* recorded on
-
-Each event is packed into a message and dispatched using the event bus.
-
-```php
-use Patchlevel\EventSourcing\Clock\SystemClock;
-use Patchlevel\EventSourcing\Message\Message;
-
-$clock = new SystemClock();
-$message = Message::create(new NameChanged('foo'))
-    ->withAggregateName('profile')
-    ->withAggregateId('bca7576c-536f-4428-b694-7b1f00c714b7')
-    ->withPlayhead(2)
-    ->withRecordedOn($clock->now());
-
-$eventBus->dispatch($message);
-```
-!!! note
-
-    The message object is immutable.
-    
-You don't have to create the message yourself, it is automatically created, saved and dispatched in
-the [repository](repository.md).
-
-### Custom headers
-
-As already mentioned, you can enrich the `Message` with your own meta information. This is then accessible in the
-message object and is also stored in the database.
-
-```php
-use Patchlevel\EventSourcing\Message\Message;
-
-$message = Message::create(new NameChanged('foo'))
-    // ...
-    ->withHeader('application-id', 'app');
-```
-!!! note
-
-    You can read about how to pass additional headers to the message object in the [message decorator](message_decorator.md) docs.
-    
-You can also access your custom headers. For this case there is also a method to only retrieve the headers which are not
-used internally.
-
-```php
-$message->header('application-id'); // app
-$message->customHeaders(); // ['application-id' => 'app']
-```
-If you want *all* the headers you can also retrieve them.
-
-```php
-$headers = $message->headers();
-/*
-[
-    'aggregateName' => 'profile',
-    'aggregateId' => '1',
-    // {...},
-    'application-id' => 'app'
-]
-*/
-```
-!!! warning
-
-    Relying on internal meta data could be dangerous as they could be changed. So be cautios if you want to implement logic on them.
-    
 ## Event Bus
 
 The event bus is responsible for dispatching the messages to the listeners.

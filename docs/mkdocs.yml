@@ -81,6 +81,7 @@ nav:
     - Aggregate: aggregate.md
     - Events: events.md
     - Repository: repository.md
+    - Message: message.md
     - Store: store.md
     - Event Bus:  event_bus.md
     - Subscription: subscription.md
