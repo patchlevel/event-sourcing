@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
-use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
+use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -50,8 +50,8 @@ final class MessageTest extends TestCase
                 3,
                 $recordedAt,
             ))
-            ->withHeader(new NewStreamStartHeader(true))
-            ->withHeader(new ArchivedHeader(true));
+            ->withHeader(new StreamStartHeader())
+            ->withHeader(new ArchivedHeader());
 
         self::assertEquals(
             [
@@ -61,8 +61,8 @@ final class MessageTest extends TestCase
                     3,
                     $recordedAt,
                 ),
-                new NewStreamStartHeader(true),
-                new ArchivedHeader(true),
+                new StreamStartHeader(),
+                new ArchivedHeader(),
             ],
             $message->headers(),
         );
@@ -85,8 +85,8 @@ final class MessageTest extends TestCase
                 3,
                 new DateTimeImmutable('2020-05-06 13:34:24'),
             ),
-            new NewStreamStartHeader(true),
-            new ArchivedHeader(true),
+            new StreamStartHeader(),
+            new ArchivedHeader(),
         ];
 
         $message = Message::createWithHeaders(

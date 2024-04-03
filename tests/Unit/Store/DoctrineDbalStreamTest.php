@@ -13,9 +13,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
-use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStoreStream;
-use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
 use Patchlevel\EventSourcing\Store\StreamClosed;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -78,9 +76,7 @@ final class DoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')))
-            ->withHeader(new ArchivedHeader(false))
-            ->withHeader(new NewStreamStartHeader(false));
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
@@ -92,7 +88,6 @@ final class DoctrineDbalStreamTest extends TestCase
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
-        $platform->convertFromBoolean('0')->shouldBeCalledTimes(2)->willReturn(false);
 
         $result = $this->prophesize(Result::class);
         $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messages));
@@ -165,17 +160,11 @@ final class DoctrineDbalStreamTest extends TestCase
 
         $messages = [
             Message::create($event)
-                ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')))
-                ->withHeader(new ArchivedHeader(false))
-                ->withHeader(new NewStreamStartHeader(false)),
+                ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
-                ->withHeader(new AggregateHeader('profile', '2', 1, new DateTimeImmutable('2022-10-10 10:10:10')))
-                ->withHeader(new ArchivedHeader(false))
-                ->withHeader(new NewStreamStartHeader(false)),
+                ->withHeader(new AggregateHeader('profile', '2', 1, new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
-                ->withHeader(new AggregateHeader('profile', '3', 1, new DateTimeImmutable('2022-10-10 10:10:10')))
-                ->withHeader(new ArchivedHeader(false))
-                ->withHeader(new NewStreamStartHeader(false)),
+                ->withHeader(new AggregateHeader('profile', '3', 1, new DateTimeImmutable('2022-10-10 10:10:10'))),
         ];
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -194,7 +183,6 @@ final class DoctrineDbalStreamTest extends TestCase
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledTimes(3)->willReturn('Y-m-d H:i:s');
-        $platform->convertFromBoolean('0')->shouldBeCalledTimes(6)->willReturn(false);
 
         $result = $this->prophesize(Result::class);
         $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messagesArray));
@@ -255,9 +243,7 @@ final class DoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')))
-            ->withHeader(new ArchivedHeader(false))
-            ->withHeader(new NewStreamStartHeader(false));
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
@@ -269,7 +255,6 @@ final class DoctrineDbalStreamTest extends TestCase
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
-        $platform->convertFromBoolean('0')->shouldBeCalledTimes(2)->willReturn(false);
 
         $result = $this->prophesize(Result::class);
         $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messages));
@@ -316,9 +301,7 @@ final class DoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')))
-            ->withHeader(new ArchivedHeader(false))
-            ->withHeader(new NewStreamStartHeader(false));
+            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
@@ -330,7 +313,6 @@ final class DoctrineDbalStreamTest extends TestCase
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
-        $platform->convertFromBoolean('0')->shouldBeCalledTimes(2)->willReturn(false);
 
         $result = $this->prophesize(Result::class);
         $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messages));
@@ -396,10 +378,6 @@ final class DoctrineDbalStreamTest extends TestCase
             ProfileId::fromString('foo'),
             Email::fromString('info@patchlevel.de'),
         );
-        $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')))
-            ->withHeader(new ArchivedHeader(false))
-            ->withHeader(new NewStreamStartHeader(false));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
@@ -411,7 +389,6 @@ final class DoctrineDbalStreamTest extends TestCase
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
-        $platform->convertFromBoolean('0')->shouldBeCalledTimes(2)->willReturn(false);
 
         $result = $this->prophesize(Result::class);
         $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messages));

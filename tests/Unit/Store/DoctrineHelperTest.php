@@ -34,40 +34,6 @@ final class DoctrineHelperTest extends TestCase
         DoctrineHelper::normalizePlayhead('asd', $platform->reveal());
     }
 
-    public function testNormalizeArchived(): void
-    {
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->convertFromBoolean('1')->shouldBeCalledOnce()->willReturn(true);
-
-        $result = DoctrineHelper::normalizeArchived('1', $platform->reveal());
-        self::assertTrue($result);
-    }
-
-    public function testNormalizeArchivedInvalid(): void
-    {
-        $platform = $this->prophesize(AbstractPlatform::class);
-
-        $this->expectException(InvalidType::class);
-        DoctrineHelper::normalizeArchived('asd', $platform->reveal());
-    }
-
-    public function testNormalizeNewStreamStart(): void
-    {
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->convertFromBoolean('1')->shouldBeCalledOnce()->willReturn(true);
-
-        $result = DoctrineHelper::normalizeNewStreamStart('1', $platform->reveal());
-        self::assertTrue($result);
-    }
-
-    public function testNormalizeNewStreamStartInvalid(): void
-    {
-        $platform = $this->prophesize(AbstractPlatform::class);
-
-        $this->expectException(InvalidType::class);
-        DoctrineHelper::normalizeNewStreamStart('asd', $platform->reveal());
-    }
-
     public function testNormalizeRecordedOn(): void
     {
         $platform = $this->prophesize(AbstractPlatform::class);

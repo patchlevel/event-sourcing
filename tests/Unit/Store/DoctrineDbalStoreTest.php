@@ -281,7 +281,6 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
         $abstractPlatform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
-        $abstractPlatform->convertFromBoolean('0')->shouldBeCalledTimes(2)->willReturn(false);
 
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
 
@@ -379,7 +378,6 @@ final class DoctrineDbalStoreTest extends TestCase
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
         $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
         $abstractPlatform->getDateTimeTzFormatString()->shouldBeCalledTimes(2)->willReturn('Y-m-d H:i:s');
-        $abstractPlatform->convertFromBoolean('0')->shouldBeCalledTimes(4)->willReturn(false);
 
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
 

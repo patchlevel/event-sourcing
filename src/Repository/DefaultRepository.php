@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\EventBus;
-use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
@@ -18,9 +17,9 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
 use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\CriteriaBuilder;
-use Patchlevel\EventSourcing\Store\NewStreamStartHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
+use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -377,13 +376,7 @@ final class DefaultRepository implements Repository
         $lastMessageWithNewStreamStart = null;
 
         foreach ($messages as $message) {
-            try {
-                $newStreamStartHeader = $message->header(NewStreamStartHeader::class);
-            } catch (HeaderNotFound) {
-                continue;
-            }
-
-            if (!$newStreamStartHeader->newStreamStart) {
+            if (!$message->hasHeader(StreamStartHeader::class)) {
                 continue;
             }
 

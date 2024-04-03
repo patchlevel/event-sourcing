@@ -174,35 +174,23 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
 
                     try {
                         $aggregateHeader = $message->header(AggregateHeader::class);
-
-                        $parameters[] = $aggregateHeader->aggregateName;
-                        $parameters[] = $aggregateHeader->aggregateId;
-                        $parameters[] = $aggregateHeader->playhead;
-                        $parameters[] = $data->name;
-                        $parameters[] = $data->payload;
-
-                        $parameters[] = $aggregateHeader->recordedOn;
-                        $types[$offset + 5] = $dateTimeType;
                     } catch (HeaderNotFound $e) {
                         throw new MissingDataForStorage($e->name, $e);
                     }
 
-                    try {
-                        $newStreamStart = $message->header(NewStreamStartHeader::class)->newStreamStart;
-                    } catch (HeaderNotFound) {
-                        $newStreamStart = false;
-                    }
+                    $parameters[] = $aggregateHeader->aggregateName;
+                    $parameters[] = $aggregateHeader->aggregateId;
+                    $parameters[] = $aggregateHeader->playhead;
+                    $parameters[] = $data->name;
+                    $parameters[] = $data->payload;
 
-                    $parameters[] = $newStreamStart;
+                    $parameters[] = $aggregateHeader->recordedOn;
+                    $types[$offset + 5] = $dateTimeType;
+
+                    $parameters[] = $message->hasHeader(StreamStartHeader::class);
                     $types[$offset + 6] = $booleanType;
 
-                    try {
-                        $archived = $message->header(ArchivedHeader::class)->archived;
-                    } catch (HeaderNotFound) {
-                        $archived = false;
-                    }
-
-                    $parameters[] = $archived;
+                    $parameters[] = $message->hasHeader(ArchivedHeader::class);
                     $types[$offset + 7] = $booleanType;
 
                     $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
@@ -305,7 +293,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
     {
         $filteredHeaders = [
             AggregateHeader::class,
-            NewStreamStartHeader::class,
+            StreamStartHeader::class,
             ArchivedHeader::class,
         ];
 

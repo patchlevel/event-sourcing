@@ -120,18 +120,25 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
             $this->index = $data['id'];
             $event = $eventSerializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
-            $customHeaders = $headersSerializer->deserialize(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
-
-            yield Message::create($event)
+            $message = Message::create($event)
                 ->withHeader(new AggregateHeader(
                     $data['aggregate'],
                     $data['aggregate_id'],
                     DoctrineHelper::normalizePlayhead($data['playhead'], $platform),
                     DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform),
-                ))
-                ->withHeader(new ArchivedHeader(DoctrineHelper::normalizeArchived($data['archived'], $platform)))
-                ->withHeader(new NewStreamStartHeader(DoctrineHelper::normalizeNewStreamStart($data['new_stream_start'], $platform)))
-                ->withHeaders($customHeaders);
+                ));
+
+            if ($data['archived']) {
+                $message = $message->withHeader(new ArchivedHeader());
+            }
+
+            if ($data['new_stream_start']) {
+                $message = $message->withHeader(new StreamStartHeader());
+            }
+
+            $customHeaders = $headersSerializer->deserialize(DoctrineHelper::normalizeCustomHeaders($data['custom_headers'], $platform));
+
+            yield $message->withHeaders($customHeaders);
         }
     }
 
