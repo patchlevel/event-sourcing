@@ -301,6 +301,27 @@
       <code><![CDATA[new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED')]]></code>
     </InternalMethod>
   </file>
+  <file src="tests/Unit/Store/DoctrineHelperTest.php">
+    <InternalMethod>
+      <code><![CDATA[new class extends Type {
+            /** @inheritdoc */
+            public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
+            {
+                return '';
+            }
+
+            public function getName(): string
+            {
+                return 'needed for older dbal versions';
+            }
+
+            public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
+            {
+                return 'not a datetime';
+            }
+        }]]></code>
+    </InternalMethod>
+  </file>
   <file src="tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php">
     <PossiblyUndefinedArrayOffset>
       <code><![CDATA[$update1]]></code>
