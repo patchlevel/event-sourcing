@@ -79,6 +79,7 @@ jobs:
           echo 'EOF' >> $GITHUB_ENV
 
       - uses: actions/github-script@v7
+        if: ${{ success() || (failure() && steps.bench.conclusion == 'failure') }}
         with:
           script: |
             // Get the existing comments.
