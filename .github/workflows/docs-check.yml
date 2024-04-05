@@ -30,9 +30,9 @@ jobs:
             - name: "Install PHP"
               uses: "shivammathur/setup-php@2.29.0"
               with:
-                  coverage: "pcov"
+                  coverage: none
                   php-version: "${{ matrix.php-version }}"
-                  ini-values: memory_limit=-1
+                  ini-values: memory_limit=-1, opcache.enable_cli=1
                   extensions: pdo_sqlite
 
             - uses: ramsey/composer-install@2.2.0
