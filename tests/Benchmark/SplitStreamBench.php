@@ -79,7 +79,6 @@ final class SplitStreamBench
     public function benchLoad10000Events(): void
     {
         $this->repository->load($this->id);
-        sleep(2);
     }
 
     #[Bench\Revs(10)]
