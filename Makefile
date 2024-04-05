@@ -70,8 +70,8 @@ benchmark: vendor                                                               
 
 .PHONY: benchmark-diff-test
 benchmark-diff-test: vendor                                                   	## run benchmarks
-	vendor/bin/phpbench run tests/Benchmark --revs=1 --report=default --progress=none --tag=base
-	vendor/bin/phpbench run tests/Benchmark --revs=1 --report=diff --progress=none --ref=base
+	DB_URL=sqlite3:///:memory: vendor/bin/phpbench run tests/Benchmark --revs=1 --report=default --progress=none --tag=base
+	DB_URL=sqlite3:///:memory: vendor/bin/phpbench run tests/Benchmark --revs=1 --report=diff --progress=none --ref=base
 
 .PHONY: dev
 dev: static test                                                                ## run dev tools

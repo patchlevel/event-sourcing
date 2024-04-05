@@ -67,9 +67,11 @@ jobs:
           dependency-versions: ${{ matrix.dependencies }}
 
       - name: "phpbench diff"
-        run: "vendor/bin/phpbench run tests/Benchmark --progress=none --report=diff --ref=base > bench.txt"
+        id: bench
+        run: 'vendor/bin/phpbench run tests/Benchmark --progress=none --report=diff --ref=base --assert="mode(variant.time.avg) <= mode(baseline.time.avg) +/- 5%"  --assert="mode(variant.mem.peak) <= mode(baseline.mem.peak) +/- 5%" > bench.txt'
 
       - name: "Get Bench Result"
+        if: ${{ success() || (failure() && steps.bench.conclusion == 'failure') }}
         id: phpbench
         run: |
           echo 'BENCH_RESULT<<EOF' >> $GITHUB_ENV
@@ -77,6 +79,7 @@ jobs:
           echo 'EOF' >> $GITHUB_ENV
 
       - uses: actions/github-script@v7
+        if: ${{ success() || (failure() && steps.bench.conclusion == 'failure') }}
         with:
           script: |
             // Get the existing comments.

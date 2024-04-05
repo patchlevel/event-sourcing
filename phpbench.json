@@ -9,7 +9,7 @@
       "components": [
         {
           "component": "section",
-          "title": "{{ first(frame[\"benchmark_name\"]) }}",
+          "title": "{{ first(frame['benchmark_name']) }}",
           "components": [
             {
               "component": "table_aggregate",
@@ -18,23 +18,32 @@
               {
                 "time (kde mode)":
                 {
-                  "cols": ["time"]
+                  "cols": ["time", "time-diff"]
                 },
                 "memory":
                 {
-                  "cols": ["memory"]
+                  "cols": ["memory", "memory-diff"]
                 }
               },
               "row":
               {
-                "subject": "first(partition[\"subject_name\"]) ~ \" (\" ~ first(partition[\"variant_name\"]) ~ \")\"",
+                "subject": "first(partition['subject_name']) ~ ' (' ~ first(partition['variant_name']) ~ ')'",
                 "time":
                 {
                   "type": "expand",
                   "partition": "suite_tag",
                   "cols":
                   {
-                    "Tag: {{ key }}": "mode(partition[\"result_time_avg\"]) as time ~ ' (' ~ rstdev(partition['result_time_avg']) ~ ')'"
+                    "Tag: {{ key }}": "mode(partition['result_time_avg']) as time ~ ' (' ~ rstdev(partition['result_time_avg']) ~ ')'"
+                  }
+                },
+                "time-diff":
+                {
+                  "type": "expand",
+                  "partition": "subject_name",
+                  "cols":
+                  {
+                    "time-diff": "percent_diff(partition['result_time_avg'][1], partition['result_time_avg'][0])"
                   }
                 },
                 "memory":
@@ -43,7 +52,16 @@
                   "partition": "suite_tag",
                   "cols":
                   {
-                    "Tag: {{ key }} ": "mode(partition[\"result_mem_peak\"]) as memory"
+                    "Tag: {{ key }} ": "mode(partition['result_mem_peak']) as memory"
+                  }
+                },
+                "memory-diff":
+                {
+                  "type": "expand",
+                  "partition": "subject_name",
+                  "cols":
+                  {
+                    "memory-diff": "percent_diff(partition['result_mem_peak'][1], partition['result_mem_peak'][0])"
                   }
                 }
               }
