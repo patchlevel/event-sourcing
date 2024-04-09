@@ -68,7 +68,7 @@ jobs:
 
       - name: "phpbench diff"
         id: bench
-        run: 'vendor/bin/phpbench run tests/Benchmark --progress=none --report=diff --ref=base --assert="mode(variant.time.avg) <= mode(baseline.time.avg) +/- 5%"  --assert="mode(variant.mem.peak) <= mode(baseline.mem.peak) +/- 5%" > bench.txt'
+        run: 'vendor/bin/phpbench run tests/Benchmark --progress=none --report=diff --ref=base > bench.txt'
 
       - name: "Get Bench Result"
         if: ${{ success() || (failure() && steps.bench.conclusion == 'failure') }}

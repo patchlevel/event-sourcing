@@ -27,7 +27,8 @@ final class PersonalDataBench
     private Store $store;
     private Repository $repository;
 
-    private AggregateRootId $id;
+    private AggregateRootId $singleEventId;
+    private AggregateRootId $multipleEventsId;
 
     public function setUp(): void
     {
@@ -65,9 +66,12 @@ final class PersonalDataBench
 
         $schemaDirector->create();
 
-        $this->id = ProfileId::v7();
+        $this->singleEventId = ProfileId::v7();
+        $profile = Profile::create($this->singleEventId, 'Peter');
+        $this->repository->save($profile);
 
-        $profile = Profile::create($this->id, 'Peter', 'info@patchlevel.de');
+        $this->multipleEventsId = ProfileId::v7();
+        $profile = Profile::create($this->multipleEventsId, 'Peter', 'info@patchlevel.de');
 
         for ($i = 0; $i < 10_000; $i++) {
             $profile->changeEmail('info@patchlevel.de');
@@ -77,9 +81,15 @@ final class PersonalDataBench
     }
 
     #[Bench\Revs(10)]
+    public function benchLoad1Event(): void
+    {
+        $this->repository->load($this->singleEventId);
+    }
+
+    #[Bench\Revs(10)]
     public function benchLoad10000Events(): void
     {
-        $this->repository->load($this->id);
+        $this->repository->load($this->multipleEventsId);
     }
 
     #[Bench\Revs(10)]
