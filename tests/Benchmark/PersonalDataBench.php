@@ -65,7 +65,6 @@ final class PersonalDataBench
         );
 
         $schemaDirector->create();
-        $schemaDirector->create();
 
         $this->singleEventId = ProfileId::v7();
         $profile = Profile::create($this->singleEventId, 'Peter');
