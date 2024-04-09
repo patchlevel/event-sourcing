@@ -10,9 +10,9 @@ use Patchlevel\EventSourcing\Attribute\PersonalData;
 use Patchlevel\EventSourcing\Attribute\SplitStream;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\ClassIsNotAnEvent;
-use Patchlevel\EventSourcing\Metadata\Event\DataSubjectIdIsPersonalData;
 use Patchlevel\EventSourcing\Metadata\Event\MissingDataSubjectId;
 use Patchlevel\EventSourcing\Metadata\Event\MultipleDataSubjectId;
+use Patchlevel\EventSourcing\Metadata\Event\SubjectIdAndPersonalDataConflict;
 use Patchlevel\Hydrator\Attribute\NormalizedName;
 use PHPUnit\Framework\TestCase;
 
@@ -124,7 +124,7 @@ final class AttributeEventMetadataFactoryTest extends TestCase
             }
         };
 
-        $this->expectException(DataSubjectIdIsPersonalData::class);
+        $this->expectException(SubjectIdAndPersonalDataConflict::class);
 
         $metadataFactory = new AttributeEventMetadataFactory();
         $metadataFactory->metadata($event::class);

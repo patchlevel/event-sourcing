@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Cryptography;
 
 use Patchlevel\EventSourcing\Cryptography\CryptographicHydrator;
-use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
+use Patchlevel\EventSourcing\Cryptography\PayloadCryptographer;
 use Patchlevel\Hydrator\Hydrator;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -28,7 +28,7 @@ final class CryptographicHydratorTest extends TestCase
             ->willReturn($object)
             ->shouldBeCalledOnce();
 
-        $cryptographer = $this->prophesize(EventPayloadCryptographer::class);
+        $cryptographer = $this->prophesize(PayloadCryptographer::class);
         $cryptographer
             ->decrypt(stdClass::class, $encryptedPayload)
             ->willReturn($payload)
@@ -56,7 +56,7 @@ final class CryptographicHydratorTest extends TestCase
             ->willReturn($payload)
             ->shouldBeCalledOnce();
 
-        $cryptographer = $this->prophesize(EventPayloadCryptographer::class);
+        $cryptographer = $this->prophesize(PayloadCryptographer::class);
         $cryptographer
             ->encrypt(stdClass::class, $payload)
             ->willReturn($encryptedPayload)

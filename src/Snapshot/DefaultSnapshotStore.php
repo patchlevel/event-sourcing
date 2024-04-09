@@ -6,11 +6,12 @@ namespace Patchlevel\EventSourcing\Snapshot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Cryptography\CryptographicHydrator;
+use Patchlevel\EventSourcing\Cryptography\PayloadCryptographer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
 use Patchlevel\Hydrator\Hydrator;
-use Patchlevel\Hydrator\Metadata\AttributeMetadataFactory;
 use Patchlevel\Hydrator\MetadataHydrator;
 use Throwable;
 
@@ -29,7 +30,7 @@ final class DefaultSnapshotStore implements SnapshotStore
         Hydrator|null $hydrator = null,
         AggregateRootMetadataFactory|null $metadataFactory = null,
     ) {
-        $this->hydrator = $hydrator ?? new MetadataHydrator(new AttributeMetadataFactory());
+        $this->hydrator = $hydrator ?? new MetadataHydrator();
         $this->metadataFactory = $metadataFactory ?? new AggregateRootMetadataAwareMetadataFactory();
     }
 
@@ -110,5 +111,17 @@ final class DefaultSnapshotStore implements SnapshotStore
     private function version(string $aggregateClass): string|null
     {
         return $this->metadataFactory->metadata($aggregateClass)->snapshot?->version;
+    }
+
+    /** @param array<string, SnapshotAdapter> $snapshotAdapters */
+    public static function createDefault(array $snapshotAdapters, PayloadCryptographer|null $cryptographer = null): self
+    {
+        $hydrator = new MetadataHydrator();
+
+        if ($cryptographer) {
+            $hydrator = new CryptographicHydrator($hydrator, $cryptographer);
+        }
+
+        return new self($snapshotAdapters, $hydrator);
     }
 }

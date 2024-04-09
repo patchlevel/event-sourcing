@@ -7,7 +7,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\DataSubjectId;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\PersonalData;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\NameChanged;
@@ -15,13 +17,15 @@ use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\PersonalDataR
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\ProfileCreated;
 
 #[Aggregate('profile')]
-#[Snapshot('default', 100)]
+#[Snapshot('default', 2)]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
     #[IdNormalizer]
+    #[DataSubjectId]
     private ProfileId $id;
 
+    #[PersonalData(fallback: 'unknown')]
     private string $name;
 
     public static function create(ProfileId $id, string $name): self

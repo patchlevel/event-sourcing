@@ -18,7 +18,12 @@ parameters:
 		-
 			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\EventSourcing\\\\Cryptography\\\\Cipher\\\\Cipher\\:\\:decrypt\\(\\) expects string, mixed given\\.$#"
 			count: 1
-			path: src/Cryptography/DefaultEventPayloadCryptographer.php
+			path: src/Cryptography/EventPayloadCryptographer.php
+
+		-
+			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\EventSourcing\\\\Cryptography\\\\Cipher\\\\Cipher\\:\\:decrypt\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Cryptography/SnapshotPayloadCryptographer.php
 
 		-
 			message: "#^Parameter \\#1 \\$key of class Patchlevel\\\\EventSourcing\\\\Cryptography\\\\Cipher\\\\CipherKey constructor expects non\\-empty\\-string, string given\\.$#"

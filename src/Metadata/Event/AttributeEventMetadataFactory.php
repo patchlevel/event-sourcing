@@ -45,7 +45,7 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
 
             if ($propertyMetadata->isPersonalData) {
                 if ($subjectId === $propertyMetadata->fieldName) {
-                    throw new DataSubjectIdIsPersonalData($event, $propertyMetadata->fieldName);
+                    throw new SubjectIdAndPersonalDataConflict($event, $propertyMetadata->fieldName);
                 }
 
                 $hasPersonalData = true;

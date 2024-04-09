@@ -20,6 +20,9 @@ final class AggregateRootMetadata
         public readonly array $suppressEvents,
         public readonly bool $suppressAll,
         public readonly Snapshot|null $snapshot,
+        public readonly string|null $dataSubjectIdField = null,
+        /** @var array<string, PropertyMetadata> */
+        public readonly array $propertyMetadata = [],
     ) {
     }
 }

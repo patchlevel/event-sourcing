@@ -10,7 +10,7 @@ final class CryptographicHydrator implements Hydrator
 {
     public function __construct(
         private readonly Hydrator $hydrator,
-        private readonly EventPayloadCryptographer $cryptographer,
+        private readonly PayloadCryptographer $cryptographer,
     ) {
     }
 

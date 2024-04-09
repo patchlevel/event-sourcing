@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Metadata\Event;
+namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 use Patchlevel\EventSourcing\Metadata\MetadataException;
 
 use function sprintf;
 
-final class DataSubjectIdIsPersonalData extends MetadataException
+final class SubjectIdAndPersonalDataConflict extends MetadataException
 {
     /** @param class-string $class */
     public function __construct(string $class, string $property)
