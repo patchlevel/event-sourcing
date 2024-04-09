@@ -13,15 +13,19 @@ use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\PersonalDataRemoved;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\ProfileCreated;
+use Patchlevel\Hydrator\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Attribute\PersonalData;
 
 #[Aggregate('profile')]
-#[Snapshot('default', 100)]
+#[Snapshot('default', 2)]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
     #[IdNormalizer]
+    #[DataSubjectId]
     private ProfileId $id;
 
+    #[PersonalData(fallback: 'unknown')]
     private string $name;
 
     public static function create(ProfileId $id, string $name): self

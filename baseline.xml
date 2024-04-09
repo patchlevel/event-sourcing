@@ -24,29 +24,7 @@
       <code><![CDATA[class DoctrineHelper]]></code>
     </ClassNotFinal>
   </file>
-  <file src="src/Cryptography/Cipher/OpensslCipherKeyFactory.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[openssl_random_pseudo_bytes($this->ivLength)]]></code>
-      <code><![CDATA[openssl_random_pseudo_bytes($this->keyLength)]]></code>
-    </ArgumentTypeCoercion>
-    <LessSpecificReturnStatement>
-      <code><![CDATA[openssl_get_cipher_methods(true)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[list<string>]]></code>
-    </MoreSpecificReturnType>
-  </file>
-  <file src="src/Cryptography/DefaultEventPayloadCryptographer.php">
-    <MixedArgument>
-      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
-    </MixedArgument>
-    <MixedAssignment>
-      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
-      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
-      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
-    </MixedAssignment>
-  </file>
-  <file src="src/Cryptography/Store/DoctrineCipherKeyStore.php">
+  <file src="src/Cryptography/DoctrineCipherKeyStore.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[base64_decode($result['crypto_iv'])]]></code>
       <code><![CDATA[base64_decode($result['crypto_key'])]]></code>
@@ -100,12 +78,6 @@
     <InvalidPropertyAssignmentValue>
       <code><![CDATA[$index]]></code>
     </InvalidPropertyAssignmentValue>
-  </file>
-  <file src="src/Store/DoctrineHelper.php">
-    <MixedReturnTypeCoercion>
-      <code><![CDATA[$normalizedCustomHeaders]]></code>
-      <code><![CDATA[array<string, string>]]></code>
-    </MixedReturnTypeCoercion>
   </file>
   <file src="src/Subscription/Store/DoctrineSubscriptionStore.php">
     <MixedArgument>
@@ -214,11 +186,6 @@
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Cryptography/Cipher/OpensslCipherTest.php">
-    <MixedAssignment>
-      <code><![CDATA[$return]]></code>
-    </MixedAssignment>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion>

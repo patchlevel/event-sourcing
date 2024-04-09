@@ -110,6 +110,8 @@ deptrac:
       - Store
       - Subscription
     Cryptography:
+      - Aggregate
+      - MetadataAggregate
       - MetadataEvent
       - Schema
     Debug:
@@ -167,6 +169,7 @@ deptrac:
       - MetadataEvent
     Snapshot:
       - Aggregate
+      - Cryptography
       - MetadataAggregate
     Store:
       - Aggregate

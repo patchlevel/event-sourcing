@@ -39,13 +39,13 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             return $this->aggregateMetadata[$aggregate];
         }
 
-        $reflector = new ReflectionClass($aggregate);
+        $reflectionClass = new ReflectionClass($aggregate);
 
-        $aggregateName = $this->findAggregateName($reflector);
-        $idProperty = $this->findIdProperty($reflector);
-        [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflector);
-        $applyMethods = $this->findApplyMethods($reflector, $aggregate);
-        $snapshot = $this->findSnapshot($reflector);
+        $aggregateName = $this->findAggregateName($reflectionClass);
+        $idProperty = $this->findIdProperty($reflectionClass);
+        [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflectionClass);
+        $applyMethods = $this->findApplyMethods($reflectionClass, $aggregate);
+        $snapshot = $this->findSnapshot($reflectionClass);
 
         $metadata = new AggregateRootMetadata(
             $aggregate,

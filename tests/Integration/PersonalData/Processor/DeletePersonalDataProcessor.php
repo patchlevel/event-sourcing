@@ -7,9 +7,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData\Processor;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyStore;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\PersonalDataRemoved;
+use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
 
 #[Processor('delete_personal_data')]
 final class DeletePersonalDataProcessor

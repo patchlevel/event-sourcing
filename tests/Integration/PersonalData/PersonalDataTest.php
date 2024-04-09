@@ -5,22 +5,22 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Cryptography\DefaultEventPayloadCryptographer;
-use Patchlevel\EventSourcing\Cryptography\Store\DoctrineCipherKeyStore;
-use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
+use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Processor\DeletePersonalDataProcessor;
+use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
 use PHPUnit\Framework\TestCase;
 
 /** @coversNothing */
@@ -38,14 +38,10 @@ final class PersonalDataTest extends TestCase
         $this->connection->close();
     }
 
-    public function testSuccessful(): void
+    public function testSuccessfulWithEvent(): void
     {
         $cipherKeyStore = new DoctrineCipherKeyStore($this->connection);
-
-        $cryptographer = DefaultEventPayloadCryptographer::createWithOpenssl(
-            new AttributeEventMetadataFactory(),
-            $cipherKeyStore,
-        );
+        $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl($cipherKeyStore);
 
         $store = new DoctrineDbalStore(
             $this->connection,
@@ -57,12 +53,9 @@ final class PersonalDataTest extends TestCase
             'eventstore',
         );
 
-        $eventBus = DefaultEventBus::create();
-
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            $eventBus,
         );
 
         $repository = $manager->get(Profile::class);
@@ -99,14 +92,10 @@ final class PersonalDataTest extends TestCase
         self::assertStringNotContainsString('John', $row['payload']);
     }
 
-    public function testRemoveKey(): void
+    public function testRemoveKeyWithEvent(): void
     {
         $cipherKeyStore = new DoctrineCipherKeyStore($this->connection);
-
-        $cryptographer = DefaultEventPayloadCryptographer::createWithOpenssl(
-            new AttributeEventMetadataFactory(),
-            $cipherKeyStore,
-        );
+        $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl($cipherKeyStore);
 
         $subscriptionStore = new DoctrineSubscriptionStore(
             $this->connection,
@@ -122,12 +111,9 @@ final class PersonalDataTest extends TestCase
             'eventstore',
         );
 
-        $eventBus = DefaultEventBus::create();
-
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
-            $eventBus,
         );
 
         $repository = $manager->get(Profile::class);
@@ -184,5 +170,81 @@ final class PersonalDataTest extends TestCase
         self::assertEquals($profileId, $profile->aggregateRootId());
         self::assertSame(3, $profile->playhead());
         self::assertSame('hallo', $profile->name());
+    }
+
+    public function testRemoveKeyWithEventAndSnapshot(): void
+    {
+        $cipherKeyStore = new DoctrineCipherKeyStore($this->connection);
+        $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl($cipherKeyStore);
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+        );
+
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events'], cryptographer: $cryptographer),
+            DefaultHeadersSerializer::createFromPaths([
+                __DIR__ . '/../../../src',
+                __DIR__,
+            ]),
+            'eventstore',
+        );
+
+        $snapshotAdapter = new InMemorySnapshotAdapter();
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            null,
+            DefaultSnapshotStore::createDefault(
+                ['default' => $snapshotAdapter],
+                $cryptographer,
+            ),
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $cipherKeyStore,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $engine = new DefaultSubscriptionEngine(
+            $store,
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([new DeletePersonalDataProcessor($cipherKeyStore)]),
+        );
+
+        $engine->setup(skipBooting: true);
+
+        $profileId = ProfileId::fromString('1');
+        $profile = Profile::create($profileId, 'John');
+        $profile->changeName('John 2');
+
+        $repository->save($profile);
+        $engine->run();
+
+        $profile = $repository->load($profileId);
+
+        self::assertInstanceOf(Profile::class, $profile);
+        self::assertEquals($profileId, $profile->aggregateRootId());
+        self::assertSame(2, $profile->playhead());
+        self::assertSame('John 2', $profile->name());
+
+        $cipherKeyStore->remove('1');
+
+        $profile = $repository->load($profileId);
+
+        self::assertInstanceOf(Profile::class, $profile);
+        self::assertEquals($profileId, $profile->aggregateRootId());
+        self::assertSame(2, $profile->playhead());
+        self::assertSame('unknown', $profile->name());
     }
 }
