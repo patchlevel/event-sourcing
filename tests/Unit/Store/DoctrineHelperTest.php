@@ -73,20 +73,4 @@ final class DoctrineHelperTest extends TestCase
             Type::getTypeRegistry()->override(Types::DATETIMETZ_IMMUTABLE, $type);
         }
     }
-
-    public function testNormalizeCustomHeaders(): void
-    {
-        $platform = $this->prophesize(AbstractPlatform::class);
-
-        $result = DoctrineHelper::normalizeCustomHeaders('{}', $platform->reveal());
-        self::assertSame([], $result);
-    }
-
-    public function testNormalizeCustomHeadersInvalid(): void
-    {
-        $platform = $this->prophesize(AbstractPlatform::class);
-
-        $this->expectException(InvalidType::class);
-        DoctrineHelper::normalizeCustomHeaders('', $platform->reveal());
-    }
 }

@@ -84,7 +84,7 @@ final class DoctrineDbalStreamTest extends TestCase
             ->willReturn($event);
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize([])->shouldBeCalledOnce()->willReturn([]);
+        $headersSerializer->deserialize('{}')->shouldBeCalledOnce()->willReturn([]);
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
@@ -179,7 +179,7 @@ final class DoctrineDbalStreamTest extends TestCase
             ->willReturn($event);
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize([])->shouldBeCalledTimes(3)->willReturn([]);
+        $headersSerializer->deserialize('{}')->shouldBeCalledTimes(3)->willReturn([]);
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledTimes(3)->willReturn('Y-m-d H:i:s');
@@ -251,7 +251,7 @@ final class DoctrineDbalStreamTest extends TestCase
             ->willReturn($event);
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize([])->shouldBeCalledOnce()->willReturn([]);
+        $headersSerializer->deserialize('{}')->shouldBeCalledOnce()->willReturn([]);
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
@@ -309,7 +309,7 @@ final class DoctrineDbalStreamTest extends TestCase
             ->willReturn($event);
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize([])->shouldBeCalledOnce()->willReturn([]);
+        $headersSerializer->deserialize('{}')->shouldBeCalledOnce()->willReturn([]);
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
@@ -385,7 +385,7 @@ final class DoctrineDbalStreamTest extends TestCase
             ->willReturn($event);
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize([])->shouldBeCalledOnce()->willReturn([]);
+        $headersSerializer->deserialize('{}')->shouldBeCalledOnce()->willReturn([]);
 
         $platform = $this->prophesize(AbstractPlatform::class);
         $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');

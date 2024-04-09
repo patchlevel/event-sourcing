@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer */
-final class HeadersSerializerTest extends TestCase
+final class DefaultHeadersSerializerTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -31,10 +31,7 @@ final class HeadersSerializerTest extends TestCase
         ]);
 
         self::assertEquals(
-            [
-                'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
-                'archived' => '[]',
-            ],
+            '{"aggregate":{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":[]}',
             $content,
         );
     }
@@ -49,12 +46,7 @@ final class HeadersSerializerTest extends TestCase
             new JsonEncoder(),
         );
 
-        $deserializedMessage = $serializer->deserialize(
-            [
-                'aggregate' => '{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"}',
-                'archived' => '[]',
-            ],
-        );
+        $deserializedMessage = $serializer->deserialize('{"aggregate":{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":[]}');
 
         self::assertEquals(
             [
