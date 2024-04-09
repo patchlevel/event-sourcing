@@ -36,7 +36,17 @@
       <code><![CDATA[list<string>]]></code>
     </MoreSpecificReturnType>
   </file>
-  <file src="src/Cryptography/DefaultEventPayloadCryptographer.php">
+  <file src="src/Cryptography/EventPayloadCryptographer.php">
+    <MixedArgument>
+      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
+      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
+      <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
+    </MixedAssignment>
+  </file>
+  <file src="src/Cryptography/SnapshotPayloadCryptographer.php">
     <MixedArgument>
       <code><![CDATA[$data[$propertyMetadata->fieldName]]]></code>
     </MixedArgument>
@@ -100,12 +110,6 @@
     <InvalidPropertyAssignmentValue>
       <code><![CDATA[$index]]></code>
     </InvalidPropertyAssignmentValue>
-  </file>
-  <file src="src/Store/DoctrineHelper.php">
-    <MixedReturnTypeCoercion>
-      <code><![CDATA[$normalizedCustomHeaders]]></code>
-      <code><![CDATA[array<string, string>]]></code>
-    </MixedReturnTypeCoercion>
   </file>
   <file src="src/Subscription/Store/DoctrineSubscriptionStore.php">
     <MixedArgument>

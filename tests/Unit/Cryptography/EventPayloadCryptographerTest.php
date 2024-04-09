@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Cryptography\Cipher\Cipher;
 use Patchlevel\EventSourcing\Cryptography\Cipher\CipherKey;
 use Patchlevel\EventSourcing\Cryptography\Cipher\CipherKeyFactory;
 use Patchlevel\EventSourcing\Cryptography\Cipher\DecryptionFailed;
-use Patchlevel\EventSourcing\Cryptography\DefaultEventPayloadCryptographer;
+use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
 use Patchlevel\EventSourcing\Cryptography\MissingSubjectId;
 use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyNotExists;
 use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyStore;
@@ -20,8 +20,8 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Cryptography\DefaultEventPayloadCryptographer */
-final class DefaultEventPayloadCryptographerTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer */
+final class EventPayloadCryptographerTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -33,7 +33,7 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
         $cipherKeyFactory = $this->prophesize(CipherKeyFactory::class);
         $cipher = $this->prophesize(Cipher::class);
 
-        $cryptographer = new DefaultEventPayloadCryptographer(
+        $cryptographer = new EventPayloadCryptographer(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
             $cipherKeyFactory->reveal(),
@@ -68,7 +68,7 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
             ->willReturn('encrypted')
             ->shouldBeCalledOnce();
 
-        $cryptographer = new DefaultEventPayloadCryptographer(
+        $cryptographer = new EventPayloadCryptographer(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
             $cipherKeyFactory->reveal(),
@@ -101,7 +101,7 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
             ->willReturn('encrypted')
             ->shouldBeCalledOnce();
 
-        $cryptographer = new DefaultEventPayloadCryptographer(
+        $cryptographer = new EventPayloadCryptographer(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
             $cipherKeyFactory->reveal(),
@@ -121,7 +121,7 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
         $cipherKeyFactory = $this->prophesize(CipherKeyFactory::class);
         $cipher = $this->prophesize(Cipher::class);
 
-        $cryptographer = new DefaultEventPayloadCryptographer(
+        $cryptographer = new EventPayloadCryptographer(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
             $cipherKeyFactory->reveal(),
@@ -146,7 +146,7 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
         $cipher = $this->prophesize(Cipher::class);
         $cipher->decrypt()->shouldNotBeCalled();
 
-        $cryptographer = new DefaultEventPayloadCryptographer(
+        $cryptographer = new EventPayloadCryptographer(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
             $cipherKeyFactory->reveal(),
@@ -179,7 +179,7 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
             ->willThrow(new DecryptionFailed())
             ->shouldBeCalledOnce();
 
-        $cryptographer = new DefaultEventPayloadCryptographer(
+        $cryptographer = new EventPayloadCryptographer(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
             $cipherKeyFactory->reveal(),
@@ -212,7 +212,7 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
             ->willReturn('info@patchlevel.de')
             ->shouldBeCalledOnce();
 
-        $cryptographer = new DefaultEventPayloadCryptographer(
+        $cryptographer = new EventPayloadCryptographer(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
             $cipherKeyFactory->reveal(),
@@ -232,7 +232,7 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
         $cipherKeyFactory = $this->prophesize(CipherKeyFactory::class);
         $cipher = $this->prophesize(Cipher::class);
 
-        $cryptographer = new DefaultEventPayloadCryptographer(
+        $cryptographer = new EventPayloadCryptographer(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
             $cipherKeyFactory->reveal(),
@@ -250,7 +250,7 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
         $cipherKeyFactory = $this->prophesize(CipherKeyFactory::class);
         $cipher = $this->prophesize(Cipher::class);
 
-        $cryptographer = new DefaultEventPayloadCryptographer(
+        $cryptographer = new EventPayloadCryptographer(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
             $cipherKeyFactory->reveal(),
@@ -264,11 +264,11 @@ final class DefaultEventPayloadCryptographerTest extends TestCase
     {
         $cipherKeyStore = $this->prophesize(CipherKeyStore::class);
 
-        $cryptographer = DefaultEventPayloadCryptographer::createWithOpenssl(
+        $cryptographer = EventPayloadCryptographer::createWithOpenssl(
             new AttributeEventMetadataFactory(),
             $cipherKeyStore->reveal(),
         );
 
-        self::assertInstanceOf(DefaultEventPayloadCryptographer::class, $cryptographer);
+        self::assertInstanceOf(EventPayloadCryptographer::class, $cryptographer);
     }
 }

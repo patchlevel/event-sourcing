@@ -7,7 +7,9 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\DataSubjectId;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\PersonalData;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
@@ -20,8 +22,10 @@ final class ProfileWithSnapshot extends BasicAggregateRoot
 {
     #[Id]
     #[IdNormalizer]
+    #[DataSubjectId]
     private ProfileId $id;
     #[EmailNormalizer]
+    #[PersonalData(fallback: 'fallback')]
     private Email $email;
     /** @var array<Message> */
     #[ArrayNormalizer(new MessageNormalizer())]

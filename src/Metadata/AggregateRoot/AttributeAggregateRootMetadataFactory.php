@@ -7,13 +7,17 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\DataSubjectId;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\PersonalData;
 use Patchlevel\EventSourcing\Attribute\Snapshot as AttributeSnapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+use Patchlevel\Hydrator\Attribute\NormalizedName;
 use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
+use ReflectionProperty;
 use ReflectionUnionType;
 
 use function array_key_exists;
@@ -39,13 +43,36 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             return $this->aggregateMetadata[$aggregate];
         }
 
-        $reflector = new ReflectionClass($aggregate);
+        $reflectionClass = new ReflectionClass($aggregate);
 
-        $aggregateName = $this->findAggregateName($reflector);
-        $idProperty = $this->findIdProperty($reflector);
-        [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflector);
-        $applyMethods = $this->findApplyMethods($reflector, $aggregate);
-        $snapshot = $this->findSnapshot($reflector);
+        $aggregateName = $this->findAggregateName($reflectionClass);
+        $idProperty = $this->findIdProperty($reflectionClass);
+        [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflectionClass);
+        $applyMethods = $this->findApplyMethods($reflectionClass, $aggregate);
+        $snapshot = $this->findSnapshot($reflectionClass);
+
+        $propertyMetadataList = [];
+        $hasPersonalData = false;
+
+        $subjectId = $this->subjectIdField($reflectionClass);
+
+        foreach ($reflectionClass->getProperties() as $reflectionProperty) {
+            $propertyMetadata = $this->propertyMetadata($reflectionProperty);
+
+            if ($propertyMetadata->isPersonalData) {
+                if ($subjectId === $propertyMetadata->fieldName) {
+                    throw new SubjectIdAndPersonalDataConflict($aggregate, $propertyMetadata->fieldName);
+                }
+
+                $hasPersonalData = true;
+            }
+
+            $propertyMetadataList[$reflectionProperty->getName()] = $propertyMetadata;
+        }
+
+        if ($hasPersonalData && $subjectId === null) {
+            throw new MissingDataSubjectId($aggregate);
+        }
 
         $metadata = new AggregateRootMetadata(
             $aggregate,
@@ -55,6 +82,8 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $suppressEvents,
             $suppressAll,
             $snapshot,
+            $subjectId,
+            $propertyMetadataList,
         );
 
         $this->aggregateMetadata[$aggregate] = $metadata;
@@ -233,5 +262,64 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         }
 
         return [];
+    }
+
+    private function propertyMetadata(ReflectionProperty $reflectionProperty): PropertyMetadata
+    {
+        $attributeReflectionList = $reflectionProperty->getAttributes(PersonalData::class);
+
+        if (!$attributeReflectionList) {
+            return new PropertyMetadata(
+                $reflectionProperty->getName(),
+                $this->fieldName($reflectionProperty),
+            );
+        }
+
+        $attribute = $attributeReflectionList[0]->newInstance();
+
+        return new PropertyMetadata(
+            $reflectionProperty->getName(),
+            $this->fieldName($reflectionProperty),
+            true,
+            $attribute->fallback,
+        );
+    }
+
+    private function subjectIdField(ReflectionClass $reflectionClass): string|null
+    {
+        $property = null;
+
+        foreach ($reflectionClass->getProperties() as $reflectionProperty) {
+            $attributeReflectionList = $reflectionProperty->getAttributes(DataSubjectId::class);
+
+            if (!$attributeReflectionList) {
+                continue;
+            }
+
+            if ($property !== null) {
+                throw new MultipleDataSubjectId($property->getName(), $reflectionProperty->getName());
+            }
+
+            $property = $reflectionProperty;
+        }
+
+        if ($property === null) {
+            return null;
+        }
+
+        return $this->fieldName($property);
+    }
+
+    private function fieldName(ReflectionProperty $reflectionProperty): string
+    {
+        $attributeReflectionList = $reflectionProperty->getAttributes(NormalizedName::class);
+
+        if (!$attributeReflectionList) {
+            return $reflectionProperty->getName();
+        }
+
+        $attribute = $attributeReflectionList[0]->newInstance();
+
+        return $attribute->name();
     }
 }

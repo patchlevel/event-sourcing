@@ -18,10 +18,12 @@ you can simply delete the key and the personal data can no longer be decrypted.
 
 Encrypting and decrypting is handled by the library.
 You just have to configure the events accordingly.
+And if you use snapshots, you have to configure your aggregates too.
 
 ### PersonalData
 
 First of all, we have to mark the fields that contain personal data.
+For our example, we use events, but you can do the same with aggregates.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\PersonalData;
@@ -35,6 +37,10 @@ final class EmailChanged
     }
 }
 ```
+!!! tip
+
+    You can use the `PersonalData` in aggregates for snapshots too.
+    
 If the information could not be decrypted, then a fallback value is inserted.
 The default fallback value is `null`.
 You can change this by setting the `fallback` parameter.
@@ -84,6 +90,10 @@ final class EmailChanged
     }
 }
 ```
+!!! tip
+
+    You can use the `DataSubjectId` in aggregates for snapshots too.
+    
 !!! warning
 
     A subject ID can not be a personal data.
@@ -94,7 +104,7 @@ In order for the system to work, a few things have to be done.
 
 !!! tip
 
-    You can use named constructor `DefaultEventPayloadCryptographer::createWithOpenssl` to skip some necessary setups.
+    You can use named constructor `EventPayloadCryptographer::createWithOpenssl` and `SnapshotPayloadCryptographer::createWithOpenssl` to skip some necessary setups.
     
 ### Cipher Key Factory
 
@@ -123,10 +133,14 @@ $cipherKey = $cipherKeyFactory();
 The keys must be stored somewhere. For this we provide a doctrine implementation.
 
 ```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Cryptography\Cipher\CipherKey;
 use Patchlevel\EventSourcing\Cryptography\Store\DoctrineCipherKeyStore;
 
+/** @var Connection $dbalConnection */
 $cipherKeyStore = new DoctrineCipherKeyStore($dbalConnection);
 
+/** @var CipherKey $cipherKey */
 $cipherKeyStore->store('personId', $cipherKey);
 $cipherKey = $cipherKeyStore->get('personId');
 $cipherKeyStore->remove('personId');
@@ -135,6 +149,17 @@ To use the `DoctrineCipherKeyStore` you need to register this service in Doctrin
 Then the table will be added automatically.
 
 ```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Cryptography\Store\DoctrineCipherKeyStore;
+use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Store\Store;
+
+/**
+ * @var Connection $dbalConnection
+ * @var DoctrineCipherKeyStore $cipherKeyStore
+ * @var Store $store
+ */
 $schemaDirector = new DoctrineSchemaDirector(
     $dbalConnection,
     new ChainDoctrineSchemaConfigurator([
@@ -149,10 +174,15 @@ The encryption and decryption is handled by the `Cipher`.
 We offer an openssl implementation by default.
 
 ```php
+use Patchlevel\EventSourcing\Cryptography\Cipher\CipherKey;
 use Patchlevel\EventSourcing\Cryptography\Cipher\OpensslCipher;
 
 $cipher = new OpensslCipher();
 
+/**
+ * @var CipherKey $cipherKey
+ * @var mixed $value
+ */
 $encrypted = $cipher->encrypt($cipherKey, $value);
 $value = $cipher->decrypt($cipherKey, $encrypted);
 ```
@@ -165,9 +195,19 @@ $value = $cipher->decrypt($cipherKey, $encrypted);
 Now we have to put the whole thing together in an Event Payload Cryptographer.
 
 ```php
-use Patchlevel\EventSourcing\Cryptography\DefaultEventPayloadCryptographer;
+use Patchlevel\EventSourcing\Cryptography\Cipher\OpensslCipher;
+use Patchlevel\EventSourcing\Cryptography\Cipher\OpensslCipherKeyFactory;
+use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
+use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyStore;
+use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 
-$cryptographer = new DefaultEventPayloadCryptographer(
+/**
+ * @var EventMetadataFactory $eventMetadataFactory
+ * @var CipherKeyStore $cipherKeyStore
+ * @var OpensslCipherKeyFactory $cipherKeyFactory
+ * @var OpensslCipher $cipher
+ */
+$cryptographer = new EventPayloadCryptographer(
     $eventMetadataFactory,
     $cipherKeyStore,
     $cipherKeyFactory,
@@ -177,25 +217,105 @@ $cryptographer = new DefaultEventPayloadCryptographer(
 You can also use the shortcut with openssl.
 
 ```php
-use Patchlevel\EventSourcing\Cryptography\DefaultEventPayloadCryptographer;
+use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
+use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyStore;
+use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 
-$cryptographer = DefaultEventPayloadCryptographer::createWithOpenssl(
+/**
+ * @var EventMetadataFactory $eventMetadataFactory
+ * @var CipherKeyStore $cipherKeyStore
+ */
+$cryptographer = EventPayloadCryptographer::createWithOpenssl(
     $eventMetadataFactory,
     $cipherKeyStore,
 );
 ```
-### Integration
+### Snapshot Payload Cryptographer
+
+You can also use the cryptographer for snapshots.
+
+```php
+use Patchlevel\EventSourcing\Cryptography\Cipher\OpensslCipher;
+use Patchlevel\EventSourcing\Cryptography\Cipher\OpensslCipherKeyFactory;
+use Patchlevel\EventSourcing\Cryptography\SnapshotPayloadCryptographer;
+use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyStore;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
+
+/**
+ * @var AggregateRootMetadataFactory $aggregateRootMetadataFactory
+ * @var CipherKeyStore $cipherKeyStore
+ * @var OpensslCipherKeyFactory $cipherKeyFactory
+ * @var OpensslCipher $cipher
+ */
+$cryptographer = new SnapshotPayloadCryptographer(
+    $aggregateRootMetadataFactory,
+    $cipherKeyStore,
+    $cipherKeyFactory,
+    $cipher,
+);
+```
+You can also use the shortcut with openssl.
+
+```php
+use Patchlevel\EventSourcing\Cryptography\SnapshotPayloadCryptographer;
+use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyStore;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
+
+/**
+ * @var AggregateRootMetadataFactory $aggregateRootMetadataFactory
+ * @var CipherKeyStore $cipherKeyStore
+ */
+$cryptographer = SnapshotPayloadCryptographer::createWithOpenssl(
+    $aggregateRootMetadataFactory,
+    $cipherKeyStore,
+);
+```
+### Event Serializer Integration
 
 The last step is to integrate the cryptographer into the event store.
 
 ```php
+use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\Hydrator\Hydrator;
 
+/**
+ * @var Hydrator $hydrator
+ * @var EventPayloadCryptographer $cryptographer
+ */
 DefaultEventSerializer::createFromPaths(
     [__DIR__ . '/Events'],
     cryptographer: $cryptographer,
 );
 ```
+!!! note
+
+    More information about the events can be found [here](./events.md).
+    
+### Snapshot Store Integration
+
+And for the snapshot store.
+
+```php
+use Patchlevel\EventSourcing\Cryptography\SnapshotPayloadCryptographer;
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\Hydrator\Hydrator;
+
+/**
+ * @var Hydrator $hydrator
+ * @var SnapshotPayloadCryptographer $cryptographer
+ */
+$snapshotStore = DefaultSnapshotStore::createDefault(
+    [
+        /* adapters... */
+    ],
+    $cryptographer,
+);
+```
+!!! note
+
+    More information about the snapshot store can be found [here](./snapshots.md).
+    
 !!! success
 
     Now you can save and read events with personal data.
