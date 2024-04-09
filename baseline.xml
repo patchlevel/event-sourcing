@@ -133,15 +133,17 @@
   </file>
   <file src="tests/Benchmark/PersonalDataBench.php">
     <MissingConstructor>
-      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$multipleEventsId]]></code>
       <code><![CDATA[$repository]]></code>
+      <code><![CDATA[$singleEventId]]></code>
       <code><![CDATA[$store]]></code>
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SimpleSetupBench.php">
     <MissingConstructor>
-      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$multipleEventsId]]></code>
       <code><![CDATA[$repository]]></code>
+      <code><![CDATA[$singleEventId]]></code>
       <code><![CDATA[$store]]></code>
     </MissingConstructor>
   </file>
