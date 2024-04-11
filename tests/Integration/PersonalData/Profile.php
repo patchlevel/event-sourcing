@@ -7,14 +7,14 @@ namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\DataSubjectId;
 use Patchlevel\EventSourcing\Attribute\Id;
-use Patchlevel\EventSourcing\Attribute\PersonalData;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\PersonalDataRemoved;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\ProfileCreated;
+use Patchlevel\Hydrator\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Attribute\PersonalData;
 
 #[Aggregate('profile')]
 #[Snapshot('default', 2)]
