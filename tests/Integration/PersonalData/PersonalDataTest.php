@@ -5,13 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
-use Patchlevel\EventSourcing\Cryptography\SnapshotPayloadCryptographer;
-use Patchlevel\EventSourcing\Cryptography\Store\DoctrineCipherKeyStore;
+use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory;
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -24,6 +20,7 @@ use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Processor\DeletePersonalDataProcessor;
+use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
 use PHPUnit\Framework\TestCase;
 
 /** @coversNothing */
@@ -44,11 +41,7 @@ final class PersonalDataTest extends TestCase
     public function testSuccessfulWithEvent(): void
     {
         $cipherKeyStore = new DoctrineCipherKeyStore($this->connection);
-
-        $cryptographer = EventPayloadCryptographer::createWithOpenssl(
-            new AttributeEventMetadataFactory(),
-            $cipherKeyStore,
-        );
+        $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl($cipherKeyStore);
 
         $store = new DoctrineDbalStore(
             $this->connection,
@@ -102,11 +95,7 @@ final class PersonalDataTest extends TestCase
     public function testRemoveKeyWithEvent(): void
     {
         $cipherKeyStore = new DoctrineCipherKeyStore($this->connection);
-
-        $cryptographer = EventPayloadCryptographer::createWithOpenssl(
-            new AttributeEventMetadataFactory(),
-            $cipherKeyStore,
-        );
+        $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl($cipherKeyStore);
 
         $subscriptionStore = new DoctrineSubscriptionStore(
             $this->connection,
@@ -186,16 +175,7 @@ final class PersonalDataTest extends TestCase
     public function testRemoveKeyWithEventAndSnapshot(): void
     {
         $cipherKeyStore = new DoctrineCipherKeyStore($this->connection);
-
-        $cryptographer = EventPayloadCryptographer::createWithOpenssl(
-            new AttributeEventMetadataFactory(),
-            $cipherKeyStore,
-        );
-
-        $snapShotCryptographer = SnapshotPayloadCryptographer::createWithOpenssl(
-            new AttributeAggregateRootMetadataFactory(),
-            $cipherKeyStore,
-        );
+        $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl($cipherKeyStore);
 
         $subscriptionStore = new DoctrineSubscriptionStore(
             $this->connection,
@@ -219,7 +199,7 @@ final class PersonalDataTest extends TestCase
             null,
             DefaultSnapshotStore::createDefault(
                 ['default' => $snapshotAdapter],
-                $snapShotCryptographer,
+                $cryptographer,
             ),
         );
 

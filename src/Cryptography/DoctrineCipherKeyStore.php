@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Cryptography\Store;
+namespace Patchlevel\EventSourcing\Cryptography;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
-use Patchlevel\EventSourcing\Cryptography\Cipher\CipherKey;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
+use Patchlevel\Hydrator\Cryptography\Cipher\CipherKey;
+use Patchlevel\Hydrator\Cryptography\Store\CipherKeyNotExists;
+use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
 
 use function array_key_exists;
 use function base64_decode;

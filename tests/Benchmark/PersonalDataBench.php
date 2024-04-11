@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\Cryptography\EventPayloadCryptographer;
-use Patchlevel\EventSourcing\Cryptography\Store\DoctrineCipherKeyStore;
+use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
@@ -19,6 +17,7 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
 use PhpBench\Attributes as Bench;
 
 #[Bench\BeforeMethods('setUp')]
@@ -36,8 +35,7 @@ final class PersonalDataBench
 
         $cipherKeyStore = new DoctrineCipherKeyStore($connection);
 
-        $cryptographer = EventPayloadCryptographer::createWithOpenssl(
-            new AttributeEventMetadataFactory(),
+        $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl(
             $cipherKeyStore,
         );
 

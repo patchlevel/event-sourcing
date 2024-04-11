@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Serializer;
 
-use Patchlevel\EventSourcing\Cryptography\CryptographicHydrator;
-use Patchlevel\EventSourcing\Cryptography\PayloadCryptographer;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
 use Patchlevel\Hydrator\Hydrator;
 use Patchlevel\Hydrator\MetadataHydrator;
 
@@ -60,15 +59,9 @@ final class DefaultEventSerializer implements EventSerializer
         Upcaster|null $upcaster = null,
         PayloadCryptographer|null $cryptographer = null,
     ): static {
-        $hydrator = new MetadataHydrator();
-
-        if ($cryptographer) {
-            $hydrator = new CryptographicHydrator($hydrator, $cryptographer);
-        }
-
         return new self(
             (new AttributeEventRegistryFactory())->create($paths),
-            $hydrator,
+            new MetadataHydrator(cryptographer: $cryptographer),
             new JsonEncoder(),
             $upcaster,
         );

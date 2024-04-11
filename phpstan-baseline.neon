@@ -6,34 +6,14 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Parameter \\#1 \\$key of class Patchlevel\\\\EventSourcing\\\\Cryptography\\\\Cipher\\\\CipherKey constructor expects non\\-empty\\-string, string given\\.$#"
+			message: "#^Parameter \\#1 \\$key of class Patchlevel\\\\Hydrator\\\\Cryptography\\\\Cipher\\\\CipherKey constructor expects non\\-empty\\-string, string given\\.$#"
 			count: 1
-			path: src/Cryptography/Cipher/OpensslCipherKeyFactory.php
+			path: src/Cryptography/DoctrineCipherKeyStore.php
 
 		-
-			message: "#^Parameter \\#3 \\$iv of class Patchlevel\\\\EventSourcing\\\\Cryptography\\\\Cipher\\\\CipherKey constructor expects non\\-empty\\-string, string given\\.$#"
+			message: "#^Parameter \\#3 \\$iv of class Patchlevel\\\\Hydrator\\\\Cryptography\\\\Cipher\\\\CipherKey constructor expects non\\-empty\\-string, string given\\.$#"
 			count: 1
-			path: src/Cryptography/Cipher/OpensslCipherKeyFactory.php
-
-		-
-			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\EventSourcing\\\\Cryptography\\\\Cipher\\\\Cipher\\:\\:decrypt\\(\\) expects string, mixed given\\.$#"
-			count: 1
-			path: src/Cryptography/EventPayloadCryptographer.php
-
-		-
-			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\EventSourcing\\\\Cryptography\\\\Cipher\\\\Cipher\\:\\:decrypt\\(\\) expects string, mixed given\\.$#"
-			count: 1
-			path: src/Cryptography/SnapshotPayloadCryptographer.php
-
-		-
-			message: "#^Parameter \\#1 \\$key of class Patchlevel\\\\EventSourcing\\\\Cryptography\\\\Cipher\\\\CipherKey constructor expects non\\-empty\\-string, string given\\.$#"
-			count: 1
-			path: src/Cryptography/Store/DoctrineCipherKeyStore.php
-
-		-
-			message: "#^Parameter \\#3 \\$iv of class Patchlevel\\\\EventSourcing\\\\Cryptography\\\\Cipher\\\\CipherKey constructor expects non\\-empty\\-string, string given\\.$#"
-			count: 1
-			path: src/Cryptography/Store/DoctrineCipherKeyStore.php
+			path: src/Cryptography/DoctrineCipherKeyStore.php
 
 		-
 			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\Hydrator\\\\Hydrator\\:\\:hydrate\\(\\) expects array\\<string, mixed\\>, mixed given\\.$#"
