@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
 #[Projector('profile')]
 final class ProfileProjector
@@ -48,12 +49,12 @@ final class ProfileProjector
     }
 
     #[Subscribe(NameChanged::class)]
-    public function onNameChanged(NameChanged $nameChanged, string $aggregateRootId): void
+    public function onNameChanged(NameChanged $nameChanged, ProfileId $profileId): void
     {
         $this->connection->update(
             $this->table(),
             ['name' => $nameChanged->name],
-            ['id' => $aggregateRootId],
+            ['id' => $profileId->toString()],
         );
     }
 

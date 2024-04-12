@@ -165,6 +165,97 @@ final class DoStuffSubscriber
     If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
     to make the event method return the correct type.
     
+#### Argument Resolver
+
+The library analyses the method signature and tries to resolve the arguments.
+The order of the arguments doesn't matter, you can use multiple arguments and mix them.
+
+##### Message Resolver
+
+The message resolver resolves the `Message` object.
+It looks for a parameter with the type `Message`.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+
+#[Subscriber('do_stuff', RunMode::Once)]
+final class DoStuffSubscriber
+{
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(Message $message): void
+    {
+        // do something
+    }
+}
+```
+##### Event Resolver
+
+The event resolver resolves the event object.
+It looks for a parameter with the type of the event.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+
+#[Subscriber('do_stuff', RunMode::Once)]
+final class DoStuffSubscriber
+{
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(ProfileCreated $profileCreated): void
+    {
+        // do something
+    }
+}
+```
+##### Aggregate Id Resolver
+
+The aggregate id resolver resolves the aggregate id.
+It looks for a parameter with the instance of the `AggregateRootId`.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+
+#[Subscriber('do_stuff', RunMode::Once)]
+final class DoStuffSubscriber
+{
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(ProfileId $profileId): void
+    {
+        // do something
+    }
+}
+```
+!!! warning
+
+    The resolver argument doesn't know if you're using the correct aggregate id class and doesn't check it. 
+    It gets the Aggregate ID as a string, takes the class and instantiates it with the method `fromString`.
+    
+##### Recorded On Resolver
+
+The recorded on resolver resolves the recorded on date.
+It looks for a parameter with the instance of the `DateTimeImmutable`.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+
+#[Subscriber('do_stuff', RunMode::Once)]
+final class DoStuffSubscriber
+{
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(DateTimeImmutable $recordedOn): void
+    {
+        // do something
+    }
+}
+```
 ### Setup and Teardown
 
 Subscribers can have one `setup` and `teardown` method that is executed when the subscription is created or deleted.
