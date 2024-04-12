@@ -105,8 +105,14 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
-        $engine->setup();
-        $engine->boot();
+        $result = $engine->setup();
+
+        self::assertEquals([], $result->errors);
+
+        $result = $engine->boot();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals(
             [
@@ -124,7 +130,10 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create(ProfileId::fromString('1'), 'John');
         $repository->save($profile);
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals(
             [
@@ -150,7 +159,8 @@ final class SubscriptionTest extends TestCase
         self::assertSame('1', $result['id']);
         self::assertSame('John', $result['name']);
 
-        $engine->remove();
+        $result = $engine->remove();
+        self::assertEquals([], $result->errors);
 
         self::assertEquals(
             [
@@ -213,8 +223,12 @@ final class SubscriptionTest extends TestCase
             ),
         );
 
-        $engine->setup();
-        $engine->boot();
+        $result = $engine->setup();
+        self::assertEquals([], $result->errors);
+
+        $result = $engine->boot();
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
 
@@ -228,7 +242,16 @@ final class SubscriptionTest extends TestCase
         $repository->save($profile);
 
         $subscriber->subscribeError = true;
-        $engine->run();
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals('error_producer', $error->subscriptionId);
+        self::assertEquals('subscribe error', $error->message);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
 
@@ -237,7 +260,10 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(Status::Active, $subscription->subscriptionError()?->previousStatus);
         self::assertEquals(0, $subscription->retryAttempt());
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
 
@@ -248,7 +274,15 @@ final class SubscriptionTest extends TestCase
 
         $clock->sleep(5);
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals('error_producer', $error->subscriptionId);
+        self::assertEquals('subscribe error', $error->message);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
 
@@ -259,7 +293,15 @@ final class SubscriptionTest extends TestCase
 
         $clock->sleep(10);
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals('error_producer', $error->subscriptionId);
+        self::assertEquals('subscribe error', $error->message);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
 
@@ -278,7 +320,15 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(null, $subscription->subscriptionError());
         self::assertEquals(0, $subscription->retryAttempt());
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals('error_producer', $error->subscriptionId);
+        self::assertEquals('subscribe error', $error->message);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
 
@@ -290,7 +340,10 @@ final class SubscriptionTest extends TestCase
         $clock->sleep(5);
         $subscriber->subscribeError = false;
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
 

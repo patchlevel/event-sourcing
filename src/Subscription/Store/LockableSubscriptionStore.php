@@ -8,5 +8,14 @@ use Closure;
 
 interface LockableSubscriptionStore extends SubscriptionStore
 {
-    public function inLock(Closure $closure): void;
+    /**
+     * @param Closure():T $closure
+     *
+     * @return T
+     *
+     * @throws TransactionCommitNotPossible
+     *
+     * @template T
+     */
+    public function inLock(Closure $closure): mixed;
 }

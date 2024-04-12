@@ -182,12 +182,21 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
         $this->connection->delete($this->tableName, ['id' => $subscription->id()]);
     }
 
-    public function inLock(Closure $closure): void
+    /**
+     * @param Closure():T $closure
+     *
+     * @return T
+     *
+     * @throws TransactionCommitNotPossible
+     *
+     * @template T
+     */
+    public function inLock(Closure $closure): mixed
     {
         $this->connection->beginTransaction();
 
         try {
-            $closure();
+            return $closure();
         } finally {
             try {
                 $this->connection->commit();

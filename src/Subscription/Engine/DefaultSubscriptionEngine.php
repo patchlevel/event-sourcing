@@ -36,7 +36,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     ) {
     }
 
-    public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): void
+    public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): Result
     {
         $criteria ??= new SubscriptionEngineCriteria();
 
@@ -47,18 +47,21 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->discoverNewSubscriptions();
         $this->retrySubscriptions($criteria);
 
-        $this->findForUpdate(
+        return $this->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [Status::New],
             ),
-            function (array $subscriptions) use ($skipBooting): void {
+            function (array $subscriptions) use ($skipBooting): Result {
                 if (count($subscriptions) === 0) {
                     $this->logger?->info('Subscription Engine: No subscriptions to setup, finish setup.');
 
-                    return;
+                    return new Result();
                 }
+
+                /** @var list<Error> $errors */
+                $errors = [];
 
                 $latestIndex = $this->latestIndex();
 
@@ -118,8 +121,16 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         ));
 
                         $this->handleError($subscription, $e);
+
+                        $errors[] = new Error(
+                            $subscription->id(),
+                            $e->getMessage(),
+                            $e,
+                        );
                     }
                 }
+
+                return new Result($errors);
             },
         );
     }
@@ -127,7 +138,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     public function boot(
         SubscriptionEngineCriteria|null $criteria = null,
         int|null $limit = null,
-    ): void {
+    ): ProcessedResult {
         $criteria ??= new SubscriptionEngineCriteria();
 
         $this->logger?->info(
@@ -137,18 +148,21 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->discoverNewSubscriptions();
         $this->retrySubscriptions($criteria);
 
-        $this->findForUpdate(
+        return $this->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [Status::Booting],
             ),
-            function ($subscriptions) use ($limit): void {
+            function ($subscriptions) use ($limit): ProcessedResult {
                 if (count($subscriptions) === 0) {
                     $this->logger?->info('Subscription Engine: No subscriptions in booting status, finish booting.');
 
-                    return;
+                    return new ProcessedResult(0);
                 }
+
+                /** @var list<Error> $errors */
+                $errors = [];
 
                 $startIndex = $this->lowestSubscriptionPosition($subscriptions);
 
@@ -192,7 +206,13 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 continue;
                             }
 
-                            $this->handleMessage($index, $message, $subscription);
+                            $error = $this->handleMessage($index, $message, $subscription);
+
+                            if (!$error) {
+                                continue;
+                            }
+
+                            $errors[] = $error;
                         }
 
                         $messageCounter++;
@@ -212,7 +232,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 ),
                             );
 
-                            return;
+                            return new ProcessedResult(
+                                $messageCounter,
+                                false,
+                                $errors,
+                            );
                         }
                     }
                 } finally {
@@ -258,6 +282,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 }
 
                 $this->logger?->info('Subscription Engine: Finish booting.');
+
+                return new ProcessedResult(
+                    $messageCounter,
+                    true,
+                    $errors,
+                );
             },
         );
     }
@@ -265,7 +295,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     public function run(
         SubscriptionEngineCriteria|null $criteria = null,
         int|null $limit = null,
-    ): void {
+    ): ProcessedResult {
         $criteria ??= new SubscriptionEngineCriteria();
 
         $this->logger?->info('Subscription Engine: Start processing.');
@@ -274,18 +304,21 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->markDetachedSubscriptions($criteria);
         $this->retrySubscriptions($criteria);
 
-        $this->findForUpdate(
+        return $this->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [Status::Active],
             ),
-            function (array $subscriptions) use ($limit): void {
+            function (array $subscriptions) use ($limit): ProcessedResult {
                 if (count($subscriptions) === 0) {
                     $this->logger?->info('Subscription Engine: No subscriptions to process, finish processing.');
 
-                    return;
+                    return new ProcessedResult(0);
                 }
+
+                /** @var list<Error> $errors */
+                $errors = [];
 
                 $startIndex = $this->lowestSubscriptionPosition($subscriptions);
 
@@ -328,12 +361,21 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 continue;
                             }
 
-                            $this->handleMessage($index, $message, $subscription);
+                            $error = $this->handleMessage($index, $message, $subscription);
+
+                            if (!$error) {
+                                continue;
+                            }
+
+                            $errors[] = $error;
                         }
 
                         $messageCounter++;
 
-                        $this->logger?->debug(sprintf('Subscription Engine: Current event stream position: %s', $index));
+                        $this->logger?->debug(sprintf(
+                            'Subscription Engine: Current event stream position: %s',
+                            $index,
+                        ));
 
                         if ($limit !== null && $messageCounter >= $limit) {
                             $this->logger?->info(
@@ -343,7 +385,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 ),
                             );
 
-                            return;
+                            return new ProcessedResult($messageCounter, false, $errors);
                         }
                     }
                 } finally {
@@ -385,11 +427,13 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         $endIndex,
                     ),
                 );
+
+                return new ProcessedResult($messageCounter, true, $errors);
             },
         );
     }
 
-    public function teardown(SubscriptionEngineCriteria|null $criteria = null): void
+    public function teardown(SubscriptionEngineCriteria|null $criteria = null): Result
     {
         $criteria ??= new SubscriptionEngineCriteria();
 
@@ -397,13 +441,16 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->logger?->info('Subscription Engine: Start teardown detached subscriptions.');
 
-        $this->findForUpdate(
+        return $this->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [Status::Detached],
             ),
-            function (array $subscriptions): void {
+            function (array $subscriptions): Result {
+                /** @var list<Error> $errors */
+                $errors = [];
+
                 foreach ($subscriptions as $subscription) {
                     $subscriber = $this->subscriber($subscription->id());
 
@@ -451,6 +498,13 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 $e->getMessage(),
                             ),
                         );
+
+                        $errors[] = new Error(
+                            $subscription->id(),
+                            $e->getMessage(),
+                            $e,
+                        );
+
                         continue;
                     }
 
@@ -465,22 +519,27 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 }
 
                 $this->logger?->info('Subscription Engine: Finish teardown.');
+
+                return new Result($errors);
             },
         );
     }
 
-    public function remove(SubscriptionEngineCriteria|null $criteria = null): void
+    public function remove(SubscriptionEngineCriteria|null $criteria = null): Result
     {
         $criteria ??= new SubscriptionEngineCriteria();
 
         $this->discoverNewSubscriptions();
 
-        $this->findForUpdate(
+        return $this->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
             ),
-            function (array $subscriptions): void {
+            function (array $subscriptions): Result {
+                /** @var list<Error> $errors */
+                $errors = [];
+
                 foreach ($subscriptions as $subscription) {
                     $subscriber = $this->subscriber($subscription->id());
 
@@ -519,6 +578,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 $e->getMessage(),
                             ),
                         );
+
+                        $errors[] = new Error(
+                            $subscription->id(),
+                            $e->getMessage(),
+                            $e,
+                        );
                     }
 
                     $this->subscriptionStore->remove($subscription);
@@ -527,17 +592,19 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         sprintf('Subscription Engine: Subscription "%s" removed.', $subscription->id()),
                     );
                 }
+
+                return new Result($errors);
             },
         );
     }
 
-    public function reactivate(SubscriptionEngineCriteria|null $criteria = null): void
+    public function reactivate(SubscriptionEngineCriteria|null $criteria = null): Result
     {
         $criteria ??= new SubscriptionEngineCriteria();
 
         $this->discoverNewSubscriptions();
 
-        $this->findForUpdate(
+        return $this->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -548,14 +615,16 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     Status::Finished,
                 ],
             ),
-            function (array $subscriptions): void {
-                /** @var Subscription $subscription */
+            function (array $subscriptions): Result {
                 foreach ($subscriptions as $subscription) {
                     $subscriber = $this->subscriber($subscription->id());
 
                     if (!$subscriber) {
                         $this->logger?->debug(
-                            sprintf('Subscription Engine: Subscriber for "%s" not found, skipped.', $subscription->id()),
+                            sprintf(
+                                'Subscription Engine: Subscriber for "%s" not found, skipped.',
+                                $subscription->id(),
+                            ),
                         );
 
                         continue;
@@ -587,17 +656,19 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         $subscription->id(),
                     ));
                 }
+
+                return new Result();
             },
         );
     }
 
-    public function pause(SubscriptionEngineCriteria|null $criteria = null): void
+    public function pause(SubscriptionEngineCriteria|null $criteria = null): Result
     {
         $criteria ??= new SubscriptionEngineCriteria();
 
         $this->discoverNewSubscriptions();
 
-        $this->findForUpdate(
+        return $this->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -607,14 +678,17 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     Status::Error,
                 ],
             ),
-            function (array $subscriptions): void {
+            function (array $subscriptions): Result {
                 /** @var Subscription $subscription */
                 foreach ($subscriptions as $subscription) {
                     $subscriber = $this->subscriber($subscription->id());
 
                     if (!$subscriber) {
                         $this->logger?->debug(
-                            sprintf('Subscription Engine: Subscriber for "%s" not found, skipped.', $subscription->id()),
+                            sprintf(
+                                'Subscription Engine: Subscriber for "%s" not found, skipped.',
+                                $subscription->id(),
+                            ),
                         );
 
                         continue;
@@ -629,6 +703,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         $subscription->id(),
                     ));
                 }
+
+                return new Result();
             },
         );
     }
@@ -648,7 +724,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         );
     }
 
-    private function handleMessage(int $index, Message $message, Subscription $subscription): void
+    private function handleMessage(int $index, Message $message, Subscription $subscription): Error|null
     {
         $subscriber = $this->subscriber($subscription->id());
 
@@ -670,7 +746,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 ),
             );
 
-            return;
+            return null;
         }
 
         try {
@@ -690,7 +766,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
             $this->handleError($subscription, $e);
 
-            return;
+            return new Error(
+                $subscription->id(),
+                $e->getMessage(),
+                $e,
+            );
         }
 
         $subscription->changePosition($index);
@@ -704,6 +784,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $message->event()::class,
             ),
         );
+
+        return null;
     }
 
     private function subscriber(string $subscriberId): SubscriberAccessor|null
@@ -846,20 +928,27 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         return $min;
     }
 
-    /** @param Closure(list<Subscription>):void $closure */
-    private function findForUpdate(SubscriptionCriteria $criteria, Closure $closure): void
+    /**
+     * @param Closure(list<Subscription>):T $closure
+     *
+     * @return T
+     *
+     * @template T
+     */
+    private function findForUpdate(SubscriptionCriteria $criteria, Closure $closure): mixed
     {
         if (!$this->subscriptionStore instanceof LockableSubscriptionStore) {
-            $closure($this->subscriptionStore->find($criteria));
-
-            return;
+            return $closure($this->subscriptionStore->find($criteria));
         }
 
-        $this->subscriptionStore->inLock(function () use ($closure, $criteria): void {
-            $subscriptions = $this->subscriptionStore->find($criteria);
+        return $this->subscriptionStore->inLock(
+            /** @return T */
+            function () use ($closure, $criteria): mixed {
+                $subscriptions = $this->subscriptionStore->find($criteria);
 
-            $closure($subscriptions);
-        });
+                return $closure($subscriptions);
+            },
+        );
     }
 
     private function handleError(Subscription $subscription, Throwable $throwable): void

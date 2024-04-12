@@ -80,7 +80,7 @@ $schemaDirector = new DoctrineSchemaDirector($connection, $store);
 $cli->addCommands([
     new Command\DatabaseCreateCommand($connection, $doctrineHelper),
     new Command\DatabaseDropCommand($connection, $doctrineHelper),
-    new Command\SubscriptionBootCommand($subscriptionEngine, $store),
+    new Command\SubscriptionBootCommand($subscriptionEngine),
     new Command\SubscriptionPauseCommand($subscriptionEngine),
     new Command\SubscriptionRunCommand($subscriptionEngine, $store),
     new Command\SubscriptionTeardownCommand($subscriptionEngine),
