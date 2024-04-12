@@ -157,12 +157,11 @@ Each projector is then responsible for a specific projection.
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
 #[Projector('hotel')]
@@ -182,14 +181,12 @@ final class HotelProjector
     }
 
     #[Subscribe(HotelCreated::class)]
-    public function handleHotelCreated(Message $message): void
+    public function handleHotelCreated(HotelCreated $event, Uuid $aggregateId): void
     {
-        $event = $message->event();
-
         $this->db->insert(
             $this->table(),
             [
-                'id' => $message->header(AggregateHeader::class)->aggregateId,
+                'id' => $aggregateId->toString(),
                 'name' => $event->hotelName,
                 'guests' => 0,
             ],
@@ -197,20 +194,20 @@ final class HotelProjector
     }
 
     #[Subscribe(GuestIsCheckedIn::class)]
-    public function handleGuestIsCheckedIn(Message $message): void
+    public function handleGuestIsCheckedIn(Uuid $aggregateId): void
     {
         $this->db->executeStatement(
             "UPDATE {$this->table()} SET guests = guests + 1 WHERE id = ?;",
-            [$message->header(AggregateHeader::class)->aggregateId],
+            [$aggregateId->toString()],
         );
     }
 
     #[Subscribe(GuestIsCheckedOut::class)]
-    public function handleGuestIsCheckedOut(Message $message): void
+    public function handleGuestIsCheckedOut(Uuid $aggregateId): void
     {
         $this->db->executeStatement(
             "UPDATE {$this->table()} SET guests = guests - 1 WHERE id = ?;",
-            [$message->header(AggregateHeader::class)->aggregateId],
+            [$aggregateId->toString()],
         );
     }
 
@@ -243,7 +240,6 @@ In our example we also want to email the head office as soon as a guest is check
 ```php
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
 
 #[Processor('admin_emails')]
 final class SendCheckInEmailProcessor
@@ -254,12 +250,12 @@ final class SendCheckInEmailProcessor
     }
 
     #[Subscribe(GuestIsCheckedIn::class)]
-    public function onGuestIsCheckedIn(Message $message): void
+    public function onGuestIsCheckedIn(GuestIsCheckedIn $event): void
     {
         $this->mailer->send(
             'hq@patchlevel.de',
             'Guest is checked in',
-            sprintf('A new guest named "%s" is checked in', $message->event()->guestName),
+            sprintf('A new guest named "%s" is checked in', $event->guestName),
         );
     }
 }

@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use RuntimeException;
 
@@ -36,7 +35,7 @@ final class ErrorProducerSubscriber
     }
 
     #[Subscribe('*')]
-    public function subscribe(Message $message): void
+    public function subscribe(): void
     {
         if ($this->subscribeError) {
             throw new RuntimeException('subscribe error');

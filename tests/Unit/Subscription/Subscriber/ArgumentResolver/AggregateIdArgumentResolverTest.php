@@ -6,6 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentRe
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Aggregate\CustomId;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\AggregateIdArgumentResolver;
@@ -23,21 +25,21 @@ final class AggregateIdArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('aggregateId', 'string'),
+                new ArgumentMetadata('aggregateId', Uuid::class),
                 ProfileCreated::class,
             ),
         );
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('aggregateRootId', 'string'),
+                new ArgumentMetadata('aggregateRootId', ProfileId::class),
                 ProfileCreated::class,
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', 'string'),
+                new ArgumentMetadata('foo', ProfileCreated::class),
                 ProfileCreated::class,
             ),
         );
@@ -52,10 +54,10 @@ final class AggregateIdArgumentResolverTest extends TestCase
             new AggregateHeader('foo', 'bar', 1, new DateTimeImmutable()),
         );
 
-        self::assertSame(
-            'bar',
+        self::assertEquals(
+            new CustomId('bar'),
             $resolver->resolve(
-                new ArgumentMetadata('foo', 'string'),
+                new ArgumentMetadata('foo', CustomId::class),
                 $message,
             ),
         );
