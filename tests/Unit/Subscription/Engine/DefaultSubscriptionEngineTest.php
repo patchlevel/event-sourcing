@@ -55,10 +55,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->setup();
+        $result = $engine->setup();
 
         self::assertEquals([], $store->addedSubscriptions);
         self::assertEquals([], $store->updatedSubscriptions);
+        self::assertEquals([], $result->errors);
     }
 
     public function testSetupWithoutCreateMethod(): void
@@ -82,7 +83,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->setup();
+        $result = $engine->setup();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -131,7 +134,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->setup();
+        $result = $engine->setup();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -187,7 +192,15 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->setup();
+        $result = $engine->setup();
+
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         self::assertEquals(
             [
@@ -236,7 +249,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->setup(null, true);
+        $result = $engine->setup(null, true);
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -276,7 +291,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->setup();
+        $result = $engine->setup();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -315,7 +332,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->setup();
+        $result = $engine->setup();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -342,7 +361,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->boot();
+        $result = $engine->boot();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $store->addedSubscriptions);
         self::assertEquals([], $store->updatedSubscriptions);
@@ -367,7 +390,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->boot();
+        $result = $engine->boot();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -416,7 +443,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->boot();
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->addedSubscriptions);
 
@@ -438,6 +469,75 @@ final class DefaultSubscriptionEngineTest extends TestCase
         ], $subscriptionStore->updatedSubscriptions);
 
         self::assertSame($message, $subscriber->message);
+    }
+
+    public function testBootWithError(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                throw $this->exception;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriptionId,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::Booting,
+                        ThrowableToErrorContextTransformer::transform($subscriber->exception),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
     }
 
     public function testBootWithLimit(): void
@@ -475,7 +575,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->boot(new SubscriptionEngineCriteria(), 1);
+        $result = $engine->boot(new SubscriptionEngineCriteria(), 1);
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->addedSubscriptions);
 
@@ -546,7 +650,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->boot();
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -620,7 +728,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->boot();
+        $result = $engine->boot();
+
+        self::assertEquals(2, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -677,7 +789,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->boot();
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -716,7 +832,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -763,7 +883,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -817,7 +941,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->run(new SubscriptionEngineCriteria(), 1);
+        $result = $engine->run(new SubscriptionEngineCriteria(), 1);
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -886,7 +1014,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -947,7 +1079,17 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         self::assertEquals(
             [
@@ -968,7 +1110,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         );
     }
 
-    public function testRunningMarkOutdated(): void
+    public function testRunningMarkDetached(): void
     {
         $subscriptionId = 'test';
 
@@ -991,7 +1133,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1027,7 +1173,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
     }
@@ -1069,7 +1219,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(2, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1119,7 +1273,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1158,7 +1316,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->teardown();
+        $result = $engine->teardown();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1195,7 +1355,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->teardown();
+        $result = $engine->teardown();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
         self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
@@ -1234,7 +1396,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->teardown();
+        $result = $engine->teardown();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
         self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
@@ -1274,7 +1438,15 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->teardown();
+        $result = $engine->teardown();
+
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
         self::assertEquals([], $subscriptionStore->removedSubscriptions);
@@ -1302,7 +1474,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->teardown();
+        $result = $engine->teardown();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
         self::assertEquals([], $subscriptionStore->removedSubscriptions);
@@ -1325,7 +1499,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->remove();
+        $result = $engine->remove();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1368,7 +1544,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->remove();
+        $result = $engine->remove();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
         self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
@@ -1399,7 +1577,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->remove();
+        $result = $engine->remove();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
         self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
@@ -1436,7 +1616,15 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->remove();
+        $result = $engine->remove();
+
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
         self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
@@ -1463,7 +1651,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->remove();
+        $result = $engine->remove();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
         self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
@@ -1486,7 +1676,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->reactivate();
+        $result = $engine->reactivate();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1525,7 +1717,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->reactivate();
+        $result = $engine->reactivate();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1538,7 +1732,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         ], $subscriptionStore->updatedSubscriptions);
     }
 
-    public function testReactivateOutdated(): void
+    public function testReactivateDetached(): void
     {
         $subscriptionId = 'test';
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
@@ -1563,7 +1757,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->reactivate();
+        $result = $engine->reactivate();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1600,7 +1796,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->reactivate();
+        $result = $engine->reactivate();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1637,7 +1835,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->reactivate();
+        $result = $engine->reactivate();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1666,7 +1866,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->pause();
+        $result = $engine->pause();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1703,7 +1905,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->pause();
+        $result = $engine->pause();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1740,7 +1944,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->pause();
+        $result = $engine->pause();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1779,7 +1985,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $engine->pause();
+        $result = $engine->pause();
+
+        self::assertEquals([], $result->errors);
 
         self::assertEquals([
             new Subscription(
@@ -1870,7 +2078,16 @@ final class DefaultSubscriptionEngineTest extends TestCase
             new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR2', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         self::assertCount(2, $subscriptionStore->updatedSubscriptions);
 
@@ -1923,7 +2140,10 @@ final class DefaultSubscriptionEngineTest extends TestCase
             new NullLogger(),
         );
 
-        $engine->run();
+        $result = $engine->run();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertCount(0, $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
     }
