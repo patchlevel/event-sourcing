@@ -10,15 +10,6 @@
       <code><![CDATA[$this->frozenDateTime->modify(sprintf('+%s seconds', $seconds))]]></code>
     </PossiblyFalsePropertyAssignmentValue>
   </file>
-  <file src="src/Console/Command/SubscriptionBootCommand.php">
-    <RedundantCondition>
-      <code><![CDATA[1]]></code>
-    </RedundantCondition>
-    <TypeDoesNotContainType>
-      <code><![CDATA[$finished]]></code>
-      <code><![CDATA[$finished]]></code>
-    </TypeDoesNotContainType>
-  </file>
   <file src="src/Console/DoctrineHelper.php">
     <ClassNotFinal>
       <code><![CDATA[class DoctrineHelper]]></code>
@@ -151,14 +142,14 @@
       <code><![CDATA[$subscriptionEngine]]></code>
     </MissingConstructor>
   </file>
-  <file src="tests/Integration/BankAccountSplitStream/Aggregate/BankAccount.php">
+  <file src="tests/Integration/BankAccountSplitStream/BankAccount.php">
     <PropertyNotSetInConstructor>
       <code><![CDATA[$balanceInCents]]></code>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="tests/Integration/BasicImplementation/Aggregate/Profile.php">
+  <file src="tests/Integration/BasicImplementation/Profile.php">
     <PropertyNotSetInConstructor>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$name]]></code>
@@ -181,7 +172,7 @@
       <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="tests/Integration/Subscription/Aggregate/Profile.php">
+  <file src="tests/Integration/Subscription/Profile.php">
     <PropertyNotSetInConstructor>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$name]]></code>

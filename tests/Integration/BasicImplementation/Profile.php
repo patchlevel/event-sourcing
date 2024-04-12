@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Aggregate;
+namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
 
 #[Aggregate('profile')]
 #[Snapshot('default', 100)]
