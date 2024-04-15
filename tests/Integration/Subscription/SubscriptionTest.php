@@ -18,6 +18,7 @@ use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
@@ -27,7 +28,6 @@ use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
-use Patchlevel\EventSourcing\Tests\Integration\Subscription\Aggregate\Profile;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNewProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
@@ -393,10 +393,12 @@ final class SubscriptionTest extends TestCase
 
         $schemaDirector->create();
 
-        $engine = new DefaultSubscriptionEngine(
-            $store,
-            $subscriptionStore,
-            $subscriberAccessorRepository,
+        $engine = new CatchUpSubscriptionEngine(
+            new DefaultSubscriptionEngine(
+                $store,
+                $subscriptionStore,
+                $subscriberAccessorRepository,
+            ),
         );
 
         self::assertEquals(
@@ -446,8 +448,8 @@ final class SubscriptionTest extends TestCase
         /** @var list<Message> $messages */
         $messages = iterator_to_array($store->load());
 
-        self::assertCount(2, $messages);
-        self::assertArrayHasKey(1, $messages);
+        self::assertCount(3, $messages);
+        self::assertArrayHasKey(2, $messages);
 
         self::assertEquals(
             new TraceHeader([
@@ -456,7 +458,7 @@ final class SubscriptionTest extends TestCase
                     'category' => 'event_sourcing/subscriber/processor',
                 ],
             ]),
-            $messages[1]->header(TraceHeader::class),
+            $messages[2]->header(TraceHeader::class),
         );
     }
 

@@ -658,6 +658,25 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
     $retryStrategy,
 );
 ```
+### Catchup Subscription Engine
+
+If aggregates are used in the processors and new events are generated there,
+then they are not part of the current subscription engine run and will only be processed during the next run or boot.
+This is usually not a problem in dev or prod environment because a worker is used
+and these events will be processed at some point. But in testing it is not so easy.
+For this reason, we have the `CatchupSubscriptionEngine`.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\CatchupSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+/** @var SubscriptionEngine $subscriptionStore */
+$catchupSubscriptionEngine = new CatchupSubscriptionEngine($subscriptionEngine);
+```
+!!! tip
+
+    You can use the `CatchupSubscriptionEngine` in your tests to process the events immediately.
+    
 ## Usage
 
 The Subscription Engine has a few methods needed to use it effectively.
