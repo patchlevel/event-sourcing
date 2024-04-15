@@ -140,12 +140,112 @@ final class ProfileId implements AggregateRootId
 }
 ```
 
+#### Aggregate Name
+
+We are now using the aggregate name instead of the FQCN internally to identify the aggregate. This means that e.g. the 
+name is shown in some outputs and we replaced `aggregateClass` with `aggregateName` in the Message.
+
+
 ### Events
 
+#### Normalizer
+
+The Attribute `#[Normalize]` was removed, use the Normalizer itself instead e.g. `#[IdNormalizer]`. Most of the 
+Normalizers are now located in [patchlevel/hydrator](https://github.com/patchlevel/hydrator).
+
+#### Subscription
+
+In 2.1.0 we introduced the `Projectionist` and after that the continued on working on this system. With 3.0 we are 
+delivering alot of more feature to this system and it got a complete overhaul as an renaming. It's now called 
+`Subscription`. With this we are pushing our event based system mostly complete asynchronous. We are still offering a 
+"sync mode" mostly for testing purposes. For more information about this have a look in our 
+[docs](https://patchlevel.github.io/event-sourcing-docs/3.0/subscription/).
+
+#### EventBus
+
+We made the EventBus now completely optional and removed the Symfony Messenger implementation. You can still implement 
+the event bus on your own. We provide an default implementation and also a PSR-14 Adapter.
+
+We encourage to use our Subscription system for most of the use cases.
+
+#### Outbox
+
+Our outbox implementation relied on the eventbus and was a solution to the eventual consistency problem. We think that 
+we have now a better solution for that with our Subscription feature. If you still want an outbox table because you have 
+internally process running on this table then your can replicate the behaviour with an `#[Projector]`.
+
+```php
+<?php
+
+namespace App\Share\Infrastructure\EventSourcing;
+
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Projection\Projection\RunMode;
+
+#[Projector('outbox', runMode: RunMode::FromNow)]
+class OutboxProcessor
+{
+    public function __construct(
+        private readonly EventBus $eventBus,
+    ) {
+    }
+
+    #[Subscribe('*')]
+    public function publish(Message $message): void
+    {
+        $this->eventBus->dispatch($message);
+    }
+}
+```
+
+#### WatchServer
+
+The `WatchServer` is removed, but you can still watch which events where published via the `WatchCommand` as before. It
+is now internally using the `Subscription` systems to deliver this feature.
+
+### Store
+
+`TransactionalStore` was removed and got merged with `Store`. So now every `Store` needs a transactional capability.
+
+### Pipeline
+
+The `Pipeline` was also removed in favor of the `Subscription` system. You can achieve the same behaviour with an 
+`Projector` using the `Middlewares` which are now called `MessageTranslators`.
+
+```php
+<?php
+
+namespace App\Share\Infrastructure\EventSourcing;
+
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\EventBus\Message;
+use Patchlevel\EventSourcing\Message\Translator\Translator;
+use Patchlevel\EventSourcing\Projection\Projection\RunMode;
+use Patchlevel\EventSourcing\Store\Store;
+
+#[Projector('pipeline', runMode: RunMode::FromNow)]
+class PipelineProcessor
+{
+    public function __construct(
+        private readonly Store $store, # new eventstore
+        private readonly Translator $translator,
+    ) {
+    }
+
+    #[Subscribe('*')]
+    public function publish(Message $message): void
+    {
+        $messages = ($this->translator)($message);
+        
+        $this->store->save(...$messages);
+    }
+}
+```
+
 ### Schema
-
-
-### Store & Pipeline
 
 
 ### Projection
@@ -160,6 +260,7 @@ final class ProfileId implements AggregateRootId
 
 ### Clock
 
+Our own interface was removed, we are using the PSR-20 interface instead.
 
 ## Full BC-Break list
 
