@@ -34,11 +34,11 @@ jobs:
           ini-values: memory_limit=-1
           extensions: pdo_sqlite, bcmath, intl, sodium
 
-      - uses: ramsey/composer-install@2.2.0
+      - uses: ramsey/composer-install@3.0.0
         with:
           dependency-versions: ${{ matrix.dependencies }}
 
-      - uses: ramsey/composer-install@2.2.0
+      - uses: ramsey/composer-install@3.0.0
         with:
           dependency-versions: ${{ matrix.dependencies }}
           working-directory: 'tools'
