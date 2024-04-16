@@ -14,10 +14,10 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * Developer experience oriented and fully typed
 * Automatic [snapshot](https://patchlevel.github.io/event-sourcing-docs/latest/snapshots/)-system to boost your performance
 * [Split](https://patchlevel.github.io/event-sourcing-docs/latest/split_stream/) big aggregates into multiple streams
-* Build-in [pipeline](https://patchlevel.github.io/event-sourcing-docs/latest/pipeline/) to export, import and migrate event streams
-* Versioned and managed lifecycle of [projections](https://patchlevel.github.io/event-sourcing-docs/latest/projection/)
+* Versioned and managed lifecycle of [subscriptions](https://patchlevel.github.io/event-sourcing-docs/latest/subscription/) like projections and processors
+* Safe usage of [Personal Data](https://patchlevel.github.io/event-sourcing-docs/latest/personal_data/) with crypto-shredding
 * Smooth [upcasting](https://patchlevel.github.io/event-sourcing-docs/latest/upcasting/) of old events
-* Simple setup with [scheme management](https://patchlevel.github.io/event-sourcing-docs/latest/store/) and [doctrine migration](https://patchlevel.github.io/event-sourcing-docs/latest/migration/)
+* Simple setup with [scheme management](https://patchlevel.github.io/event-sourcing-docs/latest/store/) and [doctrine migration](https://patchlevel.github.io/event-sourcing-docs/latest/store/)
 * Built in [cli commands](https://patchlevel.github.io/event-sourcing-docs/latest/cli/) with [symfony](https://symfony.com/)
 * and much more...
 
@@ -30,6 +30,7 @@ composer require patchlevel/event-sourcing
 ## Documentation
 
 * Latest [Docs](https://patchlevel.github.io/event-sourcing-docs/latest)
+* 3.0 [Docs](https://patchlevel.github.io/event-sourcing-docs/3.0) (preview)
 
 ## Integration
 
@@ -41,6 +42,9 @@ composer require patchlevel/event-sourcing
 We officially only support the databases and versions listed in the table, as these are tested in the CI.
 Since the package is based on doctrine dbal, other databases such as OracleDB and MSSQL may also work.
 But we can only really support the databases if we can also automatically ensure that they don't break due to changes.
+
+> [!TIP]
+> We recommend using PostgresSQL.
 
 | Database    | Version                         |
 |-------------|---------------------------------|
