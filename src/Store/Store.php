@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Store;
 
 use Closure;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 
 interface Store
 {

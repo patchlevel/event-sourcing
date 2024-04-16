@@ -12,7 +12,8 @@ use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArrayStream;
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
@@ -2235,6 +2236,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
     private function criteria(int $fromIndex = 0): Criteria
     {
-        return new Criteria(fromIndex: $fromIndex);
+        return new Criteria(new FromIndexCriterion($fromIndex));
     }
 }

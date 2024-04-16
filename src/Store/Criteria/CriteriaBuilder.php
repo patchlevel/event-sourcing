@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Store;
+namespace Patchlevel\EventSourcing\Store\Criteria;
 
 final class CriteriaBuilder
 {
@@ -49,12 +49,28 @@ final class CriteriaBuilder
 
     public function build(): Criteria
     {
-        return new Criteria(
-            $this->aggregateName,
-            $this->aggregateId,
-            $this->fromIndex,
-            $this->fromPlayhead,
-            $this->archived,
-        );
+        $criteria = [];
+
+        if ($this->aggregateName !== null) {
+            $criteria[] = new AggregateNameCriterion($this->aggregateName);
+        }
+
+        if ($this->aggregateId !== null) {
+            $criteria[] = new AggregateIdCriterion($this->aggregateId);
+        }
+
+        if ($this->fromPlayhead !== null) {
+            $criteria[] = new FromPlayheadCriterion($this->fromPlayhead);
+        }
+
+        if ($this->fromIndex !== null) {
+            $criteria[] = new FromIndexCriterion($this->fromIndex);
+        }
+
+        if ($this->archived !== null) {
+            $criteria[] = new ArchivedCriterion($this->archived);
+        }
+
+        return new Criteria(...$criteria);
     }
 }

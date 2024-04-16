@@ -70,6 +70,14 @@
       <code><![CDATA[$index]]></code>
     </InvalidPropertyAssignmentValue>
   </file>
+  <file src="src/Store/Criteria/Criteria.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->criteria[$criteriaClass]]]></code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[T]]></code>
+    </InvalidReturnType>
+  </file>
   <file src="src/Subscription/Store/DoctrineSubscriptionStore.php">
     <MixedArgument>
       <code><![CDATA[$context]]></code>

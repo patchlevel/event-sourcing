@@ -15,7 +15,9 @@ use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\ArrayStream;
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -39,7 +41,10 @@ final class ShowAggregateCommandTest extends TestCase
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
         $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(Profile::class, '1'))->willReturn(
+        $store->load(new Criteria(
+            new AggregateNameCriterion('profile'),
+            new AggregateIdCriterion('1'),
+        ))->willReturn(
             new ArrayStream([$message]),
         );
 
@@ -53,7 +58,14 @@ final class ShowAggregateCommandTest extends TestCase
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
         $headersSerializer->serialize($message->headers())->willReturn(
-            ['aggregate' => ['aggregateName' => 'profile', 'aggregateId' => '1', 'playhead' => 1, 'recordedOn' => '2020-01-01T20:00:00+01:00']],
+            [
+                'aggregate' => [
+                    'aggregateName' => 'profile',
+                    'aggregateId' => '1',
+                    'playhead' => 1,
+                    'recordedOn' => '2020-01-01T20:00:00+01:00',
+                ],
+            ],
         );
 
         $command = new ShowAggregateCommand(
@@ -156,7 +168,10 @@ final class ShowAggregateCommandTest extends TestCase
     public function testNotFound(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(Profile::class, 'test'))->willReturn(new ArrayStream());
+        $store->load(new Criteria(
+            new AggregateNameCriterion('profile'),
+            new AggregateIdCriterion('test'),
+        ))->willReturn(new ArrayStream());
 
         $serializer = $this->prophesize(EventSerializer::class);
 
@@ -223,7 +238,10 @@ final class ShowAggregateCommandTest extends TestCase
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
         $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(Profile::class, '1'))->willReturn(
+        $store->load(new Criteria(
+            new AggregateNameCriterion('profile'),
+            new AggregateIdCriterion('1'),
+        ))->willReturn(
             new ArrayStream([$message]),
         );
 

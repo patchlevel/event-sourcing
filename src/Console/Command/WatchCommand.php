@@ -8,7 +8,8 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\SubscriptionStore;
 use Patchlevel\Worker\DefaultWorker;
@@ -70,18 +71,21 @@ final class WatchCommand extends Command
             $this->store->setupSubscription();
         }
 
+        $criteria = (new CriteriaBuilder())
+            ->aggregateName($aggregate)
+            ->aggregateId($aggregateId)
+            ->build();
+
         $worker = DefaultWorker::create(
-            function () use ($console, &$index, $aggregate, $aggregateId, $sleep): void {
+            function () use ($console, &$index, $criteria, $sleep): void {
                 $stream = $this->store->load(
-                    new Criteria(
-                        $aggregate,
-                        $aggregateId,
-                        $index,
-                    ),
+                    $criteria->add(new FromIndexCriterion($index)),
                 );
 
                 foreach ($stream as $message) {
                     $console->message($this->eventSerializer, $this->headersSerializer, $message);
+
+                    /** @var int $index */
                     $index = $stream->index();
                 }
 

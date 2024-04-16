@@ -216,7 +216,7 @@ $stream = $store->load();
 The load method also has a few parameters to filter, limit and sort the events.
 
 ```php
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 
 /** @var Store $store */
@@ -232,20 +232,33 @@ $stream = $store->load(
 The `Criteria` object is used to filter the events.
 
 ```php
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 
 $criteria = new Criteria(
-    aggregateName: 'profile',
-    aggregateId: 'e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e',
-    fromIndex: 100,
-    fromPlayhead: 2,
-    archived: true,
+    new AggregateNameCriterion('profile'),
+    new AggregateIdCriterion('e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
+    new FromPlayheadCriterion(2),
+    new FromIndexCriterion(100),
+    new ArchivedCriterion(true),
 );
 ```
-!!! note
+Or you can the criteria builder to create the criteria.
 
-    The individual criteria must all apply, but not all of them have to be set.
-    
+```php
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+
+$criteria = (new CriteriaBuilder())
+    ->aggregateName('profile')
+    ->aggregateId('e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e')
+    ->fromPlayhead(2)
+    ->fromIndex(100)
+    ->archived(true)
+    ->build();
+```
 #### Stream
 
 The load method returns a `Stream` object and is a generator.
@@ -287,7 +300,7 @@ $count = $store->count();
 The count method also has the possibility to filter the events.
 
 ```php
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 
 /** @var Store $store */

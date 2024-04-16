@@ -19,6 +19,12 @@ use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use PDO;
 
 use function array_fill;
@@ -103,33 +109,34 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
 
     private function applyCriteria(QueryBuilder $builder, Criteria $criteria): void
     {
-        if ($criteria->aggregateName !== null) {
-            $shortName = $criteria->aggregateName;
-            $builder->andWhere('aggregate = :aggregate');
-            $builder->setParameter('aggregate', $shortName);
-        }
+        $criteriaList = $criteria->all();
 
-        if ($criteria->aggregateId !== null) {
-            $builder->andWhere('aggregate_id = :id');
-            $builder->setParameter('id', $criteria->aggregateId);
+        foreach ($criteriaList as $criterion) {
+            switch ($criterion::class) {
+                case AggregateNameCriterion::class:
+                    $builder->andWhere('aggregate = :aggregate');
+                    $builder->setParameter('aggregate', $criterion->aggregateName);
+                    break;
+                case AggregateIdCriterion::class:
+                    $builder->andWhere('aggregate_id = :id');
+                    $builder->setParameter('id', $criterion->aggregateId);
+                    break;
+                case FromPlayheadCriterion::class:
+                    $builder->andWhere('playhead > :playhead');
+                    $builder->setParameter('playhead', $criterion->fromPlayhead, Types::INTEGER);
+                    break;
+                case ArchivedCriterion::class:
+                    $builder->andWhere('archived = :archived');
+                    $builder->setParameter('archived', $criterion->archived, Types::BOOLEAN);
+                    break;
+                case FromIndexCriterion::class:
+                    $builder->andWhere('id > :index');
+                    $builder->setParameter('index', $criterion->fromIndex, Types::INTEGER);
+                    break;
+                default:
+                    throw new UnsupportedCriterion($criterion::class);
+            }
         }
-
-        if ($criteria->fromPlayhead !== null) {
-            $builder->andWhere('playhead > :playhead');
-            $builder->setParameter('playhead', $criteria->fromPlayhead, Types::INTEGER);
-        }
-
-        if ($criteria->archived !== null) {
-            $builder->andWhere('archived = :archived');
-            $builder->setParameter('archived', $criteria->archived, Types::BOOLEAN);
-        }
-
-        if ($criteria->fromIndex === null) {
-            return;
-        }
-
-        $builder->andWhere('id > :index');
-        $builder->setParameter('index', $criteria->fromIndex, Types::INTEGER);
     }
 
     public function save(Message ...$messages): void
@@ -343,8 +350,15 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
             $this->storeTableName,
         ));
 
-        $this->connection->executeStatement(sprintf('DROP TRIGGER IF EXISTS notify_trigger ON %s;', $this->storeTableName));
-        $this->connection->executeStatement(sprintf('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON %1$s FOR EACH ROW EXECUTE PROCEDURE %2$s();', $this->storeTableName, $functionName));
+        $this->connection->executeStatement(sprintf(
+            'DROP TRIGGER IF EXISTS notify_trigger ON %s;',
+            $this->storeTableName,
+        ));
+        $this->connection->executeStatement(sprintf(
+            'CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON %1$s FOR EACH ROW EXECUTE PROCEDURE %2$s();',
+            $this->storeTableName,
+            $functionName,
+        ));
     }
 
     private function createTriggerFunctionName(): string
@@ -364,8 +378,13 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
      * @param list<mixed>                 $parameters
      * @param array<0|positive-int, Type> $types
      */
-    private function executeSave(array $columns, array $placeholders, array $parameters, array $types, Connection $connection): void
-    {
+    private function executeSave(
+        array $columns,
+        array $placeholders,
+        array $parameters,
+        array $types,
+        Connection $connection,
+    ): void {
         $query = sprintf(
             "INSERT INTO %s (%s) VALUES\n(%s)",
             $this->storeTableName,

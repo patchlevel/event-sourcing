@@ -24,7 +24,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
-use Patchlevel\EventSourcing\Store\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\MissingDataForStorage;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
@@ -203,7 +203,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (archived = :archived) AND (id > :index) ORDER BY id ASC',
+            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (id > :index) AND (archived = :archived) ORDER BY id ASC',
             [
                 'aggregate' => 'profile',
                 'id' => '1',
