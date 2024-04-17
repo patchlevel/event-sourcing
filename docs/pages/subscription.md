@@ -803,6 +803,5 @@ foreach ($subscriptions as $subscription) {
 ## Learn more
 
 * [How to use CLI commands](./cli.md)
-* [How to use Pipeline](./pipeline.md)
-* [How to use Event Bus](./event_bus.md)
+* [How to create Messages](./message.md)
 * [How to Test](./testing.md)

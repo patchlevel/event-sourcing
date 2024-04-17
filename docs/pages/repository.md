@@ -1,7 +1,7 @@
 # Repository
 
 A `repository` takes care of storing and loading the `aggregates`.
-He is also responsible for building [messages](event_bus.md) from the events
+He is also responsible for building [messages](message.md) from the events
 and optionally dispatching them to the event bus.
 
 ## Create a repository
@@ -63,7 +63,7 @@ $repository = $repositoryManager->get(Profile::class);
 !!! warning
 
     If you use the event bus, you should be aware that the events are dispatched synchronously.
-    You may encounter "at least once" problems.
+    You may encounter [at least once](https://softwaremill.com/message-delivery-and-deduplication-strategies/) problems.
     
 !!! note
 
@@ -138,6 +138,10 @@ $repository = $repositoryManager->get(Profile::class);
 
     You can find out more about message decorator [here](message_decorator.md).
     
+!!! tip
+
+    If you have multiple decorators, you can use the `ChainMessageDecorator` to chain them.
+    
 ## Use the repository
 
 Each `repository` has three methods that are responsible for loading an `aggregate`,
@@ -159,9 +163,17 @@ $profile = Profile::create($id, 'david.badura@patchlevel.de');
 /** @var Repository $repository */
 $repository->save($profile);
 ```
-!!! note
+!!! Warning
 
     All events are written to the database with one transaction in order to ensure data consistency.
+    If an exception occurs during the save process, 
+    the transaction is rolled back and the aggregate is not valid anymore.
+    You can not save the aggregate again and you need to load it again.
+    
+!!! note
+
+    Due to the nature of the aggregate having a playhead, 
+    we have a unique constraint that ensures that no race condition happens here.
     
 ### Load an aggregate
 
@@ -254,3 +266,5 @@ class ProfileRepository
 * [How to work with the store](store.md)
 * [How to use snapshots](snapshots.md)
 * [How to split streams](split_stream.md)
+* [How to use the event bus](event_bus.md)
+* [How to create messages](message.md)

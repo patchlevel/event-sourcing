@@ -83,8 +83,8 @@ nav:
     - Repository: repository.md
     - Message: message.md
     - Store: store.md
-    - Event Bus:  event_bus.md
     - Subscription: subscription.md
+    - Event Bus:  event_bus.md
   - Advanced:
     - Aggregate ID: aggregate_id.md
     - Normalizer: normalizer.md

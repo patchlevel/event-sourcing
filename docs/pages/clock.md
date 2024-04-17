@@ -69,5 +69,5 @@ $clock->sleep(10); // sleep 10 seconds
 
 * [How to test with datetime](testing.md)
 * [How to normalize datetime](normalizer.md)
-* [How to use messages](event_bus.md)
+* [How to use messages](message.md)
 * [How to decorate messages](message_decorator.md)

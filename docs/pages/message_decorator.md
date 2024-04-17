@@ -107,6 +107,7 @@ final class OnSystemRecordedDecorator implements MessageDecorator
     
 ## Learn more
 
+* [How to create messages](message.md)
 * [How to define events](events.md)
 * [How to use the event bus](event_bus.md)
 * [How to configure repositories](repository.md)

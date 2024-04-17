@@ -348,6 +348,7 @@ $store->transactional(static function () use ($command, $bankAccountRepository):
 
 * [How to create events](events.md)
 * [How to use repositories](repository.md)
-* [How to dispatch events](event_bus.md)
+* [How to create message](message.md)
+* [How to create projections](subscription.md)
 * [How to upcast events](upcasting.md)
 * [How configure cli commands](cli.md)
