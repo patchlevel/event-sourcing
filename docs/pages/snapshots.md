@@ -9,7 +9,7 @@ The `snapshot` system can be used to control this.
 
     Use snapshots only if you have a performance problems,
     because it introduces additional complexity.
-
+    
     In our benchmarks we can load 10 000 events for one aggregate in 50ms.
     Of course, this can vary from system to system.
     
@@ -260,3 +260,9 @@ And if the version is no longer correct and the snapshot is therefore invalid, t
     The aggregate may be in an old state as the snapshot may lag behind. 
     You still have to bring the aggregate up to date by loading the missing events from the event store.
     
+## Learn more
+
+* [How to define aggregates](aggregate.md)
+* [How to store and load aggregates](repository.md)
+* [How to split streams](split_stream.md)
+* [How to work with personal data](personal_data.md)

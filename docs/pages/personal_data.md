@@ -220,3 +220,9 @@ final class DeletePersonalDataProcessor
     }
 }
 ```
+## Learn more
+
+* [How to use the hydrator](https://github.com/patchlevel/hydrator)
+* [How to define aggregates](aggregate.md)
+* [How to define events](events.md)
+* [How to normalize data](normalizer.md)

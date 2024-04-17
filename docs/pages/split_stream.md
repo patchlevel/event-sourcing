@@ -83,3 +83,11 @@ final class BalanceReported
 !!! tip
 
     You can combine this feature with the snapshot feature to increase the performance even more.
+    
+## Learn more
+
+* [How to use message decorator](message_decorator.md)
+* [How to define events](events.md)
+* [How to define aggregates](aggregate.md)
+* [How to store and load aggregates](repository.md)
+* [How to use snapshots](snapshots.md)
