@@ -1,6 +1,7 @@
 # Event-Sourcing
 
-A lightweight but also all-inclusive event sourcing library with a focus on developer experience.
+An event sourcing library, complete with all the essential features,
+powered by the reliable Doctrine ecosystem and focused on developer experience.
 
 ## Features
 

@@ -16,10 +16,6 @@ It will only load the events from the split event and onwards.
 But subscriptions will still receive all events.
 So you can create projections which are based on the full event stream.
 
-!!! tip
-
-    To split the stream is often a better solution than using snapshots.
-    
 ## Configuration
 
 To use this feature you need to add the `SplitStreamDecorator` in the repository manager.
@@ -84,3 +80,6 @@ final class BalanceReported
 
     This impacts only the aggregate loaded by the repository. Subscriptions will still receive all events.
     
+!!! tip
+
+    You can combine this feature with the snapshot feature to increase the performance even more.

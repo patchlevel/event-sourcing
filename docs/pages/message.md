@@ -264,7 +264,7 @@ final class SplitProfileCreatedTranslator implements Translator
 
 * [How to use subscriptions](subscription.md)
 * [How to use the repository](repository.md)
-* [How to use the event bus](event_bus.md)
 * [How to decorate messages](message_decorator.md)
 * [How to use the normalizer](normalizer.md)
 * [How to use the upcasting](upcasting.md)
+* [How to use the event bus](event_bus.md)

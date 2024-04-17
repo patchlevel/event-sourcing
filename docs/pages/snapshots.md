@@ -5,9 +5,12 @@ This is not a problem if there are a few hundred.
 But if the number gets bigger at some point, then loading and rebuilding can become slow.
 The `snapshot` system can be used to control this.
 
-!!! note
+!!! tip
 
-    In oure benchmarks we can load 10 000 events for one aggregate in 50ms.
+    Use snapshots only if you have a performance problems,
+    because it introduces additional complexity.
+
+    In our benchmarks we can load 10 000 events for one aggregate in 50ms.
     Of course, this can vary from system to system.
     
 Normally, the events are all applied again on the aggregate in order to rebuild the current state.
@@ -162,7 +165,10 @@ final class Profile extends BasicAggregateRoot
     
 !!! tip
 
-    You can also use uuids for the snapshot version.
+    If you have aggregates with a lot of events, 
+    you should consider using [split streams](split_stream.md) if it make sense in your domain.
+    Then the load peak is not so high anymore, 
+    because only the events from new stream start are loaded to rebuild the aggregate.
     
 ## Adapter
 

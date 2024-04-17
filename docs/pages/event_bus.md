@@ -139,6 +139,7 @@ $eventBus = new Psr14EventBus($psr14EventDispatcher);
 ## Learn more
 
 * [How to use messages](message.md)
+* [How to use events](events.md)
 * [How to use the subscription engine](subscription.md)
 * [How to use repositories](repository.md)
 * [How to use decorate messages](message_decorator.md)
