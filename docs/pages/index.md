@@ -1,6 +1,7 @@
 # Event-Sourcing
 
-A lightweight but also all-inclusive event sourcing library with a focus on developer experience.
+An event sourcing library, complete with all the essential features,
+powered by the reliable Doctrine ecosystem and focused on developer experience.
 
 ## Features
 
@@ -9,10 +10,10 @@ A lightweight but also all-inclusive event sourcing library with a focus on deve
 * Developer experience oriented and fully typed
 * Automatic [snapshot](snapshots.md)-system to boost your performance
 * [Split](split_stream.md) big aggregates into multiple streams
-* Build-in [pipeline](pipeline.md) to export, import and migrate event streams
 * Versioned and managed lifecycle of [subscriptions](subscription.md) like projections and processors
+* Safe usage of [Personal Data](personal_data.md) with crypto-shredding
 * Smooth [upcasting](upcasting.md) of old events
-* Simple setup with [scheme management](store.md) and [doctrine migration](migration.md)
+* Simple setup with [scheme management](store.md) and [doctrine migration](store.md)
 * Built in [cli commands](cli.md) with [symfony](https://symfony.com/)
 * and much more...
 

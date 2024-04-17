@@ -37,6 +37,10 @@ final class DTO
     }
 }
 ```
+!!! tip
+
+    If you have personal data, you can use [crypto-shredding](personal_data.md).
+    
 ### Event
 
 For the event, the properties are normalized to a payload and saved in the DB at the end.
@@ -382,6 +386,6 @@ final class DTO
 
 * [How to use the Hydrator](https://github.com/patchlevel/hydrator)
 * [How to define aggregates](aggregate.md)
-* [How to snapshot aggregates](snapshots.md)
-* [How to create own aggregate id](aggregate_id.md)
 * [How to define events](events.md)
+* [How to snapshot aggregates](snapshots.md)
+* [How to work with personal data](personal_data.md)

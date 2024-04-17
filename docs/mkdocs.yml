@@ -83,15 +83,14 @@ nav:
     - Repository: repository.md
     - Message: message.md
     - Store: store.md
-    - Event Bus:  event_bus.md
     - Subscription: subscription.md
+    - Event Bus:  event_bus.md
   - Advanced:
     - Aggregate ID: aggregate_id.md
     - Normalizer: normalizer.md
     - Snapshots: snapshots.md
     - Personal Data: personal_data.md
     - Upcasting: upcasting.md
-    - Outbox: outbox.md
     - Message Decorator: message_decorator.md
     - Split Stream: split_stream.md
     - Time / Clock: clock.md

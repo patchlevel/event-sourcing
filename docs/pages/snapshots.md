@@ -5,12 +5,20 @@ This is not a problem if there are a few hundred.
 But if the number gets bigger at some point, then loading and rebuilding can become slow.
 The `snapshot` system can be used to control this.
 
-Normally, the events are all executed again on the aggregate in order to rebuild the current state.
+!!! tip
+
+    Use snapshots only if you have a performance problems,
+    because it introduces additional complexity.
+    
+    In our benchmarks we can load 10 000 events for one aggregate in 50ms.
+    Of course, this can vary from system to system.
+    
+Normally, the events are all applied again on the aggregate in order to rebuild the current state.
 With a `snapshot`, we can shorten the way in which we temporarily save the current state of the aggregate.
 When loading it is checked whether the snapshot exists.
-If a hit exists, the aggregate is built up with the help of the snapshot.
+If a hit exists, the aggregate is created with the help of the snapshot.
 A check is then made to see whether further events have existed since the snapshot
-and these are then also executed on the aggregate.
+and these are then also applied on the aggregate.
 Here, however, only the last events are loaded from the database and not all.
 
 ## Configuration
@@ -106,13 +114,14 @@ final class Profile extends BasicAggregateRoot
     
 !!! note
 
-    You can find more about normalizer [here](normalizer.md).
+    The [hydrator](https://github.com/patchlevel/hydrator) is used internally and you can use all of its features.
+    You can find more about normalizer also [here](normalizer.md).
     
 ### Snapshot batching
 
 Since the loading of events in itself is quite fast and only becomes noticeably slower with thousands of events,
 we do not need to create a snapshot after each event. That would also have a negative impact on performance.
-Instead, we can also create a snapshot after `N` events.
+Instead, we can also create a snapshot after `n` events.
 The remaining events that are not in the snapshot are then loaded from store.
 
 ```php
@@ -132,9 +141,10 @@ final class Profile extends BasicAggregateRoot
 Whenever something changes on the aggregate, the previous snapshot must be discarded.
 You can do this by removing the entire snapshot cache when deploying.
 But that can be quickly forgotten. It is much easier to specify a snapshot version.
-This snapshot version is also saved. When loading, the versions are compared and if they do not match,
+This snapshot version is also saved in the snapshot cache.
+When loading, the versions are compared and if they do not match,
 the snapshot is discarded and the aggregate is rebuilt from scratch.
-The new aggregate is then saved again as a snapshot.
+The new snapshot is then created automatically.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -151,10 +161,14 @@ final class Profile extends BasicAggregateRoot
 !!! warning
 
     If the snapshots are discarded, a load peak can occur since the aggregates have to be rebuilt.
+    You should update the snapshot version only when necessary.
     
 !!! tip
 
-    You can also use uuids for the snapshot version.
+    If you have aggregates with a lot of events, 
+    you should consider using [split streams](split_stream.md) if it make sense in your domain.
+    Then the load peak is not so high anymore, 
+    because only the events from new stream start are loaded to rebuild the aggregate.
     
 ## Adapter
 
@@ -169,7 +183,7 @@ Here are a few listed:
 * [laminas cache](https://docs.laminas.dev/laminas-cache/)
 * [scrapbook](https://www.scrapbook.cash/)
 
-### psr6
+### psr-6
 
 A `Psr6SnapshotAdapter`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-6/).
 
@@ -180,7 +194,7 @@ use Psr\Cache\CacheItemPoolInterface;
 /** @var CacheItemPoolInterface $cache */
 $adapter = new Psr6SnapshotAdapter($cache);
 ```
-### psr16
+### psr-16
 
 A `Psr16SnapshotAdapter`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-16/).
 
@@ -246,3 +260,9 @@ And if the version is no longer correct and the snapshot is therefore invalid, t
     The aggregate may be in an old state as the snapshot may lag behind. 
     You still have to bring the aggregate up to date by loading the missing events from the event store.
     
+## Learn more
+
+* [How to define aggregates](aggregate.md)
+* [How to store and load aggregates](repository.md)
+* [How to split streams](split_stream.md)
+* [How to work with personal data](personal_data.md)

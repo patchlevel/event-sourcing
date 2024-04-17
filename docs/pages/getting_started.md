@@ -295,17 +295,17 @@ $eventStore = new DoctrineDbalStore(
 
 $hotelProjector = new HotelProjector($projectionConnection);
 
-$projectorRepository = new MetadataSubscriberAccessorRepository([
+$subscriberRepository = new MetadataSubscriberAccessorRepository([
     $hotelProjector,
     new SendCheckInEmailProcessor($mailer),
 ]);
 
-$projectionStore = new DoctrineSubscriptionStore($connection);
+$subscriptionStore = new DoctrineSubscriptionStore($connection);
 
 $engine = new DefaultSubscriptionEngine(
     $eventStore,
-    $projectionStore,
-    $projectorRepository,
+    $subscriptionStore,
+    $subscriberRepository,
 );
 
 $repositoryManager = new DefaultRepositoryManager(
@@ -382,7 +382,7 @@ $hotels = $hotelProjection->getHotels();
 ```
 !!! warning
 
-    You need to run the subscription engine to update the projections.
+    You need to run the subscription engine to update the projections and execute the processors.
     
 !!! note
 
@@ -403,6 +403,5 @@ $hotels = $hotelProjection->getHotels();
 * [How to create an aggregate](aggregate.md)
 * [How to create an event](events.md)
 * [How to store aggregates](repository.md)
-* [How to process events](subscription.md)
-* [How to create a projection](subscription.md)
+* [How to create a projection and processors](subscription.md)
 * [How to setup the database](store.md)
