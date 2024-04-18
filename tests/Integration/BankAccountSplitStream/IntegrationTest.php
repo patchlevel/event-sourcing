@@ -75,7 +75,7 @@ final class IntegrationTest extends TestCase
         $engine->setup();
         $engine->boot();
 
-        $bankAccountId = AccountId::fromString('1');
+        $bankAccountId = AccountId::v7();
         $bankAccount = BankAccount::create($bankAccountId, 'John');
         $bankAccount->addBalance(100);
         $bankAccount->addBalance(500);
@@ -83,11 +83,14 @@ final class IntegrationTest extends TestCase
 
         $engine->run();
 
-        $result = $this->connection->fetchAssociative('SELECT * FROM projection_bank_account WHERE id = ?', ['1']);
+        $result = $this->connection->fetchAssociative(
+            'SELECT * FROM projection_bank_account WHERE id = ?',
+            [$bankAccountId->toString()],
+        );
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
-        self::assertSame('1', $result['id']);
+        self::assertSame($bankAccountId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
         self::assertSame(600, $result['balance_in_cents']);
 
@@ -119,11 +122,14 @@ final class IntegrationTest extends TestCase
 
         $engine->run();
 
-        $result = $this->connection->fetchAssociative('SELECT * FROM projection_bank_account WHERE id = ?', ['1']);
+        $result = $this->connection->fetchAssociative(
+            'SELECT * FROM projection_bank_account WHERE id = ?',
+            [$bankAccountId->toString()],
+        );
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
-        self::assertSame('1', $result['id']);
+        self::assertSame($bankAccountId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
         self::assertSame(800, $result['balance_in_cents']);
 

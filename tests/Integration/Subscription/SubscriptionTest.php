@@ -127,7 +127,8 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $profileId = ProfileId::v7();
+        $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
         $result = $engine->run();
@@ -151,12 +152,12 @@ final class SubscriptionTest extends TestCase
 
         $result = $this->projectionConnection->fetchAssociative(
             'SELECT * FROM projection_profile_1 WHERE id = ?',
-            ['1'],
+            [$profileId->toString()],
         );
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
-        self::assertSame('1', $result['id']);
+        self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
 
         $result = $engine->remove();
@@ -238,7 +239,7 @@ final class SubscriptionTest extends TestCase
 
         $repository = $manager->get(Profile::class);
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $profile = Profile::create(ProfileId::v7(), 'John');
         $repository->save($profile);
 
         $subscriber->subscribeError = true;
@@ -429,7 +430,7 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $profile = Profile::create(ProfileId::v7(), 'John');
         $repository->save($profile);
 
         $engine->run();
@@ -521,7 +522,7 @@ final class SubscriptionTest extends TestCase
 
         // Run first version
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $profile = Profile::create(ProfileId::v7(), 'John');
         $repository->save($profile);
 
         $firstEngine->run();
@@ -677,7 +678,7 @@ final class SubscriptionTest extends TestCase
 
         // Run first version
 
-        $profile = Profile::create(ProfileId::fromString('1'), 'John');
+        $profile = Profile::create(ProfileId::v7(), 'John');
         $repository->save($profile);
 
         $firstEngine->run();

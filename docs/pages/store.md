@@ -5,7 +5,7 @@ Each message contains an event and the associated headers.
 
 !!! note
 
-    More information about the message can be found [here](event_bus.md).
+    More information about the message can be found [here](message.md).
     
 The store is optimized to efficiently store and load events for aggregates.
 We currently only offer one [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html) store.
@@ -39,28 +39,33 @@ $store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths(['src/Event']),
     null,
-    'eventstore',
+    ['table_name' => 'eventstore'],
 );
 ```
 ## Schema
 
 The table structure of the `DoctrineDbalStore` looks like this:
 
-| Column           | Type     | Description                                      |
-|------------------|----------|--------------------------------------------------|
-| id               | bigint   | The index of the whole stream (autoincrement)    |
-| aggregate        | string   | The name of the aggregate                        |
-| aggregate_id     | string   | The id of the aggregate                          |
-| playhead         | int      | The current playhead of the aggregate            |
-| event            | string   | The name of the event                            |
-| payload          | json     | The payload of the event                         |
-| recorded_on      | datetime | The date when the event was recorded             |
-| new_stream_start | bool     | If the event is the first event of the aggregate |
-| archived         | bool     | If the event is archived                         |
-| custom_headers   | json     | Custom headers for the event                     |
+| Column           | Type        | Description                                      |
+|------------------|-------------|--------------------------------------------------|
+| id               | bigint      | The index of the whole stream (autoincrement)    |
+| aggregate        | string      | The name of the aggregate                        |
+| aggregate_id     | uuid/string | The id of the aggregate                          |
+| playhead         | int         | The current playhead of the aggregate            |
+| event            | string      | The name of the event                            |
+| payload          | json        | The payload of the event                         |
+| recorded_on      | datetime    | The date when the event was recorded             |
+| new_stream_start | bool        | If the event is the first event of the aggregate |
+| archived         | bool        | If the event is archived                         |
+| custom_headers   | json        | Custom headers for the event                     |
 
 With the help of the `SchemaDirector`, the database structure can be created, updated and deleted.
 
+!!! note
+
+    The default type of the `aggregate_id` column is `uuid` if the database supports it and `string` if not.
+    You can change the type with the `aggregate_id_type` to `string` if you want use custom id.
+    
 !!! tip
 
     You can also use doctrine [migration](migration.md) to create and keep your schema in sync.
@@ -280,7 +285,7 @@ foreach ($stream as $message) {
 ```
 !!! note
 
-    You can find more information about the `Message` object [here](event_bus.md).
+    You can find more information about the `Message` object [here](message.md).
     
 !!! warning
 

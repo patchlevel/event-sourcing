@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
@@ -45,11 +44,6 @@ final class PersonalDataBench
                 [__DIR__ . '/BasicImplementation/Events'],
                 cryptographer: $cryptographer,
             ),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../src',
-                __DIR__ . '/BasicImplementation/Events',
-            ]),
-            'eventstore',
         );
 
         $this->repository = new DefaultRepository($this->store, Profile::metadata());

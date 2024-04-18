@@ -48,18 +48,20 @@ final class StoreTest extends TestCase
 
     public function testSave(): void
     {
+        $profileId = ProfileId::v7();
+
         $messages = [
-            Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
+            Message::create(new ProfileCreated($profileId, 'test'))
                 ->withHeader(new AggregateHeader(
                     'profile',
-                    'test',
+                    $profileId->toString(),
                     1,
                     new DateTimeImmutable('2020-01-01 00:00:00'),
                 )),
-            Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
+            Message::create(new ProfileCreated($profileId, 'test'))
                 ->withHeader(new AggregateHeader(
                     'profile',
-                    'test',
+                    $profileId->toString(),
                     2,
                     new DateTimeImmutable('2020-01-02 00:00:00'),
                 )),
@@ -74,30 +76,32 @@ final class StoreTest extends TestCase
 
         $result1 = $result[0];
 
-        self::assertEquals('test', $result1['aggregate_id']);
+        self::assertEquals($profileId->toString(), $result1['aggregate_id']);
         self::assertEquals('profile', $result1['aggregate']);
         self::assertEquals('1', $result1['playhead']);
         self::assertStringContainsString('2020-01-01 00:00:00', $result1['recorded_on']);
         self::assertEquals('profile.created', $result1['event']);
-        self::assertEquals(['profileId' => 'test', 'name' => 'test'], json_decode($result1['payload'], true));
+        self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
 
         $result2 = $result[1];
 
-        self::assertEquals('test', $result2['aggregate_id']);
+        self::assertEquals($profileId->toString(), $result2['aggregate_id']);
         self::assertEquals('profile', $result2['aggregate']);
         self::assertEquals('2', $result2['playhead']);
         self::assertStringContainsString('2020-01-02 00:00:00', $result2['recorded_on']);
         self::assertEquals('profile.created', $result2['event']);
-        self::assertEquals(['profileId' => 'test', 'name' => 'test'], json_decode($result1['payload'], true));
+        self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
     }
 
     public function testSave10000Messages(): void
     {
+        $profileId = ProfileId::v7();
+
         $messages = [];
 
         for ($i = 1; $i <= 10000; $i++) {
-            $messages[] = Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
-                ->withHeader(new AggregateHeader('profile', 'test', $i, new DateTimeImmutable('2020-01-01 00:00:00')));
+            $messages[] = Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new AggregateHeader('profile', $profileId->toString(), $i, new DateTimeImmutable('2020-01-01 00:00:00')));
         }
 
         $this->store->save(...$messages);
@@ -110,10 +114,12 @@ final class StoreTest extends TestCase
 
     public function testLoad(): void
     {
-        $message = Message::create(new ProfileCreated(ProfileId::fromString('test'), 'test'))
+        $profileId = ProfileId::v7();
+
+        $message = Message::create(new ProfileCreated($profileId, 'test'))
             ->withHeader(new AggregateHeader(
                 'profile',
-                'test',
+                $profileId->toString(),
                 1,
                 new DateTimeImmutable('2020-01-01 00:00:00'),
             ));

@@ -125,10 +125,6 @@ final class WelcomeEmailProcessor
     }
 }
 ```
-!!! note
-
-    More about the processor can be found [here](processor.md).
-    
 ### Subscribe
 
 A subscriber (projector/processor) can subscribe any number of events.
@@ -155,16 +151,28 @@ final class DoStuffSubscriber
     }
 }
 ```
-!!! note
-
-    You can subscribe to multiple events on the same method or you can use "*" to subscribe to all events.
-    More about this can be found [here](./event_bus.md#listener).
-    
 !!! tip
 
     If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
     to make the event method return the correct type.
     
+### Subscribe all events
+
+If you want to subscribe on all events, you can pass `*` or `Subscribe::ALL` instead of the event class.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Message\Message;
+
+final class WelcomeSubscriber
+{
+    #[Subscribe('*')]
+    public function onProfileCreated(Message $message): void
+    {
+        echo 'Welcome!';
+    }
+}
+```
 #### Argument Resolver
 
 The library analyses the method signature and tries to resolve the arguments.
