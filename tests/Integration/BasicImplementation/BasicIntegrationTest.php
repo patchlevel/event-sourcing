@@ -79,17 +79,20 @@ final class BasicIntegrationTest extends TestCase
         $engine->setup();
         $engine->boot();
 
-        $profileId = ProfileId::fromString('1');
+        $profileId = ProfileId::v7();
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
         $engine->run();
 
-        $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
+        $result = $this->connection->fetchAssociative(
+            'SELECT * FROM projection_profile WHERE id = ?',
+            [$profileId->toString()],
+        );
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
-        self::assertSame('1', $result['id']);
+        self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
 
         $manager = new DefaultRepositoryManager(
@@ -147,17 +150,20 @@ final class BasicIntegrationTest extends TestCase
         $engine->setup();
         $engine->boot();
 
-        $profileId = ProfileId::fromString('1');
+        $profileId = ProfileId::v7();
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
         $engine->run();
 
-        $result = $this->connection->fetchAssociative('SELECT * FROM projection_profile WHERE id = ?', ['1']);
+        $result = $this->connection->fetchAssociative(
+            'SELECT * FROM projection_profile WHERE id = ?',
+            [$profileId->toString()],
+        );
 
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
-        self::assertSame('1', $result['id']);
+        self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
 
         $manager = new DefaultRepositoryManager(

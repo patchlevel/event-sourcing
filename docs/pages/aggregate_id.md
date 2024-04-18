@@ -7,6 +7,12 @@ since only an aggregate-wide unique string is expected in the store.
 
 This library provides you with a few options for generating the id.
 
+!!! warning
+
+    Performance reasons, the default configuration of the store require an uuid string for `aggregate id`.
+    But technically, for the library, it can be any string.
+    If you want to use a custom id, you have to change the `aggregate_id_type` in the [store](store.md) configuration.
+    
 ## Uuid
 
 The easiest way is to use an `uuid` as an aggregate ID.
@@ -68,6 +74,12 @@ final class Profile extends BasicAggregateRoot
     private CustomId $id;
 }
 ```
+!!! warning
+
+    If you want to use a custom id that is not an uuid, 
+    you need to change the `aggregate_id_type` to `string` in the store configuration.
+    More information can be found [here](store.md).
+    
 !!! note
 
     If you want to use snapshots, then you have to make sure that the aggregate id are normalized. 

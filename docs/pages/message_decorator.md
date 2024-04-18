@@ -99,7 +99,7 @@ final class OnSystemRecordedDecorator implements MessageDecorator
 ```
 !!! note
 
-    The Message is immutable, for more information look up [here](event_bus.md#message).
+    The Message is immutable, for more information look up [here](message.md).
     
 !!! tip
 

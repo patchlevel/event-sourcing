@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
@@ -46,11 +45,6 @@ final class PersonalDataTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events'], cryptographer: $cryptographer),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../../src',
-                __DIR__,
-            ]),
-            'eventstore',
         );
 
         $manager = new DefaultRepositoryManager(
@@ -70,7 +64,7 @@ final class PersonalDataTest extends TestCase
 
         $schemaDirector->create();
 
-        $profileId = ProfileId::fromString('1');
+        $profileId = ProfileId::v7();
         $profile = Profile::create($profileId, 'John');
 
         $repository->save($profile);
@@ -104,11 +98,6 @@ final class PersonalDataTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events'], cryptographer: $cryptographer),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../../src',
-                __DIR__,
-            ]),
-            'eventstore',
         );
 
         $manager = new DefaultRepositoryManager(
@@ -137,7 +126,7 @@ final class PersonalDataTest extends TestCase
 
         $engine->setup(skipBooting: true);
 
-        $profileId = ProfileId::fromString('1');
+        $profileId = ProfileId::v7();
         $profile = Profile::create($profileId, 'John');
 
         $repository->save($profile);
@@ -184,11 +173,6 @@ final class PersonalDataTest extends TestCase
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events'], cryptographer: $cryptographer),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/../../../src',
-                __DIR__,
-            ]),
-            'eventstore',
         );
 
         $snapshotAdapter = new InMemorySnapshotAdapter();
@@ -224,7 +208,7 @@ final class PersonalDataTest extends TestCase
 
         $engine->setup(skipBooting: true);
 
-        $profileId = ProfileId::fromString('1');
+        $profileId = ProfileId::v7();
         $profile = Profile::create($profileId, 'John');
         $profile->changeName('John 2');
 
@@ -238,7 +222,7 @@ final class PersonalDataTest extends TestCase
         self::assertSame(2, $profile->playhead());
         self::assertSame('John 2', $profile->name());
 
-        $cipherKeyStore->remove('1');
+        $cipherKeyStore->remove($profileId->toString());
 
         $profile = $repository->load($profileId);
 

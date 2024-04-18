@@ -29,6 +29,7 @@ use PDO;
 
 use function array_fill;
 use function array_filter;
+use function array_merge;
 use function array_values;
 use function class_exists;
 use function count;
@@ -49,13 +50,22 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
 
     private readonly HeadersSerializer $headersSerializer;
 
+    /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid'} */
+    private readonly array $config;
+
+    /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid'} $config */
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
         HeadersSerializer|null $headersSerializer = null,
-        private readonly string $storeTableName = 'eventstore',
+        array $config = [],
     ) {
         $this->headersSerializer = $headersSerializer ?? DefaultHeadersSerializer::createDefault();
+
+        $this->config = array_merge([
+            'table_name' => 'eventstore',
+            'aggregate_id_type' => 'uuid',
+        ], $config);
     }
 
     public function load(
@@ -66,7 +76,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
     ): DoctrineDbalStoreStream {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->storeTableName)
+            ->from($this->config['table_name'])
             ->orderBy('id', $backwards ? 'DESC' : 'ASC');
 
         $this->applyCriteria($builder, $criteria ?? new Criteria());
@@ -90,7 +100,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
     {
         $builder = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
-            ->from($this->storeTableName);
+            ->from($this->config['table_name']);
 
         $this->applyCriteria($builder, $criteria ?? new Criteria());
 
@@ -244,7 +254,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
             AND aggregate_id = :aggregate_id
             AND playhead < :playhead
             AND archived = false',
-            $this->storeTableName,
+            $this->config['table_name'],
         ));
 
         $statement->bindValue('aggregate', $aggregateName);
@@ -260,14 +270,17 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
             return;
         }
 
-        $table = $schema->createTable($this->storeTableName);
+        $table = $schema->createTable($this->config['table_name']);
 
         $table->addColumn('id', Types::BIGINT)
             ->setAutoincrement(true);
         $table->addColumn('aggregate', Types::STRING)
             ->setLength(255)
             ->setNotnull(true);
-        $table->addColumn('aggregate_id', Types::STRING)
+        $table->addColumn(
+            'aggregate_id',
+            $this->config['aggregate_id_type'] === 'uuid' ? Types::GUID : Types::STRING,
+        )
             ->setLength(36)
             ->setNotnull(true);
         $table->addColumn('playhead', Types::INTEGER)
@@ -321,7 +334,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
             return;
         }
 
-        $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->storeTableName));
+        $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->config['table_name']));
 
         /** @var PDO $nativeConnection */
         $nativeConnection = $this->connection->getNativeConnection();
@@ -347,23 +360,23 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
                 $$ LANGUAGE plpgsql;
                 SQL,
             $functionName,
-            $this->storeTableName,
+            $this->config['table_name'],
         ));
 
         $this->connection->executeStatement(sprintf(
             'DROP TRIGGER IF EXISTS notify_trigger ON %s;',
-            $this->storeTableName,
+            $this->config['table_name'],
         ));
         $this->connection->executeStatement(sprintf(
             'CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON %1$s FOR EACH ROW EXECUTE PROCEDURE %2$s();',
-            $this->storeTableName,
+            $this->config['table_name'],
             $functionName,
         ));
     }
 
     private function createTriggerFunctionName(): string
     {
-        $tableConfig = explode('.', $this->storeTableName);
+        $tableConfig = explode('.', $this->config['table_name']);
 
         if (count($tableConfig) === 1) {
             return sprintf('notify_%1$s', $tableConfig[0]);
@@ -387,7 +400,7 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
     ): void {
         $query = sprintf(
             "INSERT INTO %s (%s) VALUES\n(%s)",
-            $this->storeTableName,
+            $this->config['table_name'],
             implode(', ', $columns),
             implode("),\n(", $placeholders),
         );

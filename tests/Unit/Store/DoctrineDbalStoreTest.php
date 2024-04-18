@@ -80,7 +80,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $connection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
 
         $stream = $doctrineDbalStore->load(
@@ -127,7 +126,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $connection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
 
         $stream = $doctrineDbalStore->load(
@@ -179,7 +177,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $connection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
 
         $stream = $doctrineDbalStore->load(
@@ -228,7 +225,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $connection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
 
         $stream = $doctrineDbalStore->load(
@@ -299,7 +295,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $connection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
 
         $stream = $doctrineDbalStore->load(
@@ -399,7 +394,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $connection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
 
         $stream = $doctrineDbalStore->load(
@@ -453,7 +447,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $connection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
 
         $store->transactional($callback);
@@ -501,7 +494,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $mockedConnection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
         $singleTableStore->save($message);
     }
@@ -542,7 +534,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $mockedConnection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
 
         $this->expectException(MissingDataForStorage::class);
@@ -793,7 +784,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $mockedConnection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
         $singleTableStore->save($message);
     }
@@ -941,7 +931,7 @@ final class DoctrineDbalStoreTest extends TestCase
             $connection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'new.eventstore',
+            ['table_name' => 'new.eventstore'],
         );
         $doctrineDbalStore->setupSubscription();
     }
@@ -1049,6 +1039,58 @@ final class DoctrineDbalStoreTest extends TestCase
         $table->addColumn('aggregate', Types::STRING)
             ->setLength(255)
             ->setNotnull(true);
+        $table->addColumn('aggregate_id', Types::GUID)
+            ->setLength(36)
+            ->setNotnull(true);
+        $table->addColumn('playhead', Types::INTEGER)
+            ->setNotnull(true);
+        $table->addColumn('event', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $table->addColumn('payload', Types::JSON)
+            ->setNotnull(true);
+        $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
+            ->setNotnull(true);
+        $table->addColumn('new_stream_start', Types::BOOLEAN)
+            ->setNotnull(true)
+            ->setDefault(false);
+        $table->addColumn('archived', Types::BOOLEAN)
+            ->setNotnull(true)
+            ->setDefault(false);
+        $table->addColumn('custom_headers', Types::JSON)
+            ->setNotnull(true);
+
+        $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
+        $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
+
+        $schema = new Schema();
+        $doctrineDbalStore->configureSchema($schema, $connection->reveal());
+
+        self::assertEquals($expectedSchema, $schema);
+    }
+
+    public function testConfigureSchemaWithStringAsAggregateIdType(): void
+    {
+        $connection = $this->prophesize(Connection::class);
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $doctrineDbalStore = new DoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+            ['aggregate_id_type' => 'string'],
+        );
+
+        $expectedSchema = new Schema();
+        $table = $expectedSchema->createTable('eventstore');
+        $table->addColumn('id', Types::BIGINT)
+            ->setAutoincrement(true)
+            ->setNotnull(true);
+        $table->addColumn('aggregate', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
         $table->addColumn('aggregate_id', Types::STRING)
             ->setLength(36)
             ->setNotnull(true);
@@ -1106,7 +1148,6 @@ final class DoctrineDbalStoreTest extends TestCase
             $mockedConnection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
-            'eventstore',
         );
         $singleTableStore->archiveMessages('profile', '1', 1);
     }
