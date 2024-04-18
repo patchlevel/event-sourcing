@@ -36,6 +36,16 @@ parameters:
 			path: src/Store/Criteria/Criteria.php
 
 		-
+			message: "#^Parameter \\#3 \\$playhead of class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateHeader constructor expects int\\<1, max\\>, int given\\.$#"
+			count: 1
+			path: src/Store/DoctrineDbalStoreStream.php
+
+		-
+			message: "#^Parameter \\#4 \\$recordedOn of class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateHeader constructor expects DateTimeImmutable, mixed given\\.$#"
+			count: 1
+			path: src/Store/DoctrineDbalStoreStream.php
+
+		-
 			message: "#^Ternary operator condition is always true\\.$#"
 			count: 1
 			path: src/Store/DoctrineDbalStoreStream.php
