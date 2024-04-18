@@ -6,7 +6,8 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use Closure;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
@@ -178,7 +179,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
                 try {
                     $stream = $this->messageStore->load(
-                        new Criteria(fromIndex: $startIndex),
+                        new Criteria(new FromIndexCriterion($startIndex)),
                     );
 
                     foreach ($stream as $message) {
@@ -333,7 +334,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $messageCounter = 0;
 
                 try {
-                    $criteria = new Criteria(fromIndex: $startIndex);
+                    $criteria = new Criteria(new FromIndexCriterion($startIndex));
                     $stream = $this->messageStore->load($criteria);
 
                     foreach ($stream as $message) {

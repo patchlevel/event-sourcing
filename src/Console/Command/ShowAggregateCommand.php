@@ -9,7 +9,9 @@ use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -72,7 +74,10 @@ final class ShowAggregateCommand extends Command
         }
 
         $stream = $this->store->load(
-            new Criteria($this->aggregateRootRegistry->aggregateClass($aggregate), $id),
+            new Criteria(
+                new AggregateNameCriterion($aggregate),
+                new AggregateIdCriterion($id),
+            ),
         );
 
         $hasMessage = false;

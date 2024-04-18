@@ -23,7 +23,11 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\ArrayStream;
-use Patchlevel\EventSourcing\Store\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -525,8 +529,9 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(
-            'profile',
-            '1',
+            new AggregateNameCriterion('profile'),
+            new AggregateIdCriterion('1'),
+            new ArchivedCriterion(false),
         ))->willReturn(new ArrayStream([
             Message::create(
                 new ProfileCreated(
@@ -553,8 +558,9 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(
-            'profile',
-            '1',
+            new AggregateNameCriterion('profile'),
+            new AggregateIdCriterion('1'),
+            new ArchivedCriterion(false),
         ))->willReturn(
             new ArrayStream([
                 Message::create(
@@ -592,8 +598,9 @@ final class DefaultRepositoryTest extends TestCase
 
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(
-            'profile',
-            '1',
+            new AggregateNameCriterion('profile'),
+            new AggregateIdCriterion('1'),
+            new ArchivedCriterion(false),
         ))->willReturn(new ArrayStream());
 
         $repository = new DefaultRepository(
@@ -608,8 +615,8 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->count(new Criteria(
-            'profile',
-            '1',
+            new AggregateNameCriterion('profile'),
+            new AggregateIdCriterion('1'),
         ))->willReturn(1);
 
         $repository = new DefaultRepository(
@@ -624,8 +631,8 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->count(new Criteria(
-            'profile',
-            '1',
+            new AggregateNameCriterion('profile'),
+            new AggregateIdCriterion('1'),
         ))->willReturn(0);
 
         $repository = new DefaultRepository(
@@ -647,10 +654,9 @@ final class DefaultRepositoryTest extends TestCase
 
         $store = $this->prophesize(Store::class);
         $store->load(new Criteria(
-            'profile_with_snapshot',
-            '1',
-            null,
-            1,
+            new AggregateNameCriterion('profile_with_snapshot'),
+            new AggregateIdCriterion('1'),
+            new FromPlayheadCriterion(1),
         ))->willReturn(new ArrayStream());
 
         $snapshotStore = $this->prophesize(SnapshotStore::class);
@@ -679,8 +685,9 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(
             new Criteria(
-                'profile_with_snapshot',
-                '1',
+                new AggregateNameCriterion('profile_with_snapshot'),
+                new AggregateIdCriterion('1'),
+                new ArchivedCriterion(false),
             ),
         )->willReturn(
             new ArrayStream([
@@ -736,10 +743,9 @@ final class DefaultRepositoryTest extends TestCase
         $store = $this->prophesize(Store::class);
         $store->load(
             new Criteria(
-                'profile_with_snapshot',
-                '1',
-                null,
-                1,
+                new AggregateNameCriterion('profile_with_snapshot'),
+                new AggregateIdCriterion('1'),
+                new FromPlayheadCriterion(1),
             ),
         )->willReturn(new ArrayStream([
             Message::create(
@@ -785,7 +791,11 @@ final class DefaultRepositoryTest extends TestCase
     public function testLoadAggregateWithoutSnapshot(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->load(new Criteria('profile_with_snapshot', '1'))
+        $store->load(new Criteria(
+            new AggregateNameCriterion('profile_with_snapshot'),
+            new AggregateIdCriterion('1'),
+            new ArchivedCriterion(false),
+        ))
             ->willReturn(new ArrayStream([
                 Message::create(
                     new ProfileCreated(

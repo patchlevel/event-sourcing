@@ -31,6 +31,11 @@ parameters:
 			path: src/Store/ArrayStream.php
 
 		-
+			message: "#^Method Patchlevel\\\\EventSourcing\\\\Store\\\\Criteria\\\\Criteria\\:\\:get\\(\\) should return T of object but returns object\\.$#"
+			count: 1
+			path: src/Store/Criteria/Criteria.php
+
+		-
 			message: "#^Ternary operator condition is always true\\.$#"
 			count: 1
 			path: src/Store/DoctrineDbalStoreStream.php
