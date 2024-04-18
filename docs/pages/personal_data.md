@@ -53,7 +53,7 @@ final class EmailChanged
 {
     public function __construct(
         #[PersonalData(fallback: 'unknown')]
-        public readonly string|null $email,
+        public readonly string $email,
     ) {
     }
 }
@@ -85,7 +85,7 @@ final class EmailChanged
         #[DataSubjectId]
         public readonly string $personId,
         #[PersonalData(fallback: 'unknown')]
-        public readonly string|null $email,
+        public readonly string $email,
     ) {
     }
 }
