@@ -6,6 +6,8 @@ namespace Patchlevel\EventSourcing\Store;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Generator;
 use IteratorAggregate;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
@@ -109,6 +111,8 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
         HeadersSerializer $headersSerializer,
         AbstractPlatform $platform,
     ): Generator {
+        $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
+
         /** @var array{id: positive-int, aggregate: string, aggregate_id: string, playhead: int|string, event: string, payload: string, recorded_on: string, archived: int|string, new_stream_start: int|string, custom_headers: string} $data */
         foreach ($result->iterateAssociative() as $data) {
             if ($this->position === null) {
@@ -124,8 +128,8 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
                 ->withHeader(new AggregateHeader(
                     $data['aggregate'],
                     $data['aggregate_id'],
-                    DoctrineHelper::normalizePlayhead($data['playhead'], $platform),
-                    DoctrineHelper::normalizeRecordedOn($data['recorded_on'], $platform),
+                    (int)$data['playhead'],
+                    $dateTimeType->convertToPHPValue($data['recorded_on'], $platform),
                 ));
 
             if ($data['archived']) {
