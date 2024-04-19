@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\Aggregate\RamseyUuidBehaviour;
+use Patchlevel\EventSourcing\Aggregate\RamseyUuidV7Behaviour;
 
 final class ProfileId implements AggregateRootId
 {
-    use RamseyUuidBehaviour;
+    use RamseyUuidV7Behaviour;
 }

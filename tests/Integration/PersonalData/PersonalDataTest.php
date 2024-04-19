@@ -64,7 +64,7 @@ final class PersonalDataTest extends TestCase
 
         $schemaDirector->create();
 
-        $profileId = ProfileId::v7();
+        $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
 
         $repository->save($profile);
@@ -126,7 +126,7 @@ final class PersonalDataTest extends TestCase
 
         $engine->setup(skipBooting: true);
 
-        $profileId = ProfileId::v7();
+        $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
 
         $repository->save($profile);
@@ -208,7 +208,7 @@ final class PersonalDataTest extends TestCase
 
         $engine->setup(skipBooting: true);
 
-        $profileId = ProfileId::v7();
+        $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
         $profile->changeName('John 2');
 

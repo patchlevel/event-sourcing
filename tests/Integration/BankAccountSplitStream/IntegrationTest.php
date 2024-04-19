@@ -75,7 +75,7 @@ final class IntegrationTest extends TestCase
         $engine->setup();
         $engine->boot();
 
-        $bankAccountId = AccountId::v7();
+        $bankAccountId = AccountId::generate();
         $bankAccount = BankAccount::create($bankAccountId, 'John');
         $bankAccount->addBalance(100);
         $bankAccount->addBalance(500);

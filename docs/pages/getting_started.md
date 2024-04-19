@@ -363,7 +363,7 @@ use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 
-$hotel1 = Hotel::create(Uuid::v7(), 'HOTEL');
+$hotel1 = Hotel::create(Uuid::generate(), 'HOTEL');
 $hotel1->checkIn('David');
 $hotel1->checkIn('Daniel');
 $hotel1->checkOut('David');

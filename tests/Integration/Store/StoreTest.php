@@ -48,7 +48,7 @@ final class StoreTest extends TestCase
 
     public function testSave(): void
     {
-        $profileId = ProfileId::v7();
+        $profileId = ProfileId::generate();
 
         $messages = [
             Message::create(new ProfileCreated($profileId, 'test'))
@@ -95,7 +95,7 @@ final class StoreTest extends TestCase
 
     public function testSave10000Messages(): void
     {
-        $profileId = ProfileId::v7();
+        $profileId = ProfileId::generate();
 
         $messages = [];
 
@@ -114,7 +114,7 @@ final class StoreTest extends TestCase
 
     public function testLoad(): void
     {
-        $profileId = ProfileId::v7();
+        $profileId = ProfileId::generate();
 
         $message = Message::create(new ProfileCreated($profileId, 'test'))
             ->withHeader(new AggregateHeader(

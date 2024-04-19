@@ -52,7 +52,7 @@ final class SnapshotsBench
 
         $schemaDirector->create();
 
-        $this->id = ProfileId::v7();
+        $this->id = ProfileId::generate();
         $profile = Profile::create($this->id, 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
