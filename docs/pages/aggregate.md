@@ -403,7 +403,8 @@ final class Profile extends BasicAggregateRoot
 ```
 !!! danger
 
-    Validations during "apply" can brake the rebuilding of the aggregate.
+    Validations during "apply" should not happen, they will break the rebuilding of the aggregate!
+    Instead validate the data *before* the event will be recorded.
     
 We have now ensured that this rule takes effect when a name is changed with the method `changeName`.
 But when we create a new profile this rule does not currently apply.
