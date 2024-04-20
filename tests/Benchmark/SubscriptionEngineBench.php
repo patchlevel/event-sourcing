@@ -58,7 +58,7 @@ final class SubscriptionEngineBench
 
         $schemaDirector->create();
 
-        $this->id = ProfileId::v7();
+        $this->id = ProfileId::generate();
 
         $profile = Profile::create($this->id, 'Peter');
 

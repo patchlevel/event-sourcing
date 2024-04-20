@@ -43,11 +43,11 @@ final class SimpleSetupBench
 
         $schemaDirector->create();
 
-        $this->singleEventId = ProfileId::v7();
+        $this->singleEventId = ProfileId::generate();
         $profile = Profile::create($this->singleEventId, 'Peter');
         $this->repository->save($profile);
 
-        $this->multipleEventsId = ProfileId::v7();
+        $this->multipleEventsId = ProfileId::generate();
         $profile = Profile::create($this->multipleEventsId, 'Peter');
 
         for ($i = 0; $i < 10_000; $i++) {
@@ -72,14 +72,14 @@ final class SimpleSetupBench
     #[Bench\Revs(10)]
     public function benchSave1Event(): void
     {
-        $profile = Profile::create(ProfileId::v7(), 'Peter');
+        $profile = Profile::create(ProfileId::generate(), 'Peter');
         $this->repository->save($profile);
     }
 
     #[Bench\Revs(10)]
     public function benchSave10000Events(): void
     {
-        $profile = Profile::create(ProfileId::v7(), 'Peter');
+        $profile = Profile::create(ProfileId::generate(), 'Peter');
 
         for ($i = 1; $i < 10_000; $i++) {
             $profile->changeName('Peter');
@@ -92,7 +92,7 @@ final class SimpleSetupBench
     public function benchSave10000Aggregates(): void
     {
         for ($i = 1; $i < 10_000; $i++) {
-            $profile = Profile::create(ProfileId::v7(), 'Peter');
+            $profile = Profile::create(ProfileId::generate(), 'Peter');
             $this->repository->save($profile);
         }
     }
@@ -102,7 +102,7 @@ final class SimpleSetupBench
     {
         $this->store->transactional(function (): void {
             for ($i = 1; $i < 10_000; $i++) {
-                $profile = Profile::create(ProfileId::v7(), 'Peter');
+                $profile = Profile::create(ProfileId::generate(), 'Peter');
                 $this->repository->save($profile);
             }
         });

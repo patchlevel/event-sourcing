@@ -6,5 +6,5 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 final class Uuid implements AggregateRootId
 {
-    use RamseyUuidBehaviour;
+    use RamseyUuidV7Behaviour;
 }

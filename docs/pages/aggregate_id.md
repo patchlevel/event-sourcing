@@ -45,13 +45,12 @@ You have multiple options for generating an uuid:
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 
-$uuid = Uuid::v6();
-$uuid = Uuid::v7();
+$uuid = Uuid::generate();
 $uuid = Uuid::fromString('d6e8d7a0-4b0b-4e6a-8a9a-3a0b2d9d0e4e');
 ```
 !!! Note
 
-    We offer you the uuid versions 6 and 7, because they are the most suitable for event sourcing.
+    We implemented the version 7 of the uuid, because it is most suitable for event sourcing.
     More information about uuid versions can be found [here](https://uuid.ramsey.dev/en/stable/rfc4122.html).
     
 ## Custom ID
@@ -145,11 +144,11 @@ Here for the uuid:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\Aggregate\RamseyUuidBehaviour;
+use Patchlevel\EventSourcing\Aggregate\RamseyUuidV7Behaviour;
 
 class ProfileId implements AggregateRootId
 {
-    use RamseyUuidBehaviour;
+    use RamseyUuidV7Behaviour;
 }
 ```
 Or for the custom id:

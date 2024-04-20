@@ -79,7 +79,7 @@ final class BasicIntegrationTest extends TestCase
         $engine->setup();
         $engine->boot();
 
-        $profileId = ProfileId::v7();
+        $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
@@ -150,7 +150,7 @@ final class BasicIntegrationTest extends TestCase
         $engine->setup();
         $engine->boot();
 
-        $profileId = ProfileId::v7();
+        $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 

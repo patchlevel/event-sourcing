@@ -157,7 +157,7 @@ These events are then also append to the database.
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Repository\Repository;
 
-$id = Uuid::v7();
+$id = Uuid::generate();
 $profile = Profile::create($id, 'david.badura@patchlevel.de');
 
 /** @var Repository $repository */

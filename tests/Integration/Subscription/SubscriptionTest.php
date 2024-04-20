@@ -127,7 +127,7 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
-        $profileId = ProfileId::v7();
+        $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
@@ -239,7 +239,7 @@ final class SubscriptionTest extends TestCase
 
         $repository = $manager->get(Profile::class);
 
-        $profile = Profile::create(ProfileId::v7(), 'John');
+        $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
         $subscriber->subscribeError = true;
@@ -430,7 +430,7 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
-        $profile = Profile::create(ProfileId::v7(), 'John');
+        $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
         $engine->run();
@@ -522,7 +522,7 @@ final class SubscriptionTest extends TestCase
 
         // Run first version
 
-        $profile = Profile::create(ProfileId::v7(), 'John');
+        $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
         $firstEngine->run();
@@ -678,7 +678,7 @@ final class SubscriptionTest extends TestCase
 
         // Run first version
 
-        $profile = Profile::create(ProfileId::v7(), 'John');
+        $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
         $firstEngine->run();
