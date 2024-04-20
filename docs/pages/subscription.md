@@ -666,24 +666,41 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
     $retryStrategy,
 );
 ```
-### Catchup Subscription Engine
+### Catch up Subscription Engine
 
 If aggregates are used in the processors and new events are generated there,
 then they are not part of the current subscription engine run and will only be processed during the next run or boot.
 This is usually not a problem in dev or prod environment because a worker is used
 and these events will be processed at some point. But in testing it is not so easy.
-For this reason, we have the `CatchupSubscriptionEngine`.
+For this reason, we have the `CatchUpSubscriptionEngine` decorator.
 
 ```php
-use Patchlevel\EventSourcing\Subscription\Engine\CatchupSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 
 /** @var SubscriptionEngine $subscriptionStore */
-$catchupSubscriptionEngine = new CatchupSubscriptionEngine($subscriptionEngine);
+$catchupSubscriptionEngine = new CatchUpSubscriptionEngine($subscriptionEngine);
 ```
 !!! tip
 
-    You can use the `CatchupSubscriptionEngine` in your tests to process the events immediately.
+    You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
+    
+### Throw by error Subscription Engine
+
+This is another decorator for the subscription engine. It throws an exception if a subscription is in error state.
+This is useful for testing or development to get directly feedback if something is wrong.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
+
+/** @var SubscriptionEngine $subscriptionStore */
+$throwByErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscriptionEngine);
+```
+!!! warning
+
+    This is only for testing or development. Don't use it in production.
+    The subscription engine has an build in retry strategy to retry subscriptions that have failed.
     
 ## Usage
 
