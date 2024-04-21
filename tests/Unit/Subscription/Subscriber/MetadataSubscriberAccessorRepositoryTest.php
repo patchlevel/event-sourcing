@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\DuplicateSubscriberId;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use PHPUnit\Framework\TestCase;
@@ -66,5 +67,27 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
 
         self::assertEquals([$accessor], $repository->all());
         self::assertEquals($accessor, $repository->get('foo'));
+    }
+
+    public function testDuplicateSubscriberId(): void
+    {
+        $this->expectException(DuplicateSubscriberId::class);
+
+        $subscriber1 = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+        };
+
+        $subscriber2 = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+
+        $repository = new MetadataSubscriberAccessorRepository(
+            [$subscriber1, $subscriber2],
+            $metadataFactory,
+        );
+
+        $repository->all();
     }
 }

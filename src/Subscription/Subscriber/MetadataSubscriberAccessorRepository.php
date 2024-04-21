@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgum
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\RecordedOnArgumentResolver;
 
+use function array_key_exists;
 use function array_merge;
 use function array_values;
 
@@ -65,6 +66,11 @@ final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRe
 
         foreach ($this->subscribers as $subscriber) {
             $metadata = $this->metadataFactory->metadata($subscriber::class);
+
+            if (array_key_exists($metadata->id, $this->subscribersMap)) {
+                throw new DuplicateSubscriberId($metadata->id);
+            }
+
             $this->subscribersMap[$metadata->id] = new MetadataSubscriberAccessor(
                 $subscriber,
                 $metadata,
