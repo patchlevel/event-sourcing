@@ -28,6 +28,8 @@ use function sprintf;
 
 final class DefaultSubscriptionEngine implements SubscriptionEngine
 {
+    private bool $processing = false;
+
     public function __construct(
         private readonly Store $messageStore,
         private readonly SubscriptionStore $subscriptionStore,
@@ -140,128 +142,296 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         SubscriptionEngineCriteria|null $criteria = null,
         int|null $limit = null,
     ): ProcessedResult {
-        $criteria ??= new SubscriptionEngineCriteria();
+        if ($this->processing) {
+            throw new AlreadyProcessing();
+        }
 
-        $this->logger?->info(
-            'Subscription Engine: Start booting.',
-        );
+        $this->processing = true;
 
-        $this->discoverNewSubscriptions();
-        $this->retrySubscriptions($criteria);
+        try {
+            $criteria ??= new SubscriptionEngineCriteria();
 
-        return $this->findForUpdate(
-            new SubscriptionCriteria(
-                ids: $criteria->ids,
-                groups: $criteria->groups,
-                status: [Status::Booting],
-            ),
-            function ($subscriptions) use ($limit): ProcessedResult {
-                if (count($subscriptions) === 0) {
-                    $this->logger?->info('Subscription Engine: No subscriptions in booting status, finish booting.');
+            $this->logger?->info(
+                'Subscription Engine: Start booting.',
+            );
 
-                    return new ProcessedResult(0);
-                }
+            $this->discoverNewSubscriptions();
+            $this->retrySubscriptions($criteria);
 
-                /** @var list<Error> $errors */
-                $errors = [];
+            return $this->findForUpdate(
+                new SubscriptionCriteria(
+                    ids: $criteria->ids,
+                    groups: $criteria->groups,
+                    status: [Status::Booting],
+                ),
+                function ($subscriptions) use ($limit): ProcessedResult {
+                    if (count($subscriptions) === 0) {
+                        $this->logger?->info('Subscription Engine: No subscriptions in booting status, finish booting.');
 
-                $startIndex = $this->lowestSubscriptionPosition($subscriptions);
+                        return new ProcessedResult(0);
+                    }
 
-                $this->logger?->debug(
-                    sprintf(
-                        'Subscription Engine: Event stream is processed for booting from position %s.',
-                        $startIndex,
-                    ),
-                );
+                    /** @var list<Error> $errors */
+                    $errors = [];
 
-                $stream = null;
-                $messageCounter = 0;
+                    $startIndex = $this->lowestSubscriptionPosition($subscriptions);
 
-                try {
-                    $stream = $this->messageStore->load(
-                        new Criteria(new FromIndexCriterion($startIndex)),
+                    $this->logger?->debug(
+                        sprintf(
+                            'Subscription Engine: Event stream is processed for booting from position %s.',
+                            $startIndex,
+                        ),
                     );
 
-                    foreach ($stream as $message) {
-                        $index = $stream->index();
+                    $stream = null;
+                    $messageCounter = 0;
 
-                        if ($index === null) {
-                            throw new UnexpectedError('Stream index is null, this should not happen.');
-                        }
-
-                        foreach ($subscriptions as $subscription) {
-                            if (!$subscription->isBooting()) {
-                                continue;
-                            }
-
-                            if ($subscription->position() >= $index) {
-                                $this->logger?->debug(
-                                    sprintf(
-                                        'Subscription Engine: Subscription "%s" is farther than the current position (%d > %d), continue booting.',
-                                        $subscription->id(),
-                                        $subscription->position(),
-                                        $index,
-                                    ),
-                                );
-
-                                continue;
-                            }
-
-                            $error = $this->handleMessage($index, $message, $subscription);
-
-                            if (!$error) {
-                                continue;
-                            }
-
-                            $errors[] = $error;
-                        }
-
-                        $messageCounter++;
-
-                        $this->logger?->debug(
-                            sprintf(
-                                'Subscription Engine: Current event stream position for booting: %s',
-                                $index,
-                            ),
+                    try {
+                        $stream = $this->messageStore->load(
+                            new Criteria(new FromIndexCriterion($startIndex)),
                         );
 
-                        if ($limit !== null && $messageCounter >= $limit) {
-                            $this->logger?->info(
+                        foreach ($stream as $message) {
+                            $index = $stream->index();
+
+                            if ($index === null) {
+                                throw new UnexpectedError('Stream index is null, this should not happen.');
+                            }
+
+                            foreach ($subscriptions as $subscription) {
+                                if (!$subscription->isBooting()) {
+                                    continue;
+                                }
+
+                                if ($subscription->position() >= $index) {
+                                    $this->logger?->debug(
+                                        sprintf(
+                                            'Subscription Engine: Subscription "%s" is farther than the current position (%d > %d), continue booting.',
+                                            $subscription->id(),
+                                            $subscription->position(),
+                                            $index,
+                                        ),
+                                    );
+
+                                    continue;
+                                }
+
+                                $error = $this->handleMessage($index, $message, $subscription);
+
+                                if (!$error) {
+                                    continue;
+                                }
+
+                                $errors[] = $error;
+                            }
+
+                            $messageCounter++;
+
+                            $this->logger?->debug(
                                 sprintf(
-                                    'Subscription Engine: Message limit (%d) reached, finish booting.',
-                                    $limit,
+                                    'Subscription Engine: Current event stream position for booting: %s',
+                                    $index,
                                 ),
                             );
 
-                            return new ProcessedResult(
-                                $messageCounter,
-                                false,
-                                $errors,
-                            );
+                            if ($limit !== null && $messageCounter >= $limit) {
+                                $this->logger?->info(
+                                    sprintf(
+                                        'Subscription Engine: Message limit (%d) reached, finish booting.',
+                                        $limit,
+                                    ),
+                                );
+
+                                return new ProcessedResult(
+                                    $messageCounter,
+                                    false,
+                                    $errors,
+                                );
+                            }
+                        }
+                    } finally {
+                        $stream?->close();
+
+                        if ($messageCounter > 0) {
+                            foreach ($subscriptions as $subscription) {
+                                if (!$subscription->isBooting()) {
+                                    continue;
+                                }
+
+                                $this->subscriptionStore->update($subscription);
+                            }
                         }
                     }
-                } finally {
-                    $stream?->close();
 
-                    if ($messageCounter > 0) {
-                        foreach ($subscriptions as $subscription) {
-                            if (!$subscription->isBooting()) {
-                                continue;
+                    $this->logger?->debug('Subscription Engine: End of stream for booting has been reached.');
+
+                    foreach ($subscriptions as $subscription) {
+                        if (!$subscription->isBooting()) {
+                            continue;
+                        }
+
+                        if ($subscription->runMode() === RunMode::Once) {
+                            $subscription->finished();
+                            $this->subscriptionStore->update($subscription);
+
+                            $this->logger?->info(sprintf(
+                                'Subscription Engine: Subscription "%s" run only once and has been set to finished.',
+                                $subscription->id(),
+                            ));
+
+                            continue;
+                        }
+
+                        $subscription->active();
+                        $this->subscriptionStore->update($subscription);
+
+                        $this->logger?->info(sprintf(
+                            'Subscription Engine: Subscription "%s" has been set to active after booting.',
+                            $subscription->id(),
+                        ));
+                    }
+
+                    $this->logger?->info('Subscription Engine: Finish booting.');
+
+                    return new ProcessedResult(
+                        $messageCounter,
+                        true,
+                        $errors,
+                    );
+                },
+            );
+        } finally {
+            $this->processing = false;
+        }
+    }
+
+    public function run(
+        SubscriptionEngineCriteria|null $criteria = null,
+        int|null $limit = null,
+    ): ProcessedResult {
+        if ($this->processing) {
+            throw new AlreadyProcessing();
+        }
+
+        $this->processing = true;
+
+        try {
+            $criteria ??= new SubscriptionEngineCriteria();
+
+            $this->logger?->info('Subscription Engine: Start processing.');
+
+            $this->discoverNewSubscriptions();
+            $this->markDetachedSubscriptions($criteria);
+            $this->retrySubscriptions($criteria);
+
+            return $this->findForUpdate(
+                new SubscriptionCriteria(
+                    ids: $criteria->ids,
+                    groups: $criteria->groups,
+                    status: [Status::Active],
+                ),
+                function (array $subscriptions) use ($limit): ProcessedResult {
+                    if (count($subscriptions) === 0) {
+                        $this->logger?->info('Subscription Engine: No subscriptions to process, finish processing.');
+
+                        return new ProcessedResult(0);
+                    }
+
+                    /** @var list<Error> $errors */
+                    $errors = [];
+
+                    $startIndex = $this->lowestSubscriptionPosition($subscriptions);
+
+                    $this->logger?->debug(
+                        sprintf(
+                            'Subscription Engine: Event stream is processed from position %d.',
+                            $startIndex,
+                        ),
+                    );
+
+                    $stream = null;
+                    $messageCounter = 0;
+
+                    try {
+                        $criteria = new Criteria(new FromIndexCriterion($startIndex));
+                        $stream = $this->messageStore->load($criteria);
+
+                        foreach ($stream as $message) {
+                            $index = $stream->index();
+
+                            if ($index === null) {
+                                throw new UnexpectedError('Stream index is null, this should not happen.');
                             }
 
-                            $this->subscriptionStore->update($subscription);
+                            foreach ($subscriptions as $subscription) {
+                                if (!$subscription->isActive()) {
+                                    continue;
+                                }
+
+                                if ($subscription->position() >= $index) {
+                                    $this->logger?->debug(
+                                        sprintf(
+                                            'Subscription Engine: Subscription "%s" is farther than the current position (%d > %d), continue processing.',
+                                            $subscription->id(),
+                                            $subscription->position(),
+                                            $index,
+                                        ),
+                                    );
+
+                                    continue;
+                                }
+
+                                $error = $this->handleMessage($index, $message, $subscription);
+
+                                if (!$error) {
+                                    continue;
+                                }
+
+                                $errors[] = $error;
+                            }
+
+                            $messageCounter++;
+
+                            $this->logger?->debug(sprintf(
+                                'Subscription Engine: Current event stream position: %s',
+                                $index,
+                            ));
+
+                            if ($limit !== null && $messageCounter >= $limit) {
+                                $this->logger?->info(
+                                    sprintf(
+                                        'Subscription Engine: Message limit (%d) reached, finish processing.',
+                                        $limit,
+                                    ),
+                                );
+
+                                return new ProcessedResult($messageCounter, false, $errors);
+                            }
+                        }
+                    } finally {
+                        $endIndex = $stream?->index() ?: $startIndex;
+                        $stream?->close();
+
+                        if ($messageCounter > 0) {
+                            foreach ($subscriptions as $subscription) {
+                                if (!$subscription->isActive()) {
+                                    continue;
+                                }
+
+                                $this->subscriptionStore->update($subscription);
+                            }
                         }
                     }
-                }
 
-                $this->logger?->debug('Subscription Engine: End of stream for booting has been reached.');
+                    foreach ($subscriptions as $subscription) {
+                        if (!$subscription->isActive()) {
+                            continue;
+                        }
 
-                foreach ($subscriptions as $subscription) {
-                    if (!$subscription->isBooting()) {
-                        continue;
-                    }
+                        if ($subscription->runMode() !== RunMode::Once) {
+                            continue;
+                        }
 
-                    if ($subscription->runMode() === RunMode::Once) {
                         $subscription->finished();
                         $this->subscriptionStore->update($subscription);
 
@@ -269,169 +439,21 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             'Subscription Engine: Subscription "%s" run only once and has been set to finished.',
                             $subscription->id(),
                         ));
-
-                        continue;
                     }
 
-                    $subscription->active();
-                    $this->subscriptionStore->update($subscription);
+                    $this->logger?->info(
+                        sprintf(
+                            'Subscription Engine: End of stream on position "%d" has been reached, finish processing.',
+                            $endIndex,
+                        ),
+                    );
 
-                    $this->logger?->info(sprintf(
-                        'Subscription Engine: Subscription "%s" has been set to active after booting.',
-                        $subscription->id(),
-                    ));
-                }
-
-                $this->logger?->info('Subscription Engine: Finish booting.');
-
-                return new ProcessedResult(
-                    $messageCounter,
-                    true,
-                    $errors,
-                );
-            },
-        );
-    }
-
-    public function run(
-        SubscriptionEngineCriteria|null $criteria = null,
-        int|null $limit = null,
-    ): ProcessedResult {
-        $criteria ??= new SubscriptionEngineCriteria();
-
-        $this->logger?->info('Subscription Engine: Start processing.');
-
-        $this->discoverNewSubscriptions();
-        $this->markDetachedSubscriptions($criteria);
-        $this->retrySubscriptions($criteria);
-
-        return $this->findForUpdate(
-            new SubscriptionCriteria(
-                ids: $criteria->ids,
-                groups: $criteria->groups,
-                status: [Status::Active],
-            ),
-            function (array $subscriptions) use ($limit): ProcessedResult {
-                if (count($subscriptions) === 0) {
-                    $this->logger?->info('Subscription Engine: No subscriptions to process, finish processing.');
-
-                    return new ProcessedResult(0);
-                }
-
-                /** @var list<Error> $errors */
-                $errors = [];
-
-                $startIndex = $this->lowestSubscriptionPosition($subscriptions);
-
-                $this->logger?->debug(
-                    sprintf(
-                        'Subscription Engine: Event stream is processed from position %d.',
-                        $startIndex,
-                    ),
-                );
-
-                $stream = null;
-                $messageCounter = 0;
-
-                try {
-                    $criteria = new Criteria(new FromIndexCriterion($startIndex));
-                    $stream = $this->messageStore->load($criteria);
-
-                    foreach ($stream as $message) {
-                        $index = $stream->index();
-
-                        if ($index === null) {
-                            throw new UnexpectedError('Stream index is null, this should not happen.');
-                        }
-
-                        foreach ($subscriptions as $subscription) {
-                            if (!$subscription->isActive()) {
-                                continue;
-                            }
-
-                            if ($subscription->position() >= $index) {
-                                $this->logger?->debug(
-                                    sprintf(
-                                        'Subscription Engine: Subscription "%s" is farther than the current position (%d > %d), continue processing.',
-                                        $subscription->id(),
-                                        $subscription->position(),
-                                        $index,
-                                    ),
-                                );
-
-                                continue;
-                            }
-
-                            $error = $this->handleMessage($index, $message, $subscription);
-
-                            if (!$error) {
-                                continue;
-                            }
-
-                            $errors[] = $error;
-                        }
-
-                        $messageCounter++;
-
-                        $this->logger?->debug(sprintf(
-                            'Subscription Engine: Current event stream position: %s',
-                            $index,
-                        ));
-
-                        if ($limit !== null && $messageCounter >= $limit) {
-                            $this->logger?->info(
-                                sprintf(
-                                    'Subscription Engine: Message limit (%d) reached, finish processing.',
-                                    $limit,
-                                ),
-                            );
-
-                            return new ProcessedResult($messageCounter, false, $errors);
-                        }
-                    }
-                } finally {
-                    $endIndex = $stream?->index() ?: $startIndex;
-                    $stream?->close();
-
-                    if ($messageCounter > 0) {
-                        foreach ($subscriptions as $subscription) {
-                            if (!$subscription->isActive()) {
-                                continue;
-                            }
-
-                            $this->subscriptionStore->update($subscription);
-                        }
-                    }
-                }
-
-                foreach ($subscriptions as $subscription) {
-                    if (!$subscription->isActive()) {
-                        continue;
-                    }
-
-                    if ($subscription->runMode() !== RunMode::Once) {
-                        continue;
-                    }
-
-                    $subscription->finished();
-                    $this->subscriptionStore->update($subscription);
-
-                    $this->logger?->info(sprintf(
-                        'Subscription Engine: Subscription "%s" run only once and has been set to finished.',
-                        $subscription->id(),
-                    ));
-                }
-
-                $this->logger?->info(
-                    sprintf(
-                        'Subscription Engine: End of stream on position "%d" has been reached, finish processing.',
-                        $endIndex,
-                    ),
-                );
-
-                return new ProcessedResult($messageCounter, true, $errors);
-            },
-        );
+                    return new ProcessedResult($messageCounter, true, $errors);
+                },
+            );
+        } finally {
+            $this->processing = false;
+        }
     }
 
     public function teardown(SubscriptionEngineCriteria|null $criteria = null): Result
@@ -943,7 +965,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         return $this->subscriptionStore->inLock(
-            /** @return T */
+        /** @return T */
             function () use ($closure, $criteria): mixed {
                 $subscriptions = $this->subscriptionStore->find($criteria);
 

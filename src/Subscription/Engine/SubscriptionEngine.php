@@ -14,6 +14,7 @@ interface SubscriptionEngine
      * @param positive-int|null $limit
      *
      * @throws SubscriberNotFound
+     * @throws AlreadyProcessing
      */
     public function boot(
         SubscriptionEngineCriteria|null $criteria = null,
@@ -24,6 +25,7 @@ interface SubscriptionEngine
      * @param positive-int|null $limit
      *
      * @throws SubscriberNotFound
+     * @throws AlreadyProcessing
      */
     public function run(
         SubscriptionEngineCriteria|null $criteria = null,
