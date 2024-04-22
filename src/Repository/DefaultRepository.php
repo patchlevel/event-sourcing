@@ -266,7 +266,6 @@ final class DefaultRepository implements Repository
                 }
 
                 $this->archive(...$messages);
-                $this->eventBus?->dispatch(...$messages);
             });
 
             $this->aggregateIsValid[$aggregate] = true;
@@ -283,6 +282,8 @@ final class DefaultRepository implements Repository
 
             throw $exception;
         }
+
+        $this->eventBus?->dispatch(...$messages);
     }
 
     /**
