@@ -38,7 +38,7 @@ $repository = $repositoryManager->get(Profile::class);
 ### Event Bus
 
 You can pass an event bus to the `DefaultRepositoryManager` to dispatch events synchronously.
-This is useful if you want to react to events in the same transaction.
+This will be done after the events are saved in the store outside the transaction.
 
 ```php
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
