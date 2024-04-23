@@ -7,22 +7,27 @@ We removed the `MultiTableStore` without any replacement in version 3. To upgrad
 ## Rationale
 
 We removed the `MultiTableStore` because it does not bring any benefit for the user besides some more confidence due to 
-be a little more similar to the "standard" ORM based databases.
+be a little more similar to the "standard" ORM based databases which is the only reason we could think of why choosing 
+it.
 
-This was done in this 
-[PR](https://github.com/patchlevel/event-sourcing/pull/373), you can also find some more information in 
+But there are some big disadvantages when using the `MultiTableStore`:
+
+1. We need a meta table so we can ensure the right order of events published in the different tables. Because of that 
+   writes are alot slower due to writing in at least 2 different tables.
+2. To be able to filter for the projections e.g. we need to duplicate every field into the meta table which we want to 
+   filter on. So the meta table will grow and grow in columns and nearly duplicate all data besides the event payload 
+   itself which leads to a massive data duplication.
+
+Besides that, databases already to this kind of partition itself based on the indexes we set on the `eventstore`. So 
+technically there is no real reason to keep the `MultiTableStore`.
+
+To increase the developer experience even more and to compensate the lost convenience of the `MultiTableStore` we are 
+in the progress of introducing [a symfony bundle](https://github.com/patchlevel/event-sourcing-admin-bundle) which will 
+provide a UI for a great overview and visualize all aspects of the event sourced application.
+
+If you are interested in the changes, the removal was done in this 
+[PR](https://github.com/patchlevel/event-sourcing/pull/373). Also you can also find some more discussion/information in
 [this comment on GitHub](https://github.com/patchlevel/event-sourcing-bundle/issues/158#issuecomment-1888037198)
-
-* data was duplicated, due to the meta table where all events need to be tracked with all filterable field for projections
-* all fields for which you would want to filter would be needed in the meta table (and also in the aggregate table)
-* this would lead in the long run that the meta table would hold mostly all the data
-* write performance is greatly decreased due to writing in 2 different tables everytime
-
-## Misc
-
-For more convenience and kinda replacement for the overview we will provide 
-[a bundle](https://github.com/patchlevel/event-sourcing-admin-bundle) which will visualize all aspects of the event 
-sourced application.
 
 ## Migration path
 
