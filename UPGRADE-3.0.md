@@ -7,8 +7,18 @@ the [full BC-Break list](#Full-BC-Break-list)
 
 ### Outsourced packages
 
-The `Worker` is now an extra package [patchlevel/worker](https://github.com/patchlevel/worker). 
-The `Hydrator` is now an extra package [patchlevel/hydrator](https://github.com/patchlevel/hydrator).
+These packages lived in this library before and are now outsourced to be more flexible in releasing them on their own. 
+This can be done because the domain of this packages are not bound to event sourcing itself and instead provide 
+functionality which can be used in other projects as well.
+
+1. The `Worker` is now an extra package [patchlevel/worker](https://github.com/patchlevel/worker). 
+2. The `Hydrator` is now an extra package [patchlevel/hydrator](https://github.com/patchlevel/hydrator).
+
+### New packages
+
+We will also introduce [a new bundle](https://github.com/patchlevel/event-sourcing-admin-bundle) coming with version 3. 
+This bundle aims to create an even better developer experience by providing a nice view of all the aspects of the event 
+source application. 
 
 ### Aggregates
 
@@ -140,12 +150,6 @@ final class ProfileId implements AggregateRootId
 }
 ```
 
-#### Aggregate Name
-
-We are now using the aggregate name instead of the FQCN internally to identify the aggregate. This means that e.g. the 
-name is shown in some outputs and we replaced `aggregateClass` with `aggregateName` in the Message.
-
-
 ### Events
 
 #### Normalizer
@@ -163,8 +167,8 @@ delivering alot of more feature to this system and it got a complete overhaul as
 
 #### EventBus
 
-We made the EventBus now completely optional and removed the Symfony Messenger implementation. You can still implement 
-the event bus on your own. We provide an default implementation and also a PSR-14 Adapter.
+We made the EventBus now completely optional but we still provide a default implementation and also a PSR-14 Adapter.
+Also the Symfony Messenger implementation was moved to the [bundle](https://github.com/patchlevel/event-sourcing-bundle).
 
 We encourage to use our Subscription system for most of the use cases.
 
@@ -179,12 +183,12 @@ internally process running on this table then your can replicate the behaviour w
 
 namespace App\Share\Infrastructure\EventSourcing;
 
-use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 
-#[Projector('outbox', runMode: RunMode::FromNow)]
+#[Processor('outbox')]
 class OutboxProcessor
 {
     public function __construct(
@@ -207,6 +211,17 @@ is now internally using the `Subscription` systems to deliver this feature.
 
 ### Store
 
+#### Multi-Table Store
+
+We removed the `MultiTableStore` without any replacement. We did this because it does not bring any benefit for the user 
+besides some more confidence due to be a little more similar to the "standard" ORM based databases. For the migration 
+please have a look 
+[here to migrate from the MultiTableStore to the SingleTableStore](./migrate-multi-table-store-to-single-table-store.md).
+For more convenience and overview we will provide [a bundle](https://github.com/patchlevel/event-sourcing-admin-bundle) 
+which will visualize all aspects of the event sourced application.
+
+#### Misc
+
 `TransactionalStore` was removed and got merged with `Store`. So now every `Store` needs a transactional capability.
 
 ### Pipeline
@@ -219,14 +234,14 @@ The `Pipeline` was also removed in favor of the `Subscription` system. You can a
 
 namespace App\Share\Infrastructure\EventSourcing;
 
-use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Message\Translator\Translator;
 use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Store\Store;
 
-#[Projector('pipeline', runMode: RunMode::FromNow)]
+#[Processor('pipeline')]
 class PipelineProcessor
 {
     public function __construct(
@@ -245,14 +260,44 @@ class PipelineProcessor
 }
 ```
 
+### Message
+
+The `Message` class was moved into an own namespace and some changes where made to decouple it from the EventBus.
+
+#### Headers
+
+We changed the interface for the Headers. Instead of just passing a pair of key value into an array we now accept 
+classes for that case. This classes can be marked as Headers with an Attribute `#[Header]`.
+
+Before:
+```php
+use Patchlevel\EventSourcing\Message\Message;
+
+$message = Message::create($event);
+$message = $message->customHeader('key', 'value');
+```
+
+After:
+```php
+use Patchlevel\EventSourcing\Attribute\Header;
+use Patchlevel\EventSourcing\Message\Message;
+
+$message = Message::create($event);
+$message = $message->header(new CustomHeader('value'));
+
+#[Header('key')]
+class CustomHeader
+{
+    public function __construct(
+        readonly public string $value
+    ) {}
+}
+```
+
 ### Schema
 
 
 ### Projection
-
-
-
-### EventBus
 
 
 ### Snapshot
