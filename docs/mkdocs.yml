@@ -10,7 +10,7 @@ docs_dir: pages
 extra:
   meta:
     title: Event Sourcing
-    description: A lightweight but also all-inclusive event sourcing library with a focus on developer experience.
+    description: An event sourcing library, complete with all the essential features, powered by the reliable Doctrine ecosystem and focused on developer experience.
     image: img/patchlevel-banner.png
   social:
     - icon: fontawesome/brands/github
@@ -26,23 +26,26 @@ extra_css:
 theme:
   name: material
   custom_dir: overrides
+  logo: assets/logo.png
+  favicon: assets/favicon.png
   features:
     - navigation.sections
     - navigation.top
     - navigation.indexes
+    - navigation.footer
     - content.code.annotate
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: blue
-      accent: blue
+      primary: black
+      accent: light blue
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: blue
-      accent: blue
+      primary: black
+      accent: light blue
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
