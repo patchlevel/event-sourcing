@@ -90,7 +90,7 @@ final class ProfileTest extends TestCase
 ```
 !!! note
 
-    You can find out more about the clock [here](clock).
+    You can find out more about the clock [here](clock.md).
     
 !!! tip
 

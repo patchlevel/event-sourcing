@@ -68,7 +68,7 @@ With the help of the `SchemaDirector`, the database structure can be created, up
     
 !!! tip
 
-    You can also use doctrine [migration](migration.md) to create and keep your schema in sync.
+    You can also use doctrine migration to create and keep your schema in sync.
     
 ### Schema Director
 

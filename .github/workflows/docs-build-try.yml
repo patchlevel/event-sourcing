@@ -1,0 +1,29 @@
+name: Try build docs
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "renovate/*"
+
+jobs:
+  build-try:
+    name: Deploy docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Build docs
+        working-directory: docs/
+        run: |
+          mkdocs build --strict
