@@ -78,10 +78,6 @@ final class ProfileProjector
     MySQL and MariaDB don't support transactions for DDL statements.
     So you must use a different database connection for your subscriptions.
     
-!!! note
-
-    More about the projector and projections can be found [here](projection.md).
-    
 !!! tip
 
     Add a version as suffix to the subscriber id

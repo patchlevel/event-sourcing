@@ -68,7 +68,7 @@ $repository = $repositoryManager->get(Profile::class);
 ```
 !!! note
 
-    You can find out more about repository [here](repository).
+    You can find out more about repository [here](repository.md).
     
 ## Create own decorator
 
