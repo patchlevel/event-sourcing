@@ -34,18 +34,19 @@ theme:
     - navigation.indexes
     - navigation.footer
     - content.code.annotate
+    - content.code.copy
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: black
-      accent: light blue
+      accent: blue
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: black
-      accent: light blue
+      accent: blue
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -63,7 +64,6 @@ markdown_extensions:
   - pymdownx.snippets:
       auto_append:
         - docs/includes/links.md
-  - pymdownx.superfences
   - admonition
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
