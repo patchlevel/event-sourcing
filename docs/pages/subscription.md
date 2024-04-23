@@ -681,7 +681,7 @@ $catchupSubscriptionEngine = new CatchUpSubscriptionEngine($subscriptionEngine);
 
     You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
     
-### Throw by error Subscription Engine
+### Throw on error Subscription Engine
 
 This is another decorator for the subscription engine. It throws an exception if a subscription is in error state.
 This is useful for testing or development to get directly feedback if something is wrong.
@@ -691,12 +691,49 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 
 /** @var SubscriptionEngine $subscriptionStore */
-$throwByErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscriptionEngine);
+$throwOnErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscriptionEngine);
 ```
 !!! warning
 
     This is only for testing or development. Don't use it in production.
     The subscription engine has an build in retry strategy to retry subscriptions that have failed.
+    
+### Run Subscription Engine after save
+
+You can trigger the subscription engine after calling the `save` method on the repository.
+This means that a worker to run the subscriptions are not needed.
+
+```php
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
+
+/**
+ * @var SubscriptionEngine $subscriptionEngine
+ * @var RepositoryManager $defaultRepositoryManager
+ */
+$eventBus = new RunSubscriptionEngineRepositoryManager(
+    $defaultRepositoryManager,
+    $subscriptionEngine,
+    ['id1', 'id2'], // filter subscribers by id
+    ['group1', 'group2'], // filter subscribers by group
+    100, // limit the number of messages
+);
+```
+!!! danger
+
+    By using this, you can't wrap the repository in a transaction.
+    A rollback is not supported and can break the subscription engine.
+    Internally, the events are saved in a transaction to ensure data consistency.
+    
+!!! note
+
+    More about repository manager and repository can be found [here](./repository.md).
+    
+!!! tip
+
+    You can perfectly use it in development or testing.
+    Especially in combination with the `CatchUpSubscriptionEngine` and `ThrowOnErrorSubscriptionEngine` decorators.
     
 ## Usage
 

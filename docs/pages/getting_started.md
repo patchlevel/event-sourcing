@@ -275,6 +275,7 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 
@@ -308,9 +309,12 @@ $engine = new DefaultSubscriptionEngine(
     $subscriberRepository,
 );
 
-$repositoryManager = new DefaultRepositoryManager(
-    $aggregateRegistry,
-    $eventStore,
+$repositoryManager = new RunSubscriptionEngineRepositoryManager(
+    new DefaultRepositoryManager(
+        $aggregateRegistry,
+        $eventStore,
+    ),
+    $engine,
 );
 
 $hotelRepository = $repositoryManager->get(Hotel::class);
@@ -361,7 +365,6 @@ We are now ready to use the Event Sourcing System. We can load, change and save 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Repository\Repository;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 
 $hotel1 = Hotel::create(Uuid::generate(), 'HOTEL');
 $hotel1->checkIn('David');
@@ -375,15 +378,8 @@ $hotel2 = $hotelRepository->load(Uuid::fromString('d0d0d0d0-d0d0-d0d0-d0d0-d0d0d
 $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 
-/** @var SubscriptionEngine $engine */
-$engine->run();
-
 $hotels = $hotelProjection->getHotels();
 ```
-!!! warning
-
-    You need to run the subscription engine to update the projections and execute the processors.
-    
 !!! note
 
     You can also use other forms of IDs such as uuid version 6 or a custom format. 

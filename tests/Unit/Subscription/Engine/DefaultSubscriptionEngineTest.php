@@ -15,7 +15,9 @@ use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\AlreadyProcessing;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -816,6 +818,123 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals($message1, $subscriber->message);
     }
 
+    public function testBootAlreadyProcessing(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public SubscriptionEngine|null $engine = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(): void
+            {
+                $this->engine?->boot();
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $subscriber->engine = $engine;
+
+        $result = $engine->boot();
+
+        self::assertCount(1, $result->errors);
+        self::assertInstanceOf(AlreadyProcessing::class, $result->errors[0]->throwable);
+    }
+
+    public function testBootTwice(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+        $streamableStore->load($this->criteria(1))->willReturn(new ArrayStream([]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot(limit: 1);
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+                1,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+
+        self::assertSame($message, $subscriber->message);
+
+        $subscriptionStore->reset();
+        $result = $engine->boot();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+                1,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+    }
+
     public function testRunDiscoverNewSubscribers(): void
     {
         $subscriptionId = 'test';
@@ -1239,7 +1358,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertSame([$message1, $message2], $subscriber->messages);
     }
 
-    public function testRunnningWithOnlyOnce(): void
+    public function testRunningWithOnlyOnce(): void
     {
         $subscriptionId = 'test';
         $subscriber = new #[Subscriber('test', RunMode::Once)]
@@ -1298,6 +1417,115 @@ final class DefaultSubscriptionEngineTest extends TestCase
         ], $subscriptionStore->updatedSubscriptions);
 
         self::assertEquals($message1, $subscriber->message);
+    }
+
+    public function testRunningAlreadyProcessing(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public SubscriptionEngine|null $engine = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(): void
+            {
+                $this->engine?->run();
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $subscriber->engine = $engine;
+
+        $result = $engine->run();
+
+        self::assertCount(1, $result->errors);
+        self::assertInstanceOf(AlreadyProcessing::class, $result->errors[0]->throwable);
+    }
+
+    public function testRunningTwice(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+        $streamableStore->load($this->criteria(1))->willReturn(new ArrayStream([]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->run(limit: 1);
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+                1,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+
+        self::assertSame($message, $subscriber->message);
+
+        $subscriptionStore->reset();
+        $result = $engine->run();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
     }
 
     public function testTeardownDiscoverNewSubscribers(): void

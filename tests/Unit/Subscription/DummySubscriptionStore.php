@@ -56,4 +56,11 @@ final class DummySubscriptionStore implements SubscriptionStore
         $this->parentStore->remove($subscription);
         $this->removedSubscriptions[] = clone $subscription;
     }
+
+    public function reset(): void
+    {
+        $this->addedSubscriptions = [];
+        $this->updatedSubscriptions = [];
+        $this->removedSubscriptions = [];
+    }
 }
