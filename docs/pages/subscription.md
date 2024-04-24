@@ -506,7 +506,7 @@ When the process is finished, the subscription is set to active or finished.
 The active status describes the subscriptions currently being actively managed by the subscription engine.
 These subscriptions have a subscriber, follow the event stream and should be up-to-date.
 
-## Paused
+### Paused
 
 A subscription can manually be paused. It will then no longer be updated by the subscription engine.
 This can be useful if you want to pause a subscription for a certain period of time.
