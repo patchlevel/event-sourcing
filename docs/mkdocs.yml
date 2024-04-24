@@ -99,6 +99,11 @@ nav:
     - Time / Clock: clock.md
     - Testing: testing.md
     - CLI: cli.md
+  - Links:
+    - Symfony Bundle: https://patchlevel.github.io/event-sourcing-bundle-docs/latest/
+    - Admin Bundle: https://github.com/patchlevel/event-sourcing-admin-bundle
+    - Psalm Plugin: https://github.com/patchlevel/event-sourcing-psalm-plugin
+    - Hydrator: https://github.com/patchlevel/hydrator
 
 validation:
   omitted_files: warn
