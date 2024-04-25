@@ -405,9 +405,7 @@ Our own interface was removed, we are using the PSR-20 interface instead.
 - [BC] The parameter $snapshotBatch of Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata#__construct() changed from int|null to a non-contravariant Patchlevel\EventSourcing\Metadata\AggregateRoot\Snapshot|null
 - [BC] Default parameter value for parameter $properties of Patchlevel\EventSourcing\Metadata\Event\EventMetadata#__construct() changed from array (
   ) to false
-- [BC] Default parameter value for parameter $splitStream of Patchlevel\EventSourcing\Metadata\Event\EventMetadata#__construct() changed from false to NULL
 - [BC] The parameter $properties of Patchlevel\EventSourcing\Metadata\Event\EventMetadata#__construct() changed from array to a non-contravariant bool
-- [BC] The parameter $splitStream of Patchlevel\EventSourcing\Metadata\Event\EventMetadata#__construct() changed from bool to a non-contravariant string|null
 - [BC] The number of required arguments for Exception#__construct() increased from 0 to 1
 - [BC] The parameter $aggregateId of Patchlevel\EventSourcing\Repository\SnapshotRebuildFailed#__construct() changed from string to a non-contravariant Patchlevel\EventSourcing\Aggregate\AggregateRootId
 - [BC] The parameter $eventBus of Patchlevel\EventSourcing\Repository\DefaultRepository#__construct() changed from Patchlevel\EventSourcing\EventBus\EventBus to a non-contravariant Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata
@@ -427,9 +425,9 @@ Our own interface was removed, we are using the PSR-20 interface instead.
 - [BC] Default parameter value for parameter $fromPlayhead of Patchlevel\EventSourcing\Store\Store#load() changed from 0 to NULL
 - [BC] The return type of Patchlevel\EventSourcing\Store\Store#load() changed from array to the non-covariant Patchlevel\EventSourcing\Store\Stream
 - [BC] The return type of Patchlevel\EventSourcing\Store\Store#load() changed from array to Patchlevel\EventSourcing\Store\Stream
-- [BC] The parameter $aggregate of Patchlevel\EventSourcing\Store\Store#load() changed from string to a non-contravariant Patchlevel\EventSourcing\Store\Criteria|null
+- [BC] The parameter $aggregate of Patchlevel\EventSourcing\Store\Store#load() changed from string to a non-contravariant Patchlevel\EventSourcing\Store\Criteria\Criteria|null
 - [BC] The parameter $id of Patchlevel\EventSourcing\Store\Store#load() changed from string to a non-contravariant int|null
-- [BC] The parameter $aggregate of Patchlevel\EventSourcing\Store\Store#load() changed from string to Patchlevel\EventSourcing\Store\Criteria|null
+- [BC] The parameter $aggregate of Patchlevel\EventSourcing\Store\Store#load() changed from string to Patchlevel\EventSourcing\Store\Criteria\Criteria|null
 - [BC] The parameter $id of Patchlevel\EventSourcing\Store\Store#load() changed from string to int|null
 - [BC] The parameter $fromPlayhead of Patchlevel\EventSourcing\Store\Store#load() changed from int to int|null
 - [BC] Parameter 0 of Patchlevel\EventSourcing\Store\Store#load() changed name from aggregate to criteria
