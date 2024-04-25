@@ -54,6 +54,7 @@ final class SubscriptionBootCommand extends SubscriptionCommand
                 null,
                 InputOption::VALUE_REQUIRED,
                 'How much time should elapse before the next job is executed in milliseconds',
+                0,
             )
             ->addOption(
                 'setup',
