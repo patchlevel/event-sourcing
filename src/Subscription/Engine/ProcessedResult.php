@@ -9,7 +9,7 @@ final class ProcessedResult
     /** @param list<Error> $errors */
     public function __construct(
         public readonly int $processedMessages,
-        public readonly bool $streamFinished = false,
+        public readonly bool $finished = false,
         public readonly array $errors = [],
     ) {
     }

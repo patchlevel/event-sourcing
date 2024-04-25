@@ -89,18 +89,18 @@ final class CatchUpSubscriptionEngine implements SubscriptionEngine
     private function mergeResult(ProcessedResult ...$results): ProcessedResult
     {
         $processedMessages = 0;
-        $streamFinished = false;
+        $finished = false;
         $errors = [];
 
         foreach ($results as $result) {
             $processedMessages += $result->processedMessages;
-            $streamFinished = $result->streamFinished;
+            $finished = $result->finished;
             $errors[] = $result->errors;
         }
 
         return new ProcessedResult(
             $processedMessages,
-            $streamFinished,
+            $finished,
             array_merge(...$errors),
         );
     }
