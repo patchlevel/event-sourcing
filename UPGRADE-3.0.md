@@ -296,12 +296,88 @@ class CustomHeader
 
 ### Schema
 
+Renamed `*SchemaConfigurator` to `*DoctrineSchemaConfigurator`
 
-### Projection
+### Projection & Projectionist
 
+The `Projectionist` system was overhauled and renamed to `Subscription`. Also, it is now the  default for creating 
+`Projections` and `Processors`.
 
-### Snapshot
+Some Attributes where renamed:
+* `#[Handle]` was renamed to `#[Subscribe]`
+* `#[Create]` was renamed to `#[Setup]`
+* `#[Drop]` was renamed to `#[Teardown]`
 
+`VersionedProjector` with the method `targetProjection` where replaced by the Attribute `#[Projector]`. The version is 
+now part of the name, so if you want to create a new projection version you will need to update the name from e.g. 
+`#[Projector('projection.user_registered']` to `#[Projector('projection.user_registered_1']`.
+
+The logic of the method `Projectionist::boot()` was split up into 2 methods. These are `Projectionist::setup()` and 
+`Projectionist::boot()`.
+
+Some classes where also renamed:
+* `DefaultProjectionist` was renamed to `DefaultSubscriptionEngine`
+* `DoctrineStore` was renamed to `DoctrineSubscriptionStore`
+* `ProjectorRepository` was renamed to `MetadataSubscriberAccessorRepository`
+
+And also the CLI commands where renamed accordingly:
+* `event-sourcing:projectionist:boot` was renamed to `event-sourcing:subscription:boot`
+* `event-sourcing:projectionist:run` was renamed to `event-sourcing:subscription:run`
+* `event-sourcing:projectionist:pause` was renamed to `event-sourcing:subscription:pause`
+* `event-sourcing:projectionist:reactivate` was renamed to `event-sourcing:subscription:reactivate`
+* `event-sourcing:projectionist:remove` was renamed to `event-sourcing:subscription:remove`
+* `event-sourcing:projectionist:status` was renamed to `event-sourcing:subscription:status`
+* `event-sourcing:projectionist:teardown` was renamed to `event-sourcing:subscription:teardown`
+
+And now there is one new cli command to reflect the new `setup` method: `event-sourcing:subscription:setup`
+
+### Attributes
+
+All Attributes are now using `public readonly` properties instead of using methods to retrieve the data.
+
+Before:
+```php
+#[Attribute(Attribute::TARGET_CLASS)]
+final class Snapshot
+{
+    public function __construct(
+        private string $name,
+        private int|null $batch = null,
+        private string|null $version = null,
+    ) {
+    }
+    
+    public function name(): string
+    {
+        return $this->name;    
+    }
+    
+    public function batch(): int|null
+    {
+        return $this->batch;    
+    }
+    
+    public function version(): string|null
+    {
+        return $this->version;    
+    }
+}
+```
+
+After:
+```php
+#[Attribute(Attribute::TARGET_CLASS)]
+final class Snapshot
+{
+    public function __construct(
+        public readonly string $name,
+        public readonly int|null $batch = null,
+        public readonly string|null $version = null,
+    ) {
+    }
+}
+
+```
 
 ### Clock
 
