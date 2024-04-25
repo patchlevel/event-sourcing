@@ -367,7 +367,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot();
 
         self::assertEquals(0, $result->processedMessages);
-        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([], $store->addedSubscriptions);
@@ -396,7 +396,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot();
 
         self::assertEquals(0, $result->processedMessages);
-        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -449,7 +449,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot();
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->addedSubscriptions);
@@ -515,7 +515,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot();
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -581,7 +581,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot(new SubscriptionEngineCriteria(), 1);
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals(false, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->addedSubscriptions);
@@ -656,7 +656,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot();
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -734,7 +734,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot();
 
         self::assertEquals(2, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -795,7 +795,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot();
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -900,7 +900,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot(limit: 1);
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals(false, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->addedSubscriptions);
@@ -921,7 +921,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->boot();
 
         self::assertEquals(0, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -955,7 +955,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run();
 
         self::assertEquals(0, $result->processedMessages);
-        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -1006,7 +1006,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run();
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -1064,7 +1064,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run(new SubscriptionEngineCriteria(), 1);
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals(false, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -1137,7 +1137,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run();
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -1202,7 +1202,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run();
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -1256,7 +1256,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run();
 
         self::assertEquals(0, $result->processedMessages);
-        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -1296,7 +1296,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run();
 
         self::assertEquals(0, $result->processedMessages);
-        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
@@ -1342,7 +1342,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run();
 
         self::assertEquals(2, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -1396,7 +1396,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run();
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
@@ -1501,7 +1501,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run(limit: 1);
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(false, $result->streamFinished);
+        self::assertEquals(false, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->addedSubscriptions);
@@ -1522,7 +1522,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $result = $engine->run();
 
         self::assertEquals(0, $result->processedMessages);
-        self::assertEquals(true, $result->streamFinished);
+        self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);

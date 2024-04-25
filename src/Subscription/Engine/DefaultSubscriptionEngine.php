@@ -168,7 +168,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     if (count($subscriptions) === 0) {
                         $this->logger?->info('Subscription Engine: No subscriptions in booting status, finish booting.');
 
-                        return new ProcessedResult(0);
+                        return new ProcessedResult(0, true);
                     }
 
                     /** @var list<Error> $errors */
@@ -334,7 +334,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     if (count($subscriptions) === 0) {
                         $this->logger?->info('Subscription Engine: No subscriptions to process, finish processing.');
 
-                        return new ProcessedResult(0);
+                        return new ProcessedResult(0, true);
                     }
 
                     /** @var list<Error> $errors */

@@ -86,7 +86,7 @@ final class SubscriptionBootCommand extends SubscriptionCommand
             function (Closure $stop) use ($criteria, $messageLimit, &$finished): void {
                 $result = $this->engine->boot($criteria, $messageLimit);
 
-                if (!$result->streamFinished) {
+                if (!$result->finished) {
                     return;
                 }
 
