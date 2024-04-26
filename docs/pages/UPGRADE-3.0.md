@@ -223,6 +223,7 @@ which will visualize all aspects of the event sourced application.
 #### Misc
 
 `TransactionalStore` was removed and got merged with `Store`. So now every `Store` needs a transactional capability.
+`SplitEventstreamStore` was removed and is now part of the internal logic of the `Store`.
 
 ### Pipeline
 
