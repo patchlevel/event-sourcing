@@ -7,31 +7,32 @@ the [full BC-Break list](#full-bc-break-list)
 
 ### Outsourced packages
 
-These packages lived in this library before and are now outsourced to be more flexible in releasing them on their own. 
-This can be done because the domain of this packages are not bound to event sourcing itself and instead provide 
+These packages lived in this library before and are now outsourced to be more flexible in releasing them on their own.
+This can be done because the domain of this packages are not bound to event sourcing itself and instead provide
 functionality which can be used in other projects as well.
 
-1. The `Worker` is now an extra package [patchlevel/worker](https://github.com/patchlevel/worker). 
+1. The `Worker` is now an extra package [patchlevel/worker](https://github.com/patchlevel/worker).
 2. The `Hydrator` is now an extra package [patchlevel/hydrator](https://github.com/patchlevel/hydrator).
 
 ### New packages
 
-We will also introduce [a new bundle](https://github.com/patchlevel/event-sourcing-admin-bundle) coming with version 3. 
-This bundle aims to create an even better developer experience by providing a nice view of all the aspects of the event 
-source application. 
+We will also introduce [a new bundle](https://github.com/patchlevel/event-sourcing-admin-bundle) coming with version 3.
+This bundle aims to create an even better developer experience by providing a nice view of all the aspects of the event
+source application.
 
 ### Aggregates
 
 #### Aggregate Root
 
-The `AggregateRoot` base class is now an interface. This enables users to create their own implementation and to be a 
+The `AggregateRoot` base class is now an interface. This enables users to create their own implementation and to be a
 little more decoupled from our library. We are still providing implementations for an AggregateRoot which can be used
-by using a trait. Right now there are two implementations available `AggregateRootBehaviour` and 
-`AggregateRootAttributeBehaviour`. And for convinience there is also a new abstract class which you can extend from 
-`BasicAggregateRoot` with this class the upgrade should work seemless. Under the hood it is implementing the new 
+by using a trait. Right now there are two implementations available `AggregateRootBehaviour` and
+`AggregateRootAttributeBehaviour`. And for convinience there is also a new abstract class which you can extend from
+`BasicAggregateRoot` with this class the upgrade should work seemless. Under the hood it is implementing the new
 interface and using the `AggregateRootAttributeBehaviour`.
 
 Before:
+
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
@@ -42,8 +43,8 @@ final class Profile extends AggregateRoot
     // ...
 }
 ```
-
 After (Using new basic class):
+
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
@@ -54,12 +55,10 @@ final class Profile extends BasicAggregateRoot
     // ...
 }
 ```
-
 After (Using interface and trait):
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRootAttributeBehaviour;
-use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 
 #[Aggregate('profile')]
@@ -69,19 +68,19 @@ final class Profile implements AggregateRoot
     // ...
 }
 ```
-
 #### Aggregate Root ID
 
-We introduced the `#[Id]` Attribute which is used to mark the aggregate root id. This is again a step for more 
-decoupling and enables you to freely design your Aggregates API. The implementation of `AggregateRoot::aggregateRootId` 
-is not needed anymore. 
+We introduced the `#[Id]` Attribute which is used to mark the aggregate root id. This is again a step for more
+decoupling and enables you to freely design your Aggregates API. The implementation of `AggregateRoot::aggregateRootId`
+is not needed anymore.
 
-The aggregate root id now needs to implement the `AggregateRootId` interface instead of just being a string. This 
-enabled us to have more types safety internally. Regarding that we provide a `Uuid` implementation which is using 
-`ramsey/uuid` under the hood and a `CustomId` implementation which is expecting a `string` which could be used if you 
+The aggregate root id now needs to implement the `AggregateRootId` interface instead of just being a string. This
+enabled us to have more types safety internally. Regarding that we provide a `Uuid` implementation which is using
+`ramsey/uuid` under the hood and a `CustomId` implementation which is expecting a `string` which could be used if you
 are not using uuids. You can also provide your own implementation and use that.
 
 Before:
+
 ```php
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
@@ -97,7 +96,6 @@ final class Profile extends AggregateRoot
     }
 }
 
-// ProfileId.php
 final class ProfileId
 {
     private function __construct(private string $id)
@@ -115,9 +113,10 @@ final class ProfileId
     }
 }
 ```
-
 After:
+
 ```php
+use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
@@ -129,12 +128,9 @@ final class Profile extends BasicAggregateRoot
     private ProfileId $id;
 }
 
-// ProfileId.php
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-
 final class ProfileId implements AggregateRootId
 {
-    private function __construct(private string $id) 
+    private function __construct(private string $id)
     {
     }
 
@@ -149,20 +145,20 @@ final class ProfileId implements AggregateRootId
     }
 }
 ```
-
 ### Events
 
 #### Normalizer
 
-The Attribute `#[Normalize]` was removed, use the Normalizer itself instead e.g. `#[IdNormalizer]`. Most of the 
+The Attribute `#[Normalize]` was removed, use the Normalizer itself instead e.g. `#[IdNormalizer]`. Most of the
 Normalizers are now located in [patchlevel/hydrator](https://github.com/patchlevel/hydrator).
+Your own normalizer needs to add the `#[Attribute(Attribute::TARGET_PROPERTY)]` attribute to the class.
 
 #### Subscription
 
-In 2.1.0 we introduced the `Projectionist` and after that the continued on working on this system. With 3.0 we are 
-delivering alot of more feature to this system and it got a complete overhaul as an renaming. It's now called 
-`Subscription`. With this we are pushing our event based system mostly complete asynchronous. We are still offering a 
-"sync mode" mostly for testing purposes. For more information about this have a look in our 
+In 2.1.0 we introduced the `Projectionist` and after that the continued on working on this system. With 3.0 we are
+delivering alot of more feature to this system and it got a complete overhaul as an renaming. It's now called
+`Subscription`. With this we are pushing our event based system mostly complete asynchronous. We are still offering a
+"sync mode" mostly for testing purposes. For more information about this have a look in our
 [docs](https://patchlevel.github.io/event-sourcing-docs/3.0/subscription/).
 
 #### EventBus
@@ -174,19 +170,14 @@ We encourage to use our Subscription system for most of the use cases.
 
 #### Outbox
 
-Our outbox implementation relied on the eventbus and was a solution to the eventual consistency problem. We think that 
-we have now a better solution for that with our Subscription feature. If you still want an outbox table because you have 
+Our outbox implementation relied on the eventbus and was a solution to the eventual consistency problem. We think that
+we have now a better solution for that with our Subscription feature. If you still want an outbox table because you have
 internally process running on this table then your can replicate the behaviour with an `#[Projector]`.
 
 ```php
-<?php
-
-namespace App\Share\Infrastructure\EventSourcing;
-
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 
 #[Processor('outbox')]
 class OutboxProcessor
@@ -203,7 +194,6 @@ class OutboxProcessor
     }
 }
 ```
-
 #### WatchServer
 
 The `WatchServer` is removed, but you can still watch which events where published via the `WatchCommand` as before. It
@@ -213,11 +203,11 @@ is now internally using the `Subscription` systems to deliver this feature.
 
 #### Multi-Table Store
 
-We removed the `MultiTableStore` without any replacement. We did this because it does not bring any benefit for the user 
-besides some more confidence due to be a little more similar to the "standard" ORM based databases. For the migration 
-please have a look 
+We removed the `MultiTableStore` without any replacement. We did this because it does not bring any benefit for the user
+besides some more confidence due to be a little more similar to the "standard" ORM based databases. For the migration
+please have a look
 [here to migrate from the MultiTableStore to the SingleTableStore](https://patchlevel.github.io/event-sourcing-docs/2.3/migrate-multi-table-store-to-single-table-store/).
-For more convenience and overview we will provide [a bundle](https://github.com/patchlevel/event-sourcing-admin-bundle) 
+For more convenience and overview we will provide [a bundle](https://github.com/patchlevel/event-sourcing-admin-bundle)
 which will visualize all aspects of the event sourced application.
 
 #### Misc
@@ -227,26 +217,21 @@ which will visualize all aspects of the event sourced application.
 
 ### Pipeline
 
-The `Pipeline` was also removed in favor of the `Subscription` system. You can achieve the same behaviour with an 
+The `Pipeline` was also removed in favor of the `Subscription` system. You can achieve the same behaviour with an
 `Projector` using the `Middlewares` which are now called `MessageTranslators`.
 
 ```php
-<?php
-
-namespace App\Share\Infrastructure\EventSourcing;
-
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Message;
 use Patchlevel\EventSourcing\Message\Translator\Translator;
-use Patchlevel\EventSourcing\Projection\Projection\RunMode;
 use Patchlevel\EventSourcing\Store\Store;
 
 #[Processor('pipeline')]
 class PipelineProcessor
 {
     public function __construct(
-        private readonly Store $store, # new eventstore
+        private readonly Store $store, // new eventstore
         private readonly Translator $translator,
     ) {
     }
@@ -255,30 +240,30 @@ class PipelineProcessor
     public function publish(Message $message): void
     {
         $messages = ($this->translator)($message);
-        
+
         $this->store->save(...$messages);
     }
 }
 ```
-
 ### Message
 
 The `Message` class was moved into an own namespace and some changes where made to decouple it from the EventBus.
 
 #### Headers
 
-We changed the interface for the Headers. Instead of just passing a pair of key value into an array we now accept 
+We changed the interface for the Headers. Instead of just passing a pair of key value into an array we now accept
 classes for that case. This classes can be marked as Headers with an Attribute `#[Header]`.
 
 Before:
+
 ```php
 use Patchlevel\EventSourcing\Message\Message;
 
 $message = Message::create($event);
 $message = $message->customHeader('key', 'value');
 ```
-
 After:
+
 ```php
 use Patchlevel\EventSourcing\Attribute\Header;
 use Patchlevel\EventSourcing\Message\Message;
@@ -290,38 +275,41 @@ $message = $message->header(new CustomHeader('value'));
 class CustomHeader
 {
     public function __construct(
-        readonly public string $value
-    ) {}
+        public readonly string $value,
+    ) {
+    }
 }
 ```
-
 ### Schema
 
 Renamed `*SchemaConfigurator` to `*DoctrineSchemaConfigurator`
 
 ### Projection & Projectionist
 
-The `Projectionist` system was overhauled and renamed to `Subscription`. Also, it is now the  default for creating 
+The `Projectionist` system was overhauled and renamed to `Subscription`. Also, it is now the  default for creating
 `Projections` and `Processors`.
 
 Some Attributes where renamed:
+
 * `#[Handle]` was renamed to `#[Subscribe]`
 * `#[Create]` was renamed to `#[Setup]`
 * `#[Drop]` was renamed to `#[Teardown]`
 
-`VersionedProjector` with the method `targetProjection` where replaced by the Attribute `#[Projector]`. The version is 
-now part of the name, so if you want to create a new projection version you will need to update the name from e.g. 
+`VersionedProjector` with the method `targetProjection` where replaced by the Attribute `#[Projector]`. The version is
+now part of the name, so if you want to create a new projection version you will need to update the name from e.g.
 `#[Projector('projection.user_registered']` to `#[Projector('projection.user_registered_1']`.
 
-The logic of the method `Projectionist::boot()` was split up into 2 methods. These are `Projectionist::setup()` and 
+The logic of the method `Projectionist::boot()` was split up into 2 methods. These are `Projectionist::setup()` and
 `Projectionist::boot()`.
 
 Some classes where also renamed:
+
 * `DefaultProjectionist` was renamed to `DefaultSubscriptionEngine`
 * `DoctrineStore` was renamed to `DoctrineSubscriptionStore`
 * `ProjectorRepository` was renamed to `MetadataSubscriberAccessorRepository`
 
 And also the CLI commands where renamed accordingly:
+
 * `event-sourcing:projectionist:boot` was renamed to `event-sourcing:subscription:boot`
 * `event-sourcing:projectionist:run` was renamed to `event-sourcing:subscription:run`
 * `event-sourcing:projectionist:pause` was renamed to `event-sourcing:subscription:pause`
@@ -337,6 +325,7 @@ And now there is one new cli command to reflect the new `setup` method: `event-s
 All Attributes are now using `public readonly` properties instead of using methods to retrieve the data.
 
 Before:
+
 ```php
 #[Attribute(Attribute::TARGET_CLASS)]
 final class Snapshot
@@ -347,25 +336,25 @@ final class Snapshot
         private string|null $version = null,
     ) {
     }
-    
+
     public function name(): string
     {
-        return $this->name;    
+        return $this->name;
     }
-    
+
     public function batch(): int|null
     {
-        return $this->batch;    
+        return $this->batch;
     }
-    
+
     public function version(): string|null
     {
-        return $this->version;    
+        return $this->version;
     }
 }
 ```
-
 After:
+
 ```php
 #[Attribute(Attribute::TARGET_CLASS)]
 final class Snapshot
@@ -377,9 +366,7 @@ final class Snapshot
     ) {
     }
 }
-
 ```
-
 ### Clock
 
 Our own interface was removed, we are using the PSR-20 interface instead.
@@ -387,10 +374,12 @@ Our own interface was removed, we are using the PSR-20 interface instead.
 ## Full BC-Break list
 
 # Added
+
 - [BC] Method count() was added to interface Patchlevel\EventSourcing\Store\Store
 - [BC] Method transactional() was added to interface Patchlevel\EventSourcing\Store\Store
 
 # Changed
+
 - [BC] Class Patchlevel\EventSourcing\Aggregate\AggregateRoot became an interface
 - [BC] The return type of Patchlevel\EventSourcing\Aggregate\AggregateRoot#aggregateRootId() changed from string to the non-covariant Patchlevel\EventSourcing\Aggregate\AggregateRootId
 - [BC] The return type of Patchlevel\EventSourcing\Aggregate\AggregateRoot#aggregateRootId() changed from string to Patchlevel\EventSourcing\Aggregate\AggregateRootId
@@ -461,6 +450,7 @@ Our own interface was removed, we are using the PSR-20 interface instead.
 - [BC] The parameter $id of Patchlevel\EventSourcing\Snapshot\SnapshotNotFound#__construct() changed from string to a non-contravariant Patchlevel\EventSourcing\Aggregate\AggregateRootId
 
 # Removed
+
 - [BC] Class Patchlevel\EventSourcing\WatchServer\SendingFailed has been deleted
 - [BC] Class Patchlevel\EventSourcing\WatchServer\SocketWatchServer has been deleted
 - [BC] Class Patchlevel\EventSourcing\WatchServer\WatchServer has been deleted
@@ -521,8 +511,8 @@ Our own interface was removed, we are using the PSR-20 interface instead.
 - [BC] Class Patchlevel\EventSourcing\Store\DoctrineStore has been deleted
 - [BC] Class Patchlevel\EventSourcing\Store\TransactionStore has been deleted
 - [BC] Class Patchlevel\EventSourcing\Clock\Clock has been deleted
-- [BC] These ancestors of Patchlevel\EventSourcing\Clock\FrozenClock have been removed: ["Patchlevel\\EventSourcing\\Clock\\Clock"]
-- [BC] These ancestors of Patchlevel\EventSourcing\Clock\SystemClock have been removed: ["Patchlevel\\EventSourcing\\Clock\\Clock"]
+- [BC] These ancestors of Patchlevel\EventSourcing\Clock\FrozenClock have been removed: ["Patchlevel\EventSourcing\Clock\Clock"]
+- [BC] These ancestors of Patchlevel\EventSourcing\Clock\SystemClock have been removed: ["Patchlevel\EventSourcing\Clock\Clock"]
 - [BC] Class Patchlevel\EventSourcing\Schema\ChainSchemaConfigurator has been deleted
 - [BC] Class Patchlevel\EventSourcing\Schema\SchemaManager has been deleted
 - [BC] Class Patchlevel\EventSourcing\Schema\StoreNotSupported has been deleted
