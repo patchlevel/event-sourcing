@@ -15,11 +15,9 @@ use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
-use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
-use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -238,35 +236,31 @@ final class DefaultRepository implements Repository
                 $events,
             );
 
-            $this->store->transactional(function () use ($messages, $aggregate, $aggregateId, $newAggregate): void {
-                try {
-                    $this->store->save(...$messages);
-                } catch (UniqueConstraintViolation) {
-                    if ($newAggregate) {
-                        $this->logger->error(
-                            sprintf(
-                                'Repository: Aggregate "%s" with the id "%s" already exists.',
-                                $aggregate::class,
-                                $aggregateId,
-                            ),
-                        );
-
-                        throw new AggregateAlreadyExists($aggregate::class, $aggregate->aggregateRootId());
-                    }
-
+            try {
+                $this->store->save(...$messages);
+            } catch (UniqueConstraintViolation) {
+                if ($newAggregate) {
                     $this->logger->error(
                         sprintf(
-                            'Repository: Aggregate "%s" with the id "%s" is outdated.',
+                            'Repository: Aggregate "%s" with the id "%s" already exists.',
                             $aggregate::class,
                             $aggregateId,
                         ),
                     );
 
-                    throw new AggregateOutdated($aggregate::class, $aggregate->aggregateRootId());
+                    throw new AggregateAlreadyExists($aggregate::class, $aggregate->aggregateRootId());
                 }
 
-                $this->archive(...$messages);
-            });
+                $this->logger->error(
+                    sprintf(
+                        'Repository: Aggregate "%s" with the id "%s" is outdated.',
+                        $aggregate::class,
+                        $aggregateId,
+                    ),
+                );
+
+                throw new AggregateOutdated($aggregate::class, $aggregate->aggregateRootId());
+            }
 
             $this->aggregateIsValid[$aggregate] = true;
 
@@ -366,43 +360,6 @@ final class DefaultRepository implements Repository
         if (($this->aggregateIsValid[$aggregate] ?? null) === false) {
             throw new AggregateDetached($aggregate::class, $aggregate->aggregateRootId());
         }
-    }
-
-    private function archive(Message ...$messages): void
-    {
-        if (!$this->store instanceof ArchivableStore) {
-            return;
-        }
-
-        $lastMessageWithNewStreamStart = null;
-
-        foreach ($messages as $message) {
-            if (!$message->hasHeader(StreamStartHeader::class)) {
-                continue;
-            }
-
-            $lastMessageWithNewStreamStart = $message;
-        }
-
-        if ($lastMessageWithNewStreamStart === null) {
-            return;
-        }
-
-        $aggregateHeader = $lastMessageWithNewStreamStart->header(AggregateHeader::class);
-        $this->store->archiveMessages(
-            $aggregateHeader->aggregateName,
-            $aggregateHeader->aggregateId,
-            $aggregateHeader->playhead,
-        );
-
-        $this->logger->debug(
-            sprintf(
-                'Repository: Archive messages for aggregate "%s" with the id "%s" until playhead "%d".',
-                $aggregateHeader->aggregateName,
-                $aggregateHeader->aggregateId,
-                $aggregateHeader->playhead,
-            ),
-        );
     }
 
     /** @return Traversable<object> */

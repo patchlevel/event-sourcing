@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 use ArrayIterator;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
@@ -15,7 +14,6 @@ use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\SQL\Builder\DefaultSelectSQLBuilder;
-use Doctrine\DBAL\Statement;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use EmptyIterator;
@@ -27,6 +25,7 @@ use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\MissingDataForStorage;
+use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -67,7 +66,11 @@ final class DoctrineDbalStoreTest extends TestCase
         )->willReturn($result->reveal());
 
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
 
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
         $queryBuilder = new QueryBuilder($connection->reveal());
@@ -113,7 +116,11 @@ final class DoctrineDbalStoreTest extends TestCase
         )->willReturn($result->reveal());
 
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
 
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
         $queryBuilder = new QueryBuilder($connection->reveal());
@@ -164,7 +171,11 @@ final class DoctrineDbalStoreTest extends TestCase
         )->willReturn($result->reveal());
 
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
 
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
         $queryBuilder = new QueryBuilder($connection->reveal());
@@ -212,7 +223,11 @@ final class DoctrineDbalStoreTest extends TestCase
         )->willReturn($result->reveal());
 
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
 
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
         $queryBuilder = new QueryBuilder($connection->reveal());
@@ -275,7 +290,11 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
 
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
         $abstractPlatform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
 
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
@@ -318,7 +337,10 @@ final class DoctrineDbalStoreTest extends TestCase
         self::assertInstanceOf(ProfileCreated::class, $message->event());
         self::assertSame('1', $message->header(AggregateHeader::class)->aggregateId);
         self::assertSame(1, $message->header(AggregateHeader::class)->playhead);
-        self::assertEquals(new DateTimeImmutable('2021-02-17 10:00:00'), $message->header(AggregateHeader::class)->recordedOn);
+        self::assertEquals(
+            new DateTimeImmutable('2021-02-17 10:00:00'),
+            $message->header(AggregateHeader::class)->recordedOn,
+        );
 
         iterator_to_array($stream);
 
@@ -371,7 +393,11 @@ final class DoctrineDbalStoreTest extends TestCase
         )->willReturn($result->reveal());
 
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
         $abstractPlatform->getDateTimeTzFormatString()->shouldBeCalledTimes(2)->willReturn('Y-m-d H:i:s');
 
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
@@ -417,7 +443,10 @@ final class DoctrineDbalStoreTest extends TestCase
         self::assertInstanceOf(ProfileCreated::class, $message->event());
         self::assertSame('1', $message->header(AggregateHeader::class)->aggregateId);
         self::assertSame(1, $message->header(AggregateHeader::class)->playhead);
-        self::assertEquals(new DateTimeImmutable('2021-02-17 10:00:00'), $message->header(AggregateHeader::class)->recordedOn);
+        self::assertEquals(
+            new DateTimeImmutable('2021-02-17 10:00:00'),
+            $message->header(AggregateHeader::class)->recordedOn,
+        );
 
         $stream->next();
         $message = $stream->current();
@@ -429,7 +458,10 @@ final class DoctrineDbalStoreTest extends TestCase
         self::assertInstanceOf(ProfileEmailChanged::class, $message->event());
         self::assertSame('1', $message->header(AggregateHeader::class)->aggregateId);
         self::assertSame(2, $message->header(AggregateHeader::class)->playhead);
-        self::assertEquals(new DateTimeImmutable('2021-02-17 11:00:00'), $message->header(AggregateHeader::class)->recordedOn);
+        self::assertEquals(
+            new DateTimeImmutable('2021-02-17 11:00:00'),
+            $message->header(AggregateHeader::class)->recordedOn,
+        );
     }
 
     public function testTransactional(): void
@@ -475,11 +507,11 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce();
 
-        $driver = $this->prophesize(Driver::class);
-        $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
-
         $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
+        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
         $headersSerializer->serialize([])->willReturn('[]');
@@ -515,11 +547,11 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldNotBeCalled();
 
-        $driver = $this->prophesize(Driver::class);
-        $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
-
         $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
+        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
         $headersSerializer->serialize([])->willReturn('[]');
@@ -592,12 +624,15 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce();
 
-        $driver = $this->prophesize(Driver::class);
-        $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
-
         $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
-        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_email_changed', ''));
+        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
+        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_email_changed',
+            '',
+        ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
         $headersSerializer->serialize([])->willReturn('[]');
@@ -668,11 +703,11 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce()->willThrow(UniqueConstraintViolationException::class);
 
-        $driver = $this->prophesize(Driver::class);
-        $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
-
         $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledTimes(2)->willReturn(new SerializedEvent('profile_created', ''));
+        $eventSerializer->serialize($message1->event())->shouldBeCalledTimes(2)->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
         $headersSerializer->serialize([])->willReturn('[]');
@@ -713,11 +748,11 @@ final class DoctrineDbalStoreTest extends TestCase
         $innerMockedConnection->executeStatement(Argument::any(), Argument::any(), Argument::any())
             ->shouldBeCalledTimes(2);
 
-        $driver = $this->prophesize(Driver::class);
-        $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
-
         $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($messages[0]->event())->shouldBeCalledTimes(10000)->willReturn(new SerializedEvent('profile_email_changed', ''));
+        $eventSerializer->serialize($messages[0]->event())->shouldBeCalledTimes(10000)->willReturn(new SerializedEvent(
+            'profile_email_changed',
+            '',
+        ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
         $headersSerializer->serialize([])->willReturn('[]');
@@ -765,11 +800,11 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce();
 
-        $driver = $this->prophesize(Driver::class);
-        $driver->connect(Argument::any())->willReturn($innerMockedConnection->reveal());
-
         $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent('profile_created', ''));
+        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
 
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
         $headersSerializer->serialize($customHeaders)->willReturn('{foo: "foo", baz: "baz"}');
@@ -803,7 +838,11 @@ final class DoctrineDbalStoreTest extends TestCase
         )->willReturn('1');
 
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
 
         $queryBuilder = new QueryBuilder($connection->reveal());
@@ -845,7 +884,11 @@ final class DoctrineDbalStoreTest extends TestCase
         )->willReturn([]);
 
         $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder($abstractPlatform->reveal(), 'FOR UPDATE', 'SKIP LOCKED'));
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
 
         $queryBuilder = new QueryBuilder($connection->reveal());
@@ -1123,32 +1166,218 @@ final class DoctrineDbalStoreTest extends TestCase
     }
 
     #[RequiresPhp('>= 8.2')]
-    public function testArchiveMessages(): void
+    public function testArchiveMessagesDifferentAggregates(): void
     {
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $recordedOn = new DateTimeImmutable();
+        $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
+            ->withHeader(new AggregateHeader(
+                'profile',
+                '1',
+                5,
+                $recordedOn,
+            ))
+            ->withHeader(new StreamStartHeader());
 
-        $statement = $this->prophesize(Statement::class);
-        $statement->bindValue('aggregate', 'profile')->shouldBeCalledOnce();
-        $statement->bindValue('aggregate_id', '1')->shouldBeCalledOnce();
-        $statement->bindValue('playhead', 1)->shouldBeCalledOnce();
-        $statement->executeQuery()->shouldBeCalledOnce();
+        $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('2'), Email::fromString('d')))
+            ->withHeader(new AggregateHeader(
+                'profile',
+                '2',
+                42,
+                $recordedOn,
+            ))
+            ->withHeader(new StreamStartHeader());
 
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->prepare(
-            'UPDATE eventstore 
+        $innerMockedConnection = $this->prophesize(Connection::class);
+
+        $innerMockedConnection->executeStatement(
+            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                'profile',
+                '1',
+                5,
+                'profile_created',
+                '',
+                $recordedOn,
+                true,
+                false,
+                '[]',
+                'profile',
+                '2',
+                42,
+                'profile_email_changed',
+                '',
+                $recordedOn,
+                true,
+                false,
+                '[]',
+            ],
+            [
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                6 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                15 => Type::getType(Types::BOOLEAN),
+                16 => Type::getType(Types::BOOLEAN),
+            ],
+        )->shouldBeCalledOnce();
+
+        $innerMockedConnection->executeStatement(
+            <<<'SQL'
+            UPDATE eventstore
             SET archived = true
             WHERE aggregate = :aggregate
             AND aggregate_id = :aggregate_id
             AND playhead < :playhead
-            AND archived = false',
-        )->shouldBeCalledOnce()->willReturn($statement->reveal());
+            AND archived = false
+            SQL,
+            [
+                'aggregate' => 'profile',
+                'aggregate_id' => '1',
+                'playhead' => 5,
+            ],
+        )->shouldBeCalledOnce();
+
+        $innerMockedConnection->executeStatement(
+            <<<'SQL'
+            UPDATE eventstore
+            SET archived = true
+            WHERE aggregate = :aggregate
+            AND aggregate_id = :aggregate_id
+            AND playhead < :playhead
+            AND archived = false
+            SQL,
+            [
+                'aggregate' => 'profile',
+                'aggregate_id' => '2',
+                'playhead' => 42,
+            ],
+        )->shouldBeCalledOnce();
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
+        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_email_changed',
+            '',
+        ));
+
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize([])->willReturn('[]');
+
+        $mockedConnection = $this->prophesize(Connection::class);
+        $mockedConnection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
+        );
 
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $eventSerializer->reveal(),
             $headersSerializer->reveal(),
         );
-        $singleTableStore->archiveMessages('profile', '1', 1);
+
+        $singleTableStore->save($message1, $message2);
+    }
+
+    #[RequiresPhp('>= 8.2')]
+    public function testArchiveMessagesSameAggregate(): void
+    {
+        $recordedOn = new DateTimeImmutable();
+        $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
+            ->withHeader(new AggregateHeader(
+                'profile',
+                '1',
+                5,
+                $recordedOn,
+            ))
+            ->withHeader(new StreamStartHeader());
+
+        $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('d')))
+            ->withHeader(new AggregateHeader(
+                'profile',
+                '1',
+                42,
+                $recordedOn,
+            ))
+            ->withHeader(new StreamStartHeader());
+
+        $innerMockedConnection = $this->prophesize(Connection::class);
+
+        $innerMockedConnection->executeStatement(
+            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                'profile',
+                '1',
+                5,
+                'profile_created',
+                '',
+                $recordedOn,
+                true,
+                false,
+                '[]',
+                'profile',
+                '1',
+                42,
+                'profile_email_changed',
+                '',
+                $recordedOn,
+                true,
+                false,
+                '[]',
+            ],
+            [
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                6 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                15 => Type::getType(Types::BOOLEAN),
+                16 => Type::getType(Types::BOOLEAN),
+            ],
+        )->shouldBeCalledOnce();
+
+        $innerMockedConnection->executeStatement(
+            <<<'SQL'
+            UPDATE eventstore
+            SET archived = true
+            WHERE aggregate = :aggregate
+            AND aggregate_id = :aggregate_id
+            AND playhead < :playhead
+            AND archived = false
+            SQL,
+            [
+                'aggregate' => 'profile',
+                'aggregate_id' => '1',
+                'playhead' => 42,
+            ],
+        )->shouldBeCalledOnce();
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
+        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_email_changed',
+            '',
+        ));
+
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize([])->willReturn('[]');
+
+        $mockedConnection = $this->prophesize(Connection::class);
+        $mockedConnection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
+        );
+
+        $singleTableStore = new DoctrineDbalStore(
+            $mockedConnection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $singleTableStore->save($message1, $message2);
     }
 }
