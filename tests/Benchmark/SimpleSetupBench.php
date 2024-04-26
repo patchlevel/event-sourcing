@@ -32,6 +32,8 @@ final class SimpleSetupBench
         $this->store = new DoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
+            null,
+            ['buffer_messages' => true],
         );
 
         $this->repository = new DefaultRepository($this->store, Profile::metadata());

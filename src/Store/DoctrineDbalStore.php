@@ -50,10 +50,15 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
 
     private readonly HeadersSerializer $headersSerializer;
 
-    /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid'} */
+    /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid', buffer_messages: bool} */
     private readonly array $config;
 
-    /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid'} $config */
+    /** @var list<Message> */
+    private array $buffer = [];
+
+    private bool $inTransaction = false;
+
+    /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid', buffer_messages?: bool} $config */
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
@@ -65,6 +70,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         $this->config = array_merge([
             'table_name' => 'eventstore',
             'aggregate_id_type' => 'uuid',
+            'buffer_messages' => false,
         ], $config);
     }
 
@@ -74,6 +80,8 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         int|null $offset = null,
         bool $backwards = false,
     ): DoctrineDbalStoreStream {
+        $this->commit();
+
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->config['table_name'])
@@ -98,6 +106,8 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
 
     public function count(Criteria|null $criteria = null): int
     {
+        $this->commit();
+
         $builder = $this->connection->createQueryBuilder()
             ->select('COUNT(*)')
             ->from($this->config['table_name']);
@@ -150,6 +160,17 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
     }
 
     public function save(Message ...$messages): void
+    {
+        if ($this->inTransaction || $this->config['buffer_messages']) {
+            $this->buffer = array_merge($this->buffer, $messages);
+
+            return;
+        }
+
+        $this->doSave(...$messages);
+    }
+
+    private function doSave(Message ...$messages): void
     {
         if ($messages === []) {
             return;
@@ -227,7 +248,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                         continue;
                     }
 
-                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                    $this->batchInsert($columns, $placeholders, $parameters, $types, $connection);
 
                     $parameters = [];
                     $placeholders = [];
@@ -237,7 +258,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                 }
 
                 if ($position !== 0) {
-                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                    $this->batchInsert($columns, $placeholders, $parameters, $types, $connection);
                 }
 
                 foreach ($achievedUntilPlayhead as $key => $playhead) {
@@ -273,7 +294,22 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
      */
     public function transactional(Closure $function): void
     {
-        $this->connection->transactional($function);
+        if (!$this->config['buffer_messages']) {
+            $this->connection->transactional($function);
+
+            return;
+        }
+
+        $this->connection->transactional(function () use ($function): void {
+            $this->inTransaction = true;
+
+            try {
+                $function();
+                $this->commit();
+            } finally {
+                $this->inTransaction = false;
+            }
+        });
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void
@@ -403,7 +439,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
      * @param list<mixed>                 $parameters
      * @param array<0|positive-int, Type> $types
      */
-    private function executeSave(
+    private function batchInsert(
         array $columns,
         array $placeholders,
         array $parameters,
@@ -422,5 +458,17 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         } catch (UniqueConstraintViolationException $e) {
             throw new UniqueConstraintViolation($e);
         }
+    }
+
+    private function commit(): void
+    {
+        if ($this->buffer === []) {
+            return;
+        }
+
+        $messages = $this->buffer;
+        $this->buffer = [];
+
+        $this->doSave(...$messages);
     }
 }
