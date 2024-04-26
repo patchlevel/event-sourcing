@@ -270,6 +270,7 @@ After we have defined everything, we still have to plug the whole thing together
 
 ```php
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -279,9 +280,13 @@ use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineReposi
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 
-$connection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/app']);
+$connection = DriverManager::getConnection(
+    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
+);
 
-$projectionConnection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/projection']);
+$projectionConnection = DriverManager::getConnection(
+    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/projection'),
+);
 
 /* your own mailer */
 $mailer;

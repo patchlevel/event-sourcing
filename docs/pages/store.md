@@ -16,8 +16,11 @@ The first thing we need for our store is a DBAL connection:
 
 ```php
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
 
-$connection = DriverManager::getConnection(['url' => 'mysql://user:secret@localhost/app']);
+$connection = DriverManager::getConnection(
+    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
+);
 ```
 !!! note
 
