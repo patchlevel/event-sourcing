@@ -50,4 +50,4 @@ dev: static test                                                                
 
 .PHONY: docs
 docs:                                                                           ## run mkdocs
-	cd docs && mkdocs serve
+	cd docs && python3 -m mkdocs serve

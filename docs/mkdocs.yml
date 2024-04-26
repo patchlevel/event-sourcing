@@ -95,6 +95,8 @@ nav:
     - Message Decorator: message_decorator.md
     - Split Stream: split_stream.md
     - Time / Clock: clock.md
+  - Migrate from MultiTable to SingleTable: migrate-multi-table-store-to-single-table-store.md
+  - Upgrade to v3: https://patchlevel.github.io/event-sourcing-docs/3.0/UPGRADE-3.0/
   - Other / Tools:
     - UUID: uuid.md
     - CLI: cli.md
