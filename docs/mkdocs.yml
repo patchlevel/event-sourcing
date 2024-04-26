@@ -66,7 +66,7 @@ markdown_extensions:
         - docs/includes/links.md
   - admonition
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
   - def_list
   - pymdownx.tasklist:
@@ -99,6 +99,7 @@ nav:
     - Time / Clock: clock.md
     - Testing: testing.md
     - CLI: cli.md
+  - Upgrade from 2.x: UPGRADE-3.0.md
   - Links:
     - Symfony Bundle: https://patchlevel.github.io/event-sourcing-bundle-docs/latest/
     - Admin Bundle: https://github.com/patchlevel/event-sourcing-admin-bundle
