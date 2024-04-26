@@ -216,7 +216,7 @@ is now internally using the `Subscription` systems to deliver this feature.
 We removed the `MultiTableStore` without any replacement. We did this because it does not bring any benefit for the user 
 besides some more confidence due to be a little more similar to the "standard" ORM based databases. For the migration 
 please have a look 
-[here to migrate from the MultiTableStore to the SingleTableStore](./migrate-multi-table-store-to-single-table-store.md).
+[here to migrate from the MultiTableStore to the SingleTableStore](https://patchlevel.github.io/event-sourcing-docs/2.3/migrate-multi-table-store-to-single-table-store/).
 For more convenience and overview we will provide [a bundle](https://github.com/patchlevel/event-sourcing-admin-bundle) 
 which will visualize all aspects of the event sourced application.
 
