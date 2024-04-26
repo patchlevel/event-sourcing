@@ -20,7 +20,6 @@ use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
-use Patchlevel\EventSourcing\Store\ArchivableStore;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
@@ -75,11 +74,6 @@ final class DefaultRepositoryTest extends TestCase
             }),
         )->shouldBeCalled();
 
-        $store->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
-
         $repository = new DefaultRepository(
             $store->reveal(),
             Profile::metadata(),
@@ -125,11 +119,6 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->header(AggregateHeader::class)->playhead === 2;
             }),
         )->shouldBeCalled();
-
-        $store->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
 
         $repository = new DefaultRepository(
             $store->reveal(),
@@ -178,11 +167,6 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->header(AggregateHeader::class)->playhead === 2;
             }),
         )->shouldBeCalled();
-
-        $store->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
 
         $eventBus = $this->prophesize(EventBus::class);
         $eventBus->dispatch(
@@ -252,11 +236,6 @@ final class DefaultRepositoryTest extends TestCase
             }),
         )->shouldBeCalled();
 
-        $store->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
-
         $decorator = new class implements MessageDecorator {
             public function __invoke(Message $message): Message
             {
@@ -317,11 +296,6 @@ final class DefaultRepositoryTest extends TestCase
             }),
         )->shouldBeCalledOnce();
 
-        $store->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
-
         $repository = new DefaultRepository(
             $store->reveal(),
             Profile::metadata(),
@@ -342,11 +316,6 @@ final class DefaultRepositoryTest extends TestCase
         $store->save(
             Argument::type(Message::class),
         )->willThrow(new RuntimeException());
-
-        $store->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
 
         $repository = new DefaultRepository(
             $store->reveal(),
@@ -404,11 +373,6 @@ final class DefaultRepositoryTest extends TestCase
             Argument::type(Message::class),
         )->willThrow(new UniqueConstraintViolation());
 
-        $store->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
-
         $repository = new DefaultRepository(
             $store->reveal(),
             Profile::metadata(),
@@ -440,11 +404,6 @@ final class DefaultRepositoryTest extends TestCase
             }),
         )->willThrow(new UniqueConstraintViolation());
 
-        $store->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
-
         $repository = new DefaultRepository(
             $store->reveal(),
             Profile::metadata(),
@@ -465,7 +424,6 @@ final class DefaultRepositoryTest extends TestCase
     public function testSaveAggregateWithSplitStream(): void
     {
         $store = $this->prophesize(Store::class);
-        $store->willImplement(ArchivableStore::class);
         $store->save(
             Argument::that(static function (Message $message) {
                 if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
@@ -501,11 +459,6 @@ final class DefaultRepositoryTest extends TestCase
                 return $message->header(AggregateHeader::class)->playhead === 3;
             }),
         )->shouldBeCalled();
-        $store->archiveMessages('profile', '1', 3)->shouldBeCalledOnce();
-        $store->transactional(Argument::any())->will(
-            /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
 
         $repository = new DefaultRepository(
             $store->reveal(),

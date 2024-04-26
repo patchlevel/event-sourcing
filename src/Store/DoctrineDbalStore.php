@@ -41,7 +41,7 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionStore, DoctrineSchemaConfigurator
+final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchemaConfigurator
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.
@@ -157,6 +157,9 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
 
         $this->connection->transactional(
             function (Connection $connection) use ($messages): void {
+                /** @var array<string, int> $achievedUntilPlayhead */
+                $achievedUntilPlayhead = [];
+
                 $booleanType = Type::getType(Types::BOOLEAN);
                 $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
@@ -203,7 +206,14 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
                     $parameters[] = $aggregateHeader->recordedOn;
                     $types[$offset + 5] = $dateTimeType;
 
-                    $parameters[] = $message->hasHeader(StreamStartHeader::class);
+                    $streamStart = $message->hasHeader(StreamStartHeader::class);
+
+                    if ($streamStart) {
+                        $key = $aggregateHeader->aggregateName . '/' . $aggregateHeader->aggregateId;
+                        $achievedUntilPlayhead[$key] = $aggregateHeader->playhead;
+                    }
+
+                    $parameters[] = $streamStart;
                     $types[$offset + 6] = $booleanType;
 
                     $parameters[] = $message->hasHeader(ArchivedHeader::class);
@@ -226,11 +236,32 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
                     $position = 0;
                 }
 
-                if ($position === 0) {
-                    return;
+                if ($position !== 0) {
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
                 }
 
-                $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                foreach ($achievedUntilPlayhead as $key => $playhead) {
+                    [$aggregateName, $aggregateId] = explode('/', $key);
+
+                    $connection->executeStatement(
+                        sprintf(
+                            <<<'SQL'
+                            UPDATE %s
+                            SET archived = true
+                            WHERE aggregate = :aggregate
+                            AND aggregate_id = :aggregate_id
+                            AND playhead < :playhead
+                            AND archived = false
+                            SQL,
+                            $this->config['table_name'],
+                        ),
+                        [
+                            'aggregate' => $aggregateName,
+                            'aggregate_id' => $aggregateId,
+                            'playhead' => $playhead,
+                        ],
+                    );
+                }
             },
         );
     }
@@ -243,25 +274,6 @@ final class DoctrineDbalStore implements Store, ArchivableStore, SubscriptionSto
     public function transactional(Closure $function): void
     {
         $this->connection->transactional($function);
-    }
-
-    public function archiveMessages(string $aggregateName, string $aggregateId, int $untilPlayhead): void
-    {
-        $statement = $this->connection->prepare(sprintf(
-            'UPDATE %s 
-            SET archived = true
-            WHERE aggregate = :aggregate
-            AND aggregate_id = :aggregate_id
-            AND playhead < :playhead
-            AND archived = false',
-            $this->config['table_name'],
-        ));
-
-        $statement->bindValue('aggregate', $aggregateName);
-        $statement->bindValue('aggregate_id', $aggregateId);
-        $statement->bindValue('playhead', $untilPlayhead);
-
-        $statement->executeQuery();
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void
