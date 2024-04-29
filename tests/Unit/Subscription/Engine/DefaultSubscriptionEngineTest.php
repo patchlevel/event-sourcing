@@ -2451,6 +2451,42 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $engine->{$method}();
     }
 
+    public function testFromNowWithoutSetupDirectActive(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromNow)]
+        class {
+        };
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $subscriptionStore = new DummySubscriptionStore();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->setup();
+
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromNow,
+                Status::Active,
+                1,
+            ),
+        ], $subscriptionStore->addedSubscriptions);
+    }
+
     public static function methodProvider(): Generator
     {
         yield 'setup' => ['setup'];

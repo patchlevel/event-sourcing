@@ -408,21 +408,6 @@ final class SubscriptionTest extends TestCase
                     'profile',
                     'processor',
                     RunMode::FromNow,
-                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
-                ),
-            ],
-            $engine->subscriptions(),
-        );
-
-        $engine->setup();
-        $engine->boot();
-
-        self::assertEquals(
-            [
-                new Subscription(
-                    'profile',
-                    'processor',
-                    RunMode::FromNow,
                     Status::Active,
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
