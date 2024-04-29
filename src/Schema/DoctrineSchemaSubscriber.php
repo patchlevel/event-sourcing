@@ -10,6 +10,7 @@ use Doctrine\ORM\Tools\ToolEvents;
 
 use function class_exists;
 
+/** @deprecated use DoctrineSchemaListener instead */
 final class DoctrineSchemaSubscriber implements EventSubscriber
 {
     public function __construct(

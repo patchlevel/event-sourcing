@@ -267,6 +267,12 @@
       <code><![CDATA[ProfileVisited&ProfileCreated $event]]></code>
     </ReservedWord>
   </file>
+  <file src="tests/Unit/Schema/DoctrineSchemaSubscriberTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new DoctrineSchemaSubscriber($schemaConfigurator->reveal())]]></code>
+      <code><![CDATA[new DoctrineSchemaSubscriber($schemaConfigurator->reveal())]]></code>
+    </DeprecatedClass>
+  </file>
   <file src="tests/Unit/Store/DoctrineDbalStoreTest.php">
     <DeprecatedMethod>
       <code><![CDATA[addMethods]]></code>
