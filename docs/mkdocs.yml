@@ -47,6 +47,10 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
 
+plugins:
+  - mike:
+      canonical_version: latest
+
 markdown_extensions:
   - meta
   - pymdownx.highlight:
