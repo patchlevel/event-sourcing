@@ -1,15 +1,17 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 
-site_name: Event Sourcing
 site_url: https://event-sourcing.patchlevel.io/
 repo_url: https://github.com/patchlevel/event-sourcing
 repo_name: patchlevel/event-sourcing
 edit_uri: edit/2.0.x/docs/pages/
 docs_dir: pages
+site_name: Event Sourcing for PHP
+site_description: A lightweight but also all-inclusive event sourcing library for php with a focus on developer experience.
+site_author: patchlevel
 
 extra:
   meta:
-    title: Event Sourcing
+    title: Event Sourcing for PHP
     description: A lightweight but also all-inclusive event sourcing library with a focus on developer experience.
     image: img/patchlevel-banner.png
   social:
@@ -46,6 +48,10 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+
+plugins:
+  - mike:
+      canonical_version: latest
 
 markdown_extensions:
   - meta
