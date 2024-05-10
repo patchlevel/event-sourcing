@@ -20,13 +20,12 @@ jobs:
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
 
-  mastadon:
+  mastodon:
     runs-on: ubuntu-latest
     steps:
       - uses: cbrgm/mastodon-github-action@v2
         if: ${{ !github.event.repository.private }}
         with:
           message: "New ${{ github.event.repository.name }} release ${{ github.event.release.tag_name }}! ${{ github.event.release.html_url }}"
-        env:
-          MASTODON_URL: ${{ secrets.MASTODON_URL }}
-          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          url: ${{ secrets.MASTODON_URL }}
