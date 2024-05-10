@@ -7,7 +7,7 @@
     "event-sourcing",
     "ddd"
   ],
-  "homepage": "https://github.com/patchlevel/event-sourcing",
+  "homepage": "https://event-sourcing.patchlevel.io",
   "authors": [
     {
       "name": "Daniel Badura",
