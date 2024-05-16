@@ -898,6 +898,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->findForUpdate(
             new SubscriptionCriteria(),
             function (array $subscriptions): void {
+                $latestIndex = null;
+
                 foreach ($this->subscriberRepository->all() as $subscriber) {
                     foreach ($subscriptions as $subscription) {
                         if ($subscription->id() === $subscriber->id()) {
@@ -905,13 +907,22 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         }
                     }
 
-                    $this->subscriptionStore->add(
-                        new Subscription(
-                            $subscriber->id(),
-                            $subscriber->group(),
-                            $subscriber->runMode(),
-                        ),
+                    $subscription = new Subscription(
+                        $subscriber->id(),
+                        $subscriber->group(),
+                        $subscriber->runMode(),
                     );
+
+                    if ($subscriber->setupMethod() === null && $subscriber->runMode() === RunMode::FromNow) {
+                        if ($latestIndex === null) {
+                            $latestIndex = $this->latestIndex();
+                        }
+
+                        $subscription->changePosition($latestIndex);
+                        $subscription->active();
+                    }
+
+                    $this->subscriptionStore->add($subscription);
 
                     $this->logger?->info(
                         sprintf(
