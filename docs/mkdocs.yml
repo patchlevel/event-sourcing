@@ -21,6 +21,9 @@ extra:
       link: https://patchlevel.de
   version:
     provider: mike
+    alias: true
+  analytics:
+    provider: custom
 
 extra_css:
   - stylesheets/extra.css
