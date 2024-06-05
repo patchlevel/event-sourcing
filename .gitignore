@@ -7,6 +7,6 @@ phpstan.neon
 infection.log
 .phpbench/
 infection.html
-*.sqlite3
+*.sqlite*
 .deptrac.cache
 docs_php/

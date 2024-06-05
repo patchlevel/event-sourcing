@@ -140,6 +140,10 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
                 $message = $message->withHeader(new StreamStartHeader());
             }
 
+            if (isset($data['transaction_id'])) {
+                $message = $message->withHeader(new TransactionIdHeader((int)$data['transaction_id']));
+            }
+
             $customHeaders = $headersSerializer->deserialize($data['custom_headers']);
 
             yield $message->withHeaders($customHeaders);

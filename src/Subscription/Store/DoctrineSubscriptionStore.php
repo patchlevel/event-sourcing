@@ -10,12 +10,14 @@ use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
+use Patchlevel\EventSourcing\Store\PostgresXid8Type;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -34,6 +36,7 @@ use const JSON_THROW_ON_ERROR;
  *     group_name: string,
  *     run_mode: string,
  *     position: int,
+ *     transaction_id?: int,
  *     status: string,
  *     error_message: string|null,
  *     error_previous_status: string|null,
@@ -49,6 +52,11 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
         private readonly ClockInterface $clock = new SystemClock(),
         private readonly string $tableName = 'subscriptions',
     ) {
+        if (Type::hasType(PostgresXid8Type::class)) {
+            return;
+        }
+
+        Type::addType(PostgresXid8Type::class, PostgresXid8Type::class);
     }
 
     public function get(string $subscriptionId): Subscription
@@ -125,20 +133,26 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
 
         $subscription->updateLastSavedAt($this->clock->now());
 
+        $values = [
+            'id' => $subscription->id(),
+            'group_name' => $subscription->group(),
+            'run_mode' => $subscription->runMode()->value,
+            'status' => $subscription->status()->value,
+            'position' => $subscription->position(),
+            'error_message' => $subscriptionError?->errorMessage,
+            'error_previous_status' => $subscriptionError?->previousStatus?->value,
+            'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
+            'retry_attempt' => $subscription->retryAttempt(),
+            'last_saved_at' => $subscription->lastSavedAt(),
+        ];
+
+        if ($subscription->transactionId()) {
+            $values['transaction_id'] = $subscription->transactionId();
+        }
+
         $this->connection->insert(
             $this->tableName,
-            [
-                'id' => $subscription->id(),
-                'group_name' => $subscription->group(),
-                'run_mode' => $subscription->runMode()->value,
-                'status' => $subscription->status()->value,
-                'position' => $subscription->position(),
-                'error_message' => $subscriptionError?->errorMessage,
-                'error_previous_status' => $subscriptionError?->previousStatus?->value,
-                'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
-                'retry_attempt' => $subscription->retryAttempt(),
-                'last_saved_at' => $subscription->lastSavedAt(),
-            ],
+            $values,
             [
                 'last_saved_at' => Types::DATETIME_IMMUTABLE,
             ],
@@ -151,19 +165,25 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
 
         $subscription->updateLastSavedAt($this->clock->now());
 
+        $values = [
+            'group_name' => $subscription->group(),
+            'run_mode' => $subscription->runMode()->value,
+            'status' => $subscription->status()->value,
+            'position' => $subscription->position(),
+            'error_message' => $subscriptionError?->errorMessage,
+            'error_previous_status' => $subscriptionError?->previousStatus?->value,
+            'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
+            'retry_attempt' => $subscription->retryAttempt(),
+            'last_saved_at' => $subscription->lastSavedAt(),
+        ];
+
+        if ($subscription->transactionId()) {
+            $values['transaction_id'] = $subscription->transactionId();
+        }
+
         $effectedRows = $this->connection->update(
             $this->tableName,
-            [
-                'group_name' => $subscription->group(),
-                'run_mode' => $subscription->runMode()->value,
-                'status' => $subscription->status()->value,
-                'position' => $subscription->position(),
-                'error_message' => $subscriptionError?->errorMessage,
-                'error_previous_status' => $subscriptionError?->previousStatus?->value,
-                'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
-                'retry_attempt' => $subscription->retryAttempt(),
-                'last_saved_at' => $subscription->lastSavedAt(),
-            ],
+            $values,
             [
                 'id' => $subscription->id(),
             ],
@@ -239,6 +259,14 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
+
+        if (!$this->hasTransactionIdSupport()) {
+            return;
+        }
+
+        $table->addColumn('transaction_id', PostgresXid8Type::class)
+            ->setNotnull(true)
+            ->setDefault('pg_current_xact_id()');
     }
 
     /** @param Data $row */
@@ -260,6 +288,7 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ) : null,
             $row['retry_attempt'],
             self::normalizeDateTime($row['last_saved_at'], $this->connection->getDatabasePlatform()),
+            (int)$row['transaction_id'] ?? null,
         );
     }
 
@@ -270,5 +299,10 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
         assert($normalizedValue instanceof DateTimeImmutable);
 
         return $normalizedValue;
+    }
+
+    private function hasTransactionIdSupport(): bool
+    {
+        return $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform;
     }
 }

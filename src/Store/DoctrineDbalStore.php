@@ -24,11 +24,13 @@ use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\FromIndexWithTransactionIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use PDO;
 
 use function array_fill;
 use function array_filter;
+use function array_map;
 use function array_merge;
 use function array_values;
 use function class_exists;
@@ -66,6 +68,12 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
             'table_name' => 'eventstore',
             'aggregate_id_type' => 'uuid',
         ], $config);
+
+        if (Type::hasType(PostgresXid8Type::class)) {
+            return;
+        }
+
+        Type::addType(PostgresXid8Type::class, PostgresXid8Type::class);
     }
 
     public function load(
@@ -142,6 +150,16 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                 case FromIndexCriterion::class:
                     $builder->andWhere('id > :index');
                     $builder->setParameter('index', $criterion->fromIndex, Types::INTEGER);
+                    break;
+                case FromIndexWithTransactionIdCriterion::class:
+                    if ($this->hasTransactionIdSupport() === false) {
+                        throw new UnsupportedCriterion($criterion::class);
+                    }
+
+                    $builder->andWhere('(transaction_id, id) > (:transaction_id::xid8, :index)');
+                    $builder->andWhere('transaction_id < pg_snapshot_xmin(pg_current_snapshot())');
+                    $builder->setParameter('index', $criterion->fromIndex, Types::INTEGER);
+                    $builder->setParameter('transaction_id', $criterion->transactionId, PostgresXid8Type::class);
                     break;
                 default:
                     throw new UnsupportedCriterion($criterion::class);
@@ -316,6 +334,16 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['aggregate', 'aggregate_id', 'playhead']);
         $table->addIndex(['aggregate', 'aggregate_id', 'playhead', 'archived']);
+
+        if (!$this->hasTransactionIdSupport()) {
+            return;
+        }
+
+        $table->addColumn('transaction_id', PostgresXid8Type::class)
+            ->setNotnull(true)
+            ->setDefault('pg_current_xact_id()');
+
+        $table->addIndex(['id', 'transaction_id']);
     }
 
     /** @return list<object> */
@@ -410,6 +438,11 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         array $types,
         Connection $connection,
     ): void {
+        if ($this->hasTransactionIdSupport()) {
+            $columns[] = 'transaction_id';
+            $placeholders = array_map(static fn (string $placeholder): string => $placeholder . ', pg_current_xact_id()', $placeholders);
+        }
+
         $query = sprintf(
             "INSERT INTO %s (%s) VALUES\n(%s)",
             $this->config['table_name'],
@@ -422,5 +455,10 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         } catch (UniqueConstraintViolationException $e) {
             throw new UniqueConstraintViolation($e);
         }
+    }
+
+    private function hasTransactionIdSupport(): bool
+    {
+        return $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform;
     }
 }

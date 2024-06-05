@@ -8,7 +8,9 @@ use Closure;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\FromIndexWithTransactionIdCriterion;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\TransactionIdHeader;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -175,6 +177,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $errors = [];
 
                     $startIndex = $this->lowestSubscriptionPosition($subscriptions);
+                    $startTransactionId = $this->lowestSubscriptionTransactionId($subscriptions);
 
                     $this->logger?->debug(
                         sprintf(
@@ -187,9 +190,13 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $messageCounter = 0;
 
                     try {
-                        $stream = $this->messageStore->load(
-                            new Criteria(new FromIndexCriterion($startIndex)),
-                        );
+                        if ($startTransactionId === null) {
+                            $criteria = new Criteria(new FromIndexCriterion($startIndex));
+                        } else {
+                            $criteria = new Criteria(new FromIndexWithTransactionIdCriterion($startIndex, $startTransactionId));
+                        }
+
+                        $stream = $this->messageStore->load($criteria);
 
                         foreach ($stream as $message) {
                             $index = $stream->index();
@@ -341,6 +348,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $errors = [];
 
                     $startIndex = $this->lowestSubscriptionPosition($subscriptions);
+                    $startTransactionId = $this->lowestSubscriptionTransactionId($subscriptions);
 
                     $this->logger?->debug(
                         sprintf(
@@ -353,7 +361,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $messageCounter = 0;
 
                     try {
-                        $criteria = new Criteria(new FromIndexCriterion($startIndex));
+                        if ($startTransactionId === null) {
+                            $criteria = new Criteria(new FromIndexCriterion($startIndex));
+                        } else {
+                            $criteria = new Criteria(new FromIndexWithTransactionIdCriterion($startIndex, $startTransactionId));
+                        }
+
                         $stream = $this->messageStore->load($criteria);
 
                         foreach ($stream as $message) {
@@ -375,6 +388,22 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                             $subscription->id(),
                                             $subscription->position(),
                                             $index,
+                                        ),
+                                    );
+
+                                    continue;
+                                }
+
+                                if (
+                                    $subscription->transactionId()
+                                    && $subscription->transactionId() > $message->header(TransactionIdHeader::class)->transactionId
+                                ) {
+                                    $this->logger?->debug(
+                                        sprintf(
+                                            'Subscription Engine: Subscription "%s" is farther than the current transaction_id (%d > %d), continue processing.',
+                                            $subscription->id(),
+                                            $subscription->transactionId(),
+                                            $message->header(TransactionIdHeader::class)->transactionId,
                                         ),
                                     );
 
@@ -760,6 +789,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         if ($subscribeMethods === []) {
             $subscription->changePosition($index);
 
+            if ($message->hasHeader(TransactionIdHeader::class)) {
+                $subscription->changeTransactionId(
+                    $message->header(TransactionIdHeader::class)->transactionId,
+                );
+            }
+
             $this->logger?->debug(
                 sprintf(
                     'Subscription Engine: Subscriber "%s" for "%s" has no subscribe methods for "%s", continue.',
@@ -797,6 +832,13 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         $subscription->changePosition($index);
+
+        if ($message->hasHeader(TransactionIdHeader::class)) {
+            $subscription->changeTransactionId(
+                $message->header(TransactionIdHeader::class)->transactionId,
+            );
+        }
+
         $subscription->resetRetry();
 
         $this->logger?->debug(
@@ -957,6 +999,28 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         if ($min === null) {
             return 0;
+        }
+
+        return $min;
+    }
+
+    /** @param list<Subscription> $subscriptions */
+    private function lowestSubscriptionTransactionId(array $subscriptions): int|null
+    {
+        $min = null;
+
+        foreach ($subscriptions as $subscription) {
+            $transactionId = $subscription->transactionId();
+
+            if ($transactionId === null) {
+                continue;
+            }
+
+            if ($min !== null && $transactionId >= $min) {
+                continue;
+            }
+
+            $min = $transactionId;
         }
 
         return $min;

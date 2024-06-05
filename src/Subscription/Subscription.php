@@ -20,6 +20,7 @@ final class Subscription
         private SubscriptionError|null $error = null,
         private int $retryAttempt = 0,
         private DateTimeImmutable|null $lastSavedAt = null,
+        private int|null $transactionId = null,
     ) {
     }
 
@@ -48,6 +49,11 @@ final class Subscription
         return $this->position;
     }
 
+    public function transactionId(): int|null
+    {
+        return $this->transactionId;
+    }
+
     public function subscriptionError(): SubscriptionError|null
     {
         return $this->error;
@@ -56,6 +62,11 @@ final class Subscription
     public function changePosition(int $position): void
     {
         $this->position = $position;
+    }
+
+    public function changeTransactionId(int $transactionId): void
+    {
+        $this->transactionId = $transactionId;
     }
 
     public function new(): void

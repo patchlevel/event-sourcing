@@ -19,7 +19,7 @@ final class DbalManager
 {
     public const DEFAULT_DB_NAME = 'eventstore';
 
-    public static function createConnection(string $dbName = self::DEFAULT_DB_NAME): Connection
+    public static function createConnection(string $dbName = self::DEFAULT_DB_NAME, bool $reset = true): Connection
     {
         $dbUrl = getenv('DB_URL');
 
@@ -36,6 +36,10 @@ final class DbalManager
         $connection = DriverManager::getConnection($connectionParams);
 
         if ($connection->getDriver() instanceof AbstractSQLiteDriver) {
+            return $connection;
+        }
+
+        if (!$reset) {
             return $connection;
         }
 
