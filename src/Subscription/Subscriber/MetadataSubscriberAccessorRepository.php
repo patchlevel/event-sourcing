@@ -31,10 +31,11 @@ final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRe
     public function __construct(
         private readonly iterable $subscribers,
         private readonly SubscriberMetadataFactory $metadataFactory = new AttributeSubscriberMetadataFactory(),
-        array $argumentResolvers = [],
+        iterable $argumentResolvers = [],
     ) {
         $this->argumentResolvers = array_merge(
-            $argumentResolvers,
+        // the check for array is required before PHP 8.2
+            is_array($argumentResolvers) ? $argumentResolvers : iterator_to_array($argumentResolvers),
             [
                 new MessageArgumentResolver(),
                 new EventArgumentResolver(),

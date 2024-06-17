@@ -69,6 +69,35 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
         self::assertEquals($accessor, $repository->get('foo'));
     }
 
+    public function testArgumentResolversCanBeArraysAndIterators(): void
+    {
+        $customResolver = new class implements ArgumentResolver\ArgumentResolver {
+            public function resolve(ArgumentMetadata $argument, Message $message): mixed
+            {
+                return null;
+            }
+
+            public function support(ArgumentMetadata $argument, string $eventClass): bool
+            {
+                return false;
+            }
+        };
+
+        $repository = new MetadataSubscriberAccessorRepository(
+            [],
+            new AttributeSubscriberMetadataFactory(),
+            [$customResolver],
+        );
+
+        $repository2 = new MetadataSubscriberAccessorRepository(
+            [],
+            new AttributeSubscriberMetadataFactory(),
+            new \ArrayIterator([$customResolver]),
+        );
+
+        self::assertEquals($repository, $repository2);
+    }
+
     public function testDuplicateSubscriberId(): void
     {
         $this->expectException(DuplicateSubscriberId::class);
