@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "601f9b83b17b0bcdb17b0c7d1cb0c5ca",
+    "content-hash": "d4c46976f961a7d4f616636794f55538",
     "packages": [
         {
             "name": "azjezz/psl",
@@ -1179,16 +1179,16 @@
         },
         {
             "name": "qossmic/deptrac",
-            "version": "2.0.0",
+            "version": "2.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/qossmic/deptrac.git",
-                "reference": "1b6bcbe968d9dce374f969421105fd9f6afea387"
+                "reference": "f646695c1468051138e1347d89590f9084fa6256"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/qossmic/deptrac/zipball/1b6bcbe968d9dce374f969421105fd9f6afea387",
-                "reference": "1b6bcbe968d9dce374f969421105fd9f6afea387",
+                "url": "https://api.github.com/repos/qossmic/deptrac/zipball/f646695c1468051138e1347d89590f9084fa6256",
+                "reference": "f646695c1468051138e1347d89590f9084fa6256",
                 "shasum": ""
             },
             "require": {
@@ -1218,9 +1218,9 @@
             "description": "Deptrac is a static code analysis tool that helps to enforce rules for dependencies between software layers.",
             "support": {
                 "issues": "https://github.com/qossmic/deptrac/issues",
-                "source": "https://github.com/qossmic/deptrac/tree/2.0.0"
+                "source": "https://github.com/qossmic/deptrac/tree/2.0.1"
             },
-            "time": "2024-04-27T20:53:26+00:00"
+            "time": "2024-06-17T10:43:11+00:00"
         },
         {
             "name": "react/promise",
