@@ -15,6 +15,8 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\RecordedOn
 use function array_key_exists;
 use function array_merge;
 use function array_values;
+use function is_array;
+use function iterator_to_array;
 
 final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRepository
 {
@@ -25,7 +27,7 @@ final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRe
     private readonly array $argumentResolvers;
 
     /**
-     * @param iterable<object>       $subscribers
+     * @param iterable<object>                                  $subscribers
      * @param iterable<ArgumentResolver>|list<ArgumentResolver> $argumentResolvers
      */
     public function __construct(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber;
 
+use ArrayIterator;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
@@ -92,7 +93,7 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
         $repository2 = new MetadataSubscriberAccessorRepository(
             [],
             new AttributeSubscriberMetadataFactory(),
-            new \ArrayIterator([$customResolver]),
+            new ArrayIterator([$customResolver]),
         );
 
         self::assertEquals($repository, $repository2);
