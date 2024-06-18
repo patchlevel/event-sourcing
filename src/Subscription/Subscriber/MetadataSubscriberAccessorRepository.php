@@ -26,7 +26,7 @@ final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRe
 
     /**
      * @param iterable<object>       $subscribers
-     * @param list<ArgumentResolver> $argumentResolvers
+     * @param iterable<ArgumentResolver>|list<ArgumentResolver> $argumentResolvers
      */
     public function __construct(
         private readonly iterable $subscribers,
@@ -35,7 +35,7 @@ final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRe
     ) {
         $this->argumentResolvers = array_merge(
         // the check for array is required before PHP 8.2
-            is_array($argumentResolvers) ? $argumentResolvers : iterator_to_array($argumentResolvers),
+            array_values(is_array($argumentResolvers) ? $argumentResolvers : iterator_to_array($argumentResolvers)),
             [
                 new MessageArgumentResolver(),
                 new EventArgumentResolver(),
