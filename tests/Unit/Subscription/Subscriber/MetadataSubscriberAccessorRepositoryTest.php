@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber;
 
+use ArrayIterator;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
@@ -67,6 +68,35 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
 
         self::assertEquals([$accessor], $repository->all());
         self::assertEquals($accessor, $repository->get('foo'));
+    }
+
+    public function testArgumentResolversCanBeArraysAndIterators(): void
+    {
+        $customResolver = new class implements ArgumentResolver\ArgumentResolver {
+            public function resolve(ArgumentMetadata $argument, Message $message): mixed
+            {
+                return null;
+            }
+
+            public function support(ArgumentMetadata $argument, string $eventClass): bool
+            {
+                return false;
+            }
+        };
+
+        $repository = new MetadataSubscriberAccessorRepository(
+            [],
+            new AttributeSubscriberMetadataFactory(),
+            [$customResolver],
+        );
+
+        $repository2 = new MetadataSubscriberAccessorRepository(
+            [],
+            new AttributeSubscriberMetadataFactory(),
+            new ArrayIterator([$customResolver]),
+        );
+
+        self::assertEquals($repository, $repository2);
     }
 
     public function testDuplicateSubscriberId(): void
