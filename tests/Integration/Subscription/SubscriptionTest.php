@@ -37,6 +37,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNe
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 use function gc_collect_cycles;
 use function iterator_to_array;
@@ -357,7 +358,6 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(0, $subscription->retryAttempt());
     }
 
-
     public function testLargeErrorMessage(): void
     {
         $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
@@ -387,7 +387,8 @@ final class SubscriptionTest extends TestCase
             $store,
         );
 
-        $subscriber = new #[Subscriber('error_producer', RunMode::FromBeginning)] class
+        $subscriber = new #[Subscriber('error_producer', RunMode::FromBeginning)]
+        class
         {
             public bool $subscribeError = false;
 
@@ -405,7 +406,7 @@ final class SubscriptionTest extends TestCase
             public function subscribe(): void
             {
                 if ($this->subscribeError) {
-                    throw new \RuntimeException('subscribe error: as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration.');
+                    throw new RuntimeException('subscribe error: as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration.');
                 }
             }
         };
