@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Metadata\ClassFinder;
 use ReflectionClass;
 
+use function array_key_exists;
 use function count;
 use function is_subclass_of;
 
@@ -34,6 +35,10 @@ final class AttributeAggregateRootRegistryFactory implements AggregateRootRegist
             }
 
             $aggregateName = $attributes[0]->newInstance()->name;
+
+            if (array_key_exists($aggregateName, $result)) {
+                throw new AggregateRootAlreadyInRegistry($aggregateName);
+            }
 
             $result[$aggregateName] = $class;
         }
