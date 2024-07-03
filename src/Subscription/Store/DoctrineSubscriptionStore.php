@@ -224,8 +224,7 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
         $table->addColumn('status', Types::STRING)
             ->setLength(32)
             ->setNotnull(true);
-        $table->addColumn('error_message', Types::STRING)
-            ->setLength(255)
+        $table->addColumn('error_message', Types::TEXT)
             ->setNotnull(false);
         $table->addColumn('error_previous_status', Types::STRING)
             ->setLength(32)

@@ -6,6 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Setup;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Debug\Trace\TraceableSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Debug\Trace\TraceDecorator;
@@ -33,6 +37,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNe
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 use function gc_collect_cycles;
 use function iterator_to_array;
@@ -350,6 +355,109 @@ final class SubscriptionTest extends TestCase
 
         self::assertEquals(Status::Active, $subscription->status());
         self::assertEquals(null, $subscription->subscriptionError());
+        self::assertEquals(0, $subscription->retryAttempt());
+    }
+
+    public function testLargeErrorMessage(): void
+    {
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $subscriber = new #[Subscriber('error_producer', RunMode::FromBeginning)]
+        class
+        {
+            public bool $subscribeError = false;
+
+            #[Setup]
+            public function setup(): void
+            {
+            }
+
+            #[Teardown]
+            public function teardown(): void
+            {
+            }
+
+            #[Subscribe('*')]
+            public function subscribe(): void
+            {
+                if ($this->subscribeError) {
+                    throw new RuntimeException('subscribe error: as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration.');
+                }
+            }
+        };
+
+        $engine = new DefaultSubscriptionEngine(
+            $store,
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new ClockBasedRetryStrategy(
+                $clock,
+                ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
+                ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
+                2,
+            ),
+        );
+
+        $result = $engine->setup();
+        self::assertEquals([], $result->errors);
+
+        $result = $engine->boot();
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals([], $result->errors);
+
+        $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
+
+        self::assertEquals(Status::Active, $subscription->status());
+        self::assertEquals(null, $subscription->subscriptionError());
+        self::assertEquals(0, $subscription->retryAttempt());
+
+        $repository = $manager->get(Profile::class);
+
+        $profile = Profile::create(ProfileId::generate(), 'John');
+        $repository->save($profile);
+
+        $subscriber->subscribeError = true;
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals('error_producer', $error->subscriptionId);
+        self::assertEquals('subscribe error: as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration.', $error->message);
+
+        $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
+
+        self::assertEquals(Status::Error, $subscription->status());
+        self::assertEquals('subscribe error: as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration.', $subscription->subscriptionError()?->errorMessage);
+        self::assertEquals(Status::Active, $subscription->subscriptionError()?->previousStatus);
         self::assertEquals(0, $subscription->retryAttempt());
     }
 

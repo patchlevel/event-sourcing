@@ -36,7 +36,7 @@ final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRe
         iterable $argumentResolvers = [],
     ) {
         $this->argumentResolvers = array_merge(
-        // the check for array is required before PHP 8.2
+            // the check for array is required before PHP 8.2
             array_values(is_array($argumentResolvers) ? $argumentResolvers : iterator_to_array($argumentResolvers)),
             [
                 new MessageArgumentResolver(),
