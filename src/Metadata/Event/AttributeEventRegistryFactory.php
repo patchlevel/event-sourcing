@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Metadata\ClassFinder;
 use ReflectionClass;
 
+use function array_key_exists;
 use function count;
 
 final class AttributeEventRegistryFactory implements EventRegistryFactory
@@ -28,6 +29,10 @@ final class AttributeEventRegistryFactory implements EventRegistryFactory
             }
 
             $eventName = $attributes[0]->newInstance()->name;
+
+            if (array_key_exists($eventName, $result)) {
+                throw new EventAlreadyInRegistry($eventName);
+            }
 
             $result[$eventName] = $class;
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Aggregate;
 
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootAlreadyInRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -21,5 +22,14 @@ final class AttributeAggregateRootRegistryFactoryTest extends TestCase
         self::assertTrue($registry->hasAggregateName('profile'));
 
         self::assertFalse($registry->hasAggregateClass(Message::class));
+    }
+
+    public function testCreateRegistryWithDuplicateEventName(): void
+    {
+        $this->expectException(AggregateRootAlreadyInRegistry::class);
+        $this->expectExceptionMessage('The aggregate name "profile" is already used in the registry. Maybe you defined 2 aggregates with the same name.');
+
+        $factory = new AttributeAggregateRootRegistryFactory();
+        $factory->create([__DIR__ . '/Fixture']);
     }
 }
