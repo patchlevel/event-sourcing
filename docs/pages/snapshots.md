@@ -86,18 +86,14 @@ use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
-use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
-use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer]
     public Uuid $id;
     public string $name;
-    #[DateTimeImmutableNormalizer]
     public DateTimeImmutable $createdAt;
 
     // ...

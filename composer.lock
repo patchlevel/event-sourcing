@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6ac54e076f078f9ce7d647a05b58076e",
+    "content-hash": "ac6d06cc1614552b242cde2ec2ff3b60",
     "packages": [
         {
             "name": "brick/math",
@@ -416,16 +416,16 @@
         },
         {
             "name": "patchlevel/hydrator",
-            "version": "1.4.0",
+            "version": "1.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/patchlevel/hydrator.git",
-                "reference": "824959c564c8c4fb22e861724a5fd590e760a41c"
+                "reference": "0386ca29388c5c9d3f8b7b328826d16521313d91"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/824959c564c8c4fb22e861724a5fd590e760a41c",
-                "reference": "824959c564c8c4fb22e861724a5fd590e760a41c",
+                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/0386ca29388c5c9d3f8b7b328826d16521313d91",
+                "reference": "0386ca29388c5c9d3f8b7b328826d16521313d91",
                 "shasum": ""
             },
             "require": {
@@ -475,9 +475,9 @@
             ],
             "support": {
                 "issues": "https://github.com/patchlevel/hydrator/issues",
-                "source": "https://github.com/patchlevel/hydrator/tree/1.4.0"
+                "source": "https://github.com/patchlevel/hydrator/tree/1.4.1"
             },
-            "time": "2024-07-03T12:22:27+00:00"
+            "time": "2024-07-09T08:06:23+00:00"
         },
         {
             "name": "patchlevel/worker",

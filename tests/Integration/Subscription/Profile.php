@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
-use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\AdminPromoted;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
@@ -17,7 +16,6 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreate
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer]
     private ProfileId $id;
     private string $name;
 

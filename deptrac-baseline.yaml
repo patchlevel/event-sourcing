@@ -1,5 +1,11 @@
 deptrac:
   skip_violations:
+    Patchlevel\EventSourcing\Aggregate\AggregateRootId:
+      - Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer
+    Patchlevel\EventSourcing\Aggregate\CustomId:
+      - Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer
+    Patchlevel\EventSourcing\Aggregate\Uuid:
+      - Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer
     Patchlevel\EventSourcing\Attribute\Processor:
       - Patchlevel\EventSourcing\Subscription\RunMode
     Patchlevel\EventSourcing\Attribute\Projector:

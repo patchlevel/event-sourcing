@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
-use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\PersonalDataRemoved;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\ProfileCreated;
@@ -21,7 +20,6 @@ use Patchlevel\Hydrator\Attribute\PersonalData;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer]
     #[DataSubjectId]
     private ProfileId $id;
 
