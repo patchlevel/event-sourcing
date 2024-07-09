@@ -15,7 +15,7 @@ use ReflectionType;
 
 use function is_string;
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_CLASS)]
 final class IdNormalizer implements Normalizer, ReflectionTypeAwareNormalizer
 {
     public function __construct(

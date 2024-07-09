@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
-use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\EmailChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
@@ -20,7 +19,6 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\Reborn;
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer]
     private ProfileId $id;
     private string $name;
     private string|null $email;

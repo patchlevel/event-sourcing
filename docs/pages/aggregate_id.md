@@ -25,21 +25,14 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
-use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer]
     private Uuid $id;
 }
 ```
-!!! note
-
-    If you want to use snapshots, then you have to make sure that the aggregate id are normalized. 
-    You can find how to do this [here](normalizer.md).
-    
 You have multiple options for generating an uuid:
 
 ```php
@@ -63,13 +56,11 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\CustomId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
-use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer]
     private CustomId $id;
 }
 ```
@@ -78,11 +69,6 @@ final class Profile extends BasicAggregateRoot
     If you want to use a custom id that is not an uuid, 
     you need to change the `aggregate_id_type` to `string` in the store configuration.
     More information can be found [here](store.md).
-    
-!!! note
-
-    If you want to use snapshots, then you have to make sure that the aggregate id are normalized. 
-    You can find how to do this [here](normalizer.md).
     
 So you can use any string as an id:
 
@@ -124,21 +110,14 @@ So you can use it like this:
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
-use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
-    #[IdNormalizer]
     private ProfileId $id;
 }
 ```
-!!! note
-
-    If you want to use snapshots, then you have to make sure that the aggregate id are normalized. 
-    You can find how to do this [here](normalizer.md).
-    
 We also offer you some traits, so that you don't have to implement the `AggregateRootId` interface yourself.
 Here for the uuid:
 
@@ -167,4 +146,3 @@ class ProfileId implements AggregateRootId
 * [How to create an aggregate](aggregate.md)
 * [How to create an event](events.md)
 * [How to test an aggregate](testing.md)
-* [How to normalize value objects](normalizer.md)

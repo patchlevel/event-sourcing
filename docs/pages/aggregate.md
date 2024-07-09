@@ -91,20 +91,16 @@ final class CreateProfileHandler
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
 For our aggregate we create the Event `ProfileRegistered` with an ID and a name.
-Since the ID is a complex data type and cannot be easily serialized, we need to define a normalizer for the ID.
-We do this with the `IdNormalizer` attribute.
 We also give the event a unique name using the `Event` attribute.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 #[Event('profile.registered')]
 final class ProfileRegistered
 {
     public function __construct(
-        #[IdNormalizer]
         public readonly Uuid $profileId,
         public readonly string $name,
     ) {
@@ -114,7 +110,6 @@ final class ProfileRegistered
 !!! note
 
     You can find out more about events [here](./events.md).
-    And for normalizer [here](./normalizer.md).
     
 After we have defined the event, we have to adapt the profile aggregate:
 
@@ -489,7 +484,8 @@ final class NameChanged
 ```
 !!! warning
 
-    The payload must be serializable and unserializable as json.
+    You need to create a normalizer for the `Name` value object.
+    So the payload must be serializable and unserializable as json.
     
 !!! note
 

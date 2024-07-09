@@ -56,14 +56,12 @@ For that you can use the `#[SplitStream]` attribute.
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\SplitStream;
-use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 #[Event('bank_account.balance_reported')]
 #[SplitStream]
 final class BalanceReported
 {
     public function __construct(
-        #[IdNormalizer]
         public BankAccountId $bankAccountId,
         public int $year,
         public int $balanceInCents,

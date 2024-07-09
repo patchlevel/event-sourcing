@@ -7,8 +7,8 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Processor
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\SendEmailMock;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\SendEmailMock;
 
 #[Processor('send_email')]
 final class SendEmailProcessor

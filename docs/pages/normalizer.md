@@ -1,9 +1,8 @@
 # Normalizer
 
 Sometimes you also want to add more complex data in events as payload or in aggregates for the snapshots.
-For example DateTime, enums or value objects. You can do that too.
-However, you must define a normalizer for this so that the library knows
-how to write this data to the database and load it again.
+For example DateTime, enums or value objects.
+Here you can use the normalizer to define how the data should be saved and loaded.
 
 !!! note
 
@@ -12,7 +11,30 @@ how to write this data to the database and load it again.
     
 ## Usage
 
-You have to set the normalizer to the properties using the specific normalizer class.
+You have a lot of options to use the normalizer.
+First of all and simplest, you can let guess the normalizer from the type hint.
+
+```php
+final class DTO
+{
+    public DateTimeImmutable $date;
+}
+```
+Most built-in normalizers can be inferred from the type hint:
+
+* `DateTimeImmutable` => `DateTimeImmutableNormalizer`
+* `DateTime` => `DateTimeNormalizer`
+* `DateTimeZone` => `DateTimeZoneNormalizer`
+* `Enum` => `EnumNormalizer`
+* `AggregateRootId` => `IdNormalizer`
+
+!!! note
+
+    `ObjectNormalizer` will not be inferred. You have to specify it yourself.
+    This should prevent you from accidentally serializing objects that you don't want to serialize.
+    
+The other way is to specify the normalizer to the properties directly.
+This example is equivalent to the previous one.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
@@ -23,7 +45,7 @@ final class DTO
     public DateTimeImmutable $date;
 }
 ```
-The whole thing also works with property promotion and readonly properties.
+And the whole thing also works with property promotion and readonly properties too.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
@@ -37,9 +59,25 @@ final class DTO
     }
 }
 ```
-!!! tip
+If you have child entities or value objects, then you can also define the normalizer on class level.
+So you don't have to specify it for each property.
 
-    If you have personal data, you can use [crypto-shredding](personal_data.md).
+```php
+use Patchlevel\Hydrator\Normalizer\ObjectNormalizer;
+
+#[ObjectNormalizer]
+final class Item
+{
+    public function __construct(
+        public readonly int $number,
+        public readonly DateTimeImmutable $addedAt,
+    ) {
+    }
+}
+```
+!!! note
+
+    With the `ObjectNormalizer`, you can seraialize and deserialize recursively.
     
 ### Event
 
@@ -61,6 +99,10 @@ final class CreateHotel
     }
 }
 ```
+!!! note
+
+    If you have personal data, you can use [crypto-shredding](personal_data.md).
+    
 ### Aggregate
 
 For the aggregates it is very similar to the events. However, the normalizer is only used for the snapshots.
@@ -126,6 +168,10 @@ final class DTO
     public DateTimeImmutable $date;
 }
 ```
+!!! tip
+
+    You can let the hydrator guess the normalizer from the type hint.
+    
 You can also define the format. Either describe it yourself as a string or use one of the existing constants.
 The default is `DateTimeImmutable::ATOM`.
 
@@ -155,6 +201,10 @@ final class DTO
     public DateTime $date;
 }
 ```
+!!! tip
+
+    You can let the hydrator guess the normalizer from the type hint.
+    
 You can also specify the format here. The default is `DateTime::ATOM`.
 
 ```php
@@ -188,6 +238,10 @@ final class DTO
     public DateTimeZone $timeZone;
 }
 ```
+!!! tip
+
+    You can let the hydrator guess the normalizer from the type hint.
+    
 ### Enum
 
 Backed enums can also be normalized.
@@ -201,6 +255,10 @@ final class DTO
     public Status $status;
 }
 ```
+!!! tip
+
+    You can let the hydrator guess the normalizer from the type hint.
+    
 You can also specify the enum class.
 
 ```php
@@ -226,6 +284,10 @@ final class DTO
     public Uuid $id;
 }
 ```
+!!! tip
+
+    You can let the hydrator guess the normalizer from the type hint.
+    
 Optional you can also define the type of the id.
 
 ```php
@@ -295,7 +357,7 @@ Finally, you have to allow the normalizer to be used as an attribute.
 use Patchlevel\Hydrator\Normalizer\InvalidArgument;
 use Patchlevel\Hydrator\Normalizer\Normalizer;
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_CLASS)]
 class NameNormalizer implements Normalizer
 {
     public function normalize(mixed $value): string
@@ -338,6 +400,15 @@ final class DTO
 
     Every normalizer, including the custom normalizer, can be used both for the events and for the snapshots.
     
+Or define it on class level, so you don't have to specify it for each property.
+
+```php
+#[NameNormalizer]
+final class Name
+{
+    /* name logic... */
+}
+```
 ## Normalized Name
 
 By default, the property name is used to name the field in the normalized result.
