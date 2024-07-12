@@ -7,7 +7,10 @@ namespace Patchlevel\EventSourcing\Store;
 use Closure;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
@@ -48,12 +51,17 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
      */
     private const MAX_UNSIGNED_SMALL_INT = 65_535;
 
+    /**
+     * Default lock id for advisory lock.
+     */
+    private const DEFAULT_LOCK_ID = 133742;
+
     private readonly HeadersSerializer $headersSerializer;
 
-    /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid'} */
+    /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid', locking: bool, lock_id: int, lock_timeout: int} */
     private readonly array $config;
 
-    /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid'} $config */
+    /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid', locking?: bool, lock_id?: int, lock_timeout?: int} $config */
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
@@ -65,6 +73,9 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         $this->config = array_merge([
             'table_name' => 'eventstore',
             'aggregate_id_type' => 'uuid',
+            'locking' => true,
+            'lock_id' => self::DEFAULT_LOCK_ID,
+            'lock_timeout' => -1,
         ], $config);
     }
 
@@ -155,97 +166,99 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
             return;
         }
 
-        $this->connection->transactional(
-            function (Connection $connection) use ($messages): void {
-                /** @var array<string, int> $achievedUntilPlayhead */
-                $achievedUntilPlayhead = [];
+        $this->lock();
+        try {
+            $this->connection->transactional(
+                function (Connection $connection) use ($messages): void {
+                    /** @var array<string, int> $achievedUntilPlayhead */
+                    $achievedUntilPlayhead = [];
 
-                $booleanType = Type::getType(Types::BOOLEAN);
-                $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
+                    $booleanType = Type::getType(Types::BOOLEAN);
+                    $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
-                $columns = [
-                    'aggregate',
-                    'aggregate_id',
-                    'playhead',
-                    'event',
-                    'payload',
-                    'recorded_on',
-                    'new_stream_start',
-                    'archived',
-                    'custom_headers',
-                ];
+                    $columns = [
+                        'aggregate',
+                        'aggregate_id',
+                        'playhead',
+                        'event',
+                        'payload',
+                        'recorded_on',
+                        'new_stream_start',
+                        'archived',
+                        'custom_headers',
+                    ];
 
-                $columnsLength = count($columns);
-                $batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
-                $placeholder = implode(', ', array_fill(0, $columnsLength, '?'));
-
-                $parameters = [];
-                $placeholders = [];
-                /** @var array<int<0, max>, Type> $types */
-                $types = [];
-                $position = 0;
-                foreach ($messages as $message) {
-                    /** @var int<0, max> $offset */
-                    $offset = $position * $columnsLength;
-                    $placeholders[] = $placeholder;
-
-                    $data = $this->eventSerializer->serialize($message->event());
-
-                    try {
-                        $aggregateHeader = $message->header(AggregateHeader::class);
-                    } catch (HeaderNotFound $e) {
-                        throw new MissingDataForStorage($e->name, $e);
-                    }
-
-                    $parameters[] = $aggregateHeader->aggregateName;
-                    $parameters[] = $aggregateHeader->aggregateId;
-                    $parameters[] = $aggregateHeader->playhead;
-                    $parameters[] = $data->name;
-                    $parameters[] = $data->payload;
-
-                    $parameters[] = $aggregateHeader->recordedOn;
-                    $types[$offset + 5] = $dateTimeType;
-
-                    $streamStart = $message->hasHeader(StreamStartHeader::class);
-
-                    if ($streamStart) {
-                        $key = $aggregateHeader->aggregateName . '/' . $aggregateHeader->aggregateId;
-                        $achievedUntilPlayhead[$key] = $aggregateHeader->playhead;
-                    }
-
-                    $parameters[] = $streamStart;
-                    $types[$offset + 6] = $booleanType;
-
-                    $parameters[] = $message->hasHeader(ArchivedHeader::class);
-                    $types[$offset + 7] = $booleanType;
-
-                    $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
-
-                    $position++;
-
-                    if ($position !== $batchSize) {
-                        continue;
-                    }
-
-                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                    $columnsLength = count($columns);
+                    $batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
+                    $placeholder = implode(', ', array_fill(0, $columnsLength, '?'));
 
                     $parameters = [];
                     $placeholders = [];
+                    /** @var array<int<0, max>, Type> $types */
                     $types = [];
-
                     $position = 0;
-                }
+                    foreach ($messages as $message) {
+                        /** @var int<0, max> $offset */
+                        $offset = $position * $columnsLength;
+                        $placeholders[] = $placeholder;
 
-                if ($position !== 0) {
-                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
-                }
+                        $data = $this->eventSerializer->serialize($message->event());
 
-                foreach ($achievedUntilPlayhead as $key => $playhead) {
-                    [$aggregateName, $aggregateId] = explode('/', $key);
+                        try {
+                            $aggregateHeader = $message->header(AggregateHeader::class);
+                        } catch (HeaderNotFound $e) {
+                            throw new MissingDataForStorage($e->name, $e);
+                        }
 
-                    $connection->executeStatement(
-                        sprintf(
-                            <<<'SQL'
+                        $parameters[] = $aggregateHeader->aggregateName;
+                        $parameters[] = $aggregateHeader->aggregateId;
+                        $parameters[] = $aggregateHeader->playhead;
+                        $parameters[] = $data->name;
+                        $parameters[] = $data->payload;
+
+                        $parameters[] = $aggregateHeader->recordedOn;
+                        $types[$offset + 5] = $dateTimeType;
+
+                        $streamStart = $message->hasHeader(StreamStartHeader::class);
+
+                        if ($streamStart) {
+                            $key = $aggregateHeader->aggregateName . '/' . $aggregateHeader->aggregateId;
+                            $achievedUntilPlayhead[$key] = $aggregateHeader->playhead;
+                        }
+
+                        $parameters[] = $streamStart;
+                        $types[$offset + 6] = $booleanType;
+
+                        $parameters[] = $message->hasHeader(ArchivedHeader::class);
+                        $types[$offset + 7] = $booleanType;
+
+                        $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
+
+                        $position++;
+
+                        if ($position !== $batchSize) {
+                            continue;
+                        }
+
+                        $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+
+                        $parameters = [];
+                        $placeholders = [];
+                        $types = [];
+
+                        $position = 0;
+                    }
+
+                    if ($position !== 0) {
+                        $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                    }
+
+                    foreach ($achievedUntilPlayhead as $key => $playhead) {
+                        [$aggregateName, $aggregateId] = explode('/', $key);
+
+                        $connection->executeStatement(
+                            sprintf(
+                                <<<'SQL'
                             UPDATE %s
                             SET archived = true
                             WHERE aggregate = :aggregate
@@ -253,17 +266,20 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                             AND playhead < :playhead
                             AND archived = false
                             SQL,
-                            $this->config['table_name'],
-                        ),
-                        [
-                            'aggregate' => $aggregateName,
-                            'aggregate_id' => $aggregateId,
-                            'playhead' => $playhead,
-                        ],
-                    );
-                }
-            },
-        );
+                                $this->config['table_name'],
+                            ),
+                            [
+                                'aggregate' => $aggregateName,
+                                'aggregate_id' => $aggregateId,
+                                'playhead' => $playhead,
+                            ],
+                        );
+                    }
+                },
+            );
+        } finally {
+            $this->unlock();
+        }
     }
 
     /**
@@ -422,5 +438,80 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         } catch (UniqueConstraintViolationException $e) {
             throw new UniqueConstraintViolation($e);
         }
+    }
+
+    private function lock(): void
+    {
+        if (!$this->config['locking']) {
+            return;
+        }
+
+        $platform = $this->connection->getDatabasePlatform();
+
+        if ($platform instanceof PostgreSQLPlatform) {
+            $this->connection->executeStatement(
+                sprintf(
+                    'SELECT pg_advisory_lock(%s)',
+                    $this->config['lock_id'],
+                ),
+            );
+
+            return;
+        }
+
+        if ($platform instanceof MariaDBPlatform || $platform instanceof MySQLPlatform) {
+            $this->connection->fetchAllAssociative(
+                sprintf(
+                    'SELECT GET_LOCK("%s", %d)',
+                    $this->config['lock_id'],
+                    $this->config['lock_timeout'],
+                ),
+            );
+
+            return;
+        }
+
+        if ($platform instanceof SQLitePlatform) {
+            return; // locking is not supported
+        }
+
+        throw new LockingNotImplemented($platform::class);
+    }
+
+    private function unlock(): void
+    {
+        if (!$this->config['locking']) {
+            return;
+        }
+
+        $platform = $this->connection->getDatabasePlatform();
+
+        if ($platform instanceof PostgreSQLPlatform) {
+            $this->connection->executeStatement(
+                sprintf(
+                    'SELECT pg_advisory_unlock(%s)',
+                    $this->config['lock_id'],
+                ),
+            );
+
+            return;
+        }
+
+        if ($platform instanceof MariaDBPlatform || $platform instanceof MySQLPlatform) {
+            $this->connection->fetchAllAssociative(
+                sprintf(
+                    'SELECT RELEASE_LOCK("%s")',
+                    $this->config['lock_id'],
+                ),
+            );
+
+            return;
+        }
+
+        if ($platform instanceof SQLitePlatform) {
+            return; // locking is not supported
+        }
+
+        throw new LockingNotImplemented($platform::class);
     }
 }
