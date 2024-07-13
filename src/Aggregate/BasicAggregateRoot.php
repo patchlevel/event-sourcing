@@ -10,7 +10,9 @@ abstract class BasicAggregateRoot implements AggregateRoot, AggregateRootMetadat
 {
     use AggregateRootAttributeBehaviour {
         metadata as getMetadata;
+        apply as rootApply;
     }
+    use AggregateRootWithChildsBehaviour;
 
     /** @return AggregateRootMetadata<self> */
     public static function metadata(): AggregateRootMetadata
@@ -20,5 +22,10 @@ abstract class BasicAggregateRoot implements AggregateRoot, AggregateRootMetadat
         }
 
         return static::getMetadata();
+    }
+
+    protected function apply(object $event): void
+    {
+        $this->applyWithChildren($event);
     }
 }
