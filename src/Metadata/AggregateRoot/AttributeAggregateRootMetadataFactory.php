@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\ChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot as AttributeSnapshot;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
@@ -46,6 +47,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflectionClass);
         $applyMethods = $this->findApplyMethods($reflectionClass, $aggregate);
         $snapshot = $this->findSnapshot($reflectionClass);
+        $childAggregates = $this->findChildAggregates($reflectionClass);
 
         $metadata = new AggregateRootMetadata(
             $aggregate,
@@ -55,6 +57,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $suppressEvents,
             $suppressAll,
             $snapshot,
+            $childAggregates
         );
 
         $this->aggregateMetadata[$aggregate] = $metadata;
@@ -133,6 +136,38 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $attribute->version,
         );
     }
+
+    /**
+     * @return array<string>
+     */
+    private function findChildAggregates(ReflectionClass $reflector): array
+    {
+        $properties = $reflector->getProperties();
+        $childAggregates = [];
+
+        foreach ($properties as $property) {
+            $attributes = $property->getAttributes(ChildAggregate::class);
+
+            if ($attributes === []) {
+                continue;
+            }
+
+            $reflectionType = $property->getType();
+
+            if (!$reflectionType instanceof ReflectionNamedType) {
+                throw new \RuntimeException('no intersection / union supported');
+            }
+
+            if (!is_a($reflectionType->getName(), \Patchlevel\EventSourcing\Aggregate\ChildAggregate::class, true)) {
+                throw new \RuntimeException('no child');
+            }
+
+            $childAggregates[] = $property->getName();
+        }
+
+        return $childAggregates;
+    }
+
 
     /**
      * @param class-string<AggregateRoot> $aggregate

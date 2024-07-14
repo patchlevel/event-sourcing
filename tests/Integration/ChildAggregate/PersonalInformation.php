@@ -9,14 +9,13 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\ProfileCreated;
 
-#[Aggregate('child')]
 final class PersonalInformation extends BasicChildAggregate
 {
     private string $name;
 
-    public static function create(): self
+    public static function create(callable $recorder): self
     {
-        return new self();
+        return new self($recorder);
     }
 
     #[Apply(ProfileCreated::class)]

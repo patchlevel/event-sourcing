@@ -11,6 +11,7 @@ trait ChildAggregateBehaviour
 {
     #[NormalizedName('_playhead')]
     private int $playhead = 0;
+
     /**
      * @var callable(object $event): void
      */

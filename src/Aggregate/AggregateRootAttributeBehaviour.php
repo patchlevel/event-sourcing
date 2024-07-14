@@ -52,4 +52,19 @@ trait AggregateRootAttributeBehaviour
 
         return $this->cachedAggregateRootId = $aggregateRootId;
     }
+
+    /**
+     * @return array<ChildAggregate>
+     */
+    public function getChildren(): array
+    {
+        $metadata = static::metadata();
+        $childs = [];
+
+        foreach ($metadata->childAggregates as $property) {
+            $childs[] = $this->{$property};
+        }
+
+        return $childs;
+    }
 }
