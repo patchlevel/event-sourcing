@@ -166,99 +166,97 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
             return;
         }
 
-        $this->lock();
-        try {
-            $this->connection->transactional(
-                function (Connection $connection) use ($messages): void {
-                    /** @var array<string, int> $achievedUntilPlayhead */
-                    $achievedUntilPlayhead = [];
+        $this->transactional(
+            function (Connection $connection) use ($messages): void {
+                /** @var array<string, int> $achievedUntilPlayhead */
+                $achievedUntilPlayhead = [];
 
-                    $booleanType = Type::getType(Types::BOOLEAN);
-                    $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
+                $booleanType = Type::getType(Types::BOOLEAN);
+                $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
-                    $columns = [
-                        'aggregate',
-                        'aggregate_id',
-                        'playhead',
-                        'event',
-                        'payload',
-                        'recorded_on',
-                        'new_stream_start',
-                        'archived',
-                        'custom_headers',
-                    ];
+                $columns = [
+                    'aggregate',
+                    'aggregate_id',
+                    'playhead',
+                    'event',
+                    'payload',
+                    'recorded_on',
+                    'new_stream_start',
+                    'archived',
+                    'custom_headers',
+                ];
 
-                    $columnsLength = count($columns);
-                    $batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
-                    $placeholder = implode(', ', array_fill(0, $columnsLength, '?'));
+                $columnsLength = count($columns);
+                $batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
+                $placeholder = implode(', ', array_fill(0, $columnsLength, '?'));
+
+                $parameters = [];
+                $placeholders = [];
+                /** @var array<int<0, max>, Type> $types */
+                $types = [];
+                $position = 0;
+                foreach ($messages as $message) {
+                    /** @var int<0, max> $offset */
+                    $offset = $position * $columnsLength;
+                    $placeholders[] = $placeholder;
+
+                    $data = $this->eventSerializer->serialize($message->event());
+
+                    try {
+                        $aggregateHeader = $message->header(AggregateHeader::class);
+                    } catch (HeaderNotFound $e) {
+                        throw new MissingDataForStorage($e->name, $e);
+                    }
+
+                    $parameters[] = $aggregateHeader->aggregateName;
+                    $parameters[] = $aggregateHeader->aggregateId;
+                    $parameters[] = $aggregateHeader->playhead;
+                    $parameters[] = $data->name;
+                    $parameters[] = $data->payload;
+
+                    $parameters[] = $aggregateHeader->recordedOn;
+                    $types[$offset + 5] = $dateTimeType;
+
+                    $streamStart = $message->hasHeader(StreamStartHeader::class);
+
+                    if ($streamStart) {
+                        $key = $aggregateHeader->aggregateName . '/' . $aggregateHeader->aggregateId;
+                        $achievedUntilPlayhead[$key] = $aggregateHeader->playhead;
+                    }
+
+                    $parameters[] = $streamStart;
+                    $types[$offset + 6] = $booleanType;
+
+                    $parameters[] = $message->hasHeader(ArchivedHeader::class);
+                    $types[$offset + 7] = $booleanType;
+
+                    $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
+
+                    $position++;
+
+                    if ($position !== $batchSize) {
+                        continue;
+                    }
+
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
 
                     $parameters = [];
                     $placeholders = [];
-                    /** @var array<int<0, max>, Type> $types */
                     $types = [];
+
                     $position = 0;
-                    foreach ($messages as $message) {
-                        /** @var int<0, max> $offset */
-                        $offset = $position * $columnsLength;
-                        $placeholders[] = $placeholder;
+                }
 
-                        $data = $this->eventSerializer->serialize($message->event());
+                if ($position !== 0) {
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                }
 
-                        try {
-                            $aggregateHeader = $message->header(AggregateHeader::class);
-                        } catch (HeaderNotFound $e) {
-                            throw new MissingDataForStorage($e->name, $e);
-                        }
+                foreach ($achievedUntilPlayhead as $key => $playhead) {
+                    [$aggregateName, $aggregateId] = explode('/', $key);
 
-                        $parameters[] = $aggregateHeader->aggregateName;
-                        $parameters[] = $aggregateHeader->aggregateId;
-                        $parameters[] = $aggregateHeader->playhead;
-                        $parameters[] = $data->name;
-                        $parameters[] = $data->payload;
-
-                        $parameters[] = $aggregateHeader->recordedOn;
-                        $types[$offset + 5] = $dateTimeType;
-
-                        $streamStart = $message->hasHeader(StreamStartHeader::class);
-
-                        if ($streamStart) {
-                            $key = $aggregateHeader->aggregateName . '/' . $aggregateHeader->aggregateId;
-                            $achievedUntilPlayhead[$key] = $aggregateHeader->playhead;
-                        }
-
-                        $parameters[] = $streamStart;
-                        $types[$offset + 6] = $booleanType;
-
-                        $parameters[] = $message->hasHeader(ArchivedHeader::class);
-                        $types[$offset + 7] = $booleanType;
-
-                        $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
-
-                        $position++;
-
-                        if ($position !== $batchSize) {
-                            continue;
-                        }
-
-                        $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
-
-                        $parameters = [];
-                        $placeholders = [];
-                        $types = [];
-
-                        $position = 0;
-                    }
-
-                    if ($position !== 0) {
-                        $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
-                    }
-
-                    foreach ($achievedUntilPlayhead as $key => $playhead) {
-                        [$aggregateName, $aggregateId] = explode('/', $key);
-
-                        $connection->executeStatement(
-                            sprintf(
-                                <<<'SQL'
+                    $connection->executeStatement(
+                        sprintf(
+                            <<<'SQL'
                             UPDATE %s
                             SET archived = true
                             WHERE aggregate = :aggregate
@@ -266,20 +264,17 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                             AND playhead < :playhead
                             AND archived = false
                             SQL,
-                                $this->config['table_name'],
-                            ),
-                            [
-                                'aggregate' => $aggregateName,
-                                'aggregate_id' => $aggregateId,
-                                'playhead' => $playhead,
-                            ],
-                        );
-                    }
-                },
-            );
-        } finally {
-            $this->unlock();
-        }
+                            $this->config['table_name'],
+                        ),
+                        [
+                            'aggregate' => $aggregateName,
+                            'aggregate_id' => $aggregateId,
+                            'playhead' => $playhead,
+                        ],
+                    );
+                }
+            },
+        );
     }
 
     /**
@@ -289,7 +284,14 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
      */
     public function transactional(Closure $function): void
     {
-        $this->connection->transactional($function);
+        $this->connection->transactional(function (Connection $connection) use ($function): void {
+            $this->lock();
+            try {
+                $function($connection);
+            } finally {
+                $this->unlock();
+            }
+        });
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void
@@ -346,7 +348,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         return array_values(
             array_filter(
                 $message->headers(),
-                static fn (object $header) => !in_array($header::class, $filteredHeaders, true),
+                static fn(object $header) => !in_array($header::class, $filteredHeaders, true),
             ),
         );
     }
@@ -414,9 +416,9 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
     }
 
     /**
-     * @param array<string>               $columns
-     * @param array<string>               $placeholders
-     * @param list<mixed>                 $parameters
+     * @param array<string> $columns
+     * @param array<string> $placeholders
+     * @param list<mixed> $parameters
      * @param array<0|positive-int, Type> $types
      */
     private function executeSave(
