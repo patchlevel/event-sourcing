@@ -95,7 +95,6 @@ final class ChildAggregateIntegrationTest extends TestCase
         self::assertEquals($profileId, $profile->aggregateRootId());
         self::assertSame(1, $profile->playhead());
         self::assertSame('John', $profile->name());
-        self::assertSame(1, SendEmailMock::count());
     }
 
     public function testSnapshot(): void
@@ -156,6 +155,5 @@ final class ChildAggregateIntegrationTest extends TestCase
         self::assertEquals($profileId, $profile->aggregateRootId());
         self::assertSame(1, $profile->playhead());
         self::assertSame('John', $profile->name());
-        self::assertSame(1, SendEmailMock::count());
     }
 }

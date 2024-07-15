@@ -6,7 +6,11 @@ namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_CLASS)]
 final class ChildAggregate
 {
+    public function __construct(
+        public readonly string $name,
+    ) {
+    }
 }

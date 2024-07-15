@@ -202,7 +202,7 @@ final class AggregateRootTest extends TestCase
             {
                 $this->called = true;
 
-                return new AggregateRootMetadata($aggregate, 'name', 'id', [], [], false, null);
+                return new AggregateRootMetadata($aggregate, 'name', 'id', [], [], false, null, []);
             }
         };
 

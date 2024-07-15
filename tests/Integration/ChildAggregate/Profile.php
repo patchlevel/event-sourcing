@@ -18,7 +18,6 @@ final class Profile extends BasicAggregateRoot
 {
     #[Id]
     private ProfileId $id;
-    #[ChildAggregate]
     protected PersonalInformation $personalInformation;
 
     public static function create(ProfileId $id, string $name): self

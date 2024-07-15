@@ -12,7 +12,7 @@ use function array_key_exists;
 trait ChildAggregateAttributeBehaviour
 {
     use ChildAggregateBehaviour;
-    use AggregateRootMetadataAwareBehaviour;
+    use ChildAggregateMetadataAwareBehaviour;
 
     public function apply(object $event): void
     {

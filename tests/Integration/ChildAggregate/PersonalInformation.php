@@ -7,8 +7,10 @@ namespace Patchlevel\EventSourcing\Tests\Integration\ChildAggregate;
 use Patchlevel\EventSourcing\Aggregate\BasicChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\ChildAggregate;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\ProfileCreated;
 
+#[ChildAggregate('personal_information')]
 final class PersonalInformation extends BasicChildAggregate
 {
     private string $name;
