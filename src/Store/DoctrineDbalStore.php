@@ -453,7 +453,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         if ($platform instanceof PostgreSQLPlatform) {
             $this->connection->executeStatement(
                 sprintf(
-                    'SELECT pg_advisory_lock(%s)',
+                    'SELECT pg_advisory_xact_lock(%s)',
                     $this->config['lock_id'],
                 ),
             );
@@ -474,7 +474,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         }
 
         if ($platform instanceof SQLitePlatform) {
-            return; // locking is not supported
+            return; // sql locking is not needed because of file locking
         }
 
         throw new LockingNotImplemented($platform::class);
@@ -489,14 +489,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         $platform = $this->connection->getDatabasePlatform();
 
         if ($platform instanceof PostgreSQLPlatform) {
-            $this->connection->executeStatement(
-                sprintf(
-                    'SELECT pg_advisory_unlock(%s)',
-                    $this->config['lock_id'],
-                ),
-            );
-
-            return;
+            return; // lock is released automatically after transaction
         }
 
         if ($platform instanceof MariaDBPlatform || $platform instanceof MySQLPlatform) {
@@ -511,7 +504,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         }
 
         if ($platform instanceof SQLitePlatform) {
-            return; // locking is not supported
+            return; // sql locking is not needed because of file locking
         }
 
         throw new LockingNotImplemented($platform::class);

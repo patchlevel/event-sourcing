@@ -93,6 +93,57 @@ final class StoreTest extends TestCase
         self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
     }
 
+
+    public function testSaveWithTransactional(): void
+    {
+        $profileId = ProfileId::generate();
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    1,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    2,
+                    new DateTimeImmutable('2020-01-02 00:00:00'),
+                )),
+        ];
+
+        $this->store->transactional(function () use ($messages): void {
+            $this->store->save(...$messages);
+        });
+
+        /** @var list<array<string, string>> $result */
+        $result = $this->connection->fetchAllAssociative('SELECT * FROM eventstore');
+
+        self::assertCount(2, $result);
+
+        $result1 = $result[0];
+
+        self::assertEquals($profileId->toString(), $result1['aggregate_id']);
+        self::assertEquals('profile', $result1['aggregate']);
+        self::assertEquals('1', $result1['playhead']);
+        self::assertStringContainsString('2020-01-01 00:00:00', $result1['recorded_on']);
+        self::assertEquals('profile.created', $result1['event']);
+        self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
+
+        $result2 = $result[1];
+
+        self::assertEquals($profileId->toString(), $result2['aggregate_id']);
+        self::assertEquals('profile', $result2['aggregate']);
+        self::assertEquals('2', $result2['playhead']);
+        self::assertStringContainsString('2020-01-02 00:00:00', $result2['recorded_on']);
+        self::assertEquals('profile.created', $result2['event']);
+        self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
+    }
+
+
     public function testSave10000Messages(): void
     {
         $profileId = ProfileId::generate();
