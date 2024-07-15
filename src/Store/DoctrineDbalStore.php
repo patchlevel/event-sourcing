@@ -61,6 +61,8 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
     /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid', locking: bool, lock_id: int, lock_timeout: int} */
     private readonly array $config;
 
+    private bool $hasLock = false;
+
     /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid', locking?: bool, lock_id?: int, lock_timeout?: int} $config */
     public function __construct(
         private readonly Connection $connection,
@@ -167,7 +169,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         }
 
         $this->transactional(
-            function (Connection $connection) use ($messages): void {
+            function () use ($messages): void {
                 /** @var array<string, int> $achievedUntilPlayhead */
                 $achievedUntilPlayhead = [];
 
@@ -238,7 +240,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                         continue;
                     }
 
-                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
 
                     $parameters = [];
                     $placeholders = [];
@@ -248,13 +250,13 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                 }
 
                 if ($position !== 0) {
-                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
                 }
 
                 foreach ($achievedUntilPlayhead as $key => $playhead) {
                     [$aggregateName, $aggregateId] = explode('/', $key);
 
-                    $connection->executeStatement(
+                    $this->connection->executeStatement(
                         sprintf(
                             <<<'SQL'
                             UPDATE %s
@@ -284,14 +286,18 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
      */
     public function transactional(Closure $function): void
     {
-        $this->connection->transactional(function (Connection $connection) use ($function): void {
-            $this->lock();
-            try {
-                $function($connection);
-            } finally {
-                $this->unlock();
-            }
-        });
+        if ($this->hasLock || !$this->config['locking']) {
+            $this->connection->transactional($function);
+        } else {
+            $this->connection->transactional(function () use ($function): void {
+                $this->lock();
+                try {
+                    $function();
+                } finally {
+                    $this->unlock();
+                }
+            });
+        }
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void
@@ -348,7 +354,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         return array_values(
             array_filter(
                 $message->headers(),
-                static fn(object $header) => !in_array($header::class, $filteredHeaders, true),
+                static fn (object $header) => !in_array($header::class, $filteredHeaders, true),
             ),
         );
     }
@@ -416,9 +422,9 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
     }
 
     /**
-     * @param array<string> $columns
-     * @param array<string> $placeholders
-     * @param list<mixed> $parameters
+     * @param array<string>               $columns
+     * @param array<string>               $placeholders
+     * @param list<mixed>                 $parameters
      * @param array<0|positive-int, Type> $types
      */
     private function executeSave(
@@ -444,9 +450,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
 
     private function lock(): void
     {
-        if (!$this->config['locking']) {
-            return;
-        }
+        $this->hasLock = true;
 
         $platform = $this->connection->getDatabasePlatform();
 
@@ -482,9 +486,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
 
     private function unlock(): void
     {
-        if (!$this->config['locking']) {
-            return;
-        }
+        $this->hasLock = false;
 
         $platform = $this->connection->getDatabasePlatform();
 

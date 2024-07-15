@@ -93,7 +93,6 @@ final class StoreTest extends TestCase
         self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
     }
 
-
     public function testSaveWithTransactional(): void
     {
         $profileId = ProfileId::generate();
@@ -142,7 +141,6 @@ final class StoreTest extends TestCase
         self::assertEquals('profile.created', $result2['event']);
         self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
     }
-
 
     public function testSave10000Messages(): void
     {
