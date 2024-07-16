@@ -30,7 +30,7 @@ $connection = DriverManager::getConnection(
 ## Configure Store
 
 You can create a store with the `DoctrineDbalStore` class.
-The store needs a dbal connection, an event serializer, an aggregate registry and a table name.
+The store needs a dbal connection, an event serializer, an aggregate registry and some options.
 
 ```php
 use Doctrine\DBAL\Connection;
@@ -42,9 +42,19 @@ $store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths(['src/Event']),
     null,
-    ['table_name' => 'eventstore'],
+    [/** options */],
 );
 ```
+Following options are available in `DoctrineDbalStore`:
+
+| Option            | Type             | Default    | Description                                  |
+|-------------------|------------------|------------|----------------------------------------------|
+| table_name        | string           | eventstore | The name of the table in the database        |
+| aggregate_id_type | "uuid"|"string" | uuid       | The type of the `aggregate_id` column        |
+| locking           | bool             | true       | If the store should use locking for writing  |
+| lock_id           | int              | 133742     | The id of the lock                           |
+| lock_timeout      | int              | -1         | The timeout of the lock. -1 means no timeout |
+
 ## Schema
 
 The table structure of the `DoctrineDbalStore` looks like this:
@@ -339,6 +349,11 @@ $store->save(...$messages);
 !!! note
 
     The saving happens in a transaction, so all messages are saved or none.    
+    The store lock the table for writing during each save by default.
+    
+!!! tip
+
+    Use transactional method if you want call multiple save methods in a transaction.
     
 ### Delete & Update
 
@@ -348,7 +363,7 @@ In event sourcing, the events are immutable.
 ### Transaction
 
 There is also the possibility of executing a function in a transaction.
-Then dbal takes care of starting a transaction, committing it and then possibly rollback it again.
+The store takes care of starting a transaction, committing it and then possibly rollback it again.
 
 ```php
 use Patchlevel\EventSourcing\Store\Store;
@@ -365,6 +380,15 @@ $store->transactional(static function () use ($command, $bankAccountRepository):
     $bankAccountRepository->save($accountTo);
 });
 ```
+!!! note
+
+    The store lock the table for writing during the transaction by default.
+    
+!!! tip
+
+    If you want save only one aggregate, so you don't have to use the transactional method.
+    The save method in store/repository is already transactional.
+    
 ## Learn more
 
 * [How to create events](events.md)
