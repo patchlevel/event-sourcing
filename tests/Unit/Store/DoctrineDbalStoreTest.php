@@ -42,6 +42,7 @@ use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
+use RuntimeException;
 
 use function iterator_to_array;
 use function method_exists;
@@ -469,11 +470,21 @@ final class DoctrineDbalStoreTest extends TestCase
 
     public function testTransactional(): void
     {
-        $callback = static function (): void {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
         };
 
         $connection = $this->prophesize(Connection::class);
-        $connection->transactional($callback)->willReturn(null)->shouldBeCalled();
+        $connection->getDatabasePlatform()->willReturn(new SQLitePlatform());
+        $connection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        )->shouldBeCalled();
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
@@ -484,7 +495,217 @@ final class DoctrineDbalStoreTest extends TestCase
             $headersSerializer->reveal(),
         );
 
-        $store->transactional($callback);
+        $store->transactional($callback(...));
+
+        self::assertTrue($callback->called);
+    }
+
+    public function testTransactionalWithMySQL(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->prophesize(Connection::class);
+        $connection->getDatabasePlatform()->willReturn(new MySQLPlatform());
+        $connection->fetchAllAssociative('SELECT GET_LOCK("133742", -1)')->shouldBeCalledOnce()->willReturn([]);
+        $connection->fetchAllAssociative('SELECT RELEASE_LOCK("133742")')->shouldBeCalledOnce()->willReturn([]);
+
+        $connection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        )->shouldBeCalled();
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $store->transactional($callback(...));
+
+        self::assertTrue($callback->called);
+    }
+
+    public function testTransactionalWithMariaDB(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->prophesize(Connection::class);
+        $connection->getDatabasePlatform()->willReturn(new MariaDBPlatform());
+        $connection->fetchAllAssociative('SELECT GET_LOCK("133742", -1)')->shouldBeCalledOnce()->willReturn([]);
+        $connection->fetchAllAssociative('SELECT RELEASE_LOCK("133742")')->shouldBeCalledOnce()->willReturn([]);
+
+        $connection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        )->shouldBeCalled();
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $store->transactional($callback(...));
+
+        self::assertTrue($callback->called);
+    }
+
+    public function testTransactionalWithPostgreSQL(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->prophesize(Connection::class);
+        $connection->getDatabasePlatform()->willReturn(new PostgreSQLPlatform());
+        $connection->executeStatement('SELECT pg_advisory_xact_lock(133742)')->shouldBeCalledOnce();
+
+        $connection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        )->shouldBeCalled();
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $store->transactional($callback(...));
+
+        self::assertTrue($callback->called);
+    }
+
+    public function testTransactionalNested(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->prophesize(Connection::class);
+        $connection->getDatabasePlatform()->willReturn(new PostgreSQLPlatform());
+        $connection->executeStatement('SELECT pg_advisory_xact_lock(133742)')->shouldBeCalledOnce();
+
+        $connection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        )->shouldBeCalledTimes(2);
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $store->transactional(static function () use ($store, $callback): void {
+            $store->transactional($callback(...));
+        });
+
+        self::assertTrue($callback->called);
+    }
+
+    public function testTransactionalTwice(): void
+    {
+        $callback = new class () {
+            public int $called = 0;
+
+            public function __invoke(): void
+            {
+                $this->called++;
+            }
+        };
+
+        $connection = $this->prophesize(Connection::class);
+        $connection->getDatabasePlatform()->willReturn(new PostgreSQLPlatform());
+        $connection->executeStatement('SELECT pg_advisory_xact_lock(133742)')->shouldBeCalledTimes(2);
+
+        $connection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        )->shouldBeCalled();
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $store->transactional($callback(...));
+        $store->transactional($callback(...));
+
+        self::assertEquals(2, $callback->called);
+    }
+
+    public function testTransactionalUnlockByException(): void
+    {
+        $callback = new class () {
+            public function __invoke(): void
+            {
+                throw new RuntimeException();
+            }
+        };
+
+        $connection = $this->prophesize(Connection::class);
+        $connection->getDatabasePlatform()->willReturn(new MariaDBPlatform());
+        $connection->fetchAllAssociative('SELECT GET_LOCK("133742", -1)')->shouldBeCalledOnce()->willReturn([]);
+        $connection->fetchAllAssociative('SELECT RELEASE_LOCK("133742")')->shouldBeCalledOnce()->willReturn([]);
+
+        $connection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        )->shouldBeCalled();
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $this->expectException(RuntimeException::class);
+
+        $store->transactional($callback(...));
     }
 
     public function testSaveWithOneEvent(): void
@@ -497,18 +718,6 @@ final class DoctrineDbalStoreTest extends TestCase
                 1,
                 $recordedOn,
             ));
-
-        $innerMockedConnection = $this->prophesize(Connection::class);
-
-        $innerMockedConnection->executeStatement(
-            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, '[]'],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
@@ -523,8 +732,18 @@ final class DoctrineDbalStoreTest extends TestCase
         $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
         $mockedConnection->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
+            static fn (array $args): mixed => $args[0](),
         );
+
+        $mockedConnection->executeStatement(
+            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, '[]'],
+            [
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                6 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+            ],
+        )->shouldBeCalledOnce();
 
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
@@ -539,18 +758,6 @@ final class DoctrineDbalStoreTest extends TestCase
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
-        $innerMockedConnection = $this->prophesize(Connection::class);
-
-        $innerMockedConnection->executeStatement(
-            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, []],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldNotBeCalled();
-
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
             'profile_created',
@@ -564,8 +771,18 @@ final class DoctrineDbalStoreTest extends TestCase
         $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
         $mockedConnection->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
+            static fn (array $args): mixed => $args[0](),
         );
+
+        $mockedConnection->executeStatement(
+            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, []],
+            [
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                6 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+            ],
+        )->shouldNotBeCalled();
 
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
@@ -595,9 +812,27 @@ final class DoctrineDbalStoreTest extends TestCase
                 $recordedOn,
             ));
 
-        $innerMockedConnection = $this->prophesize(Connection::class);
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
+        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_email_changed',
+            '',
+        ));
 
-        $innerMockedConnection->executeStatement(
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize([])->willReturn('[]');
+
+        $mockedConnection = $this->prophesize(Connection::class);
+        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
+        $mockedConnection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        );
+
+        $mockedConnection->executeStatement(
             "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile',
@@ -629,26 +864,6 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce();
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_email_changed',
-            '',
-        ));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
-        );
-
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $eventSerializer->reveal(),
@@ -675,9 +890,23 @@ final class DoctrineDbalStoreTest extends TestCase
                 $recordedOn,
             ));
 
-        $innerMockedConnection = $this->prophesize(Connection::class);
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer->serialize($message1->event())->shouldBeCalledTimes(2)->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
 
-        $innerMockedConnection->executeStatement(
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize([])->willReturn('[]');
+
+        $mockedConnection = $this->prophesize(Connection::class);
+        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
+        $mockedConnection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        );
+
+        $mockedConnection->executeStatement(
             "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile',
@@ -709,22 +938,6 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce()->willThrow(UniqueConstraintViolationException::class);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledTimes(2)->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
-        );
-
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $eventSerializer->reveal(),
@@ -750,11 +963,6 @@ final class DoctrineDbalStoreTest extends TestCase
                 ));
         }
 
-        $innerMockedConnection = $this->prophesize(Connection::class);
-
-        $innerMockedConnection->executeStatement(Argument::any(), Argument::any(), Argument::any())
-            ->shouldBeCalledTimes(2);
-
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($messages[0]->event())->shouldBeCalledTimes(10000)->willReturn(new SerializedEvent(
             'profile_email_changed',
@@ -768,8 +976,11 @@ final class DoctrineDbalStoreTest extends TestCase
         $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
         $mockedConnection->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
+            static fn (array $args): mixed => $args[0](),
         );
+
+        $mockedConnection->executeStatement(Argument::any(), Argument::any(), Argument::any())
+            ->shouldBeCalledTimes(2);
 
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
@@ -796,18 +1007,6 @@ final class DoctrineDbalStoreTest extends TestCase
             ))
             ->withHeaders($customHeaders);
 
-        $innerMockedConnection = $this->prophesize(Connection::class);
-
-        $innerMockedConnection->executeStatement(
-            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, '{foo: "foo", baz: "baz"}'],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
-
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
             'profile_created',
@@ -821,8 +1020,18 @@ final class DoctrineDbalStoreTest extends TestCase
         $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
         $mockedConnection->transactional(Argument::any())->will(
         /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
+            static fn (array $args): mixed => $args[0](),
         );
+
+        $mockedConnection->executeStatement(
+            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, '{foo: "foo", baz: "baz"}'],
+            [
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                6 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+            ],
+        )->shouldBeCalledOnce();
 
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
@@ -1196,9 +1405,27 @@ final class DoctrineDbalStoreTest extends TestCase
             ))
             ->withHeader(new StreamStartHeader());
 
-        $innerMockedConnection = $this->prophesize(Connection::class);
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
+        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_email_changed',
+            '',
+        ));
 
-        $innerMockedConnection->executeStatement(
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize([])->willReturn('[]');
+
+        $mockedConnection = $this->prophesize(Connection::class);
+        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
+        $mockedConnection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        );
+
+        $mockedConnection->executeStatement(
             "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile',
@@ -1230,7 +1457,7 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce();
 
-        $innerMockedConnection->executeStatement(
+        $mockedConnection->executeStatement(
             <<<'SQL'
             UPDATE eventstore
             SET archived = true
@@ -1246,7 +1473,7 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce();
 
-        $innerMockedConnection->executeStatement(
+        $mockedConnection->executeStatement(
             <<<'SQL'
             UPDATE eventstore
             SET archived = true
@@ -1261,26 +1488,6 @@ final class DoctrineDbalStoreTest extends TestCase
                 'playhead' => 42,
             ],
         )->shouldBeCalledOnce();
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_email_changed',
-            '',
-        ));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
-        );
 
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
@@ -1313,9 +1520,27 @@ final class DoctrineDbalStoreTest extends TestCase
             ))
             ->withHeader(new StreamStartHeader());
 
-        $innerMockedConnection = $this->prophesize(Connection::class);
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_created',
+            '',
+        ));
+        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+            'profile_email_changed',
+            '',
+        ));
 
-        $innerMockedConnection->executeStatement(
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer->serialize([])->willReturn('[]');
+
+        $mockedConnection = $this->prophesize(Connection::class);
+        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
+        $mockedConnection->transactional(Argument::any())->will(
+        /** @param array{0: callable} $args */
+            static fn (array $args): mixed => $args[0](),
+        );
+
+        $mockedConnection->executeStatement(
             "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile',
@@ -1347,7 +1572,7 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce();
 
-        $innerMockedConnection->executeStatement(
+        $mockedConnection->executeStatement(
             <<<'SQL'
             UPDATE eventstore
             SET archived = true
@@ -1363,26 +1588,6 @@ final class DoctrineDbalStoreTest extends TestCase
             ],
         )->shouldBeCalledOnce();
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_email_changed',
-            '',
-        ));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
-        );
-
         $singleTableStore = new DoctrineDbalStore(
             $mockedConnection->reveal(),
             $eventSerializer->reveal(),
@@ -1390,155 +1595,5 @@ final class DoctrineDbalStoreTest extends TestCase
         );
 
         $singleTableStore->save($message1, $message2);
-    }
-
-    public function testSaveWithMySQL(): void
-    {
-        $recordedOn = new DateTimeImmutable();
-        $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new AggregateHeader(
-                'profile',
-                '1',
-                1,
-                $recordedOn,
-            ));
-
-        $innerMockedConnection = $this->prophesize(Connection::class);
-
-        $innerMockedConnection->executeStatement(
-            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, '[]'],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new MySQLPlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
-        );
-
-        $mockedConnection->fetchAllAssociative('SELECT GET_LOCK("133742", -1)')->shouldBeCalledOnce()->willReturn([]);
-        $mockedConnection->fetchAllAssociative('SELECT RELEASE_LOCK("133742")')->shouldBeCalledOnce()->willReturn([]);
-
-        $singleTableStore = new DoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-        );
-        $singleTableStore->save($message);
-    }
-
-    public function testSaveWithMariaDB(): void
-    {
-        $recordedOn = new DateTimeImmutable();
-        $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new AggregateHeader(
-                'profile',
-                '1',
-                1,
-                $recordedOn,
-            ));
-
-        $innerMockedConnection = $this->prophesize(Connection::class);
-
-        $innerMockedConnection->executeStatement(
-            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, '[]'],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new MariaDBPlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
-        );
-
-        $mockedConnection->fetchAllAssociative('SELECT GET_LOCK("133742", -1)')->shouldBeCalledOnce()->willReturn([]);
-        $mockedConnection->fetchAllAssociative('SELECT RELEASE_LOCK("133742")')->shouldBeCalledOnce()->willReturn([]);
-
-        $singleTableStore = new DoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-        );
-        $singleTableStore->save($message);
-    }
-
-    public function testSaveWithPostgreSQL(): void
-    {
-        $recordedOn = new DateTimeImmutable();
-        $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new AggregateHeader(
-                'profile',
-                '1',
-                1,
-                $recordedOn,
-            ));
-
-        $innerMockedConnection = $this->prophesize(Connection::class);
-
-        $innerMockedConnection->executeStatement(
-            "INSERT INTO eventstore (aggregate, aggregate_id, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile', '1', 1, 'profile_created', '', $recordedOn, false, false, '[]'],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new PostgreSQLPlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0]($innerMockedConnection->reveal()),
-        );
-
-        $mockedConnection->executeStatement('SELECT pg_advisory_lock(133742)')->shouldBeCalledOnce();
-        $mockedConnection->executeStatement('SELECT pg_advisory_unlock(133742)')->shouldBeCalledOnce();
-
-        $singleTableStore = new DoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-        );
-        $singleTableStore->save($message);
     }
 }
