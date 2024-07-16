@@ -7,7 +7,10 @@ namespace Patchlevel\EventSourcing\Store;
 use Closure;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
@@ -48,12 +51,19 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
      */
     private const MAX_UNSIGNED_SMALL_INT = 65_535;
 
+    /**
+     * Default lock id for advisory lock.
+     */
+    private const DEFAULT_LOCK_ID = 133742;
+
     private readonly HeadersSerializer $headersSerializer;
 
-    /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid'} */
+    /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid', locking: bool, lock_id: int, lock_timeout: int} */
     private readonly array $config;
 
-    /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid'} $config */
+    private bool $hasLock = false;
+
+    /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid', locking?: bool, lock_id?: int, lock_timeout?: int} $config */
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
@@ -65,6 +75,9 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         $this->config = array_merge([
             'table_name' => 'eventstore',
             'aggregate_id_type' => 'uuid',
+            'locking' => true,
+            'lock_id' => self::DEFAULT_LOCK_ID,
+            'lock_timeout' => -1,
         ], $config);
     }
 
@@ -155,8 +168,8 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
             return;
         }
 
-        $this->connection->transactional(
-            function (Connection $connection) use ($messages): void {
+        $this->transactional(
+            function () use ($messages): void {
                 /** @var array<string, int> $achievedUntilPlayhead */
                 $achievedUntilPlayhead = [];
 
@@ -227,7 +240,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                         continue;
                     }
 
-                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
 
                     $parameters = [];
                     $placeholders = [];
@@ -237,13 +250,13 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                 }
 
                 if ($position !== 0) {
-                    $this->executeSave($columns, $placeholders, $parameters, $types, $connection);
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
                 }
 
                 foreach ($achievedUntilPlayhead as $key => $playhead) {
                     [$aggregateName, $aggregateId] = explode('/', $key);
 
-                    $connection->executeStatement(
+                    $this->connection->executeStatement(
                         sprintf(
                             <<<'SQL'
                             UPDATE %s
@@ -273,7 +286,18 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
      */
     public function transactional(Closure $function): void
     {
-        $this->connection->transactional($function);
+        if ($this->hasLock || !$this->config['locking']) {
+            $this->connection->transactional($function);
+        } else {
+            $this->connection->transactional(function () use ($function): void {
+                $this->lock();
+                try {
+                    $function();
+                } finally {
+                    $this->unlock();
+                }
+            });
+        }
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void
@@ -422,5 +446,69 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         } catch (UniqueConstraintViolationException $e) {
             throw new UniqueConstraintViolation($e);
         }
+    }
+
+    private function lock(): void
+    {
+        $this->hasLock = true;
+
+        $platform = $this->connection->getDatabasePlatform();
+
+        if ($platform instanceof PostgreSQLPlatform) {
+            $this->connection->executeStatement(
+                sprintf(
+                    'SELECT pg_advisory_xact_lock(%s)',
+                    $this->config['lock_id'],
+                ),
+            );
+
+            return;
+        }
+
+        if ($platform instanceof MariaDBPlatform || $platform instanceof MySQLPlatform) {
+            $this->connection->fetchAllAssociative(
+                sprintf(
+                    'SELECT GET_LOCK("%s", %d)',
+                    $this->config['lock_id'],
+                    $this->config['lock_timeout'],
+                ),
+            );
+
+            return;
+        }
+
+        if ($platform instanceof SQLitePlatform) {
+            return; // sql locking is not needed because of file locking
+        }
+
+        throw new LockingNotImplemented($platform::class);
+    }
+
+    private function unlock(): void
+    {
+        $this->hasLock = false;
+
+        $platform = $this->connection->getDatabasePlatform();
+
+        if ($platform instanceof PostgreSQLPlatform) {
+            return; // lock is released automatically after transaction
+        }
+
+        if ($platform instanceof MariaDBPlatform || $platform instanceof MySQLPlatform) {
+            $this->connection->fetchAllAssociative(
+                sprintf(
+                    'SELECT RELEASE_LOCK("%s")',
+                    $this->config['lock_id'],
+                ),
+            );
+
+            return;
+        }
+
+        if ($platform instanceof SQLitePlatform) {
+            return; // sql locking is not needed because of file locking
+        }
+
+        throw new LockingNotImplemented($platform::class);
     }
 }

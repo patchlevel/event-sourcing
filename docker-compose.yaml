@@ -4,5 +4,5 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=eventstore
-    expose:
-      - 5432
+    ports:
+      - 5432:5432
