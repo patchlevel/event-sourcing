@@ -12,7 +12,6 @@ final class ChildAggregateMetadata
     public function __construct(
         /** @var class-string<T> */
         public readonly string $className,
-        public readonly string $name,
         /** @var array<class-string, string> */
         public readonly array $applyMethods,
         /** @var array<class-string, true> */

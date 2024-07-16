@@ -39,13 +39,12 @@ final class AttributeChildAggregateMetadataFactory implements ChildAggregateMeta
 
         $reflectionClass = new ReflectionClass($aggregate);
 
-        $aggregateName = $this->findChildAggregateName($reflectionClass);
+        //$aggregateName = $this->findChildAggregateName($reflectionClass);
         [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflectionClass);
         $applyMethods = $this->findApplyMethods($reflectionClass, $aggregate);
 
         $metadata = new ChildAggregateMetadata(
             $aggregate,
-            $aggregateName,
             $applyMethods,
             $suppressEvents,
             $suppressAll,

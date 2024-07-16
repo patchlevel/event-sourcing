@@ -62,6 +62,10 @@ trait AggregateRootAttributeBehaviour
         $childs = [];
 
         foreach ($metadata->childAggregates as $property) {
+            if (!isset($this->{$property})) {
+                continue;
+            }
+
             $childs[] = $this->{$property};
         }
 

@@ -76,6 +76,7 @@ final class ChildAggregateIntegrationTest extends TestCase
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
+        $profile->changeName('Snow');
         $repository->save($profile);
 
         $result = $this->connection->fetchAssociative(
@@ -86,15 +87,15 @@ final class ChildAggregateIntegrationTest extends TestCase
         self::assertIsArray($result);
         self::assertArrayHasKey('id', $result);
         self::assertSame($profileId->toString(), $result['id']);
-        self::assertSame('John', $result['name']);
+        self::assertSame('Snow', $result['name']);
 
         $repository = $manager->get(Profile::class);
         $profile = $repository->load($profileId);
 
         self::assertInstanceOf(Profile::class, $profile);
         self::assertEquals($profileId, $profile->aggregateRootId());
-        self::assertSame(1, $profile->playhead());
-        self::assertSame('John', $profile->name());
+        self::assertSame(2, $profile->playhead());
+        self::assertSame('Snow', $profile->name());
     }
 
     public function testSnapshot(): void

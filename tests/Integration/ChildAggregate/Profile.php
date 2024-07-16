@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\ChildAggregate;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\ChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\ProfileCreated;
@@ -32,11 +31,16 @@ final class Profile extends BasicAggregateRoot
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId;
-        $this->personalInformation = PersonalInformation::create($this->recordThat(...));
+        $this->personalInformation = PersonalInformation::create($event->name);
     }
 
     public function name(): string
     {
         return $this->personalInformation->name();
+    }
+
+    public function changeName(string $name): void
+    {
+        $this->personalInformation->changeName($name);
     }
 }

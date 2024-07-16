@@ -15,6 +15,7 @@ trait AggregateRootWithChildsBehaviour
         $this->rootApply($event);
 
         foreach ($this->getChildren() as $child) {
+            $child->setRecorder($this->recordThat(...));
             $child->apply($event);
         }
     }

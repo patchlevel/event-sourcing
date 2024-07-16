@@ -17,14 +17,6 @@ trait ChildAggregateBehaviour
      */
     private $recorder;
 
-    /**
-     * @param callable(object $event): void $recorder
-     */
-    final protected function __construct(callable $recorder)
-    {
-        $this->recorder = $recorder;
-    }
-
     abstract public function apply(object $event): void;
 
     protected function recordThat(object $event): void
@@ -46,5 +38,13 @@ trait ChildAggregateBehaviour
     public function playhead(): int
     {
         return $this->playhead;
+    }
+
+    /**
+     * @param callable(object $event): void $recorder
+     */
+    public function setRecorder(callable $recorder)
+    {
+        $this->recorder = $recorder;
     }
 }
