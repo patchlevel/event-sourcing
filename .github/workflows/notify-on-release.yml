@@ -7,7 +7,7 @@ on:
 env:
   NOTIFY_MESSAGE: |
     We released ${{ github.event.release.tag_name }} of ${{ github.event.repository.name }}! See here for the changelog: ${{ github.event.release.html_url }}
-    #PHP #EventSourcing
+    #PHP #DDD #EventSourcing
 
 jobs:
   twitter:
