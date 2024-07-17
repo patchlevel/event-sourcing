@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
 
+env:
+  NOTIFY_MESSAGE: |
+    We released ${{ github.event.release.tag_name }} of ${{ github.event.repository.name }}! See here for the changelog: ${{ github.event.release.html_url }}
+    #PHP #DDD #EventSourcing
+
 jobs:
   twitter:
     runs-on: ubuntu-latest
@@ -13,7 +18,7 @@ jobs:
         with:
           # GitHub event payload
           # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#release
-          tweet-message: "New ${{ github.event.repository.name }} release ${{ github.event.release.tag_name }}! ${{ github.event.release.html_url }}"
+          tweet-message: ${{ env.NOTIFY_MESSAGE }}
         env:
           TWITTER_CONSUMER_API_KEY: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
           TWITTER_CONSUMER_API_SECRET: ${{ secrets.TWITTER_CONSUMER_API_SECRET }}
@@ -26,6 +31,6 @@ jobs:
       - uses: cbrgm/mastodon-github-action@v2
         if: ${{ !github.event.repository.private }}
         with:
-          message: "New ${{ github.event.repository.name }} release ${{ github.event.release.tag_name }}! ${{ github.event.release.html_url }}"
+          message: ${{ env.NOTIFY_MESSAGE }}
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
           url: ${{ secrets.MASTODON_URL }}
