@@ -37,11 +37,11 @@ jobs:
                 operating-system:
                     - "ubuntu-latest"
                 postgres-version:
-                  - "12.17"
-                  - "13.13"
-                  - "14.10"
-                  - "15.5"
-                  - "16.1"
+                  - "12.19"
+                  - "13.15"
+                  - "14.12"
+                  - "15.7"
+                  - "16.3"
 
         env:
             DB_URL: 'pdo-pgsql://postgres:postgres@localhost:5432/eventstore?charset=utf8'
@@ -91,10 +91,11 @@ jobs:
           operating-system:
             - "ubuntu-latest"
           mariadb-version:
-            - "10.4"
+            - "10.5"
             - "10.6"
             - "10.11"
-            - "11.2"
+            - "11.1"
+            - "11.4"
 
       env:
         DB_URL: 'pdo-mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
@@ -147,7 +148,8 @@ jobs:
           mysql-version:
             - "5.7"
             - "8.0"
-            - "8.2"
+            - "8.4"
+            - "9.0"
 
       env:
         DB_URL: 'pdo-mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
