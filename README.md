@@ -44,14 +44,14 @@ Since the package is based on doctrine dbal, other databases such as OracleDB an
 But we can only really support the databases if we can also automatically ensure that they don't break due to changes.
 
 > [!TIP]
-> We recommend using PostgresSQL.
+> We recommend using PostgreSQL.
 
-| Database    | Version                         |
-|-------------|---------------------------------|
-| PostgresSQL | 12.19, 13.15, 14.12, 15.7, 16.3 |
-| MariaDB     | 10.5, 10.6, 10.11, 11.1, 11.4   |
-| MySQL       | 5.7, 8.0, 8.4, 9.0              |
-| SQLite      | 3.x                             |
+| Database    | Version                        |
+|-------------|--------------------------------|
+| PostgreSQL | 12.19, 13.15, 14.12, 15.7, 16.3 |
+| MariaDB     | 10.5, 10.6, 10.11, 11.1, 11.4  |
+| MySQL       | 5.7, 8.0, 8.4, 9.0             |
+| SQLite      | 3.x                            |
 
 ## Sponsors
 
