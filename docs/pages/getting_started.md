@@ -268,7 +268,7 @@ After we have defined everything, we still have to plug the whole thing together
 
 !!! tip
 
-    If you use symfony, you can use our [symfony bundle](https://github) to skip this step.
+    If you use symfony, you can use our [symfony bundle](https://event-sourcing-bundle.patchlevel.io/latest/installation/) to skip this step.
     
 ```php
 use Doctrine\DBAL\DriverManager;

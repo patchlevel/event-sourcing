@@ -57,6 +57,9 @@ theme:
 plugins:
   - mike:
       canonical_version: latest
+  - privacy:
+      links_attr_map:
+        target: _blank
 
 markdown_extensions:
   - meta
