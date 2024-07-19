@@ -53,6 +53,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+  favicon: /favicon.png
 
 plugins:
   - mike:
