@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Repository;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Message;
@@ -110,7 +111,7 @@ final class DefaultRepository implements Repository
 
         if ($this->useStreamHeader) {
             $criteria = (new CriteriaBuilder())
-                ->streamName($this->streamName($this->metadata->name, $id->toString()))
+                ->streamName(StreamNameTranslator::streamName($this->metadata->name, $id->toString()))
                 ->archived(false)
                 ->build();
         } else {
@@ -179,7 +180,7 @@ final class DefaultRepository implements Repository
     {
         if ($this->useStreamHeader) {
             $criteria = (new CriteriaBuilder())
-                ->streamName($this->streamName($this->metadata->name, $id->toString()))
+                ->streamName(StreamNameTranslator::streamName($this->metadata->name, $id->toString()))
                 ->build();
         } else {
             $criteria = (new CriteriaBuilder())
@@ -250,7 +251,7 @@ final class DefaultRepository implements Repository
                 static function (object $event) use ($aggregateName, $aggregateId, &$playhead, $messageDecorator, $clock, $useStreamHeader) {
                     if ($useStreamHeader) {
                         $header = new StreamHeader(
-                            sprintf('%s-%s', $aggregateName, $aggregateId),
+                            StreamNameTranslator::streamName($aggregateName, $aggregateId),
                             ++$playhead,
                             $clock->now(),
                         );
@@ -331,7 +332,7 @@ final class DefaultRepository implements Repository
 
         if ($this->useStreamHeader) {
             $criteria = (new CriteriaBuilder())
-                ->streamName($this->streamName($this->metadata->name, $id->toString()))
+                ->streamName(StreamNameTranslator::streamName($this->metadata->name, $id->toString()))
                 ->fromPlayhead($aggregate->playhead())
                 ->build();
         } else {
@@ -413,10 +414,5 @@ final class DefaultRepository implements Repository
         foreach ($stream as $message) {
             yield $message->event();
         }
-    }
-
-    private function streamName(string $aggregateName, string $aggregateId): string
-    {
-        return sprintf('%s-%s', $aggregateName, $aggregateId);
     }
 }

@@ -6,13 +6,13 @@ namespace Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Store\StreamHeader;
 
 use function class_exists;
-use function explode;
 use function is_a;
 
 final class AggregateIdArgumentResolver implements ArgumentResolver
@@ -31,9 +31,9 @@ final class AggregateIdArgumentResolver implements ArgumentResolver
         }
 
         $stream = $message->header(StreamHeader::class)->streamName;
-        $parts = explode('-', $stream, 2);
+        $aggregateId = StreamNameTranslator::aggregateId($stream);
 
-        return $class::fromString($parts[1]);
+        return $class::fromString($aggregateId);
     }
 
     public function support(ArgumentMetadata $argument, string $eventClass): bool

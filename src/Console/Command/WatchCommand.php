@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
@@ -19,8 +20,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function sprintf;
 
 #[AsCommand(
     'event-sourcing:watch',
@@ -76,7 +75,7 @@ final class WatchCommand extends Command
 
         if ($this->store instanceof StreamStore) {
             $criteria = (new CriteriaBuilder())
-                ->streamName(sprintf('%s-%s', $aggregate, $aggregateId))
+                ->streamName(StreamNameTranslator::streamName($aggregate, $aggregateId))
                 ->build();
         } else {
             $criteria = (new CriteriaBuilder())

@@ -184,3 +184,4 @@ deptrac:
       - Metadata
       - Schema
       - Serializer
+    Test:

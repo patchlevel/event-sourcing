@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
@@ -78,7 +79,9 @@ final class ShowAggregateCommand extends Command
         if ($this->store instanceof StreamStore) {
             $stream = $this->store->load(
                 new Criteria(
-                    new StreamCriterion(sprintf('%s-%s', $aggregate, $id)),
+                    new StreamCriterion(
+                        StreamNameTranslator::streamName($aggregate, $id),
+                    ),
                 ),
             );
         } else {

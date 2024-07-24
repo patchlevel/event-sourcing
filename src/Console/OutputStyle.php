@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
@@ -111,7 +112,7 @@ final class OutputStyle extends SymfonyStyle
     private function streamName(AggregateHeader|StreamHeader $header): string
     {
         if ($header instanceof AggregateHeader) {
-            return sprintf('%s-%s', $header->aggregateName, $header->aggregateId);
+            return StreamNameTranslator::streamName($header->aggregateName, $header->aggregateId);
         }
 
         return $header->streamName;

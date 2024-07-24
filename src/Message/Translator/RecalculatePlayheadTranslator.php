@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\StreamHeader;
 
 use function array_key_exists;
-use function sprintf;
 
 final class RecalculatePlayheadTranslator implements Translator
 {
@@ -33,7 +33,7 @@ final class RecalculatePlayheadTranslator implements Translator
         if ($header instanceof StreamHeader) {
             $stream = $header->streamName;
         } else {
-            $stream = sprintf('%s-%s', $header->aggregateName, $header->aggregateId);
+            $stream = StreamNameTranslator::streamName($header->aggregateName, $header->aggregateId);
         }
 
         $playhead = $this->nextPlayhead($stream);
