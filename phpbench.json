@@ -43,7 +43,7 @@
                   "partition": "subject_name",
                   "cols":
                   {
-                    "time-diff": "percent_diff(partition['result_time_avg'][1], partition['result_time_avg'][0])"
+                    "time-diff": "percent_diff(coalesce(partition['result_time_avg']?[1], 0), coalesce(partition['result_time_avg']?[0], 0))"
                   }
                 },
                 "memory":
@@ -61,7 +61,7 @@
                   "partition": "subject_name",
                   "cols":
                   {
-                    "memory-diff": "percent_diff(partition['result_mem_peak'][1], partition['result_mem_peak'][0])"
+                    "memory-diff": "percent_diff(coalesce(partition['result_mem_peak']?[1], 0), coalesce(partition['result_mem_peak']?[0], 0))"
                   }
                 }
               }
