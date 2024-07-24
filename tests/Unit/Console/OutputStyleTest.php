@@ -62,7 +62,7 @@ final class OutputStyleTest extends TestCase
         self::assertStringContainsString('profile.created', $content);
         self::assertStringContainsString('profile', $content);
         self::assertStringContainsString('{"id":"1","email":"foo@bar.com"}', $content);
-        self::assertStringContainsString('aggregate', $content);
+        self::assertStringContainsString('stream', $content);
         self::assertStringContainsString('profile', $content);
     }
 
@@ -106,7 +106,7 @@ final class OutputStyleTest extends TestCase
         self::assertStringContainsString('profile.created', $content);
         self::assertStringContainsString('profile', $content);
         self::assertStringContainsString('{"id":"1","email":"foo@bar.com"}', $content);
-        self::assertStringContainsString('aggregate', $content);
+        self::assertStringContainsString('stream', $content);
         self::assertStringContainsString('profile', $content);
     }
 }

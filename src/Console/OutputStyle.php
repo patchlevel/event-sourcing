@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
@@ -54,7 +55,7 @@ final class OutputStyle extends SymfonyStyle
                 && !$header instanceof StreamStartHeader,
         );
 
-        $aggregateHeader = $message->header(AggregateHeader::class);
+        $metaHeader = $this->metaHeader($message);
         $streamStart = $message->hasHeader(StreamStartHeader::class);
         $achieved = $message->hasHeader(ArchivedHeader::class);
 
@@ -69,10 +70,9 @@ final class OutputStyle extends SymfonyStyle
             ],
             [
                 [
-                    $aggregateHeader->aggregateName,
-                    $aggregateHeader->aggregateId,
-                    $aggregateHeader->playhead,
-                    $aggregateHeader->recordedOn->format('Y-m-d H:i:s'),
+                    $this->streamName($metaHeader),
+                    $metaHeader->playhead,
+                    $metaHeader->recordedOn?->format('Y-m-d H:i:s'),
                     $streamStart ? 'yes' : 'no',
                     $achieved ? 'yes' : 'no',
                 ],
@@ -97,5 +97,23 @@ final class OutputStyle extends SymfonyStyle
             $number++;
             $error = $error->getPrevious();
         } while ($error !== null);
+    }
+
+    private function metaHeader(Message $message): AggregateHeader|StreamHeader
+    {
+        try {
+            return $message->header(AggregateHeader::class);
+        } catch (HeaderNotFound) {
+            return $message->header(StreamHeader::class);
+        }
+    }
+
+    private function streamName(AggregateHeader|StreamHeader $header): string
+    {
+        if ($header instanceof AggregateHeader) {
+            return sprintf('%s-%s', $header->aggregateName, $header->aggregateId);
+        }
+
+        return $header->streamName;
     }
 }
