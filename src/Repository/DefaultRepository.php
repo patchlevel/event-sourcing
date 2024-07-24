@@ -18,8 +18,8 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
-use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\StreamHeader;
+use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -60,7 +60,7 @@ final class DefaultRepository implements Repository
         $this->clock = $clock ?? new SystemClock();
         $this->logger = $logger ?? new NullLogger();
         $this->aggregateIsValid = new WeakMap();
-        $this->useStreamHeader = $store instanceof StreamDoctrineDbalStore;
+        $this->useStreamHeader = $store instanceof StreamStore;
     }
 
     /** @return T */

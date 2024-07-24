@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\SubscriptionStore;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -18,6 +19,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+
+use function sprintf;
 
 #[AsCommand(
     'event-sourcing:watch',
@@ -71,10 +74,16 @@ final class WatchCommand extends Command
             $this->store->setupSubscription();
         }
 
-        $criteria = (new CriteriaBuilder())
-            ->aggregateName($aggregate)
-            ->aggregateId($aggregateId)
-            ->build();
+        if ($this->store instanceof StreamStore) {
+            $criteria = (new CriteriaBuilder())
+                ->streamName(sprintf('%s-%s', $aggregate, $aggregateId))
+                ->build();
+        } else {
+            $criteria = (new CriteriaBuilder())
+                ->aggregateName($aggregate)
+                ->aggregateId($aggregateId)
+                ->build();
+        }
 
         $worker = DefaultWorker::create(
             function () use ($console, &$index, $criteria, $sleep): void {

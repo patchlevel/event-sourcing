@@ -92,6 +92,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/Subscription/.*
+    - name: Test
+      collectors:
+        - type: directory
+          value: src/Test/.*
 
   ruleset:
     Aggregate:
@@ -175,6 +179,7 @@ deptrac:
     Store:
       - Aggregate
       - Attribute
+      - Clock
       - Message
       - Metadata
       - Schema

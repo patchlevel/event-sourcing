@@ -255,4 +255,76 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             $stream?->close();
         }
     }
+
+    public function testStreams(): void
+    {
+        $profileId = ProfileId::fromString('0190e47e-77e9-7b90-bf62-08bbf0ab9b4b');
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamHeader(
+                    sprintf('profile-%s', $profileId->toString()),
+                    1,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamHeader(
+                    sprintf('profile-%s', $profileId->toString()),
+                    2,
+                    new DateTimeImmutable('2020-01-02 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamHeader(
+                    sprintf('foo'),
+                )),
+        ];
+
+        $this->store->save(...$messages);
+
+        $streams = $this->store->streams();
+
+        self::assertEquals([
+            'foo',
+            'profile-0190e47e-77e9-7b90-bf62-08bbf0ab9b4b',
+        ], $streams);
+    }
+
+    public function testRemote(): void
+    {
+        $profileId = ProfileId::fromString('0190e47e-77e9-7b90-bf62-08bbf0ab9b4b');
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamHeader(
+                    sprintf('profile-%s', $profileId->toString()),
+                    1,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamHeader(
+                    sprintf('profile-%s', $profileId->toString()),
+                    2,
+                    new DateTimeImmutable('2020-01-02 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamHeader(
+                    sprintf('foo'),
+                )),
+        ];
+
+        $this->store->save(...$messages);
+
+        $streams = $this->store->streams();
+
+        self::assertEquals([
+            'foo',
+            'profile-0190e47e-77e9-7b90-bf62-08bbf0ab9b4b',
+        ], $streams);
+
+        $this->store->remove('profile-0190e47e-77e9-7b90-bf62-08bbf0ab9b4b');
+
+        $streams = $this->store->streams();
+
+        self::assertEquals(['foo'], $streams);
+    }
 }

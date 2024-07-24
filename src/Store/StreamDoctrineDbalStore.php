@@ -44,7 +44,7 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-final class StreamDoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchemaConfigurator
+final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.
@@ -290,6 +290,28 @@ final class StreamDoctrineDbalStore implements Store, SubscriptionStore, Doctrin
                 }
             });
         }
+    }
+
+    /** @return list<string> */
+    public function streams(): array
+    {
+        $builder = $this->connection->createQueryBuilder()
+            ->select('stream')
+            ->distinct()
+            ->from($this->config['table_name'])
+            ->orderBy('stream');
+
+        return $builder->fetchFirstColumn();
+    }
+
+    public function remove(string $streamName): void
+    {
+        $builder = $this->connection->createQueryBuilder()
+            ->delete($this->config['table_name'])
+            ->andWhere('stream = :stream')
+            ->setParameter('stream', $streamName);
+
+        $builder->executeStatement();
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void
