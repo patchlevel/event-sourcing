@@ -10,4 +10,9 @@ final class StreamCriterion
         public readonly string $streamName,
     ) {
     }
+
+    public static function startWith(string $streamName): self
+    {
+        return new self($streamName . '*');
+    }
 }

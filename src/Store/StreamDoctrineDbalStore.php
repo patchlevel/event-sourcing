@@ -42,7 +42,10 @@ use function implode;
 use function in_array;
 use function is_int;
 use function is_string;
+use function mb_substr;
 use function sprintf;
+use function str_contains;
+use function str_ends_with;
 
 final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
 {
@@ -140,6 +143,23 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         foreach ($criteriaList as $criterion) {
             switch ($criterion::class) {
                 case StreamCriterion::class:
+                    if ($criterion->streamName === '*') {
+                        break;
+                    }
+
+                    if (str_ends_with($criterion->streamName, '*')) {
+                        $streamName = mb_substr($criterion->streamName, 0, -1);
+
+                        if (str_contains($streamName, '*')) {
+                            throw new InvalidStreamName($criterion->streamName);
+                        }
+
+                        $builder->andWhere('stream LIKE :stream');
+                        $builder->setParameter('stream', $streamName . '%');
+
+                        break;
+                    }
+
                     $builder->andWhere('stream = :stream');
                     $builder->setParameter('stream', $criterion->streamName);
                     break;

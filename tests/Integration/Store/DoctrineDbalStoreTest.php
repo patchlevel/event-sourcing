@@ -91,7 +91,7 @@ final class DoctrineDbalStoreTest extends TestCase
         self::assertEquals('2', $result2['playhead']);
         self::assertStringContainsString('2020-01-02 00:00:00', $result2['recorded_on']);
         self::assertEquals('profile.created', $result2['event']);
-        self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
+        self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result2['payload'], true));
     }
 
     public function testSaveWithTransactional(): void
@@ -140,7 +140,7 @@ final class DoctrineDbalStoreTest extends TestCase
         self::assertEquals('2', $result2['playhead']);
         self::assertStringContainsString('2020-01-02 00:00:00', $result2['recorded_on']);
         self::assertEquals('profile.created', $result2['event']);
-        self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
+        self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result2['payload'], true));
     }
 
     public function testUniqueConstraint(): void
