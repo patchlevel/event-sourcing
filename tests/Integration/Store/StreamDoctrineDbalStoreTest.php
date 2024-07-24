@@ -12,9 +12,9 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
-use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\StreamHeader;
+use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ExternEvent;
@@ -29,7 +29,7 @@ use function sprintf;
 final class StreamDoctrineDbalStoreTest extends TestCase
 {
     private Connection $connection;
-    private Store $store;
+    private StreamStore $store;
 
     public function setUp(): void
     {
@@ -342,9 +342,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     new DateTimeImmutable('2020-01-02 00:00:00'),
                 )),
             Message::create(new ExternEvent('foo bar'))
-                ->withHeader(new StreamHeader(
-                    sprintf('foo'),
-                )),
+                ->withHeader(new StreamHeader('foo')),
         ];
 
         $this->store->save(...$messages);
@@ -375,9 +373,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     new DateTimeImmutable('2020-01-02 00:00:00'),
                 )),
             Message::create(new ExternEvent('foo bar'))
-                ->withHeader(new StreamHeader(
-                    sprintf('foo'),
-                )),
+                ->withHeader(new StreamHeader('foo')),
         ];
 
         $this->store->save(...$messages);

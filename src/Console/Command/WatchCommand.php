@@ -73,16 +73,24 @@ final class WatchCommand extends Command
             $this->store->setupSubscription();
         }
 
+        $criteriaBuilder = new CriteriaBuilder();
+
         if ($this->store instanceof StreamStore) {
-            $criteria = (new CriteriaBuilder())
-                ->streamName(StreamNameTranslator::streamName($aggregate, $aggregateId))
-                ->build();
+            if ($aggregate !== null || $aggregateId !== null) {
+                if ($aggregate === null || $aggregateId === null) {
+                    $console->error('You must provide both aggregate and aggregate-id or none of them');
+
+                    return 1;
+                }
+
+                $criteriaBuilder->streamName(StreamNameTranslator::streamName($aggregate, $aggregateId));
+            }
         } else {
-            $criteria = (new CriteriaBuilder())
-                ->aggregateName($aggregate)
-                ->aggregateId($aggregateId)
-                ->build();
+            $criteriaBuilder->aggregateName($aggregate);
+            $criteriaBuilder->aggregateId($aggregateId);
         }
+
+        $criteria = $criteriaBuilder->build();
 
         $worker = DefaultWorker::create(
             function () use ($console, &$index, $criteria, $sleep): void {

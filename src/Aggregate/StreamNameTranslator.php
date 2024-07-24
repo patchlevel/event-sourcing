@@ -20,11 +20,23 @@ final class StreamNameTranslator
 
     public static function aggregateName(string $stream): string
     {
-        return substr($stream, 0, strpos($stream, '-'));
+        $pos = strpos($stream, '-');
+
+        if ($pos === false) {
+            throw new InvalidAggregateStreamName($stream);
+        }
+
+        return substr($stream, 0, $pos);
     }
 
     public static function aggregateId(string $stream): string
     {
-        return substr($stream, strpos($stream, '-') + 1);
+        $pos = strpos($stream, '-');
+
+        if ($pos === false) {
+            throw new InvalidAggregateStreamName($stream);
+        }
+
+        return substr($stream, $pos + 1);
     }
 }

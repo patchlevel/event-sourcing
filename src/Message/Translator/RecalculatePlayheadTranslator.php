@@ -14,7 +14,7 @@ use function array_key_exists;
 
 final class RecalculatePlayheadTranslator implements Translator
 {
-    /** @var array<string, array<string, positive-int>> */
+    /** @var array<string, positive-int> */
     private array $index = [];
 
     /** @return list<Message> */

@@ -321,7 +321,10 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
             ->from($this->config['table_name'])
             ->orderBy('stream');
 
-        return $builder->fetchFirstColumn();
+        /** @var list<string> $streams */
+        $streams = $builder->fetchFirstColumn();
+
+        return $streams;
     }
 
     public function remove(string $streamName): void

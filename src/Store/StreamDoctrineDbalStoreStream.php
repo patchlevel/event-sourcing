@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Store;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Types\DateTimeTzImmutableType;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Generator;
@@ -110,6 +111,7 @@ final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
         HeadersSerializer $headersSerializer,
         AbstractPlatform $platform,
     ): Generator {
+        /** @var DateTimeTzImmutableType $dateTimeType */
         $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
         /** @var array{id: positive-int, stream: string, playhead: int|string|null, event: string, payload: string, recorded_on: string, archived: int|string, new_stream_start: int|string, custom_headers: string} $data */

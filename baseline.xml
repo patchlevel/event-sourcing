@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.23.1@8471a896ccea3526b26d082f4461eeea467f10a4">
+<files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
   <file src="src/Aggregate/AggregateRootBehaviour.php">
     <UnsafeInstantiation>
       <code><![CDATA[new static()]]></code>
@@ -86,6 +86,11 @@
       <code><![CDATA[$dateTimeType->convertToPHPValue($data['recorded_on'], $platform)]]></code>
     </MixedArgument>
   </file>
+  <file src="src/Store/StreamDoctrineDbalStoreStream.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$data['playhead'] === null ? null : (int)$data['playhead']]]></code>
+    </ArgumentTypeCoercion>
+  </file>
   <file src="src/Subscription/Store/DoctrineSubscriptionStore.php">
     <MixedArgument>
       <code><![CDATA[$context]]></code>
@@ -124,6 +129,14 @@
     </MissingConstructor>
   </file>
   <file src="tests/Benchmark/SimpleSetupBench.php">
+    <MissingConstructor>
+      <code><![CDATA[$multipleEventsId]]></code>
+      <code><![CDATA[$repository]]></code>
+      <code><![CDATA[$singleEventId]]></code>
+      <code><![CDATA[$store]]></code>
+    </MissingConstructor>
+  </file>
+  <file src="tests/Benchmark/SimpleSetupStreamStoreBench.php">
     <MissingConstructor>
       <code><![CDATA[$multipleEventsId]]></code>
       <code><![CDATA[$repository]]></code>
