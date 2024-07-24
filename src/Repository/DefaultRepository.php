@@ -18,6 +18,8 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -43,6 +45,8 @@ final class DefaultRepository implements Repository
     /** @var WeakMap<T, bool> */
     private WeakMap $aggregateIsValid;
 
+    private bool $useStreamHeader;
+
     /** @param AggregateRootMetadata<T> $metadata */
     public function __construct(
         private Store $store,
@@ -56,6 +60,7 @@ final class DefaultRepository implements Repository
         $this->clock = $clock ?? new SystemClock();
         $this->logger = $logger ?? new NullLogger();
         $this->aggregateIsValid = new WeakMap();
+        $this->useStreamHeader = $store instanceof StreamDoctrineDbalStore;
     }
 
     /** @return T */
@@ -103,11 +108,18 @@ final class DefaultRepository implements Repository
             }
         }
 
-        $criteria = (new CriteriaBuilder())
-            ->aggregateName($this->metadata->name)
-            ->aggregateId($id->toString())
-            ->archived(false)
-            ->build();
+        if ($this->useStreamHeader) {
+            $criteria = (new CriteriaBuilder())
+                ->streamName($this->streamName($this->metadata->name, $id->toString()))
+                ->archived(false)
+                ->build();
+        } else {
+            $criteria = (new CriteriaBuilder())
+                ->aggregateName($this->metadata->name)
+                ->aggregateId($id->toString())
+                ->archived(false)
+                ->build();
+        }
 
         $stream = null;
 
@@ -128,10 +140,19 @@ final class DefaultRepository implements Repository
                 throw new AggregateNotFound($this->metadata->className, $id);
             }
 
-            $aggregateHeader = $firstMessage->header(AggregateHeader::class);
+            if ($this->useStreamHeader) {
+                $playhead = $firstMessage->header(StreamHeader::class)->playhead;
+
+                if ($playhead === null) {
+                    throw new AggregateNotFound($this->metadata->className, $id);
+                }
+            } else {
+                $playhead = $firstMessage->header(AggregateHeader::class)->playhead;
+            }
+
             $aggregate = $this->metadata->className::createFromEvents(
                 $this->unpack($stream),
-                $aggregateHeader->playhead - 1,
+                $playhead - 1,
             );
 
             if ($this->snapshotStore && $this->metadata->snapshot) {
@@ -156,10 +177,16 @@ final class DefaultRepository implements Repository
 
     public function has(AggregateRootId $id): bool
     {
-        $criteria = (new CriteriaBuilder())
-            ->aggregateName($this->metadata->name)
-            ->aggregateId($id->toString())
-            ->build();
+        if ($this->useStreamHeader) {
+            $criteria = (new CriteriaBuilder())
+                ->streamName($this->streamName($this->metadata->name, $id->toString()))
+                ->build();
+        } else {
+            $criteria = (new CriteriaBuilder())
+                ->aggregateName($this->metadata->name)
+                ->aggregateId($id->toString())
+                ->build();
+        }
 
         return $this->store->count($criteria) > 0;
     }
@@ -217,15 +244,26 @@ final class DefaultRepository implements Repository
 
             $aggregateName = $this->metadata->name;
 
+            $useStreamHeader = $this->useStreamHeader;
+
             $messages = array_map(
-                static function (object $event) use ($aggregateName, $aggregateId, &$playhead, $messageDecorator, $clock) {
-                    $message = Message::create($event)
-                        ->withHeader(new AggregateHeader(
+                static function (object $event) use ($aggregateName, $aggregateId, &$playhead, $messageDecorator, $clock, $useStreamHeader) {
+                    if ($useStreamHeader) {
+                        $header = new StreamHeader(
+                            sprintf('%s-%s', $aggregateName, $aggregateId),
+                            ++$playhead,
+                            $clock->now(),
+                        );
+                    } else {
+                        $header = new AggregateHeader(
                             $aggregateName,
                             $aggregateId,
                             ++$playhead,
                             $clock->now(),
-                        ));
+                        );
+                    }
+
+                    $message = Message::create($event)->withHeader($header);
 
                     if ($messageDecorator) {
                         return $messageDecorator($message);
@@ -291,11 +329,18 @@ final class DefaultRepository implements Repository
 
         $aggregate = $this->snapshotStore->load($aggregateClass, $id);
 
-        $criteria = (new CriteriaBuilder())
-            ->aggregateName($this->metadata->name)
-            ->aggregateId($id->toString())
-            ->fromPlayhead($aggregate->playhead())
-            ->build();
+        if ($this->useStreamHeader) {
+            $criteria = (new CriteriaBuilder())
+                ->streamName($this->streamName($this->metadata->name, $id->toString()))
+                ->fromPlayhead($aggregate->playhead())
+                ->build();
+        } else {
+            $criteria = (new CriteriaBuilder())
+                ->aggregateName($this->metadata->name)
+                ->aggregateId($id->toString())
+                ->fromPlayhead($aggregate->playhead())
+                ->build();
+        }
 
         $stream = null;
 
@@ -368,5 +413,10 @@ final class DefaultRepository implements Repository
         foreach ($stream as $message) {
             yield $message->event();
         }
+    }
+
+    private function streamName(string $aggregateName, string $aggregateId): string
+    {
+        return sprintf('%s-%s', $aggregateName, $aggregateId);
     }
 }

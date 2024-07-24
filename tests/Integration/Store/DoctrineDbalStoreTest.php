@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ProfileCreated;
 use PHPUnit\Framework\TestCase;
@@ -19,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 use function json_decode;
 
 /** @coversNothing */
-final class StoreTest extends TestCase
+final class DoctrineDbalStoreTest extends TestCase
 {
     private Connection $connection;
     private Store $store;
@@ -140,6 +141,32 @@ final class StoreTest extends TestCase
         self::assertStringContainsString('2020-01-02 00:00:00', $result2['recorded_on']);
         self::assertEquals('profile.created', $result2['event']);
         self::assertEquals(['profileId' => $profileId->toString(), 'name' => 'test'], json_decode($result1['payload'], true));
+    }
+
+    public function testUniqueConstraint(): void
+    {
+        $this->expectException(UniqueConstraintViolation::class);
+
+        $profileId = ProfileId::generate();
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    1,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    1,
+                    new DateTimeImmutable('2020-01-02 00:00:00'),
+                )),
+        ];
+
+        $this->store->save(...$messages);
     }
 
     public function testSave10000Messages(): void

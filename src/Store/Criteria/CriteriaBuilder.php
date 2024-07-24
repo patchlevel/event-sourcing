@@ -6,11 +6,19 @@ namespace Patchlevel\EventSourcing\Store\Criteria;
 
 final class CriteriaBuilder
 {
+    private string|null $streamName = null;
     private string|null $aggregateName = null;
     private string|null $aggregateId = null;
     private int|null $fromIndex = null;
     private int|null $fromPlayhead = null;
     private bool|null $archived = null;
+
+    public function streamName(string|null $streamName): self
+    {
+        $this->streamName = $streamName;
+
+        return $this;
+    }
 
     public function aggregateName(string|null $aggregateName): self
     {
@@ -50,6 +58,10 @@ final class CriteriaBuilder
     public function build(): Criteria
     {
         $criteria = [];
+
+        if ($this->streamName !== null) {
+            $criteria[] = new StreamCriterion($this->streamName);
+        }
 
         if ($this->aggregateName !== null) {
             $criteria[] = new AggregateNameCriterion($this->aggregateName);

@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\StreamHeader;
 
 use function array_key_exists;
+use function sprintf;
 
 final class RecalculatePlayheadTranslator implements Translator
 {
@@ -17,14 +20,37 @@ final class RecalculatePlayheadTranslator implements Translator
     /** @return list<Message> */
     public function __invoke(Message $message): array
     {
-        $header = $message->header(AggregateHeader::class);
-        $playhead = $this->nextPlayhead($header->aggregateName, $header->aggregateId);
+        try {
+            $header = $message->header(AggregateHeader::class);
+        } catch (HeaderNotFound) {
+            try {
+                $header = $message->header(StreamHeader::class);
+            } catch (HeaderNotFound) {
+                return [$message];
+            }
+        }
+
+        if ($header instanceof StreamHeader) {
+            $stream = $header->streamName;
+        } else {
+            $stream = sprintf('%s-%s', $header->aggregateName, $header->aggregateId);
+        }
+
+        $playhead = $this->nextPlayhead($stream);
 
         if ($header->playhead === $playhead) {
             return [$message];
         }
 
-        $header = $message->header(AggregateHeader::class);
+        if ($header instanceof StreamHeader) {
+            return [
+                $message->withHeader(new StreamHeader(
+                    $header->streamName,
+                    $playhead,
+                    $header->recordedOn,
+                )),
+            ];
+        }
 
         return [
             $message->withHeader(new AggregateHeader(
@@ -42,18 +68,14 @@ final class RecalculatePlayheadTranslator implements Translator
     }
 
     /** @return positive-int */
-    private function nextPlayhead(string $aggregateName, string $aggregateId): int
+    private function nextPlayhead(string $stream): int
     {
-        if (!array_key_exists($aggregateName, $this->index)) {
-            $this->index[$aggregateName] = [];
-        }
-
-        if (!array_key_exists($aggregateId, $this->index[$aggregateName])) {
-            $this->index[$aggregateName][$aggregateId] = 1;
+        if (!array_key_exists($stream, $this->index)) {
+            $this->index[$stream] = 1;
         } else {
-            $this->index[$aggregateName][$aggregateId]++;
+            $this->index[$stream]++;
         }
 
-        return $this->index[$aggregateName][$aggregateId];
+        return $this->index[$stream];
     }
 }

@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
+use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
@@ -47,7 +48,8 @@ final class OutputStyle extends SymfonyStyle
 
         $customHeaders = array_filter(
             $message->headers(),
-            static fn ($header) => !$header instanceof AggregateHeader
+            static fn ($header) => !$header instanceof StreamHeader
+                && !$header instanceof AggregateHeader
                 && !$header instanceof ArchivedHeader
                 && !$header instanceof StreamStartHeader,
         );
@@ -59,8 +61,7 @@ final class OutputStyle extends SymfonyStyle
         $this->title($data->name);
         $this->horizontalTable(
             [
-                'aggregateName',
-                'aggregateId',
+                'stream',
                 'playhead',
                 'recordedOn',
                 'streamStart',
