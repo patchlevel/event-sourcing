@@ -47,6 +47,7 @@ use function sprintf;
 use function str_contains;
 use function str_ends_with;
 
+/** @experimental */
 final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
 {
     /**

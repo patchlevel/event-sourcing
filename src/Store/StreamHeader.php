@@ -6,7 +6,10 @@ namespace Patchlevel\EventSourcing\Store;
 
 use DateTimeImmutable;
 
-/** @psalm-immutable */
+/**
+ * @psalm-immutable
+ * @experimental
+ */
 final class StreamHeader
 {
     /** @param positive-int|null $playhead */

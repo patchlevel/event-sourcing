@@ -17,7 +17,10 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Traversable;
 
-/** @implements IteratorAggregate<Message> */
+/**
+ * @implements IteratorAggregate<Message>
+ * @experimental
+ */
 final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
 {
     private Result|null $result;

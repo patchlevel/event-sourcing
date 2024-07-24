@@ -13,6 +13,7 @@ final class CriteriaBuilder
     private int|null $fromPlayhead = null;
     private bool|null $archived = null;
 
+    /** @experimental */
     public function streamName(string|null $streamName): self
     {
         $this->streamName = $streamName;

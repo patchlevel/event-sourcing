@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Store;
 
 use function sprintf;
 
+/** @experimental */
 final class InvalidStreamName extends StoreException
 {
     public function __construct(string $streamName)
