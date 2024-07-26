@@ -30,7 +30,7 @@ theme:
   name: material
   custom_dir: overrides
   logo: assets/logo.png
-  favicon: assets/favicon.png
+  favicon: /favicon.png
   features:
     - navigation.sections
     - navigation.top
@@ -53,7 +53,6 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-  favicon: /favicon.png
 
 plugins:
   - mike:
