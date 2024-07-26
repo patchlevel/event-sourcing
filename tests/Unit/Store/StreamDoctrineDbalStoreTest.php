@@ -25,6 +25,7 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\InvalidStreamName;
 use Patchlevel\EventSourcing\Store\MissingDataForStorage;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\StreamHeader;
@@ -246,6 +247,134 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 ->fromPlayhead(0)
                 ->archived(false)
                 ->fromIndex(1)
+                ->build(),
+        );
+
+        self::assertSame(null, $stream->index());
+        self::assertSame(null, $stream->position());
+    }
+
+    public function testLoadWithLike(): void
+    {
+        $connection = $this->prophesize(Connection::class);
+        $result = $this->prophesize(Result::class);
+        $result->iterateAssociative()->willReturn(new EmptyIterator());
+
+        $connection->executeQuery(
+            'SELECT * FROM event_store WHERE (stream LIKE :stream) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
+            [
+                'stream' => 'profile-%',
+                'playhead' => 0,
+                'archived' => false,
+            ],
+            Argument::type('array'),
+        )->willReturn($result->reveal());
+
+        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
+
+        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
+        $connection->createQueryBuilder()->willReturn($queryBuilder);
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $stream = $doctrineDbalStore->load(
+            (new CriteriaBuilder())
+                ->streamName('profile-*')
+                ->fromPlayhead(0)
+                ->archived(false)
+                ->build(),
+        );
+
+        self::assertSame(null, $stream->index());
+        self::assertSame(null, $stream->position());
+    }
+
+    public function testLoadWithLikeAll(): void
+    {
+        $connection = $this->prophesize(Connection::class);
+        $result = $this->prophesize(Result::class);
+        $result->iterateAssociative()->willReturn(new EmptyIterator());
+
+        $connection->executeQuery(
+            'SELECT * FROM event_store WHERE (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
+            [
+                'playhead' => 0,
+                'archived' => false,
+            ],
+            Argument::type('array'),
+        )->willReturn($result->reveal());
+
+        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
+
+        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
+        $connection->createQueryBuilder()->willReturn($queryBuilder);
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $stream = $doctrineDbalStore->load(
+            (new CriteriaBuilder())
+                ->streamName('*')
+                ->fromPlayhead(0)
+                ->archived(false)
+                ->build(),
+        );
+
+        self::assertSame(null, $stream->index());
+        self::assertSame(null, $stream->position());
+    }
+
+    public function testLoadWithLikeInvalid(): void
+    {
+        $connection = $this->prophesize(Connection::class);
+
+        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+
+        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
+        $connection->createQueryBuilder()->willReturn($queryBuilder);
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $this->expectException(InvalidStreamName::class);
+
+        $stream = $doctrineDbalStore->load(
+            (new CriteriaBuilder())
+                ->streamName('*-*')
+                ->fromPlayhead(0)
+                ->archived(false)
                 ->build(),
         );
 
