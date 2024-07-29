@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
+use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
@@ -47,20 +49,20 @@ final class OutputStyle extends SymfonyStyle
 
         $customHeaders = array_filter(
             $message->headers(),
-            static fn ($header) => !$header instanceof AggregateHeader
+            static fn ($header) => !$header instanceof StreamHeader
+                && !$header instanceof AggregateHeader
                 && !$header instanceof ArchivedHeader
                 && !$header instanceof StreamStartHeader,
         );
 
-        $aggregateHeader = $message->header(AggregateHeader::class);
+        $metaHeader = $this->metaHeader($message);
         $streamStart = $message->hasHeader(StreamStartHeader::class);
         $achieved = $message->hasHeader(ArchivedHeader::class);
 
         $this->title($data->name);
         $this->horizontalTable(
             [
-                'aggregateName',
-                'aggregateId',
+                'stream',
                 'playhead',
                 'recordedOn',
                 'streamStart',
@@ -68,10 +70,9 @@ final class OutputStyle extends SymfonyStyle
             ],
             [
                 [
-                    $aggregateHeader->aggregateName,
-                    $aggregateHeader->aggregateId,
-                    $aggregateHeader->playhead,
-                    $aggregateHeader->recordedOn->format('Y-m-d H:i:s'),
+                    $metaHeader instanceof AggregateHeader ? $metaHeader->streamName() : $metaHeader->streamName,
+                    $metaHeader->playhead,
+                    $metaHeader->recordedOn?->format('Y-m-d H:i:s'),
                     $streamStart ? 'yes' : 'no',
                     $achieved ? 'yes' : 'no',
                 ],
@@ -96,5 +97,14 @@ final class OutputStyle extends SymfonyStyle
             $number++;
             $error = $error->getPrevious();
         } while ($error !== null);
+    }
+
+    private function metaHeader(Message $message): AggregateHeader|StreamHeader
+    {
+        try {
+            return $message->header(AggregateHeader::class);
+        } catch (HeaderNotFound) {
+            return $message->header(StreamHeader::class);
+        }
     }
 }

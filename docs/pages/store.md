@@ -8,7 +8,6 @@ Each message contains an event and the associated headers.
     More information about the message can be found [here](message.md).
     
 The store is optimized to efficiently store and load events for aggregates.
-We currently only offer one [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html) store.
 
 ## Create DBAL connection
 
@@ -29,8 +28,14 @@ $connection = DriverManager::getConnection(
     
 ## Configure Store
 
+We currently offer two stores, both based on the [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html) library.
+The default store is the `DoctrineDbalStore` and the new experimental store is the `StreamDoctrineDbalStore`.
+
+### DoctrineDbalStore
+
+This is the current default store for event sourcing.
 You can create a store with the `DoctrineDbalStore` class.
-The store needs a dbal connection, an event serializer, an aggregate registry and some options.
+The store needs a dbal connection, an event serializer and has some optional parameters like options.
 
 ```php
 use Doctrine\DBAL\Connection;
@@ -41,21 +46,17 @@ use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 $store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths(['src/Event']),
-    null,
-    [/** options */],
 );
 ```
 Following options are available in `DoctrineDbalStore`:
 
-| Option            | Type             | Default    | Description                                  |
-|-------------------|------------------|------------|----------------------------------------------|
-| table_name        | string           | eventstore | The name of the table in the database        |
-| aggregate_id_type | "uuid"|"string" | uuid       | The type of the `aggregate_id` column        |
-| locking           | bool             | true       | If the store should use locking for writing  |
-| lock_id           | int              | 133742     | The id of the lock                           |
-| lock_timeout      | int              | -1         | The timeout of the lock. -1 means no timeout |
-
-## Schema
+| Option            | Type            | Default    | Description                                  |
+|-------------------|-----------------|------------|----------------------------------------------|
+| table_name        | string          | eventstore | The name of the table in the database        |
+| aggregate_id_type | "uuid"/"string" | uuid       | The type of the `aggregate_id` column        |
+| locking           | bool            | true       | If the store should use locking for writing  |
+| lock_id           | int             | 133742     | The id of the lock                           |
+| lock_timeout      | int             | -1         | The timeout of the lock. -1 means no timeout |
 
 The table structure of the `DoctrineDbalStore` looks like this:
 
@@ -72,13 +73,59 @@ The table structure of the `DoctrineDbalStore` looks like this:
 | archived         | bool        | If the event is archived                         |
 | custom_headers   | json        | Custom headers for the event                     |
 
-With the help of the `SchemaDirector`, the database structure can be created, updated and deleted.
-
 !!! note
 
     The default type of the `aggregate_id` column is `uuid` if the database supports it and `string` if not.
     You can change the type with the `aggregate_id_type` to `string` if you want use custom id.
     
+### StreamDoctrineDbalStore
+
+We offer a new experimental store called `StreamDoctrineDbalStore`.
+This store is decoupled from the aggregate and can be used to store events from other sources.
+The difference to the `DoctrineDbalStore` is that the `StreamDoctrineDbalStore` merge the aggregate id
+and the aggregate name into one column named `stream`. Additionally, the column `playhead` is nullable.
+This store introduces two new methods `streams` and `remove`.
+
+The store needs a dbal connection, an event serializer and has some optional parameters like options.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+
+/** @var Connection $connection */
+$store = new StreamDoctrineDbalStore(
+    $connection,
+    DefaultEventSerializer::createFromPaths(['src/Event']),
+);
+```
+Following options are available in `StreamDoctrineDbalStore`:
+
+| Option            | Type            | Default     | Description                                  |
+|-------------------|-----------------|-------------|----------------------------------------------|
+| table_name        | string          | event_store | The name of the table in the database        |
+| locking           | bool            | true        | If the store should use locking for writing  |
+| lock_id           | int             | 133742      | The id of the lock                           |
+| lock_timeout      | int             | -1          | The timeout of the lock. -1 means no timeout |
+
+The table structure of the `StreamDoctrineDbalStore` looks like this:
+
+| Column           | Type     | Description                                      |
+|------------------|----------|--------------------------------------------------|
+| id               | bigint   | The index of the whole stream (autoincrement)    |
+| stream           | string   | The name of the stream                           |
+| playhead         | ?int     | The current playhead of the aggregate            |
+| event            | string   | The name of the event                            |
+| payload          | json     | The payload of the event                         |
+| recorded_on      | datetime | The date when the event was recorded             |
+| new_stream_start | bool     | If the event is the first event of the aggregate |
+| archived         | bool     | If the event is archived                         |
+| custom_headers   | json     | Custom headers for the event                     |
+
+## Schema
+
+With the help of the `SchemaDirector`, the database structure can be created, updated and deleted.
+
 !!! tip
 
     You can also use doctrine migration to create and keep your schema in sync.
@@ -92,11 +139,11 @@ Additionally, it implements the `DryRunSchemaDirector` interface, to show the sq
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\Store;
 
 /**
  * @var Connection $connection
- * @var DoctrineDbalStore $store
+ * @var Store $store
  */
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
@@ -179,13 +226,13 @@ use Doctrine\Migrations\DependencyFactory;
 use Doctrine\Migrations\Provider\SchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\Store;
 
 // event sourcing schema director configuration
 
 /**
  * @var Connection $connection
- * @var DoctrineDbalStore $store
+ * @var Store $store
  */
 $schemaDirector = new DoctrineSchemaDirector(
     $connection,
@@ -355,11 +402,39 @@ $store->save(...$messages);
 
     Use transactional method if you want call multiple save methods in a transaction.
     
-### Delete & Update
+### Update
 
-It is not possible to delete or update events.
+It is not possible to update events.
 In event sourcing, the events are immutable.
 
+### Remove
+
+You can remove a stream with the `remove` method.
+
+```php
+use Patchlevel\EventSourcing\Store\StreamStore;
+
+/** @var StreamStore $store */
+$store->remove('profile-*');
+```
+!!! note
+
+    The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
+    
+### List Streams
+
+You can list all streams with the `streams` method.
+
+```php
+use Patchlevel\EventSourcing\Store\StreamStore;
+
+/** @var StreamStore $store */
+$streams = $store->streams(); // ['profile-1', 'profile-2', 'profile-3']
+```
+!!! note
+
+    The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
+    
 ### Transaction
 
 There is also the possibility of executing a function in a transaction.

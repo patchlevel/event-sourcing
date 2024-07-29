@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
@@ -12,7 +13,9 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamStore;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -73,12 +76,22 @@ final class ShowAggregateCommand extends Command
             return 1;
         }
 
-        $stream = $this->store->load(
-            new Criteria(
-                new AggregateNameCriterion($aggregate),
-                new AggregateIdCriterion($id),
-            ),
-        );
+        if ($this->store instanceof StreamStore) {
+            $stream = $this->store->load(
+                new Criteria(
+                    new StreamCriterion(
+                        StreamNameTranslator::streamName($aggregate, $id),
+                    ),
+                ),
+            );
+        } else {
+            $stream = $this->store->load(
+                new Criteria(
+                    new AggregateNameCriterion($aggregate),
+                    new AggregateIdCriterion($id),
+                ),
+            );
+        }
 
         $hasMessage = false;
         foreach ($stream as $message) {
