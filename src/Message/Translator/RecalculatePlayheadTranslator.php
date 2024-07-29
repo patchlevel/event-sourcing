@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\StreamHeader;
@@ -30,11 +29,7 @@ final class RecalculatePlayheadTranslator implements Translator
             }
         }
 
-        if ($header instanceof StreamHeader) {
-            $stream = $header->streamName;
-        } else {
-            $stream = StreamNameTranslator::streamName($header->aggregateName, $header->aggregateId);
-        }
+        $stream = $header instanceof StreamHeader ? $header->streamName : $header->streamName();
 
         $playhead = $this->nextPlayhead($stream);
 

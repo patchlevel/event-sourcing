@@ -19,4 +19,9 @@ final class AggregateHeader
         public readonly DateTimeImmutable $recordedOn,
     ) {
     }
+
+    public function streamName(): string
+    {
+        return StreamNameTranslator::streamName($this->aggregateName, $this->aggregateId);
+    }
 }

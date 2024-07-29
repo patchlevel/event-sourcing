@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
@@ -71,7 +70,7 @@ final class OutputStyle extends SymfonyStyle
             ],
             [
                 [
-                    $this->streamName($metaHeader),
+                    $metaHeader instanceof AggregateHeader ? $metaHeader->streamName() : $metaHeader->streamName,
                     $metaHeader->playhead,
                     $metaHeader->recordedOn?->format('Y-m-d H:i:s'),
                     $streamStart ? 'yes' : 'no',
@@ -107,14 +106,5 @@ final class OutputStyle extends SymfonyStyle
         } catch (HeaderNotFound) {
             return $message->header(StreamHeader::class);
         }
-    }
-
-    private function streamName(AggregateHeader|StreamHeader $header): string
-    {
-        if ($header instanceof AggregateHeader) {
-            return StreamNameTranslator::streamName($header->aggregateName, $header->aggregateId);
-        }
-
-        return $header->streamName;
     }
 }
