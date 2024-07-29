@@ -46,16 +46,22 @@ final class WatchCommand extends Command
                 1000,
             )
             ->addOption(
+                'stream',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Watch messages from a specific stream (e.g. "stream-*")',
+            )
+            ->addOption(
                 'aggregate',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'filter aggregate name',
+                'Filter aggregate name',
             )
             ->addOption(
                 'aggregate-id',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'filter aggregate id',
+                'Filter aggregate id',
             );
     }
 
@@ -64,8 +70,15 @@ final class WatchCommand extends Command
         $console = new OutputStyle($input, $output);
 
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
+        $stream = InputHelper::nullableString($input->getOption('stream'));
         $aggregate = InputHelper::nullableString($input->getOption('aggregate'));
         $aggregateId = InputHelper::nullableString($input->getOption('aggregate-id'));
+
+        if ($stream !== null && ($aggregate !== null || $aggregateId !== null)) {
+            $console->error('You can only provide stream or aggregate and aggregate-id');
+
+            return 1;
+        }
 
         $index = $this->currentIndex();
 
@@ -74,6 +87,10 @@ final class WatchCommand extends Command
         }
 
         $criteriaBuilder = new CriteriaBuilder();
+
+        if ($stream !== null) {
+            $criteriaBuilder->streamName($stream);
+        }
 
         if ($this->store instanceof StreamStore) {
             if ($aggregate !== null || $aggregateId !== null) {
