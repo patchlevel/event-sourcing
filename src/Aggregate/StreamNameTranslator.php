@@ -14,6 +14,7 @@ final class StreamNameTranslator
     {
     }
 
+    /** @pure */
     public static function streamName(string $aggregate, string $aggregateId): string
     {
         return $aggregate . '-' . $aggregateId;
