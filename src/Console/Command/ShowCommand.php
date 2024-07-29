@@ -8,6 +8,8 @@ use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -42,6 +44,12 @@ final class ShowCommand extends Command
                 10,
             )
             ->addOption(
+                'stream',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Show messages from a specific stream (e.g. "stream-*")',
+            )
+            ->addOption(
                 'forward',
                 null,
                 InputOption::VALUE_NONE,
@@ -53,11 +61,18 @@ final class ShowCommand extends Command
     {
         $limit = InputHelper::positiveIntOrZero($input->getOption('limit'));
         $forward = InputHelper::bool($input->getOption('forward'));
+        $stream = InputHelper::nullableString($input->getOption('stream'));
 
         $console = new OutputStyle($input, $output);
 
-        $maxCount = $this->store->count();
-        $stream = $this->store->load(null, null, null, !$forward);
+        $criteria = null;
+
+        if ($stream !== null) {
+            $criteria = new Criteria(new StreamCriterion($stream));
+        }
+
+        $maxCount = $this->store->count($criteria);
+        $stream = $this->store->load($criteria, null, null, !$forward);
 
         $currentCount = 0;
 
