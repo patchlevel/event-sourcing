@@ -44,7 +44,6 @@ use function is_int;
 use function is_string;
 use function mb_substr;
 use function sprintf;
-use function str_contains;
 use function str_ends_with;
 
 /** @experimental */
@@ -149,14 +148,8 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     }
 
                     if (str_ends_with($criterion->streamName, '*')) {
-                        $streamName = mb_substr($criterion->streamName, 0, -1);
-
-                        if (str_contains($streamName, '*')) {
-                            throw new InvalidStreamName($criterion->streamName);
-                        }
-
                         $builder->andWhere('stream LIKE :stream');
-                        $builder->setParameter('stream', $streamName . '%');
+                        $builder->setParameter('stream', mb_substr($criterion->streamName, 0, -1) . '%');
 
                         break;
                     }
