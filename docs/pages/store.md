@@ -9,27 +9,11 @@ Each message contains an event and the associated headers.
     
 The store is optimized to efficiently store and load events for aggregates.
 
-## Create DBAL connection
-
-The first thing we need for our store is a DBAL connection:
-
-```php
-use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Tools\DsnParser;
-
-$connection = DriverManager::getConnection(
-    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
-);
-```
-!!! note
-
-    You can find out more about how to create a connection 
-    [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
-    
 ## Configure Store
 
-We currently offer two stores, both based on the [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html) library.
-The default store is the `DoctrineDbalStore` and the new experimental store is the `StreamDoctrineDbalStore`.
+We offer different stores to store the messages. 
+Two stores based on [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html)
+and one in-memory store for testing purposes.
 
 ### DoctrineDbalStore
 
@@ -38,16 +22,25 @@ You can create a store with the `DoctrineDbalStore` class.
 The store needs a dbal connection, an event serializer and has some optional parameters like options.
 
 ```php
-use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 
-/** @var Connection $connection */
+$connection = DriverManager::getConnection(
+    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
+);
+
 $store = new DoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths(['src/Event']),
 );
 ```
+!!! note
+
+    You can find out more about how to create a connection 
+    [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
+    
 Following options are available in `DoctrineDbalStore`:
 
 | Option            | Type            | Default    | Description                                  |
@@ -89,16 +82,25 @@ This store introduces two new methods `streams` and `remove`.
 The store needs a dbal connection, an event serializer and has some optional parameters like options.
 
 ```php
-use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 
-/** @var Connection $connection */
+$connection = DriverManager::getConnection(
+    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
+);
+
 $store = new StreamDoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths(['src/Event']),
 );
 ```
+!!! note
+
+    You can find out more about how to create a connection 
+    [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
+    
 Following options are available in `StreamDoctrineDbalStore`:
 
 | Option            | Type            | Default     | Description                                  |
@@ -122,6 +124,19 @@ The table structure of the `StreamDoctrineDbalStore` looks like this:
 | archived         | bool     | If the event is archived                         |
 | custom_headers   | json     | Custom headers for the event                     |
 
+### InMemoryStore
+
+We also offer an in-memory store for testing purposes.
+
+```php
+use Patchlevel\EventSourcing\Store\InMemoryStore;
+
+$store = new InMemoryStore();
+```
+!!! tip
+
+    You can pass messages to the constructor to initialize the store with some events.
+    
 ## Schema
 
 With the help of the `SchemaDirector`, the database structure can be created, updated and deleted.
@@ -130,7 +145,7 @@ With the help of the `SchemaDirector`, the database structure can be created, up
 
     You can also use doctrine migration to create and keep your schema in sync.
     
-### Schema Director
+### Doctrine Schema Director
 
 The `SchemaDirector` is responsible for creating, updating and deleting the database schema.
 The `DoctrineSchemaDirector` is a concrete implementation of the `SchemaDirector` for doctrine dbal.
@@ -159,18 +174,18 @@ $schemaDirector = new DoctrineSchemaDirector(
 You can create the table from scratch using the `create` method.
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 
-/** @var DoctrineSchemaDirector $schemaDirector */
+/** @var SchemaDirector $schemaDirector */
 $schemaDirector->create();
 ```
 Or can give you back which SQL statements would be necessary for this.
 Either for a dry run, or to define your own migrations.
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 
-/** @var DoctrineSchemaDirector $schemaDirector */
+/** @var DryRunSchemaDirector $schemaDirector */
 $sql = $schemaDirector->dryRunCreate();
 ```
 #### Update schema
@@ -179,17 +194,17 @@ The update method compares the current state in the database and how the table s
 As a result, the diff is executed to bring the table to the desired state.
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 
-/** @var DoctrineSchemaDirector $schemaDirector */
+/** @var SchemaDirector $schemaDirector */
 $schemaDirector->update();
 ```
 Or can give you back which SQL statements would be necessary for this.
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 
-/** @var DoctrineSchemaDirector $schemaDirector */
+/** @var DryRunSchemaDirector $schemaDirector */
 $sql = $schemaDirector->dryRunUpdate();
 ```
 #### Drop schema
@@ -197,17 +212,17 @@ $sql = $schemaDirector->dryRunUpdate();
 You can also delete the table with the `drop` method.
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 
-/** @var DoctrineSchemaDirector $schemaDirector */
+/** @var SchemaDirector $schemaDirector */
 $schemaDirector->drop();
 ```
 Or can give you back which SQL statements would be necessary for this.
 
 ```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 
-/** @var DoctrineSchemaDirector $schemaDirector */
+/** @var DryRunSchemaDirector $schemaDirector */
 $sql = $schemaDirector->dryRunDrop();
 ```
 ### Doctrine Migrations
