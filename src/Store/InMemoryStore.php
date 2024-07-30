@@ -18,7 +18,7 @@ use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 
 use function array_filter;
 use function array_map;
-use function array_merge;
+use function array_push;
 use function array_reverse;
 use function array_slice;
 use function array_unique;
@@ -32,7 +32,7 @@ use const ARRAY_FILTER_USE_BOTH;
 
 final class InMemoryStore implements StreamStore
 {
-    /** @param list<Message> $messages */
+    /** @param array<positive-int|0, Message> $messages */
     public function __construct(
         private array $messages = [],
     ) {
@@ -127,7 +127,7 @@ final class InMemoryStore implements StreamStore
         );
     }
 
-    /** @return array<int, Message> */
+    /** @return array<positive-int|0, Message> */
     private function filter(Criteria|null $criteria): array
     {
         if (!$criteria) {

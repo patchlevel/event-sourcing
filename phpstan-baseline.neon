@@ -51,6 +51,11 @@ parameters:
 			path: src/Store/DoctrineDbalStoreStream.php
 
 		-
+			message: "#^Property Patchlevel\\\\EventSourcing\\\\Store\\\\InMemoryStore\\:\\:\\$messages \\(array\\<int\\<0, max\\>, Patchlevel\\\\EventSourcing\\\\Message\\\\Message\\>\\) does not accept array\\<int, Patchlevel\\\\EventSourcing\\\\Message\\\\Message\\>\\.$#"
+			count: 1
+			path: src/Store/InMemoryStore.php
+
+		-
 			message: "#^Parameter \\#2 \\$playhead of class Patchlevel\\\\EventSourcing\\\\Store\\\\StreamHeader constructor expects int\\<1, max\\>\\|null, int\\|null given\\.$#"
 			count: 1
 			path: src/Store/StreamDoctrineDbalStoreStream.php
