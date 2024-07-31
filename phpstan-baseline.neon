@@ -66,6 +66,11 @@ parameters:
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
+			message: "#^Strict comparison using \\=\\=\\= between DateTimeImmutable and false will always evaluate to false\\.$#"
+			count: 1
+			path: src/Subscription/RetryStrategy/ClockBasedRetryStrategy.php
+
+		-
 			message: "#^Parameter \\#3 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Subscription\\\\SubscriptionError constructor expects array\\<int, array\\{class\\: class\\-string, message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
 			count: 1
 			path: src/Subscription/Store/DoctrineSubscriptionStore.php
