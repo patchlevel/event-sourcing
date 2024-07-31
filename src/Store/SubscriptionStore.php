@@ -11,4 +11,6 @@ interface SubscriptionStore
     public function setupSubscription(): void;
 
     public function wait(int $timeoutMilliseconds): void;
+
+    // public function teardownSubscription(): void;
 }
