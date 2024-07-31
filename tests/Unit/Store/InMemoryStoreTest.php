@@ -347,4 +347,25 @@ final class InMemoryStoreTest extends TestCase
 
         self::assertTrue($called);
     }
+
+    public function testClear(): void
+    {
+        $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
+            ->withHeader(new StreamHeader('foo'));
+        $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
+            ->withHeader(new StreamHeader('bar'));
+        $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
+            ->withHeader(new StreamHeader('bar'));
+        $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
+
+        $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
+
+        $store->clear();
+
+        $stream = $store->load();
+
+        $messages = iterator_to_array($stream);
+
+        self::assertSame([], $messages);
+    }
 }

@@ -227,4 +227,9 @@ final class InMemoryStore implements StreamStore
             ARRAY_FILTER_USE_BOTH,
         );
     }
+
+    public function clear(): void
+    {
+        $this->messages = [];
+    }
 }
