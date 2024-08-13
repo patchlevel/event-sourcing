@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\ChildAggregate;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -14,6 +13,7 @@ use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -46,13 +46,11 @@ final class ChildAggregateIntegrationTest extends TestCase
 
         $profileProjector = new ProfileProjector($this->connection);
 
-        $engine = new DefaultSubscriptionEngine(
+        $engine = new ThrowOnErrorSubscriptionEngine(new DefaultSubscriptionEngine(
             $store,
             new InMemorySubscriptionStore(),
-            new MetadataSubscriberAccessorRepository([
-                $profileProjector,
-            ]),
-        );
+            new MetadataSubscriberAccessorRepository([$profileProjector]),
+        ));
 
         $manager = new RunSubscriptionEngineRepositoryManager(
             new DefaultRepositoryManager(
@@ -110,9 +108,7 @@ final class ChildAggregateIntegrationTest extends TestCase
         $engine = new DefaultSubscriptionEngine(
             $store,
             new InMemorySubscriptionStore(),
-            new MetadataSubscriberAccessorRepository([
-                $profileProjection,
-            ]),
+            new MetadataSubscriberAccessorRepository([$profileProjection]),
         );
 
         $manager = new RunSubscriptionEngineRepositoryManager(

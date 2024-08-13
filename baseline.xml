@@ -5,6 +5,11 @@
       <code><![CDATA[new static()]]></code>
     </UnsafeInstantiation>
   </file>
+  <file src="src/Aggregate/ChildAggregateBehaviour.php">
+    <MissingConstructor>
+      <code><![CDATA[$recorder]]></code>
+    </MissingConstructor>
+  </file>
   <file src="src/Clock/FrozenClock.php">
     <PossiblyFalsePropertyAssignmentValue>
       <code><![CDATA[$this->frozenDateTime->modify(sprintf('+%s seconds', $seconds))]]></code>
@@ -187,6 +192,17 @@
     <PropertyNotSetInConstructor>
       <code><![CDATA[$id]]></code>
       <code><![CDATA[$name]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Integration/ChildAggregate/PersonalInformation.php">
+    <MissingConstructor>
+      <code><![CDATA[$name]]></code>
+    </MissingConstructor>
+  </file>
+  <file src="tests/Integration/ChildAggregate/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$personalInformation]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/PersonalData/PersonalDataTest.php">

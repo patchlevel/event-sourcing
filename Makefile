@@ -60,7 +60,7 @@ deptrac-baseline: vendor-tools                                                 #
 	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml --formatter=baseline --output=../deptrac-baseline.yaml
 
 .PHONY: static
-static: psalm phpstan phpcs-check                                               ## run static analyser
+static: psalm phpstan cs                                              			 ## run static analyser
 
 test: phpunit                                                                   ## run tests
 

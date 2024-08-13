@@ -8,6 +8,8 @@ use Patchlevel\Hydrator\Attribute\Ignore;
 use ReflectionProperty;
 
 use function array_key_exists;
+use function count;
+use function explode;
 
 trait AggregateRootAttributeBehaviour
 {
@@ -30,7 +32,42 @@ trait AggregateRootAttributeBehaviour
         }
 
         $method = $metadata->applyMethods[$event::class];
-        $this->$method($event);
+
+        $parts = explode('.', $method);
+
+        if (count($parts) === 2) {
+            [$property, $method] = $parts;
+
+            /** @var ChildAggregate $child */
+            $child = $this->$property;
+            $child->$method($event);
+        } else {
+            $this->$method($event);
+        }
+
+        $recorder = $this->recordThat(...);
+        foreach ($this->getChildren() as $child) {
+            $child->setRecorder($recorder);
+        }
+    }
+
+    /** @return list<ChildAggregate> */
+    private function getChildren(): array
+    {
+        $metadata = static::metadata();
+        $children = [];
+
+        foreach ($metadata->childAggregates as $property) {
+            if (!isset($this->{$property})) {
+                continue;
+            }
+
+            /** @var ChildAggregate $child */
+            $child = $this->{$property};
+            $children[] = $child;
+        }
+
+        return $children;
     }
 
     public function aggregateRootId(): AggregateRootId
@@ -51,24 +88,5 @@ trait AggregateRootAttributeBehaviour
         }
 
         return $this->cachedAggregateRootId = $aggregateRootId;
-    }
-
-    /**
-     * @return array<ChildAggregate>
-     */
-    public function getChildren(): array
-    {
-        $metadata = static::metadata();
-        $childs = [];
-
-        foreach ($metadata->childAggregates as $property) {
-            if (!isset($this->{$property})) {
-                continue;
-            }
-
-            $childs[] = $this->{$property};
-        }
-
-        return $childs;
     }
 }

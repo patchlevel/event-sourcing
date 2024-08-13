@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
-abstract class BasicChildAggregate implements ChildAggregate, ChildAggregateMetadataAware
+/** @experimental  */
+abstract class BasicChildAggregate implements ChildAggregate
 {
-    use ChildAggregateAttributeBehaviour;
+    use ChildAggregateBehaviour;
 }

@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\ChildAggregate;
 
-use Integration\ChildAggregate\Events\NameChanged;
 use Patchlevel\EventSourcing\Aggregate\BasicChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\ChildAggregate;
+use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\NameChanged;
 
-#[ChildAggregate('personal_information')]
 final class PersonalInformation extends BasicChildAggregate
 {
     private string $name;
@@ -23,7 +21,7 @@ final class PersonalInformation extends BasicChildAggregate
     }
 
     #[Apply(NameChanged::class)]
-    protected function applyNameChanged(NameChanged $event): void
+    public function applyNameChanged(NameChanged $event): void
     {
         $this->name = $event->name;
     }

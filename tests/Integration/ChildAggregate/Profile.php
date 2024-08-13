@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\ChildAggregate;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\ChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\ProfileCreated;
@@ -17,6 +18,8 @@ final class Profile extends BasicAggregateRoot
 {
     #[Id]
     private ProfileId $id;
+
+    #[ChildAggregate]
     protected PersonalInformation $personalInformation;
 
     public static function create(ProfileId $id, string $name): self
