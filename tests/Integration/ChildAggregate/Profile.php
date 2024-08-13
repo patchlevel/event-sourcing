@@ -34,7 +34,7 @@ final class Profile extends BasicAggregateRoot
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId;
-        $this->personalInformation = PersonalInformation::create($event->name);
+        $this->personalInformation = new PersonalInformation($event->name);
     }
 
     public function name(): string

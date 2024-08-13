@@ -10,14 +10,9 @@ use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\NameChanged
 
 final class PersonalInformation extends BasicChildAggregate
 {
-    private string $name;
-
-    public static function create(string $name): self
-    {
-        $personalInformation = new self();
-        $personalInformation->name = $name;
-
-        return $personalInformation;
+    public function __construct(
+        private string $name
+    ) {
     }
 
     #[Apply(NameChanged::class)]
