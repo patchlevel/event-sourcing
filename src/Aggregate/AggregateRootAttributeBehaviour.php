@@ -19,6 +19,10 @@ trait AggregateRootAttributeBehaviour
     #[Ignore]
     private AggregateRootId|null $cachedAggregateRootId = null;
 
+    /** @var (callable(object $event): void)|null */
+    #[Ignore]
+    private $recorder = null;
+
     protected function apply(object $event): void
     {
         $metadata = static::metadata();
@@ -33,6 +37,14 @@ trait AggregateRootAttributeBehaviour
 
         $method = $metadata->applyMethods[$event::class];
 
+        if ($metadata->childAggregates === []) {
+            $this->$method($event);
+
+            return;
+        }
+
+        $this->recorder ??= $this->recordThat(...);
+
         $parts = explode('.', $method);
 
         if (count($parts) === 2) {
@@ -45,18 +57,6 @@ trait AggregateRootAttributeBehaviour
             $this->$method($event);
         }
 
-        $recorder = $this->recordThat(...);
-        foreach ($this->getChildren() as $child) {
-            $child->setRecorder($recorder);
-        }
-    }
-
-    /** @return list<ChildAggregate> */
-    private function getChildren(): array
-    {
-        $metadata = static::metadata();
-        $children = [];
-
         foreach ($metadata->childAggregates as $property) {
             if (!isset($this->{$property})) {
                 continue;
@@ -64,10 +64,8 @@ trait AggregateRootAttributeBehaviour
 
             /** @var ChildAggregate $child */
             $child = $this->{$property};
-            $children[] = $child;
+            $child->setRecorder($this->recorder);
         }
-
-        return $children;
     }
 
     public function aggregateRootId(): AggregateRootId
