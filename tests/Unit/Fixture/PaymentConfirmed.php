@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 #[Event('payment_confirmed')]
 final class PaymentConfirmed
 {
-    public function __construct(
-    ) {
+    public function __construct()
+    {
     }
 }

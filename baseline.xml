@@ -8,6 +8,7 @@
   <file src="src/Aggregate/ChildAggregateBehaviour.php">
     <MissingConstructor>
       <code><![CDATA[$recorder]]></code>
+      <code><![CDATA[$recorder]]></code>
     </MissingConstructor>
   </file>
   <file src="src/Clock/FrozenClock.php">
@@ -195,9 +196,9 @@
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/ChildAggregate/PersonalInformation.php">
-    <MissingConstructor>
-      <code><![CDATA[$name]]></code>
-    </MissingConstructor>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[PersonalInformation]]></code>
+    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/ChildAggregate/Profile.php">
     <PropertyNotSetInConstructor>
@@ -232,6 +233,13 @@
     <MixedArgumentTypeCoercion>
       <code><![CDATA[$value]]></code>
     </MixedArgumentTypeCoercion>
+  </file>
+  <file src="tests/Unit/Fixture/Order.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$orderItems]]></code>
+      <code><![CDATA[$payment]]></code>
+    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/Profile.php">
     <PropertyNotSetInConstructor>

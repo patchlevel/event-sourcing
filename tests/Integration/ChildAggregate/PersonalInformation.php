@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\NameChanged
 final class PersonalInformation extends BasicChildAggregate
 {
     public function __construct(
-        private string $name
+        private string $name,
     ) {
     }
 

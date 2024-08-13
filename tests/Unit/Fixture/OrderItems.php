@@ -9,9 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 
 final class OrderItems extends BasicChildAggregate
 {
-    /**
-     * @var array<string, int>
-     */
+    /** @var array<string, int> */
     private array $items = [];
 
     public function addItem(string $productId, int $quantity): void

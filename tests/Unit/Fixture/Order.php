@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\ChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
+use RuntimeException;
 
 #[Aggregate('order')]
 final class Order extends BasicAggregateRoot
@@ -43,7 +44,7 @@ final class Order extends BasicAggregateRoot
     public function addItem(string $productId, int $quantity): void
     {
         if ($this->isPayed()) {
-            throw new \RuntimeException('No adding possible, already paid!');
+            throw new RuntimeException('No adding possible, already paid!');
         }
 
         $this->orderItems->addItem($productId, $quantity);
