@@ -11,7 +11,7 @@ The store is optimized to efficiently store and load events for aggregates.
 
 ## Configure Store
 
-We offer different stores to store the messages. 
+We offer different stores to store the messages.
 Two stores based on [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html)
 and one in-memory store for testing purposes.
 

@@ -6,12 +6,12 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Attribute\Event;
 
-#[Event('email_changed')]
-final class EmailChanged
+#[Event('item_added')]
+final class ItemAdded
 {
     public function __construct(
-        public string $id,
-        public string $email,
+        public string $productId,
+        public int $quantity,
     ) {
     }
 }

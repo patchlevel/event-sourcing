@@ -358,6 +358,83 @@ final class Profile extends BasicAggregateRoot
 
     When all events are suppressed, debugging becomes more difficult if you forget an apply method.
     
+## Child Aggregates
+
+In some cases, it makes sense to split an aggregate into several smaller aggregates.
+This can be the case if the aggregate becomes too large or if the aggregate is used in different contexts.
+Child aggregates can be used for this purpose and work in the same way as the root aggregate.
+
+In the following example, we have an `Order` aggregate that has a `Shipping` child aggregate.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\BasicChildAggregate;
+
+final class Shipping extends BasicChildAggregate
+{
+    private bool $arrived = false;
+
+    public function __construct(
+        private string $trackingId,
+    ) {
+    }
+
+    public function arrive(): void
+    {
+        $this->recordThat(new Arrived());
+    }
+
+    #[Apply]
+    public function applyArrived(Arrived $event): void
+    {
+        $this->arrived = true;
+    }
+
+    public function isArrived(): bool
+    {
+        return $this->arrived;
+    }
+}
+```
+!!! warning
+
+    The apply method must be public, otherwise the root aggregate cannot call it.
+    
+!!! note
+
+    Supress missing apply methods need to be defined in the root aggregate.
+    
+And the `Order` aggregate root looks like this:
+
+```php
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Attribute\ChildAggregate;
+
+#[Aggregate('order')]
+final class Order extends BasicAggregateRoot
+{
+    #[ChildAggregate]
+    private Shipping $shipping;
+
+    public static function create(Uuid $id, string $trackingId): static
+    {
+        $self = new static();
+        $self->recordThat(new OrderCreated($id, $trackingId));
+
+        return $self;
+    }
+
+    public function applyOrderCreated(OrderCreated $event): void
+    {
+        $this->shipping = new Shipping($event->trackingId);
+    }
+
+    public function arrive(): void
+    {
+        $this->shipping->arrive();
+    }
+}
+```
 ## Business rules
 
 Usually, aggregates have business rules that must be observed. Like there may not be more than 10 people in a group.

@@ -12,8 +12,13 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ItemAdded;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageId;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Order;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\OrderCreated;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\OrderId;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\PaymentConfirmed;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -202,7 +207,7 @@ final class AggregateRootTest extends TestCase
             {
                 $this->called = true;
 
-                return new AggregateRootMetadata($aggregate, 'name', 'id', [], [], false, null);
+                return new AggregateRootMetadata($aggregate, 'name', 'id', [], [], false, null, []);
             }
         };
 
@@ -210,5 +215,48 @@ final class AggregateRootTest extends TestCase
         self::assertFalse($newFactory->called);
         Profile::getMetadata();
         self::assertTrue($newFactory->called);
+    }
+
+    public function testApplyMethodWithMultipleChildren(): void
+    {
+        $id = OrderId::fromString('1');
+        $order = Order::create($id);
+
+        self::assertSame($id, $order->aggregateRootId());
+        self::assertSame(1, $order->playhead());
+        self::assertEquals($id, $order->id());
+        self::assertEquals(0, $order->countItem('foo'));
+        self::assertEquals(0, $order->countItem('bar'));
+        self::assertEquals(0, $order->countAll());
+        self::assertFalse($order->isPayed());
+
+        $events = $order->releaseEvents();
+        self::assertCount(1, $events);
+
+        $event = $events[0];
+
+        self::assertInstanceOf(OrderCreated::class, $event);
+        self::assertEquals($id, $event->orderId);
+
+        $order->addItem('foo', 2);
+        self::assertEquals(2, $order->countItem('foo'));
+        self::assertEquals(0, $order->countItem('bar'));
+        self::assertEquals(2, $order->countAll());
+
+        $order->confirmPayment();
+        self::assertTrue($order->isPayed());
+
+        $events = $order->releaseEvents();
+        self::assertCount(2, $events);
+
+        $event = $events[0];
+
+        self::assertInstanceOf(ItemAdded::class, $event);
+        self::assertEquals('foo', $event->productId);
+        self::assertEquals(2, $event->quantity);
+
+        $event = $events[1];
+
+        self::assertInstanceOf(PaymentConfirmed::class, $event);
     }
 }

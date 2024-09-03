@@ -20,6 +20,8 @@ final class AggregateRootMetadata
         public readonly array $suppressEvents,
         public readonly bool $suppressAll,
         public readonly Snapshot|null $snapshot,
+        /** @var list<string> */
+        public readonly array $childAggregates = [],
     ) {
     }
 }

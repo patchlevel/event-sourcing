@@ -22,21 +22,11 @@ trait AggregateRootBehaviour
 
     abstract protected function apply(object $event): void;
 
-    protected function recordThat(object $event): void
-    {
-        $this->playhead++;
-
-        $this->apply($event);
-
-        $this->uncommittedEvents[] = $event;
-    }
-
     /** @param iterable<object> $events */
     public function catchUp(iterable $events): void
     {
         foreach ($events as $event) {
-            $this->playhead++;
-            $this->apply($event);
+            $this->record($event);
         }
     }
 
@@ -65,5 +55,17 @@ trait AggregateRootBehaviour
     public function playhead(): int
     {
         return $this->playhead;
+    }
+
+    protected function recordThat(object $event): void
+    {
+        $this->record($event);
+        $this->uncommittedEvents[] = $event;
+    }
+
+    private function record(object $event): void
+    {
+        $this->playhead++;
+        $this->apply($event);
     }
 }

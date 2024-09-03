@@ -8,6 +8,8 @@ use Patchlevel\Hydrator\Attribute\Ignore;
 use ReflectionProperty;
 
 use function array_key_exists;
+use function count;
+use function explode;
 
 trait AggregateRootAttributeBehaviour
 {
@@ -16,6 +18,10 @@ trait AggregateRootAttributeBehaviour
 
     #[Ignore]
     private AggregateRootId|null $cachedAggregateRootId = null;
+
+    /** @var (callable(object $event): void)|null */
+    #[Ignore]
+    private $recorder = null;
 
     protected function apply(object $event): void
     {
@@ -30,7 +36,36 @@ trait AggregateRootAttributeBehaviour
         }
 
         $method = $metadata->applyMethods[$event::class];
-        $this->$method($event);
+
+        if ($metadata->childAggregates === []) {
+            $this->$method($event);
+
+            return;
+        }
+
+        $this->recorder ??= $this->recordThat(...);
+
+        $parts = explode('.', $method);
+
+        if (count($parts) === 2) {
+            [$property, $method] = $parts;
+
+            /** @var ChildAggregate $child */
+            $child = $this->$property;
+            $child->$method($event);
+        } else {
+            $this->$method($event);
+        }
+
+        foreach ($metadata->childAggregates as $property) {
+            if (!isset($this->{$property})) {
+                continue;
+            }
+
+            /** @var ChildAggregate $child */
+            $child = $this->{$property};
+            $child->setRecorder($this->recorder);
+        }
     }
 
     public function aggregateRootId(): AggregateRootId

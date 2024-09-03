@@ -5,6 +5,12 @@
       <code><![CDATA[new static()]]></code>
     </UnsafeInstantiation>
   </file>
+  <file src="src/Aggregate/ChildAggregateBehaviour.php">
+    <MissingConstructor>
+      <code><![CDATA[$recorder]]></code>
+      <code><![CDATA[$recorder]]></code>
+    </MissingConstructor>
+  </file>
   <file src="src/Clock/FrozenClock.php">
     <PossiblyFalsePropertyAssignmentValue>
       <code><![CDATA[$this->frozenDateTime->modify(sprintf('+%s seconds', $seconds))]]></code>
@@ -189,6 +195,17 @@
       <code><![CDATA[$name]]></code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="tests/Integration/ChildAggregate/PersonalInformation.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[PersonalInformation]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Integration/ChildAggregate/Profile.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$personalInformation]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="tests/Integration/PersonalData/PersonalDataTest.php">
     <MixedArgument>
       <code><![CDATA[$row['payload']]]></code>
@@ -216,6 +233,13 @@
     <MixedArgumentTypeCoercion>
       <code><![CDATA[$value]]></code>
     </MixedArgumentTypeCoercion>
+  </file>
+  <file src="tests/Unit/Fixture/Order.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$orderItems]]></code>
+      <code><![CDATA[$payment]]></code>
+    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/Profile.php">
     <PropertyNotSetInConstructor>
