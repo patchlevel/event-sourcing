@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Aggregate;
 
 use Patchlevel\Hydrator\Attribute\Ignore;
+use Patchlevel\Hydrator\Attribute\PostHydrate;
 use ReflectionProperty;
 
 use function array_key_exists;
@@ -43,8 +44,6 @@ trait AggregateRootAttributeBehaviour
             return;
         }
 
-        $this->recorder ??= $this->recordThat(...);
-
         $parts = explode('.', $method);
 
         if (count($parts) === 2) {
@@ -56,6 +55,15 @@ trait AggregateRootAttributeBehaviour
         } else {
             $this->$method($event);
         }
+
+        $this->passRecorderToChildAggregates();
+    }
+
+    #[PostHydrate]
+    private function passRecorderToChildAggregates(): void
+    {
+        $metadata = static::metadata();
+        $this->recorder ??= $this->recordThat(...);
 
         foreach ($metadata->childAggregates as $property) {
             if (!isset($this->{$property})) {
