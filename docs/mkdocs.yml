@@ -61,6 +61,7 @@ plugins:
 
 markdown_extensions:
   - meta
+  - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
       extend_pygments_lang:

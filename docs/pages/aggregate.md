@@ -360,6 +360,11 @@ final class Profile extends BasicAggregateRoot
     
 ## Child Aggregates
 
+??? example "Experimental"
+
+    This feature is still experimental and may change in the future.
+    Use it with caution.
+
 In some cases, it makes sense to split an aggregate into several smaller aggregates.
 This can be the case if the aggregate becomes too large or if the aggregate is used in different contexts.
 Child aggregates can be used for this purpose and work in the same way as the root aggregate.
