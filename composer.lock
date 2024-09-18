@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9352e66b4db0bf595155f52fd4158199",
+    "content-hash": "a1f064eb241d9bc1206be325eeb69e6e",
     "packages": [
         {
             "name": "brick/math",
@@ -417,16 +417,16 @@
         },
         {
             "name": "patchlevel/hydrator",
-            "version": "1.4.1",
+            "version": "1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/patchlevel/hydrator.git",
-                "reference": "0386ca29388c5c9d3f8b7b328826d16521313d91"
+                "reference": "b8951b39825e6baef7e6331c7d9a7655e19c7b4a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/0386ca29388c5c9d3f8b7b328826d16521313d91",
-                "reference": "0386ca29388c5c9d3f8b7b328826d16521313d91",
+                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/b8951b39825e6baef7e6331c7d9a7655e19c7b4a",
+                "reference": "b8951b39825e6baef7e6331c7d9a7655e19c7b4a",
                 "shasum": ""
             },
             "require": {
@@ -476,9 +476,9 @@
             ],
             "support": {
                 "issues": "https://github.com/patchlevel/hydrator/issues",
-                "source": "https://github.com/patchlevel/hydrator/tree/1.4.1"
+                "source": "https://github.com/patchlevel/hydrator/tree/1.5.0"
             },
-            "time": "2024-07-09T08:06:23+00:00"
+            "time": "2024-09-18T12:04:45+00:00"
         },
         {
             "name": "patchlevel/worker",
@@ -7135,16 +7135,16 @@
         },
         {
             "name": "squizlabs/php_codesniffer",
-            "version": "3.10.2",
+            "version": "3.10.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCSStandards/PHP_CodeSniffer.git",
-                "reference": "86e5f5dd9a840c46810ebe5ff1885581c42a3017"
+                "reference": "62d32998e820bddc40f99f8251958aed187a5c9c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCSStandards/PHP_CodeSniffer/zipball/86e5f5dd9a840c46810ebe5ff1885581c42a3017",
-                "reference": "86e5f5dd9a840c46810ebe5ff1885581c42a3017",
+                "url": "https://api.github.com/repos/PHPCSStandards/PHP_CodeSniffer/zipball/62d32998e820bddc40f99f8251958aed187a5c9c",
+                "reference": "62d32998e820bddc40f99f8251958aed187a5c9c",
                 "shasum": ""
             },
             "require": {
@@ -7211,7 +7211,7 @@
                     "type": "open_collective"
                 }
             ],
-            "time": "2024-07-21T23:26:44+00:00"
+            "time": "2024-09-18T10:38:58+00:00"
         },
         {
             "name": "symfony/clock",

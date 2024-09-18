@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use Patchlevel\Hydrator\Attribute\Ignore;
+
 /** @experimental  */
 trait ChildAggregateBehaviour
 {
     /** @var callable(object $event): void */
+    #[Ignore]
     private $recorder;
 
     protected function recordThat(object $event): void

@@ -146,11 +146,21 @@ final class ChildAggregateIntegrationTest extends TestCase
         self::assertSame('John', $result['name']);
 
         $repository = $manager->get(Profile::class);
+
+        // create snapshot
+        $repository->load($profileId);
+
+        // load from snapshot
+        $profile = $repository->load($profileId);
+
+        $profile->changeName('Snow');
+        $repository->save($profile);
+
         $profile = $repository->load($profileId);
 
         self::assertInstanceOf(Profile::class, $profile);
         self::assertEquals($profileId, $profile->aggregateRootId());
-        self::assertSame(1, $profile->playhead());
-        self::assertSame('John', $profile->name());
+        self::assertSame(2, $profile->playhead());
+        self::assertSame('Snow', $profile->name());
     }
 }

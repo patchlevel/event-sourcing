@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\ProfileCreated;
 
 #[Aggregate('profile')]
-#[Snapshot('default', 100)]
+#[Snapshot('default', 1)]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]
