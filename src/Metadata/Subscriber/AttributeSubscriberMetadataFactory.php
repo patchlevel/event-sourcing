@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
+use Patchlevel\EventSourcing\Attribute\Batch;
+use Patchlevel\EventSourcing\Attribute\BeginBatch;
+use Patchlevel\EventSourcing\Attribute\CommitBatch;
+use Patchlevel\EventSourcing\Attribute\RollbackBatch;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -43,6 +47,13 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $createMethod = null;
         $dropMethod = null;
 
+        $attributes = $reflector->getAttributes(Batch::class);
+
+        $batch = $attributes !== [];
+        $beginBatchMethod = null;
+        $commitBatchMethod = null;
+        $rollbackBatchMethod = null;
+
         foreach ($methods as $method) {
             $attributes = $method->getAttributes(Subscribe::class);
 
@@ -65,19 +76,53 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 $createMethod = $method->getName();
             }
 
-            if (!$method->getAttributes(Teardown::class)) {
-                continue;
+            if ($method->getAttributes(Teardown::class)) {
+                if ($dropMethod !== null) {
+                    throw new DuplicateTeardownMethod(
+                        $subscriber,
+                        $dropMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $dropMethod = $method->getName();
             }
 
-            if ($dropMethod !== null) {
-                throw new DuplicateTeardownMethod(
-                    $subscriber,
-                    $dropMethod,
-                    $method->getName(),
-                );
+            if ($method->getAttributes(BeginBatch::class)) {
+                if ($beginBatchMethod !== null) {
+                    throw new DuplicateBeginBatchMethod(
+                        $subscriber,
+                        $beginBatchMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $beginBatchMethod = $method->getName();
             }
 
-            $dropMethod = $method->getName();
+            if ($method->getAttributes(CommitBatch::class)) {
+                if ($commitBatchMethod !== null) {
+                    throw new DuplicateBeginBatchMethod(
+                        $subscriber,
+                        $commitBatchMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $commitBatchMethod = $method->getName();
+            }
+
+            if ($method->getAttributes(RollbackBatch::class)) {
+                if ($rollbackBatchMethod !== null) {
+                    throw new DuplicateBeginBatchMethod(
+                        $subscriber,
+                        $rollbackBatchMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $rollbackBatchMethod = $method->getName();
+            }
         }
 
         $metadata = new SubscriberMetadata(
@@ -87,6 +132,10 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $subscribeMethods,
             $createMethod,
             $dropMethod,
+            $batch,
+            $beginBatchMethod,
+            $commitBatchMethod,
+            $rollbackBatchMethod,
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;
