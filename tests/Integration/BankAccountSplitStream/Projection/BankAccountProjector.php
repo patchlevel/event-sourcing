@@ -14,8 +14,6 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BalanceAdded;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BankAccountCreated;
 
-use function assert;
-
 #[Projector('dummy-1')]
 final class BankAccountProjector
 {
