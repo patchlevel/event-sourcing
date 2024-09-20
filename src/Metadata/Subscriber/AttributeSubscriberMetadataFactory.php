@@ -112,17 +112,19 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 $commitBatchMethod = $method->getName();
             }
 
-            if ($method->getAttributes(RollbackBatch::class)) {
-                if ($rollbackBatchMethod !== null) {
-                    throw new DuplicateBeginBatchMethod(
-                        $subscriber,
-                        $rollbackBatchMethod,
-                        $method->getName(),
-                    );
-                }
-
-                $rollbackBatchMethod = $method->getName();
+            if (!$method->getAttributes(RollbackBatch::class)) {
+                continue;
             }
+
+            if ($rollbackBatchMethod !== null) {
+                throw new DuplicateBeginBatchMethod(
+                    $subscriber,
+                    $rollbackBatchMethod,
+                    $method->getName(),
+                );
+            }
+
+            $rollbackBatchMethod = $method->getName();
         }
 
         $metadata = new SubscriberMetadata(

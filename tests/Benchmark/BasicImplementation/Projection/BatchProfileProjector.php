@@ -24,9 +24,7 @@ final class BatchProfileProjector
 {
     use SubscriberUtil;
 
-    /**
-     * @var array<string, string>
-     */
+    /** @var array<string, string> */
     private array $nameChanged = [];
 
     public function __construct(
@@ -61,7 +59,7 @@ final class BatchProfileProjector
     #[Subscribe(NameChanged::class)]
     public function onNameChanged(NameChanged $nameChanged, ProfileId $profileId): void
     {
-        $nameChanged[$profileId->toString()] = $nameChanged->name;
+        $this->nameChanged[$profileId->toString()] = $nameChanged->name;
     }
 
     public function table(): string
@@ -79,7 +77,7 @@ final class BatchProfileProjector
     public function commitBatch(): void
     {
         try {
-            $this->connection->transactional(function () {
+            $this->connection->transactional(function (): void {
                 foreach ($this->nameChanged as $profileId => $name) {
                     $this->connection->update(
                         $this->table(),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
 use Patchlevel\EventSourcing\Metadata\MetadataException;
+
 use function sprintf;
 
 final class DuplicateBeginBatchMethod extends MetadataException

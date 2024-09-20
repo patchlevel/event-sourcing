@@ -62,7 +62,6 @@ final class ProfileProjection
         return 'projection_' . $this->subscriberId();
     }
 
-
     #[BeginBatch]
     public function beginBatch(): void
     {

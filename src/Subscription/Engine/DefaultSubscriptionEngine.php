@@ -22,6 +22,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepositor
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use WeakMap;
 
 use function count;
 use function in_array;
@@ -31,6 +32,9 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 {
     private bool $processing = false;
 
+    /** @var WeakMap<Subscription, true> */
+    private WeakMap $batching;
+
     public function __construct(
         private readonly Store $messageStore,
         private readonly SubscriptionStore $subscriptionStore,
@@ -38,6 +42,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
         private readonly LoggerInterface|null $logger = null,
     ) {
+        $this->batching = new WeakMap();
     }
 
     public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): Result
@@ -181,11 +186,10 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         ),
                     );
 
+                    /** @var list<Error> $errors */
+                    $errors = [];
                     $stream = null;
                     $messageCounter = 0;
-
-                    /** @var list<Error> $errors */
-                    $errors = $this->beginBatch($subscriptions);
 
                     try {
                         $stream = $this->messageStore->load(
@@ -236,10 +240,15 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             );
 
                             if ($limit !== null && $messageCounter >= $limit) {
-                                $errors = array_merge(
-                                    $errors,
-                                    $this->commitBatch($subscriptions, $index),
-                                );
+                                foreach ($subscriptions as $subscription) {
+                                    $error = $this->ensureCommitBatch($subscription, $index);
+
+                                    if (!$error) {
+                                        continue;
+                                    }
+
+                                    $errors[] = $error;
+                                }
 
                                 $this->logger?->info(
                                     sprintf(
@@ -259,15 +268,16 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         $endIndex = $stream?->index() ?: $startIndex;
                         $stream?->close();
 
-                        $errors = array_merge(
-                            $errors,
-                            $this->commitBatch($subscriptions, $endIndex),
-                        );
-
                         if ($messageCounter > 0) {
                             foreach ($subscriptions as $subscription) {
+                                $error = $this->ensureCommitBatch($subscription, $endIndex);
+
+                                if ($error) {
+                                    $errors[] = $error;
+                                }
+
                                 if (!$subscription->isBooting()) {
-                                    continue;
+                                    continue; // why?
                                 }
 
                                 $this->subscriptionStore->update($subscription);
@@ -358,11 +368,10 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         ),
                     );
 
+                    /** @var list<Error> $errors */
+                    $errors = [];
                     $stream = null;
                     $messageCounter = 0;
-
-                    /** @var list<Error> $errors */
-                    $errors = $this->beginBatch($subscriptions);
 
                     try {
                         $criteria = new Criteria(new FromIndexCriterion($startIndex));
@@ -410,10 +419,15 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             ));
 
                             if ($limit !== null && $messageCounter >= $limit) {
-                                $errors = array_merge(
-                                    $errors,
-                                    $this->commitBatch($subscriptions, $index),
-                                );
+                                foreach ($subscriptions as $subscription) {
+                                    $error = $this->ensureCommitBatch($subscription, $index);
+
+                                    if (!$error) {
+                                        continue;
+                                    }
+
+                                    $errors[] = $error;
+                                }
 
                                 $this->logger?->info(
                                     sprintf(
@@ -429,15 +443,16 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         $endIndex = $stream?->index() ?: $startIndex;
                         $stream?->close();
 
-                        $errors = array_merge(
-                            $errors,
-                            $this->commitBatch($subscriptions, $endIndex),
-                        );
-
                         if ($messageCounter > 0) {
                             foreach ($subscriptions as $subscription) {
+                                $error = $this->ensureCommitBatch($subscription, $endIndex);
+
+                                if ($error) {
+                                    $errors[] = $error;
+                                }
+
                                 if (!$subscription->isActive()) {
-                                    continue;
+                                    continue; //  why?
                                 }
 
                                 $this->subscriptionStore->update($subscription);
@@ -780,8 +795,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $subscribeMethods = $subscriber->subscribeMethods($message->event()::class);
 
         if ($subscribeMethods === []) {
-
-            if (!$subscriber instanceof BatchSubscriberAccessor || !$subscriber->batch()) {
+            if (!isset($this->batching[$subscription])) {
                 $subscription->changePosition($index);
             }
 
@@ -795,6 +809,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             );
 
             return null;
+        }
+
+        $error = $this->checkAndBeginBatch($subscription);
+
+        if ($error) {
+            return $error;
         }
 
         try {
@@ -821,7 +841,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             );
         }
 
-        if (!$subscriber instanceof BatchSubscriberAccessor || !$subscriber->batch()) {
+        if (!isset($this->batching[$subscription])) {
             $subscription->changePosition($index);
         }
 
@@ -1018,10 +1038,16 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $subscription->error($throwable);
         $this->subscriptionStore->update($subscription);
 
+        if (!isset($this->batching[$subscription])) {
+            return;
+        }
+
+        unset($this->batching[$subscription]);
+
         $subscriber = $this->subscriber($subscription->id());
 
-        if (!$subscriber instanceof BatchSubscriberAccessor || !$subscriber->batch()) {
-            return;
+        if (!$subscriber instanceof BatchSubscriberAccessor) {
+            throw new UnexpectedError('should not happen');
         }
 
         $rollbackBatchMethod = $subscriber->rollbackBatchMethod();
@@ -1042,97 +1068,89 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
     }
 
-    /**
-     * @param list<Subscription> $subscriptions
-     * @return list<Error>
-     */
-    private function commitBatch(array $subscriptions, int $index): array
+    private function ensureCommitBatch(Subscription $subscription, int $index): Error|null
     {
-        $errors = [];
-
-        foreach ($subscriptions as $subscription) {
-            if ($subscription->isError()) {
-                continue;
-            }
-
-            $subscriber = $this->subscriber($subscription->id());
-
-            if (!$subscriber instanceof BatchSubscriberAccessor || !$subscriber->batch()) {
-                continue;
-            }
-
-            $commitBatchMethod = $subscriber->commitBatchMethod();
-
-            if (!$commitBatchMethod) {
-                $subscription->changePosition($index);
-                continue;
-            }
-
-            try {
-                $commitBatchMethod();
-                $subscription->changePosition($index);
-            } catch (Throwable $e) {
-                $this->logger?->error(sprintf(
-                    'Subscription Engine: Subscriber "%s" for "%s" has an error in the commit batch method: %s',
-                    $subscriber::class,
-                    $subscription->id(),
-                    $e->getMessage(),
-                ));
-
-                $this->handleError($subscription, $e);
-
-                $errors[] = new Error(
-                    $subscription->id(),
-                    $e->getMessage(),
-                    $e,
-                );
-            }
+        if (!isset($this->batching[$subscription])) {
+            return null;
         }
 
-        return $errors;
+        unset($this->batching[$subscription]);
+
+        $subscriber = $this->subscriber($subscription->id());
+
+        if (!$subscriber instanceof BatchSubscriberAccessor) {
+            throw new UnexpectedError('should not happen');
+        }
+
+        $commitBatchMethod = $subscriber->commitBatchMethod();
+
+        if (!$commitBatchMethod) {
+            $subscription->changePosition($index);
+
+            return null;
+        }
+
+        try {
+            $commitBatchMethod();
+            $subscription->changePosition($index);
+        } catch (Throwable $e) {
+            $this->logger?->error(sprintf(
+                'Subscription Engine: Subscriber "%s" for "%s" has an error in the commit batch method: %s',
+                $subscriber::class,
+                $subscription->id(),
+                $e->getMessage(),
+            ));
+
+            $this->handleError($subscription, $e);
+
+            return new Error(
+                $subscription->id(),
+                $e->getMessage(),
+                $e,
+            );
+        }
+
+        return null;
     }
 
-    /**
-     * @param list<Subscription> $subscriptions
-     * @return list<Error>
-     */
-    private function beginBatch(array $subscriptions): array
+    private function checkAndBeginBatch(Subscription $subscription): Error|null
     {
-        $errors = [];
-
-        foreach ($subscriptions as $subscription) {
-            $subscriber = $this->subscriber($subscription->id());
-
-            if (!$subscriber instanceof BatchSubscriberAccessor || !$subscriber->batch()) {
-                continue;
-            }
-
-            $beginMethod = $subscriber->beginBatchMethod();
-
-            if (!$beginMethod) {
-                continue;
-            }
-
-            try {
-                $beginMethod();
-            } catch (Throwable $e) {
-                $this->logger?->error(sprintf(
-                    'Subscription Engine: Subscriber "%s" for "%s" has an error in the begin batch method: %s',
-                    $subscriber::class,
-                    $subscription->id(),
-                    $e->getMessage(),
-                ));
-
-                $this->handleError($subscription, $e);
-
-                $errors[] = new Error(
-                    $subscription->id(),
-                    $e->getMessage(),
-                    $e,
-                );
-            }
+        if (isset($this->batching[$subscription])) {
+            return null;
         }
 
-        return $errors;
+        $subscriber = $this->subscriber($subscription->id());
+
+        if (!$subscriber instanceof BatchSubscriberAccessor || !$subscriber->batch()) {
+            return null;
+        }
+
+        $this->batching[$subscription] = true;
+        $beginMethod = $subscriber->beginBatchMethod();
+
+        if (!$beginMethod) {
+            return null;
+        }
+
+        try {
+            $beginMethod();
+        } catch (Throwable $e) {
+            $this->logger?->error(sprintf(
+                'Subscription Engine: Subscriber "%s" for "%s" has an error in the begin batch method: %s',
+                $subscriber::class,
+                $subscription->id(),
+                $e->getMessage(),
+            ));
+
+            $this->handleError($subscription, $e);
+
+            return new Error(
+                $subscription->id(),
+                $e->getMessage(),
+                $e,
+            );
+        }
+
+        return null;
     }
 }
