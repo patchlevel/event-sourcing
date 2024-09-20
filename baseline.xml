@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
+<files psalm-version="5.26.1@d747f6500b38ac4f7dfc5edbcae6e4b637d7add0">
   <file src="src/Aggregate/AggregateRootBehaviour.php">
     <UnsafeInstantiation>
       <code><![CDATA[new static()]]></code>
@@ -124,13 +124,6 @@
       <code><![CDATA[$methodName]]></code>
     </MixedMethodCall>
   </file>
-  <file src="tests/Benchmark/BasicImplementation/Profile.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$email]]></code>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
   <file src="tests/Benchmark/PersonalDataBench.php">
     <MissingConstructor>
       <code><![CDATA[$multipleEventsId]]></code>
@@ -182,28 +175,9 @@
       <code><![CDATA[$subscriptionEngine]]></code>
     </MissingConstructor>
   </file>
-  <file src="tests/Integration/BankAccountSplitStream/BankAccount.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$balanceInCents]]></code>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Integration/BasicImplementation/Profile.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
   <file src="tests/Integration/ChildAggregate/PersonalInformation.php">
     <PropertyNotSetInConstructor>
       <code><![CDATA[PersonalInformation]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Integration/ChildAggregate/Profile.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$personalInformation]]></code>
     </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Integration/PersonalData/PersonalDataTest.php">
@@ -211,95 +185,25 @@
       <code><![CDATA[$row['payload']]]></code>
     </MixedArgument>
   </file>
-  <file src="tests/Integration/PersonalData/Profile.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Integration/Store/Profile.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Integration/Subscription/Profile.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$name]]></code>
-    </PropertyNotSetInConstructor>
+  <file src="tests/Unit/EventBus/DefaultEventBusTest.php">
+    <MoreSpecificImplementedParamType>
+      <code><![CDATA[$message]]></code>
+    </MoreSpecificImplementedParamType>
   </file>
   <file src="tests/Unit/Fixture/MessageNormalizer.php">
     <MixedArgumentTypeCoercion>
       <code><![CDATA[$value]]></code>
     </MixedArgumentTypeCoercion>
   </file>
-  <file src="tests/Unit/Fixture/Order.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$orderItems]]></code>
-      <code><![CDATA[$payment]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Fixture/Profile.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$email]]></code>
-      <code><![CDATA[$id]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileInvalid.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$email]]></code>
-      <code><![CDATA[$id]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyBothUsage.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-    </PropertyNotSetInConstructor>
     <ReservedWord>
       <code><![CDATA[ProfileCreated&ProfileVisited $event]]></code>
     </ReservedWord>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyMultipleApply.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
       <code><![CDATA[$event]]></code>
     </MissingParamType>
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithEmptyApply.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithSnapshot.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$email]]></code>
-      <code><![CDATA[$id]]></code>
-      <code><![CDATA[$messages]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithSuppressAll.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Fixture/WrongNormalizerBasicAggregate.php">
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$id]]></code>
-    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php">
     <MissingParamType>

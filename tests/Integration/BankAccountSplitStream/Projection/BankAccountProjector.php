@@ -47,8 +47,6 @@ final class BankAccountProjector
     {
         $event = $message->event();
 
-        assert($event instanceof BankAccountCreated);
-
         $this->connection->executeStatement(
             'INSERT INTO projection_bank_account (id, name, balance_in_cents) VALUES(:id, :name, 0);',
             [
@@ -62,8 +60,6 @@ final class BankAccountProjector
     public function handleBalanceAdded(Message $message): void
     {
         $event = $message->event();
-
-        assert($event instanceof BalanceAdded);
 
         $this->connection->executeStatement(
             'UPDATE projection_bank_account SET balance_in_cents = balance_in_cents + :balance WHERE id = :id;',
