@@ -55,12 +55,14 @@ theme:
         name: Switch to light mode
 
 plugins:
+  - search:
   - mike:
       canonical_version: latest
   - privacy:
 
 markdown_extensions:
   - meta
+  - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
       extend_pygments_lang:
