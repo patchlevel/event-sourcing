@@ -410,6 +410,25 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         ));
     }
 
+    public function teardownSubscription(): void
+    {
+        if (!$this->supportSubscription()) {
+            return;
+        }
+
+        $functionName = $this->createTriggerFunctionName();
+
+        $this->connection->executeStatement(sprintf(
+            'DROP FUNCTION IF EXISTS %s() CASCADE;',
+            $functionName,
+        ));
+
+        $this->connection->executeStatement(sprintf(
+            'DROP TRIGGER IF EXISTS notify_trigger ON %s;',
+            $this->config['table_name'],
+        ));
+    }
+
     private function createTriggerFunctionName(): string
     {
         $tableConfig = explode('.', $this->config['table_name']);

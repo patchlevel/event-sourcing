@@ -70,6 +70,12 @@ final class SubscriptionRunCommand extends SubscriptionCommand
                 null,
                 InputOption::VALUE_NONE,
                 'rebuild (remove & boot) subscriptions before run',
+            )
+            ->addOption(
+                'skip-subscription-setup',
+                null,
+                InputOption::VALUE_NONE,
+                'skip subscription setup',
             );
     }
 
@@ -81,11 +87,12 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
         $rebuild = InputHelper::bool($input->getOption('rebuild'));
+        $skipSubscriptionSetup = InputHelper::bool($input->getOption('skip-subscription-setup'));
 
         $criteria = $this->subscriptionEngineCriteria($input);
         $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
-        if ($this->store instanceof SubscriptionStore) {
+        if ($this->store instanceof SubscriptionStore && !$skipSubscriptionSetup) {
             $this->store->setupSubscription();
         }
 
