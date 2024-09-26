@@ -111,6 +111,7 @@ nav:
     - CLI: cli.md
   - Upgrade from 2.x: UPGRADE-3.0.md
   - Links:
+    - Blog: https://patchlevel.de/blog
     - Symfony Bundle: https://patchlevel.github.io/event-sourcing-bundle-docs/latest/
     - Admin Bundle: https://github.com/patchlevel/event-sourcing-admin-bundle
     - Psalm Plugin: https://github.com/patchlevel/event-sourcing-psalm-plugin
