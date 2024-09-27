@@ -5,7 +5,7 @@
 
 # Event-Sourcing
 
-An event sourcing library, complete with all the essential features, 
+An event sourcing library, complete with all the essential features,
 powered by the reliable Doctrine ecosystem and focused on developer experience.
 
 ## Features
@@ -13,13 +13,19 @@ powered by the reliable Doctrine ecosystem and focused on developer experience.
 * Everything is included in the package for event sourcing
 * Based on [doctrine dbal](https://github.com/doctrine/dbal) and their ecosystem
 * Developer experience oriented and fully typed
-* Automatic [snapshot](https://patchlevel.github.io/event-sourcing-docs/latest/snapshots/)-system to boost your performance
+* Automatic [snapshot](https://patchlevel.github.io/event-sourcing-docs/latest/snapshots/)-system to boost your
+  performance
 * [Split](https://patchlevel.github.io/event-sourcing-docs/latest/split_stream/) big aggregates into multiple streams
-* Versioned and managed lifecycle of [subscriptions](https://patchlevel.github.io/event-sourcing-docs/latest/subscription/) like projections and processors
-* Safe usage of [Personal Data](https://patchlevel.github.io/event-sourcing-docs/latest/personal_data/) with crypto-shredding
+* Versioned and managed lifecycle
+  of [subscriptions](https://patchlevel.github.io/event-sourcing-docs/latest/subscription/) like projections and
+  processors
+* Safe usage of [Personal Data](https://patchlevel.github.io/event-sourcing-docs/latest/personal_data/) with
+  crypto-shredding
 * Smooth [upcasting](https://patchlevel.github.io/event-sourcing-docs/latest/upcasting/) of old events
-* Simple setup with [scheme management](https://patchlevel.github.io/event-sourcing-docs/latest/store/) and [doctrine migration](https://patchlevel.github.io/event-sourcing-docs/latest/store/)
-* Built in [cli commands](https://patchlevel.github.io/event-sourcing-docs/latest/cli/) with [symfony](https://symfony.com/)
+* Simple setup with [scheme management](https://patchlevel.github.io/event-sourcing-docs/latest/store/)
+  and [doctrine migration](https://patchlevel.github.io/event-sourcing-docs/latest/store/)
+* Built in [cli commands](https://patchlevel.github.io/event-sourcing-docs/latest/cli/)
+  with [symfony](https://symfony.com/)
 * and much more...
 
 ## Installation
@@ -47,12 +53,12 @@ But we can only really support the databases if we can also automatically ensure
 > [!TIP]
 > We recommend using PostgreSQL.
 
-| Database    | Version                        |
-|-------------|--------------------------------|
-| PostgreSQL | 12.19, 13.15, 14.12, 15.7, 16.3 |
-| MariaDB     | 10.5, 10.6, 10.11, 11.1, 11.4  |
-| MySQL       | 5.7, 8.0, 8.4, 9.0             |
-| SQLite      | 3.x                            |
+| Database   | Version                               |
+|------------|---------------------------------------|
+| PostgreSQL | 12.20, 13.16, 14.13, 15.8, 16.4, 17.0 |
+| MariaDB    | 10.5, 10.6, 10.11, 11.1, 11.4         |
+| MySQL      | 5.7, 8.0, 8.4, 9.0                    |
+| SQLite     | 3.x                                   |
 
 ## Sponsors
 
