@@ -37,11 +37,12 @@ jobs:
                 operating-system:
                     - "ubuntu-latest"
                 postgres-version:
-                  - "12.19"
-                  - "13.15"
-                  - "14.12"
-                  - "15.7"
-                  - "16.3"
+                  - "12.20"
+                  - "13.16"
+                  - "14.13"
+                  - "15.8"
+                  - "16.4"
+                  - "17.0"
 
         env:
             DB_URL: 'pdo-pgsql://postgres:postgres@localhost:5432/eventstore?charset=utf8'
