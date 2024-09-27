@@ -459,13 +459,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
-                Status::Booting,
-                1,
-            ),
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
                 Status::Active,
                 1,
             ),
@@ -664,20 +657,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 $subscriptionId1,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
-                Status::Booting,
-                1,
-            ),
-            new Subscription(
-                $subscriptionId2,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Booting,
-                1,
-            ),
-            new Subscription(
-                $subscriptionId1,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
                 Status::Active,
                 1,
             ),
@@ -742,13 +721,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
-                Status::Booting,
-                3,
-            ),
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
                 Status::Active,
                 3,
             ),
@@ -799,13 +771,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::Once,
-                Status::Booting,
-                1,
-            ),
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -1400,13 +1365,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::Once,
-                Status::Active,
-                1,
-            ),
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
