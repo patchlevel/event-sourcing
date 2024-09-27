@@ -65,19 +65,25 @@ final class SubscriptionManager
         return $this->subscriptionStore->find($criteria);
     }
 
-    public function add(Subscription $subscription): void
+    public function add(Subscription ...$subscriptions): void
     {
-        $this->forAdd->attach($subscription);
+        foreach ($subscriptions as $sub) {
+            $this->forAdd->attach($sub);
+        }
     }
 
-    public function update(Subscription $subscription): void
+    public function update(Subscription ...$subscriptions): void
     {
-        $this->forUpdate->attach($subscription);
+        foreach ($subscriptions as $sub) {
+            $this->forUpdate->attach($sub);
+        }
     }
 
-    public function remove(Subscription $subscription): void
+    public function remove(Subscription ...$subscriptions): void
     {
-        $this->forRemove->attach($subscription);
+        foreach ($subscriptions as $sub) {
+            $this->forRemove->attach($sub);
+        }
     }
 
     public function flush(): void

@@ -241,16 +241,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             );
 
                             if ($limit !== null && $messageCounter >= $limit) {
-                                foreach ($subscriptions as $subscription) {
-                                    $error = $this->ensureCommitBatch($subscription, $index);
-
-                                    if (!$error) {
-                                        continue;
-                                    }
-
-                                    $errors[] = $error;
-                                }
-
                                 $this->logger?->info(
                                     sprintf(
                                         'Subscription Engine: Message limit (%d) reached, finish booting.',
@@ -416,16 +406,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             ));
 
                             if ($limit !== null && $messageCounter >= $limit) {
-                                foreach ($subscriptions as $subscription) {
-                                    $error = $this->ensureCommitBatch($subscription, $index);
-
-                                    if (!$error) {
-                                        continue;
-                                    }
-
-                                    $errors[] = $error;
-                                }
-
                                 $this->logger?->info(
                                     sprintf(
                                         'Subscription Engine: Message limit (%d) reached, finish processing.',
@@ -446,10 +426,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
                                 if ($error) {
                                     $errors[] = $error;
-                                }
-
-                                if (!$subscription->isActive()) {
-                                    continue; //  why?
                                 }
 
                                 $this->subscriptionManager->update($subscription);
