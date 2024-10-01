@@ -64,7 +64,13 @@ jobs:
       - run: git remote add doc git@github.com:patchlevel/event-sourcing-docs.git
       - run: git fetch doc gh-pages --verbose
 
-      - run: |
+      - run: |          
+          current_major=$(echo "$version_current" | cut -d '.' -f 1)
+          current_minor=$(echo "$version_current" | cut -d '.' -f 2)
+          
+          latest_major=$(echo "$version_latest" | cut -d '.' -f 1)
+          latest_minor=$(echo "$version_latest" | cut -d '.' -f 2)
+          
           if [ "${{ steps.current.outputs.result }}" = "${{ steps.latest.outputs.result }}" ]
           then
             # Here we deploy a new latest version
@@ -73,6 +79,13 @@ jobs:
           else
             # Here we deploy a version that's not the latest one
             mike deploy ${{ steps.current.outputs.result }} --config-file docs/mkdocs.yml --push --remote doc
+          
+            # If the current semver version is bigger than the latest one, we rename the title to dev
+            if [ "$current_major" -gt "$latest_major" ] || \
+            { [ "$current_major" -eq "$latest_major" ] && [ "$current_minor" -gt "$latest_minor" ]; }
+            then
+              mike retitle ${{ steps.current.outputs.result }} "${{ steps.current.outputs.result }} (dev)"
+            fi
           fi
 
       - run: |
