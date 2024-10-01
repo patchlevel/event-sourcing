@@ -69,6 +69,7 @@ jobs:
           then
             # Here we deploy a new latest version
             mike deploy latest ${{ steps.current.outputs.result }} --config-file docs/mkdocs.yml --update-aliases --alias-type=redirect --push --remote doc
+            mike retitle latest "${{ steps.current.outputs.result }} (latest)"
           else
             # Here we deploy a version that's not the latest one
             mike deploy ${{ steps.current.outputs.result }} --config-file docs/mkdocs.yml --push --remote doc

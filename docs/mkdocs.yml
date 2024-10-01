@@ -19,8 +19,6 @@ extra:
       link: https://patchlevel.de
   version:
     provider: mike
-    alias: true
-    alias_type: redirect
     canonical_version: latest
   analytics:
     provider: custom
