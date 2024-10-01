@@ -19,7 +19,6 @@ extra:
       link: https://patchlevel.de
   version:
     provider: mike
-    alias: true
   analytics:
     provider: custom
 
