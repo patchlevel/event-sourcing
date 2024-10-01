@@ -74,20 +74,14 @@ jobs:
           if [ "${{ steps.current.outputs.result }}" = "${{ steps.latest.outputs.result }}" ]
           then
             # Here we deploy a new latest version
-            mike deploy latest ${{ steps.current.outputs.result }} --config-file docs/mkdocs.yml --update-aliases --alias-type=redirect --push --remote doc
+            mike deploy latest --config-file docs/mkdocs.yml --update-aliases --alias-type=redirect --push --remote doc
             mike retitle latest "${{ steps.current.outputs.result }} (latest)" --config-file docs/mkdocs.yml
-          else
-            # Here we deploy a version that's not the latest one
+          elif [ "$current_major" -lt "$latest_major" ] || \
+            { [ "$current_major" -eq "$latest_major" ] && [ "$current_minor" -lt "$latest_minor" ]; }
+          then
+            # Here we deploy a version that's not the latest one and smaller as the latest version
             mike deploy ${{ steps.current.outputs.result }} --config-file docs/mkdocs.yml --push --remote doc
-          
-            # If the current semver version is bigger than the latest one, we rename the title to dev
-            if [ "$current_major" -gt "$latest_major" ] || \
-            { [ "$current_major" -eq "$latest_major" ] && [ "$current_minor" -gt "$latest_minor" ]; }
-            then
-              mike retitle ${{ steps.current.outputs.result }} "${{ steps.current.outputs.result }} (dev)" --config-file docs/mkdocs.yml
-            fi
           fi
-
       - run: |
           # Check if the "latest" alias exists
           HAS_LATEST=$(mike list --config-file docs/mkdocs.yml --rebase --remote doc | grep latest) || true
