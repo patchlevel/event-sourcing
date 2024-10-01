@@ -74,7 +74,7 @@ jobs:
           if [ "${{ steps.current.outputs.result }}" = "${{ steps.latest.outputs.result }}" ]
           then
             # Here we deploy a new latest version
-            mike deploy latest --config-file docs/mkdocs.yml --title="${{ steps.current.outputs.result }} (latest)" --update-aliases --alias-type=redirect --push --remote doc
+            mike deploy latest ${{ steps.current.outputs.result }} --config-file docs/mkdocs.yml --title="${{ steps.current.outputs.result }} (latest)" --update-aliases --alias-type=redirect --push --remote doc
           elif [ "$current_major" -lt "$latest_major" ] || \
             { [ "$current_major" -eq "$latest_major" ] && [ "$current_minor" -lt "$latest_minor" ]; }
           then
