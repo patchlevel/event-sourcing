@@ -68,7 +68,7 @@ jobs:
           if [ "${{ steps.current.outputs.result }}" = "${{ steps.latest.outputs.result }}" ]
           then
             # Here we deploy a new latest version
-            mike deploy ${{ steps.current.outputs.result }} latest --config-file docs/mkdocs.yml --update-aliases --push --remote doc
+            mike deploy latest ${{ steps.current.outputs.result }} --config-file docs/mkdocs.yml --update-aliases --push --remote doc
           else
             # Here we deploy a version that's not the latest one
             mike deploy ${{ steps.current.outputs.result }} --config-file docs/mkdocs.yml --push --remote doc
