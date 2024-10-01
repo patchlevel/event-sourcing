@@ -54,9 +54,6 @@ theme:
 
 plugins:
   - mike:
-      provider: mike
-      alias: true
-      alias_type: redirect
       canonical_version: latest
 
 markdown_extensions:
