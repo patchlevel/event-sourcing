@@ -20,6 +20,8 @@ extra:
   version:
     provider: mike
     alias: true
+    alias_type: redirect
+    canonical_version: latest
   analytics:
     provider: custom
 
