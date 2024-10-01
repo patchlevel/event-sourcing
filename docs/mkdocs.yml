@@ -19,6 +19,7 @@ extra:
       link: https://patchlevel.de
   version:
     provider: mike
+    canonical_version: latest
   analytics:
     provider: custom
 
