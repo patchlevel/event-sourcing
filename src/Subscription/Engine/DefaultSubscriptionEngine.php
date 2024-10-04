@@ -1018,8 +1018,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             return null;
         }
 
+        $subscriber = $this->batching[$subscription->id()];
+
+        unset($this->batching[$subscription->id()]);
+
         try {
-            $this->batching[$subscription->id()]->commitBatch();
+            $subscriber->commitBatch();
             $subscription->changePosition($index);
         } catch (Throwable $e) {
             $this->logger?->error(sprintf(

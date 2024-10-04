@@ -217,9 +217,6 @@
     <MissingParamType>
       <code><![CDATA[$message]]></code>
     </MissingParamType>
-    <ReservedWord>
-      <code><![CDATA[ProfileVisited&ProfileCreated $event]]></code>
-    </ReservedWord>
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaSubscriberTest.php">
     <DeprecatedClass>
@@ -332,6 +329,16 @@
     </InternalMethod>
   </file>
   <file src="tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[$subscriber->throwForBeginBatch]]></code>
+      <code><![CDATA[$subscriber->throwForBeginBatch]]></code>
+      <code><![CDATA[$subscriber->throwForCommitBatch]]></code>
+      <code><![CDATA[$subscriber->throwForCommitBatch]]></code>
+      <code><![CDATA[$subscriber->throwForMessage]]></code>
+      <code><![CDATA[$subscriber->throwForMessage]]></code>
+      <code><![CDATA[$subscriber->throwForMessage]]></code>
+      <code><![CDATA[$subscriber->throwForMessage]]></code>
+    </PossiblyNullArgument>
     <PossiblyUndefinedArrayOffset>
       <code><![CDATA[$update1]]></code>
     </PossiblyUndefinedArrayOffset>
