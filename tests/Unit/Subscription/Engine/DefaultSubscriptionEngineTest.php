@@ -704,7 +704,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->willReturn(new ArrayStream([
             1 => $message1,
-            3 => $message2
+            3 => $message2,
         ]))->shouldBeCalledOnce();
 
         $engine = new DefaultSubscriptionEngine(
@@ -974,7 +974,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->willReturn(new ArrayStream([
             $message1,
-            $message2
+            $message2,
         ]))->shouldBeCalledOnce();
 
         $engine = new DefaultSubscriptionEngine(
@@ -1654,7 +1654,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->willReturn(new ArrayStream([
             1 => $message1,
-            3 => $message2
+            3 => $message2,
         ]))->shouldBeCalledOnce();
 
         $engine = new DefaultSubscriptionEngine(
@@ -1916,7 +1916,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $streamableStore = $this->prophesize(Store::class);
         $streamableStore->load($this->criteria())->willReturn(new ArrayStream([
             $message1,
-            $message2
+            $message2,
         ]))->shouldBeCalledOnce();
 
         $engine = new DefaultSubscriptionEngine(
@@ -3058,7 +3058,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $subscriptionStore = $this->prophesize(SubscriptionStore::class);
         $subscriptionStore->find(
             Argument::that(
-                static fn(SubscriptionCriteria $criteria
+                static fn (SubscriptionCriteria $criteria,
                 ) => $criteria->ids === ['id1'] && $criteria->groups === ['group1'],
             ),
         )->willReturn([])->shouldBeCalled();
@@ -3097,7 +3097,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $subscriptionStore = $this->prophesize(LockableSubscriptionStore::class);
         $subscriptionStore->inLock(Argument::type(Closure::class))->will(
         /** @param array{Closure} $args */
-            static fn(array $args): mixed => $args[0](),
+            static fn (array $args): mixed => $args[0](),
         )->shouldBeCalled();
         $subscriptionStore->find(Argument::any())->willReturn([])->shouldBeCalled();
 
