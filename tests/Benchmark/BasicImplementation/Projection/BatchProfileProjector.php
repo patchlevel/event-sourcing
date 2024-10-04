@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\Batch;
 use Patchlevel\EventSourcing\Attribute\BeginBatch;
 use Patchlevel\EventSourcing\Attribute\CommitBatch;
 use Patchlevel\EventSourcing\Attribute\Projector;
@@ -18,8 +17,7 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChan
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
-#[Projector('profile')]
-#[Batch]
+#[Projector('profile', batching: true)]
 final class BatchProfileProjector
 {
     use SubscriberUtil;

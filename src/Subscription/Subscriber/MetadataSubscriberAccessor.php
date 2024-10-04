@@ -141,7 +141,7 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, BatchSubsc
 
     public function batch(): bool
     {
-        return $this->metadata->batch;
+        return $this->metadata->batching;
     }
 
     public function beginBatchMethod(): Closure|null

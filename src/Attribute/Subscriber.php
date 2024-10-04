@@ -16,6 +16,7 @@ class Subscriber
         public readonly string $id,
         public readonly RunMode $runMode,
         public readonly string $group = 'default',
+        public readonly bool $batching = false,
     ) {
     }
 }

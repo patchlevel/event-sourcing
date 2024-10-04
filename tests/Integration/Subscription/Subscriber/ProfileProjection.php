@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
-use Patchlevel\EventSourcing\Attribute\Batch;
 use Patchlevel\EventSourcing\Attribute\BeginBatch;
 use Patchlevel\EventSourcing\Attribute\CommitBatch;
 use Patchlevel\EventSourcing\Attribute\Projector;
@@ -17,8 +16,7 @@ use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
-#[Projector('profile_1')]
-#[Batch]
+#[Projector('profile_1', batching: true)]
 final class ProfileProjection
 {
     use SubscriberUtil;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
-use Patchlevel\EventSourcing\Attribute\Batch;
 use Patchlevel\EventSourcing\Attribute\BeginBatch;
 use Patchlevel\EventSourcing\Attribute\CommitBatch;
 use Patchlevel\EventSourcing\Attribute\RollbackBatch;
@@ -47,9 +46,6 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $createMethod = null;
         $dropMethod = null;
 
-        $attributes = $reflector->getAttributes(Batch::class);
-
-        $batch = $attributes !== [];
         $beginBatchMethod = null;
         $commitBatchMethod = null;
         $rollbackBatchMethod = null;
@@ -134,7 +130,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $subscribeMethods,
             $createMethod,
             $dropMethod,
-            $batch,
+            $subscriberInfo->batching,
             $beginBatchMethod,
             $commitBatchMethod,
             $rollbackBatchMethod,

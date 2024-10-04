@@ -20,7 +20,6 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepositor
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use WeakMap;
 
 use function count;
 use function in_array;
@@ -32,8 +31,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private bool $processing = false;
 
-    /** @var WeakMap<Subscription, true> */
-    private WeakMap $batching;
+    /** @var array<string, true> */
+    private array $batching = [];
 
     public function __construct(
         private readonly Store $messageStore,
@@ -43,7 +42,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         private readonly LoggerInterface|null $logger = null,
     ) {
         $this->subscriptionManager = new SubscriptionManager($subscriptionStore);
-        $this->batching = new WeakMap();
     }
 
     public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): Result
@@ -768,7 +766,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $subscribeMethods = $subscriber->subscribeMethods($message->event()::class);
 
         if ($subscribeMethods === []) {
-            if (!isset($this->batching[$subscription])) {
+            if (!isset($this->batching[$subscription->id()])) {
                 $subscription->changePosition($index);
             }
 
@@ -814,7 +812,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             );
         }
 
-        if (!isset($this->batching[$subscription])) {
+        if (!isset($this->batching[$subscription->id()])) {
             $subscription->changePosition($index);
         }
 
@@ -988,11 +986,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $subscription->error($throwable);
         $this->subscriptionManager->update($subscription);
 
-        if (!isset($this->batching[$subscription])) {
+        if (!isset($this->batching[$subscription->id()])) {
             return;
         }
 
-        unset($this->batching[$subscription]);
+        unset($this->batching[$subscription->id()]);
 
         $subscriber = $this->subscriber($subscription->id());
 
@@ -1020,11 +1018,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private function ensureCommitBatch(Subscription $subscription, int $index): Error|null
     {
-        if (!isset($this->batching[$subscription])) {
+        if (!isset($this->batching[$subscription->id()])) {
             return null;
         }
 
-        unset($this->batching[$subscription]);
+        unset($this->batching[$subscription->id()]);
 
         $subscriber = $this->subscriber($subscription->id());
 
@@ -1065,7 +1063,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private function checkAndBeginBatch(Subscription $subscription): Error|null
     {
-        if (isset($this->batching[$subscription])) {
+        if (isset($this->batching[$subscription->id()])) {
             return null;
         }
 
@@ -1075,7 +1073,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             return null;
         }
 
-        $this->batching[$subscription] = true;
+        $this->batching[$subscription->id()] = true;
         $beginMethod = $subscriber->beginBatchMethod();
 
         if (!$beginMethod) {
