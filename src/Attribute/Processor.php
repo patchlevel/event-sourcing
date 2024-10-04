@@ -14,8 +14,7 @@ final class Processor extends Subscriber
         string $id,
         string $group = 'processor',
         RunMode $runMode = RunMode::FromNow,
-        bool $batching = false,
     ) {
-        parent::__construct($id, $runMode, $group, $batching);
+        parent::__construct($id, $runMode, $group);
     }
 }

@@ -5,20 +5,18 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection;
 
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\BeginBatch;
-use Patchlevel\EventSourcing\Attribute\CommitBatch;
 use Patchlevel\EventSourcing\Attribute\Projector;
-use Patchlevel\EventSourcing\Attribute\RollbackBatch;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
-#[Projector('profile', batching: true)]
-final class BatchProfileProjector
+#[Projector('profile')]
+final class BatchProfileProjector implements BatchableSubscriber
 {
     use SubscriberUtil;
 
@@ -65,13 +63,11 @@ final class BatchProfileProjector
         return 'projection_' . $this->subscriberId();
     }
 
-    #[BeginBatch]
     public function beginBatch(): void
     {
         $this->nameChanged = [];
     }
 
-    #[CommitBatch]
     public function commitBatch(): void
     {
         try {
@@ -89,9 +85,13 @@ final class BatchProfileProjector
         }
     }
 
-    #[RollbackBatch]
     public function rollbackBatch(): void
     {
         $this->nameChanged = [];
+    }
+
+    public function forceCommit(): bool
+    {
+        return false;
     }
 }

@@ -102,11 +102,6 @@
       <code><![CDATA[$data['playhead'] === null ? null : (int)$data['playhead']]]></code>
     </ArgumentTypeCoercion>
   </file>
-  <file src="src/Subscription/Engine/DefaultSubscriptionEngine.php">
-    <PropertyTypeCoercion>
-      <code><![CDATA[new WeakMap()]]></code>
-    </PropertyTypeCoercion>
-  </file>
   <file src="src/Subscription/Store/DoctrineSubscriptionStore.php">
     <MixedArgument>
       <code><![CDATA[$context]]></code>
@@ -124,9 +119,6 @@
       <code><![CDATA[$arguments[]]]></code>
     </MixedAssignment>
     <MixedMethodCall>
-      <code><![CDATA[$method]]></code>
-      <code><![CDATA[$method]]></code>
-      <code><![CDATA[$method]]></code>
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$methodName]]></code>

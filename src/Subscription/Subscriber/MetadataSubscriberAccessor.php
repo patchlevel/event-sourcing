@@ -16,7 +16,7 @@ use function array_key_exists;
 use function array_map;
 use function array_merge;
 
-final class MetadataSubscriberAccessor implements SubscriberAccessor, BatchSubscriberAccessor
+final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscriberAccessor
 {
     /** @var array<class-string, list<Closure(Message):void>> */
     private array $subscribeCache = [];
@@ -139,41 +139,8 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, BatchSubsc
         return $resolvers;
     }
 
-    public function batch(): bool
+    public function realSubscriber(): object
     {
-        return $this->metadata->batching;
-    }
-
-    public function beginBatchMethod(): Closure|null
-    {
-        $method = $this->metadata->beginBatchMethod;
-
-        if ($method === null) {
-            return null;
-        }
-
-        return $this->subscriber->$method(...);
-    }
-
-    public function commitBatchMethod(): Closure|null
-    {
-        $method = $this->metadata->commitBatchMethod;
-
-        if ($method === null) {
-            return null;
-        }
-
-        return $this->subscriber->$method(...);
-    }
-
-    public function rollbackBatchMethod(): Closure|null
-    {
-        $method = $this->metadata->rollbackBatchMethod;
-
-        if ($method === null) {
-            return null;
-        }
-
-        return $this->subscriber->$method(...);
+        return $this->subscriber;
     }
 }

@@ -17,10 +17,6 @@ final class SubscriberMetadata
         public readonly array $subscribeMethods = [],
         public readonly string|null $setupMethod = null,
         public readonly string|null $teardownMethod = null,
-        public readonly bool $batching = false,
-        public readonly string|null $beginBatchMethod = null,
-        public readonly string|null $commitBatchMethod = null,
-        public readonly string|null $rollbackBatchMethod = null,
     ) {
     }
 }

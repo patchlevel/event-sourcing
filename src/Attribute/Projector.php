@@ -14,8 +14,7 @@ final class Projector extends Subscriber
         string $id,
         string $group = 'projector',
         RunMode $runMode = RunMode::FromBeginning,
-        bool $batching = false,
     ) {
-        parent::__construct($id, $runMode, $group, $batching);
+        parent::__construct($id, $runMode, $group);
     }
 }
