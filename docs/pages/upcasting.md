@@ -65,6 +65,10 @@ final class EventNameRenameUpcaster implements Upcaster
     }
 }
 ```
+!!! tip
+
+    Events can also have [aliases](./events.md#alias). This is usually sufficient.
+    
 ## Configure
 
 After we have defined the upcasting rules, we also have to pass the whole thing to the serializer.
