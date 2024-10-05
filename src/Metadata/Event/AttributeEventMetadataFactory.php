@@ -36,6 +36,7 @@ final class AttributeEventMetadataFactory implements EventMetadataFactory
         $this->eventMetadata[$event] = new EventMetadata(
             $eventAttribute->name,
             $this->splitStream($reflectionClass),
+            $eventAttribute->aliases,
         );
 
         return $this->eventMetadata[$event];

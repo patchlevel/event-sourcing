@@ -42,6 +42,31 @@ final class ProfileCreated
     * `profile.name_changed`
     * `hotel.guest_checked_out`
     
+## Alias
+
+You also have the option to set aliases for the events.
+This can be useful when you want to rename events but still need to process the old ones.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Event;
+
+#[Event(name: 'profile.registered', aliases: ['profile.created'])]
+final class ProfileRegistered
+{
+}
+```
+When saving, the name will always be used. However, when loading, aliases will also be taken into account.
+
+!!! note
+
+    In the database, the name of the event is always stored,
+    allowing the class to be renamed without encountering any issues.
+    
+!!! tip
+
+    If you want to make significant changes to an event,
+    you can take a look at the [Upcaster](upcasting.md).
+    
 ## Serializer
 
 So that the events can be saved in the database, they must be serialized and deserialized.

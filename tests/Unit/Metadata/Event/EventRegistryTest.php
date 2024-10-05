@@ -33,6 +33,25 @@ final class EventRegistryTest extends TestCase
         self::assertEquals([ProfileCreated::class => 'profile.created'], $registry->eventNames());
     }
 
+    public function testMappingWithAliases(): void
+    {
+        $registry = new EventRegistry([
+            'profile.created' => ProfileCreated::class,
+            'profile.created_alias' => ProfileCreated::class,
+        ]);
+
+        self::assertTrue($registry->hasEventClass(ProfileCreated::class));
+        self::assertTrue($registry->hasEventName('profile.created'));
+        self::assertEquals('profile.created', $registry->eventName(ProfileCreated::class));
+        self::assertEquals(ProfileCreated::class, $registry->eventClass('profile.created'));
+        self::assertEquals(ProfileCreated::class, $registry->eventClass('profile.created_alias'));
+        self::assertEquals([
+            'profile.created' => ProfileCreated::class,
+            'profile.created_alias' => ProfileCreated::class,
+        ], $registry->eventClasses());
+        self::assertEquals([ProfileCreated::class => 'profile.created'], $registry->eventNames());
+    }
+
     public function testEventClassNotRegistered(): void
     {
         $this->expectException(EventClassNotRegistered::class);

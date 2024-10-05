@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Metadata\Event;
 
 use function array_flip;
 use function array_key_exists;
+use function array_reverse;
 
 final class EventRegistry
 {
@@ -19,7 +20,7 @@ final class EventRegistry
     public function __construct(array $eventNameToClassMap)
     {
         $this->nameToClassMap = $eventNameToClassMap;
-        $this->classToNameMap = array_flip($eventNameToClassMap);
+        $this->classToNameMap = array_flip(array_reverse($eventNameToClassMap));
     }
 
     /** @param class-string $eventClass */

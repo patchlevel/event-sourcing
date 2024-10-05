@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events;
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
 
-#[Event('profile.created')]
+#[Event('profile.created', aliases: ['profile_was_created'])]
 final class ProfileCreated
 {
     public function __construct(

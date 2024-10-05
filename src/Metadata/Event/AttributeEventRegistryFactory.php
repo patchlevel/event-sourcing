@@ -28,13 +28,21 @@ final class AttributeEventRegistryFactory implements EventRegistryFactory
                 continue;
             }
 
-            $eventName = $attributes[0]->newInstance()->name;
+            $attribute = $attributes[0]->newInstance();
 
-            if (array_key_exists($eventName, $result)) {
-                throw new EventAlreadyInRegistry($eventName);
+            if (array_key_exists($attribute->name, $result)) {
+                throw new EventAlreadyInRegistry($attribute->name);
             }
 
-            $result[$eventName] = $class;
+            $result[$attribute->name] = $class;
+
+            foreach ($attribute->aliases as $alias) {
+                if (array_key_exists($alias, $result)) {
+                    throw new EventAlreadyInRegistry($alias);
+                }
+
+                $result[$alias] = $class;
+            }
         }
 
         return new EventRegistry($result);
