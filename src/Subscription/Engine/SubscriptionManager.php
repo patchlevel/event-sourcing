@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use SplObjectStorage;
 
+/** @internal */
 final class SubscriptionManager
 {
     /** @var SplObjectStorage<Subscription, null> */
