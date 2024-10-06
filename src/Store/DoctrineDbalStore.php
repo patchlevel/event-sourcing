@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 use Closure;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
@@ -26,6 +27,7 @@ use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use PDO;
@@ -155,6 +157,10 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                 case FromIndexCriterion::class:
                     $builder->andWhere('id > :index');
                     $builder->setParameter('index', $criterion->fromIndex, Types::INTEGER);
+                    break;
+                case EventsCriterion::class:
+                    $builder->andWhere('event IN (:events)');
+                    $builder->setParameter('events', $criterion->events, ArrayParameterType::STRING);
                     break;
                 default:
                     throw new UnsupportedCriterion($criterion::class);

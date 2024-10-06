@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -96,6 +97,7 @@ final class SubscriptionTest extends TestCase
             $store,
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]),
+            eventMetadataFactory: new AttributeEventMetadataFactory(),
         );
 
         self::assertEquals(
