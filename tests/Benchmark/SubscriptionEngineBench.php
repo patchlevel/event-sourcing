@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -70,16 +71,21 @@ final class SubscriptionEngineBench
 
         $this->repository->save($profile);
 
+        $subscriberAccessorRepository = new MetadataSubscriberAccessorRepository(
+            [
+                new ProfileProjector($connection),
+                new SendEmailProcessor(),
+            ],
+        );
+
         $this->subscriptionEngine = new DefaultSubscriptionEngine(
-            $this->store,
-            $subscriptionStore,
-            new MetadataSubscriberAccessorRepository(
-                [
-                    new ProfileProjector($connection),
-                    new SendEmailProcessor(),
-                ],
+            new EventFilteredMessageLoader(
+                $this->store,
+                new AttributeEventMetadataFactory(),
+                $subscriberAccessorRepository,
             ),
-            eventMetadataFactory: new AttributeEventMetadataFactory(),
+            $subscriptionStore,
+            $subscriberAccessorRepository,
         );
     }
 
