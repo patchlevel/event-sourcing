@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
@@ -63,6 +64,7 @@ final class SubscriptionEngineBench
         $profile = Profile::create($this->id, 'Peter');
 
         for ($i = 1; $i < 10_000; $i++) {
+            $profile->changeEmail('peter' . $i . '@example.com');
             $profile->changeName('Peter ' . $i);
         }
 
@@ -77,6 +79,7 @@ final class SubscriptionEngineBench
                     new SendEmailProcessor(),
                 ],
             ),
+            eventMetadataFactory: new AttributeEventMetadataFactory(),
         );
     }
 

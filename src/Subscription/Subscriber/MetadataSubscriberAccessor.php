@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
 
 use function array_key_exists;
+use function array_keys;
 use function array_map;
 use function array_merge;
 
@@ -64,6 +65,12 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
         }
 
         return $this->subscriber->$method(...);
+    }
+
+    /** @return list<class-string|'*'> */
+    public function events(): array
+    {
+        return array_keys($this->metadata->subscribeMethods);
     }
 
     /**

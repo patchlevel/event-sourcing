@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
@@ -15,6 +17,7 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\RealSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
@@ -22,6 +25,7 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+use function array_keys;
 use function count;
 use function in_array;
 use function sprintf;
@@ -41,6 +45,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         private readonly SubscriberAccessorRepository $subscriberRepository,
         private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
         private readonly LoggerInterface|null $logger = null,
+        private readonly EventMetadataFactory|null $eventMetadataFactory = null,
     ) {
         $this->subscriptionManager = new SubscriptionManager($subscriptionStore);
     }
@@ -193,9 +198,15 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $messageCounter = 0;
 
                     try {
-                        $stream = $this->messageStore->load(
-                            new Criteria(new FromIndexCriterion($startIndex)),
-                        );
+                        $criteria = new Criteria(new FromIndexCriterion($startIndex));
+
+                        $events = $this->events($subscriptions);
+
+                        if ($events) {
+                            $criteria = $criteria->add(new EventsCriterion($events));
+                        }
+
+                        $stream = $this->messageStore->load($criteria);
 
                         foreach ($stream as $message) {
                             $index = $stream->index();
@@ -363,6 +374,13 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
                     try {
                         $criteria = new Criteria(new FromIndexCriterion($startIndex));
+
+                        $events = $this->events($subscriptions);
+
+                        if ($events) {
+                            $criteria = $criteria->add(new EventsCriterion($events));
+                        }
+
                         $stream = $this->messageStore->load($criteria);
 
                         foreach ($stream as $message) {
@@ -1112,5 +1130,45 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         return $this->batching[$subscription->id()]->forceCommit();
+    }
+
+    /**
+     * @param list<Subscription> $subscriptions
+     *
+     * @return list<string>
+     */
+    private function events(array $subscriptions): array
+    {
+        if ($this->eventMetadataFactory === null) {
+            return [];
+        }
+
+        $eventNames = [];
+
+        foreach ($subscriptions as $subscription) {
+            $subscriber = $this->subscriber($subscription->id());
+
+            if (!$subscriber instanceof MetadataSubscriberAccessor) {
+                return [];
+            }
+
+            $events = $subscriber->events();
+
+            foreach ($events as $event) {
+                if ($event === '*') {
+                    return [];
+                }
+
+                $metadata = $this->eventMetadataFactory->metadata($event);
+
+                $eventNames[$metadata->name] = true;
+
+                foreach ($metadata->aliases as $alias) {
+                    $eventNames[$alias] = true;
+                }
+            }
+        }
+
+        return array_keys($eventNames);
     }
 }
