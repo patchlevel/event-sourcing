@@ -816,6 +816,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         if ($this->shouldCommitBatch($subscription)) {
+            $this->logger?->debug(sprintf(
+                'Subscription Engine: Subscriber "%s" forces to commit batch.',
+                $subscription->id(),
+            ));
+
             $this->ensureCommitBatch($subscription, $index);
         }
 
@@ -1001,6 +1006,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         unset($this->batching[$subscription->id()]);
 
+        $this->logger?->debug(sprintf(
+            'Subscription Engine: Subscriber "%s" rollback the batch.',
+            $subscription->id(),
+        ));
+
         try {
             $subscriber->rollbackBatch();
         } catch (Throwable $e) {
@@ -1021,6 +1031,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $subscriber = $this->batching[$subscription->id()];
 
         unset($this->batching[$subscription->id()]);
+
+        $this->logger?->debug(sprintf(
+            'Subscription Engine: Subscriber "%s" commits the batch.',
+            $subscription->id(),
+        ));
 
         try {
             $subscriber->commitBatch();
@@ -1063,6 +1078,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         $this->batching[$subscription->id()] = $realSubscriber;
+
+        $this->logger?->debug(sprintf(
+            'Subscription Engine: Subscriber "%s" starts a new batch.',
+            $subscription->id(),
+        ));
 
         try {
             $realSubscriber->beginBatch();
