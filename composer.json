@@ -36,7 +36,7 @@
     "symfony/type-info": "^7.2"
   },
   "require-dev": {
-    "ext-pdo_sqlite": "~8.2.0 || ~8.3.0",
+    "ext-pdo_sqlite": "~8.2.0 || ~8.3.0 || ~8.4.0",
     "cspray/phinal": "dev-main#9826c3407056a4618f8bba303800403e47ccb3a7",
     "doctrine/orm": "^2.18.0|^3.0.0",
     "infection/infection": "^0.29.10",
