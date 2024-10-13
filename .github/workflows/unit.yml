@@ -37,7 +37,7 @@ jobs:
                     - dependencies: "highest"
                       php-version: "8.4"
                       operating-system: "ubuntu-latest"
-                      composer-flags: "--ignore-platform-req=php+"
+                      composer-options: "--ignore-platform-req=php+"
                     - dependencies: "highest"
                       php-version: "8.4"
                       operating-system: "windows-latest"
