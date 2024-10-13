@@ -34,7 +34,7 @@
     "symfony/finder": "^5.4.27|^6.4.0|^7.0.0"
   },
   "require-dev": {
-    "ext-pdo_sqlite": "~8.1.0 || ~8.2.0 || ~8.3.0",
+    "ext-pdo_sqlite": "~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0",
     "cspray/phinal": "^2.0.0",
     "doctrine/orm": "^2.18.0|^3.0.0",
     "infection/infection": "^0.27.10",
