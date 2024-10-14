@@ -34,6 +34,14 @@ jobs:
                     - dependencies: "locked"
                       php-version: "8.3"
                       operating-system: "windows-latest"
+                    - dependencies: "highest"
+                      php-version: "8.4"
+                      operating-system: "ubuntu-latest"
+                      composer-options: "--ignore-platform-req=php+"
+                    - dependencies: "highest"
+                      php-version: "8.4"
+                      operating-system: "windows-latest"
+                      composer-options: "--ignore-platform-req=php+"
 
         steps:
             - name: "Checkout"
@@ -50,6 +58,7 @@ jobs:
             - uses: ramsey/composer-install@3.0.0
               with:
                 dependency-versions: ${{ matrix.dependencies }}
+                composer-options: ${{ matrix.composer-options }}
 
             - name: "Tests"
               run: "vendor/bin/phpunit --testsuite=unit --coverage-clover=clover.xml --coverage-text"
