@@ -15,20 +15,29 @@ use Patchlevel\Hydrator\MetadataHydrator;
 use Throwable;
 
 use function array_key_exists;
+use function is_array;
 use function sprintf;
 
 final class DefaultSnapshotStore implements SnapshotStore
 {
+    private AdapterRepository $adapterRepository;
+
     private Hydrator $hydrator;
 
     private AggregateRootMetadataFactory $metadataFactory;
 
-    /** @param array<string, SnapshotAdapter> $snapshotAdapters */
+    /** @param array<string, SnapshotAdapter>|AdapterRepository $adapterRepository */
     public function __construct(
-        private array $snapshotAdapters,
+        array|AdapterRepository $adapterRepository,
         Hydrator|null $hydrator = null,
         AggregateRootMetadataFactory|null $metadataFactory = null,
     ) {
+        if (is_array($adapterRepository)) {
+            $this->adapterRepository = new ArrayAdapterRepository($adapterRepository);
+        } else {
+            $this->adapterRepository = $adapterRepository;
+        }
+
         $this->hydrator = $hydrator ?? new MetadataHydrator();
         $this->metadataFactory = $metadataFactory ?? new AggregateRootMetadataAwareMetadataFactory();
     }
@@ -91,11 +100,7 @@ final class DefaultSnapshotStore implements SnapshotStore
             throw new SnapshotNotConfigured($aggregateClass);
         }
 
-        if (!array_key_exists($adapterName, $this->snapshotAdapters)) {
-            throw new AdapterNotFound($adapterName);
-        }
-
-        return $this->snapshotAdapters[$adapterName];
+        return $this->adapterRepository->get($adapterName);
     }
 
     /** @param class-string<AggregateRoot> $aggregateClass */
@@ -116,7 +121,7 @@ final class DefaultSnapshotStore implements SnapshotStore
     public static function createDefault(array $snapshotAdapters, PayloadCryptographer|null $cryptographer = null): self
     {
         return new self(
-            $snapshotAdapters,
+            new ArrayAdapterRepository($snapshotAdapters),
             new MetadataHydrator(cryptographer: $cryptographer),
         );
     }
