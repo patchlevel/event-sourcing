@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Message\Serializer;
 
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
+use Patchlevel\EventSourcing\Metadata\Message\HeaderNameNotRegistered;
 use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
@@ -19,6 +20,7 @@ final class DefaultHeadersSerializer implements HeadersSerializer
         private readonly MessageHeaderRegistry $messageHeaderRegistry,
         private readonly Hydrator $hydrator,
         private readonly Encoder $encoder,
+        private bool $throwOnUnknownHeaders = true,
     ) {
     }
 
@@ -51,10 +53,39 @@ final class DefaultHeadersSerializer implements HeadersSerializer
                 throw new InvalidArgument('header payload must be an array');
             }
 
-            $headers[] = $this->hydrator->hydrate(
-                $this->messageHeaderRegistry->headerClass($headerName),
-                $headerPayload,
-            );
+            try {
+                $headerClass = $this->messageHeaderRegistry->headerClass($headerName);
+
+                $headers[] = $this->hydrator->hydrate(
+                    $headerClass,
+                    $headerPayload,
+                );
+            } catch (HeaderNameNotRegistered | UnsupportedClass $exception) {
+                if ($this->throwOnUnknownHeaders) {
+                    throw $exception;
+                }
+
+                $headers[] = new class ($headerName, $headerPayload) implements UnknownHeader
+                {
+                    /** @param array<array-key, mixed> $payload */
+                    public function __construct(
+                        private readonly string $name,
+                        private readonly array $payload,
+                    ) {
+                    }
+
+                    public function name(): string
+                    {
+                        return $this->name;
+                    }
+
+                    /** @return array<array-key, mixed> */
+                    public function payload(): array
+                    {
+                        return $this->payload;
+                    }
+                };
+            }
         }
 
         return $headers;
