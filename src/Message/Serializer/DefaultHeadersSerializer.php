@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Message\Serializer;
 
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
-use Patchlevel\EventSourcing\Metadata\Message\HeaderNameNotRegistered;
 use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\Hydrator\Hydrator;
 use Patchlevel\Hydrator\MetadataHydrator;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 use function is_array;
+use function sprintf;
 
 final class DefaultHeadersSerializer implements HeadersSerializer
 {
@@ -20,7 +22,8 @@ final class DefaultHeadersSerializer implements HeadersSerializer
         private readonly MessageHeaderRegistry $messageHeaderRegistry,
         private readonly Hydrator $hydrator,
         private readonly Encoder $encoder,
-        private bool $throwOnUnknownHeaders = true,
+        private readonly bool $throwOnUnknownHeaders = true,
+        private readonly LoggerInterface|null $logger = null,
     ) {
     }
 
@@ -60,13 +63,20 @@ final class DefaultHeadersSerializer implements HeadersSerializer
                     $headerClass,
                     $headerPayload,
                 );
-            } catch (HeaderNameNotRegistered | UnsupportedClass $exception) {
+            } catch (Throwable $exception) {
                 if ($this->throwOnUnknownHeaders) {
                     throw $exception;
                 }
 
-                $headers[] = new class ($headerName, $headerPayload) implements UnknownHeader
-                {
+                $this->logger?->error(
+                    sprintf(
+                        'header %s could not be deserialized: %s',
+                        $headerName,
+                        $exception->getMessage(),
+                    ),
+                );
+
+                $headers[] = new class ($headerName, $headerPayload) implements UnknownHeader {
                     /** @param array<array-key, mixed> $payload */
                     public function __construct(
                         private readonly string $name,
