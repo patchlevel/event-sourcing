@@ -40,8 +40,8 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $methods = $reflector->getMethods();
 
         $subscribeMethods = [];
-        $createMethod = null;
-        $dropMethod = null;
+        $setupMethod = null;
+        $teardownMethod = null;
 
         foreach ($methods as $method) {
             $attributes = $method->getAttributes(Subscribe::class);
@@ -54,30 +54,30 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             }
 
             if ($method->getAttributes(Setup::class)) {
-                if ($createMethod !== null) {
+                if ($setupMethod !== null) {
                     throw new DuplicateSetupMethod(
                         $subscriber,
-                        $createMethod,
+                        $setupMethod,
                         $method->getName(),
                     );
                 }
 
-                $createMethod = $method->getName();
+                $setupMethod = $method->getName();
             }
 
             if (!$method->getAttributes(Teardown::class)) {
                 continue;
             }
 
-            if ($dropMethod !== null) {
+            if ($teardownMethod !== null) {
                 throw new DuplicateTeardownMethod(
                     $subscriber,
-                    $dropMethod,
+                    $teardownMethod,
                     $method->getName(),
                 );
             }
 
-            $dropMethod = $method->getName();
+            $teardownMethod = $method->getName();
         }
 
         $metadata = new SubscriberMetadata(
@@ -85,8 +85,8 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $subscriberInfo->group,
             $subscriberInfo->runMode,
             $subscribeMethods,
-            $createMethod,
-            $dropMethod,
+            $setupMethod,
+            $teardownMethod,
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;

@@ -29,6 +29,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorR
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\BatchingSubscriber;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\Tests\Unit\Subscription\DummySubscriptionStore;
@@ -459,13 +460,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
-                Status::Booting,
-                1,
-            ),
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
                 Status::Active,
                 1,
             ),
@@ -664,20 +658,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 $subscriptionId1,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
-                Status::Booting,
-                1,
-            ),
-            new Subscription(
-                $subscriptionId2,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Booting,
-                1,
-            ),
-            new Subscription(
-                $subscriptionId1,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
                 Status::Active,
                 1,
             ),
@@ -722,7 +702,10 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->prophesize(Store::class);
-        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([1 => $message1, 3 => $message2]))->shouldBeCalledOnce();
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([
+            1 => $message1,
+            3 => $message2,
+        ]))->shouldBeCalledOnce();
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore->reveal(),
@@ -738,13 +721,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Booting,
-                3,
-            ),
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -799,13 +775,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::Once,
-                Status::Booting,
-                1,
-            ),
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -933,6 +902,359 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 1,
             ),
         ], $subscriptionStore->updatedSubscriptions);
+    }
+
+    public function testBootBatchingSuccess(): void
+    {
+        $subscriber = new BatchingSubscriber();
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+                1,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+
+        self::assertSame([$message], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(1, $subscriber->commitBatchCalled);
+        self::assertSame(0, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testBootBatchingSuccessForceCommit(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            forceCommitAfterMessages: 1,
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+        $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([
+            $message1,
+            $message2,
+        ]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(2, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+                2,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+
+        self::assertSame([$message1, $message2], $subscriber->receivedMessages);
+        self::assertSame(2, $subscriber->beginBatchCalled);
+        self::assertSame(2, $subscriber->commitBatchCalled);
+        self::assertSame(0, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testBootBatchingWithHandleError(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            throwForMessage: new RuntimeException('ERROR'),
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriber::ID, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriber::ID,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::Booting,
+                        ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
+
+        self::assertSame([$message], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(0, $subscriber->commitBatchCalled);
+        self::assertSame(1, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testBootBatchingWithBeginBatchError(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            throwForBeginBatch: new RuntimeException('ERROR'),
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriber::ID, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriber::ID,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::Booting,
+                        ThrowableToErrorContextTransformer::transform($subscriber->throwForBeginBatch),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
+
+        self::assertSame([], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(0, $subscriber->commitBatchCalled);
+        self::assertSame(1, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testBootBatchingWithCommitBatchError(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            throwForCommitBatch: new RuntimeException('ERROR'),
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriber::ID, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriber::ID,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::Booting,
+                        ThrowableToErrorContextTransformer::transform($subscriber->throwForCommitBatch),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
+
+        self::assertSame([$message], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(1, $subscriber->commitBatchCalled);
+        self::assertSame(0, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testBootBatchingWithRollbackBatchError(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            throwForMessage: new RuntimeException('ERROR'),
+            throwForRollbackBatch: new RuntimeException('ERROR'),
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriber::ID, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriber::ID,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::Booting,
+                        ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
+
+        self::assertSame([$message], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(0, $subscriber->commitBatchCalled);
+        self::assertSame(1, $subscriber->rollbackBatchCalled);
     }
 
     public function testRunDiscoverNewSubscribers(): void
@@ -1330,7 +1652,10 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->prophesize(Store::class);
-        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([1 => $message1, 3 => $message2]))->shouldBeCalledOnce();
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([
+            1 => $message1,
+            3 => $message2,
+        ]))->shouldBeCalledOnce();
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore->reveal(),
@@ -1400,13 +1725,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals([], $result->errors);
 
         self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::Once,
-                Status::Active,
-                1,
-            ),
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -1526,6 +1844,359 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals([], $result->errors);
 
         self::assertEquals([], $subscriptionStore->updatedSubscriptions);
+    }
+
+    public function testRunningBatchingSuccess(): void
+    {
+        $subscriber = new BatchingSubscriber();
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+                1,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+
+        self::assertSame([$message], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(1, $subscriber->commitBatchCalled);
+        self::assertSame(0, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testRunningBatchingSuccessForceCommit(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            forceCommitAfterMessages: 1,
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+        $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([
+            $message1,
+            $message2,
+        ]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->run();
+
+        self::assertEquals(2, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+
+        self::assertEquals([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+                2,
+            ),
+        ], $subscriptionStore->updatedSubscriptions);
+
+        self::assertSame([$message1, $message2], $subscriber->receivedMessages);
+        self::assertSame(2, $subscriber->beginBatchCalled);
+        self::assertSame(2, $subscriber->commitBatchCalled);
+        self::assertSame(0, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testRunningBatchingWithHandleError(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            throwForMessage: new RuntimeException('ERROR'),
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriber::ID, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriber::ID,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::Active,
+                        ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
+
+        self::assertSame([$message], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(0, $subscriber->commitBatchCalled);
+        self::assertSame(1, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testRunningBatchingWithBeginBatchError(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            throwForBeginBatch: new RuntimeException('ERROR'),
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriber::ID, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriber::ID,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::Active,
+                        ThrowableToErrorContextTransformer::transform($subscriber->throwForBeginBatch),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
+
+        self::assertSame([], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(0, $subscriber->commitBatchCalled);
+        self::assertSame(1, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testRunningBatchingWithCommitBatchError(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            throwForCommitBatch: new RuntimeException('ERROR'),
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriber::ID, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriber::ID,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::Active,
+                        ThrowableToErrorContextTransformer::transform($subscriber->throwForCommitBatch),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
+
+        self::assertSame([$message], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(1, $subscriber->commitBatchCalled);
+        self::assertSame(0, $subscriber->rollbackBatchCalled);
+    }
+
+    public function testRunningBatchingWithRollbackBatchError(): void
+    {
+        $subscriber = new BatchingSubscriber(
+            throwForMessage: new RuntimeException('ERROR'),
+            throwForRollbackBatch: new RuntimeException('ERROR'),
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriber::ID, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    $subscriber::ID,
+                    Subscription::DEFAULT_GROUP,
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    0,
+                    new SubscriptionError(
+                        'ERROR',
+                        Status::Active,
+                        ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
+                    ),
+                ),
+            ],
+            $subscriptionStore->updatedSubscriptions,
+        );
+
+        self::assertSame([$message], $subscriber->receivedMessages);
+        self::assertSame(1, $subscriber->beginBatchCalled);
+        self::assertSame(0, $subscriber->commitBatchCalled);
+        self::assertSame(1, $subscriber->rollbackBatchCalled);
     }
 
     public function testTeardownDiscoverNewSubscribers(): void
@@ -2387,7 +3058,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $subscriptionStore = $this->prophesize(SubscriptionStore::class);
         $subscriptionStore->find(
             Argument::that(
-                static fn (SubscriptionCriteria $criteria) => $criteria->ids === ['id1'] && $criteria->groups === ['group1'],
+                static fn (SubscriptionCriteria $criteria,
+                ) => $criteria->ids === ['id1'] && $criteria->groups === ['group1'],
             ),
         )->willReturn([])->shouldBeCalled();
 

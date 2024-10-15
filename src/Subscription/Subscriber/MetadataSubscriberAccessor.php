@@ -16,7 +16,7 @@ use function array_key_exists;
 use function array_map;
 use function array_merge;
 
-final class MetadataSubscriberAccessor implements SubscriberAccessor
+final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscriberAccessor
 {
     /** @var array<class-string, list<Closure(Message):void>> */
     private array $subscribeCache = [];
@@ -137,5 +137,10 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor
         }
 
         return $resolvers;
+    }
+
+    public function realSubscriber(): object
+    {
+        return $this->subscriber;
     }
 }

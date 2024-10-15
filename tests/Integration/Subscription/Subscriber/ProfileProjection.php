@@ -10,11 +10,12 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
 #[Projector('profile_1')]
-final class ProfileProjection
+final class ProfileProjection implements BatchableSubscriber
 {
     use SubscriberUtil;
 
@@ -55,5 +56,25 @@ final class ProfileProjection
     private function tableName(): string
     {
         return 'projection_' . $this->subscriberId();
+    }
+
+    public function beginBatch(): void
+    {
+        $this->connection->beginTransaction();
+    }
+
+    public function commitBatch(): void
+    {
+        $this->connection->commit();
+    }
+
+    public function rollbackBatch(): void
+    {
+        $this->connection->rollBack();
+    }
+
+    public function forceCommit(): bool
+    {
+        return false;
     }
 }

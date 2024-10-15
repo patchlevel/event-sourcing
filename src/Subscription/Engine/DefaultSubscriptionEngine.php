@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
-use Closure;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
@@ -13,9 +12,10 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
-use Patchlevel\EventSourcing\Subscription\Store\LockableSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+use Patchlevel\EventSourcing\Subscription\Subscriber\RealSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -28,15 +28,21 @@ use function sprintf;
 
 final class DefaultSubscriptionEngine implements SubscriptionEngine
 {
+    private SubscriptionManager $subscriptionManager;
+
     private bool $processing = false;
+
+    /** @var array<string, BatchableSubscriber> */
+    private array $batching = [];
 
     public function __construct(
         private readonly Store $messageStore,
-        private readonly SubscriptionStore $subscriptionStore,
+        SubscriptionStore $subscriptionStore,
         private readonly SubscriberAccessorRepository $subscriberRepository,
         private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
         private readonly LoggerInterface|null $logger = null,
     ) {
+        $this->subscriptionManager = new SubscriptionManager($subscriptionStore);
     }
 
     public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): Result
@@ -50,7 +56,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->discoverNewSubscriptions();
         $this->retrySubscriptions($criteria);
 
-        return $this->findForUpdate(
+        return $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -85,7 +91,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             $skipBooting ? $subscription->active() : $subscription->booting();
                         }
 
-                        $this->subscriptionStore->update($subscription);
+                        $this->subscriptionManager->update($subscription);
 
                         $this->logger?->debug(sprintf(
                             'Subscription Engine: Subscriber "%s" for "%s" has no setup method, set to %s.',
@@ -107,7 +113,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             $skipBooting ? $subscription->active() : $subscription->booting();
                         }
 
-                        $this->subscriptionStore->update($subscription);
+                        $this->subscriptionManager->update($subscription);
 
                         $this->logger?->debug(sprintf(
                             'Subscription Engine: For Subscriber "%s" for "%s" the setup method has been executed, set to %s.',
@@ -147,6 +153,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         $this->processing = true;
+        $this->batching = [];
 
         try {
             $criteria ??= new SubscriptionEngineCriteria();
@@ -158,7 +165,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             $this->discoverNewSubscriptions();
             $this->retrySubscriptions($criteria);
 
-            return $this->findForUpdate(
+            return $this->subscriptionManager->findForUpdate(
                 new SubscriptionCriteria(
                     ids: $criteria->ids,
                     groups: $criteria->groups,
@@ -171,9 +178,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         return new ProcessedResult(0, true);
                     }
 
-                    /** @var list<Error> $errors */
-                    $errors = [];
-
                     $startIndex = $this->lowestSubscriptionPosition($subscriptions);
 
                     $this->logger?->debug(
@@ -183,6 +187,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         ),
                     );
 
+                    /** @var list<Error> $errors */
+                    $errors = [];
                     $stream = null;
                     $messageCounter = 0;
 
@@ -250,15 +256,18 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             }
                         }
                     } finally {
+                        $endIndex = $stream?->index() ?: $startIndex;
                         $stream?->close();
 
                         if ($messageCounter > 0) {
                             foreach ($subscriptions as $subscription) {
-                                if (!$subscription->isBooting()) {
-                                    continue;
+                                $error = $this->ensureCommitBatch($subscription, $endIndex);
+
+                                if ($error) {
+                                    $errors[] = $error;
                                 }
 
-                                $this->subscriptionStore->update($subscription);
+                                $this->subscriptionManager->update($subscription);
                             }
                         }
                     }
@@ -272,7 +281,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
                         if ($subscription->runMode() === RunMode::Once) {
                             $subscription->finished();
-                            $this->subscriptionStore->update($subscription);
+                            $this->subscriptionManager->update($subscription);
 
                             $this->logger?->info(sprintf(
                                 'Subscription Engine: Subscription "%s" run only once and has been set to finished.',
@@ -283,7 +292,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         }
 
                         $subscription->active();
-                        $this->subscriptionStore->update($subscription);
+                        $this->subscriptionManager->update($subscription);
 
                         $this->logger?->info(sprintf(
                             'Subscription Engine: Subscription "%s" has been set to active after booting.',
@@ -314,6 +323,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         $this->processing = true;
+        $this->batching = [];
 
         try {
             $criteria ??= new SubscriptionEngineCriteria();
@@ -324,7 +334,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             $this->markDetachedSubscriptions($criteria);
             $this->retrySubscriptions($criteria);
 
-            return $this->findForUpdate(
+            return $this->subscriptionManager->findForUpdate(
                 new SubscriptionCriteria(
                     ids: $criteria->ids,
                     groups: $criteria->groups,
@@ -337,9 +347,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         return new ProcessedResult(0, true);
                     }
 
-                    /** @var list<Error> $errors */
-                    $errors = [];
-
                     $startIndex = $this->lowestSubscriptionPosition($subscriptions);
 
                     $this->logger?->debug(
@@ -349,6 +356,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         ),
                     );
 
+                    /** @var list<Error> $errors */
+                    $errors = [];
                     $stream = null;
                     $messageCounter = 0;
 
@@ -414,11 +423,13 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
                         if ($messageCounter > 0) {
                             foreach ($subscriptions as $subscription) {
-                                if (!$subscription->isActive()) {
-                                    continue;
+                                $error = $this->ensureCommitBatch($subscription, $endIndex);
+
+                                if ($error) {
+                                    $errors[] = $error;
                                 }
 
-                                $this->subscriptionStore->update($subscription);
+                                $this->subscriptionManager->update($subscription);
                             }
                         }
                     }
@@ -433,7 +444,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         }
 
                         $subscription->finished();
-                        $this->subscriptionStore->update($subscription);
+                        $this->subscriptionManager->update($subscription);
 
                         $this->logger?->info(sprintf(
                             'Subscription Engine: Subscription "%s" run only once and has been set to finished.',
@@ -464,7 +475,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->logger?->info('Subscription Engine: Start teardown detached subscriptions.');
 
-        return $this->findForUpdate(
+        return $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -491,7 +502,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $teardownMethod = $subscriber->teardownMethod();
 
                     if (!$teardownMethod) {
-                        $this->subscriptionStore->remove($subscription);
+                        $this->subscriptionManager->remove($subscription);
 
                         $this->logger?->info(
                             sprintf(
@@ -531,7 +542,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         continue;
                     }
 
-                    $this->subscriptionStore->remove($subscription);
+                    $this->subscriptionManager->remove($subscription);
 
                     $this->logger?->info(
                         sprintf(
@@ -554,7 +565,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->discoverNewSubscriptions();
 
-        return $this->findForUpdate(
+        return $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -567,7 +578,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $subscriber = $this->subscriber($subscription->id());
 
                     if (!$subscriber) {
-                        $this->subscriptionStore->remove($subscription);
+                        $this->subscriptionManager->remove($subscription);
 
                         $this->logger?->info(
                             sprintf(
@@ -582,7 +593,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $teardownMethod = $subscriber->teardownMethod();
 
                     if (!$teardownMethod) {
-                        $this->subscriptionStore->remove($subscription);
+                        $this->subscriptionManager->remove($subscription);
 
                         $this->logger?->info(
                             sprintf('Subscription Engine: Subscription "%s" removed.', $subscription->id()),
@@ -609,7 +620,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         );
                     }
 
-                    $this->subscriptionStore->remove($subscription);
+                    $this->subscriptionManager->remove($subscription);
 
                     $this->logger?->info(
                         sprintf('Subscription Engine: Subscription "%s" removed.', $subscription->id()),
@@ -627,7 +638,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->discoverNewSubscriptions();
 
-        return $this->findForUpdate(
+        return $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -659,7 +670,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         $subscription->doRetry();
                         $subscription->resetRetry();
 
-                        $this->subscriptionStore->update($subscription);
+                        $this->subscriptionManager->update($subscription);
 
                         $this->logger?->info(sprintf(
                             'Subscription Engine: Subscriber "%s" for "%s" is reactivated.',
@@ -671,7 +682,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     }
 
                     $subscription->active();
-                    $this->subscriptionStore->update($subscription);
+                    $this->subscriptionManager->update($subscription);
 
                     $this->logger?->info(sprintf(
                         'Subscription Engine: Subscriber "%s" for "%s" is reactivated.',
@@ -691,7 +702,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->discoverNewSubscriptions();
 
-        return $this->findForUpdate(
+        return $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -718,7 +729,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     }
 
                     $subscription->pause();
-                    $this->subscriptionStore->update($subscription);
+                    $this->subscriptionManager->update($subscription);
 
                     $this->logger?->info(sprintf(
                         'Subscription Engine: Subscriber "%s" for "%s" is paused.',
@@ -739,7 +750,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->discoverNewSubscriptions();
 
-        return $this->subscriptionStore->find(
+        return $this->subscriptionManager->find(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -758,7 +769,9 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $subscribeMethods = $subscriber->subscribeMethods($message->event()::class);
 
         if ($subscribeMethods === []) {
-            $subscription->changePosition($index);
+            if (!isset($this->batching[$subscription->id()])) {
+                $subscription->changePosition($index);
+            }
 
             $this->logger?->debug(
                 sprintf(
@@ -770,6 +783,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             );
 
             return null;
+        }
+
+        $error = $this->checkAndBeginBatch($subscription);
+
+        if ($error) {
+            return $error;
         }
 
         try {
@@ -796,7 +815,19 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             );
         }
 
-        $subscription->changePosition($index);
+        if ($this->shouldCommitBatch($subscription)) {
+            $this->logger?->debug(sprintf(
+                'Subscription Engine: Subscriber "%s" forces to commit batch.',
+                $subscription->id(),
+            ));
+
+            $this->ensureCommitBatch($subscription, $index);
+        }
+
+        if (!isset($this->batching[$subscription->id()])) {
+            $subscription->changePosition($index);
+        }
+
         $subscription->resetRetry();
 
         $this->logger?->debug(
@@ -818,7 +849,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private function markDetachedSubscriptions(SubscriptionEngineCriteria $criteria): void
     {
-        $this->findForUpdate(
+        $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -833,7 +864,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     }
 
                     $subscription->detached();
-                    $this->subscriptionStore->update($subscription);
+                    $this->subscriptionManager->update($subscription);
 
                     $this->logger?->info(
                         sprintf(
@@ -848,7 +879,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private function retrySubscriptions(SubscriptionEngineCriteria $criteria): void
     {
-        $this->findForUpdate(
+        $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
@@ -878,7 +909,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     }
 
                     $subscription->doRetry();
-                    $this->subscriptionStore->update($subscription);
+                    $this->subscriptionManager->update($subscription);
 
                     $this->logger?->info(
                         sprintf(
@@ -895,7 +926,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private function discoverNewSubscriptions(): void
     {
-        $this->findForUpdate(
+        $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(),
             function (array $subscriptions): void {
                 $latestIndex = null;
@@ -922,7 +953,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         $subscription->active();
                     }
 
-                    $this->subscriptionStore->add($subscription);
+                    $this->subscriptionManager->add($subscription);
 
                     $this->logger?->info(
                         sprintf(
@@ -962,32 +993,124 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         return $min;
     }
 
-    /**
-     * @param Closure(list<Subscription>):T $closure
-     *
-     * @return T
-     *
-     * @template T
-     */
-    private function findForUpdate(SubscriptionCriteria $criteria, Closure $closure): mixed
-    {
-        if (!$this->subscriptionStore instanceof LockableSubscriptionStore) {
-            return $closure($this->subscriptionStore->find($criteria));
-        }
-
-        return $this->subscriptionStore->inLock(
-        /** @return T */
-            function () use ($closure, $criteria): mixed {
-                $subscriptions = $this->subscriptionStore->find($criteria);
-
-                return $closure($subscriptions);
-            },
-        );
-    }
-
     private function handleError(Subscription $subscription, Throwable $throwable): void
     {
         $subscription->error($throwable);
-        $this->subscriptionStore->update($subscription);
+        $this->subscriptionManager->update($subscription);
+
+        if (!isset($this->batching[$subscription->id()])) {
+            return;
+        }
+
+        $subscriber = $this->batching[$subscription->id()];
+
+        unset($this->batching[$subscription->id()]);
+
+        $this->logger?->debug(sprintf(
+            'Subscription Engine: Subscriber "%s" rollback the batch.',
+            $subscription->id(),
+        ));
+
+        try {
+            $subscriber->rollbackBatch();
+        } catch (Throwable $e) {
+            $this->logger?->error(sprintf(
+                'Subscription Engine: Subscriber "%s" has an error in the rollback batch method: %s',
+                $subscription->id(),
+                $e->getMessage(),
+            ));
+        }
+    }
+
+    private function ensureCommitBatch(Subscription $subscription, int $index): Error|null
+    {
+        if (!isset($this->batching[$subscription->id()])) {
+            return null;
+        }
+
+        $subscriber = $this->batching[$subscription->id()];
+
+        unset($this->batching[$subscription->id()]);
+
+        $this->logger?->debug(sprintf(
+            'Subscription Engine: Subscriber "%s" commits the batch.',
+            $subscription->id(),
+        ));
+
+        try {
+            $subscriber->commitBatch();
+            $subscription->changePosition($index);
+        } catch (Throwable $e) {
+            $this->logger?->error(sprintf(
+                'Subscription Engine: Subscriber "%s" has an error in the commit batch method: %s',
+                $subscription->id(),
+                $e->getMessage(),
+            ));
+
+            $this->handleError($subscription, $e);
+
+            return new Error(
+                $subscription->id(),
+                $e->getMessage(),
+                $e,
+            );
+        }
+
+        return null;
+    }
+
+    private function checkAndBeginBatch(Subscription $subscription): Error|null
+    {
+        if (isset($this->batching[$subscription->id()])) {
+            return null;
+        }
+
+        $subscriber = $this->subscriber($subscription->id());
+
+        if (!$subscriber instanceof RealSubscriberAccessor) {
+            return null;
+        }
+
+        $realSubscriber = $subscriber->realSubscriber();
+
+        if (!$realSubscriber instanceof BatchableSubscriber) {
+            return null;
+        }
+
+        $this->batching[$subscription->id()] = $realSubscriber;
+
+        $this->logger?->debug(sprintf(
+            'Subscription Engine: Subscriber "%s" starts a new batch.',
+            $subscription->id(),
+        ));
+
+        try {
+            $realSubscriber->beginBatch();
+        } catch (Throwable $e) {
+            $this->logger?->error(sprintf(
+                'Subscription Engine: Subscriber "%s" has an error in the begin batch method: %s',
+                $subscription->id(),
+                $e->getMessage(),
+            ));
+
+            $this->handleError($subscription, $e);
+
+            return new Error(
+                $subscription->id(),
+                $e->getMessage(),
+                $e,
+            );
+        }
+
+        return null;
+    }
+
+    private function shouldCommitBatch(Subscription $subscription): bool
+    {
+        if (!isset($this->batching[$subscription->id()])) {
+            return false;
+        }
+
+        return $this->batching[$subscription->id()]->forceCommit();
     }
 }

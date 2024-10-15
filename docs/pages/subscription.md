@@ -426,6 +426,97 @@ final class MigrationSubscriber
    // ...
 }
 ```
+### Batching
+
+You can also optimize the performance of your subscribers by processing a number of events in a batch.
+This is particularly useful when projections need to be rebuilt.
+To achieve this, you can implement the `BatchableSubscriber` interface.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+
+#[Projector('profile_1')]
+final class MigrationSubscriber implements BatchableSubscriber
+{
+    public function __construct(
+        private readonly Connection $connection,
+    ) {
+    }
+
+    /** @var array<string, int> */
+    private array $nameChanged = [];
+
+    #[Subscribe(NameChanged::class)]
+    public function handleNameChanged(NameChanged $event): void
+    {
+        $this->nameChanged[$event->userId] = $event->name;
+    }
+
+    public function beginBatch(): void
+    {
+        $this->nameChanged = [];
+        $this->connection->beginTransaction();
+    }
+
+    public function commitBatch(): void
+    {
+        foreach ($this->nameChanged as $userId => $name) {
+            $this->connection->executeStatement(
+                'UPDATE user SET name = :name WHERE id = :id',
+                ['name' => $name, 'id' => $userId],
+            );
+        }
+
+        $this->connection->commit();
+        $this->nameChanged = [];
+    }
+
+    public function rollbackBatch(): void
+    {
+        $this->connection->rollBack();
+    }
+
+    public function forceCommit(): bool
+    {
+        return count($this->nameChanged) > 1000;
+    }
+}
+```
+This interface provides you with all the options you need to process your data collectively.
+
+The `beginBatch` method is called as soon as a subscriber wants to process an event.
+If no suitable event is found in the stream, batching will not start, and this method will not be called.
+Here, you can make all necessary preparations, such as opening a transaction or preparing variables.
+
+The `commitBatch` method is called when batching was previously started, and one of the following conditions is met:
+Either the Subscription Engine reaches its limit, or the stream is finished.
+Alternatively, if the subscriber explicitly indicates using the `forceCommit` method that they want to process the data now.
+At this step, you must process all the data.
+
+The `rollbackBatch` method is called when an error occurs and the batching needs to be aborted.
+Here, you can respond to the error and potentially perform a database rollback.
+
+The method `forceCommit` is called after each handled event, 
+and you can decide whether the batch commit process should start now.
+This helps to determine the batch size and thus avoid memory overflow.
+
+!!! danger
+
+    Make sure to fully process the data in `commitBatch` and close any open transactions.
+    Otherwise, it may lead to inconsistent data.
+    
+!!! note
+
+    The position of the subscriber is only updated after a successful commit.
+    In case of an error, the position remains at the state before the batch started.
+    
+!!! tip
+
+    Use `forceCommit` to prevent memory leaks.
+    This allows you to decide when it's suitable to process the data and then release the memory.
+    
 ## Subscription Engine
 
 The subscription engine manages individual subscribers and keeps the subscriptions running.

@@ -294,4 +294,19 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
         self::assertNull($result);
     }
+
+    public function testRealSubscriber(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+        };
+
+        $accessor = new MetadataSubscriberAccessor(
+            $subscriber,
+            (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
+            [],
+        );
+
+        self::assertEquals($subscriber, $accessor->realSubscriber());
+    }
 }
