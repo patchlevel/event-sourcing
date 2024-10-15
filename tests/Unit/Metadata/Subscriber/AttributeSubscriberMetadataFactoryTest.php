@@ -22,6 +22,7 @@ use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
+use Stringable;
 
 /** @covers \Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory */
 final class AttributeSubscriberMetadataFactoryTest extends TestCase
@@ -243,7 +244,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {
             #[Subscribe(ProfileVisited::class)]
-            public function profileVisited(ProfileVisited&ProfileCreated $event): void
+            public function profileVisited(ProfileVisited&Stringable $event): void
             {
             }
         };
