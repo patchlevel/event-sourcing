@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Aggregate;
 use function strpos;
 use function substr;
 
-/** @experimental */
 final class StreamNameTranslator
 {
     private function __construct()

@@ -73,12 +73,7 @@ The table structure of the `DoctrineDbalStore` looks like this:
     
 ### StreamDoctrineDbalStore
 
-??? example "Experimental"
-
-    This feature is still experimental and may change in the future.
-    Use it with caution.
-    
-We offer a new experimental store called `StreamDoctrineDbalStore`.
+We offer a new store called `StreamDoctrineDbalStore`.
 This store is decoupled from the aggregate and can be used to store events from other sources.
 The difference to the `DoctrineDbalStore` is that the `StreamDoctrineDbalStore` merge the aggregate id
 and the aggregate name into one column named `stream`. Additionally, the column `playhead` is nullable.
