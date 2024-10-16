@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
@@ -13,6 +14,7 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -63,20 +65,27 @@ final class SubscriptionEngineBench
         $profile = Profile::create($this->id, 'Peter');
 
         for ($i = 1; $i < 10_000; $i++) {
+            $profile->changeEmail('peter' . $i . '@example.com');
             $profile->changeName('Peter ' . $i);
         }
 
         $this->repository->save($profile);
 
+        $subscriberAccessorRepository = new MetadataSubscriberAccessorRepository(
+            [
+                new ProfileProjector($connection),
+                new SendEmailProcessor(),
+            ],
+        );
+
         $this->subscriptionEngine = new DefaultSubscriptionEngine(
-            $this->store,
-            $subscriptionStore,
-            new MetadataSubscriberAccessorRepository(
-                [
-                    new ProfileProjector($connection),
-                    new SendEmailProcessor(),
-                ],
+            new EventFilteredMessageLoader(
+                $this->store,
+                new AttributeEventMetadataFactory(),
+                $subscriberAccessorRepository,
             ),
+            $subscriptionStore,
+            $subscriberAccessorRepository,
         );
     }
 

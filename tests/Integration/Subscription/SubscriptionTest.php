@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Debug\Trace\TraceHeader;
 use Patchlevel\EventSourcing\Debug\Trace\TraceStack;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -24,6 +25,7 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -93,10 +95,12 @@ final class SubscriptionTest extends TestCase
 
         $schemaDirector->create();
 
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]);
+
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new EventFilteredMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
             $subscriptionStore,
-            new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]),
+            $subscriberRepository,
         );
 
         self::assertEquals(
