@@ -8,7 +8,6 @@ use RuntimeException;
 
 use function sprintf;
 
-/** @experimental */
 final class InvalidAggregateStreamName extends RuntimeException
 {
     public function __construct(string $stream)

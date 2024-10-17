@@ -8,7 +8,6 @@ use DateTimeImmutable;
 
 /**
  * @psalm-immutable
- * @experimental
  */
 final class StreamHeader
 {

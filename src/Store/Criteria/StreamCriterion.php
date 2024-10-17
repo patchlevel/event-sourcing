@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Store\InvalidStreamName;
 
 use function preg_match;
 
-/** @experimental */
 final class StreamCriterion
 {
     public function __construct(

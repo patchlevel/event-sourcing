@@ -19,7 +19,6 @@ use Traversable;
 
 /**
  * @implements IteratorAggregate<Message>
- * @experimental
  */
 final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
 {
