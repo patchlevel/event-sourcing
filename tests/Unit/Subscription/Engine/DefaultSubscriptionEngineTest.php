@@ -2530,6 +2530,47 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
     }
 
+    public function testRemoveNewSubscriber(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public bool $dropped = false;
+
+            #[Teardown]
+            public function drop(): void
+            {
+                $this->dropped = true;
+            }
+        };
+
+        $subscription = new Subscription(
+            $subscriptionId,
+            Subscription::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            Status::New,
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->remove();
+
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
+        self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
+        self::assertFalse($subscriber->dropped);
+    }
+
     public function testRemoveWithoutSubscriber(): void
     {
         $subscriberId = 'test';

@@ -575,6 +575,19 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $errors = [];
 
                 foreach ($subscriptions as $subscription) {
+                    if ($subscription->isNew()) {
+                        $this->subscriptionManager->remove($subscription);
+
+                        $this->logger?->info(
+                            sprintf(
+                                'Subscription Engine: Subscription "%s" removed.',
+                                $subscription->id(),
+                            ),
+                        );
+
+                        continue;
+                    }
+
                     $subscriber = $this->subscriber($subscription->id());
 
                     if (!$subscriber) {
