@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline\Target;
 
+use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Store;
 
-final class StoreTarget implements Target
+final class EventBusTarget implements Target
 {
     public function __construct(
-        private readonly Store $store,
+        private readonly EventBus $eventBus,
     ) {
     }
 
     public function save(Message ...$message): void
     {
-        $this->store->save(...$message);
+        $this->eventBus->dispatch(...$message);
     }
 }

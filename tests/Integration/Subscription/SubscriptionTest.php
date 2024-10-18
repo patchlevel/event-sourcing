@@ -43,6 +43,7 @@ use RuntimeException;
 
 use function gc_collect_cycles;
 use function iterator_to_array;
+use function sprintf;
 
 /** @coversNothing */
 final class SubscriptionTest extends TestCase
@@ -1022,7 +1023,6 @@ final class SubscriptionTest extends TestCase
         );
 
         // target store check
-
 
         $result = $engine->remove();
         self::assertEquals([], $result->errors);

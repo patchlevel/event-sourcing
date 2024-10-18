@@ -8,9 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\StreamHeader;
 
-/**
- * @experimental
- */
+/** @experimental */
 final class AggregateToStreamHeaderMiddleware implements Middleware
 {
     /** @return list<Message> */
@@ -29,7 +27,7 @@ final class AggregateToStreamHeaderMiddleware implements Middleware
                     $aggregateHeader->streamName(),
                     $aggregateHeader->playhead,
                     $aggregateHeader->recordedOn,
-                ))
+                )),
         ];
     }
 }

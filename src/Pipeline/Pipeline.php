@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Pipeline;
 
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
-use Patchlevel\EventSourcing\Pipeline\Source\Source;
 use Patchlevel\EventSourcing\Pipeline\Target\Target;
+
+use function array_push;
+use function count;
+use function is_array;
 
 final class Pipeline
 {
@@ -15,10 +19,9 @@ final class Pipeline
 
     /** @param list<Middleware>|Middleware $middlewares */
     public function __construct(
-        private readonly Source $source,
         private readonly Target $target,
         array|Middleware $middlewares = [],
-        private readonly int $bufferSize = 1_000,
+        private readonly float|int $bufferSize = 0,
     ) {
         if (is_array($middlewares)) {
             $this->middleware = new ChainMiddleware($middlewares);
@@ -27,34 +30,28 @@ final class Pipeline
         }
     }
 
-    public function run(): void
+    /** @param iterable<Message> $messages */
+    public function run(iterable $messages): void
     {
         $buffer = [];
 
-        foreach ($this->source->load() as $message) {
+        foreach ($messages as $message) {
             $result = ($this->middleware)($message);
 
             array_push($buffer, ...$result);
 
-            if (count($buffer) >= $this->bufferSize) {
-                $this->target->save(...$result);
-                $buffer = [];
+            if (count($buffer) < $this->bufferSize) {
+                continue;
             }
-        }
 
-        if (count($buffer) > 0) {
             $this->target->save(...$buffer);
+            $buffer = [];
         }
-    }
 
-    public static function execute(
-        Source $source,
-        Target $target,
-        array|Middleware $middlewares = [],
-        $bufferSize = 1_000,
-    ): void
-    {
-        $pipeline = new self($source, $target, $middlewares, $bufferSize);
-        $pipeline->run();
+        if ($buffer === []) {
+            return;
+        }
+
+        $this->target->save(...$buffer);
     }
 }

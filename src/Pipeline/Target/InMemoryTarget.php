@@ -14,7 +14,7 @@ final class InMemoryTarget implements Target
     public function save(Message ...$message): void
     {
         foreach ($message as $m) {
-        	$this->messages[] = $m;
+            $this->messages[] = $m;
         }
     }
 

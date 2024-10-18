@@ -6,9 +6,7 @@ namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-/**
- * @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventWithHeaderMiddleware instead
- */
+/** @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventWithHeaderMiddleware instead */
 final class ExcludeEventWithHeaderTranslator implements Translator
 {
     /** @param class-string $header */

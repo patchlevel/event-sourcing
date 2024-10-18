@@ -6,9 +6,7 @@ namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-/**
- * @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\FilterEventMiddleware instead
- */
+/** @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\FilterEventMiddleware instead */
 final class FilterEventTranslator implements Translator
 {
     /** @var callable(object $event):bool */
