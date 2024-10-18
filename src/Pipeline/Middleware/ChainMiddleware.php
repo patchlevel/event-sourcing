@@ -2,18 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Translator;
+namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Message\Message;
 
 use function array_values;
 
-/**
- * @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware instead
- */
-final class ChainTranslator implements Translator
+final class ChainMiddleware implements Middleware
 {
-    /** @param iterable<Translator> $translators */
+    /** @param iterable<Middleware> $translators */
     public function __construct(
         private readonly iterable $translators,
     ) {
@@ -36,7 +33,7 @@ final class ChainTranslator implements Translator
      *
      * @return list<Message>
      */
-    private function process(Translator $translator, array $messages): array
+    private function process(Middleware $translator, array $messages): array
     {
         $result = [];
 

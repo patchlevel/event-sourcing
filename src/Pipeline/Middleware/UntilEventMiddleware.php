@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Translator;
+namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
@@ -10,10 +10,7 @@ use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\StreamHeader;
 
-/**
- * @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware instead
- */
-final class UntilEventTranslator implements Translator
+final class UntilEventMiddleware implements Middleware
 {
     public function __construct(
         private readonly DateTimeImmutable $until,

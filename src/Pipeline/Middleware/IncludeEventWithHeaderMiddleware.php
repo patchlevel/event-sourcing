@@ -2,14 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Translator;
+namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-/**
- * @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\IncludeEventWithHeaderMiddleware instead
- */
-final class IncludeEventWithHeaderTranslator implements Translator
+final class IncludeEventWithHeaderMiddleware implements Middleware
 {
     /** @param class-string $header */
     public function __construct(

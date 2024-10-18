@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Translator;
+namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
@@ -11,10 +11,7 @@ use Patchlevel\EventSourcing\Store\StreamHeader;
 
 use function array_key_exists;
 
-/**
- * @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware instead
- */
-final class RecalculatePlayheadTranslator implements Translator
+final class RecalculatePlayheadMiddleware implements Middleware
 {
     /** @var array<string, positive-int> */
     private array $index = [];
