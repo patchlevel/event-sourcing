@@ -106,6 +106,7 @@ nav:
     - Upcasting: upcasting.md
     - Message Decorator: message_decorator.md
     - Split Stream: split_stream.md
+    - Pipeline / ACL: pipeline.md
     - Time / Clock: clock.md
     - Testing: testing.md
     - CLI: cli.md

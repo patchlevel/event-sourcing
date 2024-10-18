@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Message\Translator;
+namespace Patchlevel\EventSourcing\Pipeline\Middleware;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-/** @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventWithHeaderMiddleware instead */
-final class ExcludeEventWithHeaderTranslator implements Translator
+final class IncludeEventWithHeaderMiddleware implements Middleware
 {
     /** @param class-string $header */
     public function __construct(
@@ -19,9 +18,9 @@ final class ExcludeEventWithHeaderTranslator implements Translator
     public function __invoke(Message $message): array
     {
         if ($message->hasHeader($this->header)) {
-            return [];
+            return [$message];
         }
 
-        return [$message];
+        return [];
     }
 }

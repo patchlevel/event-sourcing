@@ -84,6 +84,15 @@ final class Message
         return $message;
     }
 
+    /** @param class-string $name */
+    public function removeHeader(string $name): self
+    {
+        $message = clone $this;
+        unset($message->headers[$name]);
+
+        return $message;
+    }
+
     /** @return list<object> */
     public function headers(): array
     {
