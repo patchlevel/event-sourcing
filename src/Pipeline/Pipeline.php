@@ -5,17 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Pipeline;
 
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
 use Patchlevel\EventSourcing\Pipeline\Target\Target;
 
-use function array_push;
 use function count;
-use function is_array;
 
 final class Pipeline
 {
-    private readonly Middleware $middleware;
+    private readonly array $middlewares;
 
     /** @param list<Middleware>|Middleware $middlewares */
     public function __construct(
@@ -23,22 +20,25 @@ final class Pipeline
         array|Middleware $middlewares = [],
         private readonly float|int $bufferSize = 1_000,
     ) {
-        if (is_array($middlewares)) {
-            $this->middleware = new ChainMiddleware($middlewares);
+        if ($middlewares instanceof Middleware) {
+            $this->middlewares = [$middlewares];
         } else {
-            $this->middleware = $middlewares;
+            $this->middlewares = $middlewares;
         }
     }
 
     /** @param iterable<Message> $messages */
     public function run(iterable $messages): void
     {
+        $stream = new Pipe(
+            $messages,
+            $this->middlewares,
+        );
+
         $buffer = [];
 
-        foreach ($messages as $message) {
-            $result = ($this->middleware)($message);
-
-            array_push($buffer, ...$result);
+        foreach ($stream as $message) {
+            $buffer[] = $message;
 
             if (count($buffer) < $this->bufferSize) {
                 continue;

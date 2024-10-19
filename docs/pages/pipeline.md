@@ -1,30 +1,28 @@
 # Pipeline / Anti Corruption Layer
 
-A store is immutable, i.e. it cannot be changed afterwards.
-This includes both manipulating events and deleting them.
+Sobald man den Fall hat, dass man eine Menge an Events von A nach B fliesen lassen möchte,
+und evtl sogar dabei noch einfluss auf die Events nehmen möchte in Form von Filtern oder Manipulationen,
+dann kommt die Pipeline ins Spiel.
 
-Instead, you can duplicate the store and manipulate the events in the process.
-Thus the old store remains untouched and you can test the new store beforehand,
-whether the migration worked.
+Es gibt mehrere Situationen, in denen eine Pipeline sinnvoll ist:
 
-In this example the event `PrivacyAdded` is removed and the event `OldVisited` is replaced by `NewVisited`:
+* Migration vom event store und deren events.
+* Als Anti Corruption Layer beim Publizieren von Events an andere Systeme
+* Oder als Anti Corruption Layer beim Importieren von Events aus anderen Systemen
+
+In diesem Beispiel wird eine Pipeline verwendet,
+um einen neuen Event Store zu erstellen und dabei alte Events durch neue zu ersetzen.
 
 ```php
-use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 
 $pipeline = new Pipeline(
     new StoreTarget($newStore),
-    [
-        new ExcludeEventMiddleware([PrivacyAdded::class]),
-        new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
+      new ReplaceEventMiddleware(OldVisited::class, static function (OldVisited $oldVisited) {
             return new NewVisited($oldVisited->profileId());
         }),
-        new RecalculatePlayheadMiddleware(),
-    ]
 );
 
 $pipeline->run($oldStore->load());
@@ -32,8 +30,8 @@ $pipeline->run($oldStore->load());
 
 !!! danger
 
-    Under no circumstances may the same store be used that is used for the source.
-    Otherwise the store will be broken afterwards!
+    Unter keinen Umständen darf der selbe Store als Target verwendet werden
+    wie der, der als Source verwendet wird. Ansonsten wird der Store danach kaputt sein!
 
 The pipeline can also be used to create or rebuild a projection:
 
