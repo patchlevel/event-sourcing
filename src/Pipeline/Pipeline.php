@@ -21,7 +21,7 @@ final class Pipeline
     public function __construct(
         private readonly Target $target,
         array|Middleware $middlewares = [],
-        private readonly float|int $bufferSize = 0,
+        private readonly float|int $bufferSize = 1_000,
     ) {
         if (is_array($middlewares)) {
             $this->middleware = new ChainMiddleware($middlewares);

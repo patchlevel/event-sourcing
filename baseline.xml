@@ -37,6 +37,53 @@
       <code><![CDATA[$headerPayload]]></code>
     </MixedArgumentTypeCoercion>
   </file>
+  <file src="src/Message/Translator/ChainTranslator.php">
+    <DeprecatedInterface>
+      <code><![CDATA[ChainTranslator]]></code>
+      <code><![CDATA[Translator]]></code>
+      <code><![CDATA[iterable<Translator>]]></code>
+    </DeprecatedInterface>
+  </file>
+  <file src="src/Message/Translator/ExcludeEventTranslator.php">
+    <DeprecatedInterface>
+      <code><![CDATA[ExcludeEventTranslator]]></code>
+    </DeprecatedInterface>
+  </file>
+  <file src="src/Message/Translator/ExcludeEventWithHeaderTranslator.php">
+    <DeprecatedInterface>
+      <code><![CDATA[ExcludeEventWithHeaderTranslator]]></code>
+    </DeprecatedInterface>
+  </file>
+  <file src="src/Message/Translator/FilterEventTranslator.php">
+    <DeprecatedInterface>
+      <code><![CDATA[FilterEventTranslator]]></code>
+    </DeprecatedInterface>
+  </file>
+  <file src="src/Message/Translator/IncludeEventTranslator.php">
+    <DeprecatedInterface>
+      <code><![CDATA[IncludeEventTranslator]]></code>
+    </DeprecatedInterface>
+  </file>
+  <file src="src/Message/Translator/IncludeEventWithHeaderTranslator.php">
+    <DeprecatedInterface>
+      <code><![CDATA[IncludeEventWithHeaderTranslator]]></code>
+    </DeprecatedInterface>
+  </file>
+  <file src="src/Message/Translator/RecalculatePlayheadTranslator.php">
+    <DeprecatedInterface>
+      <code><![CDATA[RecalculatePlayheadTranslator]]></code>
+    </DeprecatedInterface>
+  </file>
+  <file src="src/Message/Translator/ReplaceEventTranslator.php">
+    <DeprecatedInterface>
+      <code><![CDATA[ReplaceEventTranslator]]></code>
+    </DeprecatedInterface>
+  </file>
+  <file src="src/Message/Translator/UntilEventTranslator.php">
+    <DeprecatedInterface>
+      <code><![CDATA[UntilEventTranslator]]></code>
+    </DeprecatedInterface>
+  </file>
   <file src="src/Metadata/AggregateRoot/AggregateRootMetadataAwareMetadataFactory.php">
     <InvalidReturnStatement>
       <code><![CDATA[$aggregate::metadata()]]></code>
@@ -212,6 +259,82 @@
     <MissingParamType>
       <code><![CDATA[$event]]></code>
     </MissingParamType>
+  </file>
+  <file src="tests/Unit/Message/Translator/ChainTranslatorTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new ChainTranslator([
+            $child1->reveal(),
+            $child2->reveal(),
+        ])]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Message/Translator/ExcludeEventTranslatorTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new ExcludeEventTranslator([ProfileCreated::class])]]></code>
+      <code><![CDATA[new ExcludeEventTranslator([ProfileCreated::class])]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Message/Translator/ExcludeEventWithHeaderTranslatorTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new ExcludeEventWithHeaderTranslator(ArchivedHeader::class)]]></code>
+      <code><![CDATA[new ExcludeEventWithHeaderTranslator(ArchivedHeader::class)]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Message/Translator/FilterEventTranslatorTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new FilterEventTranslator(static function (object $event) {
+            return $event instanceof ProfileCreated;
+        })]]></code>
+      <code><![CDATA[new FilterEventTranslator(static function (object $event) {
+            return $event instanceof ProfileCreated;
+        })]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Message/Translator/IncludeEventTranslatorTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new IncludeEventTranslator([ProfileCreated::class])]]></code>
+      <code><![CDATA[new IncludeEventTranslator([ProfileCreated::class])]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Message/Translator/IncludeEventWithHeaderTranslatorTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new IncludeEventWithHeaderTranslator(ArchivedHeader::class)]]></code>
+      <code><![CDATA[new IncludeEventWithHeaderTranslator(ArchivedHeader::class)]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Message/Translator/RecalculatePlayheadTranslatorTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new RecalculatePlayheadTranslator()]]></code>
+      <code><![CDATA[new RecalculatePlayheadTranslator()]]></code>
+      <code><![CDATA[new RecalculatePlayheadTranslator()]]></code>
+      <code><![CDATA[new RecalculatePlayheadTranslator()]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Message/Translator/ReplaceEventTranslatorTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new ReplaceEventTranslator(
+            MessagePublished::class,
+            static function (ProfileCreated $event) {
+                return new ProfileVisited(
+                    $event->profileId,
+                );
+            },
+        )]]></code>
+      <code><![CDATA[new ReplaceEventTranslator(
+            ProfileCreated::class,
+            static function (ProfileCreated $event) {
+                return new ProfileVisited(
+                    $event->profileId,
+                );
+            },
+        )]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Message/Translator/UntilEventTranslatorTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new UntilEventTranslator($until)]]></code>
+      <code><![CDATA[new UntilEventTranslator($until)]]></code>
+    </DeprecatedClass>
   </file>
   <file src="tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php">
     <MissingParamType>

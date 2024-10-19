@@ -10,9 +10,9 @@ use function array_values;
 
 final class ChainMiddleware implements Middleware
 {
-    /** @param iterable<Middleware> $translators */
+    /** @param iterable<Middleware> $middlewares */
     public function __construct(
-        private readonly iterable $translators,
+        private readonly iterable $middlewares,
     ) {
     }
 
@@ -21,7 +21,7 @@ final class ChainMiddleware implements Middleware
     {
         $messages = [$message];
 
-        foreach ($this->translators as $middleware) {
+        foreach ($this->middlewares as $middleware) {
             $messages = $this->process($middleware, $messages);
         }
 
@@ -33,12 +33,12 @@ final class ChainMiddleware implements Middleware
      *
      * @return list<Message>
      */
-    private function process(Middleware $translator, array $messages): array
+    private function process(Middleware $middleware, array $messages): array
     {
         $result = [];
 
         foreach ($messages as $message) {
-            $result += $translator($message);
+            $result += $middleware($message);
         }
 
         return array_values($result);

@@ -14,11 +14,9 @@ use Patchlevel\EventSourcing\Pipeline\Middleware\ExcludeEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware;
 use Patchlevel\EventSourcing\Pipeline\Pipeline;
-use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
 use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
 
 $pipeline = new Pipeline(
-    new StoreSource($oldStore),
     new StoreTarget($newStore),
     [
         new ExcludeEventMiddleware([PrivacyAdded::class]),
@@ -28,6 +26,8 @@ $pipeline = new Pipeline(
         new RecalculatePlayheadMiddleware(),
     ]
 );
+
+$pipeline->run($oldStore->load());
 ```
 
 !!! danger
@@ -52,69 +52,6 @@ The principle remains the same.
 There is a source where the data comes from.
 A target where the data should flow.
 And any number of middlewares to do something with the data beforehand.
-
-## Source
-
-The first thing you need is a source of where the data should come from.
-
-### Store
-
-The `StoreSource` is the standard source to load all events from the database.
-
-```php
-use Patchlevel\EventSourcing\Pipeline\Source\StoreSource;
-
-$source = new StoreSource($store);
-```
-
-### In Memory
-
-There is an `InMemorySource` that receives the messages in an array. This source can be used to write pipeline tests.
-
-```php
-use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Pipeline\Source\InMemorySource;
-
-$source = new InMemorySource([
-    new Message(
-        Profile::class,
-        '1',
-        1,
-        new ProfileCreated(Email::fromString('david.badura@patchlevel.de')),
-    ),
-    // ...
-]);
-```
-
-### Custom Source
-
-You can also create your own source class. It has to inherit from `Source`.
-Here you can, for example, create a migration from another event sourcing system or similar system.
-
-```php
-use Patchlevel\EventSourcing\EventBus\Message;
-use Patchlevel\EventSourcing\Pipeline\Source\Source;
-
-$source = new class implements Source {
-    /**
-     * @return Generator<Message>
-     */
-    public function load(): Generator
-    {
-        yield new Message(
-            Profile::class,
-            '1',
-            0, 
-            new ProfileCreated('1', ['name' => 'David'])
-        );
-    }
-
-    public function count(): int
-    {
-        reutrn 1;
-    }
-}
-```
 
 ## Target
 
