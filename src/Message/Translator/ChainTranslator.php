@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Message\Message;
 
 use function array_values;
 
-/** @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\ChainMiddleware instead */
 final class ChainTranslator implements Translator
 {
     /** @param iterable<Translator> $translators */

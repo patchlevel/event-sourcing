@@ -7,8 +7,6 @@ namespace Patchlevel\EventSourcing\Message\Translator;
 use Patchlevel\EventSourcing\Message\Message;
 
 /**
- * @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\ReplaceEventMiddleware instead
- *
  * @template T of object
  */
 final class ReplaceEventTranslator implements Translator

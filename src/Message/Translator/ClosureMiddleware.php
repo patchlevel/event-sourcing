@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Pipeline\Middleware;
+namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Closure;
 use Patchlevel\EventSourcing\Message\Message;
 
-final class ClosureMiddleware implements Middleware
+final class ClosureMiddleware implements Translator
 {
     /** @param Closure(Message): list<Message> $callable */
     public function __construct(

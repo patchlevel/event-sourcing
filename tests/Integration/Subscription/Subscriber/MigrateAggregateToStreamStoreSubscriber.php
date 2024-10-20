@@ -9,19 +9,16 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Pipeline\Middleware\AggregateToStreamHeaderMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Pipeline;
-use Patchlevel\EventSourcing\Pipeline\Target\StoreTarget;
+use Patchlevel\EventSourcing\Message\Pipeline;
+use Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator;
+use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
-
 use function count;
-
-use const INF;
 
 #[Subscriber('migrate', RunMode::Once)]
 final class MigrateAggregateToStreamStoreSubscriber implements BatchableSubscriber
@@ -31,7 +28,10 @@ final class MigrateAggregateToStreamStoreSubscriber implements BatchableSubscrib
     /** @var list<Message> */
     private array $messages = [];
 
-    private readonly Pipeline $pipeline;
+    /**
+     * @var list<Middleware>
+     */
+    private readonly array $middlewares;
 
     public function __construct(
         private readonly StreamDoctrineDbalStore $targetStore,
@@ -41,17 +41,25 @@ final class MigrateAggregateToStreamStoreSubscriber implements BatchableSubscrib
             new ChainDoctrineSchemaConfigurator([$targetStore]),
         );
 
-        $this->pipeline = new Pipeline(
-            new StoreTarget($this->targetStore),
-            new AggregateToStreamHeaderMiddleware(),
-            INF,
-        );
+        $this->middlewares = [
+            new AggregateToStreamHeaderTranslator()
+        ];
     }
 
     #[Subscribe('*')]
     public function handle(Message $message): void
     {
         $this->messages[] = $message;
+    }
+
+    #[Subscribe('*')]
+    public function kafka(Message $message): void
+    {
+        $pipeline = new Pipeline([$message], $this->middlewares);
+
+        foreach ($pipeline as $message) {
+            $this->kafka->publish($message);
+        }
     }
 
     public function beginBatch(): void
@@ -61,9 +69,10 @@ final class MigrateAggregateToStreamStoreSubscriber implements BatchableSubscrib
 
     public function commitBatch(): void
     {
-        $this->pipeline->run($this->messages);
-
+        $pipeline = new Pipeline($this->messages, $this->middlewares);
         $this->messages = [];
+
+        $this->targetStore->save(...$pipeline);
     }
 
     public function rollbackBatch(): void

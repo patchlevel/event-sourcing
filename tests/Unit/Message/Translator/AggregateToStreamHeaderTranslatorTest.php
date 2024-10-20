@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Pipeline\Middleware;
+namespace Patchlevel\EventSourcing\Tests\Unit\Message\Translator;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Pipeline\Middleware\AggregateToStreamHeaderMiddleware;
+use Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator;
 use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -15,8 +15,8 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Pipeline\Middleware\AggregateToStreamHeaderMiddleware */
-final class AggregateToStreamHeaderMiddlewareTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator */
+final class AggregateToStreamHeaderTranslatorTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -29,7 +29,7 @@ final class AggregateToStreamHeaderMiddlewareTest extends TestCase
             ),
         );
 
-        $middleware = new AggregateToStreamHeaderMiddleware();
+        $middleware = new AggregateToStreamHeaderTranslator();
 
         $result = $middleware($message);
 
@@ -52,7 +52,7 @@ final class AggregateToStreamHeaderMiddlewareTest extends TestCase
             ),
         ))->withHeader($aggregateHeader);
 
-        $middleware = new AggregateToStreamHeaderMiddleware();
+        $middleware = new AggregateToStreamHeaderTranslator();
 
         $result = $middleware($message);
 

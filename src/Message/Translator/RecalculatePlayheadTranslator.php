@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\Store\StreamHeader;
 
 use function array_key_exists;
 
-/** @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\RecalculatePlayheadMiddleware instead */
 final class RecalculatePlayheadTranslator implements Translator
 {
     /** @var array<string, positive-int> */

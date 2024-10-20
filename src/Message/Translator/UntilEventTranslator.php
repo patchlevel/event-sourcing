@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\StreamHeader;
 
-/** @deprecated use Patchlevel\EventSourcing\Pipeline\Middleware\UntilEventMiddleware instead */
 final class UntilEventTranslator implements Translator
 {
     public function __construct(

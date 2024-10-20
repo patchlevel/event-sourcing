@@ -1,24 +1,20 @@
 <?php
 
-namespace Patchlevel\EventSourcing\Pipeline;
+namespace Patchlevel\EventSourcing\Message;
 
 use Closure;
-use Doctrine\Migrations\Version\State;
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Pipeline\Middleware\ClosureMiddleware;
-use Patchlevel\EventSourcing\Pipeline\Middleware\Middleware;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use Patchlevel\EventSourcing\Message\Translator\Translator;
 
 /**
  * @template STATE of array<array-key, mixed>
  * @template OUT of array<array-key, mixed> = STATE
  */
-final class StateProcessor
+final class Reducer
 {
     /**
      * @var STATE
      */
-    private array $state = [];
+    private array $initState = [];
 
     /**
      * @var array<class-string, list<Closure(Message, STATE): STATE|null>>
@@ -36,18 +32,18 @@ final class StateProcessor
     private Closure|null $finalizeHandler = null;
 
     /**
-     * @var list<Middleware>
+     * @var list<Translator>
      */
-    private array $middlewares = [];
+    private array $translators = [];
 
     /**
-     * @param STATE $state
+     * @param STATE $initState
      *
      * @return $this
      */
-    public function initState(array $state): self
+    public function initState(array $initState): self
     {
-        $this->state = $state;
+        $this->initState = $initState;
 
         return $this;
     }
@@ -105,10 +101,10 @@ final class StateProcessor
         return $this;
     }
 
-    public function middleware(Middleware ...$middlewares): self
+    public function translator(Translator ...$translators): self
     {
-        foreach ($middlewares as $middleware) {
-            $this->middlewares[] = $middleware;
+        foreach ($translators as $translator) {
+            $this->translators[] = $translator;
         }
 
         return $this;
@@ -119,60 +115,32 @@ final class StateProcessor
      *
      * @return OUT
      */
-    public function process(iterable $messages): array
+    public function reduce(iterable $messages): array
     {
-        if ($this->middlewares !== []) {
-            $messages = new Pipe($messages, $this->middlewares);
+        if ($this->translators !== []) {
+            $messages = new Pipeline($messages, $this->translators);
         }
+
+        $state = $this->initState;
 
         foreach ($messages as $message) {
             $event = $message->event();
 
             if (isset($this->handlers[$event::class])) {
                 foreach ($this->handlers[$event::class] as $handler) {
-                    $this->state = $handler($message, $this->state);
+                    $state = $handler($message, $state);
                 }
             }
 
             foreach ($this->anyHandlers as $handler) {
-                $this->state = $handler($message, $this->state);
+                $state = $handler($message, $state);
             }
         }
 
         if ($this->finalizeHandler !== null) {
-            $this->state = ($this->finalizeHandler)($this->state);
+            $state = ($this->finalizeHandler)($state);
         }
 
-        return $this->state;
+        return $state;
     }
 }
-
-/**
- * @var StateProcessor<array{string, true}, list<string>> $state
- */
-$state = (new StateProcessor())
-    ->when(ProfileCreated::class, function (Message $message, array $state): array {
-        $event = $message->event();
-
-        $state[$event->email->toString()] = true;
-
-        return $state;
-    })
-    ->finalize(function (array $state): array {
-        return array_keys($state);
-    })
-    ->middleware(new ClosureMiddleware(static function (Message $message): array {
-        return [$message];
-    }))
-    ->process([]);
-
-
-$state = (new StateProcessor())
-    ->initState(['foo' => 'bar'])
-    ->any(function (Message $message, array $state): array {
-        return $state;
-    })
-    ->finalize(function (array $state): array {
-        return $state;
-    })
-    ->process([]);
