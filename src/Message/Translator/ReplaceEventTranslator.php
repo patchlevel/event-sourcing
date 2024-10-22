@@ -6,9 +6,7 @@ namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-/**
- * @template T of object
- */
+/** @template T of object */
 final class ReplaceEventTranslator implements Translator
 {
     /** @var callable(T $event):object */

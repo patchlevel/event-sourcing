@@ -10,33 +10,25 @@ use Patchlevel\EventSourcing\Message\Translator\ChainTranslator;
 use Patchlevel\EventSourcing\Message\Translator\Translator;
 use Traversable;
 
-/** @implements IteratorAggregate<Message> */
-final class Pipeline implements IteratorAggregate
+use function array_values;
+use function iterator_to_array;
+
+/** @implements IteratorAggregate<int, Message> */
+final class Pipe implements IteratorAggregate
 {
+    private Translator $translator;
+
     /**
-     * @param iterable<Message> $messages
-     * @param list<Translator>  $translators
+     * @param iterable<Message>           $messages
+     * @param list<Translator>|Translator $translators
      */
     public function __construct(
         private readonly iterable $messages,
-        private readonly array $translators = [],
+        array|Translator $translators = [],
     ) {
-    }
-
-    public function appendMiddleware(Translator $translator): self
-    {
-        return new self(
-            $this->messages,
-            [...$this->translators, $translator],
-        );
-    }
-
-    public function prependMiddleware(Translator $translator): self
-    {
-        return new self(
-            $this->messages,
-            [$translator, ...$this->translators],
-        );
+        $this->translator = $translators instanceof Translator
+            ? $translators
+            : new ChainTranslator($translators);
     }
 
     /** @return Traversable<Message> */
@@ -44,16 +36,16 @@ final class Pipeline implements IteratorAggregate
     {
         return $this->createGenerator(
             $this->messages,
-            new ChainTranslator($this->translators),
+            $this->translator,
         );
     }
 
-    /**
-     * @return list<Message>
-     */
+    /** @return list<Message> */
     public function toArray(): array
     {
-        return iterator_to_array($this->getIterator());
+        return array_values(
+            iterator_to_array($this->getIterator()),
+        );
     }
 
     /**

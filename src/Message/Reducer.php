@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Message;
 
 use Closure;
-use Patchlevel\EventSourcing\Message\Translator\Translator;
 
 /**
  * @template STATE of array<array-key, mixed>
@@ -11,30 +12,17 @@ use Patchlevel\EventSourcing\Message\Translator\Translator;
  */
 final class Reducer
 {
-    /**
-     * @var STATE
-     */
+    /** @var STATE */
     private array $initState = [];
 
-    /**
-     * @var array<class-string, list<Closure(Message, STATE): STATE|null>>
-     */
+    /** @var array<class-string, list<Closure(Message, STATE): STATE>> */
     private array $handlers = [];
 
-    /**
-     * @var list<Closure(Message, STATE): STATE>
-     */
+    /** @var list<Closure(Message, STATE): STATE> */
     private array $anyHandlers = [];
 
-    /**
-     * @var (Closure(STATE): OUT)|null
-     */
+    /** @var (Closure(STATE): OUT)|null */
     private Closure|null $finalizeHandler = null;
-
-    /**
-     * @var list<Translator>
-     */
-    private array $translators = [];
 
     /**
      * @param STATE $initState
@@ -49,15 +37,19 @@ final class Reducer
     }
 
     /**
-     * @template T1 of object
-     *
-     * @param class-string<T1> $event
+     * @param class-string<T1>                   $event
      * @param Closure(Message<T1>, STATE): STATE $closure
      *
      * @return $this
+     *
+     * @template T1 of object
      */
     public function when(string $event, Closure $closure): self
     {
+        if (!isset($this->handlers[$event])) {
+            $this->handlers[$event] = [];
+        }
+
         $this->handlers[$event][] = $closure;
 
         return $this;
@@ -101,26 +93,14 @@ final class Reducer
         return $this;
     }
 
-    public function translator(Translator ...$translators): self
-    {
-        foreach ($translators as $translator) {
-            $this->translators[] = $translator;
-        }
-
-        return $this;
-    }
-
     /**
      * @param iterable<Message> $messages
      *
-     * @return OUT
+     * @return OUT|STATE
+     * @psalm-return (OUT is STATE ? STATE : OUT)
      */
     public function reduce(iterable $messages): array
     {
-        if ($this->translators !== []) {
-            $messages = new Pipeline($messages, $this->translators);
-        }
-
         $state = $this->initState;
 
         foreach ($messages as $message) {
