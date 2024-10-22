@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 
 #[Aggregate('profile')]
@@ -27,10 +28,21 @@ final class Profile extends BasicAggregateRoot
         return $self;
     }
 
+    public function changeName(string $name): void
+    {
+        $this->recordThat(new NameChanged($name));
+    }
+
     #[Apply(ProfileCreated::class)]
     protected function applyProfileCreated(ProfileCreated $event): void
     {
         $this->id = $event->profileId;
+        $this->name = $event->name;
+    }
+
+    #[Apply(NameChanged::class)]
+    protected function applyNameChanged(NameChanged $event): void
+    {
         $this->name = $event->name;
     }
 

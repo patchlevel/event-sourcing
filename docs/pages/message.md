@@ -97,6 +97,66 @@ use Patchlevel\EventSourcing\Message\Message;
 /** @var Message $message */
 $message->header(ApplicationHeader::class);
 ```
+## Pipe
+
+```php
+$messages = new Pipe(
+    $messages,
+    new ExcludeEventTranslator([ProfileCreated::class]),
+);
+
+foreach ($messages as $message) {
+    // do something with the message
+}
+```
+## Reducer
+
+### Initial state
+
+```php
+$state = (new Reducer())
+    ->initialState(['count' => 0])
+    ->reduce($messages);
+
+// state is ['count' => 0]
+```
+### When
+
+```php
+$state = (new Reducer())
+    ->initialState([
+        'names' => [],
+    ])
+    ->when(
+        ProfileCreated::class,
+        static function (Message $message, array $state): array {
+            $state['names'][] = $message->event()->name;
+            
+            return $state;
+        },
+    )
+    ->reduce($messages);
+
+// state is ['names' => ['foo', 'bar']]
+```
+### Match
+
+```php
+$state = (new Reducer())
+    ->match([
+        ProfileCreated::class => static function (Message $message, array $state): array {
+            return [...$state, $message];
+        },
+    ])
+    ->reduce($messages);
+```
+### Any
+
+
+### Finalize
+
+
+
 ## Translator
 
 Translator can be used to manipulate, filter or expand messages or events.
