@@ -56,11 +56,7 @@ final class Pipe implements IteratorAggregate
     private function createGenerator(iterable $messages, Translator $translator): Generator
     {
         foreach ($messages as $message) {
-            $result = $translator($message);
-
-            foreach ($result as $m) {
-                yield $m;
-            }
+            yield from $translator($message);
         }
     }
 }
