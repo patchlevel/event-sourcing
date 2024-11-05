@@ -154,4 +154,119 @@ final class IntegrationTest extends TestCase
         self::assertInstanceOf(MonthPassed::class, $bankAccount->appliedEvents[0]);
         self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[1]);
     }
+
+    public function testRemoveArchived(): void
+    {
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $bankAccountProjector = new BankAccountProjector($this->connection);
+
+        $engine = new DefaultSubscriptionEngine(
+            $store,
+            new InMemorySubscriptionStore(),
+            new MetadataSubscriberAccessorRepository([$bankAccountProjector]),
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['bank_account' => BankAccount::class]),
+            $store,
+            null,
+            null,
+            new ChainMessageDecorator([
+                new SplitStreamDecorator(new AttributeEventMetadataFactory()),
+            ]),
+        );
+        $repository = $manager->get(BankAccount::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store,
+        );
+
+        $schemaDirector->create();
+        $engine->setup();
+        $engine->boot();
+
+        $bankAccountId = AccountId::generate();
+        $bankAccount = BankAccount::create($bankAccountId, 'John');
+        $bankAccount->addBalance(100);
+        $bankAccount->addBalance(500);
+        $repository->save($bankAccount);
+
+        $engine->run();
+
+        $result = $this->connection->fetchAssociative(
+            'SELECT * FROM projection_bank_account WHERE id = ?',
+            [$bankAccountId->toString()],
+        );
+
+        self::assertIsArray($result);
+        self::assertArrayHasKey('id', $result);
+        self::assertSame($bankAccountId->toString(), $result['id']);
+        self::assertSame('John', $result['name']);
+        self::assertSame(600, $result['balance_in_cents']);
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['bank_account' => BankAccount::class]),
+            $store,
+            null,
+            null,
+            new ChainMessageDecorator([
+                new SplitStreamDecorator(new AttributeEventMetadataFactory()),
+            ]),
+        );
+        $repository = $manager->get(BankAccount::class);
+        $bankAccount = $repository->load($bankAccountId);
+
+        self::assertInstanceOf(BankAccount::class, $bankAccount);
+        self::assertEquals($bankAccountId, $bankAccount->aggregateRootId());
+        self::assertSame(3, $bankAccount->playhead());
+        self::assertSame('John', $bankAccount->name());
+        self::assertSame(600, $bankAccount->balance());
+        self::assertSame(3, count($bankAccount->appliedEvents));
+        self::assertInstanceOf(BankAccountCreated::class, $bankAccount->appliedEvents[0]);
+        self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[1]);
+        self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[2]);
+
+        $bankAccount->beginNewMonth();
+        $bankAccount->addBalance(200);
+        $repository->save($bankAccount);
+
+        $engine->run();
+
+        $result = $this->connection->fetchAssociative(
+            'SELECT * FROM projection_bank_account WHERE id = ?',
+            [$bankAccountId->toString()],
+        );
+
+        self::assertIsArray($result);
+        self::assertArrayHasKey('id', $result);
+        self::assertSame($bankAccountId->toString(), $result['id']);
+        self::assertSame('John', $result['name']);
+        self::assertSame(800, $result['balance_in_cents']);
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['bank_account' => BankAccount::class]),
+            $store,
+            null,
+            null,
+            new ChainMessageDecorator([
+                new SplitStreamDecorator(new AttributeEventMetadataFactory()),
+            ]),
+        );
+        $repository = $manager->get(BankAccount::class);
+        $bankAccount = $repository->load($bankAccountId);
+
+        self::assertInstanceOf(BankAccount::class, $bankAccount);
+        self::assertEquals($bankAccountId, $bankAccount->aggregateRootId());
+        self::assertSame(5, $bankAccount->playhead());
+        self::assertSame('John', $bankAccount->name());
+        self::assertSame(800, $bankAccount->balance());
+        self::assertSame(2, count($bankAccount->appliedEvents));
+        self::assertInstanceOf(MonthPassed::class, $bankAccount->appliedEvents[0]);
+        self::assertInstanceOf(BalanceAdded::class, $bankAccount->appliedEvents[1]);
+    }
 }
