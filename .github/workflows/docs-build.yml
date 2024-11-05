@@ -65,16 +65,16 @@ jobs:
       - run: git fetch doc gh-pages --verbose
 
       - run: |          
-          current_major=$(echo "$version_current" | cut -d '.' -f 1)
-          current_minor=$(echo "$version_current" | cut -d '.' -f 2)
+          current_major=$(echo "${{ steps.current.outputs.result }}" | cut -d '.' -f 1)
+          current_minor=$(echo "${{ steps.current.outputs.result }}" | cut -d '.' -f 2)
           
-          latest_major=$(echo "$version_latest" | cut -d '.' -f 1)
-          latest_minor=$(echo "$version_latest" | cut -d '.' -f 2)
+          latest_major=$(echo "${{ steps.latest.outputs.result }}" | cut -d '.' -f 1)
+          latest_minor=$(echo "${{ steps.latest.outputs.result }}" | cut -d '.' -f 2)
           
           if [ "${{ steps.current.outputs.result }}" = "${{ steps.latest.outputs.result }}" ]
           then
             # Here we deploy a new latest version
-            mike deploy latest --config-file docs/mkdocs.yml --title="${{ steps.current.outputs.result }} (latest)" --update-aliases --alias-type=redirect --push --remote doc
+            mike deploy latest --config-file docs/mkdocs.yml --title="${{ steps.current.outputs.result }} (latest)" --push --remote doc
           elif [ "$current_major" -lt "$latest_major" ] || \
             { [ "$current_major" -eq "$latest_major" ] && [ "$current_minor" -lt "$latest_minor" ]; }
           then
