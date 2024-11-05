@@ -65,11 +65,11 @@ jobs:
       - run: git fetch doc gh-pages --verbose
 
       - run: |          
-          current_major=$(echo "$version_current" | cut -d '.' -f 1)
-          current_minor=$(echo "$version_current" | cut -d '.' -f 2)
+          current_major=$(echo "${{ steps.current.outputs.result }}" | cut -d '.' -f 1)
+          current_minor=$(echo "${{ steps.current.outputs.result }}" | cut -d '.' -f 2)
           
-          latest_major=$(echo "$version_latest" | cut -d '.' -f 1)
-          latest_minor=$(echo "$version_latest" | cut -d '.' -f 2)
+          latest_major=$(echo "${{ steps.latest.outputs.result }}" | cut -d '.' -f 1)
+          latest_minor=$(echo "${{ steps.latest.outputs.result }}" | cut -d '.' -f 2)
           
           if [ "${{ steps.current.outputs.result }}" = "${{ steps.latest.outputs.result }}" ]
           then
