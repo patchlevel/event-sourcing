@@ -56,7 +56,7 @@ final class MigrateAggregateToStreamStoreSubscriber implements BatchableSubscrib
 
     public function commitBatch(): void
     {
-        $pipeline = new Pipe($this->messages, $this->middlewares);
+        $pipeline = new Pipe($this->messages, ...$this->middlewares);
         $this->messages = [];
 
         $this->targetStore->save(...$pipeline);

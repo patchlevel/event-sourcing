@@ -85,10 +85,8 @@ final class PipeTest extends TestCase
 
         $stream = new Pipe(
             $messages,
-            [
-                new ExcludeEventTranslator([ProfileCreated::class]),
-                new RecalculatePlayheadTranslator(),
-            ],
+            new ExcludeEventTranslator([ProfileCreated::class]),
+            new RecalculatePlayheadTranslator(),
         );
 
         $resultMessages = iterator_to_array($stream);

@@ -18,6 +18,20 @@ final class ChainTranslatorTest extends TestCase
 {
     use ProphecyTrait;
 
+    public function testEmptyChain(): void
+    {
+        $message = new Message(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('hallo@patchlevel.de'),
+            ),
+        );
+
+        $translator = new ChainTranslator([]);
+
+        self::assertSame([$message], $translator($message));
+    }
+
     public function testChain(): void
     {
         $message = new Message(
@@ -38,6 +52,6 @@ final class ChainTranslatorTest extends TestCase
             $child2->reveal(),
         ]);
 
-        $translator($message);
+        self::assertSame([$message], $translator($message));
     }
 }

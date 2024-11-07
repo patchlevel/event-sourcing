@@ -18,17 +18,12 @@ final class Pipe implements IteratorAggregate
 {
     private Translator $translator;
 
-    /**
-     * @param iterable<Message>           $messages
-     * @param list<Translator>|Translator $translators
-     */
+    /** @param iterable<Message> $messages */
     public function __construct(
         private readonly iterable $messages,
-        array|Translator $translators = [],
+        Translator ...$translators,
     ) {
-        $this->translator = $translators instanceof Translator
-            ? $translators
-            : new ChainTranslator($translators);
+        $this->translator = new ChainTranslator($translators);
     }
 
     /** @return Traversable<Message> */
@@ -56,7 +51,9 @@ final class Pipe implements IteratorAggregate
     private function createGenerator(iterable $messages, Translator $translator): Generator
     {
         foreach ($messages as $message) {
-            yield from $translator($message);
+            foreach ($translator($message) as $translatedMessage) {
+                yield $translatedMessage;
+            }
         }
     }
 }
