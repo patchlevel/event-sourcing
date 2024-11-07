@@ -6,6 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\CommandBus\AggregateHandlerProvider;
+use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Pipe;
 use Patchlevel\EventSourcing\Message\Reducer;
@@ -26,6 +28,8 @@ use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineReposi
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\ChangeProfileName;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\CreateProfile;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
@@ -238,5 +242,76 @@ final class BasicIntegrationTest extends TestCase
             );
 
         self::assertSame(['name' => 'John99'], $state);
+    }
+
+    public function testCommandBus(): void
+    {
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            DefaultHeadersSerializer::createFromPaths([
+                __DIR__ . '/Header',
+            ]),
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]),
+            $store,
+            null,
+            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            new FooMessageDecorator(),
+        );
+
+        $profileProjection = new ProfileProjector($this->connection);
+
+        $engine = new DefaultSubscriptionEngine(
+            $store,
+            new InMemorySubscriptionStore(),
+            new MetadataSubscriberAccessorRepository([
+                $profileProjection,
+                new SendEmailProcessor(),
+            ]),
+        );
+
+        $manager = new RunSubscriptionEngineRepositoryManager(
+            $manager,
+            $engine,
+        );
+
+        $commandBus = new DefaultCommandBus(
+            new AggregateHandlerProvider($manager),
+        );
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store,
+        );
+
+        $schemaDirector->create();
+        $engine->setup(skipBooting: true);
+
+        $profileId = ProfileId::generate();
+
+        $commandBus->dispatch(new CreateProfile($profileId, 'John'));
+        $commandBus->dispatch(new ChangeProfileName($profileId, 'John Doe'));
+
+        $result = $this->connection->fetchAssociative(
+            'SELECT * FROM projection_profile WHERE id = ?',
+            [$profileId->toString()],
+        );
+
+        self::assertIsArray($result);
+        self::assertArrayHasKey('id', $result);
+        self::assertSame($profileId->toString(), $result['id']);
+        self::assertSame('John Doe', $result['name']);
+
+        $repository = $manager->get(ProfileWithCommands::class);
+        $profile = $repository->load($profileId);
+
+        self::assertInstanceOf(ProfileWithCommands::class, $profile);
+        self::assertEquals($profileId, $profile->aggregateRootId());
+        self::assertSame(2, $profile->playhead());
+        self::assertSame('John Doe', $profile->name());
+        self::assertSame(1, SendEmailMock::count());
     }
 }

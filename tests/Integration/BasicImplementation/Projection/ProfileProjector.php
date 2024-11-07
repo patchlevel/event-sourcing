@@ -10,7 +10,9 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
 
 #[Projector('profile-1')]
 final class ProfileProjector
@@ -45,6 +47,18 @@ final class ProfileProjector
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
+            ],
+        );
+    }
+
+    #[Subscribe(NameChanged::class)]
+    public function handleNameChanged(NameChanged $nameChanged, ProfileId $profileId): void
+    {
+        $this->connection->executeStatement(
+            'UPDATE projection_profile SET name = :name WHERE id = :id;',
+            [
+                'id' => $profileId->toString(),
+                'name' => $nameChanged->name,
             ],
         );
     }
