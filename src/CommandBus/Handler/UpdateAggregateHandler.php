@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\CommandBus\Handler;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
@@ -9,13 +12,12 @@ use ReflectionClass;
 
 final class UpdateAggregateHandler
 {
-    /** @param class-string $aggregateClass */
+    /** @param class-string<AggregateRoot> $aggregateClass */
     public function __construct(
         private readonly RepositoryManager $repositoryManager,
         private readonly string $aggregateClass,
         private readonly string $methodName,
-    )
-    {
+    ) {
     }
 
     public function __invoke(object $command): void
@@ -44,6 +46,6 @@ final class UpdateAggregateHandler
             return $property->getValue($command);
         }
 
-        throw new RuntimeException('No id found for aggregate ' . $reflectionClass->getName());
+        throw new AggregateIdNotFound($command::class);
     }
 }

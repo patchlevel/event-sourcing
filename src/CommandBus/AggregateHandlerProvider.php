@@ -12,7 +12,6 @@ use Patchlevel\EventSourcing\CommandBus\Handler\UpdateAggregateHandler;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use ReflectionClass;
 use ReflectionMethod;
-use RuntimeException;
 
 final class AggregateHandlerProvider implements HandlerProvider
 {
@@ -26,7 +25,6 @@ final class AggregateHandlerProvider implements HandlerProvider
         $aggregateClass = $this->aggregateClass($command::class);
 
         $reflectionClass = new ReflectionClass($aggregateClass);
-        $repository = $this->repositoryManager->get($aggregateClass);
 
         foreach ($reflectionClass->getMethods() as $method) {
             $attributes = $method->getAttributes(Handle::class);
@@ -52,7 +50,7 @@ final class AggregateHandlerProvider implements HandlerProvider
             );
         }
 
-        throw new RuntimeException('No handler found for command ' . $command::class);
+        throw new HandlerNotFound($command::class);
     }
 
     /**
@@ -66,7 +64,7 @@ final class AggregateHandlerProvider implements HandlerProvider
         $attributes = $reflectionClass->getAttributes(HandledBy::class);
 
         if ($attributes === []) {
-            throw new RuntimeException('No handler found for command ' . $commandClass);
+            throw new HandlerNotFound($commandClass);
         }
 
         $handledBy = $attributes[0]->newInstance();
@@ -74,7 +72,7 @@ final class AggregateHandlerProvider implements HandlerProvider
         return $handledBy->aggregateClass;
     }
 
-    private function handleClass(Handle $handle, ReflectionMethod $reflectionMethod): string
+    private function handleClass(Handle $handle, ReflectionMethod $reflectionMethod): string|null
     {
         if ($handle->commandClass !== null) {
             return $handle->commandClass;
@@ -83,7 +81,7 @@ final class AggregateHandlerProvider implements HandlerProvider
         $parameters = $reflectionMethod->getParameters();
 
         if ($parameters === []) {
-            throw new RuntimeException('Invalid handler method ' . $reflectionMethod->getName());
+            return null;
         }
 
         return $parameters[0]->getType()->getName();
