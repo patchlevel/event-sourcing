@@ -410,6 +410,11 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
         ));
     }
 
+    public function connection(): Connection
+    {
+        return $this->connection;
+    }
+
     private function createTriggerFunctionName(): string
     {
         $tableConfig = explode('.', $this->config['table_name']);

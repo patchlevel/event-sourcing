@@ -32,6 +32,17 @@
       <code><![CDATA[$method->getName()]]></code>
     </MixedMethodCall>
   </file>
+  <file src="src/Message/Pipe.php">
+    <LessSpecificImplementedReturnType>
+      <code><![CDATA[Traversable<Message>]]></code>
+    </LessSpecificImplementedReturnType>
+  </file>
+  <file src="src/Message/Reducer.php">
+    <InvalidPropertyAssignmentValue>
+      <code><![CDATA[$this->handlers]]></code>
+      <code><![CDATA[[]]]></code>
+    </InvalidPropertyAssignmentValue>
+  </file>
   <file src="src/Message/Serializer/DefaultHeadersSerializer.php">
     <MixedArgumentTypeCoercion>
       <code><![CDATA[$headerPayload]]></code>

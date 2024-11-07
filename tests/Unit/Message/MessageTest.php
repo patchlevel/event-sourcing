@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 /** @covers \Patchlevel\EventSourcing\Message\Message */
 final class MessageTest extends TestCase
 {
-    public function testEmptyMessage(): void
+    public function testMessage(): void
     {
         $event = new ProfileCreated(
             ProfileId::fromString('1'),
@@ -28,13 +28,6 @@ final class MessageTest extends TestCase
         $message = new Message($event);
 
         self::assertEquals($event, $message->event());
-    }
-
-    public function testEmptyAllHeaders(): void
-    {
-        $message = Message::create(new class {
-        });
-
         self::assertSame([], $message->headers());
     }
 
@@ -98,6 +91,20 @@ final class MessageTest extends TestCase
         self::assertSame($headers, $message->headers());
     }
 
+    public function testHasHeader(): void
+    {
+        $message = Message::create(new class {
+        })->withHeader(new AggregateHeader(
+            'profile',
+            '1',
+            1,
+            new DateTimeImmutable('2020-05-06 13:34:24'),
+        ));
+
+        self::assertTrue($message->hasHeader(AggregateHeader::class));
+        self::assertFalse($message->hasHeader(ArchivedHeader::class));
+    }
+
     public function testChangeHeader(): void
     {
         $message = Message::create(new class {
@@ -116,6 +123,21 @@ final class MessageTest extends TestCase
             new DateTimeImmutable('2020-05-06 13:34:24'),
         ));
         self::assertSame(2, $message->header(AggregateHeader::class)->playhead);
+    }
+
+    public function testRemoveHeader(): void
+    {
+        $message = Message::create(new class {
+        })->withHeader(new AggregateHeader(
+            'profile',
+            '1',
+            1,
+            new DateTimeImmutable('2020-05-06 13:34:24'),
+        ));
+
+        $message = $message->removeHeader(AggregateHeader::class);
+
+        self::assertFalse($message->hasHeader(AggregateHeader::class));
     }
 
     public function testHeaderNotFound(): void

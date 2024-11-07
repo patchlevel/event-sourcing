@@ -4,20 +4,30 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
+use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Pipe;
+use Patchlevel\EventSourcing\Message\Reducer;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Message\Translator\UntilEventTranslator;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\NameChanged;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjector;
@@ -169,5 +179,64 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame(1, $profile->playhead());
         self::assertSame('John', $profile->name());
         self::assertSame(1, SendEmailMock::count());
+    }
+
+    public function testTempProjection(): void
+    {
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            DefaultHeadersSerializer::createFromPaths([
+                __DIR__ . '/Header',
+            ]),
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+            null,
+            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            new FooMessageDecorator(),
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store,
+        );
+
+        $schemaDirector->create();
+
+        $profileId = ProfileId::generate();
+        $profile = Profile::create($profileId, 'John');
+
+        for ($i = 0; $i < 100; $i++) {
+            $profile->changeName('John' . $i);
+        }
+
+        $repository->save($profile);
+
+        $state = (new Reducer())
+            ->initState(['name' => 'unknown'])
+            ->match([
+                ProfileCreated::class => static function (Message $message): array {
+                    return ['name' => $message->event()->name];
+                },
+                NameChanged::class => static function (Message $message): array {
+                    return ['name' => $message->event()->name];
+                },
+            ])
+            ->reduce(
+                new Pipe(
+                    $store->load(new Criteria(
+                        new AggregateIdCriterion($profileId->toString()),
+                        new AggregateNameCriterion('profile'),
+                    )),
+                    new UntilEventTranslator(new DateTimeImmutable()),
+                ),
+            );
+
+        self::assertSame(['name' => 'John99'], $state);
     }
 }
