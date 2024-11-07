@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\CommandBus;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Attribute\HandledBy;
-use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\CommandBus\Handler\CreateAggregateHandler;
+use Patchlevel\EventSourcing\CommandBus\Handler\UpdateAggregateHandler;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use ReflectionClass;
 use ReflectionMethod;
@@ -43,26 +43,16 @@ final class AggregateHandlerProvider implements HandlerProvider
 
             if ($method->isStatic()) {
                 return new HandlerDescriptor(
-                    static function (...$args) use ($method, $repository): void {
-                        $aggregate = $method->invoke(null, ...$args);
-                        $repository->save($aggregate);
-                    },
+                    new CreateAggregateHandler($this->repositoryManager, $aggregateClass, $method->getName()),
                 );
             }
 
             return new HandlerDescriptor(
-                function (...$args) use ($method, $repository, $command): void {
-                    $aggregateRootId = $this->aggregateRootId($command);
-                    $aggregate = $repository->load($aggregateRootId);
-
-                    $aggregate->{$method->getName()}(...$args);
-
-                    $repository->save($aggregate);
-                },
+                new UpdateAggregateHandler($this->repositoryManager, $aggregateClass, $method->getName()),
             );
         }
 
-        throw new RuntimeException('No handler found for command ' . $commandClass);
+        throw new RuntimeException('No handler found for command ' . $command::class);
     }
 
     /**
@@ -82,23 +72,6 @@ final class AggregateHandlerProvider implements HandlerProvider
         $handledBy = $attributes[0]->newInstance();
 
         return $handledBy->aggregateClass;
-    }
-
-    private function aggregateRootId(object $command): AggregateRootId
-    {
-        $reflectionClass = new ReflectionClass($command);
-
-        foreach ($reflectionClass->getProperties() as $property) {
-            $attributes = $property->getAttributes(Id::class);
-
-            if ($attributes === []) {
-                continue;
-            }
-
-            return $property->getValue($command);
-        }
-
-        throw new RuntimeException('No id found for aggregate ' . $reflectionClass->getName());
     }
 
     private function handleClass(Handle $handle, ReflectionMethod $reflectionMethod): string
