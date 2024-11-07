@@ -99,68 +99,29 @@ $message->header(ApplicationHeader::class);
 ```
 ## Pipe
 
+The `Pipe` is a construct that allows you to chain multiple translators.
+This can be used to manipulate, filter or expand messages or events.
+This can be used for anti-corruption layers, data migration, or to fix errors in the event stream.
+
 ```php
+use Patchlevel\EventSourcing\Message\Pipe;
+use Patchlevel\EventSourcing\Message\Translator\ExcludeEventTranslator;
+use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
+
 $messages = new Pipe(
     $messages,
     new ExcludeEventTranslator([ProfileCreated::class]),
+    new RecalculatePlayheadTranslator(),
 );
 
 foreach ($messages as $message) {
     // do something with the message
 }
 ```
-## Reducer
-
-### Initial state
-
-```php
-$state = (new Reducer())
-    ->initialState(['count' => 0])
-    ->reduce($messages);
-
-// state is ['count' => 0]
-```
-### When
-
-```php
-$state = (new Reducer())
-    ->initialState([
-        'names' => [],
-    ])
-    ->when(
-        ProfileCreated::class,
-        static function (Message $message, array $state): array {
-            $state['names'][] = $message->event()->name;
-            
-            return $state;
-        },
-    )
-    ->reduce($messages);
-
-// state is ['names' => ['foo', 'bar']]
-```
-### Match
-
-```php
-$state = (new Reducer())
-    ->match([
-        ProfileCreated::class => static function (Message $message, array $state): array {
-            return [...$state, $message];
-        },
-    ])
-    ->reduce($messages);
-```
-### Any
-
-
-### Finalize
-
-
-
 ## Translator
 
 Translator can be used to manipulate, filter or expand messages or events.
-This can be used for anti-corruption layers, data migration, or to fix errors in the event stream.
+Translators can also be seen as middlewares.
 
 ### Exclude
 
@@ -250,6 +211,11 @@ use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 
 $translator = new RecalculatePlayheadTranslator();
 ```
+!!! warning
+
+    The `RecalculatePlayheadTranslator` is and need to be stateful.
+    You can't reuse the translator for multiple streams.
+    
 !!! tip
 
     If you migrate your event stream, you can use the `RecalculatePlayheadTranslator` to fix the playhead.
@@ -320,6 +286,93 @@ final class SplitProfileCreatedTranslator implements Translator
     You don't have to migrate the store directly for every change, 
     but you can also use the [upcasting](upcasting.md) feature.
     
+## Reducer
+
+The `Reducer` is a construct that allows you to reduce messages to a state.
+This can be used to build temporal projections or to create a read model.
+
+### Initial state
+
+The initial state is the state that is used at the beginning of the reduction.
+
+```php
+use Patchlevel\EventSourcing\Message\Reducer;
+
+$state = (new Reducer())
+    ->initialState(['count' => 0])
+    ->reduce($messages); // state is ['count' => 0]
+```
+### When
+
+The `when` method is used to define a function that is called when a specific event occurs.
+It gets the message and the current state and returns the new state.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Reducer;
+
+$state = (new Reducer())
+    ->initialState([
+        'names' => [],
+    ])
+    ->when(
+        ProfileCreated::class,
+        static function (Message $message, array $state): array {
+            $state['names'][] = $message->event()->name;
+
+            return $state;
+        },
+    )
+    ->reduce($messages); // state is ['names' => ['foo', 'bar']]
+```
+### Match
+
+You can also use the `match` method to define multiple events at once.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Reducer;
+
+$state = (new Reducer())
+    ->match([
+        ProfileCreated::class => static function (Message $message, array $state): array {
+            return [...$state, $message];
+        },
+    ])
+    ->reduce($messages);
+```
+### Any
+
+If you want to react to any event, you can use the `any` method.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Reducer;
+
+$state = (new Reducer())
+    ->any(
+        static function (Message $message, array $state): array {
+            return [...$state, $message];
+        },
+    )
+    ->reduce($messages);
+```
+### Finalize
+
+If you want to do something with the state after the reduction, you can use the `finalize` method.
+This method gets the state and returns the new state.
+
+```php
+use Patchlevel\EventSourcing\Message\Reducer;
+
+$state = (new Reducer())
+    ->finalize(
+        static function (array $state): array {
+            return ['count' => count($state['messages'])];
+        },
+    )
+    ->reduce($messages); // state is ['count' => 2]
+```
 ## Learn more
 
 * [How to decorate messages](message_decorator.md)
