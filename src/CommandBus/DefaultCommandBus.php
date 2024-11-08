@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus;
 
+use Patchlevel\EventSourcing\CommandBus\Handler\DefaultHandlerFactory;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Psr\Log\LoggerInterface;
 
 use function array_shift;
@@ -44,7 +46,7 @@ final class DefaultCommandBus implements CommandBus
             $this->logger?->debug('CommandBus: Start processing queue.');
 
             while ($command = array_shift($this->queue)) {
-                $handler = $this->handlerProvider->handlerForCommand($command);
+                $handler = $this->handlerProvider->handlerForCommand($command::class);
 
                 ($handler->callable())($command);
             }
@@ -53,5 +55,17 @@ final class DefaultCommandBus implements CommandBus
 
             $this->logger?->debug('CommandBus: Finished processing queue.');
         }
+    }
+
+    public static function createDefault(
+        RepositoryManager $repositoryManager,
+        LoggerInterface|null $logger = null,
+    ): self {
+        return new self(
+            new AggregateHandlerProvider(
+                new DefaultHandlerFactory($repositoryManager),
+            ),
+            $logger,
+        );
     }
 }

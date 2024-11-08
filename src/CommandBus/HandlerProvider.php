@@ -6,5 +6,10 @@ namespace Patchlevel\EventSourcing\CommandBus;
 
 interface HandlerProvider
 {
-    public function handlerForCommand(object $command): HandlerDescriptor;
+    /**
+     * @param class-string $commandClass
+     *
+     * @throws HandlerNotFound
+     */
+    public function handlerForCommand(string $commandClass): HandlerDescriptor;
 }

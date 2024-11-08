@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\CommandBus\AggregateHandlerProvider;
 use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Pipe;
@@ -278,9 +277,7 @@ final class BasicIntegrationTest extends TestCase
             $engine,
         );
 
-        $commandBus = new DefaultCommandBus(
-            new AggregateHandlerProvider($manager),
-        );
+        $commandBus = DefaultCommandBus::createDefault($manager);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,

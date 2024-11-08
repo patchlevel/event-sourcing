@@ -7,22 +7,25 @@ namespace Patchlevel\EventSourcing\CommandBus;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Attribute\HandledBy;
-use Patchlevel\EventSourcing\CommandBus\Handler\CreateAggregateHandler;
-use Patchlevel\EventSourcing\CommandBus\Handler\UpdateAggregateHandler;
-use Patchlevel\EventSourcing\Repository\RepositoryManager;
+use Patchlevel\EventSourcing\CommandBus\Handler\DefaultHandlerFactory;
 use ReflectionClass;
 use ReflectionMethod;
 
 final class AggregateHandlerProvider implements HandlerProvider
 {
     public function __construct(
-        private readonly RepositoryManager $repositoryManager,
+        private readonly DefaultHandlerFactory $handlerFactory,
     ) {
     }
 
-    public function handlerForCommand(object $command): HandlerDescriptor
+    /**
+     * @param class-string $commandClass
+     *
+     * @throws HandlerNotFound
+     */
+    public function handlerForCommand(string $commandClass): HandlerDescriptor
     {
-        $aggregateClass = $this->aggregateClass($command::class);
+        $aggregateClass = $this->aggregateClass($commandClass);
 
         $reflectionClass = new ReflectionClass($aggregateClass);
 
@@ -35,22 +38,18 @@ final class AggregateHandlerProvider implements HandlerProvider
 
             $handleClass = $this->handleClass($attributes[0]->newInstance(), $method);
 
-            if ($handleClass !== $command::class) {
+            if ($handleClass !== $commandClass) {
                 continue;
             }
 
             if ($method->isStatic()) {
-                return new HandlerDescriptor(
-                    new CreateAggregateHandler($this->repositoryManager, $aggregateClass, $method->getName()),
-                );
+                return new HandlerDescriptor($this->handlerFactory->createHandler($aggregateClass, $method->getName()));
             }
 
-            return new HandlerDescriptor(
-                new UpdateAggregateHandler($this->repositoryManager, $aggregateClass, $method->getName()),
-            );
+            return new HandlerDescriptor($this->handlerFactory->updateHandler($aggregateClass, $method->getName()));
         }
 
-        throw new HandlerNotFound($command::class);
+        throw new HandlerNotFound($commandClass);
     }
 
     /**
