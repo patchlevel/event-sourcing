@@ -87,7 +87,7 @@ docs: mkdocs                                                                    
 	cd docs && python3 -m mkdocs serve
 
 .PHONY: mkdocs
-mkdocs:                                                                         ## run mkdocs
+mkdocs:                                                                         ## install mkdocs
 	cd docs && pip3 install -r requirements.txt
 
 .PHONY: docs-extract-php

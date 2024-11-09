@@ -109,6 +109,8 @@ nav:
     - Time / Clock: clock.md
     - Testing: testing.md
     - CLI: cli.md
+  - Supported Versions: supported-versions.md
+  - Our BC Promise: our-backward-compatibility-promise.md
   - Upgrade from 2.x: UPGRADE-3.0.md
   - Links:
     - Blog: https://patchlevel.de/blog
