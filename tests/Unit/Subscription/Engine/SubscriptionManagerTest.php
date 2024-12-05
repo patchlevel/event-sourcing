@@ -109,7 +109,7 @@ final class SubscriptionManagerTest extends TestCase
         $manager = new SubscriptionManager($store->reveal());
         $result = $manager->find($criteria);
 
-        self::assertSame([$subscription], iterator_to_array($result));
+        self::assertSame([$subscription], $result);
     }
 
     public function testFindForUpdateWithoutLock(): void
