@@ -16,12 +16,16 @@ use function array_key_exists;
 use function array_map;
 use function array_merge;
 
+/** @template T of object */
 final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscriberAccessor
 {
     /** @var array<class-string, list<Closure(Message):void>> */
     private array $subscribeCache = [];
 
-    /** @param list<ArgumentResolver> $argumentResolvers */
+    /**
+     * @param T                      $subscriber
+     * @param list<ArgumentResolver> $argumentResolvers
+     */
     public function __construct(
         private readonly object $subscriber,
         private readonly SubscriberMetadata $metadata,
@@ -29,16 +33,30 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
     ) {
     }
 
+    public function metadata(): SubscriberMetadata
+    {
+        return $this->metadata;
+    }
+
+    /** @return T */
+    public function subscriber(): object
+    {
+        return $this->subscriber;
+    }
+
+    /** @deprecated use `->metadata()->id` instead */
     public function id(): string
     {
         return $this->metadata->id;
     }
 
+    /** @deprecated use `->metadata()->group` instead */
     public function group(): string
     {
         return $this->metadata->group;
     }
 
+    /** @deprecated use `->metadata()->runMode` instead */
     public function runMode(): RunMode
     {
         return $this->metadata->runMode;
@@ -139,6 +157,11 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
         return $resolvers;
     }
 
+    /**
+     * @deprecated use `->metadata()` instead
+     *
+     * @return T
+     */
     public function realSubscriber(): object
     {
         return $this->subscriber;

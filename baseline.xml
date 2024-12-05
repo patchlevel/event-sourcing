@@ -113,6 +113,11 @@
       <code><![CDATA[$data['playhead'] === null ? null : (int)$data['playhead']]]></code>
     </ArgumentTypeCoercion>
   </file>
+  <file src="src/Subscription/Engine/DefaultSubscriptionEngine.php">
+    <DeprecatedInterface>
+      <code><![CDATA[SubscriberAccessor|null]]></code>
+    </DeprecatedInterface>
+  </file>
   <file src="src/Subscription/Store/DoctrineSubscriptionStore.php">
     <MixedArgument>
       <code><![CDATA[$context]]></code>
@@ -126,6 +131,10 @@
     </PossiblyNullPropertyFetch>
   </file>
   <file src="src/Subscription/Subscriber/MetadataSubscriberAccessor.php">
+    <DeprecatedInterface>
+      <code><![CDATA[MetadataSubscriberAccessor]]></code>
+      <code><![CDATA[MetadataSubscriberAccessor]]></code>
+    </DeprecatedInterface>
     <MixedAssignment>
       <code><![CDATA[$arguments[]]]></code>
     </MixedAssignment>
@@ -134,6 +143,12 @@
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$methodName]]></code>
     </MixedMethodCall>
+  </file>
+  <file src="src/Subscription/Subscriber/SubscriberAccessorRepository.php">
+    <DeprecatedInterface>
+      <code><![CDATA[SubscriberAccessor|null]]></code>
+      <code><![CDATA[iterable<SubscriberAccessor>]]></code>
+    </DeprecatedInterface>
   </file>
   <file src="tests/Benchmark/PersonalDataBench.php">
     <MissingConstructor>
@@ -353,5 +368,13 @@
     <PossiblyUndefinedArrayOffset>
       <code><![CDATA[$update1]]></code>
     </PossiblyUndefinedArrayOffset>
+  </file>
+  <file src="tests/Unit/Subscription/Subscriber/MetadataSubscriberAccessorTest.php">
+    <DeprecatedMethod>
+      <code><![CDATA[group]]></code>
+      <code><![CDATA[id]]></code>
+      <code><![CDATA[realSubscriber]]></code>
+      <code><![CDATA[runMode]]></code>
+    </DeprecatedMethod>
   </file>
 </files>

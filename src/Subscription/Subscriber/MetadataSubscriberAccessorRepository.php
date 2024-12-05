@@ -20,7 +20,7 @@ use function iterator_to_array;
 
 final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRepository
 {
-    /** @var array<string, SubscriberAccessor> */
+    /** @var array<string, MetadataSubscriberAccessor> */
     private array $subscribersMap = [];
 
     /** @var list<ArgumentResolver> $argumentResolvers */
@@ -47,20 +47,20 @@ final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRe
         );
     }
 
-    /** @return iterable<SubscriberAccessor> */
+    /** @return iterable<MetadataSubscriberAccessor> */
     public function all(): iterable
     {
         return array_values($this->subscriberAccessorMap());
     }
 
-    public function get(string $id): SubscriberAccessor|null
+    public function get(string $id): MetadataSubscriberAccessor|null
     {
         $map = $this->subscriberAccessorMap();
 
         return $map[$id] ?? null;
     }
 
-    /** @return array<string, SubscriberAccessor> */
+    /** @return array<string, MetadataSubscriberAccessor> */
     private function subscriberAccessorMap(): array
     {
         if ($this->subscribersMap !== []) {

@@ -11,10 +11,6 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
-use Patchlevel\EventSourcing\Debug\Trace\TraceableSubscriberAccessorRepository;
-use Patchlevel\EventSourcing\Debug\Trace\TraceDecorator;
-use Patchlevel\EventSourcing\Debug\Trace\TraceHeader;
-use Patchlevel\EventSourcing\Debug\Trace\TraceStack;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
@@ -478,20 +474,14 @@ final class SubscriptionTest extends TestCase
             $clock,
         );
 
-        $traceStack = new TraceStack();
-
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             null,
             null,
-            new TraceDecorator($traceStack),
         );
 
-        $subscriberAccessorRepository = new TraceableSubscriberAccessorRepository(
-            new MetadataSubscriberAccessorRepository([new ProfileProcessor($manager)]),
-            $traceStack,
-        );
+        $subscriberAccessorRepository = new MetadataSubscriberAccessorRepository([new ProfileProcessor($manager)]);
 
         $repository = $manager->get(Profile::class);
 
@@ -547,16 +537,6 @@ final class SubscriptionTest extends TestCase
 
         self::assertCount(3, $messages);
         self::assertArrayHasKey(2, $messages);
-
-        self::assertEquals(
-            new TraceHeader([
-                [
-                    'name' => 'profile',
-                    'category' => 'event_sourcing/subscriber/processor',
-                ],
-            ]),
-            $messages[2]->header(TraceHeader::class),
-        );
     }
 
     public function testBlueGreenDeployment(): void
