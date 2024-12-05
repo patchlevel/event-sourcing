@@ -8,6 +8,7 @@ use Closure;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 
+/** @deprecated will be removed, use MetadataSubscriberAccessor directly */
 interface SubscriberAccessor
 {
     public function id(): string;
