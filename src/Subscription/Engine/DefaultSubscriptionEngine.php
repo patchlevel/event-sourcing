@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
+use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Clock\SystemClock;
+use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
@@ -14,13 +19,16 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\RealSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+use function array_key_exists;
 use function count;
 use function sprintf;
 
@@ -35,12 +43,16 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private readonly MessageLoader $messageLoader;
 
+    /** @var array<string, bool> */
+    private array $delaying = [];
+
     public function __construct(
         Store|MessageLoader $messageStore,
         SubscriptionStore $subscriptionStore,
         private readonly SubscriberAccessorRepository $subscriberRepository,
         private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
         private readonly LoggerInterface|null $logger = null,
+        private readonly ClockInterface $clock = new SystemClock(),
     ) {
         if ($messageStore instanceof MessageLoader) {
             $this->messageLoader = $messageStore;
@@ -160,6 +172,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->processing = true;
         $this->batching = [];
+        $this->delaying = [];
 
         try {
             $criteria ??= new SubscriptionEngineCriteria();
@@ -218,6 +231,17 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                             $subscription->id(),
                                             $subscription->position(),
                                             $index,
+                                        ),
+                                    );
+
+                                    continue;
+                                }
+
+                                if ($this->shouldDelay($subscription, $message)) {
+                                    $this->logger?->debug(
+                                        sprintf(
+                                            'Subscription Engine: Subscription "%s" is delayed, skip processing.',
+                                            $subscription->id(),
                                         ),
                                     );
 
@@ -332,6 +356,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->processing = true;
         $this->batching = [];
+        $this->delaying = [];
 
         try {
             $criteria ??= new SubscriptionEngineCriteria();
@@ -389,6 +414,17 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                             $subscription->id(),
                                             $subscription->position(),
                                             $index,
+                                        ),
+                                    );
+
+                                    continue;
+                                }
+
+                                if ($this->shouldDelay($subscription, $message)) {
+                                    $this->logger?->debug(
+                                        sprintf(
+                                            'Subscription Engine: Subscription "%s" is delayed, skip processing.',
+                                            $subscription->id(),
                                         ),
                                     );
 
@@ -1108,5 +1144,53 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         return $this->batching[$subscription->id()]->forceCommit();
+    }
+
+    private function shouldDelay(Subscription $subscription, Message $message): bool
+    {
+        if (array_key_exists($subscription->id(), $this->delaying)) {
+            return $this->delaying[$subscription->id()];
+        }
+
+        $subscriber = $this->subscriber($subscription->id());
+
+        if (!$subscriber instanceof MetadataSubscriberAccessor) {
+            $this->delaying[$subscription->id()] = false;
+
+            return false;
+        }
+
+        $delay = $subscriber->metadata()->delay;
+
+        if ($delay === null) {
+            $this->delaying[$subscription->id()] = false;
+
+            return false;
+        }
+
+        $recordedOn = $this->recordedOn($message);
+
+        if ($recordedOn === null) {
+            return false;
+        }
+
+        $threshold = $this->clock->now()->sub($delay);
+
+        if ($recordedOn > $threshold) {
+            return false;
+        }
+
+        $this->delaying[$subscription->id()] = true;
+
+        return true;
+    }
+
+    private function recordedOn(Message $message): DateTimeImmutable|null
+    {
+        try {
+            return $message->header(AggregateHeader::class)->recordedOn;
+        } catch (HeaderNotFound) {
+            return $message->header(StreamHeader::class)->recordedOn;
+        }
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
+use DateInterval;
+use Patchlevel\EventSourcing\Attribute\Delay;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -87,6 +89,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $subscribeMethods,
             $setupMethod,
             $teardownMethod,
+            $this->delay($reflector),
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;
@@ -127,5 +130,18 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $method->getName(),
             $arguments,
         );
+    }
+
+    private function delay(ReflectionClass $reflector): DateInterval|null
+    {
+        $attributes = $reflector->getAttributes(Delay::class);
+
+        if ($attributes === []) {
+            return null;
+        }
+
+        $instance = $attributes[0]->newInstance();
+
+        return $instance->delay;
     }
 }

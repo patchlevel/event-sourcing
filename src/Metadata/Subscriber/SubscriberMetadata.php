@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
+use DateInterval;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
@@ -17,6 +18,7 @@ final class SubscriberMetadata
         public readonly array $subscribeMethods = [],
         public readonly string|null $setupMethod = null,
         public readonly string|null $teardownMethod = null,
+        public readonly DateInterval|null $delay = null,
     ) {
     }
 }
