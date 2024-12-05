@@ -45,7 +45,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         if ($messageStore instanceof MessageLoader) {
             $this->messageLoader = $messageStore;
         } else {
-            $this->messageLoader = new DefaultMessageLoader($messageStore);
+            $this->messageLoader = new StoreMessageLoader($messageStore);
         }
 
         $this->subscriptionManager = new SubscriptionManager($subscriptionStore);

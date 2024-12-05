@@ -16,7 +16,7 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 
 use function array_keys;
 
-final class EventFilteredMessageLoader implements MessageLoader
+final class EventFilteredStoreMessageLoader implements MessageLoader
 {
     public function __construct(
         private readonly Store $store,

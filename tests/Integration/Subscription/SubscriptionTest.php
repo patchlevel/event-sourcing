@@ -22,7 +22,7 @@ use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -97,7 +97,7 @@ final class SubscriptionTest extends TestCase
         $subscriberRepository = new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]);
 
         $engine = new DefaultSubscriptionEngine(
-            new EventFilteredMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
             $subscriptionStore,
             $subscriberRepository,
         );

@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
-final class DefaultMessageLoader implements MessageLoader
+final class StoreMessageLoader implements MessageLoader
 {
     public function __construct(
         private readonly Store $store,
