@@ -18,11 +18,11 @@ cs: vendor                                                                      
 
 .PHONY: phpstan
 phpstan: vendor                                                                 ## run phpstan static code analyser
-	vendor/bin/phpstan analyse
+	php -d memory_limit=312M vendor/bin/phpstan analyse
 
 .PHONY: phpstan-baseline
 phpstan-baseline: vendor                                                        ## run phpstan static code analyser
-	vendor/bin/phpstan analyse --generate-baseline
+	php -d memory_limit=312M vendor/bin/phpstan analyse --generate-baseline
 
 .PHONY: psalm
 psalm: vendor                                                                   ## run psalm static code analyser
