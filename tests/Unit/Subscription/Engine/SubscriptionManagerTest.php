@@ -13,6 +13,8 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+use function iterator_to_array;
+
 /** @covers \Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager */
 final class SubscriptionManagerTest extends TestCase
 {
@@ -126,7 +128,7 @@ final class SubscriptionManagerTest extends TestCase
             return $subscriptions;
         });
 
-        self::assertSame([$subscription], $result);
+        self::assertSame([$subscription], iterator_to_array($result));
     }
 
     public function testFindForUpdateWithLock(): void
@@ -151,6 +153,6 @@ final class SubscriptionManagerTest extends TestCase
             return $subscriptions;
         });
 
-        self::assertSame([$subscription], $result);
+        self::assertSame([$subscription], iterator_to_array($result));
     }
 }

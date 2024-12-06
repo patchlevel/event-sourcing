@@ -32,7 +32,7 @@ final class SubscriptionManager
     }
 
     /**
-     * @param Closure(list<Subscription>):T $closure
+     * @param Closure(SubscriptionCollection):T $closure
      *
      * @return T
      *
@@ -42,7 +42,11 @@ final class SubscriptionManager
     {
         if (!$this->subscriptionStore instanceof LockableSubscriptionStore) {
             try {
-                return $closure($this->subscriptionStore->find($criteria));
+                return $closure(
+                    new SubscriptionCollection(
+                        $this->subscriptionStore->find($criteria),
+                    ),
+                );
             } finally {
                 $this->flush();
             }
@@ -52,7 +56,11 @@ final class SubscriptionManager
         /** @return T */
             function () use ($closure, $criteria): mixed {
                 try {
-                    return $closure($this->subscriptionStore->find($criteria));
+                    return $closure(
+                        new SubscriptionCollection(
+                            $this->subscriptionStore->find($criteria),
+                        ),
+                    );
                 } finally {
                     $this->flush();
                 }

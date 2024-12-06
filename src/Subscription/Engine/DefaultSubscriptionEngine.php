@@ -62,7 +62,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 groups: $criteria->groups,
                 status: [Status::New],
             ),
-            function (array $subscriptions) use ($skipBooting): Result {
+            function (SubscriptionCollection $subscriptions) use ($skipBooting): Result {
                 if (count($subscriptions) === 0) {
                     $this->logger?->info('Subscription Engine: No subscriptions to setup, finish setup.');
 
@@ -171,14 +171,14 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     groups: $criteria->groups,
                     status: [Status::Booting],
                 ),
-                function ($subscriptions) use ($limit): ProcessedResult {
+                function (SubscriptionCollection $subscriptions) use ($limit): ProcessedResult {
                     if (count($subscriptions) === 0) {
                         $this->logger?->info('Subscription Engine: No subscriptions in booting status, finish booting.');
 
                         return new ProcessedResult(0, true);
                     }
 
-                    $startIndex = $this->lowestSubscriptionPosition($subscriptions);
+                    $startIndex = $subscriptions->lowestPosition();
 
                     $this->logger?->debug(
                         sprintf(
@@ -198,6 +198,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         );
 
                         foreach ($stream as $message) {
+                            $messageCounter++;
+
                             $index = $stream->index();
 
                             if ($index === null) {
@@ -205,10 +207,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             }
 
                             foreach ($subscriptions as $subscription) {
-                                if (!$subscription->isBooting()) {
-                                    continue;
-                                }
-
                                 if ($subscription->position() >= $index) {
                                     $this->logger?->debug(
                                         sprintf(
@@ -229,9 +227,17 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 }
 
                                 $errors[] = $error;
-                            }
 
-                            $messageCounter++;
+                                $subscriptions->remove($subscription);
+
+                                if (count($subscriptions) === 0) {
+                                    $this->logger?->info(
+                                        'Subscription Engine: No subscriptions in booting status, finish booting.',
+                                    );
+
+                                    break 2;
+                                }
+                            }
 
                             $this->logger?->debug(
                                 sprintf(
@@ -265,6 +271,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
                                 if ($error) {
                                     $errors[] = $error;
+
+                                    $subscriptions->remove($subscription);
                                 }
 
                                 $this->subscriptionManager->update($subscription);
@@ -275,10 +283,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $this->logger?->debug('Subscription Engine: End of stream for booting has been reached.');
 
                     foreach ($subscriptions as $subscription) {
-                        if (!$subscription->isBooting()) {
-                            continue;
-                        }
-
                         if ($subscription->runMode() === RunMode::Once) {
                             $subscription->finished();
                             $this->subscriptionManager->update($subscription);
@@ -340,14 +344,14 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     groups: $criteria->groups,
                     status: [Status::Active],
                 ),
-                function (array $subscriptions) use ($limit): ProcessedResult {
+                function (SubscriptionCollection $subscriptions) use ($limit): ProcessedResult {
                     if (count($subscriptions) === 0) {
                         $this->logger?->info('Subscription Engine: No subscriptions to process, finish processing.');
 
                         return new ProcessedResult(0, true);
                     }
 
-                    $startIndex = $this->lowestSubscriptionPosition($subscriptions);
+                    $startIndex = $subscriptions->lowestPosition();
 
                     $this->logger?->debug(
                         sprintf(
@@ -366,6 +370,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         $stream = $this->messageStore->load($criteria);
 
                         foreach ($stream as $message) {
+                            $messageCounter++;
+
                             $index = $stream->index();
 
                             if ($index === null) {
@@ -373,10 +379,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                             }
 
                             foreach ($subscriptions as $subscription) {
-                                if (!$subscription->isActive()) {
-                                    continue;
-                                }
-
                                 if ($subscription->position() >= $index) {
                                     $this->logger?->debug(
                                         sprintf(
@@ -397,9 +399,17 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 }
 
                                 $errors[] = $error;
-                            }
 
-                            $messageCounter++;
+                                $subscriptions->remove($subscription);
+
+                                if (count($subscriptions) === 0) {
+                                    $this->logger?->info(
+                                        'Subscription Engine: No subscriptions in booting status, finish booting.',
+                                    );
+
+                                    break 2;
+                                }
+                            }
 
                             $this->logger?->debug(sprintf(
                                 'Subscription Engine: Current event stream position: %s',
@@ -427,6 +437,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
                                 if ($error) {
                                     $errors[] = $error;
+
+                                    $subscriptions->remove($subscription);
                                 }
 
                                 $this->subscriptionManager->update($subscription);
@@ -435,10 +447,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     }
 
                     foreach ($subscriptions as $subscription) {
-                        if (!$subscription->isActive()) {
-                            continue;
-                        }
-
                         if ($subscription->runMode() !== RunMode::Once) {
                             continue;
                         }
@@ -481,7 +489,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 groups: $criteria->groups,
                 status: [Status::Detached],
             ),
-            function (array $subscriptions): Result {
+            function (SubscriptionCollection $subscriptions): Result {
                 /** @var list<Error> $errors */
                 $errors = [];
 
@@ -570,7 +578,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 ids: $criteria->ids,
                 groups: $criteria->groups,
             ),
-            function (array $subscriptions): Result {
+            function (SubscriptionCollection $subscriptions): Result {
                 /** @var list<Error> $errors */
                 $errors = [];
 
@@ -662,7 +670,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     Status::Finished,
                 ],
             ),
-            function (array $subscriptions): Result {
+            function (SubscriptionCollection $subscriptions): Result {
                 foreach ($subscriptions as $subscription) {
                     $subscriber = $this->subscriber($subscription->id());
 
@@ -725,7 +733,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     Status::Error,
                 ],
             ),
-            function (array $subscriptions): Result {
+            function (SubscriptionCollection $subscriptions): Result {
                 /** @var Subscription $subscription */
                 foreach ($subscriptions as $subscription) {
                     $subscriber = $this->subscriber($subscription->id());
@@ -868,7 +876,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 groups: $criteria->groups,
                 status: [Status::Active, Status::Paused, Status::Finished],
             ),
-            function (array $subscriptions): void {
+            function (SubscriptionCollection $subscriptions): void {
                 foreach ($subscriptions as $subscription) {
                     $subscriber = $this->subscriber($subscription->id());
 
@@ -898,7 +906,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 groups: $criteria->groups,
                 status: [Status::Error],
             ),
-            function (array $subscriptions): void {
+            function (SubscriptionCollection $subscriptions): void {
                 /** @var Subscription $subscription */
                 foreach ($subscriptions as $subscription) {
                     $error = $subscription->subscriptionError();
@@ -941,7 +949,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     {
         $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(),
-            function (array $subscriptions): void {
+            function (SubscriptionCollection $subscriptions): void {
                 $latestIndex = null;
 
                 foreach ($this->subscriberRepository->all() as $subscriber) {
@@ -984,26 +992,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $stream = $this->messageStore->load(null, 1, null, true);
 
         return $stream->index() ?: 0;
-    }
-
-    /** @param list<Subscription> $subscriptions */
-    private function lowestSubscriptionPosition(array $subscriptions): int
-    {
-        $min = null;
-
-        foreach ($subscriptions as $subscription) {
-            if ($min !== null && $subscription->position() >= $min) {
-                continue;
-            }
-
-            $min = $subscription->position();
-        }
-
-        if ($min === null) {
-            return 0;
-        }
-
-        return $min;
     }
 
     private function handleError(Subscription $subscription, Throwable $throwable): void

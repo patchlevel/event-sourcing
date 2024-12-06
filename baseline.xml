@@ -369,6 +369,13 @@
       <code><![CDATA[$update1]]></code>
     </PossiblyUndefinedArrayOffset>
   </file>
+  <file src="tests/Unit/Subscription/Engine/SubscriptionManagerTest.php">
+    <InvalidArgument>
+      <code><![CDATA[$result]]></code>
+      <code><![CDATA[$subscriptions]]></code>
+      <code><![CDATA[$subscriptions]]></code>
+    </InvalidArgument>
+  </file>
   <file src="tests/Unit/Subscription/Subscriber/MetadataSubscriberAccessorTest.php">
     <DeprecatedMethod>
       <code><![CDATA[group]]></code>
