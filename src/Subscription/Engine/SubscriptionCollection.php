@@ -64,4 +64,10 @@ final class SubscriptionCollection implements IteratorAggregate, Countable
 
         return $min;
     }
+
+    /** @return list<Subscription> */
+    public function toArray(): array
+    {
+        return $this->subscriptions;
+    }
 }

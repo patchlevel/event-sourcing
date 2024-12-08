@@ -199,7 +199,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $messageCounter = 0;
 
                     try {
-                        $stream = $this->messageLoader->load($startIndex, $subscriptions);
+                        $stream = $this->messageLoader->load($startIndex, $subscriptions->toArray());
 
                         foreach ($stream as $message) {
                             $messageCounter++;
@@ -370,7 +370,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $messageCounter = 0;
 
                     try {
-                        $stream = $this->messageLoader->load($startIndex, $subscriptions);
+                        $stream = $this->messageLoader->load($startIndex, $subscriptions->toArray());
 
                         foreach ($stream as $message) {
                             $messageCounter++;
