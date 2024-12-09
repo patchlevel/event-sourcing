@@ -7,6 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 use Patchlevel\EventSourcing\Attribute\HandledBy;
 
 #[HandledBy(ProfileWithHandlers::class)]
-class NoTypeCommand
+final class NoTypeCommand
 {
 }

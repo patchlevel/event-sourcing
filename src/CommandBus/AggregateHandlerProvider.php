@@ -72,7 +72,10 @@ final class AggregateHandlerProvider implements HandlerProvider
         return $handledBy->aggregateClass;
     }
 
-    private function handleClass(Handle $handle, ReflectionMethod $reflectionMethod): string|null
+    /**
+     * @return class-string
+     */
+    private function handleClass(Handle $handle, ReflectionMethod $reflectionMethod): string
     {
         $parameters = $reflectionMethod->getParameters();
 
@@ -93,7 +96,7 @@ final class AggregateHandlerProvider implements HandlerProvider
             return $type->getName();
         }
 
-        throw InvalidHandleMethod::noType(
+        throw InvalidHandleMethod::incompatibleType(
             $reflectionMethod->getDeclaringClass()->getName(),
             $reflectionMethod->getName(),
         );

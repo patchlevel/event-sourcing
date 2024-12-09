@@ -16,8 +16,14 @@ final class ProfileWithHandlers extends BasicAggregateRoot
     private ProfileId $id;
 
     #[Handle]
-    public static function create(CreateProfile $command): void
+    public static function create(CreateProfile $command): self
     {
+        return new self();
+    }
+
+    public static function createEmpty(): self
+    {
+        return new self();
     }
 
     #[Handle]

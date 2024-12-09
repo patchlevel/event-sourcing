@@ -15,7 +15,7 @@ final class InvalidHandleMethod extends InvalidArgumentException
         return new self(sprintf('Method "%s" in aggregate "%s" has no parameters', $method, $aggregateClass));
     }
 
-    public static function noType(string $aggregateClass, string $method): self
+    public static function incompatibleType(string $aggregateClass, string $method): self
     {
         return new self(sprintf('Method "%s" in aggregate "%s" has no compatible type', $method, $aggregateClass));
     }

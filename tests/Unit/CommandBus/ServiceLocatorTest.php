@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Clock\ClockInterface;
 
 /** @covers \Patchlevel\EventSourcing\CommandBus\ServiceLocator */
-class ServiceLocatorTest extends TestCase
+final class ServiceLocatorTest extends TestCase
 {
     public function testGetService(): void
     {

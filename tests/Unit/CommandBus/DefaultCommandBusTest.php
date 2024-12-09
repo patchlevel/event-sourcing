@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\CommandBus\DefaultCommandBus */
-class DefaultCommandBusTest extends TestCase
+final class DefaultCommandBusTest extends TestCase
 {
     use ProphecyTrait;
 

@@ -18,7 +18,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use stdClass;
 
 /** @covers \Patchlevel\EventSourcing\CommandBus\AggregateHandlerProvider */
-class AggregateHandlerProviderTest extends TestCase
+final class AggregateHandlerProviderTest extends TestCase
 {
     use ProphecyTrait;
 

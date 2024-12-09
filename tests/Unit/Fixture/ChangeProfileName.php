@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Attribute\HandledBy;
 use Patchlevel\EventSourcing\Attribute\Id;
 
 #[HandledBy(ProfileWithHandlers::class)]
-class ChangeProfileName
+final class ChangeProfileName
 {
     public function __construct(
         #[Id]
