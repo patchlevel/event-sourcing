@@ -46,8 +46,8 @@
             "type": "library",
             "extra": {
                 "thanks": {
-                    "name": "hhvm/hsl",
-                    "url": "https://github.com/hhvm/hsl"
+                    "url": "https://github.com/hhvm/hsl",
+                    "name": "hhvm/hsl"
                 }
             },
             "autoload": {
