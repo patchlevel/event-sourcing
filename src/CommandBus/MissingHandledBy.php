@@ -8,10 +8,10 @@ use RuntimeException;
 
 use function sprintf;
 
-final class HandlerNotFound extends RuntimeException
+final class MissingHandledBy extends RuntimeException
 {
     public function __construct(string $commandClass)
     {
-        parent::__construct(sprintf('Handler for command "%s" not found', $commandClass));
+        parent::__construct(sprintf('Missing #[HandledBy] attribute for command "%s"', $commandClass));
     }
 }

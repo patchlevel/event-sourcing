@@ -26,6 +26,7 @@ final class DefaultCommandBus implements CommandBus
         $this->processing = false;
     }
 
+    /** @throws HandlerNotFound */
     public function dispatch(object $command): void
     {
         $this->logger?->debug(sprintf(
