@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c2224a1076fbef35e7ec7873bc9e1aa9",
+    "content-hash": "1c60b6a93e62fbf5b1b23c1117433bf1",
     "packages": [
         {
             "name": "brick/math",
@@ -415,21 +415,22 @@
         },
         {
             "name": "patchlevel/hydrator",
-            "version": "1.5.1",
+            "version": "1.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/patchlevel/hydrator.git",
-                "reference": "b2cc966bca642569f0dc6cd74cc77c34de52b7a9"
+                "reference": "484ed357e0647c01b4f6d4d4dc0d9732daa11dac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/b2cc966bca642569f0dc6cd74cc77c34de52b7a9",
-                "reference": "b2cc966bca642569f0dc6cd74cc77c34de52b7a9",
+                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/484ed357e0647c01b4f6d4d4dc0d9732daa11dac",
+                "reference": "484ed357e0647c01b4f6d4d4dc0d9732daa11dac",
                 "shasum": ""
             },
             "require": {
                 "ext-openssl": "*",
-                "php": "~8.1.0 || ~8.2.0  || ~8.3.0"
+                "php": "~8.2.0  || ~8.3.0",
+                "symfony/type-info": "^7.2.2"
             },
             "require-dev": {
                 "cspray/phinal": "^2.0.0",
@@ -437,7 +438,7 @@
                 "patchlevel/coding-standard": "^1.3.0",
                 "phpbench/phpbench": "^1.2.15",
                 "phpspec/prophecy-phpunit": "^2.1.0",
-                "phpstan/phpstan": "^1.10.49",
+                "phpstan/phpstan": "^2.1.0",
                 "phpunit/phpunit": "^10.5.2",
                 "psalm/plugin-phpunit": "^0.19.0",
                 "psr/cache": "^2.0.0|^3.0.0",
@@ -474,9 +475,9 @@
             ],
             "support": {
                 "issues": "https://github.com/patchlevel/hydrator/issues",
-                "source": "https://github.com/patchlevel/hydrator/tree/1.5.1"
+                "source": "https://github.com/patchlevel/hydrator/tree/1.6.0"
             },
-            "time": "2024-10-15T11:28:23+00:00"
+            "time": "2025-01-02T11:56:20+00:00"
         },
         {
             "name": "patchlevel/worker",
@@ -1952,6 +1953,81 @@
                 }
             ],
             "time": "2024-11-13T13:31:26+00:00"
+        },
+        {
+            "name": "symfony/type-info",
+            "version": "v7.2.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/type-info.git",
+                "reference": "3b5a17470fff0034f25fd4287cbdaa0010d2f749"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/type-info/zipball/3b5a17470fff0034f25fd4287cbdaa0010d2f749",
+                "reference": "3b5a17470fff0034f25fd4287cbdaa0010d2f749",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2",
+                "psr/container": "^1.1|^2.0"
+            },
+            "require-dev": {
+                "phpstan/phpdoc-parser": "^1.0|^2.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\TypeInfo\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mathias Arlaud",
+                    "email": "mathias.arlaud@gmail.com"
+                },
+                {
+                    "name": "Baptiste LEDUC",
+                    "email": "baptiste.leduc@gmail.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Extracts PHP types information.",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "PHPStan",
+                "phpdoc",
+                "symfony",
+                "type"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/type-info/tree/v7.2.2"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2024-12-20T13:38:37+00:00"
         },
         {
             "name": "symfony/var-exporter",
@@ -8282,7 +8358,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
