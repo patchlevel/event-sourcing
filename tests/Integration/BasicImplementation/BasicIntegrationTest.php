@@ -6,7 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
+use Patchlevel\EventSourcing\CommandBus\ServiceLocator;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Pipe;
 use Patchlevel\EventSourcing\Message\Reducer;
@@ -35,6 +37,7 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecora
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjector;
 use PHPUnit\Framework\TestCase;
+use Psr\Clock\ClockInterface;
 
 /** @coversNothing */
 final class BasicIntegrationTest extends TestCase
@@ -277,7 +280,12 @@ final class BasicIntegrationTest extends TestCase
             $engine,
         );
 
-        $commandBus = DefaultCommandBus::createDefault($manager);
+        $commandBus = DefaultCommandBus::createDefault(
+            $manager,
+            new ServiceLocator([
+                ClockInterface::class => new SystemClock(),
+            ]),
+        );
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,

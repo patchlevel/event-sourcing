@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\CommandBus;
 
 use Patchlevel\EventSourcing\CommandBus\Handler\DefaultHandlerFactory;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 use function array_shift;
@@ -59,11 +60,15 @@ final class DefaultCommandBus implements CommandBus
 
     public static function createDefault(
         RepositoryManager $repositoryManager,
+        ContainerInterface|null $container = null,
         LoggerInterface|null $logger = null,
     ): self {
         return new self(
             new AggregateHandlerProvider(
-                new DefaultHandlerFactory($repositoryManager),
+                new DefaultHandlerFactory(
+                    $repositoryManager,
+                    $container,
+                ),
             ),
             $logger,
         );

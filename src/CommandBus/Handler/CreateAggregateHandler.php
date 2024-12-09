@@ -6,6 +6,8 @@ namespace Patchlevel\EventSourcing\CommandBus\Handler;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
+use Psr\Container\ContainerInterface;
+use ReflectionClass;
 
 final class CreateAggregateHandler
 {
@@ -14,6 +16,7 @@ final class CreateAggregateHandler
         private readonly RepositoryManager $repositoryManager,
         private readonly string $aggregateClass,
         private readonly string $methodName,
+        private readonly ContainerInterface|null $container = null,
     ) {
     }
 
@@ -21,7 +24,16 @@ final class CreateAggregateHandler
     {
         $repository = $this->repositoryManager->get($this->aggregateClass);
 
-        $aggregate = $this->aggregateClass::{$this->methodName}($command);
+        $reflection = new ReflectionClass($this->aggregateClass);
+        $reflectionMethod = $reflection->getMethod($this->methodName);
+
+        $aggregate = $reflectionMethod->invokeArgs(
+            null,
+            [
+                $command,
+                ...ParameterResolver::resolve($reflectionMethod, $this->container),
+            ],
+        );
 
         $repository->save($aggregate);
     }

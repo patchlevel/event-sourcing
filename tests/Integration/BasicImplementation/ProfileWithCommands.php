@@ -9,11 +9,13 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\Inject;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\ChangeProfileName;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\CreateProfile;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
+use Psr\Clock\ClockInterface;
 
 #[Aggregate('profile_with_commands')]
 #[Snapshot('default', 100)]
@@ -24,8 +26,11 @@ final class ProfileWithCommands extends BasicAggregateRoot
     private string $name;
 
     #[Handle]
-    public static function create(CreateProfile $command): self
-    {
+    public static function create(
+        CreateProfile $command,
+        #[Inject]
+        ClockInterface $clock,
+    ): self {
         $self = new self();
         $self->recordThat(new ProfileCreated($command->id, $command->name));
 
@@ -33,8 +38,11 @@ final class ProfileWithCommands extends BasicAggregateRoot
     }
 
     #[Handle]
-    public function changeName(ChangeProfileName $command): void
-    {
+    public function changeName(
+        ChangeProfileName $command,
+        #[Inject]
+        ClockInterface $clock,
+    ): void {
         $this->recordThat(new NameChanged($command->name));
     }
 

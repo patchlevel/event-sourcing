@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\CommandBus\Handler;
 
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
+use Psr\Container\ContainerInterface;
 
 final class DefaultHandlerFactory implements HandlerFactory
 {
     public function __construct(
         private readonly RepositoryManager $repositoryManager,
+        private readonly ContainerInterface|null $container = null,
     ) {
     }
 
@@ -19,6 +21,7 @@ final class DefaultHandlerFactory implements HandlerFactory
             $this->repositoryManager,
             $aggregateClass,
             $method,
+            $this->container,
         );
     }
 
@@ -28,6 +31,7 @@ final class DefaultHandlerFactory implements HandlerFactory
             $this->repositoryManager,
             $aggregateClass,
             $method,
+            $this->container,
         );
     }
 }
