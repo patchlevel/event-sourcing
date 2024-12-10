@@ -10,13 +10,22 @@ use Patchlevel\EventSourcing\Attribute\HandledBy;
 use Patchlevel\EventSourcing\CommandBus\Handler\HandlerFactory;
 use ReflectionClass;
 use ReflectionMethod;
-use ReflectionNamedType;
+use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
+
+use function array_key_exists;
+use function is_a;
 
 final class AggregateHandlerProvider implements HandlerProvider
 {
+    /** @var array<class-string, HandlerDescriptor> */
+    private array $handlers = [];
+
+    private readonly TypeResolver $typeResolver;
+
     public function __construct(
         private readonly HandlerFactory $handlerFactory,
     ) {
+        $this->typeResolver = TypeResolver::create();
     }
 
     /**
@@ -26,28 +35,26 @@ final class AggregateHandlerProvider implements HandlerProvider
      */
     public function handlerForCommand(string $commandClass): HandlerDescriptor
     {
+        if (array_key_exists($commandClass, $this->handlers)) {
+            return $this->handlers[$commandClass];
+        }
+
         $aggregateClass = $this->aggregateClass($commandClass);
 
         $reflectionClass = new ReflectionClass($aggregateClass);
 
         foreach ($reflectionClass->getMethods() as $method) {
-            $attributes = $method->getAttributes(Handle::class);
-
-            if ($attributes === []) {
-                continue;
-            }
-
-            $handleClass = $this->handleClass($attributes[0]->newInstance(), $method);
-
-            if ($handleClass !== $commandClass) {
+            if (!$this->canHandle($method, $commandClass)) {
                 continue;
             }
 
             if ($method->isStatic()) {
-                return new HandlerDescriptor($this->handlerFactory->createHandler($aggregateClass, $method->getName()));
+                $this->handlers[$commandClass] = new HandlerDescriptor($this->handlerFactory->createHandler($aggregateClass, $method->getName()));
+            } else {
+                $this->handlers[$commandClass] = new HandlerDescriptor($this->handlerFactory->updateHandler($aggregateClass, $method->getName()));
             }
 
-            return new HandlerDescriptor($this->handlerFactory->updateHandler($aggregateClass, $method->getName()));
+            return $this->handlers[$commandClass];
         }
 
         throw new HandlerNotFound($commandClass);
@@ -72,11 +79,14 @@ final class AggregateHandlerProvider implements HandlerProvider
         return $handledBy->aggregateClass;
     }
 
-    /**
-     * @return class-string
-     */
-    private function handleClass(Handle $handle, ReflectionMethod $reflectionMethod): string
+    private function canHandle(ReflectionMethod $reflectionMethod, string $commandClass): bool
     {
+        $handleAttributes = $reflectionMethod->getAttributes(Handle::class);
+
+        if ($handleAttributes === []) {
+            return false;
+        }
+
         $parameters = $reflectionMethod->getParameters();
 
         if ($parameters === []) {
@@ -86,19 +96,38 @@ final class AggregateHandlerProvider implements HandlerProvider
             );
         }
 
-        if ($handle->commandClass !== null) {
-            return $handle->commandClass;
+        $reflectionType = $parameters[0]->getType();
+
+        if ($reflectionType === null) {
+            throw InvalidHandleMethod::incompatibleType(
+                $reflectionMethod->getDeclaringClass()->getName(),
+                $reflectionMethod->getName(),
+            );
         }
 
-        $type = $parameters[0]->getType();
+        $guessType = false;
 
-        if ($type instanceof ReflectionNamedType) {
-            return $type->getName();
+        foreach ($handleAttributes as $handleAttribute) {
+            $handle = $handleAttribute->newInstance();
+
+            if (!$handle->commandClass) {
+                $guessType = true;
+                continue;
+            }
+
+            if ($handle->commandClass === $commandClass) {
+                return true;
+            }
+
+            return is_a($commandClass, $handle->commandClass, true);
         }
 
-        throw InvalidHandleMethod::incompatibleType(
-            $reflectionMethod->getDeclaringClass()->getName(),
-            $reflectionMethod->getName(),
-        );
+        if (!$guessType) {
+            return false;
+        }
+
+        $type = $this->typeResolver->resolve($reflectionType);
+
+        return $type->isIdentifiedBy($commandClass);
     }
 }
