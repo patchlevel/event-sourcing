@@ -3164,6 +3164,41 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $engine->{$method}();
     }
 
+    public function testDontLockGetSubscriptions(): void
+    {
+        $subscriber = new #[Subscriber('id1', RunMode::FromNow)]
+        class {
+        };
+
+        $subscriptionStore = $this->prophesize(LockableSubscriptionStore::class);
+        $subscriptionStore->inLock(Argument::type(Closure::class))->will(
+        /** @param array{Closure} $args */
+            static fn (array $args): mixed => $args[0](),
+        )->shouldNotBeCalled();
+        $subscriptionStore->find(Argument::any())->willReturn([])->shouldBeCalled();
+
+        $subscriptionStore->find(
+            new SubscriptionCriteria(),
+        )->willReturn([
+            new Subscription('id1'),
+        ])->shouldBeCalled();
+
+        $subscriptionStore->remove(Argument::type(Subscription::class));
+        $subscriptionStore->add(Argument::type(Subscription::class));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([]));
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore->reveal(),
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $engine->subscriptions();
+    }
+
     public function testFromNowWithoutSetupDirectActive(): void
     {
         $subscriptionId = 'test';
@@ -3208,7 +3243,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
         yield 'teardown' => ['teardown'];
         yield 'remove' => ['remove'];
         yield 'reactivate' => ['reactivate'];
-        yield 'subscriptions' => ['subscriptions'];
     }
 
     private function criteria(int $fromIndex = 0): Criteria
