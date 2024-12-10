@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus\Handler;
 
+use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Psr\Container\ContainerInterface;
@@ -34,6 +35,10 @@ final class CreateAggregateHandler
                 ...ParameterResolver::resolve($reflectionMethod, $this->container),
             ],
         );
+
+        if (!$aggregate instanceof AggregateRoot) {
+            throw new InvalidArgumentException('create method must return an instance of AggregateRoot');
+        }
 
         $repository->save($aggregate);
     }

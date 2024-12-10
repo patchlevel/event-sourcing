@@ -8,6 +8,8 @@ use Patchlevel\EventSourcing\Attribute\Inject;
 use Psr\Container\ContainerInterface;
 use ReflectionMethod;
 use RuntimeException;
+use Symfony\Component\TypeInfo\Type\ObjectType;
+use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
 /** @internal */
 final class ParameterResolver
@@ -29,7 +31,19 @@ final class ParameterResolver
             $serviceName = $attributes[0]->newInstance()->service;
 
             if ($serviceName === null) {
-                $serviceName = $parameter->getType()->getName();
+                $reflectionType = $parameter->getType();
+
+                if ($reflectionType === null) {
+                    throw new RuntimeException('missing type hint');
+                }
+
+                $type = TypeResolver::create()->resolve($reflectionType);
+
+                if (!$type instanceof ObjectType) {
+                    throw new RuntimeException('type hint must be object');
+                }
+
+                $serviceName = $type->getClassName();
             }
 
             if (!$container) {

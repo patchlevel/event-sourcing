@@ -9,7 +9,7 @@ use RuntimeException;
 
 use function sprintf;
 
-class ServiceNotFound extends RuntimeException implements NotFoundExceptionInterface
+final class ServiceNotFound extends RuntimeException implements NotFoundExceptionInterface
 {
     public function __construct(string $id)
     {

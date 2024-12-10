@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus\Handler;
 
+use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Id;
@@ -54,7 +55,13 @@ final class UpdateAggregateHandler
                 continue;
             }
 
-            return $property->getValue($command);
+            $value = $property->getValue($command);
+
+            if (!$value instanceof AggregateRootId) {
+                throw new InvalidArgumentException('Id property must be an instance of AggregateRootId');
+            }
+
+            return $value;
         }
 
         throw new AggregateIdNotFound($command::class);

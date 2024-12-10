@@ -16,6 +16,16 @@
       <code><![CDATA[$this->frozenDateTime->modify(sprintf('+%s seconds', $seconds))]]></code>
     </PossiblyFalsePropertyAssignmentValue>
   </file>
+  <file src="src/CommandBus/Handler/CreateAggregateHandler.php">
+    <InvalidOperand>
+      <code><![CDATA[ParameterResolver::resolve($reflectionMethod, $this->container)]]></code>
+    </InvalidOperand>
+  </file>
+  <file src="src/CommandBus/Handler/UpdateAggregateHandler.php">
+    <InvalidOperand>
+      <code><![CDATA[ParameterResolver::resolve($reflectionMethod, $this->container)]]></code>
+    </InvalidOperand>
+  </file>
   <file src="src/Console/DoctrineHelper.php">
     <ClassNotFinal>
       <code><![CDATA[class DoctrineHelper]]></code>
@@ -57,9 +67,6 @@
     </InvalidReturnType>
   </file>
   <file src="src/Metadata/AggregateRoot/AttributeAggregateRootMetadataFactory.php">
-    <DocblockTypeContradiction>
-      <code><![CDATA[$reflectionType instanceof ReflectionIntersectionType]]></code>
-    </DocblockTypeContradiction>
     <InvalidReturnStatement>
       <code><![CDATA[$this->aggregateMetadata[$aggregate]]]></code>
     </InvalidReturnStatement>
@@ -219,6 +226,21 @@
       <code><![CDATA[$row['payload']]]></code>
     </MixedArgument>
   </file>
+  <file src="tests/Unit/CommandBus/DefaultCommandBusTest.php">
+    <InvalidPropertyFetch>
+      <code><![CDATA[$handler->command]]></code>
+    </InvalidPropertyFetch>
+  </file>
+  <file src="tests/Unit/CommandBus/Handler/DefaultHandlerFactoryTest.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA['aggregateClass']]></code>
+      <code><![CDATA['aggregateClass']]></code>
+    </ArgumentTypeCoercion>
+    <UndefinedClass>
+      <code><![CDATA['aggregateClass']]></code>
+      <code><![CDATA['aggregateClass']]></code>
+    </UndefinedClass>
+  </file>
   <file src="tests/Unit/EventBus/DefaultEventBusTest.php">
     <MoreSpecificImplementedParamType>
       <code><![CDATA[$message]]></code>
@@ -237,6 +259,11 @@
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
       <code><![CDATA[$event]]></code>
+    </MissingParamType>
+  </file>
+  <file src="tests/Unit/Fixture/ProfileWithHandlers.php">
+    <MissingParamType>
+      <code><![CDATA[$command]]></code>
     </MissingParamType>
   </file>
   <file src="tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php">
