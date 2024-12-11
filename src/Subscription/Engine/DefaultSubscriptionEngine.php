@@ -947,44 +947,43 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private function discoverNewSubscriptions(): void
     {
-        $this->subscriptionManager->findForUpdate(
-            new SubscriptionCriteria(),
-            function (SubscriptionCollection $subscriptions): void {
-                $latestIndex = null;
+        $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria());
 
-                foreach ($this->subscriberRepository->all() as $subscriber) {
-                    foreach ($subscriptions as $subscription) {
-                        if ($subscription->id() === $subscriber->id()) {
-                            continue 2;
-                        }
-                    }
+        $latestIndex = null;
 
-                    $subscription = new Subscription(
-                        $subscriber->id(),
-                        $subscriber->group(),
-                        $subscriber->runMode(),
-                    );
-
-                    if ($subscriber->setupMethod() === null && $subscriber->runMode() === RunMode::FromNow) {
-                        if ($latestIndex === null) {
-                            $latestIndex = $this->latestIndex();
-                        }
-
-                        $subscription->changePosition($latestIndex);
-                        $subscription->active();
-                    }
-
-                    $this->subscriptionManager->add($subscription);
-
-                    $this->logger?->info(
-                        sprintf(
-                            'Subscription Engine: New Subscriber "%s" was found and added to the subscription store.',
-                            $subscriber->id(),
-                        ),
-                    );
+        foreach ($this->subscriberRepository->all() as $subscriber) {
+            foreach ($subscriptions as $subscription) {
+                if ($subscription->id() === $subscriber->id()) {
+                    continue 2;
                 }
-            },
-        );
+            }
+
+            $subscription = new Subscription(
+                $subscriber->id(),
+                $subscriber->group(),
+                $subscriber->runMode(),
+            );
+
+            if ($subscriber->setupMethod() === null && $subscriber->runMode() === RunMode::FromNow) {
+                if ($latestIndex === null) {
+                    $latestIndex = $this->latestIndex();
+                }
+
+                $subscription->changePosition($latestIndex);
+                $subscription->active();
+            }
+
+            $this->subscriptionManager->add($subscription);
+
+            $this->logger?->info(
+                sprintf(
+                    'Subscription Engine: New Subscriber "%s" was found and added to the subscription store.',
+                    $subscriber->id(),
+                ),
+            );
+        }
+
+        $this->subscriptionManager->flush();
     }
 
     private function latestIndex(): int
