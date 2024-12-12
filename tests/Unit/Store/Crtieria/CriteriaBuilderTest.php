@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +34,7 @@ final class CriteriaBuilderTest extends TestCase
             ->fromIndex(1)
             ->fromPlayhead(1)
             ->archived(true)
+            ->events(['foo', 'bar'])
             ->build();
 
         self::assertEquals(
@@ -42,6 +44,7 @@ final class CriteriaBuilderTest extends TestCase
                 new FromIndexCriterion(1),
                 new FromPlayheadCriterion(1),
                 new ArchivedCriterion(true),
+                new EventsCriterion(['foo', 'bar']),
             ),
             $criteria,
         );
