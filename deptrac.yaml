@@ -154,6 +154,7 @@ deptrac:
       - Attribute
       - Clock
       - Message
+      - MetadataEvent
       - MetadataSubscriber
       - Repository
       - Schema

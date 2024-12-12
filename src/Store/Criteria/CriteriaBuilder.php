@@ -13,6 +13,9 @@ final class CriteriaBuilder
     private int|null $fromPlayhead = null;
     private bool|null $archived = null;
 
+    /** @var list<string>|null */
+    private array|null $events = null;
+
     /** @experimental */
     public function streamName(string|null $streamName): self
     {
@@ -56,6 +59,14 @@ final class CriteriaBuilder
         return $this;
     }
 
+    /** @param list<string>|null $events */
+    public function events(array|null $events): self
+    {
+        $this->events = $events;
+
+        return $this;
+    }
+
     public function build(): Criteria
     {
         $criteria = [];
@@ -82,6 +93,10 @@ final class CriteriaBuilder
 
         if ($this->archived !== null) {
             $criteria[] = new ArchivedCriterion($this->archived);
+        }
+
+        if ($this->events !== null) {
+            $criteria[] = new EventsCriterion($this->events);
         }
 
         return new Criteria(...$criteria);

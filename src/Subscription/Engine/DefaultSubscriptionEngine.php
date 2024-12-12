@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Criteria\Criteria;
-use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
@@ -35,13 +33,21 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     /** @var array<string, BatchableSubscriber> */
     private array $batching = [];
 
+    private readonly MessageLoader $messageLoader;
+
     public function __construct(
-        private readonly Store $messageStore,
+        Store|MessageLoader $messageStore,
         SubscriptionStore $subscriptionStore,
         private readonly SubscriberAccessorRepository $subscriberRepository,
         private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
         private readonly LoggerInterface|null $logger = null,
     ) {
+        if ($messageStore instanceof MessageLoader) {
+            $this->messageLoader = $messageStore;
+        } else {
+            $this->messageLoader = new StoreMessageLoader($messageStore);
+        }
+
         $this->subscriptionManager = new SubscriptionManager($subscriptionStore);
     }
 
@@ -72,7 +78,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 /** @var list<Error> $errors */
                 $errors = [];
 
-                $latestIndex = $this->latestIndex();
+                $latestIndex = $this->messageLoader->lastIndex();
 
                 foreach ($subscriptions as $subscription) {
                     $subscriber = $this->subscriber($subscription->id());
@@ -193,9 +199,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $messageCounter = 0;
 
                     try {
-                        $stream = $this->messageStore->load(
-                            new Criteria(new FromIndexCriterion($startIndex)),
-                        );
+                        $stream = $this->messageLoader->load($startIndex, $subscriptions->toArray());
 
                         foreach ($stream as $message) {
                             $messageCounter++;
@@ -366,8 +370,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     $messageCounter = 0;
 
                     try {
-                        $criteria = new Criteria(new FromIndexCriterion($startIndex));
-                        $stream = $this->messageStore->load($criteria);
+                        $stream = $this->messageLoader->load($startIndex, $subscriptions->toArray());
 
                         foreach ($stream as $message) {
                             $messageCounter++;
@@ -966,7 +969,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
             if ($subscriber->setupMethod() === null && $subscriber->runMode() === RunMode::FromNow) {
                 if ($latestIndex === null) {
-                    $latestIndex = $this->latestIndex();
+                    $latestIndex = $this->messageLoader->lastIndex();
                 }
 
                 $subscription->changePosition($latestIndex);
@@ -984,13 +987,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         $this->subscriptionManager->flush();
-    }
-
-    private function latestIndex(): int
-    {
-        $stream = $this->messageStore->load(null, 1, null, true);
-
-        return $stream->index() ?: 0;
     }
 
     private function handleError(Subscription $subscription, Throwable $throwable): void

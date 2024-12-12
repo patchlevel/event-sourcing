@@ -321,6 +321,7 @@ use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 
 $criteria = new Criteria(
@@ -329,6 +330,7 @@ $criteria = new Criteria(
     new FromPlayheadCriterion(2),
     new FromIndexCriterion(100),
     new ArchivedCriterion(true),
+    new EventsCriterion(['profile.created', 'profile.name_changed']),
 );
 ```
 Or you can the criteria builder to create the criteria.
@@ -342,6 +344,7 @@ $criteria = (new CriteriaBuilder())
     ->fromPlayhead(2)
     ->fromIndex(100)
     ->archived(true)
+    ->events(['profile.created', 'profile.name_changed'])
     ->build();
 ```
 #### Stream

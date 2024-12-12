@@ -645,6 +645,44 @@ There are two options here:
 
 In order for the subscription engine to be able to do its work, you have to assemble it beforehand.
 
+### Message Loader
+
+The subscription engine needs a message loader to load the messages.
+We provide two implementations by default.
+Which one has a better performance depends on the use case.
+
+#### Store Message Loader
+
+The store message loader loads all the messages from the event store.
+
+```php
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+
+/** @var Store $store */
+$messageLoader = new StoreMessageLoader($store);
+```
+#### Event Filtered Store Message Loader
+
+The event filtered store message loader loads only the messages that are relevant for the subscribers.
+It looks before loading the messages which subscribers are interested in the events.
+Then it loads with a filter only the relevant messages.
+
+```php
+use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
+use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
+
+/**
+ * @var Store $store
+ * @var EventMetadataFactory $eventMetadataFactory
+ * @var SubscriberRepository $subscriberRepository
+ */
+$messageLoader = new EventFilteredStoreMessageLoader(
+    $store,
+    $eventMetadataFactory,
+    $subscriberRepository,
+);
+```
 ### Subscription Store
 
 The Subscription Engine uses a subscription store to store the status of each subscription.
@@ -730,24 +768,24 @@ $subscriberAccessorRepository = new MetadataSubscriberAccessorRepository([
 ### Subscription Engine
 
 Now we can create the subscription engine and plug together the necessary services.
-The event store is needed to load the events, the Subscription Store to store the subscription state
+The message loader is needed to load the messages, the Subscription Store to store the subscription state
 and we need the subscriber accessor repository. Optionally, we can also pass a retry strategy.
 
 ```php
-use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 
 /**
- * @var Store $eventStore
+ * @var MessageLoader $messageLoader
  * @var DoctrineSubscriptionStore $subscriptionStore
  * @var MetadataSubscriberAccessorRepository $subscriberAccessorRepository
  * @var NoRetryStrategy $retryStrategy
  */
 $subscriptionEngine = new DefaultSubscriptionEngine(
-    $eventStore,
+    $messageLoader,
     $subscriptionStore,
     $subscriberAccessorRepository,
     $retryStrategy,
