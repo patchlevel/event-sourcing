@@ -28,7 +28,6 @@ use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-use function array_key_exists;
 use function count;
 use function sprintf;
 
@@ -42,9 +41,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     private array $batching = [];
 
     private readonly MessageLoader $messageLoader;
-
-    /** @var array<string, bool> */
-    private array $delaying = [];
 
     public function __construct(
         Store|MessageLoader $messageStore,
@@ -172,7 +168,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->processing = true;
         $this->batching = [];
-        $this->delaying = [];
 
         try {
             $criteria ??= new SubscriptionEngineCriteria();
@@ -238,12 +233,27 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 }
 
                                 if ($this->shouldDelay($subscription, $message)) {
-                                    $this->logger?->debug(
-                                        sprintf(
-                                            'Subscription Engine: Subscription "%s" is delayed, skip processing.',
+                                    $subscriptions->remove($subscription);
+
+                                    if ($subscription->runMode() === RunMode::Once) {
+                                        $subscription->finished();
+                                        $this->subscriptionManager->update($subscription);
+
+                                        $this->logger?->info(sprintf(
+                                            'Subscription Engine: Subscription "%s" reached delayed message, set to finished.',
                                             $subscription->id(),
-                                        ),
-                                    );
+                                        ));
+
+                                        continue;
+                                    }
+
+                                    $subscription->active();
+                                    $this->subscriptionManager->update($subscription);
+
+                                    $this->logger?->info(sprintf(
+                                        'Subscription Engine: Subscription "%s" reached delayed message, set to active.',
+                                        $subscription->id(),
+                                    ));
 
                                     continue;
                                 }
@@ -356,7 +366,6 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->processing = true;
         $this->batching = [];
-        $this->delaying = [];
 
         try {
             $criteria ??= new SubscriptionEngineCriteria();
@@ -421,6 +430,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 }
 
                                 if ($this->shouldDelay($subscription, $message)) {
+                                    $subscriptions->remove($subscription);
+
                                     $this->logger?->debug(
                                         sprintf(
                                             'Subscription Engine: Subscription "%s" is delayed, skip processing.',
@@ -1148,23 +1159,15 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private function shouldDelay(Subscription $subscription, Message $message): bool
     {
-        if (array_key_exists($subscription->id(), $this->delaying)) {
-            return $this->delaying[$subscription->id()];
-        }
-
         $subscriber = $this->subscriber($subscription->id());
 
         if (!$subscriber instanceof MetadataSubscriberAccessor) {
-            $this->delaying[$subscription->id()] = false;
-
             return false;
         }
 
         $delay = $subscriber->metadata()->delay;
 
         if ($delay === null) {
-            $this->delaying[$subscription->id()] = false;
-
             return false;
         }
 
@@ -1176,13 +1179,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $threshold = $this->clock->now()->sub($delay);
 
-        if ($recordedOn > $threshold) {
-            return false;
-        }
-
-        $this->delaying[$subscription->id()] = true;
-
-        return true;
+        return $recordedOn <= $threshold;
     }
 
     private function recordedOn(Message $message): DateTimeImmutable|null
