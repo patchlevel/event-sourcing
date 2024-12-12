@@ -284,6 +284,7 @@ final class BasicIntegrationTest extends TestCase
             $manager,
             new ServiceLocator([
                 ClockInterface::class => new SystemClock(),
+                'env' => 'test',
             ]),
         );
 

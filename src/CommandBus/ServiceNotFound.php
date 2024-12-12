@@ -13,6 +13,6 @@ final class ServiceNotFound extends RuntimeException implements NotFoundExceptio
 {
     public function __construct(string $id)
     {
-        parent::__construct(sprintf('service %s not found', $id));
+        parent::__construct(sprintf('service "%s" not found', $id));
     }
 }

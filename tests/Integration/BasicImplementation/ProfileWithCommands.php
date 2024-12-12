@@ -28,8 +28,8 @@ final class ProfileWithCommands extends BasicAggregateRoot
     #[Handle]
     public static function create(
         CreateProfile $command,
-        #[Inject]
         ClockInterface $clock,
+        #[Inject('env')] string $env,
     ): self {
         $self = new self();
         $self->recordThat(new ProfileCreated($command->id, $command->name));
@@ -40,8 +40,8 @@ final class ProfileWithCommands extends BasicAggregateRoot
     #[Handle]
     public function changeName(
         ChangeProfileName $command,
-        #[Inject]
         ClockInterface $clock,
+        #[Inject('env')] string $env,
     ): void {
         $this->recordThat(new NameChanged($command->name));
     }

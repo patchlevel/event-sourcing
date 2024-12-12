@@ -10,7 +10,7 @@ use Attribute;
 final class Inject
 {
     public function __construct(
-        public readonly string|null $service = null,
+        public readonly string $service,
     ) {
     }
 }

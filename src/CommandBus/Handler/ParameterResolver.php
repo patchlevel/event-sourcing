@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\CommandBus\Handler;
 use Patchlevel\EventSourcing\Attribute\Inject;
 use Psr\Container\ContainerInterface;
 use ReflectionMethod;
-use RuntimeException;
+use ReflectionParameter;
 use Symfony\Component\TypeInfo\Type\ObjectType;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
@@ -22,35 +22,34 @@ final class ParameterResolver
                 continue; // skip first parameter (command)
             }
 
-            $attributes = $parameter->getAttributes(Inject::class);
-
-            if ($attributes === []) {
-                throw new RuntimeException('missing inject attribute');
-            }
-
-            $serviceName = $attributes[0]->newInstance()->service;
-
-            if ($serviceName === null) {
-                $reflectionType = $parameter->getType();
-
-                if ($reflectionType === null) {
-                    throw new RuntimeException('missing type hint');
-                }
-
-                $type = TypeResolver::create()->resolve($reflectionType);
-
-                if (!$type instanceof ObjectType) {
-                    throw new RuntimeException('type hint must be object');
-                }
-
-                $serviceName = $type->getClassName();
-            }
-
             if (!$container) {
-                throw new RuntimeException('missing inject attribute');
+                throw ServiceNotResolvable::missingContainer();
             }
 
-            yield $container->get($serviceName);
+            yield $container->get(self::serviceName($method, $parameter));
         }
+    }
+
+    private static function serviceName(ReflectionMethod $method, ReflectionParameter $parameter): string
+    {
+        $attributes = $parameter->getAttributes(Inject::class);
+
+        if ($attributes !== []) {
+            return $attributes[0]->newInstance()->service;
+        }
+
+        $reflectionType = $parameter->getType();
+
+        if ($reflectionType === null) {
+            throw ServiceNotResolvable::missingType($method->getDeclaringClass()->getName(), $parameter->getName());
+        }
+
+        $type = TypeResolver::create()->resolve($reflectionType);
+
+        if (!$type instanceof ObjectType) {
+            throw ServiceNotResolvable::typeNotObject($method->getDeclaringClass()->getName(), $parameter->getName());
+        }
+
+        return $type->getClassName();
     }
 }
