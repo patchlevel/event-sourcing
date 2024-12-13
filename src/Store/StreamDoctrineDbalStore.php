@@ -292,17 +292,34 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
                 }
 
+                $subselect = null;
+
                 foreach ($achievedUntilEventId as $stream => $eventId) {
+                    if ($subselect === null) {
+                        if ($this->connection->getDatabasePlatform() instanceof MySQLPlatform) {
+                            $subselect = sprintf(
+                                'SELECT t.id FROM (SELECT * FROM %s) AS t WHERE t.event_id = :event_id',
+                                $this->config['table_name'],
+                            );
+                        } else {
+                            $subselect = sprintf(
+                                'SELECT id FROM %s WHERE event_id = :event_id',
+                                $this->config['table_name'],
+                            );
+                        }
+                    }
+
                     $this->connection->executeStatement(
                         sprintf(
                             <<<'SQL'
-                            UPDATE %1$s
+                            UPDATE %s
                             SET archived = true
                             WHERE stream = :stream
-                            AND id < (SELECT id FROM %1$s WHERE event_id = :event_id)
+                            AND id < (%s)
                             AND archived = false
                             SQL,
                             $this->config['table_name'],
+                            $subselect,
                         ),
                         [
                             'stream' => $stream,
