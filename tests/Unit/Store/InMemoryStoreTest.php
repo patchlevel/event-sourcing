@@ -24,6 +24,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use stdClass;
+
 use function iterator_to_array;
 
 /** @covers \Patchlevel\EventSourcing\Store\InMemoryStore */

@@ -23,6 +23,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Throwable;
+
 use function iterator_to_array;
 
 /** @covers \Patchlevel\EventSourcing\Store\StreamDoctrineDbalStoreStream */

@@ -47,6 +47,7 @@ use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\Clock\ClockInterface;
 use RuntimeException;
+
 use function iterator_to_array;
 use function method_exists;
 

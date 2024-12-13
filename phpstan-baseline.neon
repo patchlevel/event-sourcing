@@ -56,7 +56,7 @@ parameters:
 			path: src/Store/InMemoryStore.php
 
 		-
-			message: "#^Parameter \\#2 \\$playhead of class Patchlevel\\\\EventSourcing\\\\Store\\\\StreamHeader constructor expects int\\<1, max\\>\\|null, int\\|null given\\.$#"
+			message: "#^Parameter \\#1 \\$playhead of class Patchlevel\\\\EventSourcing\\\\Store\\\\Header\\\\PlayheadHeader constructor expects int\\<1, max\\>, int given\\.$#"
 			count: 1
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 

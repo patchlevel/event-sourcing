@@ -110,7 +110,7 @@
   </file>
   <file src="src/Store/StreamDoctrineDbalStoreStream.php">
     <ArgumentTypeCoercion>
-      <code><![CDATA[$data['playhead'] === null ? null : (int)$data['playhead']]]></code>
+      <code><![CDATA[(int)$data['playhead']]]></code>
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Subscription/Engine/DefaultSubscriptionEngine.php">
@@ -371,7 +371,6 @@
   </file>
   <file src="tests/Unit/Subscription/Engine/SubscriptionManagerTest.php">
     <InvalidArgument>
-      <code><![CDATA[$result]]></code>
       <code><![CDATA[$subscriptions]]></code>
       <code><![CDATA[$subscriptions]]></code>
     </InvalidArgument>

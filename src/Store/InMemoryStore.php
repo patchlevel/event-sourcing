@@ -29,6 +29,7 @@ use function count;
 use function mb_substr;
 use function str_ends_with;
 use function str_starts_with;
+
 use const ARRAY_FILTER_USE_BOTH;
 
 final class InMemoryStore implements StreamStore

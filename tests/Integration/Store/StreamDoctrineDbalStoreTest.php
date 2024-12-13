@@ -22,6 +22,7 @@ use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ExternEvent;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ProfileCreated;
 use PHPUnit\Framework\TestCase;
+
 use function iterator_to_array;
 use function json_decode;
 use function sprintf;
