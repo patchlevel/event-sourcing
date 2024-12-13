@@ -12,16 +12,17 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamClosed;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStoreStream;
-use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Throwable;
-
 use function iterator_to_array;
 
 /** @covers \Patchlevel\EventSourcing\Store\StreamDoctrineDbalStoreStream */
@@ -75,7 +76,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
-            ->withHeader(new StreamHeader('profile-1', 1, new DateTimeImmutable('2022-10-10 10:10:10')));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
@@ -156,11 +159,16 @@ final class StreamDoctrineDbalStreamTest extends TestCase
 
         $messages = [
             Message::create($event)
-                ->withHeader(new StreamHeader('profile-1', 1, new DateTimeImmutable('2022-10-10 10:10:10'))),
+                ->withHeader(new StreamNameHeader('profile-1'))
+                ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
-                ->withHeader(new StreamHeader('profile-2', null, new DateTimeImmutable('2022-10-10 10:10:10'))),
+                ->withHeader(new StreamNameHeader('profile-2'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
-                ->withHeader(new StreamHeader('profile-3', 1, new DateTimeImmutable('2022-10-10 10:10:10'))),
+                ->withHeader(new StreamNameHeader('profile-3'))
+                ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10'))),
         ];
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -238,7 +246,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
-            ->withHeader(new StreamHeader('profile-1', 1, new DateTimeImmutable('2022-10-10 10:10:10')));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
@@ -295,7 +305,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
-            ->withHeader(new StreamHeader('profile-1', 1, new DateTimeImmutable('2022-10-10 10:10:10')));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))

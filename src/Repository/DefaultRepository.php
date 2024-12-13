@@ -17,9 +17,11 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
-use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
@@ -142,11 +144,7 @@ final class DefaultRepository implements Repository
             }
 
             if ($this->useStreamHeader) {
-                $playhead = $firstMessage->header(StreamHeader::class)->playhead;
-
-                if ($playhead === null) {
-                    throw new AggregateNotFound($this->metadata->className, $id);
-                }
+                $playhead = $firstMessage->header(PlayheadHeader::class)->playhead;
             } else {
                 $playhead = $firstMessage->header(AggregateHeader::class)->playhead;
             }
@@ -245,26 +243,34 @@ final class DefaultRepository implements Repository
 
             $aggregateName = $this->metadata->name;
 
-            $useStreamHeader = $this->useStreamHeader;
+            $streamName = $this->useStreamHeader ? StreamNameTranslator::streamName($aggregateName, $aggregateId) : null;
 
             $messages = array_map(
-                static function (object $event) use ($aggregateName, $aggregateId, &$playhead, $messageDecorator, $clock, $useStreamHeader) {
-                    if ($useStreamHeader) {
-                        $header = new StreamHeader(
-                            StreamNameTranslator::streamName($aggregateName, $aggregateId),
-                            ++$playhead,
-                            $clock->now(),
-                        );
+                static function (object $event) use (
+                    $aggregateName,
+                    $aggregateId,
+                    &$playhead,
+                    $messageDecorator,
+                    $clock,
+                    $streamName,
+                ) {
+                    $message = Message::create($event);
+
+                    if ($streamName !== null) {
+                        $message = $message
+                            ->withHeader(new StreamNameHeader($streamName))
+                            ->withHeader(new PlayheadHeader(++$playhead))
+                            ->withHeader(new RecordedOnHeader($clock->now()));
                     } else {
-                        $header = new AggregateHeader(
-                            $aggregateName,
-                            $aggregateId,
-                            ++$playhead,
-                            $clock->now(),
+                        $message = $message->withHeader(
+                            new AggregateHeader(
+                                $aggregateName,
+                                $aggregateId,
+                                ++$playhead,
+                                $clock->now(),
+                            ),
                         );
                     }
-
-                    $message = Message::create($event)->withHeader($header);
 
                     if ($messageDecorator) {
                         return $messageDecorator($message);

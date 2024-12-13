@@ -6,9 +6,8 @@ namespace Patchlevel\EventSourcing\Message\Translator;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\StreamHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 
 final class UntilEventTranslator implements Translator
 {
@@ -20,22 +19,26 @@ final class UntilEventTranslator implements Translator
     /** @return list<Message> */
     public function __invoke(Message $message): array
     {
-        try {
+        if ($message->hasHeader(AggregateHeader::class)) {
             $header = $message->header(AggregateHeader::class);
-        } catch (HeaderNotFound) {
-            try {
-                $header = $message->header(StreamHeader::class);
-            } catch (HeaderNotFound) {
+
+            if ($header->recordedOn < $this->until) {
                 return [$message];
             }
+
+            return [];
         }
 
-        $recordedOn = $header->recordedOn;
+        if ($message->hasHeader(RecordedOnHeader::class)) {
+            $header = $message->header(RecordedOnHeader::class);
 
-        if ($recordedOn < $this->until) {
-            return [$message];
+            if ($header->recordedOn < $this->until) {
+                return [$message];
+            }
+
+            return [];
         }
 
-        return [];
+        return [$message];
     }
 }

@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
-use Patchlevel\EventSourcing\Store\StreamHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 
 use function class_exists;
 use function is_a;
@@ -30,7 +30,7 @@ final class AggregateIdArgumentResolver implements ArgumentResolver
             // do nothing
         }
 
-        $stream = $message->header(StreamHeader::class)->streamName;
+        $stream = $message->header(StreamNameHeader::class)->streamName;
         $aggregateId = StreamNameTranslator::aggregateId($stream);
 
         return $class::fromString($aggregateId);

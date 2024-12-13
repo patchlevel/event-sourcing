@@ -49,7 +49,7 @@ final class RecalculatePlayheadTranslatorTest extends TestCase
 
         $result = $translator($message);
 
-        self::assertSame([$message], $result);
+        self::assertEquals([$message], $result);
     }
 
     public function testRecalculateMultipleMessages(): void

@@ -15,6 +15,8 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 
 use function array_filter;
 use function array_map;
@@ -27,7 +29,6 @@ use function count;
 use function mb_substr;
 use function str_ends_with;
 use function str_starts_with;
-
 use const ARRAY_FILTER_USE_BOTH;
 
 final class InMemoryStore implements StreamStore
@@ -93,7 +94,7 @@ final class InMemoryStore implements StreamStore
                                 return $message->header(AggregateHeader::class)->streamName();
                             } catch (HeaderNotFound) {
                                 try {
-                                    return $message->header(StreamHeader::class)->streamName;
+                                    return $message->header(StreamNameHeader::class)->streamName;
                                 } catch (HeaderNotFound) {
                                     return null;
                                 }
@@ -117,7 +118,7 @@ final class InMemoryStore implements StreamStore
                         return $message->header(AggregateHeader::class)->streamName() !== $streamName;
                     } catch (HeaderNotFound) {
                         try {
-                            return $message->header(StreamHeader::class)->streamName !== $streamName;
+                            return $message->header(StreamNameHeader::class)->streamName !== $streamName;
                         } catch (HeaderNotFound) {
                             return true;
                         }
@@ -168,7 +169,7 @@ final class InMemoryStore implements StreamStore
                                 $messageStreamName = $message->header(AggregateHeader::class)->streamName();
                             } catch (HeaderNotFound) {
                                 try {
-                                    $messageStreamName = $message->header(StreamHeader::class)->streamName;
+                                    $messageStreamName = $message->header(StreamNameHeader::class)->streamName;
                                 } catch (HeaderNotFound) {
                                     return false;
                                 }
@@ -194,7 +195,7 @@ final class InMemoryStore implements StreamStore
                                 $playhead = $message->header(AggregateHeader::class)->playhead;
                             } catch (HeaderNotFound) {
                                 try {
-                                    $playhead = $message->header(StreamHeader::class)->playhead;
+                                    $playhead = $message->header(PlayheadHeader::class)->playhead;
                                 } catch (HeaderNotFound) {
                                     return false;
                                 }
