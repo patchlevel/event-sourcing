@@ -12,10 +12,12 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -85,10 +87,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         self::assertEquals(sprintf('profile-%s', $profileId->toString()), $result1['stream']);
         self::assertEquals('1', $result1['playhead']);
         self::assertStringContainsString('2020-01-01 00:00:00', $result1['recorded_on']);
-        self::assertEquals('profile.created', $result1['event']);
+        self::assertEquals('profile.created', $result1['event_name']);
         self::assertEquals(
             ['profileId' => $profileId->toString(), 'name' => 'test'],
-            json_decode($result1['payload'], true),
+            json_decode($result1['event_payload'], true),
         );
 
         $result2 = $result[1];
@@ -96,10 +98,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         self::assertEquals(sprintf('profile-%s', $profileId->toString()), $result2['stream']);
         self::assertEquals('2', $result2['playhead']);
         self::assertStringContainsString('2020-01-02 00:00:00', $result2['recorded_on']);
-        self::assertEquals('profile.created', $result2['event']);
+        self::assertEquals('profile.created', $result2['event_name']);
         self::assertEquals(
             ['profileId' => $profileId->toString(), 'name' => 'test'],
-            json_decode($result2['payload'], true),
+            json_decode($result2['event_payload'], true),
         );
     }
 
@@ -124,10 +126,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         self::assertEquals('extern', $result1['stream']);
         self::assertEquals(null, $result1['playhead']);
         self::assertStringContainsString('2020-01-01 00:00:00', $result1['recorded_on']);
-        self::assertEquals('extern', $result1['event']);
+        self::assertEquals('extern', $result1['event_name']);
         self::assertEquals(
             ['message' => 'test 1'],
-            json_decode($result1['payload'], true),
+            json_decode($result1['event_payload'], true),
         );
 
         $result2 = $result[1];
@@ -135,10 +137,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         self::assertEquals('extern', $result2['stream']);
         self::assertEquals(null, $result2['playhead']);
         self::assertStringContainsString('2020-01-01 00:00:00', $result2['recorded_on']);
-        self::assertEquals('extern', $result2['event']);
+        self::assertEquals('extern', $result2['event_name']);
         self::assertEquals(
             ['message' => 'test 2'],
-            json_decode($result2['payload'], true),
+            json_decode($result2['event_payload'], true),
         );
     }
 
@@ -171,10 +173,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         self::assertEquals(sprintf('profile-%s', $profileId->toString()), $result1['stream']);
         self::assertEquals('1', $result1['playhead']);
         self::assertStringContainsString('2020-01-01 00:00:00', $result1['recorded_on']);
-        self::assertEquals('profile.created', $result1['event']);
+        self::assertEquals('profile.created', $result1['event_name']);
         self::assertEquals(
             ['profileId' => $profileId->toString(), 'name' => 'test'],
-            json_decode($result1['payload'], true),
+            json_decode($result1['event_payload'], true),
         );
 
         $result2 = $result[1];
@@ -182,14 +184,68 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         self::assertEquals(sprintf('profile-%s', $profileId->toString()), $result2['stream']);
         self::assertEquals('2', $result2['playhead']);
         self::assertStringContainsString('2020-01-02 00:00:00', $result2['recorded_on']);
-        self::assertEquals('profile.created', $result2['event']);
+        self::assertEquals('profile.created', $result2['event_name']);
         self::assertEquals(
             ['profileId' => $profileId->toString(), 'name' => 'test'],
-            json_decode($result2['payload'], true),
+            json_decode($result2['event_payload'], true),
         );
     }
 
-    public function testUniqueConstraint(): void
+    public function testSplitStream(): void
+    {
+        $profileId = ProfileId::generate();
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
+                ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new EventIdHeader('1'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00'))),
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
+                ->withHeader(new PlayheadHeader(2))
+                ->withHeader(new EventIdHeader('2'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-02 00:00:00')))
+                ->withHeader(new StreamStartHeader()),
+        ];
+
+        $this->store->save(...$messages);
+
+        /** @var list<array<string, string>> $result */
+        $result = $this->connection->fetchAllAssociative('SELECT * FROM event_store ORDER BY id');
+
+        self::assertCount(2, $result);
+
+        $result1 = $result[0];
+
+        self::assertEquals(sprintf('profile-%s', $profileId->toString()), $result1['stream']);
+        self::assertEquals('1', $result1['playhead']);
+        self::assertStringContainsString('2020-01-01 00:00:00', $result1['recorded_on']);
+        self::assertEquals('profile.created', $result1['event_name']);
+        self::assertEquals(
+            ['profileId' => $profileId->toString(), 'name' => 'test'],
+            json_decode($result1['event_payload'], true),
+        );
+
+        self::assertEquals('1', $result1['archived']);
+        self::assertEquals('0', $result1['new_stream_start']);
+
+        $result2 = $result[1];
+
+        self::assertEquals(sprintf('profile-%s', $profileId->toString()), $result2['stream']);
+        self::assertEquals('2', $result2['playhead']);
+        self::assertStringContainsString('2020-01-02 00:00:00', $result2['recorded_on']);
+        self::assertEquals('profile.created', $result2['event_name']);
+        self::assertEquals(
+            ['profileId' => $profileId->toString(), 'name' => 'test'],
+            json_decode($result2['event_payload'], true),
+        );
+
+        self::assertEquals('0', $result2['archived']);
+        self::assertEquals('1', $result2['new_stream_start']);
+    }
+
+    public function testUniqueStreamNameAndPlayheadConstraint(): void
     {
         $this->expectException(UniqueConstraintViolation::class);
 
@@ -203,6 +259,26 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             Message::create(new ProfileCreated($profileId, 'test'))
                 ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
                 ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00'))),
+        ];
+
+        $this->store->save(...$messages);
+    }
+
+    public function testUniqueEventIdConstraint(): void
+    {
+        $this->expectException(UniqueConstraintViolation::class);
+
+        $profileId = ProfileId::generate();
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
+                ->withHeader(new EventIdHeader('1'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00'))),
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
+                ->withHeader(new EventIdHeader('1'))
                 ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00'))),
         ];
 
@@ -331,7 +407,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         ], $streams);
     }
 
-    public function testRemote(): void
+    public function testRemove(): void
     {
         $profileId = ProfileId::fromString('0190e47e-77e9-7b90-bf62-08bbf0ab9b4b');
 

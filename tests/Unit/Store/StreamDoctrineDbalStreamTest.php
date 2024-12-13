@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
@@ -61,8 +62,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
         $messages = [
             [
                 'id' => 1,
-                'event' => 'profile_created',
-                'payload' => '{}',
+                'event_id' => '1',
+                'event_name' => 'profile_created',
+                'event_payload' => '{}',
                 'stream' => 'profile-1',
                 'playhead' => 1,
                 'recorded_on' => '2022-10-10 10:10:10',
@@ -79,6 +81,7 @@ final class StreamDoctrineDbalStreamTest extends TestCase
         $message = Message::create($event)
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new EventIdHeader('1'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -120,8 +123,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
         $messagesArray = [
             [
                 'id' => 1,
-                'event' => 'profile_created',
-                'payload' => '{}',
+                'event_id' => '1',
+                'event_name' => 'profile_created',
+                'event_payload' => '{}',
                 'stream' => 'profile-1',
                 'playhead' => 1,
                 'recorded_on' => '2022-10-10 10:10:10',
@@ -131,8 +135,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             ],
             [
                 'id' => 2,
-                'event' => 'profile_created2',
-                'payload' => '{}',
+                'event_id' => '2',
+                'event_name' => 'profile_created2',
+                'event_payload' => '{}',
                 'stream' => 'profile-2',
                 'playhead' => null,
                 'recorded_on' => '2022-10-10 10:10:10',
@@ -142,8 +147,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             ],
             [
                 'id' => 3,
-                'event' => 'profile_created3',
-                'payload' => '{}',
+                'event_id' => '3',
+                'event_name' => 'profile_created3',
+                'event_payload' => '{}',
                 'stream' => 'profile-3',
                 'playhead' => 1,
                 'recorded_on' => '2022-10-10 10:10:10',
@@ -162,13 +168,16 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             Message::create($event)
                 ->withHeader(new StreamNameHeader('profile-1'))
                 ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new EventIdHeader('1'))
                 ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
                 ->withHeader(new StreamNameHeader('profile-2'))
+                ->withHeader(new EventIdHeader('2'))
                 ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
                 ->withHeader(new StreamNameHeader('profile-3'))
                 ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new EventIdHeader('3'))
                 ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10'))),
         ];
 
@@ -231,8 +240,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
         $messages = [
             5 => [
                 'id' => 5,
-                'event' => 'profile_created',
-                'payload' => '{}',
+                'event_id' => '1',
+                'event_name' => 'profile_created',
+                'event_payload' => '{}',
                 'stream' => 'profile-1',
                 'playhead' => 1,
                 'recorded_on' => '2022-10-10 10:10:10',
@@ -249,6 +259,7 @@ final class StreamDoctrineDbalStreamTest extends TestCase
         $message = Message::create($event)
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new EventIdHeader('1'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -290,8 +301,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
         $messages = [
             [
                 'id' => 1,
-                'event' => 'profile_created',
-                'payload' => '{}',
+                'event_id' => '1',
+                'event_name' => 'profile_created',
+                'event_payload' => '{}',
                 'stream' => 'profile-1',
                 'playhead' => 1,
                 'recorded_on' => '2022-10-10 10:10:10',
@@ -308,6 +320,7 @@ final class StreamDoctrineDbalStreamTest extends TestCase
         $message = Message::create($event)
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new EventIdHeader('1'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -369,8 +382,9 @@ final class StreamDoctrineDbalStreamTest extends TestCase
         $messages = [
             [
                 'id' => 1,
-                'event' => 'profile_created',
-                'payload' => '{}',
+                'event_id' => '1',
+                'event_name' => 'profile_created',
+                'event_payload' => '{}',
                 'stream' => 'profile-1',
                 'playhead' => 1,
                 'recorded_on' => '2022-10-10 10:10:10',
