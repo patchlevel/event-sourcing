@@ -4,19 +4,32 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\ChildAggregate;
 
-use Patchlevel\EventSourcing\Aggregate\BasicChildAggregate;
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\Stream;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\NameChanged;
+use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\ProfileCreated;
 
-final class PersonalInformation extends BasicChildAggregate
+#[Aggregate('personal_information')]
+#[Stream(Profile::class)]
+final class PersonalInformation extends BasicAggregateRoot
 {
-    public function __construct(
-        private string $name,
-    ) {
+    #[Id]
+    private ProfileId $id;
+
+    private string $name;
+
+    #[Apply(ProfileCreated::class)]
+    protected function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->profileId;
+        $this->name = $event->name;
     }
 
     #[Apply(NameChanged::class)]
-    public function applyNameChanged(NameChanged $event): void
+    protected function applyNameChanged(NameChanged $event): void
     {
         $this->name = $event->name;
     }

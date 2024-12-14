@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
@@ -39,7 +39,7 @@ final class ChildAggregateIntegrationTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -54,7 +54,10 @@ final class ChildAggregateIntegrationTest extends TestCase
 
         $manager = new RunSubscriptionEngineRepositoryManager(
             new DefaultRepositoryManager(
-                new AggregateRootRegistry(['profile' => Profile::class]),
+                new AggregateRootRegistry([
+                    'profile' => Profile::class,
+                    'personal_information' => PersonalInformation::class,
+                ]),
                 $store,
                 null,
                 null,
@@ -62,7 +65,8 @@ final class ChildAggregateIntegrationTest extends TestCase
             $engine,
         );
 
-        $repository = $manager->get(Profile::class);
+        $profileRepository = $manager->get(Profile::class);
+        $personalInformationRepository = $manager->get(PersonalInformation::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
@@ -74,8 +78,11 @@ final class ChildAggregateIntegrationTest extends TestCase
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
-        $profile->changeName('Snow');
-        $repository->save($profile);
+        $profileRepository->save($profile);
+
+        $personalInformation = $personalInformationRepository->load($profileId);
+        $personalInformation->changeName('Snow');
+        $personalInformationRepository->save($personalInformation);
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_profile WHERE id = ?',
@@ -87,18 +94,18 @@ final class ChildAggregateIntegrationTest extends TestCase
         self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('Snow', $result['name']);
 
-        $repository = $manager->get(Profile::class);
-        $profile = $repository->load($profileId);
+        $profile = $profileRepository->load($profileId);
+        $personalInformation = $personalInformationRepository->load($profileId);
 
         self::assertInstanceOf(Profile::class, $profile);
         self::assertEquals($profileId, $profile->aggregateRootId());
         self::assertSame(2, $profile->playhead());
-        self::assertSame('Snow', $profile->name());
+        self::assertSame('Snow', $personalInformation->name());
     }
 
     public function testSnapshot(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -113,7 +120,10 @@ final class ChildAggregateIntegrationTest extends TestCase
 
         $manager = new RunSubscriptionEngineRepositoryManager(
             new DefaultRepositoryManager(
-                new AggregateRootRegistry(['profile' => Profile::class]),
+                new AggregateRootRegistry([
+                    'profile' => Profile::class,
+                    'personal_information' => PersonalInformation::class,
+                ]),
                 $store,
                 null,
                 new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
@@ -121,7 +131,8 @@ final class ChildAggregateIntegrationTest extends TestCase
             $engine,
         );
 
-        $repository = $manager->get(Profile::class);
+        $profileRepository = $manager->get(Profile::class);
+        $personalInformationRepository = $manager->get(PersonalInformation::class);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $this->connection,
@@ -133,7 +144,7 @@ final class ChildAggregateIntegrationTest extends TestCase
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
-        $repository->save($profile);
+        $profileRepository->save($profile);
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_profile WHERE id = ?',
@@ -145,22 +156,22 @@ final class ChildAggregateIntegrationTest extends TestCase
         self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
 
-        $repository = $manager->get(Profile::class);
-
         // create snapshot
-        $repository->load($profileId);
+        $profileRepository->load($profileId);
+        $personalInformationRepository->load($profileId);
 
         // load from snapshot
-        $profile = $repository->load($profileId);
+        $personalInformation = $personalInformationRepository->load($profileId);
 
-        $profile->changeName('Snow');
-        $repository->save($profile);
+        $personalInformation->changeName('Snow');
+        $personalInformationRepository->save($personalInformation);
 
-        $profile = $repository->load($profileId);
+        $profile = $profileRepository->load($profileId);
+        $personalInformation = $personalInformationRepository->load($profileId);
 
         self::assertInstanceOf(Profile::class, $profile);
         self::assertEquals($profileId, $profile->aggregateRootId());
         self::assertSame(2, $profile->playhead());
-        self::assertSame('Snow', $profile->name());
+        self::assertSame('Snow', $personalInformation->name());
     }
 }

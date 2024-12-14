@@ -22,6 +22,7 @@ final class AggregateRootMetadata
         public readonly Snapshot|null $snapshot,
         /** @var list<string> */
         public readonly array $childAggregates = [],
+        public readonly string|null $streamName = null,
     ) {
     }
 }

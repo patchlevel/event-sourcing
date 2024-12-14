@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
+
+use function str_replace;
 use function strpos;
 use function substr;
 
@@ -15,20 +18,13 @@ final class StreamNameTranslator
     }
 
     /** @pure */
-    public static function streamName(string $aggregate, string $aggregateId): string
+    public static function streamName(string|AggregateRootMetadata $aggregate, string $aggregateId): string
     {
-        return $aggregate . '-' . $aggregateId;
-    }
-
-    public static function aggregateName(string $stream): string
-    {
-        $pos = strpos($stream, '-');
-
-        if ($pos === false) {
-            throw new InvalidAggregateStreamName($stream);
+        if ($aggregate instanceof AggregateRootMetadata && $aggregate->streamName !== null) {
+            return str_replace('{id}', $aggregateId, $aggregate->streamName);
         }
 
-        return substr($stream, 0, $pos);
+        return $aggregate . '-' . $aggregateId;
     }
 
     public static function aggregateId(string $stream): string

@@ -113,7 +113,7 @@ final class DefaultRepository implements Repository
 
         if ($this->useStreamHeader) {
             $criteria = (new CriteriaBuilder())
-                ->streamName(StreamNameTranslator::streamName($this->metadata->name, $id->toString()))
+                ->streamName(StreamNameTranslator::streamName($this->metadata, $id->toString()))
                 ->archived(false)
                 ->build();
         } else {
@@ -178,7 +178,7 @@ final class DefaultRepository implements Repository
     {
         if ($this->useStreamHeader) {
             $criteria = (new CriteriaBuilder())
-                ->streamName(StreamNameTranslator::streamName($this->metadata->name, $id->toString()))
+                ->streamName(StreamNameTranslator::streamName($this->metadata, $id->toString()))
                 ->build();
         } else {
             $criteria = (new CriteriaBuilder())
@@ -242,8 +242,7 @@ final class DefaultRepository implements Repository
             $clock = $this->clock;
 
             $aggregateName = $this->metadata->name;
-
-            $streamName = $this->useStreamHeader ? StreamNameTranslator::streamName($aggregateName, $aggregateId) : null;
+            $streamName = $this->useStreamHeader ? StreamNameTranslator::streamName($this->metadata, $aggregateId) : null;
 
             $messages = array_map(
                 static function (object $event) use (
@@ -338,7 +337,7 @@ final class DefaultRepository implements Repository
 
         if ($this->useStreamHeader) {
             $criteria = (new CriteriaBuilder())
-                ->streamName(StreamNameTranslator::streamName($this->metadata->name, $id->toString()))
+                ->streamName(StreamNameTranslator::streamName($this->metadata, $id->toString()))
                 ->fromPlayhead($aggregate->playhead())
                 ->build();
         } else {
