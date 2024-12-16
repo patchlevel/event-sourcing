@@ -53,6 +53,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 #[Event(name: 'profile.registered', aliases: ['profile.created'])]
 final class ProfileRegistered
 {
+    // ...
 }
 ```
 When saving, the name will always be used. However, when loading, aliases will also be taken into account.

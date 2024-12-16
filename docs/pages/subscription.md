@@ -498,7 +498,7 @@ At this step, you must process all the data.
 The `rollbackBatch` method is called when an error occurs and the batching needs to be aborted.
 Here, you can respond to the error and potentially perform a database rollback.
 
-The method `forceCommit` is called after each handled event, 
+The method `forceCommit` is called after each handled event,
 and you can decide whether the batch commit process should start now.
 This helps to determine the batch size and thus avoid memory overflow.
 

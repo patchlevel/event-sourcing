@@ -170,12 +170,14 @@ In order to change the state of the aggregates afterwards, only further events h
 As example we can add a `NameChanged` event:
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
 
 #[Event('profile.name_changed')]
 final class NameChanged
 {
     public function __construct(
+        public readonly Uuid $profileId,
         public readonly string $name,
     ) {
     }
@@ -217,7 +219,7 @@ final class Profile extends BasicAggregateRoot
 
     public function changeName(string $name): void
     {
-        $this->recordThat(new NameChanged($name));
+        $this->recordThat(new NameChanged($this->id, $name));
     }
 
     #[Apply]
@@ -538,7 +540,7 @@ final class Profile extends BasicAggregateRoot
 
     public function changeName(Name $name): void
     {
-        $this->recordThat(new NameChanged($name));
+        $this->recordThat(new NameChanged($this->id, $name));
     }
 
     #[Apply]
@@ -552,12 +554,14 @@ In order for the whole thing to work, we still have to adapt our `NameChanged` e
 since we only expected a string before but now passed a `Name` value object.
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
 
 #[Event('profile.name_changed')]
 final class NameChanged
 {
     public function __construct(
+        public readonly Uuid $profileId,
         #[NameNormalizer]
         public readonly Name $name,
     ) {
@@ -604,13 +608,13 @@ final class Hotel extends BasicAggregateRoot
             throw new NoPlaceException($name);
         }
 
-        $this->recordThat(new RoomBocked($name));
+        $this->recordThat(new RoomBocked($this->id, $name));
 
         if ($this->people !== self::SIZE) {
             return;
         }
 
-        $this->recordThat(new FullyBooked());
+        $this->recordThat(new FullyBooked($this->id));
     }
 
     #[Apply]

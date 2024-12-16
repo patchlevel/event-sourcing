@@ -26,12 +26,14 @@ final class HotelCreated
 A guest can check in by `name`:
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
 
 #[Event('hotel.guest_checked_in')]
 final class GuestIsCheckedIn
 {
     public function __construct(
+        public readonly Uuid $hotelId,
         public readonly string $guestName,
     ) {
     }
@@ -40,12 +42,14 @@ final class GuestIsCheckedIn
 And also check out again:
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
 
 #[Event('hotel.guest_checked_out')]
 final class GuestIsCheckedOut
 {
     public function __construct(
+        public readonly Uuid $hotelId,
         public readonly string $guestName,
     ) {
     }
@@ -102,19 +106,19 @@ final class Hotel extends BasicAggregateRoot
     public function checkIn(string $guestName): void
     {
         if (in_array($guestName, $this->guests, true)) {
-            throw new GuestHasAlreadyCheckedIn($guestName);
+            throw new GuestHasAlreadyCheckedIn($this->id, $guestName);
         }
 
-        $this->recordThat(new GuestIsCheckedIn($guestName));
+        $this->recordThat(new GuestIsCheckedIn($this->id, $guestName));
     }
 
     public function checkOut(string $guestName): void
     {
         if (!in_array($guestName, $this->guests, true)) {
-            throw new IsNotAGuest($guestName);
+            throw new IsNotAGuest($this->id, $guestName);
         }
 
-        $this->recordThat(new GuestIsCheckedOut($guestName));
+        $this->recordThat(new GuestIsCheckedOut($this->id, $guestName));
     }
 
     #[Apply]
@@ -162,57 +166,80 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
-#[Projector('hotel')]
-final class HotelProjector
+/**
+ * @psalm-type GuestData = array{
+ *     guest_name: string,
+ *     hotel_id: string,
+ *     check_in_date: string,
+ *     check_out_date: string|null
+ * }
+ */
+#[Projector('guests')]
+final class GuestProjection
 {
     use SubscriberUtil;
 
     public function __construct(
-        private readonly Connection $db,
+        private Connection $db,
     ) {
     }
 
-    /** @return list<array{id: string, name: string, guests: int}> */
-    public function getHotels(): array
+    /** @return list<GuestData> */
+    public function findGuestsByHotelId(Uuid $hotelId): array
     {
-        return $this->db->fetchAllAssociative("SELECT id, name, guests FROM {$this->table()};");
+        return $this->db->createQueryBuilder()
+            ->select('*')
+            ->from($this->table())
+            ->where('hotel_id = :hotel_id')
+            ->setParameter('hotel_id', $hotelId->toString())
+            ->fetchAllAssociative();
     }
 
-    #[Subscribe(HotelCreated::class)]
-    public function handleHotelCreated(HotelCreated $event, Uuid $aggregateId): void
-    {
+    #[Subscribe(GuestIsCheckedIn::class)]
+    public function onGuestIsCheckedIn(
+        GuestIsCheckedIn $event,
+        DateTimeImmutable $recordedOn,
+    ): void {
         $this->db->insert(
             $this->table(),
             [
-                'id' => $aggregateId->toString(),
-                'name' => $event->hotelName,
-                'guests' => 0,
+                'hotel_id' => $event->hotelId->toString(),
+                'guest_name' => $event->guestName,
+                'check_in_date' => $recordedOn->format('Y-m-d H:i:s'),
+                'check_out_date' => null,
             ],
         );
     }
 
-    #[Subscribe(GuestIsCheckedIn::class)]
-    public function handleGuestIsCheckedIn(Uuid $aggregateId): void
-    {
-        $this->db->executeStatement(
-            "UPDATE {$this->table()} SET guests = guests + 1 WHERE id = ?;",
-            [$aggregateId->toString()],
-        );
-    }
-
     #[Subscribe(GuestIsCheckedOut::class)]
-    public function handleGuestIsCheckedOut(Uuid $aggregateId): void
-    {
-        $this->db->executeStatement(
-            "UPDATE {$this->table()} SET guests = guests - 1 WHERE id = ?;",
-            [$aggregateId->toString()],
+    public function onGuestIsCheckedOut(
+        GuestIsCheckedOut $event,
+        DateTimeImmutable $recordedOn,
+    ): void {
+        $this->db->update(
+            $this->table(),
+            [
+                'check_out_date' => $recordedOn->format('Y-m-d H:i:s'),
+            ],
+            [
+                'hotel_id' => $event->hotelId->toString(),
+                'guest_name' => $event->guestName,
+                'check_out_date' => null,
+            ],
         );
     }
 
     #[Setup]
     public function create(): void
     {
-        $this->db->executeStatement("CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);");
+        $this->db->executeStatement(
+            "CREATE TABLE {$this->table()} (
+                hotel_id VARCHAR(36) NOT NULL,
+                guest_name VARCHAR(255) NOT NULL,
+                check_in_date TIMESTAMP NOT NULL,
+                check_out_date TIMESTAMP NULL
+            );",
+        );
     }
 
     #[Teardown]
