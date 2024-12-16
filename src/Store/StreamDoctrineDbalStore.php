@@ -252,7 +252,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
                     $streamStart = $message->hasHeader(StreamStartHeader::class);
 
-                    if ($streamStart && $playhead) {
+                    if ($streamStart && $playhead !== null) {
                         $achievedUntilPlayhead[$streamName] = $playhead;
                     }
 
