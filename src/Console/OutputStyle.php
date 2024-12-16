@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
-use Patchlevel\EventSourcing\Store\StreamHeader;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
@@ -49,13 +50,38 @@ final class OutputStyle extends SymfonyStyle
 
         $customHeaders = array_filter(
             $message->headers(),
-            static fn ($header) => !$header instanceof StreamHeader
+            static fn ($header) => !$header instanceof StreamNameHeader
+                && !$header instanceof PlayheadHeader
+                && !$header instanceof RecordedOnHeader
                 && !$header instanceof AggregateHeader
                 && !$header instanceof ArchivedHeader
                 && !$header instanceof StreamStartHeader,
         );
 
-        $metaHeader = $this->metaHeader($message);
+        $streamName = null;
+        $playhead = null;
+        $recordedOn = null;
+
+        if ($message->hasHeader(AggregateHeader::class)) {
+            $header = $message->header(AggregateHeader::class);
+
+            $streamName = $header->streamName();
+            $playhead = $header->playhead;
+            $recordedOn = $header->recordedOn;
+        }
+
+        if ($message->hasHeader(StreamNameHeader::class)) {
+            $streamName = $message->header(StreamNameHeader::class)->streamName;
+        }
+
+        if ($message->hasHeader(PlayheadHeader::class)) {
+            $playhead = $message->header(PlayheadHeader::class)->playhead;
+        }
+
+        if ($message->hasHeader(RecordedOnHeader::class)) {
+            $recordedOn = $message->header(RecordedOnHeader::class)->recordedOn;
+        }
+
         $streamStart = $message->hasHeader(StreamStartHeader::class);
         $achieved = $message->hasHeader(ArchivedHeader::class);
 
@@ -70,9 +96,9 @@ final class OutputStyle extends SymfonyStyle
             ],
             [
                 [
-                    $metaHeader instanceof AggregateHeader ? $metaHeader->streamName() : $metaHeader->streamName,
-                    $metaHeader->playhead,
-                    $metaHeader->recordedOn?->format('Y-m-d H:i:s'),
+                    $streamName,
+                    $playhead,
+                    $recordedOn?->format('Y-m-d H:i:s'),
                     $streamStart ? 'yes' : 'no',
                     $achieved ? 'yes' : 'no',
                 ],
@@ -97,14 +123,5 @@ final class OutputStyle extends SymfonyStyle
             $number++;
             $error = $error->getPrevious();
         } while ($error !== null);
-    }
-
-    private function metaHeader(Message $message): AggregateHeader|StreamHeader
-    {
-        try {
-            return $message->header(AggregateHeader::class);
-        } catch (HeaderNotFound) {
-            return $message->header(StreamHeader::class);
-        }
     }
 }

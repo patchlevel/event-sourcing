@@ -29,6 +29,9 @@ use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use PDO;
 use Psr\Clock\ClockInterface;
 
@@ -223,23 +226,34 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $data = $this->eventSerializer->serialize($message->event());
 
                     try {
-                        $streamHeader = $message->header(StreamHeader::class);
+                        $streamName = $message->header(StreamNameHeader::class)->streamName;
+                        $parameters[] = $streamName;
                     } catch (HeaderNotFound $e) {
                         throw new MissingDataForStorage($e->name, $e);
                     }
 
-                    $parameters[] = $streamHeader->streamName;
-                    $parameters[] = $streamHeader->playhead;
+                    $playhead = null;
+
+                    if ($message->hasHeader(PlayheadHeader::class)) {
+                        $playhead = $message->header(PlayheadHeader::class)->playhead;
+                    }
+
+                    $parameters[] = $playhead;
                     $parameters[] = $data->name;
                     $parameters[] = $data->payload;
 
-                    $parameters[] = $streamHeader->recordedOn ?: $this->clock->now();
+                    if ($message->hasHeader(RecordedOnHeader::class)) {
+                        $parameters[] = $message->header(RecordedOnHeader::class)->recordedOn;
+                    } else {
+                        $parameters[] = $this->clock->now();
+                    }
+
                     $types[$offset + 4] = $dateTimeType;
 
                     $streamStart = $message->hasHeader(StreamStartHeader::class);
 
-                    if ($streamStart) {
-                        $achievedUntilPlayhead[$streamHeader->streamName] = $streamHeader->playhead;
+                    if ($streamStart && $playhead !== null) {
+                        $achievedUntilPlayhead[$streamName] = $playhead;
                     }
 
                     $parameters[] = $streamStart;
@@ -377,7 +391,9 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
     private function getCustomHeaders(Message $message): array
     {
         $filteredHeaders = [
-            StreamHeader::class,
+            StreamNameHeader::class,
+            PlayheadHeader::class,
+            RecordedOnHeader::class,
             StreamStartHeader::class,
             ArchivedHeader::class,
         ];

@@ -15,8 +15,9 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\InMemoryStore;
-use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Store\UnsupportedCriterion;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -92,9 +93,9 @@ final class InMemoryStoreTest extends TestCase
     public function testLoadByStreamName(): void
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new StreamHeader('foo'));
+            ->withHeader(new StreamNameHeader('foo'));
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new StreamHeader('bar'));
+            ->withHeader(new StreamNameHeader('bar'));
         $message3 = new Message(new ProfileVisited(ProfileId::fromString('3')));
 
         $store = new InMemoryStore([$message1, $message2, $message3]);
@@ -109,11 +110,11 @@ final class InMemoryStoreTest extends TestCase
     public function testLoadByStreamNameWithLike(): void
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new StreamHeader('foo-3'));
+            ->withHeader(new StreamNameHeader('foo-3'));
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new StreamHeader('bar-1'));
+            ->withHeader(new StreamNameHeader('bar-1'));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
-            ->withHeader(new StreamHeader('bar-2'));
+            ->withHeader(new StreamNameHeader('bar-2'));
 
         $store = new InMemoryStore([$message1, $message2, $message3]);
 
@@ -131,7 +132,8 @@ final class InMemoryStoreTest extends TestCase
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
             ->withHeader(new AggregateHeader('foo', '1', 2, new DateTimeImmutable()));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
-            ->withHeader(new StreamHeader('foo-1', 3, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('foo-1'))
+            ->withHeader(new PlayheadHeader(3));
         $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
@@ -150,7 +152,8 @@ final class InMemoryStoreTest extends TestCase
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
             ->withHeader(new AggregateHeader('foo', '1', 2, new DateTimeImmutable()));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
-            ->withHeader(new StreamHeader('foo-1', 3, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('foo-1'))
+            ->withHeader(new PlayheadHeader(3));
         $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
@@ -165,11 +168,11 @@ final class InMemoryStoreTest extends TestCase
     public function testLoadByStreamNameWithLikeAll(): void
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new StreamHeader('foo-3'));
+            ->withHeader(new StreamNameHeader('foo-3'));
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new StreamHeader('bar-1'));
+            ->withHeader(new StreamNameHeader('bar-1'));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
-            ->withHeader(new StreamHeader('bar-2'));
+            ->withHeader(new StreamNameHeader('bar-2'));
 
         $store = new InMemoryStore([$message1, $message2, $message3]);
 
@@ -301,11 +304,11 @@ final class InMemoryStoreTest extends TestCase
     public function testStreams(): void
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new StreamHeader('foo'));
+            ->withHeader(new StreamNameHeader('foo'));
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new StreamHeader('bar'));
+            ->withHeader(new StreamNameHeader('bar'));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
-            ->withHeader(new StreamHeader('bar'));
+            ->withHeader(new StreamNameHeader('bar'));
         $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
@@ -316,11 +319,11 @@ final class InMemoryStoreTest extends TestCase
     public function testRemove(): void
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new StreamHeader('foo'));
+            ->withHeader(new StreamNameHeader('foo'));
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new StreamHeader('bar'));
+            ->withHeader(new StreamNameHeader('bar'));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
-            ->withHeader(new StreamHeader('bar'));
+            ->withHeader(new StreamNameHeader('bar'));
         $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
@@ -351,11 +354,11 @@ final class InMemoryStoreTest extends TestCase
     public function testClear(): void
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new StreamHeader('foo'));
+            ->withHeader(new StreamNameHeader('foo'));
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new StreamHeader('bar'));
+            ->withHeader(new StreamNameHeader('bar'));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
-            ->withHeader(new StreamHeader('bar'));
+            ->withHeader(new StreamNameHeader('bar'));
         $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);

@@ -8,7 +8,9 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator;
-use Patchlevel\EventSourcing\Store\StreamHeader;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -61,12 +63,9 @@ final class AggregateToStreamHeaderTranslatorTest extends TestCase
         $message = $result[0];
 
         self::assertFalse($message->hasHeader(AggregateHeader::class));
-        self::assertTrue($message->hasHeader(StreamHeader::class));
 
-        $streamHeader = $message->header(StreamHeader::class);
-
-        self::assertEquals($aggregateHeader->recordedOn, $streamHeader->recordedOn);
-        self::assertEquals('profile-1', $streamHeader->streamName);
-        self::assertEquals(1, $streamHeader->playhead);
+        self::assertEquals($aggregateHeader->recordedOn, $message->header(RecordedOnHeader::class)->recordedOn);
+        self::assertEquals('profile-1', $message->header(StreamNameHeader::class)->streamName);
+        self::assertEquals(1, $message->header(PlayheadHeader::class)->playhead);
     }
 }

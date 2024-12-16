@@ -15,6 +15,9 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Traversable;
 
 /**
@@ -129,11 +132,12 @@ final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
             $event = $eventSerializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
             $message = Message::create($event)
-                ->withHeader(new StreamHeader(
-                    $data['stream'],
-                    $data['playhead'] === null ? null : (int)$data['playhead'],
-                    $dateTimeType->convertToPHPValue($data['recorded_on'], $platform),
-                ));
+                ->withHeader(new StreamNameHeader($data['stream']))
+                ->withHeader(new RecordedOnHeader($dateTimeType->convertToPHPValue($data['recorded_on'], $platform)));
+
+            if ($data['playhead'] !== null) {
+                $message = $message->withHeader(new PlayheadHeader((int)$data['playhead']));
+            }
 
             if ($data['archived']) {
                 $message = $message->withHeader(new ArchivedHeader());

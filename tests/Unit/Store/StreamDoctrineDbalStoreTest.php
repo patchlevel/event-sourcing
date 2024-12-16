@@ -25,10 +25,12 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\InvalidStreamName;
 use Patchlevel\EventSourcing\Store\MissingDataForStorage;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
-use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
@@ -458,11 +460,11 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         self::assertInstanceOf(Message::class, $message);
         self::assertInstanceOf(ProfileCreated::class, $message->event());
-        self::assertSame('profile-1', $message->header(StreamHeader::class)->streamName);
-        self::assertSame(1, $message->header(StreamHeader::class)->playhead);
+        self::assertSame('profile-1', $message->header(StreamNameHeader::class)->streamName);
+        self::assertSame(1, $message->header(PlayheadHeader::class)->playhead);
         self::assertEquals(
             new DateTimeImmutable('2021-02-17 10:00:00'),
-            $message->header(StreamHeader::class)->recordedOn,
+            $message->header(RecordedOnHeader::class)->recordedOn,
         );
 
         iterator_to_array($stream);
@@ -560,11 +562,11 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         self::assertInstanceOf(Message::class, $message);
         self::assertInstanceOf(ProfileCreated::class, $message->event());
-        self::assertSame('profile-1', $message->header(StreamHeader::class)->streamName);
-        self::assertSame(1, $message->header(StreamHeader::class)->playhead);
+        self::assertSame('profile-1', $message->header(StreamNameHeader::class)->streamName);
+        self::assertSame(1, $message->header(PlayheadHeader::class)->playhead);
         self::assertEquals(
             new DateTimeImmutable('2021-02-17 10:00:00'),
-            $message->header(StreamHeader::class)->recordedOn,
+            $message->header(RecordedOnHeader::class)->recordedOn,
         );
 
         $stream->next();
@@ -575,11 +577,11 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         self::assertInstanceOf(Message::class, $message);
         self::assertInstanceOf(ProfileEmailChanged::class, $message->event());
-        self::assertSame('profile-1', $message->header(StreamHeader::class)->streamName);
-        self::assertSame(2, $message->header(StreamHeader::class)->playhead);
+        self::assertSame('profile-1', $message->header(StreamNameHeader::class)->streamName);
+        self::assertSame(2, $message->header(PlayheadHeader::class)->playhead);
         self::assertEquals(
             new DateTimeImmutable('2021-02-17 11:00:00'),
-            $message->header(StreamHeader::class)->recordedOn,
+            $message->header(RecordedOnHeader::class)->recordedOn,
         );
     }
 
@@ -827,11 +829,9 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new StreamHeader(
-                'profile-1',
-                1,
-                $recordedOn,
-            ));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader($recordedOn));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
@@ -867,7 +867,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $singleTableStore->save($message);
     }
 
-    public function testSaveWithoutStreamHeader(): void
+    public function testSaveWithoutStreamNameHeader(): void
     {
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
@@ -912,17 +912,13 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new StreamHeader(
-                'profile-1',
-                1,
-                $recordedOn,
-            ));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader($recordedOn));
         $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('d')))
-            ->withHeader(new StreamHeader(
-                'profile-1',
-                2,
-                $recordedOn,
-            ));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(2))
+            ->withHeader(new RecordedOnHeader($recordedOn));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
@@ -986,17 +982,13 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new StreamHeader(
-                'profile-1',
-                1,
-                $recordedOn,
-            ));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader($recordedOn));
         $message2 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new StreamHeader(
-                'profile-1',
-                1,
-                $recordedOn,
-            ));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader($recordedOn));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($message1->event())->shouldBeCalledTimes(2)->willReturn(new SerializedEvent(
@@ -1061,11 +1053,9 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $messages = [];
         for ($i = 1; $i <= 10000; $i++) {
             $messages[] = Message::create(new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('s')))
-                ->withHeader(new StreamHeader(
-                    'profile-1',
-                    $i,
-                    $recordedOn,
-                ));
+                ->withHeader(new StreamNameHeader('profile-1'))
+                ->withHeader(new PlayheadHeader($i))
+                ->withHeader(new RecordedOnHeader($recordedOn));
         }
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -1104,11 +1094,9 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new StreamHeader(
-                'profile-1',
-                1,
-                $recordedOn,
-            ))
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader($recordedOn))
             ->withHeaders($customHeaders);
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -1435,19 +1423,15 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new StreamHeader(
-                'profile-1',
-                5,
-                $recordedOn,
-            ))
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(5))
+            ->withHeader(new RecordedOnHeader($recordedOn))
             ->withHeader(new StreamStartHeader());
 
         $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('2'), Email::fromString('d')))
-            ->withHeader(new StreamHeader(
-                'profile-2',
-                42,
-                $recordedOn,
-            ))
+            ->withHeader(new StreamNameHeader('profile-2'))
+            ->withHeader(new PlayheadHeader(42))
+            ->withHeader(new RecordedOnHeader($recordedOn))
             ->withHeader(new StreamStartHeader());
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -1542,19 +1526,15 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $recordedOn = new DateTimeImmutable();
         $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new StreamHeader(
-                'profile-1',
-                5,
-                $recordedOn,
-            ))
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(5))
+            ->withHeader(new RecordedOnHeader($recordedOn))
             ->withHeader(new StreamStartHeader());
 
         $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('d')))
-            ->withHeader(new StreamHeader(
-                'profile-1',
-                42,
-                $recordedOn,
-            ))
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(42))
+            ->withHeader(new RecordedOnHeader($recordedOn))
             ->withHeader(new StreamStartHeader());
 
         $eventSerializer = $this->prophesize(EventSerializer::class);

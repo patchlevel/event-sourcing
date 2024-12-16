@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
-use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\StreamHeader;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 
 use function array_key_exists;
 
@@ -19,42 +19,30 @@ final class RecalculatePlayheadTranslator implements Translator
     /** @return list<Message> */
     public function __invoke(Message $message): array
     {
-        try {
-            $header = $message->header(AggregateHeader::class);
-        } catch (HeaderNotFound) {
-            try {
-                $header = $message->header(StreamHeader::class);
-            } catch (HeaderNotFound) {
-                return [$message];
-            }
-        }
+        if ($message->hasHeader(StreamNameHeader::class) && $message->hasHeader(PlayheadHeader::class)) {
+            $streamName = $message->header(StreamNameHeader::class)->streamName;
 
-        $stream = $header instanceof StreamHeader ? $header->streamName : $header->streamName();
+            $playhead = $this->nextPlayhead($streamName);
 
-        $playhead = $this->nextPlayhead($stream);
-
-        if ($header->playhead === $playhead) {
-            return [$message];
-        }
-
-        if ($header instanceof StreamHeader) {
             return [
-                $message->withHeader(new StreamHeader(
-                    $header->streamName,
-                    $playhead,
+                $message->withHeader(new PlayheadHeader($playhead)),
+            ];
+        }
+
+        if ($message->hasHeader(AggregateHeader::class)) {
+            $header = $message->header(AggregateHeader::class);
+
+            return [
+                $message->withHeader(new AggregateHeader(
+                    $header->aggregateName,
+                    $header->aggregateId,
+                    $this->nextPlayhead($header->streamName()),
                     $header->recordedOn,
                 )),
             ];
         }
 
-        return [
-            $message->withHeader(new AggregateHeader(
-                $header->aggregateName,
-                $header->aggregateId,
-                $playhead,
-                $header->recordedOn,
-            )),
-        ];
+        return [$message];
     }
 
     public function reset(): void

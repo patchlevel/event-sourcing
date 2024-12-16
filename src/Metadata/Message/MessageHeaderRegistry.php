@@ -6,7 +6,9 @@ namespace Patchlevel\EventSourcing\Metadata\Message;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
-use Patchlevel\EventSourcing\Store\StreamHeader;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 
 use function array_flip;
@@ -73,7 +75,9 @@ final class MessageHeaderRegistry
     public static function createWithInternalHeaders(array $headerNameToClassMap = []): self
     {
         $internalHeaders = [
-            'stream' => StreamHeader::class,
+            'streamName' => StreamNameHeader::class,
+            'playhead' => PlayheadHeader::class,
+            'recordedOn' => RecordedOnHeader::class,
             'aggregate' => AggregateHeader::class,
             'archived' => ArchivedHeader::class,
             'newStreamStart' => StreamStartHeader::class,
