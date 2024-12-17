@@ -6,3 +6,11 @@ services:
       - POSTGRES_DB=eventstore
     ports:
       - 5432:5432
+
+  mysql:
+    image: mysql:8
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD="yes"
+      - MYSQL_DATABASE="eventstore"
+    ports:
+      - 3306:3306

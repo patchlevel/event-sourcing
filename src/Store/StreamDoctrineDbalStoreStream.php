@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
@@ -120,7 +121,7 @@ final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
         /** @var DateTimeTzImmutableType $dateTimeType */
         $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
-        /** @var array{id: positive-int, stream: string, playhead: int|string|null, event: string, payload: string, recorded_on: string, archived: int|string, new_stream_start: int|string, custom_headers: string} $data */
+        /** @var array{id: positive-int, stream: string, playhead: int|string|null, event_id: string, event_name: string, event_payload: string, recorded_on: string, archived: int|string, new_stream_start: int|string, custom_headers: string} $data */
         foreach ($result->iterateAssociative() as $data) {
             if ($this->position === null) {
                 $this->position = 0;
@@ -129,11 +130,12 @@ final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
             }
 
             $this->index = $data['id'];
-            $event = $eventSerializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
+            $event = $eventSerializer->deserialize(new SerializedEvent($data['event_name'], $data['event_payload']));
 
             $message = Message::create($event)
                 ->withHeader(new StreamNameHeader($data['stream']))
-                ->withHeader(new RecordedOnHeader($dateTimeType->convertToPHPValue($data['recorded_on'], $platform)));
+                ->withHeader(new RecordedOnHeader($dateTimeType->convertToPHPValue($data['recorded_on'], $platform)))
+                ->withHeader(new EventIdHeader($data['event_id']));
 
             if ($data['playhead'] !== null) {
                 $message = $message->withHeader(new PlayheadHeader((int)$data['playhead']));

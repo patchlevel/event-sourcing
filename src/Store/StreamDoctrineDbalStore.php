@@ -29,11 +29,13 @@ use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use PDO;
 use Psr\Clock\ClockInterface;
+use Ramsey\Uuid\Uuid;
 
 use function array_fill;
 use function array_filter;
@@ -192,8 +194,8 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
         $this->transactional(
             function () use ($messages): void {
-                /** @var array<string, int> $achievedUntilPlayhead */
-                $achievedUntilPlayhead = [];
+                /** @var array<string, int> $achievedUntilEventId */
+                $achievedUntilEventId = [];
 
                 $booleanType = Type::getType(Types::BOOLEAN);
                 $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
@@ -201,8 +203,9 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                 $columns = [
                     'stream',
                     'playhead',
-                    'event',
-                    'payload',
+                    'event_id',
+                    'event_name',
+                    'event_payload',
                     'recorded_on',
                     'new_stream_start',
                     'archived',
@@ -232,13 +235,19 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                         throw new MissingDataForStorage($e->name, $e);
                     }
 
-                    $playhead = null;
-
                     if ($message->hasHeader(PlayheadHeader::class)) {
-                        $playhead = $message->header(PlayheadHeader::class)->playhead;
+                        $parameters[] = $message->header(PlayheadHeader::class)->playhead;
+                    } else {
+                        $parameters[] = null;
                     }
 
-                    $parameters[] = $playhead;
+                    if ($message->hasHeader(EventIdHeader::class)) {
+                        $eventId = $message->header(EventIdHeader::class)->eventId;
+                    } else {
+                        $eventId = Uuid::uuid7()->toString();
+                    }
+
+                    $parameters[] = $eventId;
                     $parameters[] = $data->name;
                     $parameters[] = $data->payload;
 
@@ -248,19 +257,19 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                         $parameters[] = $this->clock->now();
                     }
 
-                    $types[$offset + 4] = $dateTimeType;
+                    $types[$offset + 5] = $dateTimeType;
 
                     $streamStart = $message->hasHeader(StreamStartHeader::class);
 
-                    if ($streamStart && $playhead !== null) {
-                        $achievedUntilPlayhead[$streamName] = $playhead;
+                    if ($streamStart) {
+                        $achievedUntilEventId[$streamName] = $eventId;
                     }
 
                     $parameters[] = $streamStart;
-                    $types[$offset + 5] = $booleanType;
+                    $types[$offset + 6] = $booleanType;
 
                     $parameters[] = $message->hasHeader(ArchivedHeader::class);
-                    $types[$offset + 6] = $booleanType;
+                    $types[$offset + 7] = $booleanType;
 
                     $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
 
@@ -283,21 +292,38 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
                 }
 
-                foreach ($achievedUntilPlayhead as $stream => $playhead) {
+                $subselect = null;
+
+                foreach ($achievedUntilEventId as $stream => $eventId) {
+                    if ($subselect === null) {
+                        if ($this->connection->getDatabasePlatform() instanceof MySQLPlatform) {
+                            $subselect = sprintf(
+                                'SELECT t.id FROM (SELECT * FROM %s) AS t WHERE t.event_id = :event_id',
+                                $this->config['table_name'],
+                            );
+                        } else {
+                            $subselect = sprintf(
+                                'SELECT id FROM %s WHERE event_id = :event_id',
+                                $this->config['table_name'],
+                            );
+                        }
+                    }
+
                     $this->connection->executeStatement(
                         sprintf(
                             <<<'SQL'
                             UPDATE %s
                             SET archived = true
                             WHERE stream = :stream
-                            AND playhead < :playhead
+                            AND id < (%s)
                             AND archived = false
                             SQL,
                             $this->config['table_name'],
+                            $subselect,
                         ),
                         [
                             'stream' => $stream,
-                            'playhead' => $playhead,
+                            'event_id' => $eventId,
                         ],
                     );
                 }
@@ -366,10 +392,13 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
             ->setNotnull(true);
         $table->addColumn('playhead', Types::INTEGER)
             ->setNotnull(false);
-        $table->addColumn('event', Types::STRING)
+        $table->addColumn('event_id', Types::STRING)
             ->setLength(255)
             ->setNotnull(true);
-        $table->addColumn('payload', Types::JSON)
+        $table->addColumn('event_name', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $table->addColumn('event_payload', Types::JSON)
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(true);
@@ -383,6 +412,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
             ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['event_id']);
         $table->addUniqueIndex(['stream', 'playhead']);
         $table->addIndex(['stream', 'playhead', 'archived']);
     }
@@ -392,6 +422,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
     {
         $filteredHeaders = [
             StreamNameHeader::class,
+            EventIdHeader::class,
             PlayheadHeader::class,
             RecordedOnHeader::class,
             StreamStartHeader::class,

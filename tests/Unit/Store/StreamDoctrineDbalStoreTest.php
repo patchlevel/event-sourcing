@@ -25,6 +25,7 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
@@ -394,8 +395,9 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     'id' => 1,
                     'stream' => 'profile-1',
                     'playhead' => '1',
-                    'event' => 'profile.created',
-                    'payload' => '{"profileId": "1", "email": "s"}',
+                    'event_id' => '1',
+                    'event_name' => 'profile.created',
+                    'event_payload' => '{"profileId": "1", "email": "s"}',
                     'recorded_on' => '2021-02-17 10:00:00',
                     'archived' => '0',
                     'new_stream_start' => '0',
@@ -483,8 +485,9 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     'id' => 1,
                     'stream' => 'profile-1',
                     'playhead' => '1',
-                    'event' => 'profile.created',
-                    'payload' => '{"profileId": "1", "email": "s"}',
+                    'event_id' => '1',
+                    'event_name' => 'profile.created',
+                    'event_payload' => '{"profileId": "1", "email": "s"}',
                     'recorded_on' => '2021-02-17 10:00:00',
                     'archived' => '0',
                     'new_stream_start' => '0',
@@ -494,8 +497,9 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     'id' => 2,
                     'stream' => 'profile-1',
                     'playhead' => '2',
-                    'event' => 'profile.email_changed',
-                    'payload' => '{"profileId": "1", "email": "d"}',
+                    'event_id' => '2',
+                    'event_name' => 'profile.email_changed',
+                    'event_payload' => '{"profileId": "1", "email": "d"}',
                     'recorded_on' => '2021-02-17 11:00:00',
                     'archived' => '0',
                     'new_stream_start' => '0',
@@ -830,6 +834,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
             ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new EventIdHeader('1'))
             ->withHeader(new PlayheadHeader(1))
             ->withHeader(new RecordedOnHeader($recordedOn));
 
@@ -850,12 +855,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile-1', 1, 'profile_created', '', $recordedOn, false, false, '[]'],
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, false, '[]'],
             [
-                4 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                5 => Type::getType(Types::BOOLEAN),
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce();
 
@@ -869,7 +874,6 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testSaveWithoutStreamNameHeader(): void
     {
-        $recordedOn = new DateTimeImmutable();
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -888,15 +892,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             static fn (array $args): mixed => $args[0](),
         );
 
-        $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile-1', 1, 'profile_created', '', $recordedOn, false, false, []],
-            [
-                4 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                5 => Type::getType(Types::BOOLEAN),
-                6 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldNotBeCalled();
+        $mockedConnection->executeStatement(Argument::any(), Argument::any(), Argument::any())->shouldNotBeCalled();
 
         $singleTableStore = new StreamDoctrineDbalStore(
             $mockedConnection->reveal(),
@@ -914,11 +910,13 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
-            ->withHeader(new RecordedOnHeader($recordedOn));
+            ->withHeader(new RecordedOnHeader($recordedOn))
+            ->withHeader(new EventIdHeader('1'));
         $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('d')))
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(2))
-            ->withHeader(new RecordedOnHeader($recordedOn));
+            ->withHeader(new RecordedOnHeader($recordedOn))
+            ->withHeader(new EventIdHeader('2'));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
@@ -941,10 +939,11 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile-1',
                 1,
+                '1',
                 'profile_created',
                 '',
                 $recordedOn,
@@ -953,6 +952,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '[]',
                 'profile-1',
                 2,
+                '2',
                 'profile_email_changed',
                 '',
                 $recordedOn,
@@ -961,12 +961,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '[]',
             ],
             [
-                4 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                5 => Type::getType(Types::BOOLEAN),
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
-                12 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                13 => Type::getType(Types::BOOLEAN),
-                14 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                15 => Type::getType(Types::BOOLEAN),
+                16 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce();
 
@@ -984,10 +984,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new EventIdHeader('1'))
             ->withHeader(new RecordedOnHeader($recordedOn));
         $message2 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new EventIdHeader('2'))
             ->withHeader(new RecordedOnHeader($recordedOn));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -1007,10 +1009,11 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile-1',
                 1,
+                '1',
                 'profile_created',
                 '',
                 $recordedOn,
@@ -1019,6 +1022,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '[]',
                 'profile-1',
                 1,
+                '2',
                 'profile_created',
                 '',
                 $recordedOn,
@@ -1027,12 +1031,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '[]',
             ],
             [
-                4 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                5 => Type::getType(Types::BOOLEAN),
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
-                12 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                13 => Type::getType(Types::BOOLEAN),
-                14 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                15 => Type::getType(Types::BOOLEAN),
+                16 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce()->willThrow(UniqueConstraintViolationException::class);
 
@@ -1097,6 +1101,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
             ->withHeader(new RecordedOnHeader($recordedOn))
+            ->withHeader(new EventIdHeader('1'))
             ->withHeaders($customHeaders);
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -1116,12 +1121,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile-1', 1, 'profile_created', '', $recordedOn, false, false, '{foo: "foo", baz: "baz"}'],
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, false, '{foo: "foo", baz: "baz"}'],
             [
-                4 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                5 => Type::getType(Types::BOOLEAN),
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce();
 
@@ -1392,10 +1397,13 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->setNotnull(true);
         $table->addColumn('playhead', Types::INTEGER)
             ->setNotnull(false);
-        $table->addColumn('event', Types::STRING)
+        $table->addColumn('event_id', Types::STRING)
             ->setLength(255)
             ->setNotnull(true);
-        $table->addColumn('payload', Types::JSON)
+        $table->addColumn('event_name', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $table->addColumn('event_payload', Types::JSON)
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(true);
@@ -1409,6 +1417,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['event_id']);
         $table->addUniqueIndex(['stream', 'playhead']);
         $table->addIndex(['stream', 'playhead', 'archived']);
 
@@ -1426,12 +1435,14 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(5))
             ->withHeader(new RecordedOnHeader($recordedOn))
+            ->withHeader(new EventIdHeader('1'))
             ->withHeader(new StreamStartHeader());
 
         $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('2'), Email::fromString('d')))
             ->withHeader(new StreamNameHeader('profile-2'))
             ->withHeader(new PlayheadHeader(42))
             ->withHeader(new RecordedOnHeader($recordedOn))
+            ->withHeader(new EventIdHeader('2'))
             ->withHeader(new StreamStartHeader());
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -1455,10 +1466,11 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile-1',
                 5,
+                '1',
                 'profile_created',
                 '',
                 $recordedOn,
@@ -1467,6 +1479,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '[]',
                 'profile-2',
                 42,
+                '2',
                 'profile_email_changed',
                 '',
                 $recordedOn,
@@ -1475,12 +1488,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '[]',
             ],
             [
-                4 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                5 => Type::getType(Types::BOOLEAN),
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
-                12 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                13 => Type::getType(Types::BOOLEAN),
-                14 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                15 => Type::getType(Types::BOOLEAN),
+                16 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce();
 
@@ -1489,12 +1502,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             UPDATE event_store
             SET archived = true
             WHERE stream = :stream
-            AND playhead < :playhead
+            AND id < (SELECT id FROM event_store WHERE event_id = :event_id)
             AND archived = false
             SQL,
             [
                 'stream' => 'profile-1',
-                'playhead' => 5,
+                'event_id' => '1',
             ],
         )->shouldBeCalledOnce();
 
@@ -1503,12 +1516,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             UPDATE event_store
             SET archived = true
             WHERE stream = :stream
-            AND playhead < :playhead
+            AND id < (SELECT id FROM event_store WHERE event_id = :event_id)
             AND archived = false
             SQL,
             [
                 'stream' => 'profile-2',
-                'playhead' => 42,
+                'event_id' => '2',
             ],
         )->shouldBeCalledOnce();
 
@@ -1529,12 +1542,14 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(5))
             ->withHeader(new RecordedOnHeader($recordedOn))
+            ->withHeader(new EventIdHeader('3'))
             ->withHeader(new StreamStartHeader());
 
         $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('d')))
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(42))
             ->withHeader(new RecordedOnHeader($recordedOn))
+            ->withHeader(new EventIdHeader('7'))
             ->withHeader(new StreamStartHeader());
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -1558,10 +1573,11 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event, payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile-1',
                 5,
+                '3',
                 'profile_created',
                 '',
                 $recordedOn,
@@ -1570,6 +1586,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '[]',
                 'profile-1',
                 42,
+                '7',
                 'profile_email_changed',
                 '',
                 $recordedOn,
@@ -1578,12 +1595,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '[]',
             ],
             [
-                4 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                5 => Type::getType(Types::BOOLEAN),
+                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
-                12 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                13 => Type::getType(Types::BOOLEAN),
-                14 => Type::getType(Types::BOOLEAN),
+                7 => Type::getType(Types::BOOLEAN),
+                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                15 => Type::getType(Types::BOOLEAN),
+                16 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce();
 
@@ -1592,12 +1609,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             UPDATE event_store
             SET archived = true
             WHERE stream = :stream
-            AND playhead < :playhead
+            AND id < (SELECT id FROM event_store WHERE event_id = :event_id)
             AND archived = false
             SQL,
             [
                 'stream' => 'profile-1',
-                'playhead' => 42,
+                'event_id' => '7',
             ],
         )->shouldBeCalledOnce();
 
