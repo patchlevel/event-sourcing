@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Traversable;
 
 /** @implements IteratorAggregate<Message> */
@@ -125,6 +126,7 @@ final class DoctrineDbalStoreStream implements Stream, IteratorAggregate
             $event = $eventSerializer->deserialize(new SerializedEvent($data['event'], $data['payload']));
 
             $message = Message::create($event)
+                ->withHeader(new IndexHeader($data['id']))
                 ->withHeader(new AggregateHeader(
                     $data['aggregate'],
                     $data['aggregate_id'],
