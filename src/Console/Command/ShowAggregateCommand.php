@@ -74,6 +74,8 @@ final class ShowAggregateCommand extends Command
             return 1;
         }
 
+        $streamName = null;
+
         if ($this->store instanceof StreamStore) {
             $aggregateClass = $this->aggregateRootRegistry->aggregateClass($aggregate);
             $streamName = $this->aggregateRootMetadataFactory->metadata($aggregateClass)->streamName($id);
@@ -109,7 +111,13 @@ final class ShowAggregateCommand extends Command
             return 0;
         }
 
-        $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
+        if ($id !== null) {
+            $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
+        } elseif ($streamName !== null) {
+            $console->error(sprintf('aggregate for stream "%s" not found', $streamName));
+        } else {
+            $console->error('aggregate not found');
+        }
 
         return 1;
     }

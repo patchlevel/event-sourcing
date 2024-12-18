@@ -36,7 +36,7 @@ final class AggregateRootMetadata
     {
         if ($aggregateId === null) {
             if (str_contains($this->streamName, '{id}')) {
-                throw new AggregateIdMissing($this->className);
+                throw new MissingAggregateIdForStreamName($this->streamName);
             }
 
             return $this->streamName;

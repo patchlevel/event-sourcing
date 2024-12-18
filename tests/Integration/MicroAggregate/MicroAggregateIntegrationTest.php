@@ -22,7 +22,7 @@ use Patchlevel\EventSourcing\Tests\Integration\MicroAggregate\Projection\Profile
 use PHPUnit\Framework\TestCase;
 
 /** @coversNothing */
-final class ChildAggregateIntegrationTest extends TestCase
+final class MicroAggregateIntegrationTest extends TestCase
 {
     private Connection $connection;
 
