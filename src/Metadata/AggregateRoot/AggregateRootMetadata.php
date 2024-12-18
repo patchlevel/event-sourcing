@@ -6,9 +6,14 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 
+use function str_contains;
+use function str_replace;
+
 /** @template T of AggregateRoot */
 final class AggregateRootMetadata
 {
+    public readonly string $streamName;
+
     public function __construct(
         /** @var class-string<T> */
         public readonly string $className,
@@ -22,7 +27,21 @@ final class AggregateRootMetadata
         public readonly Snapshot|null $snapshot,
         /** @var list<string> */
         public readonly array $childAggregates = [],
-        public readonly string|null $streamName = null,
+        string|null $streamName = null,
     ) {
+        $this->streamName = $streamName ?? $this->name . '-{id}';
+    }
+
+    public function streamName(string|null $aggregateId = null): string
+    {
+        if ($aggregateId === null) {
+            if (str_contains($this->streamName, '{id}')) {
+                throw new AggregateIdMissing($this->className);
+            }
+
+            return $this->streamName;
+        }
+
+        return str_replace('{id}', $aggregateId, $this->streamName);
     }
 }

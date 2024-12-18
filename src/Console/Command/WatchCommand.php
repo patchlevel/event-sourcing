@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
@@ -12,7 +11,6 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\SubscriptionStore;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -88,24 +86,9 @@ final class WatchCommand extends Command
 
         $criteriaBuilder = new CriteriaBuilder();
 
-        if ($stream !== null) {
-            $criteriaBuilder->streamName($stream);
-        }
-
-        if ($this->store instanceof StreamStore) {
-            if ($aggregate !== null || $aggregateId !== null) {
-                if ($aggregate === null || $aggregateId === null) {
-                    $console->error('You must provide both aggregate and aggregate-id or none of them');
-
-                    return 1;
-                }
-
-                $criteriaBuilder->streamName(StreamNameTranslator::streamName($aggregate, $aggregateId));
-            }
-        } else {
-            $criteriaBuilder->aggregateName($aggregate);
-            $criteriaBuilder->aggregateId($aggregateId);
-        }
+        $criteriaBuilder->streamName($stream);
+        $criteriaBuilder->aggregateName($aggregate);
+        $criteriaBuilder->aggregateId($aggregateId);
 
         $criteria = $criteriaBuilder->build();
 

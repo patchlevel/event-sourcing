@@ -51,7 +51,6 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflectionClass);
         $applyMethods = $this->findApplyMethods($reflectionClass, $aggregate, $childAggregates);
         $snapshot = $this->findSnapshot($reflectionClass);
-        $streamName = $this->findStreamName($reflectionClass);
 
         $metadata = new AggregateRootMetadata(
             $aggregate,
@@ -62,7 +61,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $suppressAll,
             $snapshot,
             array_map(static fn (array $list) => $list[0], $childAggregates),
-            $streamName ?? $aggregateName . '-{id}',
+            $this->findStreamName($reflectionClass),
         );
 
         $this->aggregateMetadata[$aggregate] = $metadata;

@@ -22,6 +22,6 @@ final class AggregateHeader
 
     public function streamName(): string
     {
-        return StreamNameTranslator::streamName($this->aggregateName, $this->aggregateId);
+        return $this->aggregateName . '-' . $this->aggregateId;
     }
 }

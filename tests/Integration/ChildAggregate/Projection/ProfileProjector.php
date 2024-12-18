@@ -12,7 +12,6 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\ProfileId;
 
 #[Projector('profile-1')]
 final class ProfileProjector
@@ -52,12 +51,12 @@ final class ProfileProjector
     }
 
     #[Subscribe(NameChanged::class)]
-    public function handleNameChanged(NameChanged $nameChanged, ProfileId $profileId): void
+    public function handleNameChanged(NameChanged $nameChanged): void
     {
         $this->connection->update(
             'projection_profile',
             ['name' => $nameChanged->name],
-            ['id' => $profileId->toString()],
+            ['id' => $nameChanged->profileId->toString()],
         );
     }
 }
