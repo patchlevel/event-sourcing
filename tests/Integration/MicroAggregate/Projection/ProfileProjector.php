@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Projection;
+namespace Patchlevel\EventSourcing\Tests\Integration\MicroAggregate\Projection;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
@@ -10,9 +10,8 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\NameChanged;
-use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\ProfileId;
+use Patchlevel\EventSourcing\Tests\Integration\MicroAggregate\Events\NameChanged;
+use Patchlevel\EventSourcing\Tests\Integration\MicroAggregate\Events\ProfileCreated;
 
 #[Projector('profile-1')]
 final class ProfileProjector
@@ -52,12 +51,12 @@ final class ProfileProjector
     }
 
     #[Subscribe(NameChanged::class)]
-    public function handleNameChanged(NameChanged $nameChanged, ProfileId $profileId): void
+    public function handleNameChanged(NameChanged $nameChanged): void
     {
         $this->connection->update(
             'projection_profile',
             ['name' => $nameChanged->name],
-            ['id' => $profileId->toString()],
+            ['id' => $nameChanged->profileId->toString()],
         );
     }
 }
