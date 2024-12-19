@@ -122,8 +122,9 @@ The table structure of the `StreamDoctrineDbalStore` looks like this:
 | id               | bigint   | The index of the whole stream (autoincrement)    |
 | stream           | string   | The name of the stream                           |
 | playhead         | ?int     | The current playhead of the aggregate            |
-| event            | string   | The name of the event                            |
-| payload          | json     | The payload of the event                         |
+| event_id         | string   | The id of the event                              |
+| event_name       | string   | The name of the event                            |
+| event_payload    | json     | The payload of the event                         |
 | recorded_on      | datetime | The date when the event was recorded             |
 | new_stream_start | bool     | If the event is the first event of the aggregate |
 | archived         | bool     | If the event is archived                         |
