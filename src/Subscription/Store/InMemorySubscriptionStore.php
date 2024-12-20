@@ -92,4 +92,9 @@ final class InMemorySubscriptionStore implements SubscriptionStore
     {
         unset($this->subscriptions[$subscription->id()]);
     }
+
+    public function clear(): void
+    {
+        $this->subscriptions = [];
+    }
 }

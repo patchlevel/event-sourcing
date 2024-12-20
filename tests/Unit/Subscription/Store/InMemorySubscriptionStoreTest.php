@@ -151,4 +151,15 @@ final class InMemorySubscriptionStoreTest extends TestCase
 
         self::assertEquals([$subscription1], $store->find($criteria));
     }
+
+    public function testClear(): void
+    {
+        $subscription1 = new Subscription('1', group: 'group1', status: Status::New);
+        $subscription2 = new Subscription('2', group: 'group2', status: Status::Booting);
+
+        $store = new InMemorySubscriptionStore([$subscription1, $subscription2]);
+        $store->clear();
+
+        self::assertSame([], $store->find());
+    }
 }
