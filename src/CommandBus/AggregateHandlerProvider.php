@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Attribute\HandledBy;
 use Patchlevel\EventSourcing\CommandBus\Handler\HandlerFactory;
 use ReflectionClass;
 use ReflectionMethod;
+use Symfony\Component\TypeInfo\Type\ObjectType;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
 use function array_key_exists;
@@ -49,9 +50,15 @@ final class AggregateHandlerProvider implements HandlerProvider
             }
 
             if ($method->isStatic()) {
-                $this->handlers[$commandClass] = new HandlerDescriptor($this->handlerFactory->createHandler($aggregateClass, $method->getName()));
+                $this->handlers[$commandClass] = new HandlerDescriptor($this->handlerFactory->createHandler(
+                    $aggregateClass,
+                    $method->getName(),
+                ));
             } else {
-                $this->handlers[$commandClass] = new HandlerDescriptor($this->handlerFactory->updateHandler($aggregateClass, $method->getName()));
+                $this->handlers[$commandClass] = new HandlerDescriptor($this->handlerFactory->updateHandler(
+                    $aggregateClass,
+                    $method->getName(),
+                ));
             }
 
             return $this->handlers[$commandClass];
@@ -105,29 +112,22 @@ final class AggregateHandlerProvider implements HandlerProvider
             );
         }
 
-        $guessType = false;
-
-        foreach ($handleAttributes as $handleAttribute) {
-            $handle = $handleAttribute->newInstance();
-
-            if (!$handle->commandClass) {
-                $guessType = true;
-                continue;
-            }
-
-            if ($handle->commandClass === $commandClass) {
-                return true;
-            }
-
-            return is_a($commandClass, $handle->commandClass, true);
-        }
-
-        if (!$guessType) {
-            return false;
-        }
-
         $type = $this->typeResolver->resolve($reflectionType);
 
-        return $type->isIdentifiedBy($commandClass);
+        if (!$type instanceof ObjectType) {
+            throw InvalidHandleMethod::incompatibleType(
+                $reflectionMethod->getDeclaringClass()->getName(),
+                $reflectionMethod->getName(),
+            );
+        }
+
+        $handle = $handleAttributes[0]->newInstance();
+        $handleClassName = $handle->commandClass ?: $type->getClassName();
+
+        if ($handleClassName === $commandClass) {
+            return true;
+        }
+
+        return is_a($commandClass, $handleClassName, true);
     }
 }
