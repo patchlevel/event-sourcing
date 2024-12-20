@@ -15,14 +15,12 @@ use function class_exists;
 /** @internal */
 final class AggregateHandlerFinder
 {
-    /** @var list<AggregateHandler> */
-    private array $createHandlers = [];
-
-    /** @var list<AggregateHandler> */
-    private array $updateHandlers = [];
-
-    /** @param class-string<AggregateRoot> $aggregateClass */
-    public function __construct(string $aggregateClass)
+    /**
+     * @param class-string<AggregateRoot> $aggregateClass
+     *
+     * @return iterable<AggregateHandler>
+     */
+    public static function find(string $aggregateClass): iterable
     {
         $typeResolver = TypeResolver::create();
         $reflectionClass = new ReflectionClass($aggregateClass);
@@ -71,29 +69,11 @@ final class AggregateHandlerFinder
                 );
             }
 
-            if ($reflectionMethod->isStatic()) {
-                $this->createHandlers[] = new AggregateHandler(
-                    $reflectionMethod->getName(),
-                    $commandClass,
-                );
-            } else {
-                $this->updateHandlers[] = new AggregateHandler(
-                    $reflectionMethod->getName(),
-                    $commandClass,
-                );
-            }
+            yield new AggregateHandler(
+                $commandClass,
+                $reflectionMethod->getName(),
+                $reflectionMethod->isStatic(),
+            );
         }
-    }
-
-    /** @return iterable<AggregateHandler> */
-    public function createHandlers(): iterable
-    {
-        return $this->createHandlers;
-    }
-
-    /** @return iterable<AggregateHandler> */
-    public function updateHandlers(): iterable
-    {
-        return $this->updateHandlers;
     }
 }
