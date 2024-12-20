@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\ChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot as AttributeSnapshot;
+use Patchlevel\EventSourcing\Attribute\Stream;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use ReflectionClass;
 use ReflectionIntersectionType;
@@ -60,6 +61,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $suppressAll,
             $snapshot,
             array_map(static fn (array $list) => $list[0], $childAggregates),
+            $this->findStreamName($reflectionClass),
         );
 
         $this->aggregateMetadata[$aggregate] = $metadata;
@@ -137,6 +139,23 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $attribute->batch,
             $attribute->version,
         );
+    }
+
+    private function findStreamName(ReflectionClass $reflector): string|null
+    {
+        $attributes = $reflector->getAttributes(Stream::class);
+
+        if ($attributes === []) {
+            return null;
+        }
+
+        $streamName = $attributes[0]->newInstance()->name;
+
+        if (class_exists($streamName) && is_a($streamName, AggregateRoot::class, true)) {
+            return $this->metadata($streamName)->streamName;
+        }
+
+        return $attributes[0]->newInstance()->name;
     }
 
     /** @return list<array{string, ReflectionClass}> */

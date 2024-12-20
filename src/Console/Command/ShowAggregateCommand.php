@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
@@ -38,6 +39,7 @@ final class ShowAggregateCommand extends Command
         private readonly EventSerializer $eventSerializer,
         private readonly HeadersSerializer $headersSerializer,
         private readonly AggregateRootRegistry $aggregateRootRegistry,
+        private readonly AggregateRootMetadataFactory $aggregateRootMetadataFactory = new AttributeAggregateRootMetadataFactory(),
     ) {
         parent::__construct();
     }
@@ -65,10 +67,6 @@ final class ShowAggregateCommand extends Command
         }
 
         $id = InputHelper::nullableString($input->getArgument('id'));
-        if ($id === null) {
-            $question = new Question('Enter the aggregate id');
-            $id = InputHelper::string($console->askQuestion($question));
-        }
 
         if (!$this->aggregateRootRegistry->hasAggregateName($aggregate)) {
             $console->error(sprintf('aggregate type "%s" not exists', $aggregate));
@@ -76,15 +74,23 @@ final class ShowAggregateCommand extends Command
             return 1;
         }
 
+        $streamName = null;
+
         if ($this->store instanceof StreamStore) {
+            $aggregateClass = $this->aggregateRootRegistry->aggregateClass($aggregate);
+            $streamName = $this->aggregateRootMetadataFactory->metadata($aggregateClass)->streamName($id);
+
             $stream = $this->store->load(
                 new Criteria(
-                    new StreamCriterion(
-                        StreamNameTranslator::streamName($aggregate, $id),
-                    ),
+                    new StreamCriterion($streamName),
                 ),
             );
         } else {
+            if ($id === null) {
+                $question = new Question('Enter the aggregate id');
+                $id = InputHelper::string($console->askQuestion($question));
+            }
+
             $stream = $this->store->load(
                 new Criteria(
                     new AggregateNameCriterion($aggregate),
@@ -105,7 +111,13 @@ final class ShowAggregateCommand extends Command
             return 0;
         }
 
-        $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
+        if ($id !== null) {
+            $console->error(sprintf('aggregate "%s" => "%s" not found', $aggregate, $id));
+        } elseif ($streamName !== null) {
+            $console->error(sprintf('aggregate for stream "%s" not found', $streamName));
+        } else {
+            $console->error('aggregate not found');
+        }
 
         return 1;
     }

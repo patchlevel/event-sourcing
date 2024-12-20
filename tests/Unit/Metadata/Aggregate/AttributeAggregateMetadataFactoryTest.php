@@ -18,6 +18,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyIntersecti
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyMultipleApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyNoType;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithEmptyApply;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithStream;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
 use PHPUnit\Framework\TestCase;
 
@@ -43,6 +44,9 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
             [MessageDeleted::class => true],
             $metadata->suppressEvents,
         );
+
+        self::assertSame('profile-{id}', $metadata->streamName);
+        self::assertSame('profile-foo', $metadata->streamName('foo'));
     }
 
     public function testApplyWithNoEventClass(): void
@@ -60,6 +64,15 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
         );
         self::assertFalse($metadata->suppressAll);
         self::assertSame([], $metadata->suppressEvents);
+    }
+
+    public function streamName(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+        $metadata = $metadataFactory->metadata(ProfileWithStream::class);
+
+        self::assertSame('other-{id}', $metadata->streamName);
+        self::assertSame('other-foo', $metadata->streamName('foo'));
     }
 
     public function testBrokenApplyWithNoType(): void

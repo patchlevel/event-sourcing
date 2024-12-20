@@ -10,5 +10,7 @@ deptrac:
       - Patchlevel\EventSourcing\Subscription\RunMode
     Patchlevel\EventSourcing\Attribute\Projector:
       - Patchlevel\EventSourcing\Subscription\RunMode
+    Patchlevel\EventSourcing\Attribute\Stream:
+      - Patchlevel\EventSourcing\Aggregate\AggregateRoot
     Patchlevel\EventSourcing\Attribute\Subscriber:
       - Patchlevel\EventSourcing\Subscription\RunMode

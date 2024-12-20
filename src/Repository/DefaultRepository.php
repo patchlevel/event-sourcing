@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Repository;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\Aggregate\StreamNameTranslator;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Message;
@@ -113,7 +112,7 @@ final class DefaultRepository implements Repository
 
         if ($this->useStreamHeader) {
             $criteria = (new CriteriaBuilder())
-                ->streamName(StreamNameTranslator::streamName($this->metadata->name, $id->toString()))
+                ->streamName($this->metadata->streamName($id->toString()))
                 ->archived(false)
                 ->build();
         } else {
@@ -178,7 +177,7 @@ final class DefaultRepository implements Repository
     {
         if ($this->useStreamHeader) {
             $criteria = (new CriteriaBuilder())
-                ->streamName(StreamNameTranslator::streamName($this->metadata->name, $id->toString()))
+                ->streamName($this->metadata->streamName($id->toString()))
                 ->build();
         } else {
             $criteria = (new CriteriaBuilder())
@@ -242,8 +241,7 @@ final class DefaultRepository implements Repository
             $clock = $this->clock;
 
             $aggregateName = $this->metadata->name;
-
-            $streamName = $this->useStreamHeader ? StreamNameTranslator::streamName($aggregateName, $aggregateId) : null;
+            $streamName = $this->useStreamHeader ? $this->metadata->streamName($aggregateId) : null;
 
             $messages = array_map(
                 static function (object $event) use (
@@ -338,7 +336,7 @@ final class DefaultRepository implements Repository
 
         if ($this->useStreamHeader) {
             $criteria = (new CriteriaBuilder())
-                ->streamName(StreamNameTranslator::streamName($this->metadata->name, $id->toString()))
+                ->streamName($this->metadata->streamName($id->toString()))
                 ->fromPlayhead($aggregate->playhead())
                 ->build();
         } else {

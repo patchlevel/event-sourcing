@@ -27,7 +27,12 @@ use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -35,6 +40,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithStream;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -772,6 +778,74 @@ final class DefaultRepositoryTest extends TestCase
         $aggregate = $repository->load(ProfileId::fromString('1'));
 
         self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
+        self::assertSame(1, $aggregate->playhead());
+        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
+    }
+
+    public function testSaveAggregateInOtherStream(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->willImplement(StreamStore::class);
+        $store->save(
+            Argument::that(static function (Message $message) {
+                if ($message->header(StreamNameHeader::class)->streamName !== 'other-1') {
+                    return false;
+                }
+
+                return $message->header(PlayheadHeader::class)->playhead === 1;
+            }),
+            Argument::that(static function (Message $message) {
+                if ($message->header(StreamNameHeader::class)->streamName !== 'other-1') {
+                    return false;
+                }
+
+                return $message->header(PlayheadHeader::class)->playhead === 2;
+            }),
+        )->shouldBeCalled();
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            ProfileWithStream::metadata(),
+        );
+
+        $aggregate = ProfileWithStream::createProfile(
+            ProfileId::fromString('1'),
+            Email::fromString('hallo@patchlevel.de'),
+        );
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
+
+        $repository->save($aggregate);
+    }
+
+    public function testLoadAggregateFromOtherStream(): void
+    {
+        $store = $this->prophesize(Store::class);
+        $store->willImplement(StreamStore::class);
+
+        $store->load(new Criteria(
+            new StreamCriterion('other-1'),
+            new ArchivedCriterion(false),
+        ))->willReturn(new ArrayStream([
+            Message::create(
+                new ProfileCreated(
+                    ProfileId::fromString('1'),
+                    Email::fromString('hallo@patchlevel.de'),
+                ),
+            )->withHeader(new StreamNameHeader('other-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
+        ]));
+
+        $repository = new DefaultRepository(
+            $store->reveal(),
+            ProfileWithStream::metadata(),
+        );
+
+        $aggregate = $repository->load(ProfileId::fromString('1'));
+
+        self::assertInstanceOf(ProfileWithStream::class, $aggregate);
         self::assertSame(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
