@@ -9,7 +9,7 @@ interface HandlerProvider
     /**
      * @param class-string $commandClass
      *
-     * @throws HandlerNotFound
+     * @return iterable<HandlerDescriptor>
      */
-    public function handlerForCommand(string $commandClass): HandlerDescriptor;
+    public function handlerForCommand(string $commandClass): iterable;
 }

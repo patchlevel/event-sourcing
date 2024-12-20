@@ -256,6 +256,8 @@ final class BasicIntegrationTest extends TestCase
             ]),
         );
 
+        $aggregateRootRegistry = new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]);
+
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]),
             $store,
@@ -280,7 +282,8 @@ final class BasicIntegrationTest extends TestCase
             $engine,
         );
 
-        $commandBus = DefaultCommandBus::createDefault(
+        $commandBus = DefaultCommandBus::createForAggregateHandlers(
+            $aggregateRootRegistry,
             $manager,
             new ServiceLocator([
                 ClockInterface::class => new SystemClock(),

@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
 use Patchlevel\EventSourcing\CommandBus\HandlerDescriptor;
 use Patchlevel\EventSourcing\CommandBus\HandlerNotFound;
 use Patchlevel\EventSourcing\CommandBus\HandlerProvider;
+use Patchlevel\EventSourcing\CommandBus\MultipleHandlersFound;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -22,11 +23,29 @@ final class DefaultCommandBusTest extends TestCase
         };
 
         $handlerProvider = $this->prophesize(HandlerProvider::class);
-        $handlerProvider->handlerForCommand($command::class)->willThrow(new HandlerNotFound($command::class));
+        $handlerProvider->handlerForCommand($command::class)->willReturn([]);
 
         $commandBus = new DefaultCommandBus($handlerProvider->reveal());
 
         $this->expectException(HandlerNotFound::class);
+
+        $commandBus->dispatch($command);
+    }
+
+    public function testMultipleHandlersFound(): void
+    {
+        $command = new class {
+        };
+
+        $handlerProvider = $this->prophesize(HandlerProvider::class);
+        $handlerProvider->handlerForCommand($command::class)->willReturn([
+            new HandlerDescriptor(static fn () => null),
+            new HandlerDescriptor(static fn () => null),
+        ]);
+
+        $commandBus = new DefaultCommandBus($handlerProvider->reveal());
+
+        $this->expectException(MultipleHandlersFound::class);
 
         $commandBus->dispatch($command);
     }
@@ -46,9 +65,9 @@ final class DefaultCommandBusTest extends TestCase
         };
 
         $handlerProvider = $this->prophesize(HandlerProvider::class);
-        $handlerProvider->handlerForCommand($command::class)->willReturn(
+        $handlerProvider->handlerForCommand($command::class)->willReturn([
             new HandlerDescriptor($handler),
-        );
+        ]);
 
         $commandBus = new DefaultCommandBus($handlerProvider->reveal());
 

@@ -11,8 +11,8 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Attribute\Id;
 
-#[Aggregate(ProfileWithHandlers::class)]
-final class ProfileWithHandlers extends BasicAggregateRoot
+#[Aggregate(ProfileWithHandler::class)]
+final class ProfileWithHandler extends BasicAggregateRoot
 {
     #[Id]
     private ProfileId $id;
@@ -30,16 +30,6 @@ final class ProfileWithHandlers extends BasicAggregateRoot
 
     #[Handle]
     public function changeName(ChangeProfileName $command): void
-    {
-    }
-
-    #[Handle(NoParameterCommand::class)]
-    public function noParameters(): void
-    {
-    }
-
-    #[Handle(NoTypeCommand::class)]
-    public function noType($command): void
     {
     }
 }

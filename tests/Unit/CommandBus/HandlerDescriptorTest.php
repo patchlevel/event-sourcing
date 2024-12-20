@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\CommandBus;
 
 use Patchlevel\EventSourcing\CommandBus\HandlerDescriptor;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandlers;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 
@@ -14,20 +14,20 @@ final class HandlerDescriptorTest extends TestCase
 {
     public function testObjectMethod(): void
     {
-        $aggregate = ProfileWithHandlers::createEmpty();
+        $aggregate = ProfileWithHandler::createEmpty();
 
         $descriptor = new HandlerDescriptor($aggregate->changeName(...));
 
         self::assertEquals($aggregate->changeName(...), $descriptor->callable());
-        self::assertEquals('Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandlers::changeName', $descriptor->name());
+        self::assertEquals('Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler::changeName', $descriptor->name());
     }
 
     public function testStaticObjectMethod(): void
     {
-        $descriptor = new HandlerDescriptor([ProfileWithHandlers::class, 'create']);
+        $descriptor = new HandlerDescriptor([ProfileWithHandler::class, 'create']);
 
-        self::assertEquals(ProfileWithHandlers::create(...), $descriptor->callable());
-        self::assertEquals('Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandlers::create', $descriptor->name());
+        self::assertEquals(ProfileWithHandler::create(...), $descriptor->callable());
+        self::assertEquals('Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler::create', $descriptor->name());
     }
 
     #[RequiresPhp('>= 8.2')]

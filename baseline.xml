@@ -226,6 +226,16 @@
       <code><![CDATA[$row['payload']]]></code>
     </MixedArgument>
   </file>
+  <file src="tests/Unit/CommandBus/AggregateHandlerProviderTest.php">
+    <InvalidArrayAccess>
+      <code><![CDATA[$result[0]]]></code>
+      <code><![CDATA[$result[0]]]></code>
+    </InvalidArrayAccess>
+    <MixedMethodCall>
+      <code><![CDATA[callable]]></code>
+      <code><![CDATA[callable]]></code>
+    </MixedMethodCall>
+  </file>
   <file src="tests/Unit/CommandBus/DefaultCommandBusTest.php">
     <InvalidPropertyFetch>
       <code><![CDATA[$handler->command]]></code>
@@ -251,17 +261,12 @@
       <code><![CDATA[$value]]></code>
     </MixedArgumentTypeCoercion>
   </file>
-  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php">
-    <ReservedWord>
-      <code><![CDATA[ProfileCreated&ProfileVisited $event]]></code>
-    </ReservedWord>
-  </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
       <code><![CDATA[$event]]></code>
     </MissingParamType>
   </file>
-  <file src="tests/Unit/Fixture/ProfileWithHandlers.php">
+  <file src="tests/Unit/Fixture/ProfileWithNoTypeHandler.php">
     <MissingParamType>
       <code><![CDATA[$command]]></code>
     </MissingParamType>

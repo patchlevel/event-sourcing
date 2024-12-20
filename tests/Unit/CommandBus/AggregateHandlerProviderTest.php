@@ -7,49 +7,58 @@ namespace Patchlevel\EventSourcing\Tests\Unit\CommandBus;
 use Patchlevel\EventSourcing\CommandBus\AggregateHandlerProvider;
 use Patchlevel\EventSourcing\CommandBus\Handler\HandlerFactory;
 use Patchlevel\EventSourcing\CommandBus\InvalidHandleMethod;
-use Patchlevel\EventSourcing\CommandBus\MissingHandledBy;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ChangeProfileName;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\NoParameterCommand;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\NoTypeCommand;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandlers;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithNoParameterHandler;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithNoTypeHandler;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
-use stdClass;
 
 /** @covers \Patchlevel\EventSourcing\CommandBus\AggregateHandlerProvider */
 final class AggregateHandlerProviderTest extends TestCase
 {
     use ProphecyTrait;
 
-    public function testMissingHandledBy(): void
-    {
-        $handlerFactory = $this->prophesize(HandlerFactory::class);
-        $provider = new AggregateHandlerProvider($handlerFactory->reveal());
-
-        $this->expectException(MissingHandledBy::class);
-
-        $provider->handlerForCommand(stdClass::class);
-    }
-
     public function testNoParameters(): void
     {
         $handlerFactory = $this->prophesize(HandlerFactory::class);
-        $provider = new AggregateHandlerProvider($handlerFactory->reveal());
+        $provider = new AggregateHandlerProvider(
+            new AggregateRootRegistry(['profile' => ProfileWithNoParameterHandler::class]),
+            $handlerFactory->reveal(),
+        );
 
         $this->expectException(InvalidHandleMethod::class);
 
-        $provider->handlerForCommand(NoParameterCommand::class);
+        $provider->handlerForCommand(ChangeProfileName::class);
     }
 
     public function testNoType(): void
     {
         $handlerFactory = $this->prophesize(HandlerFactory::class);
-        $provider = new AggregateHandlerProvider($handlerFactory->reveal());
+        $provider = new AggregateHandlerProvider(
+            new AggregateRootRegistry(['profile' => ProfileWithNoTypeHandler::class]),
+            $handlerFactory->reveal(),
+        );
 
         $this->expectException(InvalidHandleMethod::class);
 
-        $provider->handlerForCommand(NoTypeCommand::class);
+        $provider->handlerForCommand(ChangeProfileName::class);
+    }
+
+    public function testEmpty(): void
+    {
+        $handlerFactory = $this->prophesize(HandlerFactory::class);
+
+        $provider = new AggregateHandlerProvider(
+            new AggregateRootRegistry([]),
+            $handlerFactory->reveal(),
+        );
+
+        $result = $provider->handlerForCommand(CreateProfile::class);
+
+        self::assertCount(0, $result);
     }
 
     public function testGetCreateHandler(): void
@@ -58,15 +67,24 @@ final class AggregateHandlerProviderTest extends TestCase
 
         $handlerFactory = $this->prophesize(HandlerFactory::class);
         $handlerFactory
-            ->createHandler(ProfileWithHandlers::class, 'create')
+            ->createHandler(ProfileWithHandler::class, 'create')
             ->shouldBeCalled()
             ->willReturn($handler);
 
-        $provider = new AggregateHandlerProvider($handlerFactory->reveal());
+        $handlerFactory
+            ->updateHandler(ProfileWithHandler::class, 'changeName')
+            ->shouldBeCalled()
+            ->willReturn($handler);
+
+        $provider = new AggregateHandlerProvider(
+            new AggregateRootRegistry(['profile' => ProfileWithHandler::class]),
+            $handlerFactory->reveal(),
+        );
 
         $result = $provider->handlerForCommand(CreateProfile::class);
 
-        self::assertSame($handler, $result->callable());
+        self::assertCount(1, $result);
+        self::assertSame($handler, $result[0]->callable());
     }
 
     public function testGetUpdateHandler(): void
@@ -74,15 +92,25 @@ final class AggregateHandlerProviderTest extends TestCase
         $handler = static fn (ChangeProfileName $command): mixed => null;
 
         $handlerFactory = $this->prophesize(HandlerFactory::class);
+
         $handlerFactory
-            ->updateHandler(ProfileWithHandlers::class, 'changeName')
+            ->createHandler(ProfileWithHandler::class, 'create')
             ->shouldBeCalled()
             ->willReturn($handler);
 
-        $provider = new AggregateHandlerProvider($handlerFactory->reveal());
+        $handlerFactory
+            ->updateHandler(ProfileWithHandler::class, 'changeName')
+            ->shouldBeCalled()
+            ->willReturn($handler);
+
+        $provider = new AggregateHandlerProvider(
+            new AggregateRootRegistry(['profile' => ProfileWithHandler::class]),
+            $handlerFactory->reveal(),
+        );
 
         $result = $provider->handlerForCommand(ChangeProfileName::class);
 
-        self::assertSame($handler, $result->callable());
+        self::assertCount(1, $result);
+        self::assertSame($handler, $result[0]->callable());
     }
 }

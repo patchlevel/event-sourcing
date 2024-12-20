@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\CommandBus;
 
 use Patchlevel\EventSourcing\CommandBus\Handler\DefaultHandlerFactory;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 use function array_shift;
+use function count;
+use function is_array;
+use function iterator_to_array;
 use function sprintf;
 
 final class DefaultCommandBus implements CommandBus
@@ -48,9 +52,23 @@ final class DefaultCommandBus implements CommandBus
             $this->logger?->debug('CommandBus: Start processing queue.');
 
             while ($command = array_shift($this->queue)) {
-                $handler = $this->handlerProvider->handlerForCommand($command::class);
+                $handlers = $this->handlerProvider->handlerForCommand($command::class);
 
-                ($handler->callable())($command);
+                if (!is_array($handlers)) {
+                    $handlers = iterator_to_array($handlers);
+                }
+
+                $count = count($handlers);
+
+                if ($count === 0) {
+                    throw new HandlerNotFound($command::class);
+                }
+
+                if ($count > 1) {
+                    throw new MultipleHandlersFound($command::class);
+                }
+
+                ($handlers[0]->callable())($command);
             }
         } finally {
             $this->processing = false;
@@ -59,13 +77,15 @@ final class DefaultCommandBus implements CommandBus
         }
     }
 
-    public static function createDefault(
+    public static function createForAggregateHandlers(
+        AggregateRootRegistry $aggregateRootRegistry,
         RepositoryManager $repositoryManager,
         ContainerInterface|null $container = null,
         LoggerInterface|null $logger = null,
     ): self {
         return new self(
             new AggregateHandlerProvider(
+                $aggregateRootRegistry,
                 new DefaultHandlerFactory(
                     $repositoryManager,
                     $container,
