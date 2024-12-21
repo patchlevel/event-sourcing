@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
-use Psr\Container\ContainerInterface;
 use ReflectionClass;
 
 final class UpdateAggregateHandler
@@ -19,7 +18,7 @@ final class UpdateAggregateHandler
         private readonly RepositoryManager $repositoryManager,
         private readonly string $aggregateClass,
         private readonly string $methodName,
-        private readonly ContainerInterface|null $container = null,
+        private readonly ParameterResolver $parameterResolver,
     ) {
     }
 
@@ -35,10 +34,7 @@ final class UpdateAggregateHandler
 
         $reflectionMethod->invokeArgs(
             $aggregate,
-            [
-                $command,
-                ...ParameterResolver::resolve($reflectionMethod, $this->container),
-            ],
+            [...$this->parameterResolver->resolve($reflectionMethod, $command)],
         );
 
         $repository->save($aggregate);

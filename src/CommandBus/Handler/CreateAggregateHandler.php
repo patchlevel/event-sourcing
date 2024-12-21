@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\CommandBus\Handler;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
-use Psr\Container\ContainerInterface;
 use ReflectionClass;
 
 final class CreateAggregateHandler
@@ -17,7 +16,7 @@ final class CreateAggregateHandler
         private readonly RepositoryManager $repositoryManager,
         private readonly string $aggregateClass,
         private readonly string $methodName,
-        private readonly ContainerInterface|null $container = null,
+        private readonly ParameterResolver $parameterResolver,
     ) {
     }
 
@@ -30,10 +29,7 @@ final class CreateAggregateHandler
 
         $aggregate = $reflectionMethod->invokeArgs(
             null,
-            [
-                $command,
-                ...ParameterResolver::resolve($reflectionMethod, $this->container),
-            ],
+            [...$this->parameterResolver->resolve($reflectionMethod, $command)],
         );
 
         if (!$aggregate instanceof AggregateRoot) {

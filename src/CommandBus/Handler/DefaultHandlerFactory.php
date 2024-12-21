@@ -21,7 +21,7 @@ final class DefaultHandlerFactory implements HandlerFactory
             $this->repositoryManager,
             $aggregateClass,
             $method,
-            $this->container,
+            new DefaultParameterResolver($this->container),
         );
     }
 
@@ -31,7 +31,7 @@ final class DefaultHandlerFactory implements HandlerFactory
             $this->repositoryManager,
             $aggregateClass,
             $method,
-            $this->container,
+            new DefaultParameterResolver($this->container),
         );
     }
 }
