@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 #[Aggregate(ProfileWithNoParameterHandler::class)]
 final class ProfileWithNoParameterHandler extends BasicAggregateRoot
 {
-    #[Handle(ChangeProfileName::class)]
+    #[Handle]
     public function noParameters(): void
     {
     }

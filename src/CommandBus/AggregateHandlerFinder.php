@@ -32,6 +32,18 @@ final class AggregateHandlerFinder
                 continue;
             }
 
+            $handle = $handleAttributes[0]->newInstance();
+
+            if ($handle->commandClass !== null) {
+                yield new AggregateHandler(
+                    $handle->commandClass,
+                    $reflectionMethod->getName(),
+                    $reflectionMethod->isStatic(),
+                );
+
+                continue;
+            }
+
             $parameters = $reflectionMethod->getParameters();
 
             if ($parameters === []) {
@@ -59,8 +71,7 @@ final class AggregateHandlerFinder
                 );
             }
 
-            $handle = $handleAttributes[0]->newInstance();
-            $commandClass = $handle->commandClass ?: $type->getClassName();
+            $commandClass = $type->getClassName();
 
             if (!class_exists($commandClass)) {
                 throw InvalidHandleMethod::incompatibleType(

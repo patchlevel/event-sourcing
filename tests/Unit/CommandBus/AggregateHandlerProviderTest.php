@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\CommandBus\AggregateHandlerProvider;
 use Patchlevel\EventSourcing\CommandBus\Handler\HandlerFactory;
 use Patchlevel\EventSourcing\CommandBus\InvalidHandleMethod;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ActivateProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ChangeProfileName;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
@@ -76,6 +77,11 @@ final class AggregateHandlerProviderTest extends TestCase
             ->shouldBeCalled()
             ->willReturn($handler);
 
+        $handlerFactory
+            ->updateHandler(ProfileWithHandler::class, 'activate')
+            ->shouldBeCalled()
+            ->willReturn($handler);
+
         $provider = new AggregateHandlerProvider(
             new AggregateRootRegistry(['profile' => ProfileWithHandler::class]),
             $handlerFactory->reveal(),
@@ -103,12 +109,49 @@ final class AggregateHandlerProviderTest extends TestCase
             ->shouldBeCalled()
             ->willReturn($handler);
 
+        $handlerFactory
+            ->updateHandler(ProfileWithHandler::class, 'activate')
+            ->shouldBeCalled()
+            ->willReturn($handler);
+
         $provider = new AggregateHandlerProvider(
             new AggregateRootRegistry(['profile' => ProfileWithHandler::class]),
             $handlerFactory->reveal(),
         );
 
         $result = $provider->handlerForCommand(ChangeProfileName::class);
+
+        self::assertCount(1, $result);
+        self::assertSame($handler, $result[0]->callable());
+    }
+
+    public function testUpdateHandlerWithoutParameter(): void
+    {
+        $handler = static fn (ChangeProfileName $command): mixed => null;
+
+        $handlerFactory = $this->prophesize(HandlerFactory::class);
+
+        $handlerFactory
+            ->createHandler(ProfileWithHandler::class, 'create')
+            ->shouldBeCalled()
+            ->willReturn($handler);
+
+        $handlerFactory
+            ->updateHandler(ProfileWithHandler::class, 'changeName')
+            ->shouldBeCalled()
+            ->willReturn($handler);
+
+        $handlerFactory
+            ->updateHandler(ProfileWithHandler::class, 'activate')
+            ->shouldBeCalled()
+            ->willReturn($handler);
+
+        $provider = new AggregateHandlerProvider(
+            new AggregateRootRegistry(['profile' => ProfileWithHandler::class]),
+            $handlerFactory->reveal(),
+        );
+
+        $result = $provider->handlerForCommand(ActivateProfile::class);
 
         self::assertCount(1, $result);
         self::assertSame($handler, $result[0]->callable());

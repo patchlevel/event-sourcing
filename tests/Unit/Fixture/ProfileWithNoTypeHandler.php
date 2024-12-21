@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 #[Aggregate(ProfileWithNoTypeHandler::class)]
 final class ProfileWithNoTypeHandler extends BasicAggregateRoot
 {
-    #[Handle(ChangeProfileName::class)]
+    #[Handle]
     public function noType($command): void
     {
     }

@@ -32,4 +32,9 @@ final class ProfileWithHandler extends BasicAggregateRoot
     public function changeName(ChangeProfileName $command): void
     {
     }
+
+    #[Handle(ActivateProfile::class)]
+    public function activate(): void
+    {
+    }
 }
