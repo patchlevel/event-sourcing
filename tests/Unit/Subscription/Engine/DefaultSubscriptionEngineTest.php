@@ -3050,6 +3050,58 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(1, $update2->retryAttempt());
     }
 
+    #[DataProvider('statusProvider')]
+    public function testShouldNotRetryOtherStatus(string $method, string $status): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+        };
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $subscription = new Subscription(
+            $subscriptionId,
+            Subscription::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            Status::Error,
+            0,
+            new SubscriptionError('ERROR', Status::from($status)),
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $retryStrategy = $this->prophesize(RetryStrategy::class);
+        $retryStrategy->shouldRetry($subscription)->shouldNotBeCalled();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            $retryStrategy->reveal(),
+            new NullLogger(),
+        );
+
+        $result = match ($method) {
+            'setup' => $engine->setup(),
+            'boot' => $engine->boot(),
+            'run' => $engine->run(),
+        };
+
+        self::assertCount(0, $result->errors);
+        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
+    }
+
+    public static function statusProvider(): Generator
+    {
+        yield 'setup_booting' => ['setup', 'booting'];
+        yield 'setup_active' => ['setup', 'active'];
+        yield 'boot_new' => ['boot', 'new'];
+        yield 'boot_active' => ['boot', 'active'];
+        yield 'run_new' => ['run', 'new'];
+        yield 'run_booting' => ['run', 'booting'];
+    }
+
     public function testShouldNotRetry(): void
     {
         $subscriptionId = 'test';

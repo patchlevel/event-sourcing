@@ -21,7 +21,6 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 use function count;
-use function in_array;
 use function sprintf;
 
 final class DefaultSubscriptionEngine implements SubscriptionEngine
@@ -60,7 +59,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         );
 
         $this->discoverNewSubscriptions();
-        $this->retrySubscriptions($criteria);
+        $this->retrySubscriptions($criteria, Status::New);
 
         return $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
@@ -169,7 +168,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             );
 
             $this->discoverNewSubscriptions();
-            $this->retrySubscriptions($criteria);
+            $this->retrySubscriptions($criteria, Status::Booting);
 
             return $this->subscriptionManager->findForUpdate(
                 new SubscriptionCriteria(
@@ -340,7 +339,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
             $this->discoverNewSubscriptions();
             $this->markDetachedSubscriptions($criteria);
-            $this->retrySubscriptions($criteria);
+            $this->retrySubscriptions($criteria, Status::Active);
 
             return $this->subscriptionManager->findForUpdate(
                 new SubscriptionCriteria(
@@ -901,7 +900,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         );
     }
 
-    private function retrySubscriptions(SubscriptionEngineCriteria $criteria): void
+    private function retrySubscriptions(SubscriptionEngineCriteria $criteria, Status $previousStatus): void
     {
         $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
@@ -909,7 +908,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 groups: $criteria->groups,
                 status: [Status::Error],
             ),
-            function (SubscriptionCollection $subscriptions): void {
+            function (SubscriptionCollection $subscriptions) use ($previousStatus): void {
                 /** @var Subscription $subscription */
                 foreach ($subscriptions as $subscription) {
                     $error = $subscription->subscriptionError();
@@ -918,13 +917,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         continue;
                     }
 
-                    $retryable = in_array(
-                        $error->previousStatus,
-                        [Status::New, Status::Booting, Status::Active],
-                        true,
-                    );
-
-                    if (!$retryable) {
+                    if ($error->previousStatus !== $previousStatus) {
                         continue;
                     }
 
