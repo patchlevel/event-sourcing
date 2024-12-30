@@ -252,6 +252,8 @@ final class SubscriptionTest extends TestCase
 
         $subscriber->subscribeError = true;
 
+        // first run, error
+
         $result = $engine->run();
 
         self::assertEquals(1, $result->processedMessages);
@@ -269,6 +271,8 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(Status::Active, $subscription->subscriptionError()?->previousStatus);
         self::assertEquals(0, $subscription->retryAttempt());
 
+        // second run, time has not passed yet, no retry, no error
+
         $result = $engine->run();
 
         self::assertEquals(0, $result->processedMessages);
@@ -281,8 +285,9 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(Status::Active, $subscription->subscriptionError()?->previousStatus);
         self::assertEquals(0, $subscription->retryAttempt());
 
-        $clock->sleep(5);
+        // third run, time has passed, 1. retry, error again
 
+        $clock->sleep(5);
         $result = $engine->run();
 
         self::assertEquals(1, $result->processedMessages);
@@ -300,8 +305,9 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(Status::Active, $subscription->subscriptionError()?->previousStatus);
         self::assertEquals(1, $subscription->retryAttempt());
 
-        $clock->sleep(10);
+        // fourth run, time has passed, 2. retry, max retries reached, failed
 
+        $clock->sleep(10);
         $result = $engine->run();
 
         self::assertEquals(1, $result->processedMessages);
@@ -314,10 +320,27 @@ final class SubscriptionTest extends TestCase
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
 
-        self::assertEquals(Status::Error, $subscription->status());
+        self::assertEquals(Status::Failed, $subscription->status());
         self::assertEquals('subscribe error', $subscription->subscriptionError()?->errorMessage);
         self::assertEquals(Status::Active, $subscription->subscriptionError()?->previousStatus);
         self::assertEquals(2, $subscription->retryAttempt());
+
+        // fifth run, time has passed, skip failed subscription
+
+        $clock->sleep(20);
+        $result = $engine->run();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals([], $result->errors);
+
+        $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
+
+        self::assertEquals(Status::Failed, $subscription->status());
+        self::assertEquals('subscribe error', $subscription->subscriptionError()?->errorMessage);
+        self::assertEquals(Status::Active, $subscription->subscriptionError()?->previousStatus);
+        self::assertEquals(2, $subscription->retryAttempt());
+
+        // reactivated subscription
 
         $engine->reactivate(new SubscriptionEngineCriteria(
             ids: ['error_producer'],
@@ -329,6 +352,8 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(null, $subscription->subscriptionError());
         self::assertEquals(0, $subscription->retryAttempt());
 
+        // sixth run, error again
+
         $result = $engine->run();
 
         self::assertEquals(1, $result->processedMessages);
@@ -345,6 +370,8 @@ final class SubscriptionTest extends TestCase
         self::assertEquals('subscribe error', $subscription->subscriptionError()?->errorMessage);
         self::assertEquals(Status::Active, $subscription->subscriptionError()?->previousStatus);
         self::assertEquals(0, $subscription->retryAttempt());
+
+        // seventh run, time has passed, error fixed, 1. retry, no error
 
         $clock->sleep(5);
         $subscriber->subscribeError = false;

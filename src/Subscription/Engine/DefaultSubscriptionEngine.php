@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
@@ -667,6 +668,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 groups: $criteria->groups,
                 status: [
                     Status::Error,
+                    Status::Failed,
                     Status::Detached,
                     Status::Paused,
                     Status::Finished,
@@ -984,7 +986,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private function handleError(Subscription $subscription, Throwable $throwable): void
     {
-        $subscription->error($throwable);
+        if ($this->retryStrategy instanceof ConditionalRetryStrategy && !$this->retryStrategy->canRetry($subscription)) {
+            $subscription->failed($throwable);
+        } else {
+            $subscription->error($throwable);
+        }
+
         $this->subscriptionManager->update($subscription);
 
         if (!isset($this->batching[$subscription->id()])) {

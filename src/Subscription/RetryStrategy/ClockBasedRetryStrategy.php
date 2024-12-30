@@ -12,7 +12,7 @@ use Psr\Clock\ClockInterface;
 use function round;
 use function sprintf;
 
-final class ClockBasedRetryStrategy implements RetryStrategy
+final class ClockBasedRetryStrategy implements ConditionalRetryStrategy
 {
     public const DEFAULT_BASE_DELAY = 5;
     public const DEFAULT_DELAY_FACTOR = 2;
@@ -30,9 +30,14 @@ final class ClockBasedRetryStrategy implements RetryStrategy
     ) {
     }
 
+    public function canRetry(Subscription $subscription): bool
+    {
+        return $subscription->retryAttempt() < $this->maxAttempts;
+    }
+
     public function shouldRetry(Subscription $subscription): bool
     {
-        if ($subscription->retryAttempt() >= $this->maxAttempts) {
+        if ($this->canRetry($subscription) === false) {
             return false;
         }
 

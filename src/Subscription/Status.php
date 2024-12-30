@@ -13,4 +13,5 @@ enum Status: string
     case Finished = 'finished';
     case Detached = 'detached';
     case Error = 'error';
+    case Failed = 'failed';
 }
