@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Store;
 
+use DateTimeImmutable;
+use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionAlreadyExists;
@@ -17,7 +19,11 @@ final class InMemorySubscriptionStoreTest extends TestCase
 {
     public function testAdd(): void
     {
-        $store = new InMemorySubscriptionStore();
+        $now = new DateTimeImmutable('2021-01-01 00:00:00');
+
+        $store = new InMemorySubscriptionStore(
+            clock: new FrozenClock($now),
+        );
 
         $id = 'test';
         $subscription = new Subscription($id);
@@ -26,6 +32,7 @@ final class InMemorySubscriptionStoreTest extends TestCase
 
         self::assertEquals($subscription, $store->get($id));
         self::assertEquals([$subscription], $store->find());
+        self::assertEquals($now, $subscription->lastSavedAt());
     }
 
     public function testAddDuplicated(): void
@@ -41,15 +48,18 @@ final class InMemorySubscriptionStoreTest extends TestCase
 
     public function testUpdate(): void
     {
+        $now = new DateTimeImmutable('2021-01-01 00:00:00');
+
         $id = 'test';
         $subscription = new Subscription($id);
 
-        $store = new InMemorySubscriptionStore([$subscription]);
+        $store = new InMemorySubscriptionStore([$subscription], new FrozenClock($now));
 
         $store->update($subscription);
 
         self::assertEquals($subscription, $store->get($id));
         self::assertEquals([$subscription], $store->find());
+        self::assertEquals($now, $subscription->lastSavedAt());
     }
 
     public function testUpdateNotFound(): void
