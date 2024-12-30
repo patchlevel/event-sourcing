@@ -163,13 +163,391 @@ parameters:
 			path: src/Subscription/Store/DoctrineSubscriptionStore.php
 
 		-
-			message: '#^Trait Patchlevel\\EventSourcing\\Subscription\\Subscriber\\SubscriberUtil is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: src/Subscription/Subscriber/SubscriberUtil.php
-
-		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 3
 			path: src/Subscription/ThrowableToErrorContextTransformer.php
+
+		-
+			message: '#^Parameter \#1 \$id of static method Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\Profile\:\:create\(\) expects Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileId, Patchlevel\\EventSourcing\\Aggregate\\AggregateRootId given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Benchmark/SplitStreamBench.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BankAccountSplitStream\\\\BankAccount'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BankAccountSplitStream\\BankAccount will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 6
+			path: tests/Integration/BankAccountSplitStream/IntegrationTest.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$accountId\.$#'
+			identifier: property.notFound
+			count: 2
+			path: tests/Integration/BankAccountSplitStream/Projection/BankAccountProjector.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$balanceInCents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Integration/BankAccountSplitStream/Projection/BankAccountProjector.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Integration/BankAccountSplitStream/Projection/BankAccountProjector.php
+
+		-
+			message: '#^Cannot call method toString\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: tests/Integration/BankAccountSplitStream/Projection/BankAccountProjector.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BasicImplementation\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\Profile will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 2
+			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BasicImplementation\\\\ProfileWithCommands'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\ProfileWithCommands will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\Profile\:\:\$id is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Integration/BasicImplementation/Profile.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\ProfileWithCommands\:\:\$id is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Integration/BasicImplementation/ProfileWithCommands.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\ChildAggregate\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\ChildAggregate\\Profile will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 2
+			path: tests/Integration/ChildAggregate/ChildAggregateIntegrationTest.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\ChildAggregate\\Profile\:\:\$id is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Integration/ChildAggregate/Profile.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\MicroAggregate\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\MicroAggregate\\Profile will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 2
+			path: tests/Integration/MicroAggregate/MicroAggregateIntegrationTest.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\MicroAggregate\\Profile\:\:\$id is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Integration/MicroAggregate/Profile.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 0 and array\{array\<string, mixed\>\} will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/PersonalData/PersonalDataTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\PersonalData\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\PersonalData\\Profile will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 6
+			path: tests/Integration/PersonalData/PersonalDataTest.php
+
+		-
+			message: '#^Parameter \#2 \$haystack of static method PHPUnit\\Framework\\Assert\:\:assertStringNotContainsString\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/PersonalData/PersonalDataTest.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\Store\\Profile\:\:\$id is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Integration/Store/Profile.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Patchlevel\\EventSourcing\\Store\\Stream\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: tests/Integration/Store/StreamDoctrineDbalStoreTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 0 and array\{Patchlevel\\EventSourcing\\Subscription\\Subscription\} will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/Subscription/SubscriptionTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 2 and array\{Patchlevel\\EventSourcing\\Message\\Message, Patchlevel\\EventSourcing\\Message\\Message, Patchlevel\\EventSourcing\\Message\\Message\} will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/Subscription/SubscriptionTest.php
+
+		-
+			message: '#^Parameter \#4 \$maxAttempts of class Patchlevel\\EventSourcing\\Subscription\\RetryStrategy\\ClockBasedRetryStrategy constructor expects int\<1, max\>, 0 given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/Subscription/SubscriptionTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Metadata\\\\AggregateRoot\\\\AggregateRootMetadata'' and Patchlevel\\EventSourcing\\Metadata\\AggregateRoot\\AggregateRootMetadata\<Patchlevel\\EventSourcing\\Aggregate\\BasicAggregateRoot\> will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Aggregate/AggregateRootTest.php
+
+		-
+			message: '#^Cannot access offset 0 on iterable\<int, Patchlevel\\EventSourcing\\CommandBus\\HandlerDescriptor\>\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: tests/Unit/CommandBus/AggregateHandlerProviderTest.php
+
+		-
+			message: '#^Cannot call method callable\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: tests/Unit/CommandBus/AggregateHandlerProviderTest.php
+
+		-
+			message: '#^Parameter \#2 \$aggregateClass of class Patchlevel\\EventSourcing\\CommandBus\\Handler\\CreateAggregateHandler constructor expects class\-string\<Patchlevel\\EventSourcing\\Aggregate\\AggregateRoot\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/CommandBus/Handler/CreateAggregateHandlerTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/CommandBus/Handler/DefaultParameterResolverTest\.php\:69\:\:handle\(\) has parameter \$foo with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/CommandBus/Handler/DefaultParameterResolverTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/CommandBus/Handler/DefaultParameterResolverTest\.php\:95\:\:handle\(\) has parameter \$foo with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/CommandBus/Handler/DefaultParameterResolverTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/CommandBus/HandlerFinderTest\.php\:40\:\:handle\(\) has parameter \$command with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/CommandBus/HandlerFinderTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 3
+			path: tests/Unit/CommandBus/InstantRetryCommandBusTest.php
+
+		-
+			message: '#^Parameter \#1 \$aggregate of class Patchlevel\\EventSourcing\\Repository\\AggregateOutdated constructor expects class\-string\<Patchlevel\\EventSourcing\\Aggregate\\AggregateRoot\>, string given\.$#'
+			identifier: argument.type
+			count: 5
+			path: tests/Unit/CommandBus/InstantRetryCommandBusTest.php
+
+		-
+			message: '#^Cannot access offset 0 on iterable\<int, Patchlevel\\EventSourcing\\CommandBus\\HandlerDescriptor\>\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: tests/Unit/CommandBus/ServiceHandlerProviderTest.php
+
+		-
+			message: '#^Cannot call method callable\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: tests/Unit/CommandBus/ServiceHandlerProviderTest.php
+
+		-
+			message: '#^Parameter \#1 \$data of static method Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\Message\:\:fromArray\(\) expects array\{id\: string, text\: string, createdAt\: string\}, array\<mixed, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Fixture/MessageNormalizer.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileInvalid\:\:\$email is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Unit/Fixture/ProfileInvalid.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileInvalid\:\:\$id is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Unit/Fixture/ProfileInvalid.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyBothUsage\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithBrokenApplyBothUsage.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyIntersection\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyMultipleApply\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithBrokenApplyMultipleApply.php
+
+		-
+			message: '#^Method Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyNoType\:\:applyWithNoType\(\) has parameter \$event with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyNoType\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenId\:\:\$id is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithBrokenId.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithEmptyApply\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithEmptyApply.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithHandler\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithHandler.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithSuppressAll\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithSuppressAll.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\WrongNormalizerBasicAggregate\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/WrongNormalizerBasicAggregate.php
+
+		-
+			message: '#^Parameter \#2 \$callable of class Patchlevel\\EventSourcing\\Message\\Translator\\ReplaceEventTranslator constructor expects callable\(Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\MessagePublished\)\: object, Closure\(Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileCreated\)\: Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileVisited given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Message/Translator/ReplaceEventTranslatorTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:212\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php
+
+		-
+			message: '#^Method class@anonymous/tests/Unit/QueryBus/HandlerFinderTest\.php\:40\:\:handle\(\) has parameter \$query with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/QueryBus/HandlerFinderTest.php
+
+		-
+			message: '#^Cannot access offset 0 on iterable\<int, Patchlevel\\EventSourcing\\QueryBus\\HandlerDescriptor\>\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: tests/Unit/QueryBus/ServiceHandlerProviderTest.php
+
+		-
+			message: '#^Cannot call method callable\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: tests/Unit/QueryBus/ServiceHandlerProviderTest.php
+
+		-
+			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
+			identifier: callable.nonCallable
+			count: 15
+			path: tests/Unit/Store/DoctrineDbalStoreTest.php
+
+		-
+			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
+			identifier: callable.nonCallable
+			count: 13
+			path: tests/Unit/Store/StreamDoctrineDbalStoreTest.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: string$#'
+			identifier: match.unhandled
+			count: 1
+			path: tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php
+
+		-
+			message: '#^Parameter \#1 \$error of static method Patchlevel\\EventSourcing\\Subscription\\ThrowableToErrorContextTransformer\:\:transform\(\) expects Throwable, Throwable\|null given\.$#'
+			identifier: argument.type
+			count: 8
+			path: tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php
+
+		-
+			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
+			identifier: callable.nonCallable
+			count: 2
+			path: tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php
+
+		-
+			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
+			identifier: callable.nonCallable
+			count: 1
+			path: tests/Unit/Subscription/Engine/SubscriptionManagerTest.php
+
+		-
+			message: '#^Offset ''args'' on array\{file\: literal\-string&non\-falsy\-string, line\: int, function\: ''createException'', class\: ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Unit\\\\Subscription\\\\ErrorContextTest'', type\: ''\-\>'', args\: array\<mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: tests/Unit/Subscription/ErrorContextTest.php
+
+		-
+			message: '#^Offset ''class'' on array\{file\: literal\-string&non\-falsy\-string, line\: int, function\: ''createException'', class\: string, type\?\: string, args\?\: array\<mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: tests/Unit/Subscription/ErrorContextTest.php
+
+		-
+			message: '#^Offset ''file'' on array\{file\: string, line\?\: int, function\?\: string, class\?\: string, type\?\: string, args\?\: array\<mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: tests/Unit/Subscription/ErrorContextTest.php
+
+		-
+			message: '#^Offset ''type'' on array\{file\: literal\-string&non\-falsy\-string, line\: int, function\: ''createException'', class\: ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Unit\\\\Subscription\\\\ErrorContextTest'', type\: string, args\?\: array\<mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: tests/Unit/Subscription/ErrorContextTest.php
+
+		-
+			message: '#^Parameter \$maxAttempts of class Patchlevel\\EventSourcing\\Subscription\\RetryStrategy\\ClockBasedRetryStrategy constructor expects int\<1, max\>, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Subscription/RetryStrategy/ClockBasedRetryStrategyTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Subscription\\\\Lookup\\\\Lookup'' and Patchlevel\\EventSourcing\\Subscription\\Lookup\\Lookup will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Subscription/Subscriber/ArgumentResolver/LookupResolverTest.php
