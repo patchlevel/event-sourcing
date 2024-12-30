@@ -6,8 +6,6 @@ namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-use function array_values;
-
 final class ChainTranslator implements Translator
 {
     /** @param iterable<Translator> $translators */
