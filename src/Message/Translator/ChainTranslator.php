@@ -6,8 +6,6 @@ namespace Patchlevel\EventSourcing\Message\Translator;
 
 use Patchlevel\EventSourcing\Message\Message;
 
-use function array_values;
-
 final class ChainTranslator implements Translator
 {
     /** @param iterable<Translator> $translators */
@@ -38,9 +36,9 @@ final class ChainTranslator implements Translator
         $result = [];
 
         foreach ($messages as $message) {
-            $result += $translator($message);
+            $result = [...$result, ...$translator($message)];
         }
 
-        return array_values($result);
+        return $result;
     }
 }
