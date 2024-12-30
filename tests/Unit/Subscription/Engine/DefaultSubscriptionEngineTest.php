@@ -61,8 +61,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         $result = $engine->setup();
 
-        self::assertEquals([], $store->addedSubscriptions);
-        self::assertEquals([], $store->updatedSubscriptions);
+        $store->assertNoChanges();
         self::assertEquals([], $result->errors);
     }
 
@@ -91,23 +90,23 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::New,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::Booting,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testSetupWithCreateMethod(): void
@@ -142,23 +141,23 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::New,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::Booting,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertTrue($subscriber->created);
     }
@@ -206,22 +205,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriptionId,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::New,
-                        ThrowableToErrorContextTransformer::transform($subscriber->exception),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::New,
+                    ThrowableToErrorContextTransformer::transform($subscriber->exception),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
     }
 
@@ -257,14 +253,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::Active,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testSetupWithFromNow(): void
@@ -299,7 +295,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -307,7 +303,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testSetupWithFromNowWithEmtpyStream(): void
@@ -340,7 +336,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -348,7 +344,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 0,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testNothingToBoot(): void
@@ -371,8 +367,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $store->addedSubscriptions);
-        self::assertEquals([], $store->updatedSubscriptions);
+        $store->assertNoChanges();
     }
 
     public function testBootDiscoverNewSubscribers(): void
@@ -400,16 +395,16 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::New,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
+        $subscriptionStore->assertNoUpdated();
     }
 
     public function testBootWithSubscriber(): void
@@ -453,9 +448,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+        $subscriptionStore->assertNoAdded();
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -463,7 +458,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame($message, $subscriber->message);
     }
@@ -518,22 +513,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriptionId,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Booting,
-                        ThrowableToErrorContextTransformer::transform($subscriber->exception),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Booting,
+                    ThrowableToErrorContextTransformer::transform($subscriber->exception),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
     }
 
@@ -578,9 +570,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(false, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+        $subscriptionStore->assertNoAdded();
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -588,7 +580,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Booting,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame($message, $subscriber->message);
     }
@@ -653,7 +645,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId1,
                 Subscription::DEFAULT_GROUP,
@@ -668,7 +660,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame($message, $subscriber1->message);
         self::assertNull($subscriber2->message);
@@ -720,7 +712,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -728,7 +720,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 3,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame([$message1, $message2], $subscriber->messages);
     }
@@ -774,7 +766,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -782,7 +774,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Finished,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertEquals($message1, $subscriber->message);
     }
@@ -872,9 +864,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(false, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+        $subscriptionStore->assertNoAdded();
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -882,7 +874,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Booting,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame($message, $subscriber->message);
 
@@ -893,7 +885,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -901,7 +893,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testBootBatchingSuccess(): void
@@ -935,9 +927,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+        $subscriptionStore->assertNoAdded();
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriber::ID,
                 Subscription::DEFAULT_GROUP,
@@ -945,7 +937,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
@@ -990,9 +982,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->addedSubscriptions);
+        $subscriptionStore->assertNoAdded();
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriber::ID,
                 Subscription::DEFAULT_GROUP,
@@ -1000,7 +992,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 2,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame([$message1, $message2], $subscriber->receivedMessages);
         self::assertSame(2, $subscriber->beginBatchCalled);
@@ -1046,22 +1038,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriber::ID,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Booting,
-                        ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Booting,
+                    ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
 
         self::assertSame([$message], $subscriber->receivedMessages);
@@ -1108,22 +1097,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriber::ID,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Booting,
-                        ThrowableToErrorContextTransformer::transform($subscriber->throwForBeginBatch),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Booting,
+                    ThrowableToErrorContextTransformer::transform($subscriber->throwForBeginBatch),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
 
         self::assertSame([], $subscriber->receivedMessages);
@@ -1170,22 +1156,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriber::ID,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Booting,
-                        ThrowableToErrorContextTransformer::transform($subscriber->throwForCommitBatch),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Booting,
+                    ThrowableToErrorContextTransformer::transform($subscriber->throwForCommitBatch),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
 
         self::assertSame([$message], $subscriber->receivedMessages);
@@ -1233,22 +1216,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriber::ID,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Booting,
-                        ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Booting,
+                    ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
 
         self::assertSame([$message], $subscriber->receivedMessages);
@@ -1280,14 +1260,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::New,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
     }
 
     public function testRunning(): void
@@ -1331,7 +1311,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -1339,7 +1319,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame($message, $subscriber->message);
     }
@@ -1389,7 +1369,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(false, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -1397,7 +1377,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame($message1, $subscriber->message);
     }
@@ -1462,7 +1442,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId1,
                 Subscription::DEFAULT_GROUP,
@@ -1477,7 +1457,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame($message, $subscriber1->message);
         self::assertNull($subscriber2->message);
@@ -1533,22 +1513,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriptionId,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Active,
-                        ThrowableToErrorContextTransformer::transform($subscriber->exception),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Active,
+                    ThrowableToErrorContextTransformer::transform($subscriber->exception),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
     }
 
@@ -1581,7 +1558,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -1589,7 +1566,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Detached,
                 0,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testRunningWithoutActiveSubscribers(): void
@@ -1621,7 +1598,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
+        $subscriptionStore->assertNoChanges();
     }
 
     public function testRunningWithGabInIndex(): void
@@ -1670,7 +1647,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -1678,7 +1655,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 3,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame([$message1, $message2], $subscriber->messages);
     }
@@ -1724,7 +1701,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -1732,7 +1709,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Finished,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertEquals($message1, $subscriber->message);
     }
@@ -1822,9 +1799,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(false, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->addedSubscriptions);
-
-        self::assertEquals([
+        $subscriptionStore->assertNoAdded();
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -1832,7 +1808,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame($message, $subscriber->message);
 
@@ -1843,7 +1819,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
+        $subscriptionStore->assertNoChanges();
     }
 
     public function testRunningBatchingSuccess(): void
@@ -1877,9 +1853,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->addedSubscriptions);
-
-        self::assertEquals([
+        $subscriptionStore->assertNoAdded();
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriber::ID,
                 Subscription::DEFAULT_GROUP,
@@ -1887,7 +1862,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
@@ -1932,9 +1907,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->addedSubscriptions);
-
-        self::assertEquals([
+        $subscriptionStore->assertNoAdded();
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriber::ID,
                 Subscription::DEFAULT_GROUP,
@@ -1942,7 +1916,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 2,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
 
         self::assertSame([$message1, $message2], $subscriber->receivedMessages);
         self::assertSame(2, $subscriber->beginBatchCalled);
@@ -1988,22 +1962,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriber::ID,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Active,
-                        ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Active,
+                    ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
 
         self::assertSame([$message], $subscriber->receivedMessages);
@@ -2050,22 +2021,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriber::ID,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Active,
-                        ThrowableToErrorContextTransformer::transform($subscriber->throwForBeginBatch),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Active,
+                    ThrowableToErrorContextTransformer::transform($subscriber->throwForBeginBatch),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
 
         self::assertSame([], $subscriber->receivedMessages);
@@ -2112,22 +2080,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriber::ID,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Active,
-                        ThrowableToErrorContextTransformer::transform($subscriber->throwForCommitBatch),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Active,
+                    ThrowableToErrorContextTransformer::transform($subscriber->throwForCommitBatch),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
 
         self::assertSame([$message], $subscriber->receivedMessages);
@@ -2175,22 +2140,19 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals(
-            [
-                new Subscription(
-                    $subscriber::ID,
-                    Subscription::DEFAULT_GROUP,
-                    RunMode::FromBeginning,
-                    Status::Error,
-                    0,
-                    new SubscriptionError(
-                        'ERROR',
-                        Status::Active,
-                        ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
-                    ),
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Error,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Active,
+                    ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
                 ),
-            ],
-            $subscriptionStore->updatedSubscriptions,
+            ),
         );
 
         self::assertSame([$message], $subscriber->receivedMessages);
@@ -2220,14 +2182,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::New,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
     }
 
     public function testTeardownWithoutTeardownMethod(): void
@@ -2259,8 +2221,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
-        self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
     }
 
     public function testTeardownWithSubscriber(): void
@@ -2300,8 +2262,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
-        self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
         self::assertTrue($subscriber->dropped);
     }
 
@@ -2348,8 +2310,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
-        self::assertEquals([], $subscriptionStore->removedSubscriptions);
+        $subscriptionStore->assertNoChanges();
     }
 
     public function testTeardownWithoutSubscriber(): void
@@ -2378,8 +2339,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
-        self::assertEquals([], $subscriptionStore->removedSubscriptions);
+        $subscriptionStore->assertNoChanges();
     }
 
     public function testRemoveDiscoverNewSubscribers(): void
@@ -2403,14 +2363,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::New,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
     }
 
     public function testRemoveWithSubscriber(): void
@@ -2448,8 +2408,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
-        self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
         self::assertTrue($subscriber->dropped);
     }
 
@@ -2481,8 +2441,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
-        self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
     }
 
     public function testRemoveWithSubscriberAndError(): void
@@ -2526,8 +2486,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals('ERROR', $error->message);
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
-        self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
     }
 
     public function testRemoveNewSubscriber(): void
@@ -2566,8 +2526,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
-        self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
         self::assertFalse($subscriber->dropped);
     }
 
@@ -2596,8 +2556,8 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
-        self::assertEquals([$subscription], $subscriptionStore->removedSubscriptions);
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
     }
 
     public function testReactiveDiscoverNewSubscribers(): void
@@ -2621,14 +2581,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::New,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
     }
 
     public function testReactivateError(): void
@@ -2662,7 +2622,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -2670,7 +2630,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::New,
                 0,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testReactivateDetached(): void
@@ -2702,14 +2662,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::Active,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testReactivatePaused(): void
@@ -2741,14 +2701,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::Active,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testReactivateFinished(): void
@@ -2780,14 +2740,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::Active,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testPauseDiscoverNewSubscribers(): void
@@ -2811,14 +2771,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::New,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
     }
 
     public function testPauseBooting(): void
@@ -2850,14 +2810,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::Paused,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testPauseActive(): void
@@ -2889,14 +2849,14 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::Paused,
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testPauseError(): void
@@ -2930,7 +2890,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertUpdated(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -2939,7 +2899,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 0,
                 new SubscriptionError('ERROR', Status::New),
             ),
-        ], $subscriptionStore->updatedSubscriptions);
+        );
     }
 
     public function testGetSubscriptionAndDiscoverNewSubscribers(): void
@@ -2961,23 +2921,22 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         $subscriptions = $engine->subscriptions();
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
                 RunMode::FromBeginning,
                 Status::New,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
 
-        self::assertEquals([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::New,
-            ),
-        ], $subscriptions);
+        self::assertCount(1, $subscriptions);
+        $subscription = $subscriptions[0];
+
+        self::assertEquals($subscriptionId, $subscription->id());
+        self::assertEquals(Subscription::DEFAULT_GROUP, $subscription->group());
+        self::assertEquals(RunMode::FromBeginning, $subscription->runMode());
+        self::assertEquals(Status::New, $subscription->status());
     }
 
     public function testRetry(): void
@@ -3034,15 +2993,13 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         [$update1, $update2] = $subscriptionStore->updatedSubscriptions;
 
-        self::assertEquals($update1, new Subscription(
-            $subscriptionId,
-            Subscription::DEFAULT_GROUP,
-            RunMode::FromBeginning,
-            Status::Active,
-            0,
-            null,
-            1,
-        ));
+        self::assertEquals($subscriptionId, $update1->id());
+        self::assertEquals(Subscription::DEFAULT_GROUP, $update1->group());
+        self::assertEquals(RunMode::FromBeginning, $update1->runMode());
+        self::assertEquals(Status::Active, $update1->status());
+        self::assertEquals(0, $update1->position());
+        self::assertNull($update1->subscriptionError());
+        self::assertEquals(1, $update1->retryAttempt());
 
         self::assertEquals(Status::Error, $update2->status());
         self::assertEquals(Status::Active, $update2->subscriptionError()?->previousStatus);
@@ -3089,7 +3046,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         };
 
         self::assertCount(0, $result->errors);
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
+        $subscriptionStore->assertNoChanges();
     }
 
     public static function statusProvider(): Generator
@@ -3138,7 +3095,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals(0, $result->processedMessages);
         self::assertCount(0, $result->errors);
 
-        self::assertEquals([], $subscriptionStore->updatedSubscriptions);
+        $subscriptionStore->assertNoChanges();
     }
 
     #[DataProvider('methodProvider')]
@@ -3276,7 +3233,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         self::assertEquals([], $result->errors);
 
-        self::assertEquals([
+        $subscriptionStore->assertAdded(
             new Subscription(
                 $subscriptionId,
                 Subscription::DEFAULT_GROUP,
@@ -3284,7 +3241,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Active,
                 1,
             ),
-        ], $subscriptionStore->addedSubscriptions);
+        );
     }
 
     public static function methodProvider(): Generator
