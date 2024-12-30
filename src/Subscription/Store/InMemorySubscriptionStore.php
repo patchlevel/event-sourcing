@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Store;
 
+use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Psr\Clock\ClockInterface;
 
 use function array_filter;
 use function array_key_exists;
@@ -17,8 +19,10 @@ final class InMemorySubscriptionStore implements SubscriptionStore
     private array $subscriptions = [];
 
     /** @param list<Subscription> $subscriptions */
-    public function __construct(array $subscriptions = [])
-    {
+    public function __construct(
+        array $subscriptions = [],
+        private readonly ClockInterface $clock = new SystemClock(),
+    ) {
         foreach ($subscriptions as $subscription) {
             $this->subscriptions[$subscription->id()] = $subscription;
         }
@@ -76,6 +80,8 @@ final class InMemorySubscriptionStore implements SubscriptionStore
             throw new SubscriptionAlreadyExists($subscription->id());
         }
 
+        $subscription->updateLastSavedAt($this->clock->now());
+
         $this->subscriptions[$subscription->id()] = $subscription;
     }
 
@@ -84,6 +90,8 @@ final class InMemorySubscriptionStore implements SubscriptionStore
         if (!array_key_exists($subscription->id(), $this->subscriptions)) {
             throw new SubscriptionNotFound($subscription->id());
         }
+
+        $subscription->updateLastSavedAt($this->clock->now());
 
         $this->subscriptions[$subscription->id()] = $subscription;
     }
