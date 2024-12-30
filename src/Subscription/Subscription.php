@@ -141,6 +141,25 @@ final class Subscription
         return $this->status === Status::Error;
     }
 
+    public function failed(Throwable|string $error): void
+    {
+        $previousStatus = $this->status;
+        $this->status = Status::Failed;
+
+        if ($error instanceof Throwable) {
+            $this->error = SubscriptionError::fromThrowable($previousStatus, $error);
+
+            return;
+        }
+
+        $this->error = new SubscriptionError($error, $previousStatus);
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->status === Status::Failed;
+    }
+
     public function retryAttempt(): int
     {
         return $this->retryAttempt;

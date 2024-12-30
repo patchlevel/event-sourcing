@@ -574,7 +574,11 @@ stateDiagram-v2
     Error --> Booting
     Error --> Active
     Error --> Paused
-    Error --> [*]
+    Error --> Failed
+    Failed --> New
+    Failed --> Booting
+    Failed --> Active
+    Failed --> [*]
     Detached --> Active
     Detached --> [*]
 ```
@@ -632,9 +636,15 @@ If an error occurs in a subscriber, then the subscription is set to Error.
 This can happen in the create process, in the boot process or in the run process.
 This subscription will then no longer boot/run until the subscription is reactivate or retried.
 
-The subscription engine has a retry strategy to retry subscriptions that have failed.
+The subscription engine has a retry strategy to retry subscriptions that have an error.
 It tries to reactivate the subscription after a certain time and a certain number of attempts.
-If this does not work, the subscription is set to error and must be manually reactivated.
+If this does not work, the subscription changes the status to failed.
+
+### Failed
+
+If the retry strategy says that the subscription should not be retried anymore,
+e.g. the maximum number of retry attempts has been reached, then the subscription is set to failed.
+The subscription will be now ignored by the subscription engine in all future runs.
 
 There are two options here:
 
