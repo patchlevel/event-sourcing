@@ -38,9 +38,9 @@ final class ChainTranslator implements Translator
         $result = [];
 
         foreach ($messages as $message) {
-            $result += $translator($message);
+            $result = [...$result, ...$translator($message)];
         }
 
-        return array_values($result);
+        return $result;
     }
 }
