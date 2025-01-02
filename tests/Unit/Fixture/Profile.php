@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
+use RuntimeException;
 
 #[Aggregate('profile')]
 #[SuppressMissingApply([MessageDeleted::class])]
@@ -64,6 +65,11 @@ final class Profile extends BasicAggregateRoot
     public function splitIt(): void
     {
         $this->recordThat(new SplittingEvent($this->email, $this->visits));
+    }
+
+    public function throwException(): void
+    {
+        throw new RuntimeException('throwing so that you can catch it!');
     }
 
     #[Apply(ProfileCreated::class)]
