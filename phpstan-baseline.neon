@@ -1,76 +1,133 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Cannot unset offset 'url' on array\\{application_name\\?\\: string, charset\\?\\: string, dbname\\?\\: string, defaultTableOptions\\?\\: array\\<string, mixed\\>, driver\\?\\: 'ibm_db2'\\|'mysqli'\\|'oci8'\\|'pdo_mysql'\\|'pdo_oci'\\|'pdo_pgsql'\\|'pdo_sqlite'\\|'pdo_sqlsrv'\\|'pgsql'\\|'sqlite3'\\|'sqlsrv', driverClass\\?\\: class\\-string\\<Doctrine\\\\DBAL\\\\Driver\\>, driverOptions\\?\\: array, host\\?\\: string, \\.\\.\\.\\}\\.$#"
+			message: '#^Cannot unset offset ''url'' on array\{application_name\?\: string, charset\?\: string, dbname\?\: string, defaultTableOptions\?\: array\<string, mixed\>, driver\?\: ''ibm_db2''\|''mysqli''\|''oci8''\|''pdo_mysql''\|''pdo_oci''\|''pdo_pgsql''\|''pdo_sqlite''\|''pdo_sqlsrv''\|''pgsql''\|''sqlite3''\|''sqlsrv'', driverClass\?\: class\-string\<Doctrine\\DBAL\\Driver\>, driverOptions\?\: array\<mixed\>, host\?\: string, \.\.\.\}\.$#'
+			identifier: unset.offset
 			count: 1
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: "#^Parameter \\#1 \\$key of class Patchlevel\\\\Hydrator\\\\Cryptography\\\\Cipher\\\\CipherKey constructor expects non\\-empty\\-string, string given\\.$#"
+			message: '#^Parameter \#1 \$key of class Patchlevel\\Hydrator\\Cryptography\\Cipher\\CipherKey constructor expects non\-empty\-string, string given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Cryptography/DoctrineCipherKeyStore.php
 
 		-
-			message: "#^Parameter \\#3 \\$iv of class Patchlevel\\\\Hydrator\\\\Cryptography\\\\Cipher\\\\CipherKey constructor expects non\\-empty\\-string, string given\\.$#"
+			message: '#^Parameter \#3 \$iv of class Patchlevel\\Hydrator\\Cryptography\\Cipher\\CipherKey constructor expects non\-empty\-string, string given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Cryptography/DoctrineCipherKeyStore.php
 
 		-
-			message: "#^Parameter \\#2 \\$data of method Patchlevel\\\\Hydrator\\\\Hydrator\\:\\:hydrate\\(\\) expects array\\<string, mixed\\>, mixed given\\.$#"
+			message: '#^Call to function method_exists\(\) with ReflectionFunction and ''isAnonymous'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/EventBus/ListenerDescriptor.php
+
+		-
+			message: '#^@readonly property Patchlevel\\EventSourcing\\Message\\Message\:\:\$headers is assigned outside of the constructor\.$#'
+			identifier: property.readOnlyByPhpDocAssignNotInConstructor
+			count: 3
+			path: src/Message/Message.php
+
+		-
+			message: '#^@readonly property cannot have a default value\.$#'
+			identifier: property.readOnlyByPhpDocDefaultValue
+			count: 1
+			path: src/Message/Message.php
+
+		-
+			message: '#^Parameter \#2 \$data of method Patchlevel\\Hydrator\\Hydrator\:\:hydrate\(\) expects array\<string, mixed\>, array\<mixed, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Message/Serializer/DefaultHeadersSerializer.php
+
+		-
+			message: '#^Parameter \#2 \$data of method Patchlevel\\Hydrator\\Hydrator\:\:hydrate\(\) expects array\<string, mixed\>, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Snapshot/DefaultSnapshotStore.php
 
 		-
-			message: "#^Property Patchlevel\\\\EventSourcing\\\\Store\\\\ArrayStream\\:\\:\\$index \\(int\\<1, max\\>\\|null\\) does not accept int\\<0, max\\>\\.$#"
+			message: '#^Method Patchlevel\\EventSourcing\\Store\\ArrayStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
 			count: 1
 			path: src/Store/ArrayStream.php
 
 		-
-			message: "#^Ternary operator condition is always true\\.$#"
+			message: '#^Property Patchlevel\\EventSourcing\\Store\\ArrayStream\:\:\$index \(int\<1, max\>\|null\) does not accept int\<0, max\>\.$#'
+			identifier: assign.propertyType
 			count: 1
 			path: src/Store/ArrayStream.php
 
 		-
-			message: "#^Method Patchlevel\\\\EventSourcing\\\\Store\\\\Criteria\\\\Criteria\\:\\:get\\(\\) should return T of object but returns object\\.$#"
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: src/Store/ArrayStream.php
+
+		-
+			message: '#^Method Patchlevel\\EventSourcing\\Store\\Criteria\\Criteria\:\:get\(\) should return T of object but returns object\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Store/Criteria/Criteria.php
 
 		-
-			message: "#^Parameter \\#3 \\$playhead of class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateHeader constructor expects int\\<1, max\\>, int given\\.$#"
+			message: '#^Method Patchlevel\\EventSourcing\\Store\\DoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
 			count: 1
 			path: src/Store/DoctrineDbalStoreStream.php
 
 		-
-			message: "#^Parameter \\#4 \\$recordedOn of class Patchlevel\\\\EventSourcing\\\\Aggregate\\\\AggregateHeader constructor expects DateTimeImmutable, mixed given\\.$#"
+			message: '#^Parameter \#3 \$playhead of class Patchlevel\\EventSourcing\\Aggregate\\AggregateHeader constructor expects int\<1, max\>, int given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Store/DoctrineDbalStoreStream.php
 
 		-
-			message: "#^Ternary operator condition is always true\\.$#"
+			message: '#^Parameter \#4 \$recordedOn of class Patchlevel\\EventSourcing\\Aggregate\\AggregateHeader constructor expects DateTimeImmutable, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Store/DoctrineDbalStoreStream.php
 
 		-
-			message: "#^Property Patchlevel\\\\EventSourcing\\\\Store\\\\InMemoryStore\\:\\:\\$messages \\(array\\<int\\<0, max\\>, Patchlevel\\\\EventSourcing\\\\Message\\\\Message\\>\\) does not accept array\\<int, Patchlevel\\\\EventSourcing\\\\Message\\\\Message\\>\\.$#"
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
 			count: 1
-			path: src/Store/InMemoryStore.php
+			path: src/Store/DoctrineDbalStoreStream.php
 
 		-
-			message: "#^Parameter \\#1 \\$playhead of class Patchlevel\\\\EventSourcing\\\\Store\\\\Header\\\\PlayheadHeader constructor expects int\\<1, max\\>, int given\\.$#"
+			message: '#^Method Patchlevel\\EventSourcing\\Store\\StreamDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
 			count: 1
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
-			message: "#^Ternary operator condition is always true\\.$#"
+			message: '#^Parameter \#1 \$playhead of class Patchlevel\\EventSourcing\\Store\\Header\\PlayheadHeader constructor expects int\<1, max\>, int given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
-			message: "#^Strict comparison using \\=\\=\\= between DateTimeImmutable and false will always evaluate to false\\.$#"
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: src/Store/StreamDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between DateTimeImmutable and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Subscription/RetryStrategy/ClockBasedRetryStrategy.php
 
 		-
-			message: "#^Parameter \\#3 \\$errorContext of class Patchlevel\\\\EventSourcing\\\\Subscription\\\\SubscriptionError constructor expects array\\<int, array\\{class\\: class\\-string, message\\: string, code\\: int\\|string, file\\: string, line\\: int, trace\\: array\\<int, array\\{file\\?\\: string, line\\?\\: int, function\\?\\: string, class\\?\\: string, type\\?\\: string, args\\?\\: array\\}\\>\\}\\>\\|null, mixed given\\.$#"
+			message: '#^Parameter \#3 \$errorContext of class Patchlevel\\EventSourcing\\Subscription\\SubscriptionError constructor expects list\<array\{class\: class\-string, message\: string, code\: int\|string, file\: string, line\: int, trace\: list\<array\{file\?\: string, line\?\: int, function\?\: string, class\?\: string, type\?\: string, args\?\: array\<mixed\>\}\>\}\>\|null, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/Subscription/Store/DoctrineSubscriptionStore.php
+
+		-
+			message: '#^Trait Patchlevel\\EventSourcing\\Subscription\\Subscriber\\SubscriberUtil is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: src/Subscription/Subscriber/SubscriberUtil.php
