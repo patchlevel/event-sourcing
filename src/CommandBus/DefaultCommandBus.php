@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus;
 
-use Patchlevel\EventSourcing\CommandBus\Handler\DefaultHandlerFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Psr\Container\ContainerInterface;
@@ -86,10 +85,8 @@ final class DefaultCommandBus implements CommandBus
         return new self(
             new AggregateHandlerProvider(
                 $aggregateRootRegistry,
-                new DefaultHandlerFactory(
-                    $repositoryManager,
-                    $container,
-                ),
+                $repositoryManager,
+                $container,
             ),
             $logger,
         );

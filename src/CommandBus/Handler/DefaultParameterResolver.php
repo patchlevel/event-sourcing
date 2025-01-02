@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\CommandBus\Handler;
 
 use Patchlevel\EventSourcing\Attribute\Inject;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use ReflectionMethod;
 use ReflectionParameter;
@@ -32,7 +33,16 @@ final class DefaultParameterResolver implements ParameterResolver
                 throw ServiceNotResolvable::missingContainer();
             }
 
-            yield $this->container->get(self::serviceName($method, $parameter));
+            try {
+                yield $this->container->get(self::serviceName($method, $parameter));
+            } catch (ContainerExceptionInterface $exception) {
+                throw ServiceNotResolvable::missingService(
+                    $method->getDeclaringClass()->getName(),
+                    $method->getName(),
+                    $parameter->getName(),
+                    $exception,
+                );
+            }
         }
     }
 

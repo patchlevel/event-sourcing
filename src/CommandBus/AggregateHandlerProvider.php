@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus;
 
-use Patchlevel\EventSourcing\CommandBus\Handler\HandlerFactory;
+use Patchlevel\EventSourcing\CommandBus\Handler\CreateAggregateHandler;
+use Patchlevel\EventSourcing\CommandBus\Handler\DefaultParameterResolver;
+use Patchlevel\EventSourcing\CommandBus\Handler\UpdateAggregateHandler;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
+use Psr\Container\ContainerInterface;
 
 final class AggregateHandlerProvider implements HandlerProvider
 {
@@ -16,7 +20,8 @@ final class AggregateHandlerProvider implements HandlerProvider
 
     public function __construct(
         private readonly AggregateRootRegistry $aggregateRootRegistry,
-        private readonly HandlerFactory $handlerFactory,
+        private readonly RepositoryManager $repositoryManager,
+        private readonly ContainerInterface|null $container = null,
     ) {
     }
 
@@ -40,9 +45,11 @@ final class AggregateHandlerProvider implements HandlerProvider
             foreach (AggregateHandlerFinder::find($aggregateClass) as $handler) {
                 if ($handler->static) {
                     $this->handlers[$handler->commandClass][] = new HandlerDescriptor(
-                        $this->handlerFactory->createHandler(
+                        new CreateAggregateHandler(
+                            $this->repositoryManager,
                             $aggregateClass,
                             $handler->method,
+                            new DefaultParameterResolver($this->container),
                         ),
                     );
 
@@ -50,9 +57,11 @@ final class AggregateHandlerProvider implements HandlerProvider
                 }
 
                 $this->handlers[$handler->commandClass][] = new HandlerDescriptor(
-                    $this->handlerFactory->updateHandler(
+                    new UpdateAggregateHandler(
+                        $this->repositoryManager,
                         $aggregateClass,
                         $handler->method,
+                        new DefaultParameterResolver($this->container),
                     ),
                 );
             }
