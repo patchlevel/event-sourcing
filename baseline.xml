@@ -18,12 +18,12 @@
   </file>
   <file src="src/CommandBus/Handler/CreateAggregateHandler.php">
     <InvalidOperand>
-      <code><![CDATA[ParameterResolver::resolve($reflectionMethod, $this->container)]]></code>
+      <code><![CDATA[$this->parameterResolver->resolve($reflectionMethod, $command)]]></code>
     </InvalidOperand>
   </file>
   <file src="src/CommandBus/Handler/UpdateAggregateHandler.php">
     <InvalidOperand>
-      <code><![CDATA[ParameterResolver::resolve($reflectionMethod, $this->container)]]></code>
+      <code><![CDATA[$this->parameterResolver->resolve($reflectionMethod, $command)]]></code>
     </InvalidOperand>
   </file>
   <file src="src/Console/DoctrineHelper.php">
@@ -230,8 +230,10 @@
     <InvalidArrayAccess>
       <code><![CDATA[$result[0]]]></code>
       <code><![CDATA[$result[0]]]></code>
+      <code><![CDATA[$result[0]]]></code>
     </InvalidArrayAccess>
     <MixedMethodCall>
+      <code><![CDATA[callable]]></code>
       <code><![CDATA[callable]]></code>
       <code><![CDATA[callable]]></code>
     </MixedMethodCall>

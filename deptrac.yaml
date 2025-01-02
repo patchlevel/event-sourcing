@@ -106,11 +106,11 @@ deptrac:
       - Attribute
       - MetadataAggregate
     Attribute:
-      - Aggregate
     Clock:
     CommandBus:
       - Aggregate
       - Attribute
+      - MetadataAggregate
       - Repository
     Console:
       - Aggregate
