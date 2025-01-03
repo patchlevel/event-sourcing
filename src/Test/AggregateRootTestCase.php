@@ -11,7 +11,6 @@ use PHPUnit\Framework\Attributes\Before;
 use PHPUnit\Framework\Constraint\Exception as ExceptionConstraint;
 use PHPUnit\Framework\Constraint\ExceptionMessageIsOrContains;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Throwable;
 
 abstract class AggregateRootTestCase extends TestCase
@@ -88,9 +87,11 @@ abstract class AggregateRootTestCase extends TestCase
                     throw new NoAggregateCreated();
                 }
 
-                if ($aggregate === null && $return instanceof AggregateRoot) {
-                    $aggregate = $return;
+                if ($aggregate !== null || !($return instanceof AggregateRoot)) {
+                    continue;
                 }
+
+                $aggregate = $return;
             }
         } catch (Throwable $throwable) {
             $this->handleException($throwable);

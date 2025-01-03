@@ -250,7 +250,7 @@ final class AggregateRootTestCaseTest extends TestCase
 
     public function getTester(): AggregateRootTestCase
     {
-        return new class($this->name()) extends AggregateRootTestCase {
+        return new class ($this->name()) extends AggregateRootTestCase {
             protected function aggregateClass(): string
             {
                 return Profile::class;

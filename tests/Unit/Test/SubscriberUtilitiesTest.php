@@ -18,7 +18,8 @@ final class SubscriberUtilitiesTest extends TestCase
 {
     public function testRun(): void
     {
-        $subscriber = new #[Projector('test')] class {
+        $subscriber = new #[Projector('test')]
+        class {
             public int $called = 0;
 
             #[Subscribe(ProfileCreated::class)]
@@ -40,9 +41,11 @@ final class SubscriberUtilitiesTest extends TestCase
 
         self::assertSame(1, $subscriber->called);
     }
+
     public function testRunNotFound(): void
     {
-        $subscriber = new #[Projector('test')] class {
+        $subscriber = new #[Projector('test')]
+        class {
             public int $called = 0;
 
             public function run(): void
@@ -66,7 +69,8 @@ final class SubscriberUtilitiesTest extends TestCase
 
     public function testSetup(): void
     {
-        $subscriber = new #[Projector('test')] class {
+        $subscriber = new #[Projector('test')]
+        class {
             public int $called = 0;
 
             #[Setup]
@@ -84,7 +88,8 @@ final class SubscriberUtilitiesTest extends TestCase
 
     public function testSetupNotFound(): void
     {
-        $subscriber = new #[Projector('test')] class {
+        $subscriber = new #[Projector('test')]
+        class {
             public int $called = 0;
 
             public function run(): void
@@ -101,7 +106,8 @@ final class SubscriberUtilitiesTest extends TestCase
 
     public function testTeardown(): void
     {
-        $subscriber = new #[Projector('test')] class {
+        $subscriber = new #[Projector('test')]
+        class {
             public int $called = 0;
 
             #[Teardown]
@@ -119,7 +125,8 @@ final class SubscriberUtilitiesTest extends TestCase
 
     public function testTeardownNotFound(): void
     {
-        $subscriber = new #[Projector('test')] class {
+        $subscriber = new #[Projector('test')]
+        class {
             public int $called = 0;
 
             public function run(): void
@@ -136,7 +143,7 @@ final class SubscriberUtilitiesTest extends TestCase
 
     public function getTester(): TestCase
     {
-        return new class($this->name()) extends TestCase {
+        return new class ($this->name()) extends TestCase {
             use SubscriberUtilities;
         };
     }

@@ -30,9 +30,11 @@ trait SubscriberUtilities
         foreach ($subscriberAccessors as $subscriberAccessor) {
             $setupMethod = $subscriberAccessor->setupMethod();
 
-            if ($setupMethod) {
-                $setupMethod();
+            if (!$setupMethod) {
+                continue;
             }
+
+            $setupMethod();
         }
 
         return $this;
@@ -60,9 +62,11 @@ trait SubscriberUtilities
         foreach ($subscriberAccessors as $subscriberAccessor) {
             $teardownMethod = $subscriberAccessor->teardownMethod();
 
-            if ($teardownMethod) {
-                $teardownMethod();
+            if (!$teardownMethod) {
+                continue;
             }
+
+            $teardownMethod();
         }
 
         return $this;
@@ -77,6 +81,7 @@ trait SubscriberUtilities
 
     /**
      * @param array<object> $subscribers
+     *
      * @return iterable<MetadataSubscriberAccessor>
      */
     private function createSubscriberAccessors(array $subscribers): iterable
