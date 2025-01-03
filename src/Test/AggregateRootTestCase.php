@@ -93,6 +93,8 @@ abstract class AggregateRootTestCase extends TestCase
 
                 $aggregate = $return;
             }
+        } catch (AggregateTestError $exception) {
+            throw $exception;
         } catch (Throwable $throwable) {
             $this->handleException($throwable);
         }
