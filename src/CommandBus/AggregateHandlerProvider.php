@@ -42,7 +42,7 @@ final class AggregateHandlerProvider implements HandlerProvider
     private function initialize(): void
     {
         foreach ($this->aggregateRootRegistry->aggregateClasses() as $aggregateClass) {
-            foreach (AggregateHandlerFinder::find($aggregateClass) as $handler) {
+            foreach (HandlerFinder::findInClass($aggregateClass) as $handler) {
                 if ($handler->static) {
                     $this->handlers[$handler->commandClass][] = new HandlerDescriptor(
                         new CreateAggregateHandler(

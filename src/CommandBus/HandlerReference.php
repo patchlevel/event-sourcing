@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus;
 
-/** @internal */
-final class AggregateHandler
+final class HandlerReference
 {
     /** @param class-string $commandClass */
     public function __construct(

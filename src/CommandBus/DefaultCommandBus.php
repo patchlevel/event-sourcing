@@ -17,14 +17,23 @@ use function sprintf;
 
 final class DefaultCommandBus implements CommandBus
 {
+    private readonly HandlerProvider $handlerProvider;
+
     /** @var array<object> */
     private array $queue;
     private bool $processing;
 
+    /** @param iterable<HandlerProvider>|HandlerProvider $handlerProviders */
     public function __construct(
-        private readonly HandlerProvider $handlerProvider,
+        iterable|HandlerProvider $handlerProviders,
         private readonly LoggerInterface|null $logger = null,
     ) {
+        if (!$handlerProviders instanceof HandlerProvider) {
+            $this->handlerProvider = new ChainHandlerProvider($handlerProviders);
+        } else {
+            $this->handlerProvider = $handlerProviders;
+        }
+
         $this->queue = [];
         $this->processing = false;
     }

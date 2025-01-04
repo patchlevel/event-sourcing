@@ -4,26 +4,22 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use ReflectionClass;
 use Symfony\Component\TypeInfo\Type\ObjectType;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
-use function class_exists;
-
-/** @internal */
-final class AggregateHandlerFinder
+final class HandlerFinder
 {
     /**
-     * @param class-string<AggregateRoot> $aggregateClass
+     * @param class-string $classString
      *
-     * @return iterable<AggregateHandler>
+     * @return iterable<HandlerReference>
      */
-    public static function find(string $aggregateClass): iterable
+    public static function findInClass(string $classString): iterable
     {
         $typeResolver = TypeResolver::create();
-        $reflectionClass = new ReflectionClass($aggregateClass);
+        $reflectionClass = new ReflectionClass($classString);
 
         foreach ($reflectionClass->getMethods() as $reflectionMethod) {
             $handleAttributes = $reflectionMethod->getAttributes(Handle::class);
@@ -35,7 +31,7 @@ final class AggregateHandlerFinder
             $handle = $handleAttributes[0]->newInstance();
 
             if ($handle->commandClass !== null) {
-                yield new AggregateHandler(
+                yield new HandlerReference(
                     $handle->commandClass,
                     $reflectionMethod->getName(),
                     $reflectionMethod->isStatic(),
@@ -71,16 +67,10 @@ final class AggregateHandlerFinder
                 );
             }
 
+            /** @var class-string $commandClass */
             $commandClass = $type->getClassName();
 
-            if (!class_exists($commandClass)) {
-                throw InvalidHandleMethod::incompatibleType(
-                    $reflectionMethod->getDeclaringClass()->getName(),
-                    $reflectionMethod->getName(),
-                );
-            }
-
-            yield new AggregateHandler(
+            yield new HandlerReference(
                 $commandClass,
                 $reflectionMethod->getName(),
                 $reflectionMethod->isStatic(),

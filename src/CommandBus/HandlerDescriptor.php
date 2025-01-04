@@ -7,8 +7,6 @@ namespace Patchlevel\EventSourcing\CommandBus;
 use Closure;
 use ReflectionFunction;
 
-use function method_exists;
-
 final class HandlerDescriptor
 {
     private readonly Closure $callable;
@@ -34,7 +32,7 @@ final class HandlerDescriptor
     {
         $reflectionFunction = new ReflectionFunction($closure);
 
-        if (method_exists($reflectionFunction, 'isAnonymous') && $reflectionFunction->isAnonymous()) {
+        if ($reflectionFunction->isAnonymous()) {
             return 'Closure';
         }
 
