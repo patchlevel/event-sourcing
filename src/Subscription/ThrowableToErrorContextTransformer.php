@@ -70,6 +70,10 @@ final class ThrowableToErrorContextTransformer
      */
     private static function transformTrace(array $trace): array
     {
+        if (array_key_exists('class', $trace) && is_string($trace['class'])) {
+            $trace['class'] = str_replace("\x00", '', $trace['class']);
+        }
+
         if (!array_key_exists('args', $trace)) {
             return $trace;
         }
