@@ -21,6 +21,7 @@ use function is_object;
 use function is_resource;
 use function mb_strlen;
 use function mb_substr;
+use function str_replace;
 
 /**
  * @psalm-import-type Context from SubscriptionError
@@ -70,7 +71,7 @@ final class ThrowableToErrorContextTransformer
      */
     private static function transformTrace(array $trace): array
     {
-        if (array_key_exists('class', $trace) && is_string($trace['class'])) {
+        if (array_key_exists('class', $trace)) {
             $trace['class'] = str_replace("\x00", '', $trace['class']);
         }
 
