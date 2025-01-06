@@ -337,6 +337,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
             ->setLength(255)
             ->setNotnull(true);
         $table->addColumn('payload', Types::JSON)
+            ->setPlatformOption('jsonb', true)
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(true);
@@ -347,6 +348,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
             ->setNotnull(true)
             ->setDefault(false);
         $table->addColumn('custom_headers', Types::JSON)
+            ->setPlatformOption('jsonb', true)
             ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);

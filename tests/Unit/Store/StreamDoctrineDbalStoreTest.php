@@ -1416,6 +1416,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->setLength(255)
             ->setNotnull(true);
         $table->addColumn('event_payload', Types::JSON)
+            ->setPlatformOption('jsonb', true)
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(true);
@@ -1423,6 +1424,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->setNotnull(true)
             ->setDefault(false);
         $table->addColumn('custom_headers', Types::JSON)
+            ->setPlatformOption('jsonb', true)
             ->setNotnull(true);
 
         $table->setPrimaryKey(['id']);
