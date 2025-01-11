@@ -17,7 +17,7 @@ use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\CommandBus\Handler\CreateAggregateHandler */
-class CreateAggregateHandlerTest extends TestCase
+final class CreateAggregateHandlerTest extends TestCase
 {
     use ProphecyTrait;
 

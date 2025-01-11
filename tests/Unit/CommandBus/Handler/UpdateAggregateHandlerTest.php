@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\CommandBus\Handler\UpdateAggregateHandler */
-class UpdateAggregateHandlerTest extends TestCase
+final class UpdateAggregateHandlerTest extends TestCase
 {
     use ProphecyTrait;
 

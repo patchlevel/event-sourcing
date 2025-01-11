@@ -44,7 +44,7 @@ final class CreateProfileHandler
     
 !!! tip
 
-    A class can have multiple handler methods.
+    A class can have multiple handle methods.
     
 ### Aggregate Handler
 
@@ -55,7 +55,7 @@ To do this, you need to mark the method that handles the command with the `#[Han
 
     The aggregates themselves are of course not a service. 
     The AggregateHandlerProvider uses the aggregates to create the handlers for you. 
-    You can find out more about this in the providers.
+    You can find out more about this in the [providers](./command_bus.md#provider) section.
     
 #### Create Aggregate
 
@@ -128,7 +128,7 @@ final class Profile extends BasicAggregateRoot
     #[Handle]
     public function changeName(ChangeProfileName $command): void
     {
-        if (!$nameValidator($command->name) {
+        if (!$nameValidator($command->name)) {
             throw new InvalidArgument();
         }
 
@@ -200,7 +200,7 @@ final class Profile extends BasicAggregateRoot
     ): self {
         $self = new self();
 
-        if (!$nameValidator($command->name) {
+        if (!$nameValidator($command->name)) {
             throw new InvalidArgument();
         }
 

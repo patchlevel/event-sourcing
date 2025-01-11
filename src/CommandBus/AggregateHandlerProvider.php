@@ -28,7 +28,7 @@ final class AggregateHandlerProvider implements HandlerProvider
     /**
      * @param class-string $commandClass
      *
-     * @return iterable<HandlerDescriptor>
+     * @return iterable<int, HandlerDescriptor>
      */
     public function handlerForCommand(string $commandClass): iterable
     {

@@ -14,7 +14,7 @@ final class HandlerFinder
     /**
      * @param class-string $classString
      *
-     * @return iterable<HandlerReference>
+     * @return iterable<int, HandlerReference>
      */
     public static function findInClass(string $classString): iterable
     {

@@ -26,6 +26,15 @@
       <code><![CDATA[$this->parameterResolver->resolve($reflectionMethod, $command)]]></code>
     </InvalidOperand>
   </file>
+  <file src="src/CommandBus/ServiceHandlerProvider.php">
+    <MixedArgument>
+      <code><![CDATA[$service::{$handler->method}(...)]]></code>
+    </MixedArgument>
+    <MixedMethodCall>
+      <code><![CDATA[$handler->method]]></code>
+      <code><![CDATA[$service::{$handler->method}(...)]]></code>
+    </MixedMethodCall>
+  </file>
   <file src="src/Console/DoctrineHelper.php">
     <ClassNotFinal>
       <code><![CDATA[class DoctrineHelper]]></code>
@@ -230,10 +239,8 @@
     <InvalidArrayAccess>
       <code><![CDATA[$result[0]]]></code>
       <code><![CDATA[$result[0]]]></code>
-      <code><![CDATA[$result[0]]]></code>
     </InvalidArrayAccess>
     <MixedMethodCall>
-      <code><![CDATA[callable]]></code>
       <code><![CDATA[callable]]></code>
       <code><![CDATA[callable]]></code>
     </MixedMethodCall>
@@ -243,15 +250,31 @@
       <code><![CDATA[$handler->command]]></code>
     </InvalidPropertyFetch>
   </file>
-  <file src="tests/Unit/CommandBus/Handler/DefaultHandlerFactoryTest.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA['aggregateClass']]></code>
-      <code><![CDATA['aggregateClass']]></code>
-    </ArgumentTypeCoercion>
-    <UndefinedClass>
-      <code><![CDATA['aggregateClass']]></code>
-      <code><![CDATA['aggregateClass']]></code>
-    </UndefinedClass>
+  <file src="tests/Unit/CommandBus/Handler/CreateAggregateHandlerTest.php">
+    <InvalidArgument>
+      <code><![CDATA[$class::class]]></code>
+    </InvalidArgument>
+  </file>
+  <file src="tests/Unit/CommandBus/Handler/DefaultParameterResolverTest.php">
+    <MissingParamType>
+      <code><![CDATA[$foo]]></code>
+      <code><![CDATA[$foo]]></code>
+    </MissingParamType>
+  </file>
+  <file src="tests/Unit/CommandBus/HandlerFinderTest.php">
+    <MissingParamType>
+      <code><![CDATA[$command]]></code>
+    </MissingParamType>
+  </file>
+  <file src="tests/Unit/CommandBus/ServiceHandlerProviderTest.php">
+    <InvalidArrayAccess>
+      <code><![CDATA[$result[0]]]></code>
+      <code><![CDATA[$result[0]]]></code>
+    </InvalidArrayAccess>
+    <MixedMethodCall>
+      <code><![CDATA[callable]]></code>
+      <code><![CDATA[callable]]></code>
+    </MixedMethodCall>
   </file>
   <file src="tests/Unit/EventBus/DefaultEventBusTest.php">
     <MoreSpecificImplementedParamType>
@@ -266,11 +289,6 @@
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>
       <code><![CDATA[$event]]></code>
-    </MissingParamType>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithNoTypeHandler.php">
-    <MissingParamType>
-      <code><![CDATA[$command]]></code>
     </MissingParamType>
   </file>
   <file src="tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php">

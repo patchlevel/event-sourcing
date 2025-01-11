@@ -19,7 +19,7 @@ final class DefaultParameterResolver implements ParameterResolver
     ) {
     }
 
-    /** @return iterable<mixed> */
+    /** @return iterable<int, mixed> */
     public function resolve(ReflectionMethod $method, object $command): iterable
     {
         foreach ($method->getParameters() as $index => $parameter) {
