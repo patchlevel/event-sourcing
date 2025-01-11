@@ -37,10 +37,12 @@ final class HandlerFinderTest extends TestCase
         $this->expectException(InvalidHandleMethod::class);
 
         $class = new class () {
+            // phpcs:disable
             #[Handle]
             public function handle($command): void
             {
             }
+            // phpcs:enable
         };
 
         $result = [...HandlerFinder::findInClass($class::class)];

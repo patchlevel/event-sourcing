@@ -66,9 +66,11 @@ final class DefaultParameterResolverTest extends TestCase
         $this->expectException(ServiceNotResolvable::class);
 
         $class = new class () {
+            // phpcs:disable
             public function handle(stdClass $command, $foo): void
             {
             }
+            // phpcs:enable
         };
 
         $resolver = new DefaultParameterResolver();
@@ -90,9 +92,11 @@ final class DefaultParameterResolverTest extends TestCase
         $this->expectException(ServiceNotResolvable::class);
 
         $class = new class () {
+            // phpcs:disable
             public function handle(stdClass $command, $foo): void
             {
             }
+            // phpcs:enable
         };
 
         $container = $this->prophesize(ContainerInterface::class);

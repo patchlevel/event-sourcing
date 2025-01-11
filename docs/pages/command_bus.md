@@ -1,16 +1,15 @@
 # Command Bus
 
-The Command Bus is an optional component in the Event Sourcing library that coordinates the execution of commands. 
-It allows commands to be forwarded to the appropriate aggregates and their handlers to be invoked. 
+The Command Bus is an optional component in the Event Sourcing library that coordinates the execution of commands.
+It allows commands to be forwarded to the appropriate aggregates and their handlers to be invoked.
 This promotes a clear separation of responsibilities and simplifies the management of business logic.
 
 ## Command
 
-First of all, you need to create a command class. 
+First of all, you need to create a command class.
 A command is a simple data transfer object that represents an intention to perform an action.
 
 ```php
-
 final class CreateProfile
 {
     public function __construct(
@@ -20,14 +19,13 @@ final class CreateProfile
     }
 }
 ```
-
 ## Handler
 
-Then you need to create a handler class. 
+Then you need to create a handler class.
 A handler is a class that contains the business logic for a command.
 It will be invoked when a command is dispatched.
 You need to mark the method that handles the command with the `#[Handle]` attribute.
-    
+
 ```php
 use Patchlevel\EventSourcing\Attribute\Handle;
 
@@ -40,15 +38,13 @@ final class CreateProfileHandler
     }
 }
 ```
-
 !!! note
 
     To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
-
+    
 !!! tip
 
     A class can have multiple handler methods.
-    
     
 ### Aggregate Handler
 
@@ -60,7 +56,7 @@ To do this, you need to mark the method that handles the command with the `#[Han
     The aggregates themselves are of course not a service. 
     The AggregateHandlerProvider uses the aggregates to create the handlers for you. 
     You can find out more about this in the providers.
-
+    
 #### Create Aggregate
 
 If you want to create a new aggregate, you need to create a static method that returns a new instance of the aggregate.
@@ -90,14 +86,13 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 !!! tip
 
     You can find more information about aggregates [here](aggregate.md).
-
+    
 #### Update Aggregate
 
-If you want to update an existing aggregate, 
+If you want to update an existing aggregate,
 first you need to mark the `aggregate id` with the `#[Id]` attribute in the command class.
 Otherwise, the handler does not know which aggregates should be loaded.
 
@@ -114,7 +109,6 @@ final class ChangeProfileName
     }
 }
 ```
-
 Then you need to create a method that changes the aggregate state.
 Here too, you need to mark the method with the `#[Handle]` attribute.
 
@@ -144,11 +138,10 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 #### Inject Service
 
 You can inject services into aggregate handler methods.
-Starting with the second parameter, it automatically tries to inject the service using a service locator. 
+Starting with the second parameter, it automatically tries to inject the service using a service locator.
 Standard, it uses the fully qualified class name from the parameter type hint to find the service.
 
 ```php
@@ -179,15 +172,14 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 !!! note
 
     The service must be registered in the service locator.
-
+    
 !!! tip
 
     You can inject multiple services into the handler method.
-
+    
 Or you can inject the service manually using the `#[Inject]` attribute.
 There you can specify the service name that should be injected.
 
@@ -220,11 +212,10 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 !!! note
 
     Injection in handler methods is only possible with the `AggregateHandlerProvider`.
-
+    
 ## Setup
 
 We provide a `DefaultCommandBus` that you can use to dispatch commands.
@@ -234,20 +225,17 @@ You need to pass a `HandlerProvider` to the constructor.
 use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
 use Patchlevel\EventSourcing\CommandBus\HandlerProvider;
 
-/**
- * @var HandlerProvider $handlerProvider
- */
+/** @var HandlerProvider $handlerProvider */
 $commandBus = new DefaultCommandBus($handlerProvider);
 
 $commandBus->dispatch(new CreateProfile($profileId, 'name'));
 $commandBus->dispatch(new ChangeProfileName($profileId, 'new name'));
 ```
-
 !!! note
 
     The `DefaultCommandBus` is a synchronous command bus. 
     But it ensures that a command has been completely handled before the next handler is executed.
-
+    
 ## Provider
 
 There are different types of providers that you can use to register handlers.
@@ -267,11 +255,10 @@ $provider = new ServiceHandlerProvider([
     ),
 ]);
 ```
-
 ### Aggregate Handler Provider
 
 The `AggregateHandlerProvider` is used to handle commands by invoking methods on aggregates.
-The special thing about it is that the aggregates themselves are not services, 
+The special thing about it is that the aggregates themselves are not services,
 but the handler provider automatically creates suitable handler services for the aggregates.
 
 ```php
@@ -281,14 +268,13 @@ use Patchlevel\EventSourcing\Repository\RepositoryManager;
 
 /**
  * @var AggregateRootRegistry $aggregateRootRegistry
- * @var RepositoryManager $repositoryManager 
+ * @var RepositoryManager $repositoryManager
  */
 $provider = new AggregateHandlerProvider(
     $aggregateRootRegistry,
     $repositoryManager,
 );
 ```
-
 #### Service Locator
 
 If you want service injection in aggregate handler methods,
@@ -306,11 +292,10 @@ $provider = new AggregateHandlerProvider(
     ]), // or other psr-11 compatible container
 );
 ```
-
 !!! tip
 
     You can find suitable implementations of psr-11 containers on [packagist](https://packagist.org/search/?tags=PSR-11).
-
+    
 ### Chain Handler Provider
 
 The `ChainHandlerProvider` allows you to combine multiple handler providers.
@@ -323,7 +308,6 @@ $provider = new ChainHandlerProvider([
     $aggregateHandlerProvider,
 ]);
 ```
-
 ## Learn more
 
 * [How to use aggregates](aggregate.md)
