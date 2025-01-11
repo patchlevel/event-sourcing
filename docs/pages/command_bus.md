@@ -1,31 +1,16 @@
 # Command Bus
 
-You can also use the Command Bus to work with your aggregate root and perform write operations such as creating or editing.
-We provide a Command Bus implementation that is sufficient for our use case. 
-We only support handlers defined in Aggregate and no other handler services.
+The Command Bus is an optional component in the Event Sourcing library that coordinates the execution of commands. 
+It allows commands to be forwarded to the appropriate aggregates and their handlers to be invoked. 
+This promotes a clear separation of responsibilities and simplifies the management of business logic.
 
-## Setup
-
-```php
-use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Repository\RepositoryManager;
-
-/**
- * @var AggregateRootRegistry $aggregateRootRegistry
- * @var RepositoryManager $repositoryManager
- */
-$commandBus = DefaultCommandBus::createForAggregateHandlers(
-    $aggregateRootRegistry,
-    $repositoryManager,
-);
-
-$commandBus->dispatch(new CreateProfile($profileId, 'John'));
-$commandBus->dispatch(new ChangeProfileName($profileId, 'John Doe'));
-```
 ## Command
 
+First of all, you need to create a command class. 
+A command is a simple data transfer object that represents an intention to perform an action.
+
 ```php
+
 final class CreateProfile
 {
     public function __construct(
@@ -36,22 +21,49 @@ final class CreateProfile
 }
 ```
 
+## Handler
 
-
+Then you need to create a handler class. 
+A handler is a class that contains the business logic for a command.
+It will be invoked when a command is dispatched.
+You need to mark the method that handles the command with the `#[Handle]` attribute.
+    
 ```php
-use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\Handle;
 
-final class ChangeProfileName
+final class CreateProfileHandler
 {
-    public function __construct(
-        #[Id]
-        public readonly ProfileId $id,
-        public readonly string $name,
-    ) {
+    #[Handle]
+    public function __invoke(CreateProfile $command): void
+    {
+        // handle command
     }
 }
 ```
-## Handler
+
+!!! note
+
+    To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
+
+!!! tip
+
+    A class can have multiple handler methods.
+    
+    
+### Aggregate Handler
+
+Another way to handle commands is to use the aggregates themselves.
+To do this, you need to mark the method that handles the command with the `#[Handle]` attribute.
+
+!!! note
+
+    The aggregates themselves are of course not a service. 
+    The AggregateHandlerProvider uses the aggregates to create the handlers for you. 
+    You can find out more about this in the providers.
+
+#### Create Aggregate
+
+If you want to create a new aggregate, you need to create a static method that returns a new instance of the aggregate.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -70,15 +82,54 @@ final class Profile extends BasicAggregateRoot
     public static function create(CreateProfile $command): self
     {
         $self = new self();
-
-        if (!$nameValidator($command->name) {
-            throw new InvalidArgument();
-        }
-
         $self->recordThat(new ProfileCreated($command->id, $command->name));
 
         return $self;
     }
+
+    // ... apply methods
+}
+```
+
+!!! tip
+
+    You can find more information about aggregates [here](aggregate.md).
+
+#### Update Aggregate
+
+If you want to update an existing aggregate, 
+first you need to mark the `aggregate id` with the `#[Id]` attribute in the command class.
+Otherwise, the handler does not know which aggregates should be loaded.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Id;
+
+final class ChangeProfileName
+{
+    public function __construct(
+        #[Id]
+        public readonly ProfileId $id,
+        public readonly string $name,
+    ) {
+    }
+}
+```
+
+Then you need to create a method that changes the aggregate state.
+Here too, you need to mark the method with the `#[Handle]` attribute.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\Attribute\Id;
+
+#[Aggregate('profile')]
+final class Profile extends BasicAggregateRoot
+{
+    #[Id]
+    private ProfileId $id;
+    private string $name;
 
     #[Handle]
     public function changeName(ChangeProfileName $command): void
@@ -93,28 +144,13 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-## Dependency Injection
 
-```php
-use Patchlevel\EventSourcing\Clock\SystemClock;
-use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
-use Patchlevel\EventSourcing\CommandBus\ServiceLocator;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Repository\RepositoryManager;
-use Psr\Clock\ClockInterface;
+#### Inject Service
 
-/**
- * @var AggregateRootRegistry $aggregateRootRegistry
- * @var RepositoryManager $repositoryManager
- */
-$commandBus = DefaultCommandBus::createForAggregateHandlers(
-    $aggregateRootRegistry,
-    $repositoryManager,
-    new ServiceLocator([
-        ClockInterface::class => new SystemClock(),
-    ]), // or other psr-11 compatible container
-);
-```
+You can inject services into aggregate handler methods.
+Starting with the second parameter, it automatically tries to inject the service using a service locator. 
+Standard, it uses the fully qualified class name from the parameter type hint to find the service.
+
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
@@ -143,26 +179,18 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-### Inject
 
-```php
-use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
-use Patchlevel\EventSourcing\CommandBus\ServiceLocator;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\Repository\RepositoryManager;
+!!! note
 
-/**
- * @var AggregateRootRegistry $aggregateRootRegistry
- * @var RepositoryManager $repositoryManager
- */
-$commandBus = DefaultCommandBus::createForAggregateHandlers(
-    $aggregateRootRegistry,
-    $repositoryManager,
-    new ServiceLocator([
-        'name_validator' => new NameValidator(),
-    ]), // or other psr-11 compatible container
-);
-```
+    The service must be registered in the service locator.
+
+!!! tip
+
+    You can inject multiple services into the handler method.
+
+Or you can inject the service manually using the `#[Inject]` attribute.
+There you can specify the service name that should be injected.
+
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
@@ -192,6 +220,110 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
+
+!!! note
+
+    Injection in handler methods is only possible with the `AggregateHandlerProvider`.
+
+## Setup
+
+We provide a `DefaultCommandBus` that you can use to dispatch commands.
+You need to pass a `HandlerProvider` to the constructor.
+
+```php
+use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
+use Patchlevel\EventSourcing\CommandBus\HandlerProvider;
+
+/**
+ * @var HandlerProvider $handlerProvider
+ */
+$commandBus = new DefaultCommandBus($handlerProvider);
+
+$commandBus->dispatch(new CreateProfile($profileId, 'name'));
+$commandBus->dispatch(new ChangeProfileName($profileId, 'new name'));
+```
+
+!!! note
+
+    The `DefaultCommandBus` is a synchronous command bus. 
+    But it ensures that a command has been completely handled before the next handler is executed.
+
+## Provider
+
+There are different types of providers that you can use to register handlers.
+
+### Service Handler Provider
+
+The classically way to handle commands is to use services.
+The `ServiceHandlerProvider` is used to handle commands by invoking methods on services.
+
+```php
+use Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider;
+
+$provider = new ServiceHandlerProvider([
+    new CreateProfileHandler(),
+    new ChangeProfileNameHandler(
+        new NameValidator(),
+    ),
+]);
+```
+
+### Aggregate Handler Provider
+
+The `AggregateHandlerProvider` is used to handle commands by invoking methods on aggregates.
+The special thing about it is that the aggregates themselves are not services, 
+but the handler provider automatically creates suitable handler services for the aggregates.
+
+```php
+use Patchlevel\EventSourcing\CommandBus\AggregateHandlerProvider;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
+
+/**
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var RepositoryManager $repositoryManager 
+ */
+$provider = new AggregateHandlerProvider(
+    $aggregateRootRegistry,
+    $repositoryManager,
+);
+```
+
+#### Service Locator
+
+If you want service injection in aggregate handler methods,
+you need to pass a service locator to the `AggregateHandlerProvider`.
+You can use any psr-11 compatible container, or you can use our implementation `ServiceLocator`.
+
+```php
+use Patchlevel\EventSourcing\CommandBus\ServiceLocator;
+
+$provider = new AggregateHandlerProvider(
+    $aggregateRootRegistry,
+    $repositoryManager,
+    new ServiceLocator([
+        'name_validator' => new NameValidator(),
+    ]), // or other psr-11 compatible container
+);
+```
+
+!!! tip
+
+    You can find suitable implementations of psr-11 containers on [packagist](https://packagist.org/search/?tags=PSR-11).
+
+### Chain Handler Provider
+
+The `ChainHandlerProvider` allows you to combine multiple handler providers.
+
+```php
+use Patchlevel\EventSourcing\CommandBus\ChainHandlerProvider;
+
+$provider = new ChainHandlerProvider([
+    $serviceHandlerProvider,
+    $aggregateHandlerProvider,
+]);
+```
+
 ## Learn more
 
 * [How to use aggregates](aggregate.md)
