@@ -16,6 +16,25 @@
       <code><![CDATA[$this->frozenDateTime->modify(sprintf('+%s seconds', $seconds))]]></code>
     </PossiblyFalsePropertyAssignmentValue>
   </file>
+  <file src="src/CommandBus/Handler/CreateAggregateHandler.php">
+    <InvalidOperand>
+      <code><![CDATA[$this->parameterResolver->resolve($reflectionMethod, $command)]]></code>
+    </InvalidOperand>
+  </file>
+  <file src="src/CommandBus/Handler/UpdateAggregateHandler.php">
+    <InvalidOperand>
+      <code><![CDATA[$this->parameterResolver->resolve($reflectionMethod, $command)]]></code>
+    </InvalidOperand>
+  </file>
+  <file src="src/CommandBus/ServiceHandlerProvider.php">
+    <MixedArgument>
+      <code><![CDATA[$service::{$handler->method}(...)]]></code>
+    </MixedArgument>
+    <MixedMethodCall>
+      <code><![CDATA[$handler->method]]></code>
+      <code><![CDATA[$service::{$handler->method}(...)]]></code>
+    </MixedMethodCall>
+  </file>
   <file src="src/Console/DoctrineHelper.php">
     <ClassNotFinal>
       <code><![CDATA[class DoctrineHelper]]></code>
@@ -57,9 +76,6 @@
     </InvalidReturnType>
   </file>
   <file src="src/Metadata/AggregateRoot/AttributeAggregateRootMetadataFactory.php">
-    <DocblockTypeContradiction>
-      <code><![CDATA[$reflectionType instanceof ReflectionIntersectionType]]></code>
-    </DocblockTypeContradiction>
     <InvalidReturnStatement>
       <code><![CDATA[$this->aggregateMetadata[$aggregate]]]></code>
     </InvalidReturnStatement>
@@ -219,6 +235,47 @@
       <code><![CDATA[$row['payload']]]></code>
     </MixedArgument>
   </file>
+  <file src="tests/Unit/CommandBus/AggregateHandlerProviderTest.php">
+    <InvalidArrayAccess>
+      <code><![CDATA[$result[0]]]></code>
+      <code><![CDATA[$result[0]]]></code>
+    </InvalidArrayAccess>
+    <MixedMethodCall>
+      <code><![CDATA[callable]]></code>
+      <code><![CDATA[callable]]></code>
+    </MixedMethodCall>
+  </file>
+  <file src="tests/Unit/CommandBus/Handler/CreateAggregateHandlerTest.php">
+    <InvalidArgument>
+      <code><![CDATA[$class::class]]></code>
+    </InvalidArgument>
+  </file>
+  <file src="tests/Unit/CommandBus/Handler/DefaultParameterResolverTest.php">
+    <MissingParamType>
+      <code><![CDATA[$foo]]></code>
+      <code><![CDATA[$foo]]></code>
+    </MissingParamType>
+  </file>
+  <file src="tests/Unit/CommandBus/HandlerFinderTest.php">
+    <MissingParamType>
+      <code><![CDATA[$command]]></code>
+    </MissingParamType>
+  </file>
+  <file src="tests/Unit/CommandBus/ServiceHandlerProviderTest.php">
+    <InvalidArrayAccess>
+      <code><![CDATA[$result[0]]]></code>
+      <code><![CDATA[$result[0]]]></code>
+    </InvalidArrayAccess>
+    <MixedMethodCall>
+      <code><![CDATA[callable]]></code>
+      <code><![CDATA[callable]]></code>
+    </MixedMethodCall>
+  </file>
+  <file src="tests/Unit/CommandBus/SyncCommandBusTest.php">
+    <InvalidPropertyFetch>
+      <code><![CDATA[$handler->command]]></code>
+    </InvalidPropertyFetch>
+  </file>
   <file src="tests/Unit/EventBus/DefaultEventBusTest.php">
     <MoreSpecificImplementedParamType>
       <code><![CDATA[$message]]></code>
@@ -228,11 +285,6 @@
     <MixedArgumentTypeCoercion>
       <code><![CDATA[$value]]></code>
     </MixedArgumentTypeCoercion>
-  </file>
-  <file src="tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php">
-    <ReservedWord>
-      <code><![CDATA[ProfileCreated&ProfileVisited $event]]></code>
-    </ReservedWord>
   </file>
   <file src="tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php">
     <MissingParamType>

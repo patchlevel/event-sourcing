@@ -17,6 +17,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/Clock/.*
+    - name: CommandBus
+      collectors:
+        - type: directory
+          value: src/CommandBus/.*
     - name: Console
       collectors:
         - type: directory
@@ -103,6 +107,11 @@ deptrac:
       - MetadataAggregate
     Attribute:
     Clock:
+    CommandBus:
+      - Aggregate
+      - Attribute
+      - MetadataAggregate
+      - Repository
     Console:
       - Aggregate
       - Message
