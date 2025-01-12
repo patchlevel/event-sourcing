@@ -7,8 +7,8 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Clock\SystemClock;
-use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
 use Patchlevel\EventSourcing\CommandBus\ServiceLocator;
+use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Pipe;
 use Patchlevel\EventSourcing\Message\Reducer;
@@ -282,7 +282,7 @@ final class BasicIntegrationTest extends TestCase
             $engine,
         );
 
-        $commandBus = DefaultCommandBus::createForAggregateHandlers(
+        $commandBus = SyncCommandBus::createForAggregateHandlers(
             $aggregateRootRegistry,
             $manager,
             new ServiceLocator([

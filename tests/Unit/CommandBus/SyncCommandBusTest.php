@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\CommandBus;
 
-use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
 use Patchlevel\EventSourcing\CommandBus\HandlerDescriptor;
 use Patchlevel\EventSourcing\CommandBus\HandlerNotFound;
 use Patchlevel\EventSourcing\CommandBus\HandlerProvider;
 use Patchlevel\EventSourcing\CommandBus\MultipleHandlersFound;
+use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\DefaultCommandBus */
-final class DefaultCommandBusTest extends TestCase
+/** @covers \Patchlevel\EventSourcing\CommandBus\SyncCommandBus */
+final class SyncCommandBusTest extends TestCase
 {
     use ProphecyTrait;
 
@@ -25,7 +25,7 @@ final class DefaultCommandBusTest extends TestCase
         $handlerProvider = $this->prophesize(HandlerProvider::class);
         $handlerProvider->handlerForCommand($command::class)->willReturn([]);
 
-        $commandBus = new DefaultCommandBus($handlerProvider->reveal());
+        $commandBus = new SyncCommandBus($handlerProvider->reveal());
 
         $this->expectException(HandlerNotFound::class);
 
@@ -43,7 +43,7 @@ final class DefaultCommandBusTest extends TestCase
             new HandlerDescriptor(static fn () => null),
         ]);
 
-        $commandBus = new DefaultCommandBus($handlerProvider->reveal());
+        $commandBus = new SyncCommandBus($handlerProvider->reveal());
 
         $this->expectException(MultipleHandlersFound::class);
 
@@ -69,7 +69,7 @@ final class DefaultCommandBusTest extends TestCase
             new HandlerDescriptor($handler),
         ]);
 
-        $commandBus = new DefaultCommandBus($handlerProvider->reveal());
+        $commandBus = new SyncCommandBus($handlerProvider->reveal());
 
         $commandBus->dispatch($command);
 

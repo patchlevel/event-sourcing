@@ -218,22 +218,22 @@ final class Profile extends BasicAggregateRoot
     
 ## Setup
 
-We provide a `DefaultCommandBus` that you can use to dispatch commands.
+We provide a `SyncCommandBus` that you can use to dispatch commands.
 You need to pass a `HandlerProvider` to the constructor.
 
 ```php
-use Patchlevel\EventSourcing\CommandBus\DefaultCommandBus;
 use Patchlevel\EventSourcing\CommandBus\HandlerProvider;
+use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
 
 /** @var HandlerProvider $handlerProvider */
-$commandBus = new DefaultCommandBus($handlerProvider);
+$commandBus = new SyncCommandBus($handlerProvider);
 
 $commandBus->dispatch(new CreateProfile($profileId, 'name'));
 $commandBus->dispatch(new ChangeProfileName($profileId, 'new name'));
 ```
 !!! note
 
-    The `DefaultCommandBus` is a synchronous command bus. 
+    The `SyncCommandBus` is a synchronous command bus. 
     But it ensures that a command has been completely handled before the next handler is executed.
     
 ## Provider

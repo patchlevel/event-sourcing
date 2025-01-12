@@ -15,7 +15,7 @@ use function is_array;
 use function iterator_to_array;
 use function sprintf;
 
-final class DefaultCommandBus implements CommandBus
+final class SyncCommandBus implements CommandBus
 {
     private readonly HandlerProvider $handlerProvider;
 
