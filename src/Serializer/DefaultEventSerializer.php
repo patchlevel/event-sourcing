@@ -53,6 +53,11 @@ final class DefaultEventSerializer implements EventSerializer
         return $this->hydrator->hydrate($class, $payload);
     }
 
+    public function eventRegistry(): EventRegistry
+    {
+        return $this->eventRegistry;
+    }
+
     /** @param list<string> $paths */
     public static function createFromPaths(
         array $paths,

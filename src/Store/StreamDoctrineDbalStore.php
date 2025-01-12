@@ -188,12 +188,12 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $builder->setParameter('archived', $criterion->archived, Types::BOOLEAN);
                     break;
                 case FromIndexCriterion::class:
-                    $builder->andWhere('id > :fromIndex');
-                    $builder->setParameter('fromIndex', $criterion->fromIndex, Types::INTEGER);
+                    $builder->andWhere('id > :from_index');
+                    $builder->setParameter('from_index', $criterion->fromIndex, Types::INTEGER);
                     break;
                 case ToIndexCriterion::class:
-                    $builder->andWhere('id < :toIndex');
-                    $builder->setParameter('toIndex', $criterion->toIndex, Types::INTEGER);
+                    $builder->andWhere('id < :to_index');
+                    $builder->setParameter('to_index', $criterion->toIndex, Types::INTEGER);
                     break;
                 case EventsCriterion::class:
                     $builder->andWhere('event IN (:events)');

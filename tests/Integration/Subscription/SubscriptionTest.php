@@ -23,15 +23,18 @@ use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerSubscriber;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\LookupSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\MigrateAggregateToStreamStoreSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNewProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
@@ -418,8 +421,7 @@ final class SubscriptionTest extends TestCase
         );
 
         $subscriber = new #[Subscriber('error_producer', RunMode::FromBeginning)]
-        class
-        {
+        class {
             public bool $subscribeError = false;
 
             #[Setup]
@@ -481,12 +483,18 @@ final class SubscriptionTest extends TestCase
         $error = $result->errors[0];
 
         self::assertEquals('error_producer', $error->subscriptionId);
-        self::assertEquals('subscribe error: as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration.', $error->message);
+        self::assertEquals(
+            'subscribe error: as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration.',
+            $error->message,
+        );
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
 
         self::assertEquals(Status::Error, $subscription->status());
-        self::assertEquals('subscribe error: as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration.', $subscription->subscriptionError()?->errorMessage);
+        self::assertEquals(
+            'subscribe error: as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration, as an extra long message exceeding 255 varchar configuration.',
+            $subscription->subscriptionError()?->errorMessage,
+        );
         self::assertEquals(Status::Active, $subscription->subscriptionError()?->previousStatus);
         self::assertEquals(0, $subscription->retryAttempt());
     }
@@ -1054,6 +1062,102 @@ final class SubscriptionTest extends TestCase
         self::assertFalse(
             $this->projectionConnection->createSchemaManager()->tableExists('new_eventstore'),
         );
+    }
+
+    public function testLookup(): void
+    {
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
+
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            $serializer,
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $subscriberRepository = new MetadataSubscriberAccessorRepository(
+            [
+                new LookupSubscriber($this->projectionConnection),
+            ],
+            argumentResolvers: [
+                new LookupResolver(
+                    $store,
+                    $serializer->eventRegistry(),
+                ),
+            ],
+        );
+
+        $engine = new DefaultSubscriptionEngine(
+            new StoreMessageLoader($store),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        $result = $engine->setup();
+
+        self::assertEquals([], $result->errors);
+
+        $result = $engine->boot();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals([], $result->errors);
+
+        $profileId = ProfileId::generate();
+        $profile = Profile::create($profileId, 'John');
+        $repository->save($profile);
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals([], $result->errors);
+
+        $result = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_lookup WHERE id = ?',
+            [$profileId->toString()],
+        );
+
+        self::assertFalse($result);
+
+        $profile->changeName('Hans');
+        $profile->promoteToAdmin();
+        $repository->save($profile);
+
+        $result = $engine->run();
+
+        self::assertEquals(2, $result->processedMessages);
+        self::assertEquals([], $result->errors);
+
+        $result = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_lookup WHERE id = ?',
+            [$profileId->toString()],
+        );
+
+        self::assertIsArray($result);
+        self::assertArrayHasKey('id', $result);
+        self::assertSame($profileId->toString(), $result['id']);
+        self::assertSame('Hans', $result['name']);
     }
 
     /** @param list<Subscription> $subscriptions */

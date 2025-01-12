@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
@@ -79,6 +80,7 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
+            ->withHeader(new IndexHeader(1))
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
             ->withHeader(new EventIdHeader('1'))
@@ -166,15 +168,18 @@ final class StreamDoctrineDbalStreamTest extends TestCase
 
         $messages = [
             Message::create($event)
+                ->withHeader(new IndexHeader(1))
                 ->withHeader(new StreamNameHeader('profile-1'))
                 ->withHeader(new PlayheadHeader(1))
                 ->withHeader(new EventIdHeader('1'))
                 ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
+                ->withHeader(new IndexHeader(2))
                 ->withHeader(new StreamNameHeader('profile-2'))
                 ->withHeader(new EventIdHeader('2'))
                 ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
+                ->withHeader(new IndexHeader(3))
                 ->withHeader(new StreamNameHeader('profile-3'))
                 ->withHeader(new PlayheadHeader(1))
                 ->withHeader(new EventIdHeader('3'))
@@ -257,6 +262,7 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
+            ->withHeader(new IndexHeader(5))
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
             ->withHeader(new EventIdHeader('1'))
@@ -318,6 +324,7 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
+            ->withHeader(new IndexHeader(1))
             ->withHeader(new StreamNameHeader('profile-1'))
             ->withHeader(new PlayheadHeader(1))
             ->withHeader(new EventIdHeader('1'))

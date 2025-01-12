@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStoreStream;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\StreamClosed;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -76,6 +77,7 @@ final class DoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
+            ->withHeader(new IndexHeader(1))
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -160,10 +162,13 @@ final class DoctrineDbalStreamTest extends TestCase
 
         $messages = [
             Message::create($event)
+                ->withHeader(new IndexHeader(1))
                 ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
+                ->withHeader(new IndexHeader(2))
                 ->withHeader(new AggregateHeader('profile', '2', 1, new DateTimeImmutable('2022-10-10 10:10:10'))),
             Message::create($event)
+                ->withHeader(new IndexHeader(3))
                 ->withHeader(new AggregateHeader('profile', '3', 1, new DateTimeImmutable('2022-10-10 10:10:10'))),
         ];
 
@@ -243,6 +248,7 @@ final class DoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
+            ->withHeader(new IndexHeader(5))
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
@@ -301,6 +307,7 @@ final class DoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
         $message = Message::create($event)
+            ->withHeader(new IndexHeader(1))
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable('2022-10-10 10:10:10')));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);

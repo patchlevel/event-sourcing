@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Message;
 
 use Closure;
+use RuntimeException;
 
 /**
  * @template STATE of array<array-key, mixed>
@@ -23,6 +24,9 @@ final class Reducer
 
     /** @var (Closure(STATE): OUT)|null */
     private Closure|null $finalizeHandler = null;
+
+    /** @var iterable<Message>|null */
+    private iterable|null $messages = null;
 
     /**
      * @param STATE $initState
@@ -93,15 +97,31 @@ final class Reducer
         return $this;
     }
 
+    /** @param iterable<Message> $messages */
+    public function messages(iterable $messages): self
+    {
+        $this->messages = $messages;
+
+        return $this;
+    }
+
     /**
-     * @param iterable<Message> $messages
+     * @param iterable<Message>|null $messages
      *
      * @return OUT|STATE
      * @psalm-return (OUT is STATE ? STATE : OUT)
      */
-    public function reduce(iterable $messages): array
+    public function reduce(iterable|null $messages = null): array
     {
         $state = $this->initState;
+
+        if ($messages === null) {
+            $messages = $this->messages;
+
+            if ($messages === null) {
+                throw new RuntimeException('no messages given');
+            }
+        }
 
         foreach ($messages as $message) {
             $event = $message->event();

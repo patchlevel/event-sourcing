@@ -7,9 +7,8 @@ namespace Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
-use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Subscription\Lookup;
+use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
 
 final class LookupResolver implements ArgumentResolver
 {
@@ -24,7 +23,7 @@ final class LookupResolver implements ArgumentResolver
         return new Lookup(
             $this->store,
             $this->eventRegistry,
-            $message->header(IndexHeader::class)->index,
+            $message,
         );
     }
 
