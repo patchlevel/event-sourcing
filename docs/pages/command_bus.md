@@ -282,8 +282,15 @@ you need to pass a service locator to the `AggregateHandlerProvider`.
 You can use any psr-11 compatible container, or you can use our implementation `ServiceLocator`.
 
 ```php
+use Patchlevel\EventSourcing\CommandBus\AggregateHandlerProvider;
 use Patchlevel\EventSourcing\CommandBus\ServiceLocator;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
 
+/**
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var RepositoryManager $repositoryManager
+ */
 $provider = new AggregateHandlerProvider(
     $aggregateRootRegistry,
     $repositoryManager,
