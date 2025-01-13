@@ -14,7 +14,7 @@ final class LookupResolver implements ArgumentResolver
 {
     public function __construct(
         private readonly Store $store,
-        private readonly EventRegistry $eventRegistry,
+        private readonly EventRegistry|null $eventRegistry = null,
     ) {
     }
 
@@ -22,8 +22,8 @@ final class LookupResolver implements ArgumentResolver
     {
         return new Lookup(
             $this->store,
-            $this->eventRegistry,
             $message,
+            $this->eventRegistry,
         );
     }
 

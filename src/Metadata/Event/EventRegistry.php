@@ -43,6 +43,7 @@ final class EventRegistry
         return $this->nameToClassMap[$eventName];
     }
 
+    /** @phpstan-assert-if-true class-string $eventClass */
     public function hasEventClass(string $eventClass): bool
     {
         return array_key_exists($eventClass, $this->classToNameMap);
