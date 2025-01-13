@@ -33,7 +33,7 @@ final class LookupSubscriber
     public function onAdminPromoted(AdminPromoted $event, Lookup $lookup): void
     {
         $messages = $lookup
-            ->currentAggregate()
+            ->stream('profile')
             ->events(
                 ProfileCreated::class,
                 NameChanged::class,

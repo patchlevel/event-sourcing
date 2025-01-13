@@ -44,7 +44,6 @@ final class AggregateRootRegistry
         return $this->nameToClassMap[$aggregateName];
     }
 
-    /** @phpstan-assert-if-true class-string<AggregateRoot> $aggregateClass */
     public function hasAggregateClass(string $aggregateClass): bool
     {
         return array_key_exists($aggregateClass, $this->classToNameMap);

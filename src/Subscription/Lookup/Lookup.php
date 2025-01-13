@@ -35,14 +35,12 @@ final class Lookup
         $this->criteria = new Criteria();
     }
 
-    /**
-     * @param class-string|string ...$events
-     *
-     * @return $this
-     */
+    /** @param class-string|string ...$events */
     public function events(string ...$events): self
     {
-        $this->criteria = $this->criteria->add(
+        $self = clone $this;
+
+        $self->criteria = $self->criteria->add(
             new EventsCriterion(
                 array_values(
                     array_map(
@@ -59,78 +57,86 @@ final class Lookup
             ),
         );
 
-        return $this;
+        return $self;
     }
 
-    /** @return $this */
     public function stream(string|null $stream = null): self
     {
+        $self = clone $this;
+
         if ($stream === null) {
-            $this->criteria = $this->criteria->remove(StreamCriterion::class);
+            $self->criteria = $self->criteria->remove(StreamCriterion::class);
         } else {
-            $this->criteria = $this->criteria->add(new StreamCriterion($stream));
+            $self->criteria = $self->criteria->add(new StreamCriterion($stream));
         }
 
-        return $this;
+        return $self;
     }
 
-    /** @return $this */
     public function currentStream(): self
     {
-        $stream = $this->currentMessage->header(StreamNameHeader::class)->streamName;
-        $this->criteria = $this->criteria->add(new StreamCriterion($stream));
+        $self = clone $this;
 
-        return $this;
+        $stream = $self->currentMessage->header(StreamNameHeader::class)->streamName;
+        $self->criteria = $self->criteria->add(new StreamCriterion($stream));
+
+        return $self;
     }
 
-    /** @return $this */
     public function aggregateName(string|null $aggregateName = null): self
     {
+        $self = clone $this;
+
         if ($aggregateName === null) {
-            $this->criteria = $this->criteria->remove(AggregateNameCriterion::class);
+            $self->criteria = $self->criteria->remove(AggregateNameCriterion::class);
         } else {
-            $this->criteria = $this->criteria->add(new AggregateNameCriterion($aggregateName));
+            $self->criteria = $self->criteria->add(new AggregateNameCriterion($aggregateName));
         }
 
-        return $this;
+        return $self;
     }
 
-    /** @return $this */
     public function aggregateId(string|null $aggregateId = null): self
     {
+        $self = clone $this;
+
         if ($aggregateId === null) {
-            $this->criteria = $this->criteria->remove(AggregateIdCriterion::class);
+            $self->criteria = $self->criteria->remove(AggregateIdCriterion::class);
         } else {
-            $this->criteria = $this->criteria->add(new AggregateIdCriterion($aggregateId));
+            $self->criteria = $self->criteria->add(new AggregateIdCriterion($aggregateId));
         }
 
-        return $this;
+        return $self;
     }
 
     public function currentAggregate(): self
     {
-        $aggregateHeader = $this->currentMessage->header(AggregateHeader::class);
-        $this->criteria = $this->criteria
+        $self = clone $this;
+
+        $aggregateHeader = $self->currentMessage->header(AggregateHeader::class);
+        $self->criteria = $self->criteria
             ->add(new AggregateNameCriterion($aggregateHeader->aggregateName))
             ->add(new AggregateIdCriterion($aggregateHeader->aggregateId));
 
-        return $this;
+        return $self;
     }
 
-    /** @return $this */
     public function forward(): self
     {
-        $this->backwards = false;
+        $self = clone $this;
 
-        return $this;
+        $self->backwards = false;
+
+        return $self;
     }
 
-    /** @return $this */
     public function backwards(): self
     {
-        $this->backwards = true;
+        $self = clone $this;
 
-        return $this;
+        $self->backwards = true;
+
+        return $self;
     }
 
     public function fetchAll(): Stream
@@ -145,7 +151,13 @@ final class Lookup
 
     public function fetchFirst(): Message
     {
-        $stream = $this->fetchAll();
+        $stream = $this->store->load(
+            $this->criteria->add(
+                new ToIndexCriterion($this->currentMessage->header(IndexHeader::class)->index),
+            ),
+            limit: 1,
+            backwards: $this->backwards,
+        );
 
         $message = $stream->current();
 
@@ -158,11 +170,13 @@ final class Lookup
 
     public function fetchLast(): Message
     {
-        $stream = $this->fetchAll();
-
-        while (!$stream->end()) {
-            $stream->next();
-        }
+        $stream = $this->store->load(
+            $this->criteria->add(
+                new ToIndexCriterion($this->currentMessage->header(IndexHeader::class)->index),
+            ),
+            limit: 1,
+            backwards: !$this->backwards,
+        );
 
         $message = $stream->current();
 
@@ -171,14 +185,5 @@ final class Lookup
         }
 
         return $message;
-    }
-
-    /** @return $this */
-    public function reset(): self
-    {
-        $this->criteria = new Criteria();
-        $this->backwards = false;
-
-        return $this;
     }
 }
