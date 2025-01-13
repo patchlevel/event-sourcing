@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Subscription\Lookup;
 
 use RuntimeException;
 
-class MessageNotFound extends RuntimeException
+final class MessageNotFound extends RuntimeException
 {
     public function __construct()
     {

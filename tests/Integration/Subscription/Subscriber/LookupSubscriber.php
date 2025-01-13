@@ -33,12 +33,12 @@ final class LookupSubscriber
     public function onAdminPromoted(AdminPromoted $event, Lookup $lookup): void
     {
         $messages = $lookup
-            ->query()
+            ->queryBuilder()
             ->events(
                 ProfileCreated::class,
                 NameChanged::class,
             )
-            ->lookAgain();
+            ->fetch();
 
         $state = (new Reducer())
             ->initState(['name' => null])

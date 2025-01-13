@@ -27,7 +27,7 @@ final class Lookup
     ) {
     }
 
-    public function query(): LookupQuery
+    public function queryBuilder(): QueryBuilder
     {
         $criteria = new Criteria();
 
@@ -38,16 +38,20 @@ final class Lookup
             throw new MissingIndex();
         }
 
-        if ($this->store instanceof StreamStore) {
-            $stream = $this->currentMessage->header(StreamNameHeader::class)->streamName;
-            $criteria->add(new StreamCriterion($stream));
-        } else {
-            $aggregateHeader = $this->currentMessage->header(AggregateHeader::class);
-            $criteria->add(new AggregateNameCriterion($aggregateHeader->aggregateName));
-            $criteria->add(new AggregateIdCriterion($aggregateHeader->aggregateId));
+        try {
+            if ($this->store instanceof StreamStore) {
+                $stream = $this->currentMessage->header(StreamNameHeader::class)->streamName;
+                $criteria->add(new StreamCriterion($stream));
+            } else {
+                $aggregateHeader = $this->currentMessage->header(AggregateHeader::class);
+                $criteria->add(new AggregateNameCriterion($aggregateHeader->aggregateName));
+                $criteria->add(new AggregateIdCriterion($aggregateHeader->aggregateId));
+            }
+        } catch (HeaderNotFound $exception) {
+            throw new MissingContext($exception);
         }
 
-        return new LookupQuery(
+        return new QueryBuilder(
             $this->store,
             $this->eventRegistry,
             $criteria,

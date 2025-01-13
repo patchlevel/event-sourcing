@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Subscription\Lookup;
 
 use RuntimeException;
 
-class MissingIndex extends RuntimeException
+final class MissingIndex extends RuntimeException
 {
     public function __construct()
     {
