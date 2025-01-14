@@ -29,8 +29,10 @@ use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
@@ -186,11 +188,15 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $builder->setParameter('archived', $criterion->archived, Types::BOOLEAN);
                     break;
                 case FromIndexCriterion::class:
-                    $builder->andWhere('id > :index');
-                    $builder->setParameter('index', $criterion->fromIndex, Types::INTEGER);
+                    $builder->andWhere('id > :from_index');
+                    $builder->setParameter('from_index', $criterion->fromIndex, Types::INTEGER);
+                    break;
+                case ToIndexCriterion::class:
+                    $builder->andWhere('id < :to_index');
+                    $builder->setParameter('to_index', $criterion->toIndex, Types::INTEGER);
                     break;
                 case EventsCriterion::class:
-                    $builder->andWhere('event IN (:events)');
+                    $builder->andWhere('event_name IN (:events)');
                     $builder->setParameter('events', $criterion->events, ArrayParameterType::STRING);
                     break;
                 default:
@@ -399,6 +405,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
     private function getCustomHeaders(Message $message): array
     {
         $filteredHeaders = [
+            IndexHeader::class,
             StreamNameHeader::class,
             EventIdHeader::class,
             PlayheadHeader::class,

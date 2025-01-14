@@ -216,12 +216,12 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (id > :index) AND (archived = :archived) ORDER BY id ASC',
+            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (id > :from_index) AND (archived = :archived) ORDER BY id ASC',
             [
                 'stream_0' => 'profile-1',
                 'from_playhead' => 0,
                 'archived' => false,
-                'index' => 1,
+                'from_index' => 1,
             ],
             Argument::type('array'),
         )->willReturn($result->reveal());

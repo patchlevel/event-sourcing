@@ -31,12 +31,12 @@ final class Profile extends BasicAggregateRoot
 
     public function changeName(string $name): void
     {
-        $this->recordThat(new NameChanged($name));
+        $this->recordThat(new NameChanged($this->id, $name));
     }
 
     public function promoteToAdmin(): void
     {
-        $this->recordThat(new AdminPromoted());
+        $this->recordThat(new AdminPromoted($this->id));
     }
 
     #[Apply]

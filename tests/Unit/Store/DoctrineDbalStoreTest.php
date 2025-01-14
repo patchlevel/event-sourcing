@@ -215,13 +215,13 @@ final class DoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (id > :index) AND (archived = :archived) ORDER BY id ASC',
+            'SELECT * FROM eventstore WHERE (aggregate = :aggregate) AND (aggregate_id = :id) AND (playhead > :playhead) AND (id > :fromIndex) AND (archived = :archived) ORDER BY id ASC',
             [
                 'aggregate' => 'profile',
                 'id' => '1',
                 'playhead' => 0,
                 'archived' => false,
-                'index' => 1,
+                'fromIndex' => 1,
             ],
             Argument::type('array'),
         )->willReturn($result->reveal());

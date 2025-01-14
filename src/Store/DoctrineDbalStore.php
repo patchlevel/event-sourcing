@@ -30,6 +30,8 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use PDO;
 
 use function array_fill;
@@ -155,8 +157,12 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                     $builder->setParameter('archived', $criterion->archived, Types::BOOLEAN);
                     break;
                 case FromIndexCriterion::class:
-                    $builder->andWhere('id > :index');
-                    $builder->setParameter('index', $criterion->fromIndex, Types::INTEGER);
+                    $builder->andWhere('id > :fromIndex');
+                    $builder->setParameter('fromIndex', $criterion->fromIndex, Types::INTEGER);
+                    break;
+                case ToIndexCriterion::class:
+                    $builder->andWhere('id < :toIndex');
+                    $builder->setParameter('toIndex', $criterion->toIndex, Types::INTEGER);
                     break;
                 case EventsCriterion::class:
                     $builder->andWhere('event IN (:events)');
@@ -352,6 +358,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
     private function getCustomHeaders(Message $message): array
     {
         $filteredHeaders = [
+            IndexHeader::class,
             AggregateHeader::class,
             StreamStartHeader::class,
             ArchivedHeader::class,

@@ -145,6 +145,11 @@
       <code><![CDATA[SubscriberAccessor|null]]></code>
     </DeprecatedInterface>
   </file>
+  <file src="src/Subscription/Lookup/Lookup.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$event]]></code>
+    </ArgumentTypeCoercion>
+  </file>
   <file src="src/Subscription/Store/DoctrineSubscriptionStore.php">
     <MixedArgument>
       <code><![CDATA[$context]]></code>

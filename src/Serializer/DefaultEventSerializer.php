@@ -18,8 +18,8 @@ final class DefaultEventSerializer implements EventSerializer
 {
     public function __construct(
         private EventRegistry $eventRegistry,
-        private Hydrator $hydrator,
-        private Encoder $encoder,
+        private Hydrator $hydrator = new MetadataHydrator(),
+        private Encoder $encoder = new JsonEncoder(),
         private Upcaster|null $upcaster = null,
     ) {
     }

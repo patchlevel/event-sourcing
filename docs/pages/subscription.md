@@ -215,6 +215,65 @@ final class DoStuffSubscriber
     }
 }
 ```
+##### Lookup Resolver
+
+Sometimes you need to query previous events to build a projection.
+For this you can use the `Lookup` service.
+This service only has access to the messages before the current message.
+Here is an example how you can use it in a projector.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Message\Reducer;
+use Patchlevel\EventSourcing\Subscription\Lookup;
+
+#[Projector('public_profile')]
+final class PublicProfileProjection
+{
+    use SubscriberUtil;
+
+    // ... constructor
+
+    #[Subscribe(Published::class)]
+    public function onPublished(Lookup $lookup): void
+    {
+        $messages = $lookup
+            ->currentAggregate() // or ->currentStream() for StreamStore
+            ->events(
+                ProfileCreated::class,
+                ProfileNameChanged::class,
+            )->fetchAll();
+
+        $state = (new Reducer())
+            ->initState([
+                'id' => null,
+                'name' => null,
+            ])
+            ->match([
+                ProfileCreated::class => static function (Message $message): array {
+                    return [
+                        'id' => $message->event()->id->toString(),
+                        'name' => $message->event()->name,
+                    ];
+                },
+                ProfileNameChanged::class => static function (Message $message, array $prevState): array {
+                    return array_merge($prevState, [
+                        'name' => $message->event()->name,
+                    ]);
+                },
+            ])
+            ->reduce($messages);
+
+        $this->connection->insert('public_profile', $state);
+    }
+
+    // ... setup, teardown, ...
+}
+```
+!!! note
+
+    More about reducers you can find [here](./message.md#reducer)
+    
 ##### Aggregate Id Resolver
 
 The aggregate id resolver resolves the aggregate id.

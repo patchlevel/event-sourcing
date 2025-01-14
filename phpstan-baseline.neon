@@ -133,6 +133,12 @@ parameters:
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
+			message: '#^Parameter \#1 \$eventClass of method Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry\:\:eventName\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Subscription/Lookup/Lookup.php
+
+		-
 			message: '#^Strict comparison using \=\=\= between DateTimeImmutable and false will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
