@@ -142,7 +142,7 @@ $store = new InMemoryStore();
 
 Last but not least, we offer two read-only stores.
 One for the `DoctrineDbalStore` and one for the `StreamDoctrineDbalStore`.
-It passes all methods to the underlying store, but the save throws an `StoreIsReadOnly` exception.
+It passes all methods to the underlying store, but throws an `StoreIsReadOnly` exception when trying to execute write operations.
 
 ```php
 use Patchlevel\EventSourcing\Store\ReadOnlyStore;
