@@ -196,7 +196,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $builder->setParameter('to_index', $criterion->toIndex, Types::INTEGER);
                     break;
                 case EventsCriterion::class:
-                    $builder->andWhere('event IN (:events)');
+                    $builder->andWhere('event_name IN (:events)');
                     $builder->setParameter('events', $criterion->events, ArrayParameterType::STRING);
                     break;
                 default:

@@ -20,6 +20,7 @@ use Patchlevel\EventSourcing\Store\Stream;
 
 use function array_map;
 use function array_values;
+use function is_array;
 
 final class Lookup
 {
@@ -32,7 +33,9 @@ final class Lookup
         private readonly Message $currentMessage,
         private readonly EventRegistry|null $eventRegistry = null,
     ) {
-        $this->criteria = new Criteria();
+        $this->criteria = new Criteria(
+            new ToIndexCriterion($this->currentMessage->header(IndexHeader::class)->index),
+        );
     }
 
     /** @param class-string|string ...$events */
@@ -60,14 +63,23 @@ final class Lookup
         return $self;
     }
 
-    public function stream(string|null $stream = null): self
+    /**
+     * @param string|list<string>|null $stream
+     *
+     * @return $this
+     */
+    public function stream(string|array|null $stream): self
     {
         $self = clone $this;
 
         if ($stream === null) {
             $self->criteria = $self->criteria->remove(StreamCriterion::class);
         } else {
-            $self->criteria = $self->criteria->add(new StreamCriterion($stream));
+            if (!is_array($stream)) {
+                $stream = [$stream];
+            }
+
+            $self->criteria = $self->criteria->add(new StreamCriterion(...$stream));
         }
 
         return $self;
@@ -142,9 +154,7 @@ final class Lookup
     public function fetchAll(): Stream
     {
         return $this->store->load(
-            $this->criteria->add(
-                new ToIndexCriterion($this->currentMessage->header(IndexHeader::class)->index),
-            ),
+            $this->criteria,
             backwards: $this->backwards,
         );
     }
@@ -152,9 +162,7 @@ final class Lookup
     public function fetchFirst(): Message
     {
         $stream = $this->store->load(
-            $this->criteria->add(
-                new ToIndexCriterion($this->currentMessage->header(IndexHeader::class)->index),
-            ),
+            $this->criteria,
             limit: 1,
             backwards: $this->backwards,
         );
@@ -171,9 +179,7 @@ final class Lookup
     public function fetchLast(): Message
     {
         $stream = $this->store->load(
-            $this->criteria->add(
-                new ToIndexCriterion($this->currentMessage->header(IndexHeader::class)->index),
-            ),
+            $this->criteria,
             limit: 1,
             backwards: !$this->backwards,
         );

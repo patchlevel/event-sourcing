@@ -657,22 +657,10 @@ We currently support two patterns for this: Micro Aggregates and Child Aggregate
 
 ### Micro Aggregates
 
-<<<<<<< HEAD
 !!! warning
 
     This feature works only with the [StreamDoctrineDbalStore](./store.md#streamdoctrinedbalstore).
 
-=======
-??? example "Experimental"
-
-    This feature is still experimental and may change in the future.
-    Use it with caution.
-    
-!!! warning
-
-    This feature works only with the experimental [StreamDoctrineDbalStore](./store.md#streamdoctrinedbalstore).
-    
->>>>>>> c1041b78 (refactor api again)
 Micro Aggregates are a pattern to split an aggregate into several smaller aggregates.
 Each of these aggregates is saved in the same stream.
 This gives the Micro Aggregates the ability to independently manage their state and trigger their events,

@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -1066,9 +1067,10 @@ final class SubscriptionTest extends TestCase
 
     public function testLookup(): void
     {
-        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']);
+        $eventRegistry = (new AttributeEventRegistryFactory())->create([__DIR__ . '/Events']);
+        $serializer = new DefaultEventSerializer($eventRegistry);
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             $serializer,
         );
@@ -1104,7 +1106,7 @@ final class SubscriptionTest extends TestCase
             argumentResolvers: [
                 new LookupResolver(
                     $store,
-                    $serializer->eventRegistry(),
+                    $eventRegistry,
                 ),
             ],
         );

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Lookup;
 
+use DateTimeImmutable;
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
@@ -36,14 +38,12 @@ final class LookupTest extends TestCase
 
         $message = new Message($event);
 
-        $lookup = new Lookup(
+        $this->expectException(HeaderNotFound::class);
+
+        new Lookup(
             $store->reveal(),
             $message,
         );
-
-        $this->expectException(HeaderNotFound::class);
-
-        $lookup->fetchAll();
     }
 
     public function testEmpty(): void
@@ -251,6 +251,7 @@ final class LookupTest extends TestCase
     {
         $expectedResult = new ArrayStream([]);
         $expectedCriteria = new Criteria(
+            new ToIndexCriterion(1),
             new StreamCriterion('foo'),
         );
 
@@ -280,6 +281,7 @@ final class LookupTest extends TestCase
     {
         $expectedResult = new ArrayStream([]);
         $expectedCriteria = new Criteria(
+            new ToIndexCriterion(1),
             new AggregateNameCriterion('foo'),
             new AggregateIdCriterion('bar'),
         );
@@ -293,7 +295,12 @@ final class LookupTest extends TestCase
         };
 
         $message = (new Message($event))
-            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new AggregateHeader(
+                'foo',
+                'bar',
+                1,
+                new DateTimeImmutable(),
+            ))
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
@@ -301,8 +308,84 @@ final class LookupTest extends TestCase
             $message,
         );
 
-        $result = $lookup->currentStream()->fetchAll();
+        $result = $lookup->currentAggregate()->fetchAll();
 
         self::assertSame($expectedResult, $result);
+    }
+
+    public function testFetchFirst(): void
+    {
+        $message1 = new Message(new class () {
+        });
+
+        $message2 = new Message(new class () {
+        });
+
+        $expectedResult = new ArrayStream([
+            $message1,
+            $message2,
+        ]);
+
+        $expectedCriteria = new Criteria(
+            new ToIndexCriterion(1),
+        );
+
+        $store = $this->prophesize(Store::class);
+        $store->load($expectedCriteria, 1, null, false)
+            ->willReturn($expectedResult)
+            ->shouldBeCalledOnce();
+
+        $event = new class () {
+        };
+
+        $message = (new Message($event))
+            ->withHeader(new IndexHeader(1));
+
+        $lookup = new Lookup(
+            $store->reveal(),
+            $message,
+        );
+
+        $result = $lookup->fetchFirst();
+
+        self::assertSame($message1, $result);
+    }
+
+    public function testFetchLast(): void
+    {
+        $message1 = new Message(new class () {
+        });
+
+        $message2 = new Message(new class () {
+        });
+
+        $expectedResult = new ArrayStream([
+            $message2,
+            $message1,
+        ]);
+
+        $expectedCriteria = new Criteria(
+            new ToIndexCriterion(1),
+        );
+
+        $store = $this->prophesize(Store::class);
+        $store->load($expectedCriteria, 1, null, true)
+            ->willReturn($expectedResult)
+            ->shouldBeCalledOnce();
+
+        $event = new class () {
+        };
+
+        $message = (new Message($event))
+            ->withHeader(new IndexHeader(1));
+
+        $lookup = new Lookup(
+            $store->reveal(),
+            $message,
+        );
+
+        $result = $lookup->fetchLast();
+
+        self::assertSame($message2, $result);
     }
 }

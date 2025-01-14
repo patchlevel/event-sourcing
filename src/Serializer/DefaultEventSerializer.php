@@ -18,8 +18,8 @@ final class DefaultEventSerializer implements EventSerializer
 {
     public function __construct(
         private EventRegistry $eventRegistry,
-        private Hydrator $hydrator,
-        private Encoder $encoder,
+        private Hydrator $hydrator = new MetadataHydrator(),
+        private Encoder $encoder = new JsonEncoder(),
         private Upcaster|null $upcaster = null,
     ) {
     }
@@ -51,11 +51,6 @@ final class DefaultEventSerializer implements EventSerializer
         $class = $this->eventRegistry->eventClass($eventName);
 
         return $this->hydrator->hydrate($class, $payload);
-    }
-
-    public function eventRegistry(): EventRegistry
-    {
-        return $this->eventRegistry;
     }
 
     /** @param list<string> $paths */

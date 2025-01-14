@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupResolver;
@@ -56,6 +57,8 @@ final class LookupResolverTest extends TestCase
 
         $message = (new Message($event))->withHeader(
             new AggregateHeader('foo', 'bar', 1, new DateTimeImmutable()),
+        )->withHeader(
+            new IndexHeader(1),
         );
 
         $lookup = $resolver->resolve(
