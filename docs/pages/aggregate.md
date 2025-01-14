@@ -360,14 +360,9 @@ final class Profile extends BasicAggregateRoot
     
 ## Stream Name
 
-??? example "Experimental"
-
-    This feature is still experimental and may change in the future.
-    Use it with caution.
-
 !!! warning
 
-    The `stream name` works only with the experimental [StreamDoctrineDbalStore](./store.md#streamdoctrinedbalstore).
+    The `stream name` works only with the [StreamDoctrineDbalStore](./store.md#streamdoctrinedbalstore).
 
 The stream name is the name of the stream in the event store.
 By default, the stream name has the format `aggregateName-aggregateId`.
@@ -662,14 +657,9 @@ We currently support two patterns for this: Micro Aggregates and Child Aggregate
 
 ### Micro Aggregates
 
-??? example "Experimental"
-
-    This feature is still experimental and may change in the future.
-    Use it with caution.
-
 !!! warning
 
-    This feature works only with the experimental [StreamDoctrineDbalStore](./store.md#streamdoctrinedbalstore).
+    This feature works only with the [StreamDoctrineDbalStore](./store.md#streamdoctrinedbalstore).
 
 Micro Aggregates are a pattern to split an aggregate into several smaller aggregates.
 Each of these aggregates is saved in the same stream.
