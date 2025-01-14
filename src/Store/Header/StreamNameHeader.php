@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store\Header;
 
-/**
- * @psalm-immutable
- * @experimental
- */
+/** @psalm-immutable */
 final class StreamNameHeader
 {
     public function __construct(

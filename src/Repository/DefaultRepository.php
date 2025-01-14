@@ -15,12 +15,19 @@ use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
-use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
+use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
@@ -47,22 +54,22 @@ final class DefaultRepository implements Repository
     /** @var WeakMap<T, bool> */
     private WeakMap $aggregateIsValid;
 
-    private bool $useStreamHeader;
+    private bool $isStreamStore;
 
     /** @param AggregateRootMetadata<T> $metadata */
     public function __construct(
-        private Store $store,
+        private readonly Store $store,
         private readonly AggregateRootMetadata $metadata,
-        private EventBus|null $eventBus = null,
-        private SnapshotStore|null $snapshotStore = null,
-        private MessageDecorator|null $messageDecorator = null,
+        private readonly EventBus|null $eventBus = null,
+        private readonly SnapshotStore|null $snapshotStore = null,
+        private readonly MessageDecorator|null $messageDecorator = null,
         ClockInterface|null $clock = null,
         LoggerInterface|null $logger = null,
     ) {
         $this->clock = $clock ?? new SystemClock();
         $this->logger = $logger ?? new NullLogger();
         $this->aggregateIsValid = new WeakMap();
-        $this->useStreamHeader = $store instanceof StreamStore;
+        $this->isStreamStore = $store instanceof StreamStore;
     }
 
     /** @return T */
@@ -110,17 +117,17 @@ final class DefaultRepository implements Repository
             }
         }
 
-        if ($this->useStreamHeader) {
-            $criteria = (new CriteriaBuilder())
-                ->streamName($this->metadata->streamName($id->toString()))
-                ->archived(false)
-                ->build();
+        if ($this->isStreamStore) {
+            $criteria = new Criteria(
+                new StreamCriterion($this->metadata->streamName($id->toString())),
+                new ArchivedCriterion(false),
+            );
         } else {
-            $criteria = (new CriteriaBuilder())
-                ->aggregateName($this->metadata->name)
-                ->aggregateId($id->toString())
-                ->archived(false)
-                ->build();
+            $criteria = new Criteria(
+                new AggregateNameCriterion($this->metadata->name),
+                new AggregateIdCriterion($id->toString()),
+                new ArchivedCriterion(false),
+            );
         }
 
         $stream = null;
@@ -142,7 +149,7 @@ final class DefaultRepository implements Repository
                 throw new AggregateNotFound($this->metadata->className, $id);
             }
 
-            if ($this->useStreamHeader) {
+            if ($this->isStreamStore) {
                 $playhead = $firstMessage->header(PlayheadHeader::class)->playhead;
             } else {
                 $playhead = $firstMessage->header(AggregateHeader::class)->playhead;
@@ -175,15 +182,15 @@ final class DefaultRepository implements Repository
 
     public function has(AggregateRootId $id): bool
     {
-        if ($this->useStreamHeader) {
-            $criteria = (new CriteriaBuilder())
-                ->streamName($this->metadata->streamName($id->toString()))
-                ->build();
+        if ($this->isStreamStore) {
+            $criteria = new Criteria(
+                new StreamCriterion($this->metadata->streamName($id->toString())),
+            );
         } else {
-            $criteria = (new CriteriaBuilder())
-                ->aggregateName($this->metadata->name)
-                ->aggregateId($id->toString())
-                ->build();
+            $criteria = new Criteria(
+                new AggregateNameCriterion($this->metadata->name),
+                new AggregateIdCriterion($id->toString()),
+            );
         }
 
         return $this->store->count($criteria) > 0;
@@ -241,13 +248,16 @@ final class DefaultRepository implements Repository
             $clock = $this->clock;
 
             $aggregateName = $this->metadata->name;
-            $streamName = $this->useStreamHeader ? $this->metadata->streamName($aggregateId) : null;
+            $streamName = $this->isStreamStore ? $this->metadata->streamName($aggregateId) : null;
+
+            $archiveTo = null;
 
             $messages = array_map(
                 static function (object $event) use (
                     $aggregateName,
                     $aggregateId,
                     &$playhead,
+                    &$archiveTo,
                     $messageDecorator,
                     $clock,
                     $streamName,
@@ -271,7 +281,11 @@ final class DefaultRepository implements Repository
                     }
 
                     if ($messageDecorator) {
-                        return $messageDecorator($message);
+                        $message = $messageDecorator($message);
+                    }
+
+                    if ($message->hasHeader(StreamStartHeader::class)) {
+                        $archiveTo = $playhead;
                     }
 
                     return $message;
@@ -280,7 +294,21 @@ final class DefaultRepository implements Repository
             );
 
             try {
-                $this->store->save(...$messages);
+                if ($archiveTo !== null && $this->store instanceof StreamStore) {
+                    $this->store->transactional(
+                        function () use ($messages, $streamName, $archiveTo): void {
+                            $this->store->save(...$messages);
+                            $this->store->archive(
+                                new Criteria(
+                                    new StreamCriterion($streamName),
+                                    new ToPlayheadCriterion($archiveTo),
+                                ),
+                            );
+                        },
+                    );
+                } else {
+                    $this->store->save(...$messages);
+                }
             } catch (UniqueConstraintViolation) {
                 if ($newAggregate) {
                     $this->logger->error(
@@ -334,17 +362,17 @@ final class DefaultRepository implements Repository
 
         $aggregate = $this->snapshotStore->load($aggregateClass, $id);
 
-        if ($this->useStreamHeader) {
-            $criteria = (new CriteriaBuilder())
-                ->streamName($this->metadata->streamName($id->toString()))
-                ->fromPlayhead($aggregate->playhead())
-                ->build();
+        if ($this->isStreamStore) {
+            $criteria = new Criteria(
+                new StreamCriterion($this->metadata->streamName($id->toString())),
+                new FromPlayheadCriterion($aggregate->playhead()),
+            );
         } else {
-            $criteria = (new CriteriaBuilder())
-                ->aggregateName($this->metadata->name)
-                ->aggregateId($id->toString())
-                ->fromPlayhead($aggregate->playhead())
-                ->build();
+            $criteria = new Criteria(
+                new AggregateNameCriterion($this->metadata->name),
+                new AggregateIdCriterion($id->toString()),
+                new FromPlayheadCriterion($aggregate->playhead()),
+            );
         }
 
         $stream = null;

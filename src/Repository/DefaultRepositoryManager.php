@@ -30,11 +30,11 @@ final class DefaultRepositoryManager implements RepositoryManager
     private array $instances = [];
 
     public function __construct(
-        private AggregateRootRegistry $aggregateRootRegistry,
-        private Store $store,
-        private EventBus|null $eventBus = null,
-        private SnapshotStore|null $snapshotStore = null,
-        private MessageDecorator|null $messageDecorator = null,
+        private readonly AggregateRootRegistry $aggregateRootRegistry,
+        private readonly Store $store,
+        private readonly EventBus|null $eventBus = null,
+        private readonly SnapshotStore|null $snapshotStore = null,
+        private readonly MessageDecorator|null $messageDecorator = null,
         ClockInterface|null $clock = null,
         AggregateRootMetadataFactory|null $metadataFactory = null,
         LoggerInterface|null $logger = null,

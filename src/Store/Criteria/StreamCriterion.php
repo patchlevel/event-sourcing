@@ -8,19 +8,36 @@ use Patchlevel\EventSourcing\Store\InvalidStreamName;
 
 use function preg_match;
 
-/** @experimental */
 final class StreamCriterion
 {
+    /** @var list<string> */
+    public readonly array $streamName;
+
     public function __construct(
-        public readonly string $streamName,
+        string ...$streamName,
     ) {
-        if (!preg_match('/^[^*]*\*?$/', $this->streamName)) {
-            throw new InvalidStreamName($this->streamName);
+        foreach ($streamName as $name) {
+            if (!preg_match('/^[^*]*\*?$/', $name)) {
+                throw new InvalidStreamName($name);
+            }
         }
+
+        $this->streamName = $streamName;
     }
 
     public static function startWith(string $streamName): self
     {
         return new self($streamName . '*');
+    }
+
+    public function all(): bool
+    {
+        foreach ($this->streamName as $name) {
+            if ($name === '*') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

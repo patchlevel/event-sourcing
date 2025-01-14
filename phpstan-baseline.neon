@@ -43,6 +43,18 @@ parameters:
 			path: src/Message/Serializer/DefaultHeadersSerializer.php
 
 		-
+			message: '#^Call to an undefined method Patchlevel\\EventSourcing\\Store\\Store\:\:archive\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Repository/DefaultRepository.php
+
+		-
+			message: '#^Parameter \#1 \.\.\.\$streamName of class Patchlevel\\EventSourcing\\Store\\Criteria\\StreamCriterion constructor expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Repository/DefaultRepository.php
+
+		-
 			message: '#^Parameter \#2 \$data of method Patchlevel\\Hydrator\\Hydrator\:\:hydrate\(\) expects array\<string, mixed\>, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -71,6 +83,12 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: src/Store/Criteria/Criteria.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Store\\Criteria\\StreamCriterion\:\:\$streamName \(list\<string\>\) does not accept array\<int\|string, string\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Store/Criteria/StreamCriterion.php
 
 		-
 			message: '#^Method Patchlevel\\EventSourcing\\Store\\DoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'

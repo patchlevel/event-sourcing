@@ -13,6 +13,7 @@ use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
+use Doctrine\DBAL\Query\Expression\ExpressionBuilder;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\Schema;
@@ -32,7 +33,6 @@ use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\InvalidStreamName;
 use Patchlevel\EventSourcing\Store\MissingDataForStorage;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
-use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -42,7 +42,6 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileEmailChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PDO;
-use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -64,10 +63,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
+            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
             [
-                'stream' => 'profile-1',
-                'playhead' => 0,
+                'stream_0' => 'profile-1',
+                'from_playhead' => 0,
                 'archived' => false,
             ],
             Argument::type('array'),
@@ -83,6 +82,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
@@ -112,10 +112,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC LIMIT 10',
+            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC LIMIT 10',
             [
-                'stream' => 'profile-1',
-                'playhead' => 0,
+                'stream_0' => 'profile-1',
+                'from_playhead' => 0,
                 'archived' => false,
             ],
             Argument::type('array'),
@@ -131,6 +131,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
@@ -165,10 +166,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC OFFSET 5',
+            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC OFFSET 5',
             [
-                'stream' => 'profile-1',
-                'playhead' => 0,
+                'stream_0' => 'profile-1',
+                'from_playhead' => 0,
                 'archived' => false,
             ],
             Argument::type('array'),
@@ -184,6 +185,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
@@ -214,10 +216,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream) AND (playhead > :playhead) AND (id > :index) AND (archived = :archived) ORDER BY id ASC',
+            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (id > :index) AND (archived = :archived) ORDER BY id ASC',
             [
-                'stream' => 'profile-1',
-                'playhead' => 0,
+                'stream_0' => 'profile-1',
+                'from_playhead' => 0,
                 'archived' => false,
                 'index' => 1,
             ],
@@ -234,6 +236,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
@@ -264,10 +267,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream LIKE :stream) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
+            'SELECT * FROM event_store WHERE (stream LIKE :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
             [
-                'stream' => 'profile-%',
-                'playhead' => 0,
+                'stream_0' => 'profile-%',
+                'from_playhead' => 0,
                 'archived' => false,
             ],
             Argument::type('array'),
@@ -283,6 +286,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
@@ -312,9 +316,9 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $result->iterateAssociative()->willReturn(new EmptyIterator());
 
         $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
+            'SELECT * FROM event_store WHERE (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
             [
-                'playhead' => 0,
+                'from_playhead' => 0,
                 'archived' => false,
             ],
             Argument::type('array'),
@@ -385,6 +389,56 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         self::assertSame(null, $stream->position());
     }
 
+    public function testLoadMultipleStream(): void
+    {
+        $connection = $this->prophesize(Connection::class);
+        $result = $this->prophesize(Result::class);
+        $result->iterateAssociative()->willReturn(new EmptyIterator());
+
+        $connection->executeQuery(
+            'SELECT * FROM event_store WHERE ((stream LIKE :stream_0) OR (stream = :stream_1)) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
+            [
+                'stream_0' => 'profile-%',
+                'stream_1' => 'foo',
+                'from_playhead' => 0,
+                'archived' => false,
+            ],
+            Argument::type('array'),
+        )->willReturn($result->reveal());
+
+        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform->reveal(),
+            'FOR UPDATE',
+            'SKIP LOCKED',
+        ));
+
+        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $queryBuilder = new QueryBuilder($connection->reveal());
+        $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+
+        $eventSerializer = $this->prophesize(EventSerializer::class);
+        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection->reveal(),
+            $eventSerializer->reveal(),
+            $headersSerializer->reveal(),
+        );
+
+        $stream = $doctrineDbalStore->load(
+            (new CriteriaBuilder())
+                ->streamName(['profile-*', 'foo'])
+                ->fromPlayhead(0)
+                ->archived(false)
+                ->build(),
+        );
+
+        self::assertSame(null, $stream->index());
+        self::assertSame(null, $stream->position());
+    }
+
     public function testLoadWithOneEvent(): void
     {
         $connection = $this->prophesize(Connection::class);
@@ -400,17 +454,16 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     'event_payload' => '{"profileId": "1", "email": "s"}',
                     'recorded_on' => '2021-02-17 10:00:00',
                     'archived' => '0',
-                    'new_stream_start' => '0',
                     'custom_headers' => '[]',
                 ],
             ],
         ));
 
         $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
+            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
             [
-                'stream' => 'profile-1',
-                'playhead' => 0,
+                'stream_0' => 'profile-1',
+                'from_playhead' => 0,
                 'archived' => false,
             ],
             Argument::type('array'),
@@ -429,6 +482,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(
@@ -490,7 +544,6 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     'event_payload' => '{"profileId": "1", "email": "s"}',
                     'recorded_on' => '2021-02-17 10:00:00',
                     'archived' => '0',
-                    'new_stream_start' => '0',
                     'custom_headers' => '[]',
                 ],
                 [
@@ -502,17 +555,16 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     'event_payload' => '{"profileId": "1", "email": "d"}',
                     'recorded_on' => '2021-02-17 11:00:00',
                     'archived' => '0',
-                    'new_stream_start' => '0',
                     'custom_headers' => '[]',
                 ],
             ],
         ));
 
         $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream) AND (playhead > :playhead) AND (archived = :archived) ORDER BY id ASC',
+            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
             [
-                'stream' => 'profile-1',
-                'playhead' => 0,
+                'stream_0' => 'profile-1',
+                'from_playhead' => 0,
                 'archived' => false,
             ],
             Argument::type('array'),
@@ -530,6 +582,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $eventSerializer->deserialize(
@@ -855,12 +908,11 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, false, '[]'],
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?)",
+            ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, '[]'],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce();
 
@@ -939,7 +991,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile-1',
                 1,
@@ -947,7 +999,6 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 'profile_created',
                 '',
                 $recordedOn,
-                false,
                 false,
                 '[]',
                 'profile-1',
@@ -957,16 +1008,13 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '',
                 $recordedOn,
                 false,
-                false,
                 '[]',
             ],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                15 => Type::getType(Types::BOOLEAN),
-                16 => Type::getType(Types::BOOLEAN),
+                13 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                14 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce();
 
@@ -1009,7 +1057,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 'profile-1',
                 1,
@@ -1017,7 +1065,6 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 'profile_created',
                 '',
                 $recordedOn,
-                false,
                 false,
                 '[]',
                 'profile-1',
@@ -1027,16 +1074,13 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 '',
                 $recordedOn,
                 false,
-                false,
                 '[]',
             ],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                15 => Type::getType(Types::BOOLEAN),
-                16 => Type::getType(Types::BOOLEAN),
+                13 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                14 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce()->willThrow(UniqueConstraintViolationException::class);
 
@@ -1121,12 +1165,11 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, false, '{foo: "foo", baz: "baz"}'],
+            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?)",
+            ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, '{foo: "foo", baz: "baz"}'],
             [
                 5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
                 6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
             ],
         )->shouldBeCalledOnce();
 
@@ -1142,10 +1185,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $connection = $this->prophesize(Connection::class);
         $connection->fetchOne(
-            'SELECT COUNT(*) FROM event_store WHERE (stream = :stream) AND (playhead > :playhead) AND (archived = :archived)',
+            'SELECT COUNT(*) FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived)',
             [
-                'stream' => 'profile-1',
-                'playhead' => 0,
+                'stream_0' => 'profile-1',
+                'from_playhead' => 0,
                 'archived' => false,
             ],
             Argument::type('array'),
@@ -1161,6 +1204,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
@@ -1186,10 +1230,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $connection = $this->prophesize(Connection::class);
         $connection->fetchOne(
-            'SELECT COUNT(*) FROM event_store WHERE (stream = :stream) AND (playhead > :playhead) AND (archived = :archived)',
+            'SELECT COUNT(*) FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived)',
             [
-                'stream' => 'profile-1',
-                'playhead' => 0,
+                'stream_0' => 'profile-1',
+                'from_playhead' => 0,
                 'archived' => false,
             ],
             Argument::type('array'),
@@ -1205,6 +1249,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $queryBuilder = new QueryBuilder($connection->reveal());
         $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
 
         $eventSerializer = $this->prophesize(EventSerializer::class);
         $headersSerializer = $this->prophesize(HeadersSerializer::class);
@@ -1232,7 +1277,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             <<<'SQL'
                 CREATE OR REPLACE FUNCTION notify_event_store() RETURNS TRIGGER AS $$
                     BEGIN
-                        PERFORM pg_notify('event_store', 'update');
+                        PERFORM pg_notify('event_store', NEW.stream::text);
                         RETURN NEW;
                     END;
                 $$ LANGUAGE plpgsql;
@@ -1264,7 +1309,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             <<<'SQL'
                 CREATE OR REPLACE FUNCTION new.notify_event_store() RETURNS TRIGGER AS $$
                     BEGIN
-                        PERFORM pg_notify('new.event_store', 'update');
+                        PERFORM pg_notify('new.event_store', NEW.stream::text);
                         RETURN NEW;
                     END;
                 $$ LANGUAGE plpgsql;
@@ -1407,9 +1452,6 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(true);
-        $table->addColumn('new_stream_start', Types::BOOLEAN)
-            ->setNotnull(true)
-            ->setDefault(false);
         $table->addColumn('archived', Types::BOOLEAN)
             ->setNotnull(true)
             ->setDefault(false);
@@ -1425,205 +1467,5 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore->configureSchema($schema, $connection->reveal());
 
         self::assertEquals($expectedSchema, $schema);
-    }
-
-    #[RequiresPhp('>= 8.2')]
-    public function testArchiveMessagesDifferentAggregates(): void
-    {
-        $recordedOn = new DateTimeImmutable();
-        $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new StreamNameHeader('profile-1'))
-            ->withHeader(new PlayheadHeader(5))
-            ->withHeader(new RecordedOnHeader($recordedOn))
-            ->withHeader(new EventIdHeader('1'))
-            ->withHeader(new StreamStartHeader());
-
-        $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('2'), Email::fromString('d')))
-            ->withHeader(new StreamNameHeader('profile-2'))
-            ->withHeader(new PlayheadHeader(42))
-            ->withHeader(new RecordedOnHeader($recordedOn))
-            ->withHeader(new EventIdHeader('2'))
-            ->withHeader(new StreamStartHeader());
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_email_changed',
-            '',
-        ));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
-
-        $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [
-                'profile-1',
-                5,
-                '1',
-                'profile_created',
-                '',
-                $recordedOn,
-                true,
-                false,
-                '[]',
-                'profile-2',
-                42,
-                '2',
-                'profile_email_changed',
-                '',
-                $recordedOn,
-                true,
-                false,
-                '[]',
-            ],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                15 => Type::getType(Types::BOOLEAN),
-                16 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
-
-        $mockedConnection->executeStatement(
-            <<<'SQL'
-            UPDATE event_store
-            SET archived = true
-            WHERE stream = :stream
-            AND id < (SELECT id FROM event_store WHERE event_id = :event_id)
-            AND archived = false
-            SQL,
-            [
-                'stream' => 'profile-1',
-                'event_id' => '1',
-            ],
-        )->shouldBeCalledOnce();
-
-        $mockedConnection->executeStatement(
-            <<<'SQL'
-            UPDATE event_store
-            SET archived = true
-            WHERE stream = :stream
-            AND id < (SELECT id FROM event_store WHERE event_id = :event_id)
-            AND archived = false
-            SQL,
-            [
-                'stream' => 'profile-2',
-                'event_id' => '2',
-            ],
-        )->shouldBeCalledOnce();
-
-        $singleTableStore = new StreamDoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-        );
-
-        $singleTableStore->save($message1, $message2);
-    }
-
-    #[RequiresPhp('>= 8.2')]
-    public function testArchiveMessagesSameAggregate(): void
-    {
-        $recordedOn = new DateTimeImmutable();
-        $message1 = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')))
-            ->withHeader(new StreamNameHeader('profile-1'))
-            ->withHeader(new PlayheadHeader(5))
-            ->withHeader(new RecordedOnHeader($recordedOn))
-            ->withHeader(new EventIdHeader('3'))
-            ->withHeader(new StreamStartHeader());
-
-        $message2 = Message::create(new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('d')))
-            ->withHeader(new StreamNameHeader('profile-1'))
-            ->withHeader(new PlayheadHeader(42))
-            ->withHeader(new RecordedOnHeader($recordedOn))
-            ->withHeader(new EventIdHeader('7'))
-            ->withHeader(new StreamStartHeader());
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_email_changed',
-            '',
-        ));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
-
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
-
-        $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, new_stream_start, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [
-                'profile-1',
-                5,
-                '3',
-                'profile_created',
-                '',
-                $recordedOn,
-                true,
-                false,
-                '[]',
-                'profile-1',
-                42,
-                '7',
-                'profile_email_changed',
-                '',
-                $recordedOn,
-                true,
-                false,
-                '[]',
-            ],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                7 => Type::getType(Types::BOOLEAN),
-                14 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                15 => Type::getType(Types::BOOLEAN),
-                16 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
-
-        $mockedConnection->executeStatement(
-            <<<'SQL'
-            UPDATE event_store
-            SET archived = true
-            WHERE stream = :stream
-            AND id < (SELECT id FROM event_store WHERE event_id = :event_id)
-            AND archived = false
-            SQL,
-            [
-                'stream' => 'profile-1',
-                'event_id' => '7',
-            ],
-        )->shouldBeCalledOnce();
-
-        $singleTableStore = new StreamDoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-        );
-
-        $singleTableStore->save($message1, $message2);
     }
 }

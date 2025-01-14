@@ -26,6 +26,7 @@ use function array_slice;
 use function array_unique;
 use function array_values;
 use function count;
+use function in_array;
 use function mb_substr;
 use function str_ends_with;
 use function str_starts_with;
@@ -109,24 +110,21 @@ final class InMemoryStore implements StreamStore
         );
     }
 
-    public function remove(string $streamName): void
+    public function remove(Criteria|null $criteria = null): void
     {
-        $this->messages = array_values(
-            array_filter(
-                $this->messages,
-                static function (Message $message) use ($streamName): bool {
-                    try {
-                        return $message->header(AggregateHeader::class)->streamName() !== $streamName;
-                    } catch (HeaderNotFound) {
-                        try {
-                            return $message->header(StreamNameHeader::class)->streamName !== $streamName;
-                        } catch (HeaderNotFound) {
-                            return true;
-                        }
-                    }
-                },
-            ),
+        $messagesToRemove = $this->filter($criteria);
+
+        $this->messages = array_filter(
+            $this->messages,
+            static fn (Message $message): bool => !in_array($message, $messagesToRemove, true),
         );
+    }
+
+    public function archive(Criteria|null $criteria = null): void
+    {
+        foreach ($this->filter($criteria) as $key => $message) {
+            $this->messages[$key] = $message->withHeader(new ArchivedHeader());
+        }
     }
 
     /** @return array<positive-int|0, Message> */
@@ -162,7 +160,7 @@ final class InMemoryStore implements StreamStore
 
                             break;
                         case StreamCriterion::class:
-                            if ($criterion->streamName === '*') {
+                            if ($criterion->all()) {
                                 break;
                             }
 
@@ -176,15 +174,25 @@ final class InMemoryStore implements StreamStore
                                 }
                             }
 
-                            if (str_ends_with($criterion->streamName, '*')) {
-                                if (!str_starts_with($messageStreamName, mb_substr($criterion->streamName, 0, -1))) {
-                                    return false;
-                                }
+                            $match = false;
 
-                                break;
+                            foreach ($criterion->streamName as $streamName) {
+                                if (str_ends_with($streamName, '*')) {
+                                    if (str_starts_with($messageStreamName, mb_substr($streamName, 0, -1))) {
+                                        $match = true;
+
+                                        break;
+                                    }
+                                } else {
+                                    if ($streamName === $messageStreamName) {
+                                        $match = true;
+
+                                        break;
+                                    }
+                                }
                             }
 
-                            if ($messageStreamName !== $criterion->streamName) {
+                            if (!$match) {
                                 return false;
                             }
 

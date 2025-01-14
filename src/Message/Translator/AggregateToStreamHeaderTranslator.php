@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 
-/** @experimental */
 final class AggregateToStreamHeaderTranslator implements Translator
 {
     /** @return list<Message> */

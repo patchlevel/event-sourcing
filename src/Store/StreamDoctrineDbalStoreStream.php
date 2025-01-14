@@ -21,10 +21,7 @@ use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Traversable;
 
-/**
- * @implements IteratorAggregate<Message>
- * @experimental
- */
+/** @implements IteratorAggregate<Message> */
 final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
 {
     private Result|null $result;
@@ -121,7 +118,7 @@ final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
         /** @var DateTimeTzImmutableType $dateTimeType */
         $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
-        /** @var array{id: positive-int, stream: string, playhead: int|string|null, event_id: string, event_name: string, event_payload: string, recorded_on: string, archived: int|string, new_stream_start: int|string, custom_headers: string} $data */
+        /** @var array{id: positive-int, stream: string, playhead: int|string|null, event_id: string, event_name: string, event_payload: string, recorded_on: string, archived: int|string, custom_headers: string} $data */
         foreach ($result->iterateAssociative() as $data) {
             if ($this->position === null) {
                 $this->position = 0;
@@ -143,10 +140,6 @@ final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
 
             if ($data['archived']) {
                 $message = $message->withHeader(new ArchivedHeader());
-            }
-
-            if ($data['new_stream_start']) {
-                $message = $message->withHeader(new StreamStartHeader());
             }
 
             $customHeaders = $headersSerializer->deserialize($data['custom_headers']);
