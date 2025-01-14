@@ -138,17 +138,23 @@ $store = new InMemoryStore();
 
     You can pass messages to the constructor to initialize the store with some events.
     
-### ReadOnlyStore
+### ReadOnlyStore & StreamReadOnlyStore
 
-Last but not least, we offer a read-only store decorator.
+Last but not least, we offer two read-only stores.
+One for the `DoctrineDbalStore` and one for the `StreamDoctrineDbalStore`.
 It passes all methods to the underlying store, but the save throws an `StoreIsReadOnly` exception.
 
 ```php
 use Patchlevel\EventSourcing\Store\ReadOnlyStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamReadOnlyStore;
+use Patchlevel\EventSourcing\Store\StreamStore;
 
 /** @var Store $store */
 $readOnlyStore = new ReadOnlyStore($store);
+
+/** @var StreamStore $store */
+$readOnlyStore = new StreamReadOnlyStore($store);
 ```
 ## Schema
 

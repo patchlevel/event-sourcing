@@ -4,17 +4,28 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
+use InvalidArgumentException;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\ReadOnlyStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StoreIsReadOnly;
+use Patchlevel\EventSourcing\Store\StreamStore;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
+/** @covers \Patchlevel\EventSourcing\Store\ReadOnlyStore */
 final class ReadOnlyStoreTest extends TestCase
 {
     use ProphecyTrait;
+
+    public function testUnsupportedStore(): void
+    {
+        $parentStore = $this->prophesize(StreamStore::class);
+
+        $this->expectException(InvalidArgumentException::class);
+        new ReadOnlyStore($parentStore->reveal());
+    }
 
     public function testLoad(): void
     {

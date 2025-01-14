@@ -5,20 +5,16 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 use Closure;
-use InvalidArgumentException;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Psr\Log\LoggerInterface;
 
-final class ReadOnlyStore implements Store
+final class StreamReadOnlyStore implements StreamStore
 {
     public function __construct(
-        private readonly Store $store,
+        private readonly StreamStore $store,
         private readonly LoggerInterface|null $logger = null,
     ) {
-        if ($this->store instanceof StreamStore) {
-            throw new InvalidArgumentException('store must not be a StreamStore. use StreamReadOnlyStore instead');
-        }
     }
 
     public function load(
@@ -47,5 +43,21 @@ final class ReadOnlyStore implements Store
     public function transactional(Closure $function): void
     {
         $this->store->transactional($function);
+    }
+
+    /** @return list<string> */
+    public function streams(): array
+    {
+        return $this->store->streams();
+    }
+
+    public function remove(Criteria|null $criteria = null): void
+    {
+        throw new StoreIsReadOnly();
+    }
+
+    public function archive(Criteria|null $criteria = null): void
+    {
+        throw new StoreIsReadOnly();
     }
 }
