@@ -4,22 +4,36 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store\Criteria;
 
+use function is_array;
+
 final class CriteriaBuilder
 {
-    private string|null $streamName = null;
+    /** @var list<string>|null */
+    private array|null $streamName = null;
     private string|null $aggregateName = null;
     private string|null $aggregateId = null;
     private int|null $fromIndex = null;
     private int|null $fromPlayhead = null;
+    private int|null $toPlayhead = null;
     private bool|null $archived = null;
 
     /** @var list<string>|null */
     private array|null $events = null;
 
-    /** @experimental */
-    public function streamName(string|null $streamName): self
+    /** @param string|list<string>|null $streamName */
+    public function streamName(string|array|null $streamName): self
     {
-        $this->streamName = $streamName;
+        if ($streamName === null) {
+            $this->streamName = null;
+
+            return $this;
+        }
+
+        if (is_array($streamName)) {
+            $this->streamName = $streamName;
+        } else {
+            $this->streamName = [$streamName];
+        }
 
         return $this;
     }
@@ -52,6 +66,13 @@ final class CriteriaBuilder
         return $this;
     }
 
+    public function toPlayhead(int|null $toPlayhead): self
+    {
+        $this->toPlayhead = $toPlayhead;
+
+        return $this;
+    }
+
     public function archived(bool|null $archived): self
     {
         $this->archived = $archived;
@@ -72,7 +93,7 @@ final class CriteriaBuilder
         $criteria = [];
 
         if ($this->streamName !== null) {
-            $criteria[] = new StreamCriterion($this->streamName);
+            $criteria[] = new StreamCriterion(...$this->streamName);
         }
 
         if ($this->aggregateName !== null) {
@@ -85,6 +106,10 @@ final class CriteriaBuilder
 
         if ($this->fromPlayhead !== null) {
             $criteria[] = new FromPlayheadCriterion($this->fromPlayhead);
+        }
+
+        if ($this->toPlayhead !== null) {
+            $criteria[] = new ToPlayheadCriterion($this->toPlayhead);
         }
 
         if ($this->fromIndex !== null) {

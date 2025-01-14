@@ -12,12 +12,12 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
-use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -191,7 +191,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
     }
 
-    public function testSplitStream(): void
+    public function testArchive(): void
     {
         $profileId = ProfileId::generate();
 
@@ -205,11 +205,16 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
                 ->withHeader(new PlayheadHeader(2))
                 ->withHeader(new EventIdHeader('2'))
-                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-02 00:00:00')))
-                ->withHeader(new StreamStartHeader()),
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-02 00:00:00'))),
         ];
 
         $this->store->save(...$messages);
+        $this->store->archive(
+            new Criteria(
+                new StreamCriterion(sprintf('profile-%s', $profileId->toString())),
+                new ToPlayheadCriterion(2),
+            ),
+        );
 
         /** @var list<array<string, string>> $result */
         $result = $this->connection->fetchAllAssociative('SELECT * FROM event_store ORDER BY id');
@@ -228,7 +233,6 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         self::assertEquals('1', $result1['archived']);
-        self::assertEquals('0', $result1['new_stream_start']);
 
         $result2 = $result[1];
 
@@ -242,7 +246,6 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
 
         self::assertEquals('0', $result2['archived']);
-        self::assertEquals('1', $result2['new_stream_start']);
     }
 
     public function testUniqueStreamNameAndPlayheadConstraint(): void
@@ -433,7 +436,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             'profile-0190e47e-77e9-7b90-bf62-08bbf0ab9b4b',
         ], $streams);
 
-        $this->store->remove('profile-0190e47e-77e9-7b90-bf62-08bbf0ab9b4b');
+        $this->store->remove(new Criteria(new StreamCriterion('profile-*')));
 
         $streams = $this->store->streams();
 

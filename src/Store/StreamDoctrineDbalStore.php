@@ -29,6 +29,7 @@ use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
@@ -53,7 +54,6 @@ use function mb_substr;
 use function sprintf;
 use function str_ends_with;
 
-/** @experimental */
 final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
 {
     /**
@@ -150,23 +150,36 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         foreach ($criteriaList as $criterion) {
             switch ($criterion::class) {
                 case StreamCriterion::class:
-                    if ($criterion->streamName === '*') {
+                    if ($criterion->all()) {
                         break;
                     }
 
-                    if (str_ends_with($criterion->streamName, '*')) {
-                        $builder->andWhere('stream LIKE :stream');
-                        $builder->setParameter('stream', mb_substr($criterion->streamName, 0, -1) . '%');
+                    $streamFilters = [];
 
+                    foreach ($criterion->streamName as $index => $streamName) {
+                        if (str_ends_with($streamName, '*')) {
+                            $streamFilters[] = 'stream LIKE :stream_' . $index;
+                            $builder->setParameter('stream_' . $index, mb_substr($streamName, 0, -1) . '%');
+                        } else {
+                            $streamFilters[] = 'stream = :stream_' . $index;
+                            $builder->setParameter('stream_' . $index, $streamName);
+                        }
+                    }
+
+                    if ($streamFilters === []) {
                         break;
                     }
 
-                    $builder->andWhere('stream = :stream');
-                    $builder->setParameter('stream', $criterion->streamName);
+                    $builder->andWhere($builder->expr()->or(...$streamFilters));
+
                     break;
                 case FromPlayheadCriterion::class:
-                    $builder->andWhere('playhead > :playhead');
-                    $builder->setParameter('playhead', $criterion->fromPlayhead, Types::INTEGER);
+                    $builder->andWhere('playhead > :from_playhead');
+                    $builder->setParameter('from_playhead', $criterion->fromPlayhead, Types::INTEGER);
+                    break;
+                case ToPlayheadCriterion::class:
+                    $builder->andWhere('playhead < :to_playhead');
+                    $builder->setParameter('to_playhead', $criterion->toPlayhead, Types::INTEGER);
                     break;
                 case ArchivedCriterion::class:
                     $builder->andWhere('archived = :archived');
@@ -194,9 +207,6 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
         $this->transactional(
             function () use ($messages): void {
-                /** @var array<string, int> $achievedUntilEventId */
-                $achievedUntilEventId = [];
-
                 $booleanType = Type::getType(Types::BOOLEAN);
                 $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
@@ -207,7 +217,6 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     'event_name',
                     'event_payload',
                     'recorded_on',
-                    'new_stream_start',
                     'archived',
                     'custom_headers',
                 ];
@@ -259,17 +268,8 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
                     $types[$offset + 5] = $dateTimeType;
 
-                    $streamStart = $message->hasHeader(StreamStartHeader::class);
-
-                    if ($streamStart) {
-                        $achievedUntilEventId[$streamName] = $eventId;
-                    }
-
-                    $parameters[] = $streamStart;
-                    $types[$offset + 6] = $booleanType;
-
                     $parameters[] = $message->hasHeader(ArchivedHeader::class);
-                    $types[$offset + 7] = $booleanType;
+                    $types[$offset + 6] = $booleanType;
 
                     $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
 
@@ -288,45 +288,11 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $position = 0;
                 }
 
-                if ($position !== 0) {
-                    $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
+                if ($position === 0) {
+                    return;
                 }
 
-                $subselect = null;
-
-                foreach ($achievedUntilEventId as $stream => $eventId) {
-                    if ($subselect === null) {
-                        if ($this->connection->getDatabasePlatform() instanceof MySQLPlatform) {
-                            $subselect = sprintf(
-                                'SELECT t.id FROM (SELECT * FROM %s) AS t WHERE t.event_id = :event_id',
-                                $this->config['table_name'],
-                            );
-                        } else {
-                            $subselect = sprintf(
-                                'SELECT id FROM %s WHERE event_id = :event_id',
-                                $this->config['table_name'],
-                            );
-                        }
-                    }
-
-                    $this->connection->executeStatement(
-                        sprintf(
-                            <<<'SQL'
-                            UPDATE %s
-                            SET archived = true
-                            WHERE stream = :stream
-                            AND id < (%s)
-                            AND archived = false
-                            SQL,
-                            $this->config['table_name'],
-                            $subselect,
-                        ),
-                        [
-                            'stream' => $stream,
-                            'event_id' => $eventId,
-                        ],
-                    );
-                }
+                $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
             },
         );
     }
@@ -367,12 +333,27 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         return $streams;
     }
 
-    public function remove(string $streamName): void
+    public function remove(Criteria|null $criteria = null): void
     {
-        $builder = $this->connection->createQueryBuilder()
-            ->delete($this->config['table_name'])
-            ->andWhere('stream = :stream')
-            ->setParameter('stream', $streamName);
+        $builder = $this->connection->createQueryBuilder();
+
+        $builder->delete($this->config['table_name']);
+        $this->applyCriteria($builder, $criteria ?? new Criteria());
+
+        $builder->executeStatement();
+    }
+
+    public function archive(Criteria|null $criteria = null): void
+    {
+        $builder = $this->connection->createQueryBuilder();
+
+        $builder->update($this->config['table_name']);
+
+        $this->applyCriteria($builder, $criteria ?? new Criteria());
+
+        $builder
+            ->set('archived', ':value')
+            ->setParameter('value', true, Types::BOOLEAN);
 
         $builder->executeStatement();
     }
@@ -402,9 +383,6 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
             ->setNotnull(true);
         $table->addColumn('recorded_on', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(true);
-        $table->addColumn('new_stream_start', Types::BOOLEAN)
-            ->setNotnull(true)
-            ->setDefault(false);
         $table->addColumn('archived', Types::BOOLEAN)
             ->setNotnull(true)
             ->setDefault(false);
@@ -425,7 +403,6 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
             EventIdHeader::class,
             PlayheadHeader::class,
             RecordedOnHeader::class,
-            StreamStartHeader::class,
             ArchivedHeader::class,
         ];
 
@@ -468,7 +445,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
             <<<'SQL'
                 CREATE OR REPLACE FUNCTION %1$s() RETURNS TRIGGER AS $$
                     BEGIN
-                        PERFORM pg_notify('%2$s', 'update');
+                        PERFORM pg_notify('%2$s', NEW.stream::text);
                         RETURN NEW;
                     END;
                 $$ LANGUAGE plpgsql;

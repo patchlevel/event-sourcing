@@ -328,7 +328,7 @@ final class InMemoryStoreTest extends TestCase
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
 
-        $store->remove('bar');
+        $store->remove(new Criteria(new StreamCriterion('bar')));
 
         $stream = $store->load();
 
