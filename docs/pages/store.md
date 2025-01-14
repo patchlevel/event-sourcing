@@ -72,7 +72,7 @@ The table structure of the `DoctrineDbalStore` looks like this:
     You can change the type with the `aggregate_id_type` to `string` if you want use custom id.
     
 ### StreamDoctrineDbalStore
-    
+
 We offer a new store called `StreamDoctrineDbalStore`.
 This store is decoupled from the aggregate and can be used to store events from other sources.
 The difference to the `DoctrineDbalStore` is that the `StreamDoctrineDbalStore` merge the aggregate id
@@ -138,6 +138,24 @@ $store = new InMemoryStore();
 
     You can pass messages to the constructor to initialize the store with some events.
     
+### ReadOnlyStore & StreamReadOnlyStore
+
+Last but not least, we offer two read-only stores.
+One for the `DoctrineDbalStore` and one for the `StreamDoctrineDbalStore`.
+It passes all methods to the underlying store, but throws an `StoreIsReadOnly` exception when trying to execute write operations.
+
+```php
+use Patchlevel\EventSourcing\Store\ReadOnlyStore;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamReadOnlyStore;
+use Patchlevel\EventSourcing\Store\StreamStore;
+
+/** @var Store $store */
+$readOnlyStore = new ReadOnlyStore($store);
+
+/** @var StreamStore $store */
+$readOnlyStore = new StreamReadOnlyStore($store);
+```
 ## Schema
 
 With the help of the `SchemaDirector`, the database structure can be created, updated and deleted.
