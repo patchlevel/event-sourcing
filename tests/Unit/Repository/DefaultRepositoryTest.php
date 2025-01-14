@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
-use Closure;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\EventBus;
@@ -788,14 +787,6 @@ final class DefaultRepositoryTest extends TestCase
     {
         $store = $this->prophesize(Store::class);
         $store->willImplement(StreamStore::class);
-        $store->transactional(Argument::that(
-            static function (Closure $closure): bool {
-                $closure();
-
-                return true;
-            },
-        ))->shouldBeCalled();
-
         $store->save(
             Argument::that(static function (Message $message) {
                 if ($message->header(StreamNameHeader::class)->streamName !== 'other-1') {

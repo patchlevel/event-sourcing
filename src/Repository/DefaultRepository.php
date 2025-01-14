@@ -38,7 +38,6 @@ use Traversable;
 use WeakMap;
 
 use function array_map;
-use function array_reduce;
 use function assert;
 use function count;
 use function sprintf;
@@ -251,11 +250,14 @@ final class DefaultRepository implements Repository
             $aggregateName = $this->metadata->name;
             $streamName = $this->isStreamStore ? $this->metadata->streamName($aggregateId) : null;
 
+            $archiveTo = null;
+
             $messages = array_map(
                 static function (object $event) use (
                     $aggregateName,
                     $aggregateId,
                     &$playhead,
+                    &$archiveTo,
                     $messageDecorator,
                     $clock,
                     $streamName,
@@ -279,7 +281,11 @@ final class DefaultRepository implements Repository
                     }
 
                     if ($messageDecorator) {
-                        return $messageDecorator($message);
+                        $message = $messageDecorator($message);
+                    }
+
+                    if ($message->hasHeader(StreamStartHeader::class)) {
+                        $archiveTo = $playhead;
                     }
 
                     return $message;
@@ -288,27 +294,10 @@ final class DefaultRepository implements Repository
             );
 
             try {
-                if ($this->store instanceof StreamStore) {
-                    $archiveTo = array_reduce(
-                        $messages,
-                        static function (int|null $archiveTo, Message $message): int|null {
-                            if (!$message->hasHeader(StreamStartHeader::class)) {
-                                return $archiveTo;
-                            }
-
-                            return $message->header(PlayheadHeader::class)->playhead;
-                        },
-                        null,
-                    );
-
+                if ($archiveTo !== null && $this->store instanceof StreamStore) {
                     $this->store->transactional(
                         function () use ($messages, $streamName, $archiveTo): void {
                             $this->store->save(...$messages);
-
-                            if ($archiveTo === null) {
-                                return;
-                            }
-
                             $this->store->archive(
                                 new Criteria(
                                     new StreamCriterion($streamName),
