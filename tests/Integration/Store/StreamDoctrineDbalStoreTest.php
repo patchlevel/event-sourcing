@@ -381,6 +381,16 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         } finally {
             $stream?->close();
         }
+
+        try {
+            $stream = $this->store->load(new Criteria(new StreamCriterion('*-*')));
+
+            $messages = iterator_to_array($stream);
+
+            self::assertCount(2, $messages);
+        } finally {
+            $stream?->close();
+        }
     }
 
     public function testStreams(): void

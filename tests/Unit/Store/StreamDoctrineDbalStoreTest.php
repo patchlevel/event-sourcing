@@ -30,7 +30,6 @@ use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
-use Patchlevel\EventSourcing\Store\InvalidStreamName;
 use Patchlevel\EventSourcing\Store\MissingDataForStorage;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
@@ -347,39 +346,6 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $stream = $doctrineDbalStore->load(
             (new CriteriaBuilder())
                 ->streamName('*')
-                ->fromPlayhead(0)
-                ->archived(false)
-                ->build(),
-        );
-
-        self::assertSame(null, $stream->index());
-        self::assertSame(null, $stream->position());
-    }
-
-    public function testLoadWithLikeInvalid(): void
-    {
-        $connection = $this->prophesize(Connection::class);
-
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-
-        $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-        );
-
-        $this->expectException(InvalidStreamName::class);
-
-        $stream = $doctrineDbalStore->load(
-            (new CriteriaBuilder())
-                ->streamName('*-*')
                 ->fromPlayhead(0)
                 ->archived(false)
                 ->build(),

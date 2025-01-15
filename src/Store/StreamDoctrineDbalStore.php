@@ -52,9 +52,9 @@ use function implode;
 use function in_array;
 use function is_int;
 use function is_string;
-use function mb_substr;
 use function sprintf;
-use function str_ends_with;
+use function str_contains;
+use function str_replace;
 
 final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
 {
@@ -159,9 +159,9 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $streamFilters = [];
 
                     foreach ($criterion->streamName as $index => $streamName) {
-                        if (str_ends_with($streamName, '*')) {
+                        if (str_contains($streamName, '*')) {
                             $streamFilters[] = 'stream LIKE :stream_' . $index;
-                            $builder->setParameter('stream_' . $index, mb_substr($streamName, 0, -1) . '%');
+                            $builder->setParameter('stream_' . $index, str_replace('*', '%', $streamName));
                         } else {
                             $streamFilters[] = 'stream = :stream_' . $index;
                             $builder->setParameter('stream_' . $index, $streamName);

@@ -10,7 +10,7 @@ use function assert;
 use function is_a;
 
 /**
- * @template-covariant T of object
+ * @template-covariant T of object = object
  * @psalm-immutable
  */
 final class Message
