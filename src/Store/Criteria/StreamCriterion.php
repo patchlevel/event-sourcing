@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store\Criteria;
 
-use Patchlevel\EventSourcing\Store\InvalidStreamName;
-
-use function preg_match;
-
 final class StreamCriterion
 {
     /** @var list<string> */
@@ -16,12 +12,6 @@ final class StreamCriterion
     public function __construct(
         string ...$streamName,
     ) {
-        foreach ($streamName as $name) {
-            if (!preg_match('/^[^*]*\*?$/', $name)) {
-                throw new InvalidStreamName($name);
-            }
-        }
-
         $this->streamName = $streamName;
     }
 

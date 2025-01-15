@@ -251,6 +251,14 @@
       <code><![CDATA[$row['payload']]]></code>
     </MixedArgument>
   </file>
+  <file src="tests/Integration/Store/StreamDoctrineDbalStoreTest.php">
+    <RedundantCondition>
+      <code><![CDATA[$stream?->close()]]></code>
+    </RedundantCondition>
+    <TypeDoesNotContainNull>
+      <code><![CDATA[$stream]]></code>
+    </TypeDoesNotContainNull>
+  </file>
   <file src="tests/Unit/CommandBus/AggregateHandlerProviderTest.php">
     <InvalidArrayAccess>
       <code><![CDATA[$result[0]]]></code>
