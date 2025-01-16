@@ -25,6 +25,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\EventIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
@@ -198,6 +199,10 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                 case EventsCriterion::class:
                     $builder->andWhere('event_name IN (:events)');
                     $builder->setParameter('events', $criterion->events, ArrayParameterType::STRING);
+                    break;
+                case EventIdCriterion::class:
+                    $builder->andWhere('event_id = :event_id');
+                    $builder->setParameter('event_id', $criterion->eventId, ArrayParameterType::STRING);
                     break;
                 default:
                     throw new UnsupportedCriterion($criterion::class);
