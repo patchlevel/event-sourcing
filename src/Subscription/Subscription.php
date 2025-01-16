@@ -20,6 +20,7 @@ final class Subscription
         private SubscriptionError|null $error = null,
         private int $retryAttempt = 0,
         private DateTimeImmutable|null $lastSavedAt = null,
+        private DateTimeImmutable|null $delay = null,
     ) {
     }
 
@@ -189,5 +190,20 @@ final class Subscription
     public function updateLastSavedAt(DateTimeImmutable $lastSavedAt): void
     {
         $this->lastSavedAt = $lastSavedAt;
+    }
+
+    public function delay(): DateTimeImmutable|null
+    {
+        return $this->delay;
+    }
+
+    public function updateDelay(DateTimeImmutable $delay): void
+    {
+        $this->delay = $delay;
+    }
+
+    public function removeDelay(): void
+    {
+        $this->delay = null;
     }
 }

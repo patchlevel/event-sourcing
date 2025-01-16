@@ -18,6 +18,7 @@ final class SubscriptionCriteria
         public readonly array|null $ids = null,
         public readonly array|null $groups = null,
         public readonly array|null $status = null,
+        public readonly bool $includeDelayed = false,
     ) {
     }
 }

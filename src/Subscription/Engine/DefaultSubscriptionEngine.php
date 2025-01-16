@@ -9,10 +9,11 @@ use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\StreamHeader;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\DelayRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
@@ -35,6 +36,9 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 {
     private SubscriptionManager $subscriptionManager;
 
+    private readonly RetryStrategy $retryStrategy;
+
+
     private bool $processing = false;
 
     /** @var array<string, BatchableSubscriber> */
@@ -46,7 +50,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         Store|MessageLoader $messageStore,
         SubscriptionStore $subscriptionStore,
         private readonly SubscriberAccessorRepository $subscriberRepository,
-        private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
+        RetryStrategy|null $retryStrategy = null,
         private readonly LoggerInterface|null $logger = null,
         private readonly ClockInterface $clock = new SystemClock(),
     ) {
@@ -56,6 +60,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             $this->messageLoader = new StoreMessageLoader($messageStore);
         }
 
+        $this->retryStrategy = $retryStrategy ?? new ClockBasedRetryStrategy($clock);
         $this->subscriptionManager = new SubscriptionManager($subscriptionStore);
     }
 
@@ -232,7 +237,9 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                     continue;
                                 }
 
-                                if ($this->shouldDelay($subscription, $message)) {
+                                $delay = $this->delay($subscription, $message);
+
+                                if ($delay) {
                                     $subscriptions->remove($subscription);
 
                                     if ($subscription->runMode() === RunMode::Once) {
@@ -248,6 +255,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                     }
 
                                     $subscription->active();
+                                    $subscription->updateDelay($delay);
+
                                     $this->subscriptionManager->update($subscription);
 
                                     $this->logger?->info(sprintf(
@@ -429,7 +438,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                     continue;
                                 }
 
-                                if ($this->shouldDelay($subscription, $message)) {
+                                $delay = $this->delay($subscription, $message);
+
+                                if ($delay) {
+                                    $subscription->updateDelay($delay);
+                                    $this->subscriptionManager->update($subscription);
+
                                     $subscriptions->remove($subscription);
 
                                     $this->logger?->debug(
@@ -440,7 +454,10 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                     );
 
                                     continue;
+                                } else {
+                                    $subscription->removeDelay();
                                 }
+
 
                                 $error = $this->handleMessage($index, $message, $subscription);
 
@@ -538,6 +555,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 ids: $criteria->ids,
                 groups: $criteria->groups,
                 status: [Status::Detached],
+                includeDelayed: true,
             ),
             function (SubscriptionCollection $subscriptions): Result {
                 /** @var list<Error> $errors */
@@ -627,6 +645,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
+                includeDelayed: true,
             ),
             function (SubscriptionCollection $subscriptions): Result {
                 /** @var list<Error> $errors */
@@ -720,6 +739,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     Status::Paused,
                     Status::Finished,
                 ],
+                includeDelayed: true,
             ),
             function (SubscriptionCollection $subscriptions): Result {
                 foreach ($subscriptions as $subscription) {
@@ -741,6 +761,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     if ($error) {
                         $subscription->doRetry();
                         $subscription->resetRetry();
+                        $subscription->removeDelay();
 
                         $this->subscriptionManager->update($subscription);
 
@@ -754,6 +775,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     }
 
                     $subscription->active();
+                    $subscription->removeDelay();
+
                     $this->subscriptionManager->update($subscription);
 
                     $this->logger?->info(sprintf(
@@ -783,6 +806,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     Status::Booting,
                     Status::Error,
                 ],
+                includeDelayed: true
             ),
             function (SubscriptionCollection $subscriptions): Result {
                 /** @var Subscription $subscription */
@@ -801,6 +825,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     }
 
                     $subscription->pause();
+                    $subscription->removeDelay();
                     $this->subscriptionManager->update($subscription);
 
                     $this->logger?->info(sprintf(
@@ -826,6 +851,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
+                includeDelayed: true,
             ),
         );
     }
@@ -975,6 +1001,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                     }
 
                     $subscription->doRetry();
+
+                    $subscription->removeDelay();
                     $this->subscriptionManager->update($subscription);
 
                     $this->logger?->info(
@@ -992,7 +1020,9 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private function discoverNewSubscriptions(): void
     {
-        $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria());
+        $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria(
+            includeDelayed: true,
+        ));
 
         $latestIndex = null;
 
@@ -1036,6 +1066,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         if ($this->retryStrategy instanceof ConditionalRetryStrategy && !$this->retryStrategy->canRetry($subscription)) {
             $subscription->failed($throwable);
         } else {
+            if ($this->retryStrategy instanceof DelayRetryStrategy) {
+                $delay = $this->retryStrategy->delayUntil($subscription);
+                $subscription->updateDelay($delay);
+            }
+
             $subscription->error($throwable);
         }
 
@@ -1157,29 +1192,33 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         return $this->batching[$subscription->id()]->forceCommit();
     }
 
-    private function shouldDelay(Subscription $subscription, Message $message): bool
+    private function delay(Subscription $subscription, Message $message): DateTimeImmutable|null
     {
         $subscriber = $this->subscriber($subscription->id());
 
         if (!$subscriber instanceof MetadataSubscriberAccessor) {
-            return false;
+            return null;
         }
 
         $delay = $subscriber->metadata()->delay;
 
         if ($delay === null) {
-            return false;
+            return null;
         }
 
         $recordedOn = $this->recordedOn($message);
 
         if ($recordedOn === null) {
-            return false;
+            return null;
         }
 
-        $threshold = $this->clock->now()->sub($delay);
+        $until = $recordedOn->add($delay);
 
-        return $recordedOn <= $threshold;
+        if ($until > $this->clock->now()) {
+            return $until;
+        }
+
+        return null;
     }
 
     private function recordedOn(Message $message): DateTimeImmutable|null
@@ -1187,7 +1226,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         try {
             return $message->header(AggregateHeader::class)->recordedOn;
         } catch (HeaderNotFound) {
-            return $message->header(StreamHeader::class)->recordedOn;
+            return $message->header(RecordedOnHeader::class)->recordedOn;
         }
     }
 }

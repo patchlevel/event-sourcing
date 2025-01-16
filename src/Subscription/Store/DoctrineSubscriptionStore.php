@@ -108,6 +108,15 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
                         ArrayParameterType::STRING,
                     );
             }
+
+            if ($criteria->includeDelayed === false) {
+                $qb->andWhere('delay <= :delay OR delay IS NULL')
+                    ->setParameter(
+                        'delay',
+                        $this->clock->now(),
+                        Types::DATETIMETZ_IMMUTABLE,
+                    );
+            }
         }
 
         /** @var list<Data> $result */
@@ -138,9 +147,11 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
                 'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
                 'retry_attempt' => $subscription->retryAttempt(),
                 'last_saved_at' => $subscription->lastSavedAt(),
+                'delay' => $subscription->delay(),
             ],
             [
-                'last_saved_at' => Types::DATETIME_IMMUTABLE,
+                'last_saved_at' => Types::DATETIMETZ_IMMUTABLE,
+                'delay' => Types::DATETIMETZ_IMMUTABLE,
             ],
         );
     }
@@ -163,12 +174,14 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
                 'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
                 'retry_attempt' => $subscription->retryAttempt(),
                 'last_saved_at' => $subscription->lastSavedAt(),
+                'delay' => $subscription->delay(),
             ],
             [
                 'id' => $subscription->id(),
             ],
             [
-                'last_saved_at' => Types::DATETIME_IMMUTABLE,
+                'last_saved_at' => Types::DATETIMETZ_IMMUTABLE,
+                'delay' => Types::DATETIMETZ_IMMUTABLE,
             ],
         );
 
@@ -224,6 +237,8 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
         $table->addColumn('status', Types::STRING)
             ->setLength(32)
             ->setNotnull(true);
+        $table->addColumn('delay', Types::DATETIMETZ_IMMUTABLE)
+            ->setNotnull(false);
         $table->addColumn('error_message', Types::TEXT)
             ->setNotnull(false);
         $table->addColumn('error_previous_status', Types::STRING)
@@ -260,6 +275,7 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ) : null,
             $row['retry_attempt'],
             self::normalizeDateTime($row['last_saved_at'], $this->connection->getDatabasePlatform()),
+            $row['delay'] ? self::normalizeDateTime($row['delay'], $this->connection->getDatabasePlatform()) : null,
         );
     }
 

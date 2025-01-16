@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
 use Closure;
+use DateTimeImmutable;
 use Generator;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
+use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
@@ -38,6 +40,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
+use Psr\Clock\ClockInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
@@ -45,6 +48,13 @@ use RuntimeException;
 final class DefaultSubscriptionEngineTest extends TestCase
 {
     use ProphecyTrait;
+
+    private ClockInterface $clock;
+
+    public function setUp(): void
+    {
+        $this->clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00.000000+00:00'));
+    }
 
     public function testNothingToSetup(): void
     {
@@ -194,6 +204,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
             logger: new NullLogger(),
+            clock: $this->clock,
         );
 
         $result = $engine->setup();
@@ -218,6 +229,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
                     Status::New,
                     ThrowableToErrorContextTransformer::transform($subscriber->exception),
                 ),
+                delay: $this->clock->now()->modify('+5 seconds'),
             ),
         );
     }

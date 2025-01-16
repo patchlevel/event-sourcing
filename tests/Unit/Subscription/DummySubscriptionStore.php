@@ -15,8 +15,6 @@ use Psr\Clock\ClockInterface;
 
 final class DummySubscriptionStore implements SubscriptionStore
 {
-    private readonly ClockInterface $clock;
-
     private readonly InMemorySubscriptionStore $parentStore;
 
     /** @var list<Subscription> */
@@ -31,8 +29,8 @@ final class DummySubscriptionStore implements SubscriptionStore
     /** @param list<Subscription> $subscriptions */
     public function __construct(
         array $subscriptions = [],
+        private ClockInterface $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00.000000+00:00')),
     ) {
-        $this->clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00.000000+00:00'));
         $this->parentStore = new InMemorySubscriptionStore($subscriptions, $this->clock);
     }
 

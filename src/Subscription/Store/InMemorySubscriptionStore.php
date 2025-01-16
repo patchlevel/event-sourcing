@@ -68,6 +68,12 @@ final class InMemorySubscriptionStore implements SubscriptionStore
                         }
                     }
 
+                    if ($criteria->includeDelayed === false) {
+                        if ($subscription->delay() !== null && $subscription->delay() > $this->clock->now()) {
+                            return false;
+                        }
+                    }
+
                     return true;
                 },
             ),
