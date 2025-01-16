@@ -130,7 +130,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             clock: $this->clock,
-            config: ['use_index' => true],
+            config: ['keep_index' => true],
         );
 
         $store->save(...$messages);
