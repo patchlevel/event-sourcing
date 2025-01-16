@@ -217,6 +217,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                 $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
                 $columns = [
+                    'id',
                     'stream',
                     'playhead',
                     'event_id',
@@ -242,6 +243,12 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $placeholders[] = $placeholder;
 
                     $data = $this->eventSerializer->serialize($message->event());
+
+                    if ($message->hasHeader(IndexHeader::class)) {
+                        $parameters[] = $message->header(IndexHeader::class)->index;
+                    } else {
+                        $parameters[] = null;
+                    }
 
                     try {
                         $streamName = $message->header(StreamNameHeader::class)->streamName;
@@ -272,10 +279,10 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                         $parameters[] = $this->clock->now();
                     }
 
-                    $types[$offset + 5] = $dateTimeType;
+                    $types[$offset + 6] = $dateTimeType;
 
                     $parameters[] = $message->hasHeader(ArchivedHeader::class);
-                    $types[$offset + 6] = $booleanType;
+                    $types[$offset + 7] = $booleanType;
 
                     $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
 
