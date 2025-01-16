@@ -73,12 +73,12 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
     private readonly ClockInterface $clock;
 
-    /** @var array{table_name: string, locking: bool, lock_id: int, lock_timeout: int} */
+    /** @var array{table_name: string, locking: bool, lock_id: int, lock_timeout: int, keep_index: bool} */
     private readonly array $config;
 
     private bool $hasLock = false;
 
-    /** @param array{table_name?: string, locking?: bool, lock_id?: int, lock_timeout?: int} $config */
+    /** @param array{table_name?: string, locking?: bool, lock_id?: int, lock_timeout?: int, keep_index?: bool} $config */
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
@@ -94,6 +94,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
             'locking' => true,
             'lock_id' => self::DEFAULT_LOCK_ID,
             'lock_timeout' => -1,
+            'keep_index' => false,
         ], $config);
     }
 
@@ -232,6 +233,10 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     'custom_headers',
                 ];
 
+                if ($this->config['keep_index']) {
+                    $columns[] = 'id';
+                }
+
                 $columnsLength = count($columns);
                 $batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
                 $placeholder = implode(', ', array_fill(0, $columnsLength, '?'));
@@ -284,6 +289,14 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
                     $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
 
+                    if ($this->config['keep_index']) {
+                        try {
+                            $parameters[] = $message->header(IndexHeader::class)->index;
+                        } catch (HeaderNotFound $e) {
+                            throw new MissingDataForStorage($e->name, $e);
+                        }
+                    }
+
                     $position++;
 
                     if ($position !== $batchSize) {
@@ -304,6 +317,18 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                 }
 
                 $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
+
+                if (!$this->config['keep_index'] || !($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform)) {
+                    return;
+                }
+
+                $this->connection->executeStatement(
+                    sprintf(
+                        "SELECT setval('%s', (SELECT MAX(id) FROM %s));",
+                        sprintf('%s_id_seq', $this->config['table_name']),
+                        $this->config['table_name'],
+                    ),
+                );
             },
         );
     }
