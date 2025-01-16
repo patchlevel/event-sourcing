@@ -312,6 +312,16 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                 }
 
                 $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
+
+                if ($this->config['use_index'] && $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+                    $this->connection->executeStatement(
+                        sprintf(
+                            "SELECT setval('%s', (SELECT MAX(id) FROM %s));",
+                            sprintf('%s_id_seq', $this->config['table_name']),
+                            $this->config['table_name'],
+                        ),
+                    );
+                }
             },
         );
     }
