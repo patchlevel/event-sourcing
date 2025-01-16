@@ -25,6 +25,7 @@ use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ExternEvent;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ProfileCreated;
 use PHPUnit\Framework\TestCase;
+use Psr\Clock\ClockInterface;
 
 use function iterator_to_array;
 use function json_decode;
@@ -36,16 +37,18 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     private Connection $connection;
     private StreamStore $store;
 
+    private ClockInterface $clock;
+
     public function setUp(): void
     {
         $this->connection = DbalManager::createConnection();
 
-        $clock = new FrozenClock(new DateTimeImmutable('2020-01-01 00:00:00'));
+        $this->clock = new FrozenClock(new DateTimeImmutable('2020-01-01 00:00:00'));
 
         $this->store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            clock: $clock,
+            clock: $this->clock,
         );
 
         $schemaDirector = new DoctrineSchemaDirector(
@@ -121,13 +124,29 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 ->withHeader(new PlayheadHeader(2))
                 ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-02 00:00:00')))
                 ->withHeader(new IndexHeader(42)),
+        ];
+
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            clock: $this->clock,
+            config: ['use_index' => true],
+        );
+
+        $store->save(...$messages);
+
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            clock: $this->clock,
+        );
+
+        $store->save(
             Message::create(new ProfileCreated($profileId, 'test'))
                 ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
                 ->withHeader(new PlayheadHeader(3))
                 ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-02 00:00:00'))),
-        ];
-
-        $this->store->save(...$messages);
+        );
 
         /** @var list<array<string, string>> $result */
         $result = $this->connection->fetchAllAssociative('SELECT * FROM event_store');

@@ -72,12 +72,12 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
     private readonly ClockInterface $clock;
 
-    /** @var array{table_name: string, locking: bool, lock_id: int, lock_timeout: int} */
+    /** @var array{table_name: string, locking: bool, lock_id: int, lock_timeout: int, use_index: bool} */
     private readonly array $config;
 
     private bool $hasLock = false;
 
-    /** @param array{table_name?: string, locking?: bool, lock_id?: int, lock_timeout?: int} $config */
+    /** @param array{table_name?: string, locking?: bool, lock_id?: int, lock_timeout?: int, use_index?: bool} $config */
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
@@ -93,6 +93,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
             'locking' => true,
             'lock_id' => self::DEFAULT_LOCK_ID,
             'lock_timeout' => -1,
+            'use_index' => false,
         ], $config);
     }
 
@@ -217,7 +218,6 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                 $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
 
                 $columns = [
-                    'id',
                     'stream',
                     'playhead',
                     'event_id',
@@ -227,6 +227,10 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     'archived',
                     'custom_headers',
                 ];
+
+                if ($this->config['use_index']) {
+                    $columns[] = 'id';
+                }
 
                 $columnsLength = count($columns);
                 $batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
@@ -243,12 +247,6 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $placeholders[] = $placeholder;
 
                     $data = $this->eventSerializer->serialize($message->event());
-
-                    if ($message->hasHeader(IndexHeader::class)) {
-                        $parameters[] = $message->header(IndexHeader::class)->index;
-                    } else {
-                        $parameters[] = null;
-                    }
 
                     try {
                         $streamName = $message->header(StreamNameHeader::class)->streamName;
@@ -279,12 +277,20 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                         $parameters[] = $this->clock->now();
                     }
 
-                    $types[$offset + 6] = $dateTimeType;
+                    $types[$offset + 5] = $dateTimeType;
 
                     $parameters[] = $message->hasHeader(ArchivedHeader::class);
-                    $types[$offset + 7] = $booleanType;
+                    $types[$offset + 6] = $booleanType;
 
                     $parameters[] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
+
+                    if ($this->config['use_index']) {
+                        try {
+                            $parameters[] = $message->header(IndexHeader::class)->index;
+                        } catch (HeaderNotFound $e) {
+                            throw new MissingDataForStorage($e->name, $e);
+                        }
+                    }
 
                     $position++;
 
