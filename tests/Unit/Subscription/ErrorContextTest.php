@@ -51,11 +51,23 @@ final class ErrorContextTest extends TestCase
         $this->assertSame('->', $firstTrace['type'] ?? null);
         $this->assertArrayHasKey('args', $firstTrace);
         $this->assertSame([
-            'test',
-            'object(Patchlevel\EventSourcing\Aggregate\CustomId)',
-            'resource(stream)',
-            ['test' => [1, 2, 3]],
-            'object(Closure)',
+            ['string', 'test'],
+            ['object', 'Patchlevel\EventSourcing\Aggregate\CustomId'],
+            ['resource', 'stream'],
+            [
+                'array',
+                [
+                    'test' => [
+                        'array',
+                        [
+                            ['integer', 1],
+                            ['integer', 2],
+                            ['integer', 3],
+                        ],
+                    ],
+                ],
+            ],
+            ['object', 'Closure'],
         ], $firstTrace['args'] ?? null);
     }
 
