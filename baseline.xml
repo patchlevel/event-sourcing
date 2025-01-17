@@ -182,6 +182,11 @@
       <code><![CDATA[iterable<SubscriberAccessor>]]></code>
     </DeprecatedInterface>
   </file>
+  <file src="src/Subscription/ThrowableToErrorContextTransformer.php">
+    <MixedAssignment>
+      <code><![CDATA[$value]]></code>
+    </MixedAssignment>
+  </file>
   <file src="tests/Benchmark/PersonalDataBench.php">
     <MissingConstructor>
       <code><![CDATA[$multipleEventsId]]></code>

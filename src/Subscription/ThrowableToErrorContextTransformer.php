@@ -8,11 +8,17 @@ use Throwable;
 
 use function array_key_exists;
 use function array_map;
-use function array_walk_recursive;
+use function array_pop;
+use function explode;
+use function get_debug_type;
 use function get_resource_type;
+use function implode;
+use function is_array;
+use function is_bool;
+use function is_float;
+use function is_int;
 use function is_object;
 use function is_resource;
-use function sprintf;
 
 /**
  * @psalm-import-type Context from SubscriptionError
@@ -39,7 +45,13 @@ final class ThrowableToErrorContextTransformer
         /** @var list<Trace> $traces */
         $traces = $error->getTrace();
 
+        $classParts = explode('\\', $error::class);
+        $shortClass = array_pop($classParts);
+        $namespace = implode('\\', $classParts);
+
         return [
+            'short_name' => $shortClass,
+            'namespace' => $namespace,
             'class' => $error::class,
             'message' => $error->getMessage(),
             'code' => $error->getCode(),
@@ -60,18 +72,50 @@ final class ThrowableToErrorContextTransformer
             return $trace;
         }
 
-        array_walk_recursive($trace['args'], static function (mixed &$value): void {
-            if (is_object($value)) {
-                $value = sprintf('object(%s)', $value::class);
-            }
-
-            if (!is_resource($value)) {
-                return;
-            }
-
-            $value = sprintf('resource(%s)', get_resource_type($value));
-        });
+        $trace['args'] = self::flattenArgs($trace['args']);
 
         return $trace;
+    }
+
+    /**
+     * @param array<array-key, mixed> $args
+     *
+     * @return array<array-key, mixed>
+     */
+    private static function flattenArgs(array $args, int $level = 0, int &$count = 0): array
+    {
+        $result = [];
+
+        foreach ($args as $key => $value) {
+            $count++;
+
+            if ($count > 10_000) {
+                return ['array', '*SKIPPED over 10000 entries*'];
+            }
+
+            if (is_object($value)) {
+                $result[$key] = ['object', get_debug_type($value)];
+            } elseif (is_array($value)) {
+                if ($level > 10) {
+                    $result[$key] = ['array', '*DEEP NESTED ARRAY*'];
+                } else {
+                    $result[$key] = ['array', self::flattenArgs($value, $level + 1, $count)];
+                }
+            } elseif ($value === null) {
+                $result[$key] = ['null', null];
+            } elseif (is_bool($value)) {
+                $result[$key] = ['boolean', $value];
+            } elseif (is_int($value)) {
+                $result[$key] = ['integer', $value];
+            } elseif (is_float($value)) {
+                $result[$key] = ['float', $value];
+            } elseif (is_resource($value)) {
+                $result[$key] = ['resource', get_resource_type($value)];
+            } else {
+                $result[$key] = ['string', (string)$value];
+            }
+        }
+
+        return $result;
     }
 }
