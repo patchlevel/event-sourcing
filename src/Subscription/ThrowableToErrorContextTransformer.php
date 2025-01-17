@@ -112,7 +112,11 @@ final class ThrowableToErrorContextTransformer
             } elseif (is_resource($value)) {
                 $result[$key] = ['resource', get_resource_type($value)];
             } else {
-                $result[$key] = ['string', (string)$value];
+                if (mb_strlen((string)$value) > 1_000) {
+                    $result[$key] = ['string', '*TOO LONG STRING TRUNCATED* ' . mb_substr((string)$value, 0, 1_000) . '...'];
+                } else {
+                    $result[$key] = ['string', (string)$value];
+                }
             }
         }
 
