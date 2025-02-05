@@ -19,6 +19,8 @@ use function is_float;
 use function is_int;
 use function is_object;
 use function is_resource;
+use function mb_strlen;
+use function mb_substr;
 
 /**
  * @psalm-import-type Context from SubscriptionError

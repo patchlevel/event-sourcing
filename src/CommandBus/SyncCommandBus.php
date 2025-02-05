@@ -9,19 +9,13 @@ use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
-use function array_shift;
 use function count;
 use function is_array;
 use function iterator_to_array;
-use function sprintf;
 
 final class SyncCommandBus implements CommandBus
 {
     private readonly HandlerProvider $handlerProvider;
-
-    /** @var array<object> */
-    private array $queue;
-    private bool $processing;
 
     /** @param iterable<HandlerProvider>|HandlerProvider $handlerProviders */
     public function __construct(
@@ -33,56 +27,30 @@ final class SyncCommandBus implements CommandBus
         } else {
             $this->handlerProvider = $handlerProviders;
         }
-
-        $this->queue = [];
-        $this->processing = false;
     }
 
     /** @throws HandlerNotFound */
     public function dispatch(object $command): void
     {
-        $this->logger?->debug(sprintf(
-            'CommandBus: Add message "%s" to queue.',
-            $command::class,
-        ));
+        $this->logger?->debug('CommandBus: dispatch command', ['command' => $command::class]);
 
-        $this->queue[] = $command;
+        $handlers = $this->handlerProvider->handlerForCommand($command::class);
 
-        if ($this->processing) {
-            $this->logger?->debug('CommandBus: Is already processing, dont start new processing.');
-
-            return;
+        if (!is_array($handlers)) {
+            $handlers = iterator_to_array($handlers);
         }
 
-        try {
-            $this->processing = true;
+        $count = count($handlers);
 
-            $this->logger?->debug('CommandBus: Start processing queue.');
-
-            while ($command = array_shift($this->queue)) {
-                $handlers = $this->handlerProvider->handlerForCommand($command::class);
-
-                if (!is_array($handlers)) {
-                    $handlers = iterator_to_array($handlers);
-                }
-
-                $count = count($handlers);
-
-                if ($count === 0) {
-                    throw new HandlerNotFound($command::class);
-                }
-
-                if ($count > 1) {
-                    throw new MultipleHandlersFound($command::class);
-                }
-
-                ($handlers[0]->callable())($command);
-            }
-        } finally {
-            $this->processing = false;
-
-            $this->logger?->debug('CommandBus: Finished processing queue.');
+        if ($count === 0) {
+            throw new HandlerNotFound($command::class);
         }
+
+        if ($count > 1) {
+            throw new MultipleHandlersFound($command::class);
+        }
+
+        ($handlers[0]->callable())($command);
     }
 
     public static function createForAggregateHandlers(
