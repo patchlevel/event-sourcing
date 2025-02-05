@@ -159,5 +159,5 @@ parameters:
 		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 1
+			count: 3
 			path: src/Subscription/ThrowableToErrorContextTransformer.php

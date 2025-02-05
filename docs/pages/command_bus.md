@@ -231,11 +231,7 @@ $commandBus = new SyncCommandBus($handlerProvider);
 $commandBus->dispatch(new CreateProfile($profileId, 'name'));
 $commandBus->dispatch(new ChangeProfileName($profileId, 'new name'));
 ```
-!!! note
 
-    The `SyncCommandBus` is a synchronous command bus. 
-    But it ensures that a command has been completely handled before the next handler is executed.
-    
 ## Provider
 
 There are different types of providers that you can use to register handlers.
