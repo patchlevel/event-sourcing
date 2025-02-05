@@ -14,6 +14,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 #[AsCommand(
     'event-sourcing:subscription:run',
@@ -24,6 +26,7 @@ final class SubscriptionRunCommand extends SubscriptionCommand
     public function __construct(
         SubscriptionEngine $engine,
         private readonly Store $store,
+        private readonly EventDispatcherInterface|null $workerEventDispatcher = null,
     ) {
         parent::__construct($engine);
     }
@@ -107,6 +110,7 @@ final class SubscriptionRunCommand extends SubscriptionCommand
                 'timeLimit' => $timeLimit,
             ],
             $logger,
+            $this->workerEventDispatcher,
         );
 
         if ($rebuild) {
