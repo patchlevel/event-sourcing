@@ -6,12 +6,14 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Closure;
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[AsCommand(
     'event-sourcing:subscription:boot',
@@ -19,6 +21,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class SubscriptionBootCommand extends SubscriptionCommand
 {
+    public function __construct(
+        SubscriptionEngine $engine,
+        private readonly EventDispatcherInterface|null $workerEventDispatcher = null,
+    ) {
+        parent::__construct($engine);
+    }
+
     public function configure(): void
     {
         parent::configure();
@@ -100,6 +109,7 @@ final class SubscriptionBootCommand extends SubscriptionCommand
                 'timeLimit' => $timeLimit,
             ],
             $logger,
+            $this->workerEventDispatcher,
         );
 
         $worker->run($sleep);
