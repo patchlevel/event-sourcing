@@ -251,6 +251,11 @@
       <code><![CDATA[PersonalInformation]]></code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="tests/Integration/ChildAggregate/Views.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[Views]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="tests/Integration/PersonalData/PersonalDataTest.php">
     <MixedArgument>
       <code><![CDATA[$row['payload']]]></code>

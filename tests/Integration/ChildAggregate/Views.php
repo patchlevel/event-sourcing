@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Integration\ChildAggregate;
 
 use Patchlevel\EventSourcing\Aggregate\BasicChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Events\ViewTracked;
 
 final class Views extends BasicChildAggregate

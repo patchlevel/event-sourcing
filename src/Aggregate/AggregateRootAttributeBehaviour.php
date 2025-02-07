@@ -86,7 +86,10 @@ trait AggregateRootAttributeBehaviour
             return null;
         }
 
-        return $reflectionProperty->getValue($this);
+        /** @var ChildAggregate|null $child */
+        $child = $reflectionProperty->getValue($this);
+
+        return $child;
     }
 
     public function aggregateRootId(): AggregateRootId
