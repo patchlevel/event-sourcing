@@ -49,7 +49,7 @@ trait AggregateRootAttributeBehaviour
         if (count($parts) === 2) {
             [$property, $method] = $parts;
 
-            $child = $this->getChildProperty($property);
+            $child = $this->getChildAggregateByPropertyName($property);
 
             if ($child !== null) {
                 $child->$method($event);
@@ -67,8 +67,8 @@ trait AggregateRootAttributeBehaviour
         $metadata = static::metadata();
         $this->recorder ??= $this->recordThat(...);
 
-        foreach ($metadata->childAggregates as $property) {
-            $child = $this->getChildProperty($property);
+        foreach ($metadata->childAggregates as $propertyName) {
+            $child = $this->getChildAggregateByPropertyName($propertyName);
 
             if ($child === null) {
                 continue;
@@ -78,7 +78,7 @@ trait AggregateRootAttributeBehaviour
         }
     }
 
-    private function getChildProperty(string $propertyName): ChildAggregate|null
+    private function getChildAggregateByPropertyName(string $propertyName): ChildAggregate|null
     {
         $reflectionProperty = new ReflectionProperty($this::class, $propertyName);
 
