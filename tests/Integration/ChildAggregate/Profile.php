@@ -22,6 +22,9 @@ final class Profile extends BasicAggregateRoot
     #[ChildAggregate]
     protected PersonalInformation $personalInformation;
 
+    #[ChildAggregate]
+    private Views $views;
+
     public static function create(ProfileId $id, string $name): self
     {
         $self = new self();
@@ -35,6 +38,7 @@ final class Profile extends BasicAggregateRoot
     {
         $this->id = $event->profileId;
         $this->personalInformation = new PersonalInformation($event->name);
+        $this->views = new Views();
     }
 
     public function name(): string
@@ -42,8 +46,18 @@ final class Profile extends BasicAggregateRoot
         return $this->personalInformation->name();
     }
 
+    public function views(): int
+    {
+        return $this->views->views();
+    }
+
     public function changeName(string $name): void
     {
         $this->personalInformation->changeName($name);
+    }
+
+    public function trackView(): void
+    {
+        $this->views->trackView();
     }
 }
