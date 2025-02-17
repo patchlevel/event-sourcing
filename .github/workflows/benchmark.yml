@@ -80,7 +80,10 @@ jobs:
 
       - name: "Write to summary"
         if: ${{ success() || (failure() && steps.bench.conclusion == 'failure') }}
-        run: echo '${{ env.BENCH_RESULT }}' >> $GITHUB_STEP_SUMMARY
+        run: |
+          echo '\`\`\`' >> $GITHUB_STEP_SUMMARY
+          echo '${{ env.BENCH_RESULT }}' >> $GITHUB_STEP_SUMMARY
+          echo '\`\`\`' >> $GITHUB_STEP_SUMMARY
 
       - uses: actions/github-script@v7
         name: "Write or update comment on PR"
