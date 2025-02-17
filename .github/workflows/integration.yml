@@ -31,11 +31,11 @@ jobs:
         strategy:
             matrix:
                 dependencies:
-                    - "locked"
+                  - "locked"
                 php-version:
-                    - "8.3"
+                  - "8.4"
                 operating-system:
-                    - "ubuntu-latest"
+                  - "ubuntu-latest"
                 postgres-version:
                   - "12.20"
                   - "13.16"
@@ -62,6 +62,7 @@ jobs:
             - uses: ramsey/composer-install@3.0.0
               with:
                 dependency-versions: ${{ matrix.dependencies }}
+                composer-options: ${{ matrix.composer-options }}
 
             - name: "Tests"
               run: "vendor/bin/phpunit --testsuite=integration"
@@ -88,7 +89,7 @@ jobs:
           dependencies:
             - "locked"
           php-version:
-            - "8.3"
+            - "8.4"
           operating-system:
             - "ubuntu-latest"
           mariadb-version:
@@ -116,6 +117,7 @@ jobs:
         - uses: ramsey/composer-install@3.0.0
           with:
             dependency-versions: ${{ matrix.dependencies }}
+            composer-options: ${{ matrix.composer-options }}
 
         - name: "Tests"
           run: "vendor/bin/phpunit --testsuite=integration"
@@ -143,7 +145,7 @@ jobs:
           dependencies:
             - "locked"
           php-version:
-            - "8.3"
+            - "8.4"
           operating-system:
             - "ubuntu-latest"
           mysql-version:
@@ -170,6 +172,7 @@ jobs:
         - uses: ramsey/composer-install@3.0.0
           with:
             dependency-versions: ${{ matrix.dependencies }}
+            composer-options: ${{ matrix.composer-options }}
 
         - name: "Tests"
           run: "vendor/bin/phpunit --testsuite=integration"
@@ -184,7 +187,7 @@ jobs:
           dependencies:
             - "locked"
           php-version:
-            - "8.3"
+            - "8.4"
           operating-system:
             - "ubuntu-latest"
 
@@ -203,6 +206,7 @@ jobs:
         - uses: ramsey/composer-install@3.0.0
           with:
             dependency-versions: ${{ matrix.dependencies }}
+            composer-options: ${{ matrix.composer-options }}
 
         - name: "Tests"
           run: "vendor/bin/phpunit --testsuite=integration"
