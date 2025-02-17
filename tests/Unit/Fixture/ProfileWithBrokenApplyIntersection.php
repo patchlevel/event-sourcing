@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
+use JsonSerializable;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
@@ -16,7 +17,7 @@ final class ProfileWithBrokenApplyIntersection extends BasicAggregateRoot
     private ProfileId $id;
 
     #[Apply]
-    protected function applyIntersection(ProfileCreated&ProfileVisited $event): void
+    protected function applyIntersection(ProfileCreated&JsonSerializable $event): void
     {
     }
 }
