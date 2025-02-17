@@ -33,7 +33,7 @@ jobs:
                 dependencies:
                   - "locked"
                 php-version:
-                  - "8.3"
+                  - "8.4"
                 operating-system:
                   - "ubuntu-latest"
                 postgres-version:
@@ -43,12 +43,6 @@ jobs:
                   - "15.8"
                   - "16.4"
                   - "17.0"
-                include:
-                  - dependencies: "highest"
-                    php-version: "8.4"
-                    operating-system: "ubuntu-latest"
-                    postgres-version: "17.0"
-                    composer-options: "--ignore-platform-req=php+"
 
         env:
             DB_URL: 'pdo-pgsql://postgres:postgres@localhost:5432/eventstore?charset=utf8'
@@ -95,7 +89,7 @@ jobs:
           dependencies:
             - "locked"
           php-version:
-            - "8.3"
+            - "8.4"
           operating-system:
             - "ubuntu-latest"
           mariadb-version:
@@ -104,12 +98,6 @@ jobs:
             - "10.11"
             - "11.1"
             - "11.4"
-          include:
-            - dependencies: "highest"
-              php-version: "8.4"
-              operating-system: "ubuntu-latest"
-              mariadb-version: "11.4"
-              composer-options: "--ignore-platform-req=php+"
 
       env:
         DB_URL: 'pdo-mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
@@ -157,7 +145,7 @@ jobs:
           dependencies:
             - "locked"
           php-version:
-            - "8.3"
+            - "8.4"
           operating-system:
             - "ubuntu-latest"
           mysql-version:
@@ -165,12 +153,6 @@ jobs:
             - "8.0"
             - "8.4"
             - "9.0"
-          include:
-            - dependencies: "highest"
-              php-version: "8.4"
-              operating-system: "ubuntu-latest"
-              mysql-version: "9.0"
-              composer-options: "--ignore-platform-req=php+"
 
       env:
         DB_URL: 'pdo-mysql://root@127.0.0.1:3306/eventstore?charset=utf8'
@@ -205,14 +187,9 @@ jobs:
           dependencies:
             - "locked"
           php-version:
-            - "8.3"
+            - "8.4"
           operating-system:
             - "ubuntu-latest"
-          include:
-            - dependencies: "highest"
-              php-version: "8.4"
-              operating-system: "ubuntu-latest"
-              composer-options: "--ignore-platform-req=php+"
 
       steps:
         - name: "Checkout"
