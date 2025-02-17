@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ef4a220b6399c180840d5dac42944436",
+    "content-hash": "c905de446d3c3d7ffe85873e0b379029",
     "packages": [
         {
             "name": "azjezz/psl",
@@ -1183,16 +1183,16 @@
         },
         {
             "name": "qossmic/deptrac",
-            "version": "2.0.4",
+            "version": "2.0.5",
             "source": {
                 "type": "git",
-                "url": "https://github.com/qossmic/deptrac.git",
-                "reference": "a6dbfaf4f20f0ae98b766954f35b8c164c3063ed"
+                "url": "https://github.com/deptrac/deptrac.git",
+                "reference": "605ee322f273ade1727f5ff2db3b47566140f4bf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/qossmic/deptrac/zipball/a6dbfaf4f20f0ae98b766954f35b8c164c3063ed",
-                "reference": "a6dbfaf4f20f0ae98b766954f35b8c164c3063ed",
+                "url": "https://api.github.com/repos/deptrac/deptrac/zipball/605ee322f273ade1727f5ff2db3b47566140f4bf",
+                "reference": "605ee322f273ade1727f5ff2db3b47566140f4bf",
                 "shasum": ""
             },
             "require": {
@@ -1212,7 +1212,7 @@
                     "bootstrap.php"
                 ],
                 "psr-4": {
-                    "Qossmic\\Deptrac\\": "src/"
+                    "Deptrac\\Deptrac\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -1224,10 +1224,11 @@
                 "static analysis"
             ],
             "support": {
-                "issues": "https://github.com/qossmic/deptrac/issues",
-                "source": "https://github.com/qossmic/deptrac/tree/2.0.4"
+                "issues": "https://github.com/deptrac/deptrac/issues",
+                "source": "https://github.com/deptrac/deptrac/tree/2.0.5"
             },
-            "time": "2024-11-21T22:38:34+00:00"
+            "abandoned": "deptrac/deptrac",
+            "time": "2025-02-17T08:20:48+00:00"
         },
         {
             "name": "react/promise",
