@@ -18,6 +18,5 @@
 
     <plugins>
         <pluginClass class="Patchlevel\EventSourcingPsalmPlugin\Plugin"/>
-        <pluginClass class="Cspray\Phinal\Plugin"/>
     </plugins>
 </psalm>
