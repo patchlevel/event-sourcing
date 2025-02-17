@@ -18,6 +18,8 @@ final class ErrorContextTest extends TestCase
     public function testErrorContext(): void
     {
         $resource = fopen('php://memory', 'r');
+        self::assertNotFalse($resource);
+
         $result = ThrowableToErrorContextTransformer::transform(
             $this->createException(
                 'test',
@@ -29,28 +31,28 @@ final class ErrorContextTest extends TestCase
         );
         fclose($resource);
 
-        $this->assertCount(1, $result);
+        self::assertCount(1, $result);
         $error = $result[0];
 
-        $this->assertSame(RuntimeException::class, $error['class']);
-        $this->assertSame('test', $error['message']);
-        $this->assertSame(0, $error['code']);
-        $this->assertSame(__FILE__, $error['file']);
-        $this->assertGreaterThan(0, count($error['trace']));
-        $this->assertArrayHasKey(0, $error['trace']);
+        self::assertSame(RuntimeException::class, $error['class']);
+        self::assertSame('test', $error['message']);
+        self::assertSame(0, $error['code']);
+        self::assertSame(__FILE__, $error['file']);
+        self::assertGreaterThan(0, count($error['trace']));
+        self::assertArrayHasKey(0, $error['trace']);
 
         $firstTrace = $error['trace'][0];
 
-        $this->assertArrayHasKey('file', $firstTrace);
-        $this->assertSame(__FILE__, $firstTrace['file'] ?? null);
-        $this->assertArrayHasKey('line', $firstTrace);
-        $this->assertSame('createException', $firstTrace['function'] ?? null);
-        $this->assertArrayHasKey('class', $firstTrace);
-        $this->assertSame(self::class, $firstTrace['class'] ?? null);
-        $this->assertArrayHasKey('type', $firstTrace);
-        $this->assertSame('->', $firstTrace['type'] ?? null);
-        $this->assertArrayHasKey('args', $firstTrace);
-        $this->assertSame([
+        self::assertArrayHasKey('file', $firstTrace);
+        self::assertSame(__FILE__, $firstTrace['file'] ?? null);
+        self::assertArrayHasKey('line', $firstTrace);
+        self::assertSame('createException', $firstTrace['function'] ?? null);
+        self::assertArrayHasKey('class', $firstTrace);
+        self::assertSame(self::class, $firstTrace['class'] ?? null);
+        self::assertArrayHasKey('type', $firstTrace);
+        self::assertSame('->', $firstTrace['type'] ?? null);
+        self::assertArrayHasKey('args', $firstTrace);
+        self::assertSame([
             ['string', 'test'],
             ['object', 'Patchlevel\EventSourcing\Aggregate\CustomId'],
             ['resource', 'stream'],

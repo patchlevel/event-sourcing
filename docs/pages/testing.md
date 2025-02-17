@@ -1,66 +1,148 @@
 # Tests
 
-The library is designed to be easily testable.
-We provide you with a few helpers to make testing easier
-and some tips on how to test your application.
+The library's design promotes easily testable code, and we offer several helpers to simplify the testing process even
+further. If you need additional support, we also provide
+a [PHPUnit testing library](https://github.com/patchlevel/event-sourcing-phpunit) to make testing even more convenient.
 
-## Aggregate Unit Tests
+## Testing with patchlevel/event-sourcing-phpunit
 
-The aggregates can also be tested very well.
-You can test whether certain events have been recorded
-or whether the state is set up correctly when the aggregate is set up again via the events.
+### Aggregate Unit Tests
+
+There is a special `TestCase` for aggregate tests that you can extend. By extending `AggregateRootTestCase`, you can use
+the given/when/then notation, making the test's purpose clear. When extending this class, you must implement a method
+that provides the fully qualified class name (FQCN) of the aggregate you want to test.
 
 ```php
-use PHPUnit\Framework\TestCase;
+use Patchlevel\EventSourcing\PhpUnit\Test\AggregateRootTestCase;
 
-final class ProfileTest extends TestCase
+final class ProfileTest extends AggregateRootTestCase
 {
+    protected function aggregateClass(): string
+    {
+        return Profile::class;
+    }
+
     public function testCreateProfile(): void
     {
-        $id = ProfileId::generate();
-        $profile = Profile::createProfile($id, Email::fromString('foo@email.com'));
-
-        self::assertEquals(
-            $profile->releaseEvents(),
-            [
-                new ProfileCreated($id, Email::fromString('foo@email.com')),
-            ],
-        );
-
-        self::assertEquals('foo@email.com', $profile->email()->toString());
+        $this
+            ->when(static fn () => Profile::createProfile(new CreateProfile(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de'))))
+            ->then(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de')));
     }
 }
 ```
-You can also prepare the aggregate with events to a specific state.
-And then test whether the aggregate behaves as expected.
+You can also prepare the aggregate with events to set it to a specific state and then test whether it behaves as
+expected.
 
 ```php
-use PHPUnit\Framework\TestCase;
+use Patchlevel\EventSourcing\PhpUnit\Test\AggregateRootTestCase;
 
-final class ProfileTest extends TestCase
+final class ProfileTest extends AggregateRootTestCase
 {
-    public function testChangeName(): void
+    // protected function aggregateClass(): string;
+
+    public function testBehaviour(): void
     {
-        $id = ProfileId::generate();
-
-        $profile = Profile::createFromEvents([
-            new ProfileCreated($id, Email::fromString('foo@email.com')),
-        ]);
-
-        $profile->changeEmail(Email::fromString('bar@email.com'));
-
-        self::assertEquals(
-            $profile->releaseEvents(),
-            [
-                new EmailChanged(Email::fromString('bar@email.com')),
-            ],
-        );
-
-        self::assertEquals('bar@email.com', $profile->email()->toString());
+        $this
+            ->given(
+                new ProfileCreated(
+                    ProfileId::fromString('1'),
+                    Email::fromString('hq@patchlevel.de'),
+                ),
+            )
+            ->when(static fn (Profile $profile) => $profile->visitProfile(ProfileId::fromString('2')))
+            ->then(new ProfileVisited(ProfileId::fromString('2')));
     }
 }
 ```
-## Tests with DateTime
+#### Using Commandbus like syntax
+
+When using the command bus and the `#[Handle]` attributes in your aggregate, you can directly provide the command to the
+`when` method.
+
+```php
+use Patchlevel\EventSourcing\PhpUnit\Test\AggregateRootTestCase;
+
+final class ProfileTest extends AggregateRootTestCase
+{
+    // protected function aggregateClass(): string;
+
+    public function testBehaviour(): void
+    {
+        $this
+            ->when(new CreateProfile(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de')))
+            ->then(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de')));
+    }
+}
+```
+If additional parameters are required beyond the command, they can be provided as extra arguments for `when`.
+In this example, a string is needed, which will be passed directly to the event.
+
+```php
+use Patchlevel\EventSourcing\PhpUnit\Test\AggregateRootTestCase;
+
+final class ProfileTest extends AggregateRootTestCase
+{
+    // protected function aggregateClass(): string;
+
+    public function testBehaviour(): void
+    {
+        $this
+            ->given(
+                new ProfileCreated(
+                    ProfileId::fromString('1'),
+                    Email::fromString('hq@patchlevel.de'),
+                ),
+            )
+            ->when(
+                new VisitProfile(ProfileId::fromString('2')),
+                'Extra Parameter / Dependency',
+            )
+            ->then(
+                new ProfileVisited(ProfileId::fromString('2'), 'Extra Parameter / Dependency'),
+            );
+    }
+}
+```
+### Subscriber Tests
+
+For testing a subscriber, there is a utility class available. Using `SubscriberUtilities` provides several DX features
+that simplify testing.
+
+First, you need to specify the subscriptions you want to test when initializing the utility class. Once set up, you can
+call three methods:
+
+- `executeSetup`
+- `executeRun`
+- `executeTeardown`
+
+These methods automatically invoke the appropriate functions defined via attributes.
+
+```php
+use Patchlevel\EventSourcing\PhpUnit\Test\SubscriberUtilities;
+
+final class ProfileSubscriberTest extends TestCase
+{
+    use SubscriberUtilities;
+
+    public function testProfileCreated(): void
+    {
+        $subscriber = new ProfileSubscriber(/* inject deps or mock tests as needed */);
+
+        $util = new SubscriberUtilities($subscriber);
+        $util->executeSetup();
+        $util->executeRun(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('hq@patchlevel.de'),
+            ),
+        );
+        $util->executeTeardown();
+
+        self::assertSame(3, $subscriber->count);
+    }
+}
+```
+## Tests with DateTime using a Clock
 
 You should not instantiate the `DateTimeImmutable` directly in the aggregate.
 Instead, you should pass a `Clock` to the aggregate and use this to get the current time.
@@ -68,10 +150,12 @@ This allows you to test the aggregate with a fixed time.
 
 ```php
 use Patchlevel\EventSourcing\Clock\FrozenClock;
-use PHPUnit\Framework\TestCase;
+use Patchlevel\EventSourcing\PhpUnit\Test\AggregateRootTestCase;
 
-final class ProfileTest extends TestCase
+final class ProfileTest extends AggregateRootTestCase
 {
+    // protected function aggregateClass(): string;
+
     public function testCreateProfile(): void
     {
         $clock = new FrozenClock(new DateTimeImmutable('2021-01-01 00:00:00'));
@@ -85,6 +169,18 @@ final class ProfileTest extends TestCase
         $clock->sleep(10);
 
         $profile->changeEmail(Email::fromString('info@patchlevel.de'));
+
+        $this
+            ->given(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de')))
+            ->when(
+                new ChangeEmail(ProfileId::fromString('1'), Email::fromString('new-hq@patchlevel.de')),
+                $clock,
+            )
+            ->then(new EmailChanged(
+                ProfileId::fromString('1'),
+                Email::fromString('new-hq@patchlevel.de'),
+                new DateTimeImmutable('2021-01-01 00:00:10'),
+            ));
     }
 }
 ```
