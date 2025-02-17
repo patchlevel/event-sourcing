@@ -231,7 +231,6 @@ $commandBus = new SyncCommandBus($handlerProvider);
 $commandBus->dispatch(new CreateProfile($profileId, 'name'));
 $commandBus->dispatch(new ChangeProfileName($profileId, 'new name'));
 ```
-
 ## Provider
 
 There are different types of providers that you can use to register handlers.
