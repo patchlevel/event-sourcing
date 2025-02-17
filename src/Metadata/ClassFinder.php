@@ -77,8 +77,6 @@ final class ClassFinder
     private function getClassesInPhpFiles(array $files): array
     {
         foreach ($files as $file) {
-
-            /** @psalm-suppress all */
             require_once $file;
         }
 
