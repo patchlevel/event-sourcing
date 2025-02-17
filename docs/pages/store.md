@@ -6,7 +6,7 @@ Each message contains an event and the associated headers.
 !!! note
 
     More information about the message can be found [here](message.md).
-
+    
 The store is optimized to efficiently store and load events for aggregates.
 
 ## Configure Store
@@ -36,12 +36,11 @@ $store = new DoctrineDbalStore(
     DefaultEventSerializer::createFromPaths(['src/Event']),
 );
 ```
-
 !!! note
 
     You can find out more about how to create a connection 
     [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
-
+    
 Following options are available in `DoctrineDbalStore`:
 
 | Option            | Type            | Default    | Description                                  |
@@ -71,7 +70,7 @@ The table structure of the `DoctrineDbalStore` looks like this:
 
     The default type of the `aggregate_id` column is `uuid` if the database supports it and `string` if not.
     You can change the type with the `aggregate_id_type` to `string` if you want use custom id.
-
+    
 ### StreamDoctrineDbalStore
 
 We offer a new store called `StreamDoctrineDbalStore`.
@@ -97,12 +96,11 @@ $store = new StreamDoctrineDbalStore(
     DefaultEventSerializer::createFromPaths(['src/Event']),
 );
 ```
-
 !!! note
 
     You can find out more about how to create a connection 
     [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
-
+    
 Following options are available in `StreamDoctrineDbalStore`:
 
 | Option       | Type   | Default     | Description                                   |
@@ -137,11 +135,10 @@ use Patchlevel\EventSourcing\Store\InMemoryStore;
 
 $store = new InMemoryStore();
 ```
-
 !!! tip
 
     You can pass messages to the constructor to initialize the store with some events.
-
+    
 ### ReadOnlyStore & StreamReadOnlyStore
 
 Last but not least, we offer two read-only stores.
@@ -161,7 +158,6 @@ $readOnlyStore = new ReadOnlyStore($store);
 /** @var StreamStore $store */
 $readOnlyStore = new StreamReadOnlyStore($store);
 ```
-
 ## Schema
 
 With the help of the `SchemaDirector`, the database structure can be created, updated and deleted.
@@ -169,7 +165,7 @@ With the help of the `SchemaDirector`, the database structure can be created, up
 !!! tip
 
     You can also use doctrine migration to create and keep your schema in sync.
-
+    
 ### Doctrine Schema Director
 
 The `SchemaDirector` is responsible for creating, updating and deleting the database schema.
@@ -190,11 +186,10 @@ $schemaDirector = new DoctrineSchemaDirector(
     $store,
 );
 ```
-
 !!! note
 
     How to setup cli commands for schema director can be found [here](cli.md).
-
+    
 #### Create schema
 
 You can create the table from scratch using the `create` method.
@@ -205,7 +200,6 @@ use Patchlevel\EventSourcing\Schema\SchemaDirector;
 /** @var SchemaDirector $schemaDirector */
 $schemaDirector->create();
 ```
-
 Or can give you back which SQL statements would be necessary for this.
 Either for a dry run, or to define your own migrations.
 
@@ -215,7 +209,6 @@ use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 /** @var DryRunSchemaDirector $schemaDirector */
 $sql = $schemaDirector->dryRunCreate();
 ```
-
 #### Update schema
 
 The update method compares the current state in the database and how the table should be structured.
@@ -227,7 +220,6 @@ use Patchlevel\EventSourcing\Schema\SchemaDirector;
 /** @var SchemaDirector $schemaDirector */
 $schemaDirector->update();
 ```
-
 Or can give you back which SQL statements would be necessary for this.
 
 ```php
@@ -236,7 +228,6 @@ use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 /** @var DryRunSchemaDirector $schemaDirector */
 $sql = $schemaDirector->dryRunUpdate();
 ```
-
 #### Drop schema
 
 You can also delete the table with the `drop` method.
@@ -247,7 +238,6 @@ use Patchlevel\EventSourcing\Schema\SchemaDirector;
 /** @var SchemaDirector $schemaDirector */
 $schemaDirector->drop();
 ```
-
 Or can give you back which SQL statements would be necessary for this.
 
 ```php
@@ -256,7 +246,6 @@ use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 /** @var DryRunSchemaDirector $schemaDirector */
 $sql = $schemaDirector->dryRunDrop();
 ```
-
 ### Doctrine Migrations
 
 You can use [doctrine migration](https://www.doctrine-project.org/projects/migrations.html),
@@ -301,16 +290,15 @@ $dependencyFactory->setService(
     $schemaProvider,
 );
 ```
-
 !!! note
 
     Here you can find more information on how to 
     [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
-
+    
 !!! note
 
     How to setup cli commands for doctrine migration can be found [here](cli.md).
-
+    
 ## Usage
 
 The store has a few methods to interact with the database.
@@ -326,7 +314,6 @@ use Patchlevel\EventSourcing\Store\Store;
 /** @var Store $store */
 $stream = $store->load();
 ```
-
 The load method also has a few parameters to filter, limit and sort the events.
 
 ```php
@@ -341,7 +328,6 @@ $stream = $store->load(
     true,  // latest first
 );
 ```
-
 #### Criteria
 
 The `Criteria` object is used to filter the events.
@@ -363,7 +349,6 @@ $criteria = new Criteria(
     new EventsCriterion(['profile.created', 'profile.name_changed']),
 );
 ```
-
 Or you can the criteria builder to create the criteria.
 
 ```php
@@ -378,7 +363,6 @@ $criteria = (new CriteriaBuilder())
     ->events(['profile.created', 'profile.name_changed'])
     ->build();
 ```
-
 #### Stream
 
 The load method returns a `Stream` object and is a generator.
@@ -398,16 +382,15 @@ foreach ($stream as $message) {
     $message->event(); // get the event
 }
 ```
-
 !!! note
 
     You can find more information about the `Message` object [here](message.md).
-
+    
 !!! warning
 
     The stream cannot rewind, so you can only iterate over it once.
     If you want to iterate over it again, you have to call the `load` method again.
-
+    
 ### Count
 
 You can count the number of events in the store with the `count` method.
@@ -418,7 +401,6 @@ use Patchlevel\EventSourcing\Store\Store;
 /** @var Store $store */
 $count = $store->count();
 ```
-
 The count method also has the possibility to filter the events.
 
 ```php
@@ -430,7 +412,6 @@ $count = $store->count(
     new Criteria(), // filter criteria
 );
 ```
-
 ### Save
 
 You can save a message with the `save` method.
@@ -451,16 +432,15 @@ $store->save($message);
 $store->save($message1, $message2, $message3);
 $store->save(...$messages);
 ```
-
 !!! note
 
     The saving happens in a transaction, so all messages are saved or none.    
     The store lock the table for writing during each save by default.
-
+    
 !!! tip
 
     Use transactional method if you want call multiple save methods in a transaction.
-
+    
 ### Update
 
 It is not possible to update events.
@@ -476,11 +456,10 @@ use Patchlevel\EventSourcing\Store\StreamStore;
 /** @var StreamStore $store */
 $store->remove('profile-*');
 ```
-
 !!! note
 
     The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
-
+    
 ### List Streams
 
 You can list all streams with the `streams` method.
@@ -491,11 +470,10 @@ use Patchlevel\EventSourcing\Store\StreamStore;
 /** @var StreamStore $store */
 $streams = $store->streams(); // ['profile-1', 'profile-2', 'profile-3']
 ```
-
 !!! note
 
     The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
-
+    
 ### Transaction
 
 There is also the possibility of executing a function in a transaction.
@@ -516,16 +494,15 @@ $store->transactional(static function () use ($command, $bankAccountRepository):
     $bankAccountRepository->save($accountTo);
 });
 ```
-
 !!! note
 
     The store lock the table for writing during the transaction by default.
-
+    
 !!! tip
 
     If you want save only one aggregate, so you don't have to use the transactional method.
     The save method in store/repository is already transactional.
-
+    
 ## Learn more
 
 * [How to create events](events.md)
