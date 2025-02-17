@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.26.1@d747f6500b38ac4f7dfc5edbcae6e4b637d7add0">
+<files psalm-version="6.0.0@b8e96bb617bf59382113b1b56cef751f648a7dc9">
   <file src="src/Aggregate/AggregateRootBehaviour.php">
     <UnsafeInstantiation>
       <code><![CDATA[new static()]]></code>
@@ -10,11 +10,6 @@
       <code><![CDATA[$recorder]]></code>
       <code><![CDATA[$recorder]]></code>
     </MissingConstructor>
-  </file>
-  <file src="src/Clock/FrozenClock.php">
-    <PossiblyFalsePropertyAssignmentValue>
-      <code><![CDATA[$this->frozenDateTime->modify(sprintf('+%s seconds', $seconds))]]></code>
-    </PossiblyFalsePropertyAssignmentValue>
   </file>
   <file src="src/CommandBus/Handler/CreateAggregateHandler.php">
     <InvalidOperand>
