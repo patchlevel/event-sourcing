@@ -152,6 +152,9 @@
     <DeprecatedInterface>
       <code><![CDATA[SubscriberAccessor|null]]></code>
     </DeprecatedInterface>
+    <DeprecatedMethod>
+      <code><![CDATA[realSubscriber]]></code>
+    </DeprecatedMethod>
   </file>
   <file src="src/Subscription/Lookup/Lookup.php">
     <ArgumentTypeCoercion>
@@ -187,8 +190,13 @@
     <MixedMethodCall>
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$method]]></code>
+      <code><![CDATA[$method]]></code>
       <code><![CDATA[$methodName]]></code>
     </MixedMethodCall>
+    <MixedReturnTypeCoercion>
+      <code><![CDATA[$this->subscriber->$method(...)]]></code>
+      <code><![CDATA[Closure(Message, Throwable):void|null]]></code>
+    </MixedReturnTypeCoercion>
   </file>
   <file src="src/Subscription/Subscriber/SubscriberAccessorRepository.php">
     <DeprecatedInterface>
@@ -299,6 +307,11 @@
     <TypeDoesNotContainNull>
       <code><![CDATA[$stream]]></code>
     </TypeDoesNotContainNull>
+  </file>
+  <file src="tests/Integration/Subscription/SubscriptionTest.php">
+    <InvalidArgument>
+      <code><![CDATA[0]]></code>
+    </InvalidArgument>
   </file>
   <file src="tests/Unit/CommandBus/AggregateHandlerProviderTest.php">
     <InvalidArrayAccess>
@@ -496,6 +509,11 @@
       <code><![CDATA[$subscriptions]]></code>
       <code><![CDATA[$subscriptions]]></code>
     </InvalidArgument>
+  </file>
+  <file src="tests/Unit/Subscription/RetryStrategy/ClockBasedRetryStrategyTest.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$maxAttempts]]></code>
+    </ArgumentTypeCoercion>
   </file>
   <file src="tests/Unit/Subscription/Subscriber/MetadataSubscriberAccessorTest.php">
     <DeprecatedMethod>
