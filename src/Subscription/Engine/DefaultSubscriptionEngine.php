@@ -8,7 +8,9 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
@@ -36,11 +38,13 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
     private readonly MessageLoader $messageLoader;
 
+    private readonly RetryStrategyRepository $retryStrategyRepository;
+
     public function __construct(
         Store|MessageLoader $messageStore,
         SubscriptionStore $subscriptionStore,
         private readonly SubscriberAccessorRepository $subscriberRepository,
-        private readonly RetryStrategy $retryStrategy = new ClockBasedRetryStrategy(),
+        RetryStrategy|RetryStrategyRepository|null $retryStrategyRepository = null,
         private readonly LoggerInterface|null $logger = null,
     ) {
         if ($messageStore instanceof MessageLoader) {
@@ -50,6 +54,15 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         $this->subscriptionManager = new SubscriptionManager($subscriptionStore);
+
+        if ($retryStrategyRepository instanceof RetryStrategyRepository) {
+            $this->retryStrategyRepository = $retryStrategyRepository;
+        } else {
+            $this->retryStrategyRepository = new RetryStrategyRepository([
+                RetryStrategyRepository::DEFAULT_STRATEGY_NAME => $retryStrategyRepository ?? new ClockBasedRetryStrategy(),
+                'no_retry' => new NoRetryStrategy(),
+            ]);
+        }
     }
 
     public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): Result
@@ -924,7 +937,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         continue;
                     }
 
-                    if (!$this->retryStrategy->shouldRetry($subscription)) {
+                    if (!$this->retryStrategy($subscription)->shouldRetry($subscription)) {
                         continue;
                     }
 
@@ -991,7 +1004,9 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             $this->rollback($subscription);
         }
 
-        if (!$this->retryStrategy instanceof ConditionalRetryStrategy || $this->retryStrategy->canRetry($subscription)) {
+        $retryStrategy = $this->retryStrategy($subscription);
+
+        if (!$retryStrategy instanceof ConditionalRetryStrategy || $retryStrategy->canRetry($subscription)) {
             $subscription->error($throwable);
             $this->subscriptionManager->update($subscription);
 
@@ -1174,5 +1189,22 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         return $this->batching[$subscription->id()]->forceCommit();
+    }
+
+    private function retryStrategy(Subscription $subscription): RetryStrategy
+    {
+        $subscriber = $this->subscriber($subscription->id());
+
+        if (!$subscriber instanceof MetadataSubscriberAccessor) {
+            return $this->retryStrategyRepository->getDefaultRetryStrategy();
+        }
+
+        $retryStrategy = $subscriber->metadata()->retryStrategy;
+
+        if ($retryStrategy === null) {
+            return $this->retryStrategyRepository->getDefaultRetryStrategy();
+        }
+
+        return $this->retryStrategyRepository->get($retryStrategy);
     }
 }

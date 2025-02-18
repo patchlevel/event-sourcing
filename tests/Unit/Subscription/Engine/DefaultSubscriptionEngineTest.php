@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 use Closure;
 use Generator;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
+use Patchlevel\EventSourcing\Attribute\RetryStrategy as RetryStrategyName;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -228,6 +229,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     {
         $subscriptionId = 'test';
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        #[RetryStrategyName('no_retry')]
         class {
             public function __construct(
                 public readonly RuntimeException $exception = new RuntimeException('ERROR'),
@@ -254,7 +256,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
-            new NoRetryStrategy(),
             logger: new NullLogger(),
         );
 
@@ -661,6 +662,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     {
         $subscriptionId = 'test';
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        #[RetryStrategyName('no_retry')]
         class {
             public function __construct(
                 public readonly RuntimeException $exception = new RuntimeException('ERROR'),
@@ -692,7 +694,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
-            new NoRetryStrategy(),
             logger: new NullLogger(),
         );
 
@@ -1960,6 +1961,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
     {
         $subscriptionId = 'test';
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        #[RetryStrategyName('no_retry')]
         class {
             public function __construct(
                 public readonly RuntimeException $exception = new RuntimeException('ERROR'),
@@ -1991,7 +1993,6 @@ final class DefaultSubscriptionEngineTest extends TestCase
             $streamableStore->reveal(),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
-            new NoRetryStrategy(),
             logger: new NullLogger(),
         );
 

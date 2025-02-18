@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
 use Patchlevel\EventSourcing\Attribute\OnFailed;
+use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -102,6 +103,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $setupMethod,
             $teardownMethod,
             $failedMethod,
+            $this->retryStrategy($reflector),
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;
@@ -142,5 +144,18 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $method->getName(),
             $arguments,
         );
+    }
+
+    private function retryStrategy(ReflectionClass $reflector): string|null
+    {
+        $attributes = $reflector->getAttributes(RetryStrategy::class);
+
+        if ($attributes === []) {
+            return null;
+        }
+
+        $instance = $attributes[0]->newInstance();
+
+        return $instance->name;
     }
 }
