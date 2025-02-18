@@ -377,6 +377,45 @@ final class ProfileProjector
     Most databases have a limit on the length of the table/collection name.
     The limit is usually 64 characters.
     
+### On Failed
+
+The subscription engine has a [retry strategy](#retry-strategy) to retry subscriptions that have an error.
+If this does not work, the subscription changes the status to failed and will be ignored in all future runs.
+You can react to this transition and prevent it, so the subscription can skip the message and continue with the next one.
+To do this, you can add a method with the `OnFailed` attribute.
+If the method throws an exception, the subscription will be set to failed,
+otherwise the subscription will continue with the next message.
+
+```php
+use Patchlevel\EventSourcing\Attribute\OnFailed;
+use Patchlevel\EventSourcing\Attribute\Processor;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Message\Message;
+
+#[Processor('invoice')]
+final class InvoiceProcessor
+{
+    #[Subscribe(OrderPlaced::class)]
+    public function onOrderPlaced(OrderPlaced $orderPlaced): void
+    {
+        // an error occurs
+    }
+
+    #[OnFailed]
+    public function onFailed(Message $message, Throwable $throwable): void
+    {
+        // do something (failed queue, logging, etc.), so the subscription can continue
+    }
+}
+```
+!!! warning
+
+    Currently, the `OnFailed` method is only available for non-batchable subscribers.
+    
+!!! note
+
+    The `OnFailed` method is called after the retry strategy has decided that the subscription should be set to failed.
+    
 ### Versioning
 
 As soon as the structure of a projection changes, or you need other events from the past,

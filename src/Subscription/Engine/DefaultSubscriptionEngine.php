@@ -21,6 +21,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepositor
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Throwable;
+
 use function count;
 use function sprintf;
 
@@ -1018,7 +1019,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             return;
         }
 
-        if (!$subscriber->realSubscriber() instanceof BatchableSubscriber) {
+        if ($subscriber->realSubscriber() instanceof BatchableSubscriber) {
             $subscription->failed($throwable);
             $this->subscriptionManager->update($subscription);
 
@@ -1035,7 +1036,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         try {
-            $failedMethod($message);
+            $failedMethod($message, $throwable);
             $subscription->changePosition($index);
             $subscription->resetRetry();
 
