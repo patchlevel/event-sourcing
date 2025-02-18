@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use function class_exists;
 use function is_a;
 
+/** @deprecated add aggregate id in your events, automatically resolving in stream store is not possible. */
 final class AggregateIdArgumentResolver implements ArgumentResolver
 {
     public function resolve(ArgumentMetadata $argument, Message $message): AggregateRootId

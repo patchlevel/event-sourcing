@@ -273,32 +273,7 @@ final class PublicProfileProjection
 !!! note
 
     More about reducers you can find [here](./message.md#reducer)
-    
-##### Aggregate Id Resolver
 
-The aggregate id resolver resolves the aggregate id.
-It looks for a parameter with the instance of the `AggregateRootId`.
-
-```php
-use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Subscriber;
-use Patchlevel\EventSourcing\Subscription\RunMode;
-
-#[Subscriber('do_stuff', RunMode::Once)]
-final class DoStuffSubscriber
-{
-    #[Subscribe(ProfileCreated::class)]
-    public function onProfileCreated(ProfileId $profileId): void
-    {
-        // do something
-    }
-}
-```
-!!! warning
-
-    The resolver argument doesn't know if you're using the correct aggregate id class and doesn't check it. 
-    It gets the Aggregate ID as a string, takes the class and instantiates it with the method `fromString`.
-    
 ##### Recorded On Resolver
 
 The recorded on resolver resolves the recorded on date.
