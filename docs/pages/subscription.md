@@ -160,6 +160,7 @@ If you want to subscribe on all events, you can pass `*` or `Subscribe::ALL` ins
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
 
+#[Subscriber('welcome_email', RunMode::FromNow)]
 final class WelcomeSubscriber
 {
     #[Subscribe('*')]
@@ -499,6 +500,33 @@ final class MigrationSubscriber
    // ...
 }
 ```
+### Select Retry Strategy
+
+You can select a retry strategy for your subscriber.
+We preconfigured two strategies for you: `default` and `no_retry`.
+
+* `default` - The default strategy retries the subscription 5 times.
+* `no_retry` - The no retry strategy does not retry the subscription.
+
+```php
+use Patchlevel\EventSourcing\Attribute\RetryStrategy;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Message\Message;
+
+#[Subscriber('welcome_email', RunMode::FromNow)]
+#[RetryStrategy('default')]
+final class WelcomeSubscriber
+{
+    #[Subscribe('*')]
+    public function onProfileCreated(Message $message): void
+    {
+        echo 'Welcome!';
+    }
+}
+```
+You can configure or add more strategies if you want.
+For more information, see the [retry strategy](#retry-strategy) documentation.
+
 ### Batching
 
 You can also optimize the performance of your subscribers by processing a number of events in a batch.
@@ -809,8 +837,14 @@ $schemaDirector = new DoctrineSchemaDirector(
     
 ### Retry Strategy
 
-The subscription engine uses a retry strategy to retry subscriptions that have failed.
-Our default strategy can be configured with the following parameters:
+The subscription engine uses a retry strategy to retry subscriptions that have an error.
+If the retry strategy says that the subscription should not be retried anymore,
+e.g. the maximum number of retry attempts has been reached, then the subscription is set to failed.
+
+#### Clock Based Retry Strategy
+
+We provide a clock based retry strategy by default.
+You can configure the base delay, the delay factor and the maximum number of attempts.
 
 * `baseDelay` - The base delay in seconds.
 * `delayFactor` - The factor by which the delay is multiplied after each attempt.
@@ -825,9 +859,43 @@ $retryStrategy = new ClockBasedRetryStrategy(
     maxAttempts: 5,
 );
 ```
+#### Non Retry Strategy
+
+If you don't want to retry subscriptions that have an error, you can use the non retry strategy.
+The subscription will be set to failed after the first error.
+
+```php
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
+
+$retryStrategy = new NoRetryStrategy();
+```
+#### Retry Strategy Repository
+
+You can define multiple retry strategies and select them by name in the subscriber.
+This is useful if you have different retry strategies for different subscribers.
+Here is an example how you can configure the repository.
+
+```php
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
+
+$retryStrategyRepository = new RetryStrategyRepository([
+    'default' => new ClockBasedRetryStrategy(
+        baseDelay: 5,
+        delayFactor: 2,
+        maxAttempts: 5,
+    ),
+    'no_retry' => new NoRetryStrategy(),
+]);
+```
+!!! note
+
+    This is what our default configuration looks like if you do not define the retry strategy.
+    
 !!! tip
 
-    You can reactivate the subscription manually or remove it and rebuild it from scratch.
+    You can change the default retry strategy by define the name in the constructor as second parameter.
     
 ### Subscriber Accessor
 
@@ -857,7 +925,7 @@ and we need the subscriber accessor repository. Optionally, we can also pass a r
 ```php
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
-use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 
@@ -865,13 +933,13 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorR
  * @var MessageLoader $messageLoader
  * @var DoctrineSubscriptionStore $subscriptionStore
  * @var MetadataSubscriberAccessorRepository $subscriberAccessorRepository
- * @var NoRetryStrategy $retryStrategy
+ * @var RetryStrategyRepository $retryStrategyRepository
  */
 $subscriptionEngine = new DefaultSubscriptionEngine(
     $messageLoader,
     $subscriptionStore,
     $subscriberAccessorRepository,
-    $retryStrategy,
+    $retryStrategyRepository, // optional, if not set the default retry strategy is used
 );
 ```
 ### Catch up Subscription Engine
