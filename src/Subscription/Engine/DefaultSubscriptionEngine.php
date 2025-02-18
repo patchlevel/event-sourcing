@@ -21,7 +21,6 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepositor
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Throwable;
-
 use function count;
 use function sprintf;
 
@@ -832,7 +831,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 ),
             );
 
-            $this->handleError($subscription, $e, $message);
+            $this->handleError($subscription, $e, $message, $index);
 
             return new Error(
                 $subscription->id(),
@@ -985,28 +984,71 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->subscriptionManager->flush();
     }
 
-    private function handleError(Subscription $subscription, Throwable $throwable, Message|null $message = null): void
+    private function handleError(Subscription $subscription, Throwable $throwable, Message|null $message = null, int|null $index = null): void
     {
-        if ($this->retryStrategy instanceof ConditionalRetryStrategy && !$this->retryStrategy->canRetry($subscription)) {
-            $subscriber = $this->subscriber($subscription->id());
-
-            if ($subscriber instanceof MetadataSubscriberAccessor) {
-                $failedMethod = $subscriber->failedMethod();
-
-                if ($failedMethod) {
-                    $failedMethod($message);
-                }
-            }
-
-            $subscription->failed($throwable);
-        } else {
-            $subscription->error($throwable);
-        }
-
-        $this->subscriptionManager->update($subscription);
-
         if ($this->needRollback($subscription)) {
             $this->rollback($subscription);
+        }
+
+        if (!$this->retryStrategy instanceof ConditionalRetryStrategy || $this->retryStrategy->canRetry($subscription)) {
+            $subscription->error($throwable);
+            $this->subscriptionManager->update($subscription);
+
+            return;
+        }
+
+        $this->handleFailed($subscription, $throwable, $message, $index);
+    }
+
+    private function handleFailed(Subscription $subscription, Throwable $throwable, Message|null $message = null, int|null $index = null): void
+    {
+        if (!$message || $index === null) {
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
+
+            return;
+        }
+
+        $subscriber = $this->subscriber($subscription->id());
+
+        if (!$subscriber instanceof MetadataSubscriberAccessor) {
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
+
+            return;
+        }
+
+        if (!$subscriber->realSubscriber() instanceof BatchableSubscriber) {
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
+
+            return;
+        }
+
+        $failedMethod = $subscriber->failedMethod();
+
+        if (!$failedMethod) {
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
+
+            return;
+        }
+
+        try {
+            $failedMethod($message);
+            $subscription->changePosition($index);
+            $subscription->resetRetry();
+
+            $this->subscriptionManager->update($subscription);
+        } catch (Throwable $e) {
+            $this->logger?->error(sprintf(
+                'Subscription Engine: Subscriber "%s" has an error in the failed method: %s',
+                $subscription->id(),
+                $e->getMessage(),
+            ));
+
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
         }
     }
 

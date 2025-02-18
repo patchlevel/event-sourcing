@@ -59,7 +59,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 if ($failedMethod !== null) {
                     throw new DuplicateFailedMethod(
                         $subscriber,
-                        $setupMethod,
+                        $failedMethod,
                         $method->getName(),
                     );
                 }
