@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
 use Closure;
 use Generator;
+use Patchlevel\EventSourcing\Attribute\OnFailed;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -26,6 +27,7 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\LockableSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
@@ -236,6 +238,71 @@ final class DefaultSubscriptionEngineTest extends TestCase
             public function create(): void
             {
                 throw $this->exception;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription($subscriptionId),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load(null, 1, null, true)->willReturn(new ArrayStream([$message1]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new NoRetryStrategy(),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->setup();
+
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Failed,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::New,
+                    ThrowableToErrorContextTransformer::transform($subscriber->exception),
+                ),
+            ),
+        );
+    }
+
+    public function testSetupWithCreateErrorRecoveryNotPossible(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
+
+            #[Setup]
+            public function create(): void
+            {
+                throw $this->exception;
+            }
+
+            #[OnFailed]
+            public function onFailed(): void
+            {
             }
         };
 
@@ -604,6 +671,238 @@ final class DefaultSubscriptionEngineTest extends TestCase
             public function handle(Message $message): void
             {
                 throw $this->exception;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new NoRetryStrategy(),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Failed,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Booting,
+                    ThrowableToErrorContextTransformer::transform($subscriber->exception),
+                ),
+            ),
+        );
+    }
+
+    public function testBootWithErrorAndRecovery(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                throw $this->exception;
+            }
+
+            #[OnFailed]
+            public function onFailed(): void
+            {
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new NoRetryStrategy(),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+                1,
+            ),
+        );
+    }
+
+    public function testBootWithErrorAndRecoveryFailed(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                throw $this->exception;
+            }
+
+            #[OnFailed]
+            public function onFailed(): void
+            {
+                throw new RuntimeException('RECOVERY ERROR');
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new NoRetryStrategy(),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Failed,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Booting,
+                    ThrowableToErrorContextTransformer::transform($subscriber->exception),
+                ),
+            ),
+        );
+    }
+
+    public function testBootWithErrorAndRecoveryFailedBecauseBatching(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class implements BatchableSubscriber {
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                throw $this->exception;
+            }
+
+            #[OnFailed]
+            public function onFailed(): void
+            {
+            }
+
+            public function beginBatch(): void
+            {
+                // TODO: Implement beginBatch() method.
+            }
+
+            public function commitBatch(): void
+            {
+                // TODO: Implement commitBatch() method.
+            }
+
+            public function rollbackBatch(): void
+            {
+                // TODO: Implement rollbackBatch() method.
+            }
+
+            public function forceCommit(): bool
+            {
+                return false;
             }
         };
 
@@ -1671,6 +1970,146 @@ final class DefaultSubscriptionEngineTest extends TestCase
             public function handle(Message $message): void
             {
                 throw $this->exception;
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new NoRetryStrategy(),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Failed,
+                0,
+                new SubscriptionError(
+                    'ERROR',
+                    Status::Active,
+                    ThrowableToErrorContextTransformer::transform($subscriber->exception),
+                ),
+            ),
+        );
+    }
+
+    public function testRunningWithErrorAndRecovery(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                throw $this->exception;
+            }
+
+            #[OnFailed]
+            public function onFailed(): void
+            {
+            }
+        };
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new NoRetryStrategy(),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertEquals('ERROR', $error->message);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+                1,
+            ),
+        );
+    }
+
+    public function testRunningWithErrorAndRecoveryFailed(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public function __construct(
+                public readonly RuntimeException $exception = new RuntimeException('ERROR'),
+            ) {
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                throw $this->exception;
+            }
+
+            #[OnFailed]
+            public function onFailed(): void
+            {
+                throw new RuntimeException('RECOVERY ERROR');
             }
         };
 

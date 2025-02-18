@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
+use Throwable;
 
 use function array_key_exists;
 use function array_keys;
@@ -77,6 +78,18 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
     public function teardownMethod(): Closure|null
     {
         $method = $this->metadata->teardownMethod;
+
+        if ($method === null) {
+            return null;
+        }
+
+        return $this->subscriber->$method(...);
+    }
+
+    /** @return Closure(Message, Throwable):void|null */
+    public function failedMethod(): Closure|null
+    {
+        $method = $this->metadata->failedMethod;
 
         if ($method === null) {
             return null;

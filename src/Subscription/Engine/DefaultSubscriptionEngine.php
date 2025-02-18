@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\RealSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
@@ -831,7 +832,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 ),
             );
 
-            $this->handleError($subscription, $e);
+            $this->handleError($subscription, $e, $message, $index);
 
             return new Error(
                 $subscription->id(),
@@ -984,18 +985,83 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->subscriptionManager->flush();
     }
 
-    private function handleError(Subscription $subscription, Throwable $throwable): void
+    private function handleError(Subscription $subscription, Throwable $throwable, Message|null $message = null, int|null $index = null): void
     {
-        if ($this->retryStrategy instanceof ConditionalRetryStrategy && !$this->retryStrategy->canRetry($subscription)) {
-            $subscription->failed($throwable);
-        } else {
-            $subscription->error($throwable);
+        if ($this->needRollback($subscription)) {
+            $this->rollback($subscription);
         }
 
-        $this->subscriptionManager->update($subscription);
+        if (!$this->retryStrategy instanceof ConditionalRetryStrategy || $this->retryStrategy->canRetry($subscription)) {
+            $subscription->error($throwable);
+            $this->subscriptionManager->update($subscription);
 
-        if (!isset($this->batching[$subscription->id()])) {
             return;
+        }
+
+        $this->handleFailed($subscription, $throwable, $message, $index);
+    }
+
+    private function handleFailed(Subscription $subscription, Throwable $throwable, Message|null $message = null, int|null $index = null): void
+    {
+        if (!$message || $index === null) {
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
+
+            return;
+        }
+
+        $subscriber = $this->subscriber($subscription->id());
+
+        if (!$subscriber instanceof MetadataSubscriberAccessor) {
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
+
+            return;
+        }
+
+        if ($subscriber->realSubscriber() instanceof BatchableSubscriber) {
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
+
+            return;
+        }
+
+        $failedMethod = $subscriber->failedMethod();
+
+        if (!$failedMethod) {
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
+
+            return;
+        }
+
+        try {
+            $failedMethod($message, $throwable);
+            $subscription->changePosition($index);
+            $subscription->resetRetry();
+
+            $this->subscriptionManager->update($subscription);
+        } catch (Throwable $e) {
+            $this->logger?->error(sprintf(
+                'Subscription Engine: Subscriber "%s" has an error in the failed method: %s',
+                $subscription->id(),
+                $e->getMessage(),
+            ));
+
+            $subscription->failed($throwable);
+            $this->subscriptionManager->update($subscription);
+        }
+    }
+
+    private function needRollback(Subscription $subscription): bool
+    {
+        return isset($this->batching[$subscription->id()]);
+    }
+
+    private function rollback(Subscription $subscription): void
+    {
+        if (!isset($this->batching[$subscription->id()])) {
+            throw new UnexpectedError('No batch to rollback.');
         }
 
         $subscriber = $this->batching[$subscription->id()];

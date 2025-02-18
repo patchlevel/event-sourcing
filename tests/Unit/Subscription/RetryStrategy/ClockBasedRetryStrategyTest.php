@@ -66,4 +66,35 @@ final class ClockBasedRetryStrategyTest extends TestCase
         yield [5, 160, false];
         yield [5, 320, false];
     }
+
+    #[DataProvider('canRetryProvider')]
+    public function testCanRetry(int $maxAttempts, int $attempt, bool $expected): void
+    {
+        $strategy = new ClockBasedRetryStrategy(
+            $this->clock,
+            maxAttempts: $maxAttempts,
+        );
+
+        $subscription = new Subscription(
+            'test',
+            'default',
+            RunMode::FromBeginning,
+            Status::Error,
+            0,
+            null,
+            $attempt,
+            $this->clock->now(),
+        );
+
+        self::assertEquals(
+            $expected,
+            $strategy->canRetry($subscription),
+        );
+    }
+
+    public static function canRetryProvider(): Generator
+    {
+        yield [0, 0, false];
+        yield [1, 0, true];
+    }
 }

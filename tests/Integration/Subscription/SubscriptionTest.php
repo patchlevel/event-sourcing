@@ -35,6 +35,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorR
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerSubscriber;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerWithSelfRecoverySubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\LookupSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\MigrateAggregateToStreamStoreSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNewProjection;
@@ -390,6 +391,104 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(Status::Active, $subscription->status());
         self::assertEquals(null, $subscription->subscriptionError());
         self::assertEquals(0, $subscription->retryAttempt());
+    }
+
+    public function testSelfRecovery(): void
+    {
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $subscriber = new ErrorProducerWithSelfRecoverySubscriber();
+
+        $engine = new DefaultSubscriptionEngine(
+            $store,
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new ClockBasedRetryStrategy(
+                $clock,
+                ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
+                ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
+                0,
+            ),
+        );
+
+        $result = $engine->setup(skipBooting: true);
+        self::assertEquals([], $result->errors);
+
+        // add data
+
+        $repository = $manager->get(Profile::class);
+
+        $profile = Profile::create(ProfileId::generate(), 'John');
+        $repository->save($profile);
+
+        $subscriber->subscribeError = true;
+
+        // first run, failed -> self recovery
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals('error_producer', $error->subscriptionId);
+        self::assertEquals('subscribe error', $error->message);
+
+        $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
+
+        self::assertEquals(Status::Active, $subscription->status());
+        self::assertEquals(0, $subscription->retryAttempt());
+        self::assertEquals(1, $subscription->position());
+
+        // change data
+
+        $profile->changeName('Jane');
+        $repository->save($profile);
+
+        // second run, failed -> self recovery failed
+
+        $subscriber->onFailedError = true;
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals('error_producer', $error->subscriptionId);
+        self::assertEquals('subscribe error', $error->message);
+
+        $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
+
+        self::assertEquals(Status::Failed, $subscription->status());
+        self::assertEquals(0, $subscription->retryAttempt());
+        self::assertEquals(1, $subscription->position());
     }
 
     public function testLargeErrorMessage(): void
