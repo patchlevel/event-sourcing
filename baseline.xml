@@ -198,6 +198,11 @@
       <code><![CDATA[Closure(Message, Throwable):void|null]]></code>
     </MixedReturnTypeCoercion>
   </file>
+  <file src="src/Subscription/Subscriber/MetadataSubscriberAccessorRepository.php">
+    <DeprecatedClass>
+      <code><![CDATA[new AggregateIdArgumentResolver()]]></code>
+    </DeprecatedClass>
+  </file>
   <file src="src/Subscription/Subscriber/SubscriberAccessorRepository.php">
     <DeprecatedInterface>
       <code><![CDATA[SubscriberAccessor|null]]></code>
@@ -514,6 +519,17 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$maxAttempts]]></code>
     </ArgumentTypeCoercion>
+  </file>
+  <file src="tests/Unit/Subscription/Subscriber/ArgumentResolver/AggregateIdArgumentResolverTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new AggregateIdArgumentResolver()]]></code>
+      <code><![CDATA[new AggregateIdArgumentResolver()]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Subscription/Subscriber/MetadataSubscriberAccessorRepositoryTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[new ArgumentResolver\AggregateIdArgumentResolver()]]></code>
+    </DeprecatedClass>
   </file>
   <file src="tests/Unit/Subscription/Subscriber/MetadataSubscriberAccessorTest.php">
     <DeprecatedMethod>
