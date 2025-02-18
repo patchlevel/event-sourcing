@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
+use Patchlevel\EventSourcing\Attribute\OnFailed;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -42,6 +43,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $subscribeMethods = [];
         $setupMethod = null;
         $teardownMethod = null;
+        $failedMethod = null;
 
         foreach ($methods as $method) {
             $attributes = $method->getAttributes(Subscribe::class);
@@ -51,6 +53,18 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 $eventClass = $instance->eventClass;
 
                 $subscribeMethods[$eventClass][] = $this->subscribeMethod($method);
+            }
+
+            if ($method->getAttributes(OnFailed::class)) {
+                if ($failedMethod !== null) {
+                    throw new DuplicateFailedMethod(
+                        $subscriber,
+                        $setupMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $failedMethod = $method->getName();
             }
 
             if ($method->getAttributes(Setup::class)) {
@@ -87,6 +101,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $subscribeMethods,
             $setupMethod,
             $teardownMethod,
+            $failedMethod,
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;

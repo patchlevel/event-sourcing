@@ -17,6 +17,7 @@ final class SubscriberMetadata
         public readonly array $subscribeMethods = [],
         public readonly string|null $setupMethod = null,
         public readonly string|null $teardownMethod = null,
+        public readonly string|null $failedMethod = null,
     ) {
     }
 }

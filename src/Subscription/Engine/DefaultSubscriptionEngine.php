@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\RealSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
@@ -831,7 +832,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 ),
             );
 
-            $this->handleError($subscription, $e);
+            $this->handleError($subscription, $e, $message);
 
             return new Error(
                 $subscription->id(),
@@ -984,9 +985,19 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->subscriptionManager->flush();
     }
 
-    private function handleError(Subscription $subscription, Throwable $throwable): void
+    private function handleError(Subscription $subscription, Throwable $throwable, Message|null $message = null): void
     {
         if ($this->retryStrategy instanceof ConditionalRetryStrategy && !$this->retryStrategy->canRetry($subscription)) {
+            $subscriber = $this->subscriber($subscription->id());
+
+            if ($subscriber instanceof MetadataSubscriberAccessor) {
+                $failedMethod = $subscriber->failedMethod();
+
+                if ($failedMethod) {
+                    $failedMethod($message);
+                }
+            }
+
             $subscription->failed($throwable);
         } else {
             $subscription->error($throwable);
@@ -994,8 +1005,20 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->subscriptionManager->update($subscription);
 
+        if ($this->needRollback($subscription)) {
+            $this->rollback($subscription);
+        }
+    }
+
+    private function needRollback(Subscription $subscription): bool
+    {
+        return isset($this->batching[$subscription->id()]);
+    }
+
+    private function rollback(Subscription $subscription): void
+    {
         if (!isset($this->batching[$subscription->id()])) {
-            return;
+            throw new UnexpectedError('No batch to rollback.');
         }
 
         $subscriber = $this->batching[$subscription->id()];

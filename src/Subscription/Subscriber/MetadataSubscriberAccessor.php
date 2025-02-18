@@ -85,6 +85,20 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
         return $this->subscriber->$method(...);
     }
 
+    /**
+     * @return Closure(Message):void|null
+     */
+    public function failedMethod(): Closure|null
+    {
+        $method = $this->metadata->failedMethod;
+
+        if ($method === null) {
+            return null;
+        }
+
+        return $this->subscriber->$method(...);
+    }
+
     /** @return list<class-string|'*'> */
     public function events(): array
     {
