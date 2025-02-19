@@ -16,7 +16,6 @@ use Throwable;
 use function array_key_exists;
 use function array_keys;
 use function array_map;
-use function array_merge;
 
 /** @template T of object */
 final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscriberAccessor

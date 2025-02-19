@@ -197,7 +197,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
                     [
                         new ArgumentMetadata('profileCreated', ProfileCreated::class),
                         new ArgumentMetadata('aggregateId', 'string'),
-                    ]
+                    ],
                 ),
             ],
             $metadata->subscribeMethods,
