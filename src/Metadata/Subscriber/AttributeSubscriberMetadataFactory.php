@@ -16,6 +16,7 @@ use ReflectionMethod;
 use ReflectionNamedType;
 
 use function array_key_exists;
+use function count;
 
 final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFactory
 {
@@ -58,7 +59,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                         $subscriber,
                         $eventClass,
                         $subscribeMethods[$eventClass][0]->name,
-                        $method->getName()
+                        $method->getName(),
                     );
                 }
 

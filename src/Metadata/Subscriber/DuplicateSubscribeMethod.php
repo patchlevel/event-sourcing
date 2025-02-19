@@ -14,7 +14,7 @@ final class DuplicateSubscribeMethod extends MetadataException
         string $subscriber,
         string $event,
         string $fistMethod,
-        string $secondMethod
+        string $secondMethod,
     ): self {
         return new self(
             sprintf(
@@ -22,7 +22,7 @@ final class DuplicateSubscribeMethod extends MetadataException
                 $fistMethod,
                 $secondMethod,
                 $subscriber,
-                $event
+                $event,
             ),
         );
     }

@@ -264,6 +264,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
             public function profileVisited(ProfileVisited $event): void
             {
             }
+
             #[Subscribe(Subscribe::ALL)]
             public function listenAll(ProfileVisited $event): void
             {
@@ -284,6 +285,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
             public function profileVisited(ProfileVisited $event): void
             {
             }
+
             #[Subscribe(ProfileVisited::class)]
             public function profileVisitedAgain(ProfileVisited $event): void
             {
