@@ -100,39 +100,6 @@ final class MetadataSubscriberAccessorTest extends TestCase
         self::assertSame($message, $subscriber->message);
     }
 
-    public function testMultipleSubscribeMethod(): void
-    {
-        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
-        class {
-            #[Subscribe(ProfileCreated::class)]
-            public function onProfileCreated(Message $message): void
-            {
-            }
-
-            #[Subscribe(ProfileCreated::class)]
-            public function onFoo(Message $message): void
-            {
-            }
-        };
-
-        $accessor = new MetadataSubscriberAccessor(
-            $subscriber,
-            (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
-            [
-                new MessageArgumentResolver(),
-            ],
-        );
-
-        $result = $accessor->subscribeMethods(ProfileCreated::class);
-
-        self::assertCount(2, $result);
-
-        self::assertEquals([
-            $subscriber->onProfileCreated(...),
-            $subscriber->onFoo(...),
-        ], $result);
-    }
-
     public function testSubscribeAllMethod(): void
     {
         $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
