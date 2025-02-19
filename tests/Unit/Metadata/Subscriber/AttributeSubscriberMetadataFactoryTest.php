@@ -114,9 +114,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => [
-                    new SubscribeMethodMetadata('handle', []),
-                ],
+                ProfileVisited::class => new SubscribeMethodMetadata('handle', []),
             ],
             $metadata->subscribeMethods,
         );
@@ -141,8 +139,8 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => [new SubscribeMethodMetadata('handle', [])],
-                ProfileCreated::class => [new SubscribeMethodMetadata('handle', [])],
+                ProfileVisited::class => new SubscribeMethodMetadata('handle', []),
+                ProfileCreated::class => new SubscribeMethodMetadata('handle', []),
             ],
             $metadata->subscribeMethods,
         );
@@ -163,7 +161,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                '*' => [new SubscribeMethodMetadata('handle', [])],
+                '*' => new SubscribeMethodMetadata('handle', []),
             ],
             $metadata->subscribeMethods,
         );
@@ -189,17 +187,18 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => [
-                    new SubscribeMethodMetadata('profileVisited', [
-                        new ArgumentMetadata('message', Message::class),
-                    ]),
-                ],
-                ProfileCreated::class => [
-                    new SubscribeMethodMetadata('profileCreated', [
+                ProfileVisited::class => new SubscribeMethodMetadata(
+                    'profileVisited',
+                    [new ArgumentMetadata('message', Message::class)],
+                ),
+
+                ProfileCreated::class => new SubscribeMethodMetadata(
+                    'profileCreated',
+                    [
                         new ArgumentMetadata('profileCreated', ProfileCreated::class),
                         new ArgumentMetadata('aggregateId', 'string'),
-                    ]),
-                ],
+                    ]
+                ),
             ],
             $metadata->subscribeMethods,
         );
