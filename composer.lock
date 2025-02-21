@@ -413,16 +413,16 @@
         },
         {
             "name": "patchlevel/hydrator",
-            "version": "1.7.0",
+            "version": "1.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/patchlevel/hydrator.git",
-                "reference": "e60410fbbfbfcfd02aa16eedab94434fa9ddf359"
+                "reference": "e4caf6af9e4fe3ecbc988942954318d11e848380"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/e60410fbbfbfcfd02aa16eedab94434fa9ddf359",
-                "reference": "e60410fbbfbfcfd02aa16eedab94434fa9ddf359",
+                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/e4caf6af9e4fe3ecbc988942954318d11e848380",
+                "reference": "e4caf6af9e4fe3ecbc988942954318d11e848380",
                 "shasum": ""
             },
             "require": {
@@ -472,9 +472,9 @@
             ],
             "support": {
                 "issues": "https://github.com/patchlevel/hydrator/issues",
-                "source": "https://github.com/patchlevel/hydrator/tree/1.7.0"
+                "source": "https://github.com/patchlevel/hydrator/tree/1.7.1"
             },
-            "time": "2025-01-28T11:28:11+00:00"
+            "time": "2025-02-20T14:47:14+00:00"
         },
         {
             "name": "patchlevel/worker",
@@ -9343,16 +9343,16 @@
         },
         {
             "name": "vimeo/psalm",
-            "version": "6.8.1",
+            "version": "6.8.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/vimeo/psalm.git",
-                "reference": "f12f96cde537a424fe2a9366105b5e7146d4fc23"
+                "reference": "7ee919229d510c5834af3112072f4b12cd7bb51a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/vimeo/psalm/zipball/f12f96cde537a424fe2a9366105b5e7146d4fc23",
-                "reference": "f12f96cde537a424fe2a9366105b5e7146d4fc23",
+                "url": "https://api.github.com/repos/vimeo/psalm/zipball/7ee919229d510c5834af3112072f4b12cd7bb51a",
+                "reference": "7ee919229d510c5834af3112072f4b12cd7bb51a",
                 "shasum": ""
             },
             "require": {
@@ -9457,7 +9457,7 @@
                 "issues": "https://github.com/vimeo/psalm/issues",
                 "source": "https://github.com/vimeo/psalm"
             },
-            "time": "2025-02-19T12:09:52+00:00"
+            "time": "2025-02-20T10:00:51+00:00"
         },
         {
             "name": "webmozart/assert",

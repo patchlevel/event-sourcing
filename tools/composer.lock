@@ -786,16 +786,16 @@
         },
         {
             "name": "deptrac/deptrac",
-            "version": "2.0.5",
+            "version": "2.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/deptrac/deptrac.git",
-                "reference": "605ee322f273ade1727f5ff2db3b47566140f4bf"
+                "reference": "613fc0e37b08d589d4776efbd0a3e0dabe08a32a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/deptrac/deptrac/zipball/605ee322f273ade1727f5ff2db3b47566140f4bf",
-                "reference": "605ee322f273ade1727f5ff2db3b47566140f4bf",
+                "url": "https://api.github.com/repos/deptrac/deptrac/zipball/613fc0e37b08d589d4776efbd0a3e0dabe08a32a",
+                "reference": "613fc0e37b08d589d4776efbd0a3e0dabe08a32a",
                 "shasum": ""
             },
             "require": {
@@ -815,7 +815,7 @@
                     "bootstrap.php"
                 ],
                 "psr-4": {
-                    "Deptrac\\Deptrac\\": "src/"
+                    "Qossmic\\Deptrac\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -828,9 +828,9 @@
             ],
             "support": {
                 "issues": "https://github.com/deptrac/deptrac/issues",
-                "source": "https://github.com/deptrac/deptrac/tree/2.0.5"
+                "source": "https://github.com/deptrac/deptrac/tree/2.0.6"
             },
-            "time": "2025-02-17T08:20:48+00:00"
+            "time": "2025-02-17T18:34:18+00:00"
         },
         {
             "name": "jetbrains/phpstorm-stubs",
