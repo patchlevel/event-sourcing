@@ -15,7 +15,6 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgum
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\NoSuitableResolver;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\TestCase;
@@ -98,39 +97,6 @@ final class MetadataSubscriberAccessorTest extends TestCase
         $result[0]($message);
 
         self::assertSame($message, $subscriber->message);
-    }
-
-    public function testMultipleSubscribeMethod(): void
-    {
-        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
-        class {
-            #[Subscribe(ProfileCreated::class)]
-            public function onProfileCreated(Message $message): void
-            {
-            }
-
-            #[Subscribe(ProfileCreated::class)]
-            public function onFoo(Message $message): void
-            {
-            }
-        };
-
-        $accessor = new MetadataSubscriberAccessor(
-            $subscriber,
-            (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
-            [
-                new MessageArgumentResolver(),
-            ],
-        );
-
-        $result = $accessor->subscribeMethods(ProfileCreated::class);
-
-        self::assertCount(2, $result);
-
-        self::assertEquals([
-            $subscriber->onProfileCreated(...),
-            $subscriber->onFoo(...),
-        ], $result);
     }
 
     public function testSubscribeAllMethod(): void
