@@ -16,6 +16,7 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentTypeNotSupported;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ClassIsNotASubscriber;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSetupMethod;
+use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSubscribeMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateTeardownMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -245,6 +246,48 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         class {
             #[Subscribe(ProfileVisited::class)]
             public function profileVisited(ProfileVisited&Stringable $event): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testSubscribeAllWithExplicitSubscribeMethod(): void
+    {
+        $this->expectException(DuplicateSubscribeMethod::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function profileVisited(ProfileVisited $event): void
+            {
+            }
+
+            #[Subscribe(Subscribe::ALL)]
+            public function listenAll(ProfileVisited $event): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testSubscribeSameEvent(): void
+    {
+        $this->expectException(DuplicateSubscribeMethod::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function profileVisited(ProfileVisited $event): void
+            {
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function profileVisitedAgain(ProfileVisited $event): void
             {
             }
         };

@@ -16,6 +16,7 @@ use ReflectionMethod;
 use ReflectionNamedType;
 
 use function array_key_exists;
+use function count;
 
 final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFactory
 {
@@ -52,6 +53,15 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             foreach ($attributes as $attribute) {
                 $instance = $attribute->newInstance();
                 $eventClass = $instance->eventClass;
+
+                if (array_key_exists($eventClass, $subscribeMethods)) {
+                    throw DuplicateSubscribeMethod::duplicateEvent(
+                        $subscriber,
+                        $eventClass,
+                        $subscribeMethods[$eventClass][0]->name,
+                        $method->getName(),
+                    );
+                }
 
                 $subscribeMethods[$eventClass][] = $this->subscribeMethod($method);
             }
@@ -93,6 +103,10 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             }
 
             $teardownMethod = $method->getName();
+        }
+
+        if (array_key_exists(Subscribe::ALL, $subscribeMethods) && count($subscribeMethods) > 1) {
+            throw DuplicateSubscribeMethod::mixedWithAll($subscriber);
         }
 
         $metadata = new SubscriberMetadata(
