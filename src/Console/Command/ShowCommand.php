@@ -93,9 +93,13 @@ final class ShowCommand extends Command
 
                 $stream->next();
 
-                if ($i >= $limit) {
+                if ($limit !== 0 && $i >= $limit) {
                     break;
                 }
+            }
+
+            if ($limit === 0) {
+                break;
             }
 
             if ($currentCount >= $maxCount) {
