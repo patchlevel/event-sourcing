@@ -198,6 +198,23 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                         return new ProcessedResult(0, true);
                     }
 
+                    foreach ($subscriptions as $subscription) {
+                        $subscriber = $this->subscriber($subscription->id());
+
+                        if ($subscriber) {
+                            continue;
+                        }
+
+                        $this->logger?->debug(
+                            sprintf(
+                                'Subscription Engine: Subscriber for "%s" not found, skipped.',
+                                $subscription->id(),
+                            ),
+                        );
+
+                        $subscriptions->remove($subscription);
+                    }
+
                     $startIndex = $subscriptions->lowestPosition();
 
                     $this->logger?->debug(
@@ -754,25 +771,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             function (SubscriptionCollection $subscriptions): Result {
                 /** @var Subscription $subscription */
                 foreach ($subscriptions as $subscription) {
-                    $subscriber = $this->subscriber($subscription->id());
-
-                    if (!$subscriber) {
-                        $this->logger?->debug(
-                            sprintf(
-                                'Subscription Engine: Subscriber for "%s" not found, skipped.',
-                                $subscription->id(),
-                            ),
-                        );
-
-                        continue;
-                    }
-
                     $subscription->pause();
                     $this->subscriptionManager->update($subscription);
 
                     $this->logger?->info(sprintf(
-                        'Subscription Engine: Subscriber "%s" for "%s" is paused.',
-                        $subscriber::class,
+                        'Subscription Engine: Subscription "%s" is paused.',
                         $subscription->id(),
                     ));
                 }
