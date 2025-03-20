@@ -1324,6 +1324,40 @@ final class DefaultSubscriptionEngineTest extends TestCase
         );
     }
 
+    public function testBootWithoutSubscriber(): void
+    {
+        $subscriptionId = 'test';
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $streamableStore = $this->prophesize(Store::class);
+        $streamableStore->load($this->criteria())->willReturn(new ArrayStream([$message]))->shouldBeCalledOnce();
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->boot();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertEquals([], $result->errors);
+
+        $subscriptionStore->assertNoChanges();
+    }
+
     public function testBootBatchingSuccess(): void
     {
         $subscriber = new BatchingSubscriber();
@@ -3533,6 +3567,42 @@ final class DefaultSubscriptionEngineTest extends TestCase
                 Status::Paused,
                 0,
                 new SubscriptionError('ERROR', Status::New),
+            ),
+        );
+    }
+
+    public function testPauseWithoutSubscriber(): void
+    {
+        $subscriptionId = 'test';
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        ]);
+
+        $streamableStore = $this->prophesize(Store::class);
+
+        $engine = new DefaultSubscriptionEngine(
+            $streamableStore->reveal(),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
+        );
+
+        $result = $engine->pause();
+
+        self::assertEquals([], $result->errors);
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Paused,
             ),
         );
     }

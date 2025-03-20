@@ -1,6 +1,6 @@
 # Upcasting
 
-There are cases where the already have events in our stream but there is data missing
+There are cases where we already have events in our stream but there is data missing
 or not in the right format for our new usecase. Normally you would need to create versioned events for this.
 This can lead to many versions of the same event which could lead to some chaos.
 To prevent this we offer `Upcaster`, which can operate on the payload before denormalizing to an event object.

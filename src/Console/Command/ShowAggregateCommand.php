@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\MissingAggregateIdForStreamName;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
@@ -56,6 +57,7 @@ final class ShowAggregateCommand extends Command
         $console = new OutputStyle($input, $output);
 
         $aggregate = InputHelper::nullableString($input->getArgument('aggregate'));
+
         if ($aggregate === null) {
             $question = new ChoiceQuestion(
                 'Choose the aggregate',
@@ -66,19 +68,28 @@ final class ShowAggregateCommand extends Command
             $aggregate = InputHelper::string($console->askQuestion($question));
         }
 
-        $id = InputHelper::nullableString($input->getArgument('id'));
-
         if (!$this->aggregateRootRegistry->hasAggregateName($aggregate)) {
             $console->error(sprintf('aggregate type "%s" not exists', $aggregate));
 
             return 1;
         }
 
+        $id = InputHelper::nullableString($input->getArgument('id'));
         $streamName = null;
 
         if ($this->store instanceof StreamStore) {
             $aggregateClass = $this->aggregateRootRegistry->aggregateClass($aggregate);
-            $streamName = $this->aggregateRootMetadataFactory->metadata($aggregateClass)->streamName($id);
+
+            $metadata = $this->aggregateRootMetadataFactory->metadata($aggregateClass);
+
+            try {
+                $streamName = $metadata->streamName($id);
+            } catch (MissingAggregateIdForStreamName) {
+                $question = new Question('Enter the aggregate id');
+                $id = InputHelper::string($console->askQuestion($question));
+
+                $streamName = $metadata->streamName($id);
+            }
 
             $stream = $this->store->load(
                 new Criteria(

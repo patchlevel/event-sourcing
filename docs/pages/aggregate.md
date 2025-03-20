@@ -701,7 +701,7 @@ With this pattern, the Shipping aggregate can listen to the events of the Order 
 In this case, the `Shipping` aggregate listens to the `OrderCreated` event to initialize itself.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
