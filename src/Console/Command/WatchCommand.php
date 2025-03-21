@@ -17,6 +17,8 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Logger\ConsoleLogger;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
@@ -36,6 +38,24 @@ final class WatchCommand extends Command
     protected function configure(): void
     {
         $this
+            ->addOption(
+                'run-limit',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'The maximum number of runs this command should execute',
+            )
+            ->addOption(
+                'memory-limit',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'How much memory consumption should the worker be terminated (e.g. 250MB)',
+            )
+            ->addOption(
+                'time-limit',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'What is the maximum time the worker can run in seconds',
+            )
             ->addOption(
                 'sleep',
                 null,
@@ -67,6 +87,9 @@ final class WatchCommand extends Command
     {
         $console = new OutputStyle($input, $output);
 
+        $runLimit = InputHelper::nullablePositiveInt($input->getOption('run-limit'));
+        $memoryLimit = InputHelper::nullableString($input->getOption('memory-limit'));
+        $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
         $stream = InputHelper::nullableString($input->getOption('stream'));
         $aggregate = InputHelper::nullableString($input->getOption('aggregate'));
@@ -92,6 +115,9 @@ final class WatchCommand extends Command
 
         $criteria = $criteriaBuilder->build();
 
+        $errOutput = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
+        $logger = new ConsoleLogger($errOutput);
+
         $worker = DefaultWorker::create(
             function () use ($console, &$index, $criteria, $sleep): void {
                 $stream = $this->store->load(
@@ -113,12 +139,18 @@ final class WatchCommand extends Command
 
                 $this->store->wait($sleep);
             },
+            [
+                'runLimit' => $runLimit,
+                'memoryLimit' => $memoryLimit,
+                'timeLimit' => $timeLimit,
+            ],
+            $logger,
         );
 
         $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();
         $worker->run($supportSubscription ? 0 : $sleep);
 
-        return 0;
+        return Command::SUCCESS;
     }
 
     private function currentIndex(): int
