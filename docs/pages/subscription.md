@@ -954,7 +954,7 @@ For this reason, we have the `CatchUpSubscriptionEngine` decorator.
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 
-/** @var SubscriptionEngine $subscriptionStore */
+/** @var SubscriptionEngine $subscriptionEngine */
 $catchupSubscriptionEngine = new CatchUpSubscriptionEngine($subscriptionEngine);
 ```
 !!! tip
@@ -970,7 +970,7 @@ This is useful for testing or development to get directly feedback if something 
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 
-/** @var SubscriptionEngine $subscriptionStore */
+/** @var SubscriptionEngine $subscriptionEngine */
 $throwOnErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscriptionEngine);
 ```
 !!! warning
