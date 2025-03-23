@@ -848,9 +848,9 @@ There, with the help of paths, all classes with the attribute `Aggregate` are se
 and the `AggregateRootRegistry` is built up.
 
 ```php
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 
-$aggregateRegistry = (new AttributeEventRegistryFactory())->create([/* paths... */]);
+$aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create([/* paths... */]);
 ```
 ## Learn more
 
