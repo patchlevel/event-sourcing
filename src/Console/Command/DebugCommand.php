@@ -14,7 +14,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use function array_intersect_key;
 use function array_keys;
 use function array_map;
 use function array_shift;
@@ -80,7 +79,7 @@ final class DebugCommand extends Command
         foreach ($this->subscriberAccessorRepository?->all() ?? [] as $subscriberAccessor) {
             $metadata = $subscriberAccessor->metadata();
 
-            $eventsHandled = array_intersect_key($eventNames, $metadata->subscribeMethods);
+            $eventsHandled = array_keys($metadata->subscribeMethods);
 
             $subscribers[] = [
                 $metadata->id,
