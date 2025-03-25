@@ -71,8 +71,6 @@ final class DebugCommand extends Command
 
     private function showSubscribers(OutputStyle $console): void
     {
-        $eventNames = $this->eventRegistry->eventNames();
-
         $subscribers = [];
 
         /** @var MetadataSubscriberAccessor $subscriberAccessor */
@@ -85,11 +83,11 @@ final class DebugCommand extends Command
                 $metadata->id,
                 $metadata->group,
                 $metadata->runMode->value,
-                // first event name handled
+                // first event class name handled
                 array_shift($eventsHandled),
             ];
 
-            // display more event names that the subscriber can handle (if any)
+            // display more event class names that the subscriber can handle (if any)
             foreach ($eventsHandled as $eventName) {
                 $subscribers[] = ['', '', '', $eventName];
             }
