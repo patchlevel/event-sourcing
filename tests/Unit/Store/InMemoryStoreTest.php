@@ -134,7 +134,7 @@ final class InMemoryStoreTest extends TestCase
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
             ->withHeader(new StreamNameHeader('foo-1'))
             ->withHeader(new PlayheadHeader(3));
-        $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
+        $message4 = new Message(new ProfileVisited(ProfileId::fromString('3')));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
 
@@ -154,7 +154,7 @@ final class InMemoryStoreTest extends TestCase
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
             ->withHeader(new StreamNameHeader('foo-1'))
             ->withHeader(new PlayheadHeader(3));
-        $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
+        $message4 = new Message(new ProfileVisited(ProfileId::fromString('3')));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
 
@@ -187,7 +187,7 @@ final class InMemoryStoreTest extends TestCase
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
             ->withHeader(new ArchivedHeader());
-        $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))));
+        $message2 = new Message(new ProfileVisited(ProfileId::fromString('2')));
 
         $store = new InMemoryStore([$message1, $message2]);
 
@@ -256,7 +256,7 @@ final class InMemoryStoreTest extends TestCase
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
             ->withHeader(new ArchivedHeader());
-        $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))));
+        $message2 = new Message(new ProfileVisited(ProfileId::fromString('2')));
 
         $store = new InMemoryStore([$message1, $message2]);
 
@@ -309,7 +309,7 @@ final class InMemoryStoreTest extends TestCase
             ->withHeader(new StreamNameHeader('bar'));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
             ->withHeader(new StreamNameHeader('bar'));
-        $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
+        $message4 = new Message(new ProfileVisited(ProfileId::fromString('3')));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
 
@@ -324,7 +324,7 @@ final class InMemoryStoreTest extends TestCase
             ->withHeader(new StreamNameHeader('bar'));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
             ->withHeader(new StreamNameHeader('bar'));
-        $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
+        $message4 = new Message(new ProfileVisited(ProfileId::fromString('3')));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
 
@@ -359,7 +359,7 @@ final class InMemoryStoreTest extends TestCase
             ->withHeader(new StreamNameHeader('bar'));
         $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
             ->withHeader(new StreamNameHeader('bar'));
-        $message4 = (new Message(new ProfileVisited(ProfileId::fromString('3'))));
+        $message4 = new Message(new ProfileVisited(ProfileId::fromString('3')));
 
         $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
 
