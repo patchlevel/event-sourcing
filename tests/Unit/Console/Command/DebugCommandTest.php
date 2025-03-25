@@ -76,7 +76,12 @@ final class DebugCommandTest extends TestCase
 
         $content = $output->fetch();
 
+        self::assertStringContainsString('Subscribers', $content);
+        self::assertStringContainsString('events handled', $content);
+        self::assertStringContainsString('profile.test', $content);
         self::assertStringContainsString('default', $content);
+        self::assertStringContainsString('profile.projection', $content);
         self::assertStringContainsString('projector', $content);
+        self::assertStringContainsString('profile.created', $content);
     }
 }
