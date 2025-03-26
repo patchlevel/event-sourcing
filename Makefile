@@ -55,6 +55,10 @@ phpunit-unit: vendor                                             				## run phpu
 infection: vendor                                                               ## run infection
 	php -d memory_limit=312M vendor/bin/roave-infection-static-analysis-plugin --threads=max
 
+.PHONY: infection-diff
+infection-diff: vendor                                                          ## run infection on differences
+	php -d memory_limit=312M vendor/bin/roave-infection-static-analysis-plugin --threads=max --git-diff-lines --git-diff-base=origin/HEAD --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=95
+
 .PHONY: deptrac
 deptrac: vendor-tools                                                           ## run deptrac
 	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml
