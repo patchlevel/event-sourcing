@@ -133,6 +133,18 @@ parameters:
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
+			message: '#^Generator expects key type int, int\<1, max\>\|null given\.$#'
+			identifier: generator.keyType
+			count: 1
+			path: src/Subscription/Engine/GapResolverStoreMessageLoader.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Subscription\\Engine\\GeneratorStream\:\:\$index \(int\<1, max\>\|null\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Subscription/Engine/GeneratorStream.php
+
+		-
 			message: '#^Parameter \#1 \$eventClass of method Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry\:\:eventName\(\) expects class\-string, string given\.$#'
 			identifier: argument.type
 			count: 1

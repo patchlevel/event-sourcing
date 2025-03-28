@@ -24,6 +24,7 @@ use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
@@ -103,6 +104,132 @@ final class SubscriptionTest extends TestCase
 
         $engine = new DefaultSubscriptionEngine(
             new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $engine->subscriptions(),
+        );
+
+        $result = $engine->setup();
+
+        self::assertEquals([], $result->errors);
+
+        $result = $engine->boot();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $engine->subscriptions(),
+        );
+
+        $profileId = ProfileId::generate();
+        $profile = Profile::create($profileId, 'John');
+        $repository->save($profile);
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $engine->subscriptions(),
+        );
+
+        $result = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_profile_1 WHERE id = ?',
+            [$profileId->toString()],
+        );
+
+        self::assertIsArray($result);
+        self::assertArrayHasKey('id', $result);
+        self::assertSame($profileId->toString(), $result['id']);
+        self::assertSame('John', $result['name']);
+
+        $result = $engine->remove();
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_1',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::New,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $engine->subscriptions(),
+        );
+
+        self::assertFalse(
+            $this->projectionConnection->createSchemaManager()->tableExists('projection_profile_1'),
+        );
+    }
+
+    public function testGapResolver(): void
+    {
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]);
+
+        $engine = new DefaultSubscriptionEngine(
+            new GapResolverStoreMessageLoader($store),
             $subscriptionStore,
             $subscriberRepository,
         );
