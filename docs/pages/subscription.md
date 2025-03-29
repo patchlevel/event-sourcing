@@ -274,7 +274,7 @@ final class PublicProfileProjection
 !!! note
 
     More about reducers you can find [here](./message.md#reducer)
-
+    
 ##### Recorded On Resolver
 
 The recorded on resolver resolves the recorded on date.
@@ -762,6 +762,10 @@ The subscription engine needs a message loader to load the messages.
 We provide two implementations by default.
 Which one has a better performance depends on the use case.
 
+!!! tip
+
+    We recommend the `GapResolverStoreMessageLoader` as it handles gaps in the stream.
+    
 #### Store Message Loader
 
 The store message loader loads all the messages from the event store.
@@ -792,6 +796,33 @@ $messageLoader = new EventFilteredStoreMessageLoader(
     $store,
     $eventMetadataFactory,
     $subscriberRepository,
+);
+```
+#### Gap Resolver Store Message Loader
+
+Relational databases can lead to so-called gaps in the stream.
+There's a [blog post](https://event-driven.io/en/ordering_in_postgres_outbox/) by Oskar Dudycz
+that describes the problem very well.
+
+By default, we use a write lock for our event store
+to ensure that only one process can write at the same time to maintain order and completeness.
+However, there is still a small chance that the gap will occur.
+To detect and prevent these, we've introduced the `GapResolverStoreMessageLoader`.
+
+```php
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
+use Psr\Clock\ClockInterface;
+
+/**
+ * @var Store $store
+ * @var ClockInterface $clock
+ */
+$messageLoader = new GapResolverStoreMessageLoader(
+    $store,
+    $clock,
+    [0, 5, 50, 500], // default: retries in milliseconds (0 means immediate)
+    new DateInterval('PT5M'), // default: detection window when to retry (5 minutes)
 );
 ```
 ### Subscription Store
