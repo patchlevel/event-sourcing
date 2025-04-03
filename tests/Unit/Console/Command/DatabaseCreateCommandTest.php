@@ -7,13 +7,14 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Console\Command\DatabaseCreateCommand;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
-/** @covers \Patchlevel\EventSourcing\Console\Command\DatabaseCreateCommand */
+#[CoversClass(DatabaseCreateCommand::class)]
 final class DatabaseCreateCommandTest extends TestCase
 {
     use ProphecyTrait;

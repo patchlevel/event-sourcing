@@ -6,10 +6,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Test;
 
 use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Test\IncrementalRamseyUuidFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid as RamseyUuid;
 
-/** @covers \Patchlevel\EventSourcing\Test\IncrementalRamseyUuidFactory */
+#[CoversClass(IncrementalRamseyUuidFactory::class)]
 final class IncrementalRamseyUuidFactoryTest extends TestCase
 {
     public function testGenerate(): void

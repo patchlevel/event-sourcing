@@ -9,10 +9,11 @@ use Patchlevel\EventSourcing\CommandBus\HandlerNotFound;
 use Patchlevel\EventSourcing\CommandBus\HandlerProvider;
 use Patchlevel\EventSourcing\CommandBus\MultipleHandlersFound;
 use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\SyncCommandBus */
+#[CoversClass(SyncCommandBus::class)]
 final class SyncCommandBusTest extends TestCase
 {
     use ProphecyTrait;

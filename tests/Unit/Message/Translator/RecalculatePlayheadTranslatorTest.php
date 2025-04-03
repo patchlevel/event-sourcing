@@ -11,9 +11,10 @@ use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator */
+#[CoversClass(RecalculatePlayheadTranslator::class)]
 final class RecalculatePlayheadTranslatorTest extends TestCase
 {
     public function testRecalculatePlayhead(): void

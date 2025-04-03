@@ -15,11 +15,12 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ProfileCreated;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
 use function json_decode;
 
-/** @coversNothing */
+#[CoversNothing]
 final class DoctrineDbalStoreTest extends TestCase
 {
     private Connection $connection;

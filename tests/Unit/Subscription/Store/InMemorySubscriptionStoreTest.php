@@ -12,9 +12,10 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionAlreadyExists;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore */
+#[CoversClass(InMemorySubscriptionStore::class)]
 final class InMemorySubscriptionStoreTest extends TestCase
 {
     public function testAdd(): void

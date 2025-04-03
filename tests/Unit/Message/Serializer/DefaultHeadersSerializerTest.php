@@ -11,10 +11,11 @@ use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFact
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\Hydrator\MetadataHydrator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer */
+#[CoversClass(DefaultHeadersSerializer::class)]
 final class DefaultHeadersSerializerTest extends TestCase
 {
     use ProphecyTrait;

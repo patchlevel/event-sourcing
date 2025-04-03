@@ -9,13 +9,14 @@ use Patchlevel\EventSourcing\Subscription\Store\LockableSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 use function iterator_to_array;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager */
+#[CoversClass(SubscriptionManager::class)]
 final class SubscriptionManagerTest extends TestCase
 {
     use ProphecyTrait;

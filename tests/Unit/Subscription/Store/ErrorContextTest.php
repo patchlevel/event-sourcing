@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Store;
 
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer */
+#[CoversClass(ThrowableToErrorContextTransformer::class)]
 final class ErrorContextTest extends TestCase
 {
     public function testWithoutPrevious(): void

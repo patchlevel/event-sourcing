@@ -8,13 +8,14 @@ use Patchlevel\EventSourcing\Attribute\Inject;
 use Patchlevel\EventSourcing\CommandBus\Handler\DefaultParameterResolver;
 use Patchlevel\EventSourcing\CommandBus\Handler\ServiceNotResolvable;
 use Patchlevel\EventSourcing\CommandBus\ServiceNotFound;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\Container\ContainerInterface;
 use ReflectionMethod;
 use stdClass;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\Handler\DefaultParameterResolver */
+#[CoversClass(DefaultParameterResolver::class)]
 final class DefaultParameterResolverTest extends TestCase
 {
     use ProphecyTrait;

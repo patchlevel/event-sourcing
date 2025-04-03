@@ -6,13 +6,15 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\ReadOnlyStore;
 use Patchlevel\EventSourcing\Store\StoreIsReadOnly;
 use Patchlevel\EventSourcing\Store\StreamReadOnlyStore;
 use Patchlevel\EventSourcing\Store\StreamStore;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Store\ReadOnlyStore */
+#[CoversClass(ReadOnlyStore::class)]
 final class StreamReadOnlyStoreTest extends TestCase
 {
     use ProphecyTrait;

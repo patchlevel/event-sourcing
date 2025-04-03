@@ -10,9 +10,10 @@ use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Translator\IncludeEventWithHeaderTranslator */
+#[CoversClass(IncludeEventWithHeaderTranslator::class)]
 final class IncludeEventWithHeaderTranslatorTest extends TestCase
 {
     public function testExcludedEvent(): void

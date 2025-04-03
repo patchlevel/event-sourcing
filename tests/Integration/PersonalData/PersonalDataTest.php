@@ -20,9 +20,10 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorR
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Processor\DeletePersonalDataProcessor;
 use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
-/** @coversNothing */
+#[CoversNothing]
 final class PersonalDataTest extends TestCase
 {
     private Connection $connection;

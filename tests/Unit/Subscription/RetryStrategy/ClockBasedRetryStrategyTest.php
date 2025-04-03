@@ -11,10 +11,11 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy */
+#[CoversClass(ClockBasedRetryStrategy::class)]
 final class ClockBasedRetryStrategyTest extends TestCase
 {
     private ClockBasedRetryStrategy $strategy;

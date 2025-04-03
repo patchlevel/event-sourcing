@@ -22,13 +22,14 @@ use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStoreStream;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Throwable;
 
 use function iterator_to_array;
 
-/** @covers \Patchlevel\EventSourcing\Store\StreamDoctrineDbalStoreStream */
+#[CoversClass(StreamDoctrineDbalStoreStream::class)]
 final class StreamDoctrineDbalStreamTest extends TestCase
 {
     use ProphecyTrait;

@@ -12,11 +12,12 @@ use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\Handler\CreateAggregateHandler */
+#[CoversClass(CreateAggregateHandler::class)]
 final class CreateAggregateHandlerTest extends TestCase
 {
     use ProphecyTrait;

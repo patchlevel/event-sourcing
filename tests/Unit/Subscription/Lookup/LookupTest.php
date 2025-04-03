@@ -21,10 +21,11 @@ use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Lookup\Lookup */
+#[CoversClass(Lookup::class)]
 final class LookupTest extends TestCase
 {
     use ProphecyTrait;

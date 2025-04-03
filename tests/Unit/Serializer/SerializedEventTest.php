@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer;
 
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Serializer\SerializedEvent */
+#[CoversClass(SerializedEvent::class)]
 final class SerializedEventTest extends TestCase
 {
     public function testCreate(): void

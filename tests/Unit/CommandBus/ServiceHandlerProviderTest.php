@@ -7,10 +7,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\CommandBus;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider */
+#[CoversClass(ServiceHandlerProvider::class)]
 final class ServiceHandlerProviderTest extends TestCase
 {
     use ProphecyTrait;

@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Console\InputHelper */
+#[CoversClass(InputHelper::class)]
 final class InputHelperTest extends TestCase
 {
     public function testValidString(): void

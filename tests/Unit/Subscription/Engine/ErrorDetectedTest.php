@@ -6,10 +6,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\ErrorDetected;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Engine\ErrorDetected */
+#[CoversClass(ErrorDetected::class)]
 final class ErrorDetectedTest extends TestCase
 {
     public function testError(): void

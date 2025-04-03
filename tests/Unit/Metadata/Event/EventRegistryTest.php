@@ -8,9 +8,10 @@ use Patchlevel\EventSourcing\Metadata\Event\EventClassNotRegistered;
 use Patchlevel\EventSourcing\Metadata\Event\EventNameNotRegistered;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Metadata\Event\EventRegistry */
+#[CoversClass(EventRegistry::class)]
 final class EventRegistryTest extends TestCase
 {
     public function testEmpty(): void

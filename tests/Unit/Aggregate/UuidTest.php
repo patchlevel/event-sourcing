@@ -6,12 +6,13 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeInterface;
 use Patchlevel\EventSourcing\Aggregate\Uuid;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid as RamseyUuid;
 use Ramsey\Uuid\UuidFactory;
 use Ramsey\Uuid\UuidInterface;
 
-/** @covers \Patchlevel\EventSourcing\Aggregate\Uuid */
+#[CoversClass(Uuid::class)]
 final class UuidTest extends TestCase
 {
     public function testFromString(): void

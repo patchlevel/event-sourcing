@@ -14,11 +14,12 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 
-/** @covers \Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore */
+#[CoversClass(DefaultSnapshotStore::class)]
 final class DefaultSnapshotStoreTest extends TestCase
 {
     use ProphecyTrait;

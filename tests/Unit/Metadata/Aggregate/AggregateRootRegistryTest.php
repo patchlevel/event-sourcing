@@ -8,9 +8,10 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootClassNotRegiste
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootNameNotRegistered;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry */
+#[CoversClass(AggregateRootRegistry::class)]
 final class AggregateRootRegistryTest extends TestCase
 {
     public function testEmpty(): void

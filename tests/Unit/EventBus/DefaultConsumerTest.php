@@ -12,10 +12,11 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\DefaultConsumer */
+#[CoversClass(DefaultConsumer::class)]
 final class DefaultConsumerTest extends TestCase
 {
     use ProphecyTrait;

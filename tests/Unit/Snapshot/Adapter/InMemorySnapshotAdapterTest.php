@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot\Adapter;
 
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotNotFound;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter */
+#[CoversClass(InMemorySnapshotAdapter::class)]
 final class InMemorySnapshotAdapterTest extends TestCase
 {
     public function testInMemorySnapshotStore(): void

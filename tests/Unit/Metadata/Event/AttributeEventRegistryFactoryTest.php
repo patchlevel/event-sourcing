@@ -8,9 +8,10 @@ use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Event\EventAlreadyInRegistry;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory */
+#[CoversClass(AttributeEventRegistryFactory::class)]
 final class AttributeEventRegistryFactoryTest extends TestCase
 {
     public function testCreateRegistry(): void

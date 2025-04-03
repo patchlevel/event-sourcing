@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Attribute;
 
 use Patchlevel\EventSourcing\Attribute\Id;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Attribute\Id */
+#[CoversClass(Id::class)]
 final class IdTest extends TestCase
 {
     #[DoesNotPerformAssertions]

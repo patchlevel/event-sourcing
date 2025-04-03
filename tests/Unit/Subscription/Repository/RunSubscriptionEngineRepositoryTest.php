@@ -13,10 +13,11 @@ use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineReposi
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepository */
+#[CoversClass(RunSubscriptionEngineRepository::class)]
 final class RunSubscriptionEngineRepositoryTest extends TestCase
 {
     use ProphecyTrait;

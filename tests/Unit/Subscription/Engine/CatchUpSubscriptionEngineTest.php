@@ -11,11 +11,12 @@ use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine */
+#[CoversClass(CatchUpSubscriptionEngine::class)]
 final class CatchUpSubscriptionEngineTest extends TestCase
 {
     use ProphecyTrait;

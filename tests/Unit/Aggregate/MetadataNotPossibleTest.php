@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\MetadataNotPossible;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Aggregate\MetadataNotPossible */
+#[CoversClass(MetadataNotPossible::class)]
 final class MetadataNotPossibleTest extends TestCase
 {
     public function testCreate(): void

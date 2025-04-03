@@ -11,9 +11,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessagePublished;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Translator\ReplaceEventTranslator */
+#[CoversClass(ReplaceEventTranslator::class)]
 final class ReplaceEventTranslatorTest extends TestCase
 {
     public function testReplace(): void

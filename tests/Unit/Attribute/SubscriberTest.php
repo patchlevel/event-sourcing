@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Attribute;
 
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Subscription\RunMode;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Attribute\Subscriber */
+#[CoversClass(Subscriber::class)]
 final class SubscriberTest extends TestCase
 {
     public function testInstantiate(): void

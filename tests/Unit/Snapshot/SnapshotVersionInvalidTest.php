@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid */
+#[CoversClass(SnapshotVersionInvalid::class)]
 final class SnapshotVersionInvalidTest extends TestCase
 {
     public function testCreate(): void

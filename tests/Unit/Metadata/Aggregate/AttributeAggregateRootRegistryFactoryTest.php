@@ -8,9 +8,10 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootAlreadyInRegist
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory */
+#[CoversClass(AttributeAggregateRootRegistryFactory::class)]
 final class AttributeAggregateRootRegistryFactoryTest extends TestCase
 {
     public function testCreateRegistry(): void

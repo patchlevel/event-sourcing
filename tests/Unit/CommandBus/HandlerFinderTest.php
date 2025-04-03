@@ -9,10 +9,11 @@ use Patchlevel\EventSourcing\CommandBus\HandlerFinder;
 use Patchlevel\EventSourcing\CommandBus\HandlerReference;
 use Patchlevel\EventSourcing\CommandBus\InvalidHandleMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\HandlerFinder */
+#[CoversClass(HandlerFinder::class)]
 final class HandlerFinderTest extends TestCase
 {
     use ProphecyTrait;

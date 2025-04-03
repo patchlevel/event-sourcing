@@ -7,10 +7,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\CommandBus;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\CommandBus\ServiceLocator;
 use Patchlevel\EventSourcing\CommandBus\ServiceNotFound;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Clock\ClockInterface;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\ServiceLocator */
+#[CoversClass(ServiceLocator::class)]
 final class ServiceLocatorTest extends TestCase
 {
     public function testGetService(): void

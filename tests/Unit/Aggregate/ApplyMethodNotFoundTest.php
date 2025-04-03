@@ -7,9 +7,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 use Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound */
+#[CoversClass(ApplyMethodNotFound::class)]
 final class ApplyMethodNotFoundTest extends TestCase
 {
     public function testCreate(): void

@@ -13,10 +13,11 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ChangeProfileName;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\Handler\UpdateAggregateHandler */
+#[CoversClass(UpdateAggregateHandler::class)]
 final class UpdateAggregateHandlerTest extends TestCase
 {
     use ProphecyTrait;

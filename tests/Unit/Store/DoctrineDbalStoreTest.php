@@ -38,6 +38,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileEmailChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
@@ -47,7 +48,7 @@ use RuntimeException;
 use function iterator_to_array;
 use function method_exists;
 
-/** @covers \Patchlevel\EventSourcing\Store\DoctrineDbalStore */
+#[CoversClass(DoctrineDbalStore::class)]
 final class DoctrineDbalStoreTest extends TestCase
 {
     use ProphecyTrait;

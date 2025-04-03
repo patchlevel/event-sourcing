@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
+use Patchlevel\EventSourcing\Aggregate\AggregateRootAttributeBehaviour;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootBehaviour;
 use Patchlevel\EventSourcing\Aggregate\AggregateRootIdNotSupported;
+use Patchlevel\EventSourcing\Aggregate\AggregateRootMetadataAwareBehaviour;
 use Patchlevel\EventSourcing\Aggregate\ApplyMethodNotFound;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\MetadataNotPossible;
@@ -25,15 +28,14 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileInvalid;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSuppressAll;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot
- * @covers \Patchlevel\EventSourcing\Aggregate\AggregateRootBehaviour
- * @covers \Patchlevel\EventSourcing\Aggregate\AggregateRootAttributeBehaviour
- * @covers \Patchlevel\EventSourcing\Aggregate\AggregateRootMetadataAwareBehaviour
- */
+#[CoversClass(BasicAggregateRoot::class)]
+#[CoversClass(AggregateRootBehaviour::class)]
+#[CoversClass(AggregateRootAttributeBehaviour::class)]
+#[CoversClass(AggregateRootMetadataAwareBehaviour::class)]
 final class AggregateRootTest extends TestCase
 {
     public function testApplyMethod(): void

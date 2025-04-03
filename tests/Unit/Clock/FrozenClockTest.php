@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Clock;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Clock\FrozenClock */
+#[CoversClass(FrozenClock::class)]
 final class FrozenClockTest extends TestCase
 {
     public function testCreateDateTimeImmutableWithFrozenClock(): void

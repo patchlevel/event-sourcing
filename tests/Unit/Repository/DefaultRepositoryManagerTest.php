@@ -11,10 +11,11 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Repository\DefaultRepositoryManager */
+#[CoversClass(DefaultRepositoryManager::class)]
 final class DefaultRepositoryManagerTest extends TestCase
 {
     use ProphecyTrait;

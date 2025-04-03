@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\CustomId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Aggregate\CustomId */
+#[CoversClass(CustomId::class)]
 final class CustomIdTest extends TestCase
 {
     public function testFromString(): void

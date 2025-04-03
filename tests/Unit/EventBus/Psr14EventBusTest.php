@@ -9,11 +9,12 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\Psr14EventBus */
+#[CoversClass(Psr14EventBus::class)]
 final class Psr14EventBusTest extends TestCase
 {
     use ProphecyTrait;

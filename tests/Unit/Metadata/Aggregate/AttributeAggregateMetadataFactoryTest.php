@@ -20,9 +20,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyNoType;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithEmptyApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithStream;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory */
+#[CoversClass(AttributeAggregateRootMetadataFactory::class)]
 final class AttributeAggregateMetadataFactoryTest extends TestCase
 {
     public function testProfile(): void

@@ -41,13 +41,14 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithStream;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 use Throwable;
 
-/** @covers \Patchlevel\EventSourcing\Repository\DefaultRepository */
+#[CoversClass(DefaultRepository::class)]
 final class DefaultRepositoryTest extends TestCase
 {
     use ProphecyTrait;

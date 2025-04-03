@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot\Adapter;
 
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotNotFound;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotNotFound */
+#[CoversClass(SnapshotNotFound::class)]
 final class SnapshotNotFoundTest extends TestCase
 {
     public function testCreate(): void

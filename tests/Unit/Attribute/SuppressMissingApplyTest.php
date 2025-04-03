@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Attribute;
 
 use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Attribute\SuppressMissingApply */
+#[CoversClass(SuppressMissingApply::class)]
 final class SuppressMissingApplyTest extends TestCase
 {
     public function testSuppressEvents(): void

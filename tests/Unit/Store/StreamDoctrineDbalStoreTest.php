@@ -41,6 +41,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileEmailChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -50,7 +51,7 @@ use RuntimeException;
 use function iterator_to_array;
 use function method_exists;
 
-/** @covers \Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore */
+#[CoversClass(StreamDoctrineDbalStore::class)]
 final class StreamDoctrineDbalStoreTest extends TestCase
 {
     use ProphecyTrait;

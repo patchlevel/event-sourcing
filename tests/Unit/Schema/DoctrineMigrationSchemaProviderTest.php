@@ -7,10 +7,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Schema;
 use Doctrine\DBAL\Schema\Schema;
 use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider */
+#[CoversClass(DoctrineMigrationSchemaProvider::class)]
 final class DoctrineMigrationSchemaProviderTest extends TestCase
 {
     use ProphecyTrait;
