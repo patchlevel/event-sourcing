@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata;
 
 use Patchlevel\EventSourcing\Metadata\ClassFinder;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Metadata\ClassFinder */
+#[CoversClass(ClassFinder::class)]
 final class ClassFinderTest extends TestCase
 {
     public function testEmpty(): void

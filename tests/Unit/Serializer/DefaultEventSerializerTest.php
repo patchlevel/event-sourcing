@@ -15,9 +15,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\Hydrator\MetadataHydrator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Serializer\DefaultEventSerializer */
+#[CoversClass(DefaultEventSerializer::class)]
 final class DefaultEventSerializerTest extends TestCase
 {
     private DefaultEventSerializer $serializer;

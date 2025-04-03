@@ -13,10 +13,11 @@ use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ChangeProfileName;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\AggregateHandlerProvider */
+#[CoversClass(AggregateHandlerProvider::class)]
 final class AggregateHandlerProviderTest extends TestCase
 {
     use ProphecyTrait;

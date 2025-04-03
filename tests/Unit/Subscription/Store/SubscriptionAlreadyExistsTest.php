@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Store;
 
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionAlreadyExists;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Store\SubscriptionAlreadyExists */
+#[CoversClass(SubscriptionAlreadyExists::class)]
 final class SubscriptionAlreadyExistsTest extends TestCase
 {
     public function testCreate(): void

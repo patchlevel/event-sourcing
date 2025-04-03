@@ -7,10 +7,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentRe
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver */
+#[CoversClass(MessageArgumentResolver::class)]
 final class MessageArgumentResolverTest extends TestCase
 {
     public function testSupport(): void

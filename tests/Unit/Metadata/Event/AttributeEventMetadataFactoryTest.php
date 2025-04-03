@@ -8,9 +8,10 @@ use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\SplitStream;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\ClassIsNotAnEvent;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory */
+#[CoversClass(AttributeEventMetadataFactory::class)]
 final class AttributeEventMetadataFactoryTest extends TestCase
 {
     public function testEmptyEvent(): void

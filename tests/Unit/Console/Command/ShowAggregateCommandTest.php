@@ -22,6 +22,7 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Exception\MissingInputException;
@@ -29,7 +30,7 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 
-/** @covers \Patchlevel\EventSourcing\Console\Command\ShowAggregateCommand */
+#[CoversClass(ShowAggregateCommand::class)]
 final class ShowAggregateCommandTest extends TestCase
 {
     use ProphecyTrait;

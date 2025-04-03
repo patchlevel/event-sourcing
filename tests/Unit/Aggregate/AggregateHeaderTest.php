@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Aggregate\AggregateHeader */
+#[CoversClass(AggregateHeader::class)]
 final class AggregateHeaderTest extends TestCase
 {
     public function testInstantiate(): void

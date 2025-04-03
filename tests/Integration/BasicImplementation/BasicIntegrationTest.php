@@ -36,10 +36,11 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\Profil
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjector;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Psr\Clock\ClockInterface;
 
-/** @coversNothing */
+#[CoversNothing]
 final class BasicIntegrationTest extends TestCase
 {
     private Connection $connection;

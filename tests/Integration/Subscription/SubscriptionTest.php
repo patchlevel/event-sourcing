@@ -42,6 +42,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\MigrateAg
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNewProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -49,7 +50,7 @@ use function gc_collect_cycles;
 use function iterator_to_array;
 use function sprintf;
 
-/** @coversNothing */
+#[CoversNothing]
 final class SubscriptionTest extends TestCase
 {
     private Connection $connection;

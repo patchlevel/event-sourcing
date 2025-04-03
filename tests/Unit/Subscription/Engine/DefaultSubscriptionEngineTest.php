@@ -37,6 +37,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\BatchingSubscriber;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use Patchlevel\EventSourcing\Tests\Unit\Subscription\DummySubscriptionStore;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
@@ -44,7 +45,7 @@ use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine */
+#[CoversClass(DefaultSubscriptionEngine::class)]
 final class DefaultSubscriptionEngineTest extends TestCase
 {
     use ProphecyTrait;

@@ -13,9 +13,10 @@ use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Message */
+#[CoversClass(Message::class)]
 final class MessageTest extends TestCase
 {
     public function testMessage(): void

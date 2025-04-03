@@ -7,12 +7,13 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use Patchlevel\EventSourcing\Console\Command\SchemaDropCommand;
 use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
-/** @covers \Patchlevel\EventSourcing\Console\Command\SchemaDropCommand */
+#[CoversClass(SchemaDropCommand::class)]
 final class SchemaDropCommandTest extends TestCase
 {
     use ProphecyTrait;

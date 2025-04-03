@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootIdNotSupported;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Aggregate\AggregateRootIdNotSupported */
+#[CoversClass(AggregateRootIdNotSupported::class)]
 final class AggregateRootIdNotSupportedTest extends TestCase
 {
     public function testCreate(): void

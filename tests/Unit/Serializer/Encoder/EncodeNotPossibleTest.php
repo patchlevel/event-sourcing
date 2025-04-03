@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer\Encoder;
 
 use Patchlevel\EventSourcing\Serializer\Encoder\EncodeNotPossible;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Serializer\Encoder\EncodeNotPossible */
+#[CoversClass(EncodeNotPossible::class)]
 final class EncodeNotPossibleTest extends TestCase
 {
     public function testCreate(): void

@@ -7,10 +7,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\AdapterNotFound;
 use Patchlevel\EventSourcing\Snapshot\ArrayAdapterRepository;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Snapshot\ArrayAdapterRepository */
+#[CoversClass(ArrayAdapterRepository::class)]
 final class ArrayAdapterRepositoryTest extends TestCase
 {
     use ProphecyTrait;

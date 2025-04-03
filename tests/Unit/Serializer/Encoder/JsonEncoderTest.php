@@ -9,9 +9,10 @@ use Patchlevel\EventSourcing\Serializer\Encoder\EncodeNotPossible;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder */
+#[CoversClass(JsonEncoder::class)]
 final class JsonEncoderTest extends TestCase
 {
     private JsonEncoder $encoder;

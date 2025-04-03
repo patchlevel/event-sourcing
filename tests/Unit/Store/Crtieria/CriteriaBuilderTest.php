@@ -12,9 +12,10 @@ use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder */
+#[CoversClass(CriteriaBuilder::class)]
 final class CriteriaBuilderTest extends TestCase
 {
     public function testEmpty(): void

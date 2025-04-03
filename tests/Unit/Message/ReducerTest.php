@@ -12,12 +12,13 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
 use function count;
 
-/** @covers \Patchlevel\EventSourcing\Message\Reducer */
+#[CoversClass(Reducer::class)]
 final class ReducerTest extends TestCase
 {
     use ProphecyTrait;

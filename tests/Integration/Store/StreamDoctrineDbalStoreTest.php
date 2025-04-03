@@ -24,6 +24,7 @@ use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ExternEvent;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ProfileCreated;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Psr\Clock\ClockInterface;
 
@@ -31,7 +32,7 @@ use function iterator_to_array;
 use function json_decode;
 use function sprintf;
 
-/** @coversNothing */
+#[CoversNothing]
 final class StreamDoctrineDbalStoreTest extends TestCase
 {
     private Connection $connection;

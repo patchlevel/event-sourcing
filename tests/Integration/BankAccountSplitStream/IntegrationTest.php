@@ -25,12 +25,13 @@ use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\Bal
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\BankAccountCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Events\MonthPassed;
 use Patchlevel\EventSourcing\Tests\Integration\BankAccountSplitStream\Projection\BankAccountProjector;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
 use function count;
 use function iterator_to_array;
 
-/** @coversNothing */
+#[CoversNothing]
 final class IntegrationTest extends TestCase
 {
     private Connection $connection;

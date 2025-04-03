@@ -12,10 +12,11 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator */
+#[CoversClass(SplitStreamDecorator::class)]
 final class SplitStreamDecoratorTest extends TestCase
 {
     use ProphecyTrait;

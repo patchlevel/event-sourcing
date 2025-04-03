@@ -10,10 +10,11 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Subscription */
+#[CoversClass(Subscription::class)]
 final class SubscriptionTest extends TestCase
 {
     public function testCreate(): void

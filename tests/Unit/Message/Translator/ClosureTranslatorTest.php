@@ -9,9 +9,10 @@ use Patchlevel\EventSourcing\Message\Translator\ClosureMiddleware;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Translator\ClosureMiddleware */
+#[CoversClass(ClosureMiddleware::class)]
 final class ClosureTranslatorTest extends TestCase
 {
     public function testClosure(): void

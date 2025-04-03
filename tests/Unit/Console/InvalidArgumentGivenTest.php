@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console;
 
 use Patchlevel\EventSourcing\Console\InvalidArgumentGiven;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Console\InvalidArgumentGiven */
+#[CoversClass(InvalidArgumentGiven::class)]
 final class InvalidArgumentGivenTest extends TestCase
 {
     public function testException(): void

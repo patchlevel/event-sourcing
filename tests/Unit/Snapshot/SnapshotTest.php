@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 
 use Patchlevel\EventSourcing\Snapshot\Snapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Snapshot\Snapshot */
+#[CoversClass(Snapshot::class)]
 final class SnapshotTest extends TestCase
 {
     public function testSnapshot(): void

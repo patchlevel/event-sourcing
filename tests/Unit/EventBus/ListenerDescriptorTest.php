@@ -6,10 +6,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
 use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\DummyListener;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\ListenerDescriptor */
+#[CoversClass(ListenerDescriptor::class)]
 final class ListenerDescriptorTest extends TestCase
 {
     public function testObjectMethod(): void

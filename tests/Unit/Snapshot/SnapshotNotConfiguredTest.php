@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotConfigured;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Snapshot\SnapshotNotConfigured */
+#[CoversClass(SnapshotNotConfigured::class)]
 final class SnapshotNotConfiguredTest extends TestCase
 {
     public function testCreate(): void

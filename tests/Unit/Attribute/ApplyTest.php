@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Attribute;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Attribute\Apply */
+#[CoversClass(Apply::class)]
 final class ApplyTest extends TestCase
 {
     public function testInstantiate(): void

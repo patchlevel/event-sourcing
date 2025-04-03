@@ -10,9 +10,10 @@ use Patchlevel\EventSourcing\EventBus\ListenerDescriptor;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\AttributeListenerProvider */
+#[CoversClass(AttributeListenerProvider::class)]
 final class AttributeListenerProviderTest extends TestCase
 {
     public function testProvideNothing(): void

@@ -9,10 +9,11 @@ use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Console\DoctrineHelper */
+#[CoversClass(DoctrineHelper::class)]
 final class DoctrineHelperTest extends TestCase
 {
     use ProphecyTrait;

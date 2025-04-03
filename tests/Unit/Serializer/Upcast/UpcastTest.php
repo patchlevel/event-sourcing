@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer\Upcast;
 
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers Patchlevel\EventSourcing\Serializer\Upcast\Upcast */
+#[CoversClass(Upcast::class)]
 final class UpcastTest extends TestCase
 {
     public function testReplaceEventName(): void

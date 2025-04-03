@@ -19,9 +19,10 @@ use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\ChildAggregate\Projection\ProfileProjector;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
-/** @coversNothing */
+#[CoversNothing]
 final class ChildAggregateIntegrationTest extends TestCase
 {
     private Connection $connection;

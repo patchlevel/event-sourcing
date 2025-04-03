@@ -10,10 +10,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Event\GenerateSchemaEventArgs;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaListener;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Schema\DoctrineSchemaListener */
+#[CoversClass(DoctrineSchemaListener::class)]
 final class DoctrineSchemaListenerTest extends TestCase
 {
     use ProphecyTrait;

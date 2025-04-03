@@ -10,9 +10,10 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgum
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgumentResolver */
+#[CoversClass(EventArgumentResolver::class)]
 final class EventArgumentResolverTest extends TestCase
 {
     public function testSupport(): void

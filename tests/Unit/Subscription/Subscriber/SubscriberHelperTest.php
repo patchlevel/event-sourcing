@@ -7,9 +7,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberHelper;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberHelper */
+#[CoversClass(SubscriberHelper::class)]
 final class SubscriberHelperTest extends TestCase
 {
     public function testSubscriberId(): void

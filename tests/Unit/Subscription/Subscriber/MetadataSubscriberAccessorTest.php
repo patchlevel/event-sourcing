@@ -17,9 +17,10 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\NoSuitableResolver;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor */
+#[CoversClass(MetadataSubscriberAccessor::class)]
 final class MetadataSubscriberAccessorTest extends TestCase
 {
     public function testId(): void

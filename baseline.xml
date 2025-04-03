@@ -366,6 +366,7 @@
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaSubscriberTest.php">
     <DeprecatedClass>
+      <code><![CDATA[DoctrineSchemaSubscriber::class]]></code>
       <code><![CDATA[new DoctrineSchemaSubscriber($schemaConfigurator->reveal())]]></code>
       <code><![CDATA[new DoctrineSchemaSubscriber($schemaConfigurator->reveal())]]></code>
     </DeprecatedClass>
@@ -512,8 +513,14 @@
   </file>
   <file src="tests/Unit/Subscription/Subscriber/ArgumentResolver/AggregateIdArgumentResolverTest.php">
     <DeprecatedClass>
+      <code><![CDATA[AggregateIdArgumentResolver::class]]></code>
       <code><![CDATA[new AggregateIdArgumentResolver()]]></code>
       <code><![CDATA[new AggregateIdArgumentResolver()]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="tests/Unit/Subscription/Subscriber/ArgumentResolver/LookupResolverTest.php">
+    <DeprecatedClass>
+      <code><![CDATA[AggregateIdArgumentResolver::class]]></code>
     </DeprecatedClass>
   </file>
   <file src="tests/Unit/Subscription/Subscriber/MetadataSubscriberAccessorRepositoryTest.php">

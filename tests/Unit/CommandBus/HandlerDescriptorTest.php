@@ -6,10 +6,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\CommandBus;
 
 use Patchlevel\EventSourcing\CommandBus\HandlerDescriptor;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\CommandBus\HandlerDescriptor */
+#[CoversClass(HandlerDescriptor::class)]
 final class HandlerDescriptorTest extends TestCase
 {
     public function testObjectMethod(): void

@@ -7,9 +7,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Serializer\Upcast;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
 use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain */
+#[CoversClass(UpcasterChain::class)]
 final class UpcasterChainTest extends TestCase
 {
     public function testChainSuccessful(): void

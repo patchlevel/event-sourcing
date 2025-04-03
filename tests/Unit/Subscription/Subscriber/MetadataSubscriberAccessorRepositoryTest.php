@@ -14,9 +14,10 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\DuplicateSubscriberId;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository */
+#[CoversClass(MetadataSubscriberAccessorRepository::class)]
 final class MetadataSubscriberAccessorRepositoryTest extends TestCase
 {
     public function testEmpty(): void

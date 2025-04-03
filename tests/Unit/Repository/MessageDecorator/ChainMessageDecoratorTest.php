@@ -10,10 +10,11 @@ use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator */
+#[CoversClass(ChainMessageDecorator::class)]
 final class ChainMessageDecoratorTest extends TestCase
 {
     use ProphecyTrait;

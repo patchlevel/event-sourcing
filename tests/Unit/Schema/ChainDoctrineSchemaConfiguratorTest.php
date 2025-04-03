@@ -8,10 +8,11 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator */
+#[CoversClass(ChainDoctrineSchemaConfigurator::class)]
 final class ChainDoctrineSchemaConfiguratorTest extends TestCase
 {
     use ProphecyTrait;

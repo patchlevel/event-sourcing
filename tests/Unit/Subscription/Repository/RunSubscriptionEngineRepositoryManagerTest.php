@@ -9,10 +9,11 @@ use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager */
+#[CoversClass(RunSubscriptionEngineRepositoryManager::class)]
 final class RunSubscriptionEngineRepositoryManagerTest extends TestCase
 {
     use ProphecyTrait;

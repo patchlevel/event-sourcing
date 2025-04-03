@@ -13,10 +13,11 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\NameChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\EventBus\DefaultEventBus */
+#[CoversClass(DefaultEventBus::class)]
 final class DefaultEventBusTest extends TestCase
 {
     use ProphecyTrait;

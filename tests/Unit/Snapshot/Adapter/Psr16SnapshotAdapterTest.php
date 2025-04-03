@@ -6,11 +6,12 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot\Adapter;
 
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotNotFound;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\SimpleCache\CacheInterface;
 
-/** @covers \Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter */
+#[CoversClass(Psr16SnapshotAdapter::class)]
 final class Psr16SnapshotAdapterTest extends TestCase
 {
     use ProphecyTrait;

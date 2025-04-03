@@ -6,9 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Clock;
 
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock\SystemClock;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Clock\SystemClock */
+#[CoversClass(SystemClock::class)]
 final class SystemClockTest extends TestCase
 {
     public function testCreateDateTimeImmutable(): void

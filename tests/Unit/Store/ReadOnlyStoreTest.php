@@ -11,10 +11,11 @@ use Patchlevel\EventSourcing\Store\ReadOnlyStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StoreIsReadOnly;
 use Patchlevel\EventSourcing\Store\StreamStore;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-/** @covers \Patchlevel\EventSourcing\Store\ReadOnlyStore */
+#[CoversClass(ReadOnlyStore::class)]
 final class ReadOnlyStoreTest extends TestCase
 {
     use ProphecyTrait;

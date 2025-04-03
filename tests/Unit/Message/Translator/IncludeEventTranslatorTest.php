@@ -10,9 +10,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\Message\Translator\IncludeEventTranslator */
+#[CoversClass(IncludeEventTranslator::class)]
 final class IncludeEventTranslatorTest extends TestCase
 {
     public function testFilterEvent(): void

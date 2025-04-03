@@ -22,10 +22,11 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Stringable;
 
-/** @covers \Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory */
+#[CoversClass(AttributeSubscriberMetadataFactory::class)]
 final class AttributeSubscriberMetadataFactoryTest extends TestCase
 {
     public function testNotASubscriber(): void
