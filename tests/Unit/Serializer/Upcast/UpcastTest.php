@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(Patchlevel\EventSourcing\Serializer\Upcast\Upcast::class)]
+#[CoversClass(Upcast::class)]
 final class UpcastTest extends TestCase
 {
     public function testReplaceEventName(): void
