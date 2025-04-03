@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\Hydrator\Normalizer\InvalidArgument;
 use Patchlevel\Hydrator\Normalizer\InvalidType;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Ramsey\Uuid\Exception\InvalidUuidStringException;
@@ -19,7 +20,7 @@ use ReflectionClass;
 use ReflectionType;
 use RuntimeException;
 
-/** @covers \Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer */
+#[CoversClass(IdNormalizer::class)]
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class IdNormalizerTest extends TestCase
 {
