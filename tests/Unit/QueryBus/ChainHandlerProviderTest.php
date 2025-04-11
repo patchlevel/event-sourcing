@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Patchlevel\EventSourcing\Tests\Unit\QueryBus;
+
+use Patchlevel\EventSourcing\QueryBus\ChainHandlerProvider;
+use Patchlevel\EventSourcing\QueryBus\HandlerDescriptor;
+use Patchlevel\EventSourcing\QueryBus\HandlerProvider;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\QueryProfile;
+use PHPUnit\Framework\TestCase;
+use Prophecy\PhpUnit\ProphecyTrait;
+
+/** @covers \Patchlevel\EventSourcing\QueryBus\ChainHandlerProvider */
+final class ChainHandlerProviderTest extends TestCase
+{
+    use ProphecyTrait;
+
+    public function testEmpty(): void
+    {
+        $provider = new ChainHandlerProvider([]);
+
+        $result = $provider->handlerForQuery(QueryProfile::class);
+
+        self::assertCount(0, $result);
+    }
+
+    public function testFindHandler(): void
+    {
+        $handler1 = new HandlerDescriptor(static fn () => null);
+        $handler2 = new HandlerDescriptor(static fn () => null);
+        $handler3 = new HandlerDescriptor(static fn () => null);
+
+        $provider1 = $this->prophesize(HandlerProvider::class);
+        $provider1->handlerForQuery(QueryProfile::class)->willReturn([
+            $handler1,
+            $handler2,
+        ]);
+
+        $provider2 = $this->prophesize(HandlerProvider::class);
+        $provider2->handlerForQuery(QueryProfile::class)->willReturn([$handler3]);
+
+        $chainProvider = new ChainHandlerProvider([
+            $provider1->reveal(),
+            $provider2->reveal(),
+        ]);
+
+        $result = $chainProvider->handlerForQuery(QueryProfile::class);
+
+        self::assertSame([$handler1, $handler2, $handler3], $result);
+    }
+}

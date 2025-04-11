@@ -83,6 +83,15 @@
       <code><![CDATA[require_once $file]]></code>
     </UnresolvableInclude>
   </file>
+  <file src="src/QueryBus/ServiceHandlerProvider.php">
+    <MixedArgument>
+      <code><![CDATA[$service::{$handler->method}(...)]]></code>
+    </MixedArgument>
+    <MixedMethodCall>
+      <code><![CDATA[$handler->method]]></code>
+      <code><![CDATA[$service::{$handler->method}(...)]]></code>
+    </MixedMethodCall>
+  </file>
   <file src="src/Repository/DefaultRepository.php">
     <PossiblyNullArgument>
       <code><![CDATA[$streamName]]></code>
@@ -363,6 +372,26 @@
     <MissingParamType>
       <code><![CDATA[$message]]></code>
     </MissingParamType>
+  </file>
+  <file src="tests/Unit/QueryBus/HandlerFinderTest.php">
+    <MissingParamType>
+      <code><![CDATA[$query]]></code>
+    </MissingParamType>
+  </file>
+  <file src="tests/Unit/QueryBus/ServiceHandlerProviderTest.php">
+    <InvalidArrayAccess>
+      <code><![CDATA[$result[0]]]></code>
+      <code><![CDATA[$result[0]]]></code>
+    </InvalidArrayAccess>
+    <MixedMethodCall>
+      <code><![CDATA[callable]]></code>
+      <code><![CDATA[callable]]></code>
+    </MixedMethodCall>
+  </file>
+  <file src="tests/Unit/QueryBus/SyncQueryBusTest.php">
+    <InvalidPropertyFetch>
+      <code><![CDATA[$handler->query]]></code>
+    </InvalidPropertyFetch>
   </file>
   <file src="tests/Unit/Schema/DoctrineSchemaSubscriberTest.php">
     <DeprecatedClass>
