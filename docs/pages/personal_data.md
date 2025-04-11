@@ -20,17 +20,43 @@ Encrypting and decrypting is handled by the library.
 You just have to configure the events accordingly.
 And if you use snapshots, you have to configure your aggregates too.
 
-### PersonalData
+### DataSubjectId
 
-First of all, we have to mark the fields that contain personal data.
-For our example, we use events, but you can do the same with aggregates.
+In order for the correct key to be used, a subject ID must be defined.
+Without Subject Id, no personal data can be encrypted or decrypted.
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\Hydrator\Attribute\DataSubjectId;
+
+final class EmailChanged
+{
+    public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
+        // ...
+    ) {
+    }
+}
+```
+!!! tip
+
+    You can use the `DataSubjectId` in aggregates for snapshots too.
+    
+### PersonalData
+
+Next, you have to mark the properties that should be encrypted with the `#[PersonalData]` attribute.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\Hydrator\Attribute\DataSubjectId;
 use Patchlevel\Hydrator\Attribute\PersonalData;
 
 final class EmailChanged
 {
     public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
         #[PersonalData]
         public readonly string|null $email,
     ) {
@@ -41,20 +67,28 @@ final class EmailChanged
 
     You can use the `PersonalData` in aggregates for snapshots too.
     
-If the information could not be decrypted, then a fallback value is inserted.
+If the information could not be decrypted, then a fallback value will be used.
 The default fallback value is `null`.
-You can change this by setting the `fallback` parameter.
-In this case `unknown` is added:
+You can change this by setting the `fallback` parameter or using the `fallbackCallable` parameter.
 
 ```php
 use Patchlevel\Hydrator\Attribute\PersonalData;
 
-final class EmailChanged
+final class ProfileChanged
 {
     public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
         #[PersonalData(fallback: 'unknown')]
+        public readonly string $name,
+        #[PersonalData(fallbackCallable: [self::class, 'createAnonymousEmail'])]
         public readonly string $email,
     ) {
+    }
+
+    public static function createAnonymousEmail(string $subjectId): string
+    {
+        return sprintf('%s@example.com', $subjectId);
     }
 }
 ```
@@ -62,41 +96,9 @@ final class EmailChanged
 
     You have to deal with this case in your business logic such as aggregates and subscriptions.
     
-!!! warning
-
-    You need to define a subject ID to use the personal data attribute.
-    
 !!! note
 
-    The normalized data is encrypted. This means that this happens after the 'extract' or before the 'hydrate'.
-    
-### DataSubjectId
-
-In order for the correct key to be used, a subject ID must be defined.
-Without Subject Id, no personal data can be encrypted or decrypted.
-
-```php
-use Patchlevel\Hydrator\Attribute\DataSubjectId;
-use Patchlevel\Hydrator\Attribute\PersonalData;
-
-final class EmailChanged
-{
-    public function __construct(
-        #[DataSubjectId]
-        public readonly string $personId,
-        #[PersonalData(fallback: 'unknown')]
-        public readonly string $email,
-    ) {
-    }
-}
-```
-!!! tip
-
-    You can use the `DataSubjectId` in aggregates for snapshots too.
-    
-!!! warning
-
-    A subject ID can not be a personal data.
+    The normalized data is encrypted. This means that this happens after the `extract` or before the `hydrate`.
     
 ## Setup
 
@@ -145,7 +147,7 @@ use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyStore;
 use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
 
 /** @var CipherKeyStore $cipherKeyStore */
-$cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl($cipherKeyStore);
+$cryptographer = PersonalDataPayloadCryptographer::createWithDefaultSettings($cipherKeyStore);
 ```
 !!! tip
 
