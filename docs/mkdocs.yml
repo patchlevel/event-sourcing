@@ -99,6 +99,7 @@ nav:
     - Subscription: subscription.md
     - Command Bus:  command_bus.md
     - Event Bus:  event_bus.md
+    - Query Bus:  query_bus.md
   - Advanced:
     - Aggregate ID: aggregate_id.md
     - Normalizer: normalizer.md
