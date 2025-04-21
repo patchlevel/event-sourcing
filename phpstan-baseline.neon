@@ -1,6 +1,24 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Dead catch \- Patchlevel\\EventSourcing\\Repository\\AggregateOutdated is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 1
+			path: src/CommandBus/RetryOutdatedAggregateCommandBus.php
+
+		-
+			message: '#^Method Patchlevel\\EventSourcing\\CommandBus\\RetryOutdatedAggregateCommandBus\:\:maxRetries\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/CommandBus/RetryOutdatedAggregateCommandBus.php
+
+		-
+			message: '#^Method Patchlevel\\EventSourcing\\CommandBus\\RetryOutdatedAggregateCommandBus\:\:maxRetries\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/CommandBus/RetryOutdatedAggregateCommandBus.php
+
+		-
 			message: '#^Cannot unset offset ''url'' on array\{application_name\?\: string, charset\?\: string, dbname\?\: string, defaultTableOptions\?\: array\<string, mixed\>, driver\?\: ''ibm_db2''\|''mysqli''\|''oci8''\|''pdo_mysql''\|''pdo_oci''\|''pdo_pgsql''\|''pdo_sqlite''\|''pdo_sqlsrv''\|''pgsql''\|''sqlite3''\|''sqlsrv'', driverClass\?\: class\-string\<Doctrine\\DBAL\\Driver\>, driverOptions\?\: array\<mixed\>, host\?\: string, \.\.\.\}\.$#'
 			identifier: unset.offset
 			count: 1

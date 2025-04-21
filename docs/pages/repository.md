@@ -163,7 +163,7 @@ $profile = Profile::create($id, 'david.badura@patchlevel.de');
 /** @var Repository $repository */
 $repository->save($profile);
 ```
-!!! Warning
+!!! warning
 
     All events are written to the database with one transaction in order to ensure data consistency.
     If an exception occurs during the save process, 
@@ -174,6 +174,12 @@ $repository->save($profile);
 
     Due to the nature of the aggregate having a playhead, 
     we have a unique constraint that ensures that no race condition happens here.
+    An `AggregateOutdated` exception is thrown if a conflict occurs.
+    
+!!! tip
+
+    If you use the Command Bus, you can use the [RetryOutdatedAggregateCommandBus](command_bus.md#retry-outdated-aggregate-command-bus)
+    to retry the command when an `AggregateOutdated` exception occurs automatically.
     
 ### Load an aggregate
 
