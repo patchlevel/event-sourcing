@@ -231,6 +231,44 @@ $commandBus = new SyncCommandBus($handlerProvider);
 $commandBus->dispatch(new CreateProfile($profileId, 'name'));
 $commandBus->dispatch(new ChangeProfileName($profileId, 'new name'));
 ```
+### Retry Outdated Aggregate
+
+If you want to retry the command when an `AggregateOutdated` exception occurs,
+you can use the `RetryOutdatedAggregateCommandBus` decorator.
+
+```php
+use Patchlevel\EventSourcing\CommandBus;
+use Patchlevel\EventSourcing\CommandBus\RetryOutdatedAggregateCommandBus;
+
+/**
+ * @var HandlerProvider $handlerProvider
+ * @var CommandBus $store
+ */
+$commandBus = new RetryOutdatedAggregateCommandBus(
+    $commandBus,
+);
+```
+And you need to mark the command class with the `#[RetryAggregateOutdated]` attribute,
+if you want to retry the command when an `AggregateOutdated` exception occurs.
+
+```php
+use Patchlevel\EventSourcing\Attribute\RetryAggregateOutdated;
+
+#[RetryAggregateOutdated]
+final class CreateProfile
+{
+    public function __construct(
+        public readonly ProfileId $id,
+        public readonly string $name,
+    ) {
+    }
+}
+```
+!!! tip
+
+    You can specify the maximum number of retries in the `#[RetryAggregateOutdated]` attribute.
+    The default value is 3.
+    
 ## Provider
 
 There are different types of providers that you can use to register handlers.
