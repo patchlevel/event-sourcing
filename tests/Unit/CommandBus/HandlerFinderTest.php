@@ -11,13 +11,10 @@ use Patchlevel\EventSourcing\CommandBus\InvalidHandleMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(HandlerFinder::class)]
 final class HandlerFinderTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testNoParameters(): void
     {
         $this->expectException(InvalidHandleMethod::class);
@@ -40,7 +37,7 @@ final class HandlerFinderTest extends TestCase
         $class = new class () {
             // phpcs:disable
             #[Handle]
-            public function handle($command): void
+            public function handle(mixed $command): void
             {
             }
             // phpcs:enable

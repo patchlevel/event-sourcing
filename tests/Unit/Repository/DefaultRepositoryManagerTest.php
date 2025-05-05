@@ -13,25 +13,22 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(DefaultRepositoryManager::class)]
 final class DefaultRepositoryManagerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testGetNewRepository(): void
     {
-        $store = $this->prophesize(Store::class);
-        $eventBus = $this->prophesize(EventBus::class);
+        $store = $this->createMock(Store::class);
+        $eventBus = $this->createMock(EventBus::class);
 
         $repositoryManager = new DefaultRepositoryManager(
             new AggregateRootRegistry([
                 'profile' => Profile::class,
                 'profile2' => ProfileWithSnapshot::class,
             ]),
-            $store->reveal(),
-            $eventBus->reveal(),
+            $store,
+            $eventBus,
         );
 
         $repository1 = $repositoryManager->get(Profile::class);
@@ -42,13 +39,13 @@ final class DefaultRepositoryManagerTest extends TestCase
 
     public function testSameRepository(): void
     {
-        $store = $this->prophesize(Store::class);
-        $eventBus = $this->prophesize(EventBus::class);
+        $store = $this->createMock(Store::class);
+        $eventBus = $this->createMock(EventBus::class);
 
         $repositoryManager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['profile' => Profile::class]),
-            $store->reveal(),
-            $eventBus->reveal(),
+            $store,
+            $eventBus,
         );
 
         $repository1 = $repositoryManager->get(Profile::class);
@@ -61,13 +58,13 @@ final class DefaultRepositoryManagerTest extends TestCase
     {
         $this->expectException(AggregateRootClassNotRegistered::class);
 
-        $store = $this->prophesize(Store::class);
-        $eventBus = $this->prophesize(EventBus::class);
+        $store = $this->createMock(Store::class);
+        $eventBus = $this->createMock(EventBus::class);
 
         $repositoryManager = new DefaultRepositoryManager(
             new AggregateRootRegistry([]),
-            $store->reveal(),
-            $eventBus->reveal(),
+            $store,
+            $eventBus,
         );
 
         $repositoryManager->get(Profile::class);

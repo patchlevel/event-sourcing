@@ -14,27 +14,21 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(CreateAggregateHandler::class)]
 final class CreateAggregateHandlerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSuccess(): void
     {
-        $repository = $this->prophesize(Repository::class);
-        $repository->save(Argument::type(ProfileWithHandler::class))->shouldBeCalled();
+        $repository = $this->createMock(Repository::class);
+        $repository->expects($this->atLeastOnce())->method('save')->with($this->isInstanceOf(ProfileWithHandler::class));
 
-        $repositoryManager = $this->prophesize(RepositoryManager::class);
-        $repositoryManager
-            ->get(ProfileWithHandler::class)
-            ->willReturn($repository->reveal())
-            ->shouldBeCalled();
+        $repositoryManager = $this->createMock(RepositoryManager::class);
+        $repositoryManager->expects($this->atLeastOnce())->method('get')->with(ProfileWithHandler::class)
+            ->willReturn($repository);
 
         $handler = new CreateAggregateHandler(
-            $repositoryManager->reveal(),
+            $repositoryManager,
             ProfileWithHandler::class,
             'create',
             new DefaultParameterResolver(),
@@ -57,16 +51,14 @@ final class CreateAggregateHandlerTest extends TestCase
             }
         };
 
-        $repository = $this->prophesize(Repository::class);
+        $repository = $this->createMock(Repository::class);
 
-        $repositoryManager = $this->prophesize(RepositoryManager::class);
-        $repositoryManager
-            ->get($class::class)
-            ->willReturn($repository->reveal())
-            ->shouldBeCalled();
+        $repositoryManager = $this->createMock(RepositoryManager::class);
+        $repositoryManager->expects($this->atLeastOnce())->method('get')->with($class::class)
+            ->willReturn($repository);
 
         $handler = new CreateAggregateHandler(
-            $repositoryManager->reveal(),
+            $repositoryManager,
             $class::class,
             'create',
             new DefaultParameterResolver(),

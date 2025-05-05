@@ -43,21 +43,19 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithStream;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 use Throwable;
 
 #[CoversClass(DefaultRepository::class)]
 final class DefaultRepositoryTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSaveAggregate(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->save(
-            Argument::that(static function (Message $message) {
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->atLeastOnce())
+            ->method('save')
+            ->willReturnCallback(static function (Message $message) {
                 if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
@@ -67,25 +65,9 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
+            });
 
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 2;
-            }),
-        )->shouldBeCalled();
-
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
-
+        $repository = new DefaultRepository($store, Profile::metadata());
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de'),
@@ -98,9 +80,11 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testUpdateAggregate(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->save(
-            Argument::that(static function (Message $message) {
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->exactly(2))
+            ->method('save')
+            ->willReturnCallback(static function (Message $message) {
                 if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
@@ -109,46 +93,34 @@ final class DefaultRepositoryTest extends TestCase
                     return false;
                 }
 
-                return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-        )->shouldBeCalled();
-
-        $store->save(
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
+                if ($message->header(AggregateHeader::class)->playhead === 1 && $message->event()::class === ProfileCreated::class) {
+                    return true;
                 }
 
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
+                return $message->header(AggregateHeader::class)->playhead === 2 && $message->event()::class === ProfileVisited::class;
+            });
 
-                return $message->header(AggregateHeader::class)->playhead === 2;
-            }),
-        )->shouldBeCalled();
-
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
-
+        $repository = new DefaultRepository($store, Profile::metadata());
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de'),
         );
-
         $repository->save($aggregate);
 
         $aggregate->visitProfile(ProfileId::fromString('2'));
-
         $repository->save($aggregate);
     }
 
     public function testEventBus(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->save(
-            Argument::that(static function (Message $message) {
+        $store = $this->createMock(Store::class);
+        $store->expects($this->exactly(2))->method('save');
+
+        $eventBus = $this->createMock(EventBus::class);
+        $eventBus
+            ->expects($this->exactly(2))
+            ->method('dispatch')
+            ->willReturnCallback(static function (Message $message) {
                 if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
@@ -157,76 +129,31 @@ final class DefaultRepositoryTest extends TestCase
                     return false;
                 }
 
-                return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-        )->shouldBeCalled();
-
-        $store->save(
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
+                if ($message->header(AggregateHeader::class)->playhead === 1 && $message->event()::class === ProfileCreated::class) {
+                    return true;
                 }
 
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
+                return $message->header(AggregateHeader::class)->playhead === 2 && $message->event()::class === ProfileVisited::class;
+            });
 
-                return $message->header(AggregateHeader::class)->playhead === 2;
-            }),
-        )->shouldBeCalled();
-
-        $eventBus = $this->prophesize(EventBus::class);
-        $eventBus->dispatch(
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-        )->shouldBeCalled();
-
-        $eventBus->dispatch(
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 2;
-            }),
-        )->shouldBeCalled();
-
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-            $eventBus->reveal(),
-        );
-
+        $repository = new DefaultRepository($store, Profile::metadata(), $eventBus);
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de'),
         );
-
         $repository->save($aggregate);
 
         $aggregate->visitProfile(ProfileId::fromString('2'));
-
         $repository->save($aggregate);
     }
 
     public function testDecorator(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->save(
-            Argument::that(static function (Message $message) {
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->atLeastOnce())
+            ->method('save')
+            ->willReturnCallback(static function (Message $message) {
                 if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
@@ -240,8 +167,7 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-        )->shouldBeCalled();
+            });
 
         $decorator = new class implements MessageDecorator {
             public function __invoke(Message $message): Message
@@ -251,7 +177,7 @@ final class DefaultRepositoryTest extends TestCase
         };
 
         $repository = new DefaultRepository(
-            $store->reveal(),
+            $store,
             Profile::metadata(),
             null,
             null,
@@ -268,10 +194,10 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testSaveWrongAggregate(): void
     {
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
 
         $repository = new DefaultRepository(
-            $store->reveal(),
+            $store,
             Profile::metadata(),
         );
 
@@ -288,9 +214,11 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testSaveAggregateWithEmptyEventStream(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->save(
-            Argument::that(static function (Message $message) {
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('save')
+            ->willReturnCallback(static function (Message $message) {
                 if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
@@ -300,14 +228,9 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-        )->shouldBeCalledOnce();
+            });
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
-
+        $repository = new DefaultRepository($store, Profile::metadata());
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de'),
@@ -319,15 +242,14 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testDetachedException(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->save(
-            Argument::type(Message::class),
-        )->willThrow(new RuntimeException());
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->atLeastOnce())
+            ->method('save')
+            ->with($this->isInstanceOf(Message::class))
+            ->willThrowException(new RuntimeException());
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
+        $repository = new DefaultRepository($store, Profile::metadata());
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
@@ -341,7 +263,6 @@ final class DefaultRepositoryTest extends TestCase
         }
 
         $this->expectException(AggregateDetached::class);
-
         $repository->save($aggregate);
     }
 
@@ -349,23 +270,19 @@ final class DefaultRepositoryTest extends TestCase
     {
         $this->expectException(AggregateUnknown::class);
 
-        $store = $this->prophesize(Store::class);
-        $store->save(
-            Argument::type(Message::class),
-        )->shouldNotBeCalled();
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->never())
+            ->method('save')
+            ->with($this->isInstanceOf(Message::class));
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
+        $repository = new DefaultRepository($store, Profile::metadata());
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de'),
         );
-
         $aggregate->releaseEvents();
-
         $aggregate->visitProfile(ProfileId::fromString('2'));
 
         $repository->save($aggregate);
@@ -375,15 +292,14 @@ final class DefaultRepositoryTest extends TestCase
     {
         $this->expectException(AggregateAlreadyExists::class);
 
-        $store = $this->prophesize(Store::class);
-        $store->save(
-            Argument::type(Message::class),
-        )->willThrow(new UniqueConstraintViolation());
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('save')
+            ->with($this->isInstanceOf(Message::class))
+            ->willThrowException(new UniqueConstraintViolation());
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
+        $repository = new DefaultRepository($store, Profile::metadata());
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
@@ -397,42 +313,34 @@ final class DefaultRepositoryTest extends TestCase
     {
         $this->expectException(AggregateOutdated::class);
 
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->exactly(2))
+            ->method('save')
+            ->willReturnOnConsecutiveCalls(
+                true,
+                $this->throwException(new UniqueConstraintViolation()),
+            );
 
-        $store->save(
-            Argument::that(static function (Message $message) {
-                return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-        )->shouldBeCalled();
-
-        $store->save(
-            Argument::that(static function (Message $message) {
-                return $message->header(AggregateHeader::class)->playhead === 2;
-            }),
-        )->willThrow(new UniqueConstraintViolation());
-
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
+        $repository = new DefaultRepository($store, Profile::metadata());
 
         $aggregate = Profile::createProfile(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de'),
         );
-
         $repository->save($aggregate);
 
         $aggregate->visitProfile(ProfileId::fromString('2'));
-
         $repository->save($aggregate);
     }
 
     public function testSaveAggregateWithSplitStream(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->save(
-            Argument::that(static function (Message $message) {
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->atLeastOnce())
+            ->method('save')
+            ->willReturnCallback(static function (Message $message) {
                 if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
                     return false;
                 }
@@ -442,33 +350,10 @@ final class DefaultRepositoryTest extends TestCase
                 }
 
                 return $message->header(AggregateHeader::class)->playhead === 1;
-            }),
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 2;
-            }),
-            Argument::that(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 3;
-            }),
-        )->shouldBeCalled();
+            });
 
         $repository = new DefaultRepository(
-            $store->reveal(),
+            $store,
             Profile::metadata(),
             null,
             null,
@@ -487,24 +372,24 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testLoadAggregate(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(
-            new AggregateNameCriterion('profile'),
-            new AggregateIdCriterion('1'),
-            new ArchivedCriterion(false),
-        ))->willReturn(new ArrayStream([
-            Message::create(
-                new ProfileCreated(
-                    ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de'),
-                ),
-            )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
-        ]));
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(
+                new AggregateNameCriterion('profile'),
+                new AggregateIdCriterion('1'),
+                new ArchivedCriterion(false),
+            ))->willReturn(new ArrayStream([
+                Message::create(
+                    new ProfileCreated(
+                        ProfileId::fromString('1'),
+                        Email::fromString('hallo@patchlevel.de'),
+                    ),
+                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+            ]));
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
+        $repository = new DefaultRepository($store, Profile::metadata());
 
         $aggregate = $repository->load(ProfileId::fromString('1'));
 
@@ -516,34 +401,34 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testLoadAggregateTwice(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(
-            new AggregateNameCriterion('profile'),
-            new AggregateIdCriterion('1'),
-            new ArchivedCriterion(false),
-        ))->willReturn(
-            new ArrayStream([
-                Message::create(
-                    new ProfileCreated(
-                        ProfileId::fromString('1'),
-                        Email::fromString('hallo@patchlevel.de'),
-                    ),
-                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
-            ]),
-            new ArrayStream([
-                Message::create(
-                    new ProfileCreated(
-                        ProfileId::fromString('1'),
-                        Email::fromString('hallo@patchlevel.de'),
-                    ),
-                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
-            ]),
-        );
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->exactly(2))
+            ->method('load')
+            ->with(new Criteria(
+                new AggregateNameCriterion('profile'),
+                new AggregateIdCriterion('1'),
+                new ArchivedCriterion(false),
+            ))->willReturn(
+                new ArrayStream([
+                    Message::create(
+                        new ProfileCreated(
+                            ProfileId::fromString('1'),
+                            Email::fromString('hallo@patchlevel.de'),
+                        ),
+                    )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                ]),
+                new ArrayStream([
+                    Message::create(
+                        new ProfileCreated(
+                            ProfileId::fromString('1'),
+                            Email::fromString('hallo@patchlevel.de'),
+                        ),
+                    )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                ]),
+            );
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
+        $repository = new DefaultRepository($store, Profile::metadata());
 
         $aggregate1 = $repository->load(ProfileId::fromString('1'));
         $aggregate2 = $repository->load(ProfileId::fromString('1'));
@@ -556,49 +441,52 @@ final class DefaultRepositoryTest extends TestCase
     {
         $this->expectException(AggregateNotFound::class);
 
-        $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(
-            new AggregateNameCriterion('profile'),
-            new AggregateIdCriterion('1'),
-            new ArchivedCriterion(false),
-        ))->willReturn(new ArrayStream());
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(
+                new AggregateNameCriterion('profile'),
+                new AggregateIdCriterion('1'),
+                new ArchivedCriterion(false),
+            ))
+            ->willReturn(new ArrayStream());
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
+        $repository = new DefaultRepository($store, Profile::metadata());
 
         $repository->load(ProfileId::fromString('1'));
     }
 
     public function testHasAggregate(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->count(new Criteria(
-            new AggregateNameCriterion('profile'),
-            new AggregateIdCriterion('1'),
-        ))->willReturn(1);
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('count')
+            ->with(new Criteria(
+                new AggregateNameCriterion('profile'),
+                new AggregateIdCriterion('1'),
+            ))
+            ->willReturn(1);
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
+        $repository = new DefaultRepository($store, Profile::metadata());
 
         self::assertTrue($repository->has(ProfileId::fromString('1')));
     }
 
     public function testNotHasAggregate(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->count(new Criteria(
-            new AggregateNameCriterion('profile'),
-            new AggregateIdCriterion('1'),
-        ))->willReturn(0);
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('count')
+            ->with(new Criteria(
+                new AggregateNameCriterion('profile'),
+                new AggregateIdCriterion('1'),
+            ))
+            ->willReturn(0);
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            Profile::metadata(),
-        );
+        $repository = new DefaultRepository($store, Profile::metadata());
 
         self::assertFalse($repository->has(ProfileId::fromString('1')));
     }
@@ -612,24 +500,25 @@ final class DefaultRepositoryTest extends TestCase
             Email::fromString('hallo@patchlevel.de'),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(
-            new AggregateNameCriterion('profile_with_snapshot'),
-            new AggregateIdCriterion('1'),
-            new FromPlayheadCriterion(1),
-        ))->willReturn(new ArrayStream());
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(
+                new AggregateNameCriterion('profile_with_snapshot'),
+                new AggregateIdCriterion('1'),
+                new FromPlayheadCriterion(1),
+            ))
+            ->willReturn(new ArrayStream());
 
-        $snapshotStore = $this->prophesize(SnapshotStore::class);
-        $snapshotStore->load(
-            ProfileWithSnapshot::class,
-            $id,
-        )->willReturn($profile);
+        $snapshotStore = $this->createMock(SnapshotStore::class);
+        $snapshotStore->method('load')->with(ProfileWithSnapshot::class, $id)->willReturn($profile);
 
         $repository = new DefaultRepository(
-            $store->reveal(),
+            $store,
             ProfileWithSnapshot::metadata(),
             null,
-            $snapshotStore->reveal(),
+            $snapshotStore,
         );
 
         $aggregate = $repository->load(ProfileId::fromString('1'));
@@ -642,47 +531,59 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testLoadAggregateWithSnapshotFirstTime(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->load(
-            new Criteria(
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(
                 new AggregateNameCriterion('profile_with_snapshot'),
                 new AggregateIdCriterion('1'),
                 new ArchivedCriterion(false),
-            ),
-        )->willReturn(
-            new ArrayStream([
-                Message::create(
-                    new ProfileCreated(
-                        ProfileId::fromString('1'),
-                        Email::fromString('hallo@patchlevel.de'),
-                    ),
-                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
-                Message::create(
-                    new ProfileVisited(
-                        ProfileId::fromString('1'),
-                    ),
-                )->withHeader(new AggregateHeader('profile', '1', 2, new DateTimeImmutable())),
-                Message::create(
-                    new ProfileVisited(
-                        ProfileId::fromString('1'),
-                    ),
-                )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
-            ]),
-        );
+            ))
+            ->willReturn(
+                new ArrayStream([
+                    Message::create(
+                        new ProfileCreated(
+                            ProfileId::fromString('1'),
+                            Email::fromString('hallo@patchlevel.de'),
+                        ),
+                    )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                    Message::create(
+                        new ProfileVisited(
+                            ProfileId::fromString('1'),
+                        ),
+                    )->withHeader(new AggregateHeader('profile', '1', 2, new DateTimeImmutable())),
+                    Message::create(
+                        new ProfileVisited(
+                            ProfileId::fromString('1'),
+                        ),
+                    )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
+                ]),
+            );
 
-        $snapshotStore = $this->prophesize(SnapshotStore::class);
-        $snapshotStore->load(
-            ProfileWithSnapshot::class,
-            ProfileId::fromString('1'),
-        )->willThrow(new SnapshotNotFound(ProfileWithSnapshot::class, ProfileId::fromString('1')));
+        $snapshotStore = $this->createMock(SnapshotStore::class);
+        $snapshotStore
+            ->expects($this->once())
+            ->method('load')
+            ->with(
+                ProfileWithSnapshot::class,
+                ProfileId::fromString('1'),
+            )
+            ->willThrowException(new SnapshotNotFound(
+                ProfileWithSnapshot::class,
+                ProfileId::fromString('1'),
+            ));
 
-        $snapshotStore->save(Argument::type(ProfileWithSnapshot::class))->shouldBeCalled();
+        $snapshotStore
+            ->expects($this->once())
+            ->method('save')
+            ->with($this->isInstanceOf(ProfileWithSnapshot::class));
 
         $repository = new DefaultRepository(
-            $store->reveal(),
+            $store,
             ProfileWithSnapshot::metadata(),
             null,
-            $snapshotStore->reveal(),
+            $snapshotStore,
         );
 
         $aggregate = $repository->load(ProfileId::fromString('1'));
@@ -700,44 +601,50 @@ final class DefaultRepositoryTest extends TestCase
             Email::fromString('hallo@patchlevel.de'),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load(
-            new Criteria(
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(
                 new AggregateNameCriterion('profile_with_snapshot'),
                 new AggregateIdCriterion('1'),
                 new FromPlayheadCriterion(1),
-            ),
-        )->willReturn(new ArrayStream([
-            Message::create(
-                new ProfileVisited(
-                    ProfileId::fromString('1'),
-                ),
-            )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
-            Message::create(
-                new ProfileVisited(
-                    ProfileId::fromString('1'),
-                ),
-            )->withHeader(new AggregateHeader('profile', '1', 2, new DateTimeImmutable())),
-            Message::create(
-                new ProfileVisited(
-                    ProfileId::fromString('1'),
-                ),
-            )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
-        ]));
+            ))
+            ->willReturn(new ArrayStream([
+                Message::create(
+                    new ProfileVisited(
+                        ProfileId::fromString('1'),
+                    ),
+                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                Message::create(
+                    new ProfileVisited(
+                        ProfileId::fromString('1'),
+                    ),
+                )->withHeader(new AggregateHeader('profile', '1', 2, new DateTimeImmutable())),
+                Message::create(
+                    new ProfileVisited(
+                        ProfileId::fromString('1'),
+                    ),
+                )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
+            ]));
 
-        $snapshotStore = $this->prophesize(SnapshotStore::class);
-        $snapshotStore->load(
-            ProfileWithSnapshot::class,
-            ProfileId::fromString('1'),
-        )->willReturn($profile);
+        $snapshotStore = $this->createMock(SnapshotStore::class);
+        $snapshotStore
+            ->expects($this->once())
+            ->method('load')
+            ->with(ProfileWithSnapshot::class, ProfileId::fromString('1'))
+            ->willReturn($profile);
 
-        $snapshotStore->save($profile)->shouldBeCalled();
+        $snapshotStore
+            ->expects($this->once())
+            ->method('save')
+            ->with($profile);
 
         $repository = new DefaultRepository(
-            $store->reveal(),
+            $store,
             ProfileWithSnapshot::metadata(),
             null,
-            $snapshotStore->reveal(),
+            $snapshotStore,
         );
 
         $aggregate = $repository->load(ProfileId::fromString('1'));
@@ -750,12 +657,15 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testLoadAggregateWithoutSnapshot(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(
-            new AggregateNameCriterion('profile_with_snapshot'),
-            new AggregateIdCriterion('1'),
-            new ArchivedCriterion(false),
-        ))
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(
+                new AggregateNameCriterion('profile_with_snapshot'),
+                new AggregateIdCriterion('1'),
+                new ArchivedCriterion(false),
+            ))
             ->willReturn(new ArrayStream([
                 Message::create(
                     new ProfileCreated(
@@ -765,15 +675,18 @@ final class DefaultRepositoryTest extends TestCase
                 )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
             ]));
 
-        $snapshotStore = $this->prophesize(SnapshotStore::class);
-        $snapshotStore->load(ProfileWithSnapshot::class, ProfileId::fromString('1'))
-            ->willThrow(SnapshotNotFound::class);
+        $snapshotStore = $this->createMock(SnapshotStore::class);
+        $snapshotStore
+            ->expects($this->once())
+            ->method('load')
+            ->with(ProfileWithSnapshot::class, ProfileId::fromString('1'))
+            ->willThrowException(new SnapshotNotFound(ProfileWithSnapshot::class, ProfileId::fromString('1')));
 
         $repository = new DefaultRepository(
-            $store->reveal(),
+            $store,
             ProfileWithSnapshot::metadata(),
             null,
-            $snapshotStore->reveal(),
+            $snapshotStore,
         );
 
         $aggregate = $repository->load(ProfileId::fromString('1'));
@@ -786,64 +699,51 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testSaveAggregateInOtherStream(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->willImplement(StreamStore::class);
-        $store->save(
-            Argument::that(static function (Message $message) {
+        $store = $this->createMock(StreamStore::class);
+        $store
+            ->expects($this->once())
+            ->method('save')
+            ->willReturnCallback(static function (Message $message) {
                 if ($message->header(StreamNameHeader::class)->streamName !== 'other-1') {
                     return false;
                 }
 
                 return $message->header(PlayheadHeader::class)->playhead === 1;
-            }),
-            Argument::that(static function (Message $message) {
-                if ($message->header(StreamNameHeader::class)->streamName !== 'other-1') {
-                    return false;
-                }
+            });
 
-                return $message->header(PlayheadHeader::class)->playhead === 2;
-            }),
-        )->shouldBeCalled();
-
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            ProfileWithStream::metadata(),
-        );
-
+        $repository = new DefaultRepository($store, ProfileWithStream::metadata());
         $aggregate = ProfileWithStream::createProfile(
             ProfileId::fromString('1'),
             Email::fromString('hallo@patchlevel.de'),
         );
 
         $aggregate->visitProfile(ProfileId::fromString('2'));
-
         $repository->save($aggregate);
     }
 
     public function testLoadAggregateFromOtherStream(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->willImplement(StreamStore::class);
+        $store = $this->createMock(StreamStore::class);
 
-        $store->load(new Criteria(
-            new StreamCriterion('other-1'),
-            new ArchivedCriterion(false),
-        ))->willReturn(new ArrayStream([
-            Message::create(
-                new ProfileCreated(
-                    ProfileId::fromString('1'),
-                    Email::fromString('hallo@patchlevel.de'),
-                ),
-            )->withHeader(new StreamNameHeader('other-1'))
-            ->withHeader(new PlayheadHeader(1))
-            ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
-        ]));
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(
+                new StreamCriterion('other-1'),
+                new ArchivedCriterion(false),
+            ))
+            ->willReturn(new ArrayStream([
+                Message::create(
+                    new ProfileCreated(
+                        ProfileId::fromString('1'),
+                        Email::fromString('hallo@patchlevel.de'),
+                    ),
+                )->withHeader(new StreamNameHeader('other-1'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
+            ]));
 
-        $repository = new DefaultRepository(
-            $store->reveal(),
-            ProfileWithStream::metadata(),
-        );
-
+        $repository = new DefaultRepository($store, ProfileWithStream::metadata());
         $aggregate = $repository->load(ProfileId::fromString('1'));
 
         self::assertInstanceOf(ProfileWithStream::class, $aggregate);

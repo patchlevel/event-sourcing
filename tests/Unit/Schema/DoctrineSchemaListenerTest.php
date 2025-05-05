@@ -12,26 +12,23 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaListener;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(DoctrineSchemaListener::class)]
 final class DoctrineSchemaListenerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testPostGenerateSchema(): void
     {
-        $connection = $this->prophesize(Connection::class)->reveal();
-        $em = $this->prophesize(EntityManagerInterface::class);
-        $em->getConnection()->willReturn($connection);
+        $connection = $this->createMock(Connection::class);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
         $expectedSchema = new Schema();
 
-        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
-        $schemaConfigurator->configureSchema($expectedSchema, $connection)->shouldBeCalled();
+        $schemaConfigurator = $this->createMock(DoctrineSchemaConfigurator::class);
+        $schemaConfigurator->expects($this->atLeastOnce())->method('configureSchema')->with($expectedSchema, $connection);
 
-        $event = new GenerateSchemaEventArgs($em->reveal(), $expectedSchema);
+        $event = new GenerateSchemaEventArgs($em, $expectedSchema);
 
-        $doctrineSchemaSubscriber = new DoctrineSchemaListener($schemaConfigurator->reveal());
+        $doctrineSchemaSubscriber = new DoctrineSchemaListener($schemaConfigurator);
         $doctrineSchemaSubscriber->postGenerateSchema($event);
     }
 }

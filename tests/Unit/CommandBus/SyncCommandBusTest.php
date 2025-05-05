@@ -11,22 +11,19 @@ use Patchlevel\EventSourcing\CommandBus\MultipleHandlersFound;
 use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(SyncCommandBus::class)]
 final class SyncCommandBusTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testHandlerNotFound(): void
     {
         $command = new class {
         };
 
-        $handlerProvider = $this->prophesize(HandlerProvider::class);
-        $handlerProvider->handlerForCommand($command::class)->willReturn([]);
+        $handlerProvider = $this->createMock(HandlerProvider::class);
+        $handlerProvider->method('handlerForCommand')->with($command::class)->willReturn([]);
 
-        $commandBus = new SyncCommandBus($handlerProvider->reveal());
+        $commandBus = new SyncCommandBus($handlerProvider);
 
         $this->expectException(HandlerNotFound::class);
 
@@ -38,13 +35,13 @@ final class SyncCommandBusTest extends TestCase
         $command = new class {
         };
 
-        $handlerProvider = $this->prophesize(HandlerProvider::class);
-        $handlerProvider->handlerForCommand($command::class)->willReturn([
+        $handlerProvider = $this->createMock(HandlerProvider::class);
+        $handlerProvider->method('handlerForCommand')->with($command::class)->willReturn([
             new HandlerDescriptor(static fn () => null),
             new HandlerDescriptor(static fn () => null),
         ]);
 
-        $commandBus = new SyncCommandBus($handlerProvider->reveal());
+        $commandBus = new SyncCommandBus($handlerProvider);
 
         $this->expectException(MultipleHandlersFound::class);
 
@@ -65,12 +62,12 @@ final class SyncCommandBusTest extends TestCase
             }
         };
 
-        $handlerProvider = $this->prophesize(HandlerProvider::class);
-        $handlerProvider->handlerForCommand($command::class)->willReturn([
+        $handlerProvider = $this->createMock(HandlerProvider::class);
+        $handlerProvider->method('handlerForCommand')->with($command::class)->willReturn([
             new HandlerDescriptor($handler),
         ]);
 
-        $commandBus = new SyncCommandBus($handlerProvider->reveal());
+        $commandBus = new SyncCommandBus($handlerProvider);
 
         $commandBus->dispatch($command);
 

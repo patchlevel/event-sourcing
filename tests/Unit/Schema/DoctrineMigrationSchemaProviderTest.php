@@ -9,21 +9,18 @@ use Patchlevel\EventSourcing\Schema\DoctrineMigrationSchemaProvider;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(DoctrineMigrationSchemaProvider::class)]
 final class DoctrineMigrationSchemaProviderTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testCreateSchema(): void
     {
         $expectedSchema = new Schema();
 
-        $schemaProvider = $this->prophesize(DoctrineSchemaProvider::class);
-        $schemaProvider->schema()->willReturn($expectedSchema);
+        $schemaProvider = $this->createMock(DoctrineSchemaProvider::class);
+        $schemaProvider->method('schema')->willReturn($expectedSchema);
 
-        $doctrineSchemaManager = new DoctrineMigrationSchemaProvider($schemaProvider->reveal());
+        $doctrineSchemaManager = new DoctrineMigrationSchemaProvider($schemaProvider);
         $schema = $doctrineSchemaManager->createSchema();
 
         $this->assertEquals($expectedSchema, $schema);

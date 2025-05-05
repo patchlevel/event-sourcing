@@ -9,22 +9,19 @@ use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 #[CoversClass(SchemaUpdateCommand::class)]
 final class SchemaUpdateCommandTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSuccessful(): void
     {
-        $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->update()->shouldBeCalled();
+        $schemaManager = $this->createMock(SchemaDirector::class);
+        $schemaManager->expects($this->atLeastOnce())->method('update');
 
         $command = new SchemaUpdateCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput(['--force' => true]);
@@ -41,11 +38,11 @@ final class SchemaUpdateCommandTest extends TestCase
 
     public function testMissingForce(): void
     {
-        $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->update()->shouldNotBeCalled();
+        $schemaManager = $this->createMock(SchemaDirector::class);
+        $schemaManager->expects($this->never())->method('update');
 
         $command = new SchemaUpdateCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput([]);
@@ -65,15 +62,15 @@ final class SchemaUpdateCommandTest extends TestCase
 
     public function testDryRun(): void
     {
-        $schemaManager = $this->prophesize(DryRunSchemaDirector::class);
-        $schemaManager->dryRunUpdate()->willReturn([
+        $schemaManager = $this->createMock(DryRunSchemaDirector::class);
+        $schemaManager->method('dryRunUpdate')->willReturn([
             'update table 1;',
             'update table 2;',
             'update table 3;',
         ]);
 
         $command = new SchemaUpdateCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput(['--dry-run' => true]);
@@ -92,10 +89,10 @@ final class SchemaUpdateCommandTest extends TestCase
 
     public function testDryRunNotSupported(): void
     {
-        $schemaManager = $this->prophesize(SchemaDirector::class);
+        $schemaManager = $this->createMock(SchemaDirector::class);
 
         $command = new SchemaUpdateCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput(['--dry-run' => true]);

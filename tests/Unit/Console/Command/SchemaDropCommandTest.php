@@ -9,22 +9,19 @@ use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 #[CoversClass(SchemaDropCommand::class)]
 final class SchemaDropCommandTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSuccessful(): void
     {
-        $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->drop()->shouldBeCalled();
+        $schemaManager = $this->createMock(SchemaDirector::class);
+        $schemaManager->expects($this->atLeastOnce())->method('drop');
 
         $command = new SchemaDropCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput(['--force' => true]);
@@ -41,11 +38,11 @@ final class SchemaDropCommandTest extends TestCase
 
     public function testMissingForce(): void
     {
-        $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->drop()->shouldNotBeCalled();
+        $schemaManager = $this->createMock(SchemaDirector::class);
+        $schemaManager->expects($this->never())->method('drop');
 
         $command = new SchemaDropCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput([]);
@@ -65,15 +62,15 @@ final class SchemaDropCommandTest extends TestCase
 
     public function testDryRun(): void
     {
-        $schemaManager = $this->prophesize(DryRunSchemaDirector::class);
-        $schemaManager->dryRunDrop()->willReturn([
+        $schemaManager = $this->createMock(DryRunSchemaDirector::class);
+        $schemaManager->method('dryRunDrop')->willReturn([
             'drop table 1;',
             'drop table 2;',
             'drop table 3;',
         ]);
 
         $command = new SchemaDropCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput(['--dry-run' => true]);
@@ -93,10 +90,10 @@ final class SchemaDropCommandTest extends TestCase
 
     public function testDryRunNotSupported(): void
     {
-        $schemaManager = $this->prophesize(SchemaDirector::class);
+        $schemaManager = $this->createMock(SchemaDirector::class);
 
         $command = new SchemaDropCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput(['--dry-run' => true]);

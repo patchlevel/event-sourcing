@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\InMemoryStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -19,21 +18,19 @@ use function sprintf;
 #[CoversClass(WatchCommand::class)]
 final class WatchCommandTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSuccessfulWithLogger(): void
     {
         $store = new InMemoryStore();
 
-        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer = $this->createMock(EventSerializer::class);
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $commandTest = new CommandTester(
             new WatchCommand(
                 $store,
-                $serializer->reveal(),
-                $headersSerializer->reveal(),
+                $serializer,
+                $headersSerializer,
             ),
         );
 
@@ -55,15 +52,15 @@ final class WatchCommandTest extends TestCase
     {
         $store = new InMemoryStore();
 
-        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer = $this->createMock(EventSerializer::class);
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $commandTest = new CommandTester(
             new WatchCommand(
                 $store,
-                $serializer->reveal(),
-                $headersSerializer->reveal(),
+                $serializer,
+                $headersSerializer,
             ),
         );
 

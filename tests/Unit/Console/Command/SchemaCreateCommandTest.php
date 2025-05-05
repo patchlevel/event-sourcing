@@ -9,22 +9,19 @@ use Patchlevel\EventSourcing\Schema\DryRunSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 #[CoversClass(SchemaCreateCommand::class)]
 final class SchemaCreateCommandTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSuccessful(): void
     {
-        $schemaManager = $this->prophesize(SchemaDirector::class);
-        $schemaManager->create()->shouldBeCalled();
+        $schemaManager = $this->createMock(SchemaDirector::class);
+        $schemaManager->expects($this->atLeastOnce())->method('create');
 
         $command = new SchemaCreateCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput([]);
@@ -41,15 +38,15 @@ final class SchemaCreateCommandTest extends TestCase
 
     public function testDryRun(): void
     {
-        $schemaManager = $this->prophesize(DryRunSchemaDirector::class);
-        $schemaManager->dryRunCreate()->willReturn([
+        $schemaManager = $this->createMock(DryRunSchemaDirector::class);
+        $schemaManager->method('dryRunCreate')->willReturn([
             'create table 1;',
             'create table 2;',
             'create table 3;',
         ]);
 
         $command = new SchemaCreateCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput(['--dry-run' => true]);
@@ -69,10 +66,10 @@ final class SchemaCreateCommandTest extends TestCase
 
     public function testDryRunNotSupported(): void
     {
-        $schemaManager = $this->prophesize(SchemaDirector::class);
+        $schemaManager = $this->createMock(SchemaDirector::class);
 
         $command = new SchemaCreateCommand(
-            $schemaManager->reveal(),
+            $schemaManager,
         );
 
         $input = new ArrayInput(['--dry-run' => true]);

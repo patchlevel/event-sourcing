@@ -10,13 +10,10 @@ use Patchlevel\EventSourcing\CommandBus\HandlerProvider;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(ChainHandlerProvider::class)]
 final class ChainHandlerProviderTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testEmpty(): void
     {
         $provider = new ChainHandlerProvider([]);
@@ -32,18 +29,23 @@ final class ChainHandlerProviderTest extends TestCase
         $handler2 = new HandlerDescriptor(static fn () => null);
         $handler3 = new HandlerDescriptor(static fn () => null);
 
-        $provider1 = $this->prophesize(HandlerProvider::class);
-        $provider1->handlerForCommand(CreateProfile::class)->willReturn([
-            $handler1,
-            $handler2,
-        ]);
+        $provider1 = $this->createMock(HandlerProvider::class);
+        $provider1
+            ->method('handlerForCommand')
+            ->with(CreateProfile::class)
+            ->willReturn(
+                [
+                    $handler1,
+                    $handler2,
+                ],
+            );
 
-        $provider2 = $this->prophesize(HandlerProvider::class);
-        $provider2->handlerForCommand(CreateProfile::class)->willReturn([$handler3]);
+        $provider2 = $this->createMock(HandlerProvider::class);
+        $provider2->method('handlerForCommand')->with(CreateProfile::class)->willReturn([$handler3]);
 
         $chainProvider = new ChainHandlerProvider([
-            $provider1->reveal(),
-            $provider2->reveal(),
+            $provider1,
+            $provider2,
         ]);
 
         $result = $chainProvider->handlerForCommand(CreateProfile::class);

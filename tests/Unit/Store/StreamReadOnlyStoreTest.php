@@ -12,21 +12,18 @@ use Patchlevel\EventSourcing\Store\StreamReadOnlyStore;
 use Patchlevel\EventSourcing\Store\StreamStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(ReadOnlyStore::class)]
 final class StreamReadOnlyStoreTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testLoad(): void
     {
         $criteria = new Criteria();
 
-        $parentStore = $this->prophesize(StreamStore::class);
-        $parentStore->load($criteria, 8, 42, true)->shouldBeCalled();
+        $parentStore = $this->createMock(StreamStore::class);
+        $parentStore->expects($this->atLeastOnce())->method('load')->with($criteria, 8, 42, true);
 
-        $store = new StreamReadOnlyStore($parentStore->reveal());
+        $store = new StreamReadOnlyStore($parentStore);
         $store->load($criteria, 8, 42, true);
     }
 
@@ -34,10 +31,10 @@ final class StreamReadOnlyStoreTest extends TestCase
     {
         $criteria = new Criteria();
 
-        $parentStore = $this->prophesize(StreamStore::class);
-        $parentStore->count($criteria)->shouldBeCalled();
+        $parentStore = $this->createMock(StreamStore::class);
+        $parentStore->expects($this->atLeastOnce())->method('count')->with($criteria);
 
-        $store = new StreamReadOnlyStore($parentStore->reveal());
+        $store = new StreamReadOnlyStore($parentStore);
         $store->count($criteria);
     }
 
@@ -46,10 +43,10 @@ final class StreamReadOnlyStoreTest extends TestCase
         $message = new Message(new class () {
         });
 
-        $parentStore = $this->prophesize(StreamStore::class);
-        $parentStore->save($message)->shouldNotBeCalled();
+        $parentStore = $this->createMock(StreamStore::class);
+        $parentStore->expects($this->never())->method('save')->with($message);
 
-        $store = new StreamReadOnlyStore($parentStore->reveal());
+        $store = new StreamReadOnlyStore($parentStore);
         $this->expectException(StoreIsReadOnly::class);
         $store->save($message);
     }
@@ -59,19 +56,19 @@ final class StreamReadOnlyStoreTest extends TestCase
         $callback = static function (): void {
         };
 
-        $parentStore = $this->prophesize(StreamStore::class);
-        $parentStore->transactional($callback)->shouldBeCalled();
+        $parentStore = $this->createMock(StreamStore::class);
+        $parentStore->expects($this->atLeastOnce())->method('transactional')->with($callback);
 
-        $store = new StreamReadOnlyStore($parentStore->reveal());
+        $store = new StreamReadOnlyStore($parentStore);
         $store->transactional($callback);
     }
 
     public function testStreams(): void
     {
-        $parentStore = $this->prophesize(StreamStore::class);
-        $parentStore->streams()->willReturn(['foo', 'bar'])->shouldBeCalled();
+        $parentStore = $this->createMock(StreamStore::class);
+        $parentStore->expects($this->atLeastOnce())->method('streams')->willReturn(['foo', 'bar']);
 
-        $store = new StreamReadOnlyStore($parentStore->reveal());
+        $store = new StreamReadOnlyStore($parentStore);
 
         self::assertEquals(['foo', 'bar'], $store->streams());
     }
@@ -80,10 +77,10 @@ final class StreamReadOnlyStoreTest extends TestCase
     {
         $criteria = new Criteria();
 
-        $parentStore = $this->prophesize(StreamStore::class);
-        $parentStore->remove($criteria)->shouldNotBeCalled();
+        $parentStore = $this->createMock(StreamStore::class);
+        $parentStore->expects($this->never())->method('remove')->with($criteria);
 
-        $store = new StreamReadOnlyStore($parentStore->reveal());
+        $store = new StreamReadOnlyStore($parentStore);
         $this->expectException(StoreIsReadOnly::class);
         $store->remove($criteria);
     }
@@ -92,10 +89,10 @@ final class StreamReadOnlyStoreTest extends TestCase
     {
         $criteria = new Criteria();
 
-        $parentStore = $this->prophesize(StreamStore::class);
-        $parentStore->archive($criteria)->shouldNotBeCalled();
+        $parentStore = $this->createMock(StreamStore::class);
+        $parentStore->expects($this->never())->method('archive')->with($criteria);
 
-        $store = new StreamReadOnlyStore($parentStore->reveal());
+        $store = new StreamReadOnlyStore($parentStore);
         $this->expectException(StoreIsReadOnly::class);
         $store->archive($criteria);
     }

@@ -24,7 +24,6 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Exception\MissingInputException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -33,46 +32,50 @@ use Symfony\Component\Console\Tester\CommandTester;
 #[CoversClass(ShowAggregateCommand::class)]
 final class ShowAggregateCommandTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSuccessful(): void
     {
         $event = new ProfileVisited(ProfileId::fromString('1'));
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
-        $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(
-            new AggregateNameCriterion('profile'),
-            new AggregateIdCriterion('1'),
-        ))->willReturn(
-            new ArrayStream([$message]),
-        );
+        $store = $this->createMock(Store::class);
+        $store
+            ->method('load')
+            ->with(new Criteria(
+                new AggregateNameCriterion('profile'),
+                new AggregateIdCriterion('1'),
+            ))
+            ->willReturn(new ArrayStream([$message]));
 
-        $serializer = $this->prophesize(EventSerializer::class);
-        $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
-            new SerializedEvent(
-                'profile.visited',
-                '{"visitorId": "1"}',
-            ),
-        );
+        $serializer = $this->createMock(EventSerializer::class);
+        $serializer
+            ->method('serialize')
+            ->with($event, [Encoder::OPTION_PRETTY_PRINT => true])
+            ->willReturn(
+                new SerializedEvent(
+                    'profile.visited',
+                    '{"visitorId": "1"}',
+                ),
+            );
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($message->headers())->willReturn(
-            [
-                'aggregate' => [
-                    'aggregateName' => 'profile',
-                    'aggregateId' => '1',
-                    'playhead' => 1,
-                    'recordedOn' => '2020-01-01T20:00:00+01:00',
-                ],
-            ],
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->method('serialize')->with($message->headers())->willReturn(
+            <<<'JSON'
+{
+	"aggregate": {
+		"aggregateName": "profile",
+		"aggregateId": "1",
+		"playhead": 1,
+		"recordedOn": "2020-01-01T20:00:00+01:00"
+	}
+}
+JSON,
         );
 
         $command = new ShowAggregateCommand(
-            $store->reveal(),
-            $serializer->reveal(),
-            $headersSerializer->reveal(),
+            $store,
+            $serializer,
+            $headersSerializer,
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -94,13 +97,13 @@ final class ShowAggregateCommandTest extends TestCase
 
     public function testAggregateNotAString(): void
     {
-        $store = $this->prophesize(Store::class);
-        $serializer = $this->prophesize(EventSerializer::class);
+        $store = $this->createMock(Store::class);
+        $serializer = $this->createMock(EventSerializer::class);
 
         $command = new ShowAggregateCommand(
-            $store->reveal(),
-            $serializer->reveal(),
-            $this->prophesize(HeadersSerializer::class)->reveal(),
+            $store,
+            $serializer,
+            $this->createMock(HeadersSerializer::class),
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -117,13 +120,13 @@ final class ShowAggregateCommandTest extends TestCase
 
     public function testIdNotAString(): void
     {
-        $store = $this->prophesize(Store::class);
-        $serializer = $this->prophesize(EventSerializer::class);
+        $store = $this->createMock(Store::class);
+        $serializer = $this->createMock(EventSerializer::class);
 
         $command = new ShowAggregateCommand(
-            $store->reveal(),
-            $serializer->reveal(),
-            $this->prophesize(HeadersSerializer::class)->reveal(),
+            $store,
+            $serializer,
+            $this->createMock(HeadersSerializer::class),
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -140,13 +143,13 @@ final class ShowAggregateCommandTest extends TestCase
 
     public function testWrongAggregate(): void
     {
-        $store = $this->prophesize(Store::class);
-        $serializer = $this->prophesize(EventSerializer::class);
+        $store = $this->createMock(Store::class);
+        $serializer = $this->createMock(EventSerializer::class);
 
         $command = new ShowAggregateCommand(
-            $store->reveal(),
-            $serializer->reveal(),
-            $this->prophesize(HeadersSerializer::class)->reveal(),
+            $store,
+            $serializer,
+            $this->createMock(HeadersSerializer::class),
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -168,18 +171,18 @@ final class ShowAggregateCommandTest extends TestCase
 
     public function testNotFound(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(
+        $store = $this->createMock(Store::class);
+        $store->method('load')->with(new Criteria(
             new AggregateNameCriterion('profile'),
             new AggregateIdCriterion('test'),
         ))->willReturn(new ArrayStream());
 
-        $serializer = $this->prophesize(EventSerializer::class);
+        $serializer = $this->createMock(EventSerializer::class);
 
         $command = new ShowAggregateCommand(
-            $store->reveal(),
-            $serializer->reveal(),
-            $this->prophesize(HeadersSerializer::class)->reveal(),
+            $store,
+            $serializer,
+            $this->createMock(HeadersSerializer::class),
             new AggregateRootRegistry(['profile' => Profile::class]),
         );
 
@@ -203,9 +206,9 @@ final class ShowAggregateCommandTest extends TestCase
     {
         $commandTest = new CommandTester(
             new ShowAggregateCommand(
-                $this->prophesize(Store::class)->reveal(),
-                $this->prophesize(EventSerializer::class)->reveal(),
-                $this->prophesize(HeadersSerializer::class)->reveal(),
+                $this->createMock(Store::class),
+                $this->createMock(EventSerializer::class),
+                $this->createMock(HeadersSerializer::class),
                 new AggregateRootRegistry(['test' => Profile::class]),
             ),
         );
@@ -218,9 +221,9 @@ final class ShowAggregateCommandTest extends TestCase
     {
         $commandTest = new CommandTester(
             new ShowAggregateCommand(
-                $this->prophesize(Store::class)->reveal(),
-                $this->prophesize(EventSerializer::class)->reveal(),
-                $this->prophesize(HeadersSerializer::class)->reveal(),
+                $this->createMock(Store::class),
+                $this->createMock(EventSerializer::class),
+                $this->createMock(HeadersSerializer::class),
                 new AggregateRootRegistry(['test' => Profile::class]),
             ),
         );
@@ -238,29 +241,29 @@ final class ShowAggregateCommandTest extends TestCase
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
-        $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(
+        $store = $this->createMock(Store::class);
+        $store->method('load')->with(new Criteria(
             new AggregateNameCriterion('profile'),
             new AggregateIdCriterion('1'),
         ))->willReturn(
             new ArrayStream([$message]),
         );
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->method('serialize')->with($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(
             new SerializedEvent(
                 'profile.visited',
                 '{"visitorId": "1"}',
             ),
         );
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $commandTest = new CommandTester(
             new ShowAggregateCommand(
-                $store->reveal(),
-                $eventSerializer->reveal(),
-                $headersSerializer->reveal(),
+                $store,
+                $eventSerializer,
+                $headersSerializer,
                 new AggregateRootRegistry(['profile' => Profile::class]),
             ),
         );

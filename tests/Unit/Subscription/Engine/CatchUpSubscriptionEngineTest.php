@@ -13,24 +13,21 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 
 #[CoversClass(CatchUpSubscriptionEngine::class)]
 final class CatchUpSubscriptionEngineTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSetup(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->setup($criteria, true)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('setup')->with($criteria, true)->willReturn($expectedResult);
         $result = $engine->setup($criteria, true);
 
         self::assertSame($expectedResult, $result);
@@ -38,14 +35,14 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testBootFinished(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new ProcessedResult(0);
 
-        $parent->boot($criteria, 42)->willReturn($expectedResult)->shouldBeCalledTimes(1);
+        $parent->expects($this->exactly(1))->method('boot')->with($criteria, 42)->willReturn($expectedResult);
         $result = $engine->boot($criteria, 42);
 
         self::assertEquals($expectedResult, $result);
@@ -53,9 +50,9 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testBootSecondTime(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $error = new Error(
@@ -64,10 +61,10 @@ final class CatchUpSubscriptionEngineTest extends TestCase
             new RuntimeException('baz'),
         );
 
-        $parent->boot($criteria, 42)->willReturn(
+        $parent->expects($this->exactly(2))->method('boot')->with($criteria, 42)->willReturn(
             new ProcessedResult(1),
             new ProcessedResult(0, true, [$error]),
-        )->shouldBeCalledTimes(2);
+        );
 
         $result = $engine->boot($criteria, 42);
 
@@ -76,15 +73,15 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testBootLimit(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal(), 2);
+        $engine = new CatchUpSubscriptionEngine($parent, 2);
         $criteria = new SubscriptionEngineCriteria();
 
-        $parent->boot($criteria, 42)->willReturn(
+        $parent->expects($this->exactly(2))->method('boot')->with($criteria, 42)->willReturn(
             new ProcessedResult(1),
             new ProcessedResult(1),
-        )->shouldBeCalledTimes(2);
+        );
 
         $result = $engine->boot($criteria, 42);
 
@@ -93,14 +90,14 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testRunFinished(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new ProcessedResult(0);
 
-        $parent->run($criteria, 42)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('run')->with($criteria, 42)->willReturn($expectedResult);
         $result = $engine->run($criteria, 42);
 
         self::assertEquals($expectedResult, $result);
@@ -108,9 +105,9 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testRunSecondTime(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $error = new Error(
@@ -119,10 +116,10 @@ final class CatchUpSubscriptionEngineTest extends TestCase
             new RuntimeException('baz'),
         );
 
-        $parent->run($criteria, 42)->willReturn(
+        $parent->expects($this->exactly(2))->method('run')->with($criteria, 42)->willReturn(
             new ProcessedResult(1, true, [$error]),
             new ProcessedResult(0),
-        )->shouldBeCalledTimes(2);
+        );
         $result = $engine->run($criteria, 42);
 
         self::assertEquals(new ProcessedResult(1, false, [$error]), $result);
@@ -130,15 +127,15 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testRunLimit(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal(), 2);
+        $engine = new CatchUpSubscriptionEngine($parent, 2);
         $criteria = new SubscriptionEngineCriteria();
 
-        $parent->run($criteria, 42)->willReturn(
+        $parent->expects($this->exactly(2))->method('run')->with($criteria, 42)->willReturn(
             new ProcessedResult(1),
             new ProcessedResult(1),
-        )->shouldBeCalledTimes(2);
+        );
 
         $result = $engine->run($criteria, 42);
 
@@ -147,14 +144,14 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testTeardown(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->teardown($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('teardown')->with($criteria)->willReturn($expectedResult);
         $result = $engine->teardown($criteria);
 
         self::assertSame($expectedResult, $result);
@@ -162,14 +159,14 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testRemove(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->remove($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('remove')->with($criteria)->willReturn($expectedResult);
         $result = $engine->remove($criteria);
 
         self::assertSame($expectedResult, $result);
@@ -177,14 +174,14 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testReactivate(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->reactivate($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('reactivate')->with($criteria)->willReturn($expectedResult);
         $result = $engine->reactivate($criteria);
 
         self::assertSame($expectedResult, $result);
@@ -192,14 +189,14 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testPause(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->pause($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('pause')->with($criteria)->willReturn($expectedResult);
         $result = $engine->pause($criteria);
 
         self::assertSame($expectedResult, $result);
@@ -207,14 +204,14 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
     public function testSubscriptions(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new CatchUpSubscriptionEngine($parent->reveal());
+        $engine = new CatchUpSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedSubscriptions = [new Subscription('foo')];
 
-        $parent->subscriptions($criteria)->willReturn($expectedSubscriptions)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('subscriptions')->with($criteria)->willReturn($expectedSubscriptions);
         $subscriptions = $engine->subscriptions($criteria);
 
         self::assertEquals($expectedSubscriptions, $subscriptions);

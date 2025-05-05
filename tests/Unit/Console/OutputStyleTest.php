@@ -18,16 +18,12 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 #[CoversClass(OutputStyle::class)]
 final class OutputStyleTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testMessage(): void
     {
         $input = new ArrayInput([]);
@@ -41,20 +37,20 @@ final class OutputStyleTest extends TestCase
         $message = Message::create($event)
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->method('serialize')->with($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
             'profile.created',
             '{"id":"1","email":"foo@bar.com"}',
         ));
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize(Argument::any())->shouldNotBeCalled();
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->expects($this->never())->method('serialize');
 
         $console = new OutputStyle($input, $output);
 
         $console->message(
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $eventSerializer,
+            $headersSerializer,
             $message,
         );
 
@@ -83,22 +79,22 @@ final class OutputStyleTest extends TestCase
             ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()))
             ->withHeader($fooHeader);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->method('serialize')->with($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
             'profile.created',
             '{"id":"1","email":"foo@bar.com"}',
         ));
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([$fooHeader])->willReturn(
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->expects($this->atLeastOnce())->method('serialize')->with([$fooHeader])->willReturn(
             '{"aggregate":{"aggregateName":"profile","aggregateId":"1","playhead":1,"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":[]}',
-        )->shouldBeCalled();
+        );
 
         $console = new OutputStyle($input, $output);
 
         $console->message(
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $eventSerializer,
+            $headersSerializer,
             $message,
         );
 

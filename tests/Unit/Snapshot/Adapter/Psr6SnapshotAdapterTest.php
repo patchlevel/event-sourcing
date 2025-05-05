@@ -8,39 +8,36 @@ use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotNotFound;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 
 #[CoversClass(Psr6SnapshotAdapter::class)]
 final class Psr6SnapshotAdapterTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSaveSnapshot(): void
     {
-        $item = $this->prophesize(CacheItemInterface::class);
-        $item->set(['foo' => 'bar'])->shouldBeCalled()->willReturn($item);
+        $item = $this->createMock(CacheItemInterface::class);
+        $item->expects($this->atLeastOnce())->method('set')->with(['foo' => 'bar'])->willReturn($item);
 
-        $cache = $this->prophesize(CacheItemPoolInterface::class);
-        $cache->getItem('key')->willReturn($item);
-        $cache->save($item)->shouldBeCalled();
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $cache->method('getItem')->with('key')->willReturn($item);
+        $cache->expects($this->atLeastOnce())->method('save')->with($item);
 
-        $store = new Psr6SnapshotAdapter($cache->reveal());
+        $store = new Psr6SnapshotAdapter($cache);
 
         $store->save('key', ['foo' => 'bar']);
     }
 
     public function testLoadSnapshot(): void
     {
-        $item = $this->prophesize(CacheItemInterface::class);
-        $item->isHit()->willReturn(true);
-        $item->get()->willReturn(['foo' => 'bar']);
+        $item = $this->createMock(CacheItemInterface::class);
+        $item->method('isHit')->willReturn(true);
+        $item->method('get')->willReturn(['foo' => 'bar']);
 
-        $cache = $this->prophesize(CacheItemPoolInterface::class);
-        $cache->getItem('key')->willReturn($item);
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $cache->method('getItem')->with('key')->willReturn($item);
 
-        $store = new Psr6SnapshotAdapter($cache->reveal());
+        $store = new Psr6SnapshotAdapter($cache);
 
         self::assertEquals(['foo' => 'bar'], $store->load('key'));
     }
@@ -49,13 +46,13 @@ final class Psr6SnapshotAdapterTest extends TestCase
     {
         $this->expectException(SnapshotNotFound::class);
 
-        $item = $this->prophesize(CacheItemInterface::class);
-        $item->isHit()->willReturn(false);
+        $item = $this->createMock(CacheItemInterface::class);
+        $item->method('isHit')->willReturn(false);
 
-        $cache = $this->prophesize(CacheItemPoolInterface::class);
-        $cache->getItem('key')->willReturn($item);
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $cache->method('getItem')->with('key')->willReturn($item);
 
-        $store = new Psr6SnapshotAdapter($cache->reveal());
+        $store = new Psr6SnapshotAdapter($cache);
         $store->load('key');
     }
 }

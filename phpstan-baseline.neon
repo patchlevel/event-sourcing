@@ -331,24 +331,6 @@ parameters:
 			path: tests/Unit/CommandBus/Handler/CreateAggregateHandlerTest.php
 
 		-
-			message: '#^Method class@anonymous/tests/Unit/CommandBus/Handler/DefaultParameterResolverTest\.php\:69\:\:handle\(\) has parameter \$foo with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: tests/Unit/CommandBus/Handler/DefaultParameterResolverTest.php
-
-		-
-			message: '#^Method class@anonymous/tests/Unit/CommandBus/Handler/DefaultParameterResolverTest\.php\:95\:\:handle\(\) has parameter \$foo with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: tests/Unit/CommandBus/Handler/DefaultParameterResolverTest.php
-
-		-
-			message: '#^Method class@anonymous/tests/Unit/CommandBus/HandlerFinderTest\.php\:40\:\:handle\(\) has parameter \$command with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: tests/Unit/CommandBus/HandlerFinderTest.php
-
-		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
 			identifier: method.alreadyNarrowedType
 			count: 3
@@ -463,12 +445,6 @@ parameters:
 			path: tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php
 
 		-
-			message: '#^Method class@anonymous/tests/Unit/QueryBus/HandlerFinderTest\.php\:40\:\:handle\(\) has parameter \$query with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: tests/Unit/QueryBus/HandlerFinderTest.php
-
-		-
 			message: '#^Cannot access offset 0 on iterable\<int, Patchlevel\\EventSourcing\\QueryBus\\HandlerDescriptor\>\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 2
@@ -481,18 +457,6 @@ parameters:
 			path: tests/Unit/QueryBus/ServiceHandlerProviderTest.php
 
 		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 15
-			path: tests/Unit/Store/DoctrineDbalStoreTest.php
-
-		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 13
-			path: tests/Unit/Store/StreamDoctrineDbalStoreTest.php
-
-		-
 			message: '#^Match expression does not handle remaining value\: string$#'
 			identifier: match.unhandled
 			count: 1
@@ -503,18 +467,6 @@ parameters:
 			identifier: argument.type
 			count: 8
 			path: tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php
-
-		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 2
-			path: tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php
-
-		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 1
-			path: tests/Unit/Subscription/Engine/SubscriptionManagerTest.php
 
 		-
 			message: '#^Offset ''args'' on array\{file\: literal\-string&non\-falsy\-string, line\: int, function\: ''createException'', class\: ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Unit\\\\Subscription\\\\ErrorContextTest'', type\: ''\-\>'', args\: array\<mixed\>\} on left side of \?\? always exists and is not nullable\.$#'

@@ -11,25 +11,22 @@ use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineReposi
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(RunSubscriptionEngineRepositoryManager::class)]
 final class RunSubscriptionEngineRepositoryManagerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testGet(): void
     {
-        $defaultRepository = $this->prophesize(Repository::class)->reveal();
+        $defaultRepository = $this->createMock(Repository::class);
 
-        $defaultRepositoryManager = $this->prophesize(RepositoryManager::class);
-        $defaultRepositoryManager->get(Profile::class)->willReturn($defaultRepository)->shouldBeCalledOnce();
+        $defaultRepositoryManager = $this->createMock(RepositoryManager::class);
+        $defaultRepositoryManager->expects($this->once())->method('get')->with(Profile::class)->willReturn($defaultRepository);
 
-        $engine = $this->prophesize(SubscriptionEngine::class);
+        $engine = $this->createMock(SubscriptionEngine::class);
 
         $repository = new RunSubscriptionEngineRepositoryManager(
-            $defaultRepositoryManager->reveal(),
-            $engine->reveal(),
+            $defaultRepositoryManager,
+            $engine,
             ['id1', 'id2'],
             ['group1', 'group2'],
             42,

@@ -19,12 +19,12 @@ use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamClosed;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStoreStream;
+use Patchlevel\EventSourcing\Tests\ReturnCallback;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Throwable;
 
 use function iterator_to_array;
@@ -32,22 +32,20 @@ use function iterator_to_array;
 #[CoversClass(StreamDoctrineDbalStoreStream::class)]
 final class StreamDoctrineDbalStreamTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testEmpty(): void
     {
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $platform = $this->prophesize(AbstractPlatform::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $platform = $this->createMock(AbstractPlatform::class);
 
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator());
+        $result = $this->createMock(Result::class);
+        $result->expects($this->once())->method('iterateAssociative')->willReturn(new ArrayIterator());
 
         $stream = new StreamDoctrineDbalStoreStream(
-            $result->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-            $platform->reveal(),
+            $result,
+            $eventSerializer,
+            $headersSerializer,
+            $platform,
         );
 
         self::assertSame(null, $stream->position());
@@ -87,25 +85,24 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             ->withHeader(new EventIdHeader('1'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10')));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
-            ->shouldBeCalledOnce()
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->expects($this->once())->method('deserialize')->with(new SerializedEvent('profile_created', '{}'))
             ->willReturn($event);
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize('{}')->shouldBeCalledOnce()->willReturn([]);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->expects($this->once())->method('deserialize')->with('{}')->willReturn([]);
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform->expects($this->once())->method('getDateTimeTzFormatString')->willReturn('Y-m-d H:i:s');
 
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messages));
+        $result = $this->createMock(Result::class);
+        $result->expects($this->once())->method('iterateAssociative')->willReturn(new ArrayIterator($messages));
 
         $stream = new StreamDoctrineDbalStoreStream(
-            $result->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-            $platform->reveal(),
+            $result,
+            $eventSerializer,
+            $headersSerializer,
+            $platform,
         );
 
         self::assertSame(1, $stream->index());
@@ -187,31 +184,39 @@ final class StreamDoctrineDbalStreamTest extends TestCase
                 ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10'))),
         ];
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
-            ->shouldBeCalledOnce()
-            ->willReturn($event);
-        $eventSerializer->deserialize(new SerializedEvent('profile_created2', '{}'))
-            ->shouldBeCalledOnce()
-            ->willReturn($event);
-        $eventSerializer->deserialize(new SerializedEvent('profile_created3', '{}'))
-            ->shouldBeCalledOnce()
-            ->willReturn($event);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer
+            ->expects($this->exactly(3))
+            ->method('deserialize')
+            ->willReturnCallback(new ReturnCallback([
+                [
+                    [new SerializedEvent('profile_created', '{}'), []],
+                    $event,
+                ],
+                [
+                    [new SerializedEvent('profile_created2', '{}'), []],
+                    $event,
+                ],
+                [
+                    [new SerializedEvent('profile_created3', '{}'), []],
+                    $event,
+                ],
+            ]));
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize('{}')->shouldBeCalledTimes(3)->willReturn([]);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->expects($this->exactly(3))->method('deserialize')->with('{}')->willReturn([]);
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getDateTimeTzFormatString()->shouldBeCalledTimes(3)->willReturn('Y-m-d H:i:s');
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform->expects($this->exactly(3))->method('getDateTimeTzFormatString')->willReturn('Y-m-d H:i:s');
 
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messagesArray));
+        $result = $this->createMock(Result::class);
+        $result->expects($this->once())->method('iterateAssociative')->willReturn(new ArrayIterator($messagesArray));
 
         $stream = new StreamDoctrineDbalStoreStream(
-            $result->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-            $platform->reveal(),
+            $result,
+            $eventSerializer,
+            $headersSerializer,
+            $platform,
         );
 
         self::assertSame(1, $stream->index());
@@ -269,25 +274,24 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             ->withHeader(new EventIdHeader('1'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10')));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
-            ->shouldBeCalledOnce()
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->expects($this->once())->method('deserialize')->with(new SerializedEvent('profile_created', '{}'))
             ->willReturn($event);
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize('{}')->shouldBeCalledOnce()->willReturn([]);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->expects($this->once())->method('deserialize')->with('{}')->willReturn([]);
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform->expects($this->once())->method('getDateTimeTzFormatString')->willReturn('Y-m-d H:i:s');
 
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messages));
+        $result = $this->createMock(Result::class);
+        $result->expects($this->once())->method('iterateAssociative')->willReturn(new ArrayIterator($messages));
 
         $stream = new StreamDoctrineDbalStoreStream(
-            $result->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-            $platform->reveal(),
+            $result,
+            $eventSerializer,
+            $headersSerializer,
+            $platform,
         );
 
         self::assertSame(5, $stream->index());
@@ -331,26 +335,25 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             ->withHeader(new EventIdHeader('1'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2022-10-10 10:10:10')));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
-            ->shouldBeCalledOnce()
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->expects($this->once())->method('deserialize')->with(new SerializedEvent('profile_created', '{}'))
             ->willReturn($event);
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize('{}')->shouldBeCalledOnce()->willReturn([]);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->expects($this->once())->method('deserialize')->with('{}')->willReturn([]);
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform->expects($this->once())->method('getDateTimeTzFormatString')->willReturn('Y-m-d H:i:s');
 
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messages));
-        $result->free()->shouldBeCalledOnce();
+        $result = $this->createMock(Result::class);
+        $result->expects($this->once())->method('iterateAssociative')->willReturn(new ArrayIterator($messages));
+        $result->expects($this->once())->method('free');
 
         $stream = new StreamDoctrineDbalStoreStream(
-            $result->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-            $platform->reveal(),
+            $result,
+            $eventSerializer,
+            $headersSerializer,
+            $platform,
         );
 
         self::assertSame(1, $stream->index());
@@ -366,18 +369,18 @@ final class StreamDoctrineDbalStreamTest extends TestCase
 
     public function testPositionEmpty(): void
     {
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $platform = $this->prophesize(AbstractPlatform::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $platform = $this->createMock(AbstractPlatform::class);
 
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator());
+        $result = $this->createMock(Result::class);
+        $result->expects($this->once())->method('iterateAssociative')->willReturn(new ArrayIterator());
 
         $stream = new StreamDoctrineDbalStoreStream(
-            $result->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-            $platform->reveal(),
+            $result,
+            $eventSerializer,
+            $headersSerializer,
+            $platform,
         );
 
         $position = $stream->position();
@@ -407,25 +410,24 @@ final class StreamDoctrineDbalStreamTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->deserialize(new SerializedEvent('profile_created', '{}'))
-            ->shouldBeCalledOnce()
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->expects($this->once())->method('deserialize')->with(new SerializedEvent('profile_created', '{}'))
             ->willReturn($event);
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize('{}')->shouldBeCalledOnce()->willReturn([]);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->expects($this->once())->method('deserialize')->with('{}')->willReturn([]);
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform->expects($this->once())->method('getDateTimeTzFormatString')->willReturn('Y-m-d H:i:s');
 
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->shouldBeCalledOnce()->willReturn(new ArrayIterator($messages));
+        $result = $this->createMock(Result::class);
+        $result->expects($this->once())->method('iterateAssociative')->willReturn(new ArrayIterator($messages));
 
         $stream = new StreamDoctrineDbalStoreStream(
-            $result->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-            $platform->reveal(),
+            $result,
+            $eventSerializer,
+            $headersSerializer,
+            $platform,
         );
 
         $position = $stream->position();

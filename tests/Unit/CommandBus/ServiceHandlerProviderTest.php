@@ -9,13 +9,10 @@ use Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(ServiceHandlerProvider::class)]
 final class ServiceHandlerProviderTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testEmpty(): void
     {
         $provider = new ServiceHandlerProvider([]);
