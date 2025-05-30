@@ -62,12 +62,12 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
 
     private readonly HeadersSerializer $headersSerializer;
 
-    /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid', locking: bool, lock_id: int, lock_timeout: int} */
+    /** @var array{table_name: string, aggregate_id_type: 'string'|'uuid', locking: bool, lock_id: int, lock_timeout: int, transactional: bool} */
     private readonly array $config;
 
     private bool $hasLock = false;
 
-    /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid', locking?: bool, lock_id?: int, lock_timeout?: int} $config */
+    /** @param array{table_name?: string, aggregate_id_type?: 'string'|'uuid', locking?: bool, lock_id?: int, lock_timeout?: int, transactional: bool} $config */
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
@@ -82,6 +82,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
             'locking' => true,
             'lock_id' => self::DEFAULT_LOCK_ID,
             'lock_timeout' => -1,
+            'transactional' => true,
         ], $config);
     }
 
@@ -298,17 +299,21 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
      */
     public function transactional(Closure $function): void
     {
+        if ($this->config['transactional']) {
+            $function = function () use ($function): void {
+                $this->connection->transactional($function);
+            };
+        }
+
         if ($this->hasLock || !$this->config['locking']) {
-            $this->connection->transactional($function);
+            $function();
         } else {
-            $this->connection->transactional(function () use ($function): void {
-                $this->lock();
-                try {
-                    $function();
-                } finally {
-                    $this->unlock();
-                }
-            });
+            $this->lock();
+            try {
+                $function();
+            } finally {
+                $this->unlock();
+            }
         }
     }
 
