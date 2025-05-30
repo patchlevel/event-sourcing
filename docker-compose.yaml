@@ -11,6 +11,6 @@ services:
     image: mysql:8
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD="yes"
-      - MYSQL_DATABASE="eventstore"
+      - MYSQL_DATABASE=eventstore
     ports:
       - 3306:3306

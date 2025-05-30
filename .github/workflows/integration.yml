@@ -77,7 +77,7 @@ jobs:
           image: "mariadb:${{ matrix.mariadb-version }}"
           env:
             MYSQL_ALLOW_EMPTY_PASSWORD: yes
-            MYSQL_DATABASE: "eventstore"
+            MYSQL_DATABASE: eventstore
 
           options: >-
             --health-cmd "mariadb-admin ping --silent"
