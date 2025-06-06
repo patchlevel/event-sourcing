@@ -12,13 +12,14 @@ use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
 use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
 use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
 use Patchlevel\Hydrator\Hydrator;
+use Patchlevel\Hydrator\LazyHydrator;
 use Patchlevel\Hydrator\MetadataHydrator;
 
 final class DefaultEventSerializer implements EventSerializer
 {
     public function __construct(
         private EventRegistry $eventRegistry,
-        private Hydrator $hydrator = new MetadataHydrator(),
+        private Hydrator $hydrator = new LazyHydrator(new MetadataHydrator()),
         private Encoder $encoder = new JsonEncoder(),
         private Upcaster|null $upcaster = null,
     ) {
@@ -61,7 +62,7 @@ final class DefaultEventSerializer implements EventSerializer
     ): static {
         return new self(
             (new AttributeEventRegistryFactory())->create($paths),
-            new MetadataHydrator(cryptographer: $cryptographer),
+            new LazyHydrator(new MetadataHydrator(cryptographer: $cryptographer)),
             new JsonEncoder(),
             $upcaster,
         );

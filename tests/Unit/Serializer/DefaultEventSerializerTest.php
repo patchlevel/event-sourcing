@@ -43,11 +43,6 @@ final class DefaultEventSerializerTest extends TestCase
 
     public function testDeserialize(): void
     {
-        $expected = new ProfileCreated(
-            ProfileId::fromString('1'),
-            Email::fromString('info@patchlevel.de'),
-        );
-
         $event = $this->serializer->deserialize(
             new SerializedEvent(
                 'profile_created',
@@ -55,7 +50,9 @@ final class DefaultEventSerializerTest extends TestCase
             ),
         );
 
-        self::assertEquals($expected, $event);
+        self::assertInstanceOf(ProfileCreated::class, $event);
+        self::assertEquals(ProfileId::fromString('1'), $event->profileId);
+        self::assertEquals(Email::fromString('info@patchlevel.de'), $event->email);
     }
 
     public function testSerializeWithUpcasting(): void
