@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: "Install PHP"
-        uses: "shivammathur/setup-php@2.34.0"
+        uses: "shivammathur/setup-php@2.34.1"
         with:
           coverage: none
           php-version: "${{ matrix.php-version }}"
