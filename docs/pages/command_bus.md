@@ -231,30 +231,30 @@ $commandBus = new SyncCommandBus($handlerProvider);
 $commandBus->dispatch(new CreateProfile($profileId, 'name'));
 $commandBus->dispatch(new ChangeProfileName($profileId, 'new name'));
 ```
-### Retry Outdated Aggregate
+### Instant Retry
 
-If you want to retry the command when an `AggregateOutdated` exception occurs,
-you can use the `RetryOutdatedAggregateCommandBus` decorator.
+If you want to retry the command when defined exceptions occur,
+you can use the `InstantRetryCommandBus` command bus decorator.
 
 ```php
-use Patchlevel\EventSourcing\CommandBus;
-use Patchlevel\EventSourcing\CommandBus\RetryOutdatedAggregateCommandBus;
+use Patchlevel\EventSourcing\CommandBus\CommandBus;
+use Patchlevel\EventSourcing\CommandBus\InstantRetryCommandBus;
+use Patchlevel\EventSourcing\Repository\AggregateOutdated;
 
-/**
- * @var HandlerProvider $handlerProvider
- * @var CommandBus $store
- */
-$commandBus = new RetryOutdatedAggregateCommandBus(
+/** @var CommandBus $store */
+$commandBus = new InstantRetryCommandBus(
     $commandBus,
+    3, // maximum number of retries, default is 3
+    [AggregateOutdated::class], // exceptions to retry, default is [AggregateOutdated::class]
 );
 ```
-And you need to mark the command class with the `#[RetryAggregateOutdated]` attribute,
-if you want to retry the command when an `AggregateOutdated` exception occurs.
+After that, you need to mark the command class with the `#[InstantRetry]` attribute,
+to indicate that the command should be retried when the condition is met.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\RetryAggregateOutdated;
+use Patchlevel\EventSourcing\Attribute\InstantRetry;
 
-#[RetryAggregateOutdated]
+#[InstantRetry]
 final class CreateProfile
 {
     public function __construct(
@@ -266,8 +266,17 @@ final class CreateProfile
 ```
 !!! tip
 
-    You can specify the maximum number of retries in the `#[RetryAggregateOutdated]` attribute.
-    The default value is 3.
+    You can override the default values for the maximum number of retries and the conditions
+    by passing them to the `InstantRetry` attribute.
+    
+    ```php
+    use Patchlevel\EventSourcing\Attribute\InstantRetry;
+    
+    #[InstantRetry(3, [AggregateOutdated::class])]
+    final class CreateProfile
+    {
+    }
+    ```
     
 ## Provider
 
