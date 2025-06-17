@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
 
+/** @deprecated use InstantRetry instead. */
 #[Attribute(Attribute::TARGET_CLASS)]
 final class RetryAggregateOutdated
 {

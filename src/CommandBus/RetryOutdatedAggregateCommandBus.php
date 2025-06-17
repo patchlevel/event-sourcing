@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Attribute\RetryAggregateOutdated;
 use Patchlevel\EventSourcing\Repository\AggregateOutdated;
 use ReflectionClass;
 
+/** @deprecated use RetryCommandBus instead */
 final class RetryOutdatedAggregateCommandBus implements CommandBus
 {
     public function __construct(
