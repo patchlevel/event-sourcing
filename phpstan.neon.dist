@@ -1,10 +1,13 @@
 includes:
 	- phpstan-baseline.neon
+	- vendor/phpstan/phpstan-phpunit/extension.neon
+	- vendor/jangregor/phpstan-prophecy/extension.neon
 
 parameters:
 	level: max
 	paths:
 		- src
+		- tests
 	ignoreErrors:
 		-
 			identifier: missingType.generics
