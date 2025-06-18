@@ -9,7 +9,6 @@ parameters:
 	paths:
 		- src
 		- tests
-		- tests/Architecture
 	ignoreErrors:
 		-
 			identifier: missingType.generics
