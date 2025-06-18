@@ -24,11 +24,6 @@
       <code><![CDATA[$service::{$handler->method}(...)]]></code>
     </MixedMethodCall>
   </file>
-  <file src="src/Console/DoctrineHelper.php">
-    <ClassNotFinal>
-      <code><![CDATA[class DoctrineHelper]]></code>
-    </ClassNotFinal>
-  </file>
   <file src="src/Cryptography/DoctrineCipherKeyStore.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[base64_decode($result['crypto_iv'])]]></code>
