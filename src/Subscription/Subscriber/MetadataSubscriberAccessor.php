@@ -16,7 +16,6 @@ use Throwable;
 use function array_key_exists;
 use function array_keys;
 use function array_map;
-use function array_merge;
 
 /** @template T of object */
 final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscriberAccessor
@@ -115,10 +114,15 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
             return $this->subscribeCache[$eventClass];
         }
 
-        $methods = array_merge(
-            $this->metadata->subscribeMethods[$eventClass] ?? [],
-            $this->metadata->subscribeMethods[Subscribe::ALL] ?? [],
-        );
+        $methods = [];
+
+        if (array_key_exists($eventClass, $this->metadata->subscribeMethods)) {
+            $methods[] = $this->metadata->subscribeMethods[$eventClass];
+        }
+
+        if (array_key_exists(Subscribe::ALL, $this->metadata->subscribeMethods)) {
+            $methods[] = $this->metadata->subscribeMethods[Subscribe::ALL];
+        }
 
         $this->subscribeCache[$eventClass] = array_map(
             fn (SubscribeMethodMetadata $method): Closure => $this->createClosure($eventClass, $method),

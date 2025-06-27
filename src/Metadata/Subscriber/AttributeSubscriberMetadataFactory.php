@@ -58,12 +58,12 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                     throw DuplicateSubscribeMethod::duplicateEvent(
                         $subscriber,
                         $eventClass,
-                        $subscribeMethods[$eventClass][0]->name,
+                        $subscribeMethods[$eventClass]->name,
                         $method->getName(),
                     );
                 }
 
-                $subscribeMethods[$eventClass][] = $this->subscribeMethod($method);
+                $subscribeMethods[$eventClass] = $this->subscribeMethod($method);
             }
 
             if ($method->getAttributes(OnFailed::class)) {
