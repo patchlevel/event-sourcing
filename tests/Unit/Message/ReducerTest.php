@@ -14,15 +14,12 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 use function count;
 
 #[CoversClass(Reducer::class)]
 final class ReducerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testEmpty(): void
     {
         $reducer = new Reducer();

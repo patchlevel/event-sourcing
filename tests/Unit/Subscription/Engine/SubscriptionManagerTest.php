@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
+use Closure;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Store\LockableSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
@@ -11,24 +12,20 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 use function iterator_to_array;
 
 #[CoversClass(SubscriptionManager::class)]
 final class SubscriptionManagerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testAdd(): void
     {
         $subscription = new Subscription('foo');
 
-        $store = $this->prophesize(SubscriptionStore::class);
-        $store->add($subscription)->shouldBeCalledOnce();
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->once())->method('add')->with($subscription);
 
-        $manager = new SubscriptionManager($store->reveal());
+        $manager = new SubscriptionManager($store);
         $manager->add($subscription);
         $manager->flush();
     }
@@ -37,10 +34,10 @@ final class SubscriptionManagerTest extends TestCase
     {
         $subscription = new Subscription('foo');
 
-        $store = $this->prophesize(SubscriptionStore::class);
-        $store->update($subscription)->shouldBeCalledOnce();
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->once())->method('update')->with($subscription);
 
-        $manager = new SubscriptionManager($store->reveal());
+        $manager = new SubscriptionManager($store);
         $manager->update($subscription);
         $manager->flush();
     }
@@ -49,10 +46,10 @@ final class SubscriptionManagerTest extends TestCase
     {
         $subscription = new Subscription('foo');
 
-        $store = $this->prophesize(SubscriptionStore::class);
-        $store->remove($subscription)->shouldBeCalledOnce();
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->once())->method('remove')->with($subscription);
 
-        $manager = new SubscriptionManager($store->reveal());
+        $manager = new SubscriptionManager($store);
         $manager->remove($subscription);
         $manager->flush();
     }
@@ -61,11 +58,11 @@ final class SubscriptionManagerTest extends TestCase
     {
         $subscription = new Subscription('foo');
 
-        $store = $this->prophesize(SubscriptionStore::class);
-        $store->add($subscription)->shouldBeCalledOnce();
-        $store->update($subscription)->shouldNotBeCalled();
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->once())->method('add')->with($subscription);
+        $store->expects($this->never())->method('update')->with($subscription);
 
-        $manager = new SubscriptionManager($store->reveal());
+        $manager = new SubscriptionManager($store);
         $manager->add($subscription);
         $manager->update($subscription);
         $manager->flush();
@@ -75,11 +72,11 @@ final class SubscriptionManagerTest extends TestCase
     {
         $subscription = new Subscription('foo');
 
-        $store = $this->prophesize(SubscriptionStore::class);
-        $store->remove($subscription)->shouldBeCalledOnce();
-        $store->update($subscription)->shouldNotBeCalled();
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->once())->method('remove')->with($subscription);
+        $store->expects($this->never())->method('update')->with($subscription);
 
-        $manager = new SubscriptionManager($store->reveal());
+        $manager = new SubscriptionManager($store);
         $manager->update($subscription);
         $manager->remove($subscription);
         $manager->flush();
@@ -89,11 +86,11 @@ final class SubscriptionManagerTest extends TestCase
     {
         $subscription = new Subscription('foo');
 
-        $store = $this->prophesize(SubscriptionStore::class);
-        $store->remove($subscription)->shouldNotBeCalled();
-        $store->add($subscription)->shouldNotBeCalled();
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->never())->method('remove')->with($subscription);
+        $store->expects($this->never())->method('add')->with($subscription);
 
-        $manager = new SubscriptionManager($store->reveal());
+        $manager = new SubscriptionManager($store);
         $manager->add($subscription);
         $manager->remove($subscription);
         $manager->flush();
@@ -104,10 +101,10 @@ final class SubscriptionManagerTest extends TestCase
         $subscription = new Subscription('foo');
         $criteria = new SubscriptionCriteria();
 
-        $store = $this->prophesize(SubscriptionStore::class);
-        $store->find($criteria)->shouldBeCalledOnce()->willReturn([$subscription]);
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
 
-        $manager = new SubscriptionManager($store->reveal());
+        $manager = new SubscriptionManager($store);
         $result = $manager->find($criteria);
 
         self::assertSame([$subscription], $result);
@@ -118,11 +115,11 @@ final class SubscriptionManagerTest extends TestCase
         $subscription = new Subscription('foo');
         $criteria = new SubscriptionCriteria();
 
-        $store = $this->prophesize(SubscriptionStore::class);
-        $store->update($subscription)->shouldBeCalledOnce();
-        $store->find($criteria)->shouldBeCalledOnce()->willReturn([$subscription]);
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->once())->method('update')->with($subscription);
+        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
 
-        $manager = new SubscriptionManager($store->reveal());
+        $manager = new SubscriptionManager($store);
         $result = $manager->findForUpdate($criteria, static function ($subscriptions) use ($manager) {
             $manager->update(...$subscriptions);
 
@@ -137,17 +134,17 @@ final class SubscriptionManagerTest extends TestCase
         $subscription = new Subscription('foo');
         $criteria = new SubscriptionCriteria();
 
-        $store = $this->prophesize(SubscriptionStore::class);
-        $store->willImplement(LockableSubscriptionStore::class);
-        $store->update($subscription)->shouldBeCalledOnce();
-        $store->find($criteria)->shouldBeCalledOnce()->willReturn([$subscription]);
+        $store = $this->createMock(LockableSubscriptionStore::class);
+        $store->expects($this->once())->method('update')->with($subscription);
+        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
 
-        $store->inLock(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        )->shouldBeCalledOnce();
+        $store
+            ->expects($this->once())
+            ->method('inLock')
+            ->with($this->isInstanceOf(Closure::class))
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
 
-        $manager = new SubscriptionManager($store->reveal());
+        $manager = new SubscriptionManager($store);
         $result = $manager->findForUpdate($criteria, static function ($subscriptions) use ($manager) {
             $manager->update(...$subscriptions);
 

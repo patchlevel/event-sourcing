@@ -16,13 +16,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(AggregateToStreamHeaderTranslator::class)]
 final class AggregateToStreamHeaderTranslatorTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testMissingHeader(): void
     {
         $message = new Message(

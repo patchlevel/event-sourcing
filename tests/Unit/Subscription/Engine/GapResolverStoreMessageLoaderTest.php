@@ -15,42 +15,44 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
 use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\Clock\ClockInterface;
+use RuntimeException;
 use stdClass;
 
 final class GapResolverStoreMessageLoaderTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testEmpty(): void
     {
-        $store = $this->prophesize(Store::class);
-        $store->load(new Criteria(new FromIndexCriterion(0)))->willReturn(new ArrayStream([]));
+        $store = $this->createMock(Store::class);
+        $store->method('load')->with(new Criteria(new FromIndexCriterion(0)))->willReturn(new ArrayStream([]));
 
-        $loader = new GapResolverStoreMessageLoader($store->reveal());
+        $loader = new GapResolverStoreMessageLoader($store);
 
         $stream = $loader->load(0, []);
 
-        self::assertStream([], $stream);
+        $this->assertEqualsStream([], $stream);
     }
 
     public function testNoGap(): void
     {
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
 
-        $store->load(new Criteria(new FromIndexCriterion(0)))->willReturn(new ArrayStream([
-            1 => new Message(new stdClass()),
-            2 => new Message(new stdClass()),
-            3 => new Message(new stdClass()),
-            4 => new Message(new stdClass()),
-        ]))->shouldBeCalledOnce();
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(new FromIndexCriterion(0)))
+            ->willReturn(new ArrayStream([
+                1 => new Message(new stdClass()),
+                2 => new Message(new stdClass()),
+                3 => new Message(new stdClass()),
+                4 => new Message(new stdClass()),
+            ]));
 
-        $loader = new GapResolverStoreMessageLoader($store->reveal());
+        $loader = new GapResolverStoreMessageLoader($store);
 
         $stream = $loader->load(0, []);
 
-        self::assertStream([
+        $this->assertEqualsStream([
             1 => new Message(new stdClass()),
             2 => new Message(new stdClass()),
             3 => new Message(new stdClass()),
@@ -60,47 +62,61 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
 
     public function testNoGapFromHigherIndex(): void
     {
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
 
-        $store->load(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
-            6 => new Message(new stdClass()),
-            7 => new Message(new stdClass()),
-            8 => new Message(new stdClass()),
-            9 => new Message(new stdClass()),
-        ]))->shouldBeCalledOnce();
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(new FromIndexCriterion(5)))
+            ->willReturn(new ArrayStream([
+                6 => new Message(new stdClass()),
+                7 => new Message(new stdClass()),
+                8 => new Message(new stdClass()),
+                9 => new Message(new stdClass()),
+            ]));
 
-        $loader = new GapResolverStoreMessageLoader($store->reveal());
+        $loader = new GapResolverStoreMessageLoader($store);
 
         $stream = $loader->load(5, []);
 
-        self::assertStream([
-            6 => new Message(new stdClass()),
-            7 => new Message(new stdClass()),
-            8 => new Message(new stdClass()),
-            9 => new Message(new stdClass()),
-        ], $stream);
+        $this->assertEqualsStream(
+            [
+                6 => new Message(new stdClass()),
+                7 => new Message(new stdClass()),
+                8 => new Message(new stdClass()),
+                9 => new Message(new stdClass()),
+            ],
+            $stream,
+        );
     }
 
     public function testWithGapAndFill(): void
     {
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
 
-        $store->load(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
-            6 => new Message(new stdClass()),
-            7 => new Message(new stdClass()),
-            9 => new Message(new stdClass()),
-        ]))->shouldBeCalledOnce();
+        $store
+            ->expects($this->exactly(2))
+            ->method('load')
+            ->willReturnCallback(
+                static fn (Criteria $criteria) => match ($criteria->get(FromIndexCriterion::class)->fromIndex) {
+                    5 => new ArrayStream([
+                        6 => new Message(new stdClass()),
+                        7 => new Message(new stdClass()),
+                        9 => new Message(new stdClass()),
+                    ]),
+                    7 => new ArrayStream([
+                        8 => new Message(new stdClass()),
+                        9 => new Message(new stdClass()),
+                    ]),
+                    default => new RuntimeException('Unmatched case!')
+                },
+            );
 
-        $store->load(new Criteria(new FromIndexCriterion(7)))->willReturn(new ArrayStream([
-            8 => new Message(new stdClass()),
-            9 => new Message(new stdClass()),
-        ]))->shouldBeCalledOnce();
-
-        $loader = new GapResolverStoreMessageLoader($store->reveal());
+        $loader = new GapResolverStoreMessageLoader($store);
 
         $stream = $loader->load(5, []);
 
-        self::assertStream([
+        $this->assertEqualsStream([
             6 => new Message(new stdClass()),
             7 => new Message(new stdClass()),
             8 => new Message(new stdClass()),
@@ -110,34 +126,28 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
 
     public function testWithGapWithoutFill(): void
     {
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
 
-        $store->load(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
-            6 => new Message(new stdClass()),
-            7 => new Message(new stdClass()),
-            9 => new Message(new stdClass()),
-        ]))->shouldBeCalledOnce();
+        $store
+            ->expects($this->exactly(5))
+            ->method('load')
+            ->willReturnCallback(static fn (Criteria $criteria) => match ($criteria->get(FromIndexCriterion::class)->fromIndex) {
+                5 => new ArrayStream([
+                    6 => new Message(new stdClass()),
+                    7 => new Message(new stdClass()),
+                    9 => new Message(new stdClass()),
+                ]),
+                7 => new ArrayStream([
+                    9 => new Message(new stdClass()),
+                ]),
+                default => new RuntimeException('Unmatched case!')
+            });
 
-        $store->load(new Criteria(new FromIndexCriterion(7)))->willReturn(
-            new ArrayStream([
-                9 => new Message(new stdClass()),
-            ]),
-            new ArrayStream([
-                9 => new Message(new stdClass()),
-            ]),
-            new ArrayStream([
-                9 => new Message(new stdClass()),
-            ]),
-            new ArrayStream([
-                9 => new Message(new stdClass()),
-            ]),
-        )->shouldBeCalledTimes(4);
-
-        $loader = new GapResolverStoreMessageLoader($store->reveal());
+        $loader = new GapResolverStoreMessageLoader($store);
 
         $stream = $loader->load(5, []);
 
-        self::assertStream([
+        $this->assertEqualsStream([
             6 => new Message(new stdClass()),
             7 => new Message(new stdClass()),
             9 => new Message(new stdClass()),
@@ -146,37 +156,32 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
 
     public function testGapAndInDetectionWindowForAggregateHeader(): void
     {
-        $store = $this->prophesize(Store::class);
-        $clock = $this->prophesize(ClockInterface::class);
+        $clock = $this->createMock(ClockInterface::class);
+        $clock
+            ->expects($this->exactly(5))
+            ->method('now')
+            ->willReturn(new DateTimeImmutable('2023-10-01 00:00:03'));
 
-        $clock->now()->willReturn(new DateTimeImmutable('2023-10-01 00:00:03'))->shouldBeCalledTimes(5);
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->exactly(5))
+            ->method('load')
+            ->willReturnCallback(fn (Criteria $criteria) => match ($criteria->get(FromIndexCriterion::class)->fromIndex) {
+                5 => new ArrayStream([
+                    6 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:00')),
+                    7 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:01')),
+                    9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
+                ]),
+                7 => new ArrayStream([
+                    9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
+                ]),
+                default => new RuntimeException('Unmatched case!')
+            });
 
-        $store->load(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
-            6 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:00')),
-            7 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:01')),
-            9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-        ]))->shouldBeCalledOnce();
-
-        $store->load(new Criteria(new FromIndexCriterion(7)))->willReturn(
-            new ArrayStream([
-                9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-            ]),
-            new ArrayStream([
-                9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-            ]),
-            new ArrayStream([
-                9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-            ]),
-            new ArrayStream([
-                9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-            ]),
-        )->shouldBeCalledTimes(4);
-
-        $loader = new GapResolverStoreMessageLoader($store->reveal(), $clock->reveal());
-
+        $loader = new GapResolverStoreMessageLoader($store, $clock);
         $stream = $loader->load(5, []);
 
-        self::assertStream([
+        $this->assertEqualsStream([
             6 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:00')),
             7 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:01')),
             9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
@@ -185,22 +190,22 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
 
     public function testGapAndNotInDetectionWindowForAggregateHeader(): void
     {
-        $store = $this->prophesize(Store::class);
-        $clock = $this->prophesize(ClockInterface::class);
+        $store = $this->createMock(Store::class);
+        $clock = $this->createMock(ClockInterface::class);
 
-        $clock->now()->willReturn(new DateTimeImmutable('2023-12-01 00:00:00'))->shouldBeCalledTimes(1);
+        $clock->expects($this->exactly(1))->method('now')->willReturn(new DateTimeImmutable('2023-12-01 00:00:00'));
 
-        $store->load(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
+        $store->expects($this->once())->method('load')->with(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
             6 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:00')),
             7 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:01')),
             9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-        ]))->shouldBeCalledOnce();
+        ]));
 
-        $loader = new GapResolverStoreMessageLoader($store->reveal(), $clock->reveal());
+        $loader = new GapResolverStoreMessageLoader($store, $clock);
 
         $stream = $loader->load(5, []);
 
-        self::assertStream([
+        $this->assertEqualsStream([
             6 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:00')),
             7 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:01')),
             9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
@@ -209,61 +214,59 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
 
     public function testGapAndInDetectionWindowForRecordedOnHeader(): void
     {
-        $store = $this->prophesize(Store::class);
-        $clock = $this->prophesize(ClockInterface::class);
+        $clock = $this->createMock(ClockInterface::class);
+        $clock
+            ->expects($this->exactly(5))
+            ->method('now')
+            ->willReturn(new DateTimeImmutable('2023-10-01 00:00:03'));
 
-        $clock->now()->willReturn(new DateTimeImmutable('2023-10-01 00:00:03'))->shouldBeCalledTimes(5);
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->exactly(5))
+            ->method('load')
+            ->willReturnCallback(fn (Criteria $criteria) => match ($criteria->get(FromIndexCriterion::class)->fromIndex) {
+                5 => new ArrayStream([
+                    6 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:00')),
+                    7 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:01')),
+                    9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
+                ]),
+                7 => new ArrayStream([
+                    9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
+                ]),
+                default => new RuntimeException('Unmatched case!')
+            });
 
-        $store->load(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
-            6 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:00')),
-            7 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:01')),
-            9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
-        ]))->shouldBeCalledOnce();
-
-        $store->load(new Criteria(new FromIndexCriterion(7)))->willReturn(
-            new ArrayStream([
-                9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
-            ]),
-            new ArrayStream([
-                9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
-            ]),
-            new ArrayStream([
-                9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
-            ]),
-            new ArrayStream([
-                9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
-            ]),
-        )->shouldBeCalledTimes(4);
-
-        $loader = new GapResolverStoreMessageLoader($store->reveal(), $clock->reveal());
-
+        $loader = new GapResolverStoreMessageLoader($store, $clock);
         $stream = $loader->load(5, []);
 
-        self::assertStream([
-            6 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:00')),
-            7 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:01')),
-            9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
-        ], $stream);
+        $this->assertEqualsStream(
+            [
+                6 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:00')),
+                7 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:01')),
+                9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
+            ],
+            $stream,
+        );
     }
 
     public function testGapAndNotInDetectionWindowForRecordedOnHeader(): void
     {
-        $store = $this->prophesize(Store::class);
-        $clock = $this->prophesize(ClockInterface::class);
+        $store = $this->createMock(Store::class);
+        $clock = $this->createMock(ClockInterface::class);
 
-        $clock->now()->willReturn(new DateTimeImmutable('2023-12-01 00:00:00'))->shouldBeCalledTimes(1);
+        $clock->expects($this->exactly(1))->method('now')->willReturn(new DateTimeImmutable('2023-12-01 00:00:00'));
 
-        $store->load(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
+        $store->expects($this->once())->method('load')->with(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
             6 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:00')),
             7 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:01')),
             9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
-        ]))->shouldBeCalledOnce();
+        ]));
 
-        $loader = new GapResolverStoreMessageLoader($store->reveal(), $clock->reveal());
+        $loader = new GapResolverStoreMessageLoader($store, $clock);
 
         $stream = $loader->load(5, []);
 
-        self::assertStream([
+        $this->assertEqualsStream([
             6 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:00')),
             7 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:01')),
             9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
@@ -283,7 +286,7 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
     }
 
     /** @param array<int, Message> $expected */
-    private function assertStream(array $expected, Stream $actual): void
+    private function assertEqualsStream(array $expected, Stream $actual): void
     {
         $result = [];
 

@@ -12,13 +12,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(ChainMessageDecorator::class)]
 final class ChainMessageDecoratorTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testChain(): void
     {
         $message = new Message(
@@ -28,15 +25,15 @@ final class ChainMessageDecoratorTest extends TestCase
             ),
         );
 
-        $decorator1 = $this->prophesize(MessageDecorator::class);
-        $decorator1->__invoke($message)->willReturn($message)->shouldBeCalled();
+        $decorator1 = $this->createMock(MessageDecorator::class);
+        $decorator1->expects($this->atLeastOnce())->method('__invoke')->with($message)->willReturn($message);
 
-        $decorator2 = $this->prophesize(MessageDecorator::class);
-        $decorator2->__invoke($message)->willReturn($message)->shouldBeCalled();
+        $decorator2 = $this->createMock(MessageDecorator::class);
+        $decorator2->expects($this->atLeastOnce())->method('__invoke')->with($message)->willReturn($message);
 
         $chain = new ChainMessageDecorator([
-            $decorator1->reveal(),
-            $decorator2->reveal(),
+            $decorator1,
+            $decorator2,
         ]);
 
         $chain($message);

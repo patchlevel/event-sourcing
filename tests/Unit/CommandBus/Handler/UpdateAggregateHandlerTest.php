@@ -15,30 +15,28 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(UpdateAggregateHandler::class)]
 final class UpdateAggregateHandlerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSuccess(): void
     {
         $profileId = ProfileId::fromString('123');
         $profile = ProfileWithHandler::createEmpty();
 
-        $repository = $this->prophesize(Repository::class);
-        $repository->load($profileId)->willReturn($profile)->shouldBeCalled();
-        $repository->save($profile)->shouldBeCalled();
+        $repository = $this->createMock(Repository::class);
+        $repository->expects($this->atLeastOnce())->method('load')->with($profileId)->willReturn($profile);
+        $repository->expects($this->atLeastOnce())->method('save')->with($profile);
 
-        $repositoryManager = $this->prophesize(RepositoryManager::class);
+        $repositoryManager = $this->createMock(RepositoryManager::class);
         $repositoryManager
-            ->get(ProfileWithHandler::class)
-            ->willReturn($repository->reveal())
-            ->shouldBeCalled();
+            ->expects($this->atLeastOnce())
+            ->method('get')
+            ->with(ProfileWithHandler::class)
+            ->willReturn($repository);
 
         $handler = new UpdateAggregateHandler(
-            $repositoryManager->reveal(),
+            $repositoryManager,
             ProfileWithHandler::class,
             'changeName',
             new DefaultParameterResolver(),
@@ -54,10 +52,10 @@ final class UpdateAggregateHandlerTest extends TestCase
 
     public function testMissingAggregateId(): void
     {
-        $repositoryManager = $this->prophesize(RepositoryManager::class);
+        $repositoryManager = $this->createMock(RepositoryManager::class);
 
         $handler = new UpdateAggregateHandler(
-            $repositoryManager->reveal(),
+            $repositoryManager,
             ProfileWithHandler::class,
             'changeName',
             new DefaultParameterResolver(),

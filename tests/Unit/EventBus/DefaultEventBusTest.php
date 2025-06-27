@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\EventBus;
 
+use LogicException;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\EventBus\Consumer;
 use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
@@ -15,13 +16,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(DefaultEventBus::class)]
 final class DefaultEventBusTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testDispatchEvent(): void
     {
         $message = new Message(
@@ -31,10 +29,10 @@ final class DefaultEventBusTest extends TestCase
             ),
         );
 
-        $consumer = $this->prophesize(Consumer::class);
-        $consumer->consume($message)->shouldBeCalled();
+        $consumer = $this->createMock(Consumer::class);
+        $consumer->expects($this->atLeastOnce())->method('consume')->with($message);
 
-        $eventBus = new DefaultEventBus($consumer->reveal());
+        $eventBus = new DefaultEventBus($consumer);
         $eventBus->dispatch($message);
     }
 
@@ -54,11 +52,11 @@ final class DefaultEventBusTest extends TestCase
             ),
         );
 
-        $consumer = $this->prophesize(Consumer::class);
-        $consumer->consume($message1)->shouldBeCalled();
-        $consumer->consume($message2)->shouldBeCalled();
+        $consumer = $this->createMock(Consumer::class);
+        $consumer->expects($this->atLeastOnce())->method('consume')->with($message1);
+        $consumer->expects($this->atLeastOnce())->method('consume')->with($message2);
 
-        $eventBus = new DefaultEventBus($consumer->reveal());
+        $eventBus = new DefaultEventBus($consumer);
         $eventBus->dispatch($message1, $message2);
     }
 
@@ -83,14 +81,17 @@ final class DefaultEventBusTest extends TestCase
             ),
         );
 
-        $consumer = $this->prophesize(Consumer::class);
-        $eventBus = new DefaultEventBus($consumer->reveal());
+        $consumer = $this->createMock(Consumer::class);
+        $eventBus = new DefaultEventBus($consumer);
 
-        $consumer->consume($messageA)->shouldBeCalled()->will(static function () use ($eventBus, $messageC): void {
-            $eventBus->dispatch($messageC);
-        });
-        $consumer->consume($messageB)->shouldBeCalled();
-        $consumer->consume($messageC)->shouldBeCalled();
+        $consumer->expects($this->exactly(3))->method('consume')->willReturnCallback(
+            static fn (Message $message) => match ($message) {
+                $messageA => $eventBus->dispatch($messageC),
+                $messageB => true,
+                $messageC => true,
+                default => throw new LogicException('Unmatched case!'),
+            },
+        );
 
         $eventBus->dispatch($messageA, $messageB);
     }

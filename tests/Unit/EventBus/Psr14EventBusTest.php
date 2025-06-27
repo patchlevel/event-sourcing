@@ -11,14 +11,11 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(Psr14EventBus::class)]
 final class Psr14EventBusTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testDispatchEvent(): void
     {
         $message = new Message(
@@ -28,10 +25,10 @@ final class Psr14EventBusTest extends TestCase
             ),
         );
 
-        $eventDispatcher = $this->prophesize(EventDispatcherInterface::class);
-        $eventDispatcher->dispatch($message)->shouldBeCalled();
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects($this->atLeastOnce())->method('dispatch')->with($message);
 
-        $eventBus = new Psr14EventBus($eventDispatcher->reveal());
+        $eventBus = new Psr14EventBus($eventDispatcher);
         $eventBus->dispatch($message);
     }
 
@@ -51,11 +48,11 @@ final class Psr14EventBusTest extends TestCase
             ),
         );
 
-        $eventDispatcher = $this->prophesize(EventDispatcherInterface::class);
-        $eventDispatcher->dispatch($message1)->shouldBeCalled();
-        $eventDispatcher->dispatch($message2)->shouldBeCalled();
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects($this->atLeastOnce())->method('dispatch')->with($message1);
+        $eventDispatcher->expects($this->atLeastOnce())->method('dispatch')->with($message2);
 
-        $eventBus = new Psr14EventBus($eventDispatcher->reveal());
+        $eventBus = new Psr14EventBus($eventDispatcher);
         $eventBus->dispatch($message1, $message2);
     }
 }

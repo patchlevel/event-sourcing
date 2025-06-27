@@ -16,15 +16,12 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 #[CoversClass(DebugCommand::class)]
 final class DebugCommandTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSuccessful(): void
     {
         $command = new DebugCommand(

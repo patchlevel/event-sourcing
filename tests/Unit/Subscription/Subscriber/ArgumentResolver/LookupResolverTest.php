@@ -19,19 +19,16 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(AggregateIdArgumentResolver::class)]
 final class LookupResolverTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSupport(): void
     {
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
         $eventRegistry = new EventRegistry([]);
 
-        $resolver = new LookupResolver($store->reveal(), $eventRegistry);
+        $resolver = new LookupResolver($store, $eventRegistry);
 
         self::assertTrue(
             $resolver->support(
@@ -52,10 +49,10 @@ final class LookupResolverTest extends TestCase
     {
         $event = new ProfileVisited(ProfileId::fromString('1'));
 
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
         $eventRegistry = new EventRegistry([]);
 
-        $resolver = new LookupResolver($store->reveal(), $eventRegistry);
+        $resolver = new LookupResolver($store, $eventRegistry);
 
         $message = (new Message($event))->withHeader(
             new AggregateHeader('foo', 'bar', 1, new DateTimeImmutable()),

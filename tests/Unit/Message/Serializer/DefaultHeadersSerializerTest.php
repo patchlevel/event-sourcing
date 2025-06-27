@@ -13,13 +13,10 @@ use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\Hydrator\MetadataHydrator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(DefaultHeadersSerializer::class)]
 final class DefaultHeadersSerializerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSerialize(): void
     {
         $serializer = DefaultHeadersSerializer::createFromPaths([

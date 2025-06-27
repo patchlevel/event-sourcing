@@ -13,29 +13,26 @@ use Patchlevel\EventSourcing\Store\StoreIsReadOnly;
 use Patchlevel\EventSourcing\Store\StreamStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(ReadOnlyStore::class)]
 final class ReadOnlyStoreTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testUnsupportedStore(): void
     {
-        $parentStore = $this->prophesize(StreamStore::class);
+        $parentStore = $this->createMock(StreamStore::class);
 
         $this->expectException(InvalidArgumentException::class);
-        new ReadOnlyStore($parentStore->reveal());
+        new ReadOnlyStore($parentStore);
     }
 
     public function testLoad(): void
     {
         $criteria = new Criteria();
 
-        $parentStore = $this->prophesize(Store::class);
-        $parentStore->load($criteria, 8, 42, true)->shouldBeCalled();
+        $parentStore = $this->createMock(Store::class);
+        $parentStore->expects($this->atLeastOnce())->method('load')->with($criteria, 8, 42, true);
 
-        $store = new ReadOnlyStore($parentStore->reveal());
+        $store = new ReadOnlyStore($parentStore);
         $store->load($criteria, 8, 42, true);
     }
 
@@ -43,10 +40,10 @@ final class ReadOnlyStoreTest extends TestCase
     {
         $criteria = new Criteria();
 
-        $parentStore = $this->prophesize(Store::class);
-        $parentStore->count($criteria)->shouldBeCalled();
+        $parentStore = $this->createMock(Store::class);
+        $parentStore->expects($this->atLeastOnce())->method('count')->with($criteria);
 
-        $store = new ReadOnlyStore($parentStore->reveal());
+        $store = new ReadOnlyStore($parentStore);
         $store->count($criteria);
     }
 
@@ -55,10 +52,10 @@ final class ReadOnlyStoreTest extends TestCase
         $message = new Message(new class () {
         });
 
-        $parentStore = $this->prophesize(Store::class);
-        $parentStore->save($message)->shouldNotBeCalled();
+        $parentStore = $this->createMock(Store::class);
+        $parentStore->expects($this->never())->method('save')->with($message);
 
-        $store = new ReadOnlyStore($parentStore->reveal());
+        $store = new ReadOnlyStore($parentStore);
         $this->expectException(StoreIsReadOnly::class);
         $store->save($message);
     }
@@ -68,10 +65,10 @@ final class ReadOnlyStoreTest extends TestCase
         $callback = static function (): void {
         };
 
-        $parentStore = $this->prophesize(Store::class);
-        $parentStore->transactional($callback)->shouldBeCalled();
+        $parentStore = $this->createMock(Store::class);
+        $parentStore->expects($this->atLeastOnce())->method('transactional')->with($callback);
 
-        $store = new ReadOnlyStore($parentStore->reveal());
+        $store = new ReadOnlyStore($parentStore);
         $store->transactional($callback);
     }
 }

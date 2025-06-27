@@ -14,13 +14,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(DefaultConsumer::class)]
 final class DefaultConsumerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testConsumeEvent(): void
     {
         $listener = new class {
@@ -39,10 +36,14 @@ final class DefaultConsumerTest extends TestCase
             ),
         );
 
-        $provider = $this->prophesize(ListenerProvider::class);
-        $provider->listenersForEvent(ProfileCreated::class)->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
+        $provider = $this->createMock(ListenerProvider::class);
+        $provider
+            ->expects($this->once())
+            ->method('listenersForEvent')
+            ->with(ProfileCreated::class)
+            ->willReturn([new ListenerDescriptor($listener->__invoke(...))]);
 
-        $eventBus = new DefaultConsumer($provider->reveal());
+        $eventBus = new DefaultConsumer($provider);
         $eventBus->consume($message);
 
         self::assertSame($message, $listener->message);

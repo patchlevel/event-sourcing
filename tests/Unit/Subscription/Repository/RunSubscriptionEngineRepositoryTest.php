@@ -15,13 +15,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(RunSubscriptionEngineRepository::class)]
 final class RunSubscriptionEngineRepositoryTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testLoad(): void
     {
         $profileId = ProfileId::fromString('id1');
@@ -31,14 +28,14 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
 
-        $defaultRepository = $this->prophesize(Repository::class);
-        $defaultRepository->load($profileId)->willReturn($aggregate)->shouldBeCalledOnce();
+        $defaultRepository = $this->createMock(Repository::class);
+        $defaultRepository->expects($this->once())->method('load')->with($profileId)->willReturn($aggregate);
 
-        $engine = $this->prophesize(SubscriptionEngine::class);
+        $engine = $this->createMock(SubscriptionEngine::class);
 
         $repository = new RunSubscriptionEngineRepository(
-            $defaultRepository->reveal(),
-            $engine->reveal(),
+            $defaultRepository,
+            $engine,
             ['id1', 'id2'],
             ['group1', 'group2'],
             42,
@@ -51,14 +48,14 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
     {
         $profileId = ProfileId::fromString('id1');
 
-        $defaultRepository = $this->prophesize(Repository::class);
-        $defaultRepository->has($profileId)->willReturn(true)->shouldBeCalledOnce();
+        $defaultRepository = $this->createMock(Repository::class);
+        $defaultRepository->expects($this->once())->method('has')->with($profileId)->willReturn(true);
 
-        $engine = $this->prophesize(SubscriptionEngine::class);
+        $engine = $this->createMock(SubscriptionEngine::class);
 
         $repository = new RunSubscriptionEngineRepository(
-            $defaultRepository->reveal(),
-            $engine->reveal(),
+            $defaultRepository,
+            $engine,
             ['id1', 'id2'],
             ['group1', 'group2'],
             42,
@@ -79,15 +76,15 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
 
-        $defaultRepository = $this->prophesize(Repository::class);
-        $defaultRepository->save($aggregate)->shouldBeCalledOnce();
+        $defaultRepository = $this->createMock(Repository::class);
+        $defaultRepository->expects($this->once())->method('save')->with($aggregate);
 
-        $engine = $this->prophesize(SubscriptionEngine::class);
-        $engine->run($criteria, 42)->willReturn(new ProcessedResult(21))->shouldBeCalledOnce();
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine->expects($this->once())->method('run')->with($criteria, 42)->willReturn(new ProcessedResult(21));
 
         $repository = new RunSubscriptionEngineRepository(
-            $defaultRepository->reveal(),
-            $engine->reveal(),
+            $defaultRepository,
+            $engine,
             ['id1', 'id2'],
             ['group1', 'group2'],
             42,
@@ -108,15 +105,15 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
             Email::fromString('info@patchlevel.de'),
         );
 
-        $defaultRepository = $this->prophesize(Repository::class);
-        $defaultRepository->save($aggregate)->shouldBeCalledOnce();
+        $defaultRepository = $this->createMock(Repository::class);
+        $defaultRepository->expects($this->once())->method('save')->with($aggregate);
 
-        $engine = $this->prophesize(SubscriptionEngine::class);
-        $engine->run($criteria, 42)->willThrow(new AlreadyProcessing())->shouldBeCalledOnce();
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine->expects($this->once())->method('run')->with($criteria, 42)->willThrowException(new AlreadyProcessing());
 
         $repository = new RunSubscriptionEngineRepository(
-            $defaultRepository->reveal(),
-            $engine->reveal(),
+            $defaultRepository,
+            $engine,
             ['id1', 'id2'],
             ['group1', 'group2'],
             42,

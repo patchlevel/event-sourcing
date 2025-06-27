@@ -10,26 +10,23 @@ use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(ChainDoctrineSchemaConfigurator::class)]
 final class ChainDoctrineSchemaConfiguratorTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testChain(): void
     {
-        $schema = $this->prophesize(Schema::class)->reveal();
-        $connection = $this->prophesize(Connection::class)->reveal();
+        $schema = $this->createMock(Schema::class);
+        $connection = $this->createMock(Connection::class);
 
-        $configurator1 = $this->prophesize(DoctrineSchemaConfigurator::class);
-        $configurator1->configureSchema($schema, $connection)->shouldBeCalledOnce();
-        $configurator2 = $this->prophesize(DoctrineSchemaConfigurator::class);
-        $configurator2->configureSchema($schema, $connection)->shouldBeCalledOnce();
+        $configurator1 = $this->createMock(DoctrineSchemaConfigurator::class);
+        $configurator1->expects($this->once())->method('configureSchema')->with($schema, $connection);
+        $configurator2 = $this->createMock(DoctrineSchemaConfigurator::class);
+        $configurator2->expects($this->once())->method('configureSchema')->with($schema, $connection);
 
         $chain = new ChainDoctrineSchemaConfigurator([
-            $configurator1->reveal(),
-            $configurator2->reveal(),
+            $configurator1,
+            $configurator2,
         ]);
 
         $chain->configureSchema($schema, $connection);

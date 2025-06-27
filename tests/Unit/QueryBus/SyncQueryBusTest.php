@@ -9,23 +9,20 @@ use Patchlevel\EventSourcing\QueryBus\HandlerProvider;
 use Patchlevel\EventSourcing\QueryBus\InvalidQueryHandler;
 use Patchlevel\EventSourcing\QueryBus\SyncQueryBus;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\Log\LoggerInterface;
 
 /** @covers \Patchlevel\EventSourcing\QueryBus\SyncQueryBus */
 final class SyncQueryBusTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testHandlerNotFound(): void
     {
         $query = new class {
         };
 
-        $handlerProvider = $this->prophesize(HandlerProvider::class);
-        $handlerProvider->handlerForQuery($query::class)->willReturn([]);
+        $handlerProvider = $this->createMock(HandlerProvider::class);
+        $handlerProvider->method('handlerForQuery')->with($query::class)->willReturn([]);
 
-        $queryBus = new SyncQueryBus($handlerProvider->reveal());
+        $queryBus = new SyncQueryBus($handlerProvider);
 
         $this->expectException(InvalidQueryHandler::class);
         $this->expectExceptionMessage('No handler found for query ' . $query::class);
@@ -38,13 +35,13 @@ final class SyncQueryBusTest extends TestCase
         $query = new class {
         };
 
-        $handlerProvider = $this->prophesize(HandlerProvider::class);
-        $handlerProvider->handlerForQuery($query::class)->willReturn([
+        $handlerProvider = $this->createMock(HandlerProvider::class);
+        $handlerProvider->method('handlerForQuery')->with($query::class)->willReturn([
             new HandlerDescriptor(static fn () => null),
             new HandlerDescriptor(static fn () => null),
         ]);
 
-        $queryBus = new SyncQueryBus($handlerProvider->reveal());
+        $queryBus = new SyncQueryBus($handlerProvider);
 
         $this->expectException(InvalidQueryHandler::class);
         $this->expectExceptionMessage('Multiple handlers found for query ' . $query::class);
@@ -66,15 +63,15 @@ final class SyncQueryBusTest extends TestCase
             }
         };
 
-        $handlerProvider = $this->prophesize(HandlerProvider::class);
-        $handlerProvider->handlerForQuery($query::class)->willReturn([
+        $handlerProvider = $this->createMock(HandlerProvider::class);
+        $handlerProvider->method('handlerForQuery')->with($query::class)->willReturn([
             new HandlerDescriptor($handler),
         ]);
 
-        $logger = $this->prophesize(LoggerInterface::class);
-        $logger->debug('QueryBus: dispatch query', ['query' => $query::class])->shouldBeCalledOnce();
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('debug')->with('QueryBus: dispatch query', ['query' => $query::class]);
 
-        $queryBus = new SyncQueryBus($handlerProvider->reveal(), $logger->reveal());
+        $queryBus = new SyncQueryBus($handlerProvider, $logger);
         $queryBus->dispatch($query);
 
         self::assertSame($query, $handler->query);

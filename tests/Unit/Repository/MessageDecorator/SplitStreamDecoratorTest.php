@@ -14,13 +14,10 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(SplitStreamDecorator::class)]
 final class SplitStreamDecoratorTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testWithoutSplittingStream(): void
     {
         $message = new Message(

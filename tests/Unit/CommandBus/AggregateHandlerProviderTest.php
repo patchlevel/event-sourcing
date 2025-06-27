@@ -15,20 +15,17 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(AggregateHandlerProvider::class)]
 final class AggregateHandlerProviderTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testEmpty(): void
     {
-        $repositoryManager = $this->prophesize(RepositoryManager::class);
+        $repositoryManager = $this->createMock(RepositoryManager::class);
 
         $provider = new AggregateHandlerProvider(
             new AggregateRootRegistry([]),
-            $repositoryManager->reveal(),
+            $repositoryManager,
         );
 
         $result = $provider->handlerForCommand(CreateProfile::class);
@@ -38,17 +35,17 @@ final class AggregateHandlerProviderTest extends TestCase
 
     public function testGetCreateHandler(): void
     {
-        $repositoryManager = $this->prophesize(RepositoryManager::class);
+        $repositoryManager = $this->createMock(RepositoryManager::class);
 
         $provider = new AggregateHandlerProvider(
             new AggregateRootRegistry(['profile' => ProfileWithHandler::class]),
-            $repositoryManager->reveal(),
+            $repositoryManager,
         );
 
         $result = $provider->handlerForCommand(CreateProfile::class);
 
         $handler = new CreateAggregateHandler(
-            $repositoryManager->reveal(),
+            $repositoryManager,
             ProfileWithHandler::class,
             'create',
             new DefaultParameterResolver(),
@@ -60,17 +57,17 @@ final class AggregateHandlerProviderTest extends TestCase
 
     public function testGetUpdateHandler(): void
     {
-        $repositoryManager = $this->prophesize(RepositoryManager::class);
+        $repositoryManager = $this->createMock(RepositoryManager::class);
 
         $provider = new AggregateHandlerProvider(
             new AggregateRootRegistry(['profile' => ProfileWithHandler::class]),
-            $repositoryManager->reveal(),
+            $repositoryManager,
         );
 
         $result = $provider->handlerForCommand(ChangeProfileName::class);
 
         $handler = new UpdateAggregateHandler(
-            $repositoryManager->reveal(),
+            $repositoryManager,
             ProfileWithHandler::class,
             'updateName',
             new DefaultParameterResolver(),

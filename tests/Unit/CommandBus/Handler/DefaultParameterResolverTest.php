@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\CommandBus\Handler\ServiceNotResolvable;
 use Patchlevel\EventSourcing\CommandBus\ServiceNotFound;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\Container\ContainerInterface;
 use ReflectionMethod;
 use stdClass;
@@ -18,8 +17,6 @@ use stdClass;
 #[CoversClass(DefaultParameterResolver::class)]
 final class DefaultParameterResolverTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testNoParameters(): void
     {
         $class = new class () {
@@ -68,7 +65,7 @@ final class DefaultParameterResolverTest extends TestCase
 
         $class = new class () {
             // phpcs:disable
-            public function handle(stdClass $command, $foo): void
+            public function handle(stdClass $command, mixed $foo): void
             {
             }
             // phpcs:enable
@@ -94,15 +91,15 @@ final class DefaultParameterResolverTest extends TestCase
 
         $class = new class () {
             // phpcs:disable
-            public function handle(stdClass $command, $foo): void
+            public function handle(stdClass $command, mixed $foo): void
             {
             }
             // phpcs:enable
         };
 
-        $container = $this->prophesize(ContainerInterface::class);
+        $container = $this->createMock(ContainerInterface::class);
 
-        $resolver = new DefaultParameterResolver($container->reveal());
+        $resolver = new DefaultParameterResolver($container);
 
         $command = new stdClass();
 
@@ -126,9 +123,9 @@ final class DefaultParameterResolverTest extends TestCase
             }
         };
 
-        $container = $this->prophesize(ContainerInterface::class);
+        $container = $this->createMock(ContainerInterface::class);
 
-        $resolver = new DefaultParameterResolver($container->reveal());
+        $resolver = new DefaultParameterResolver($container);
 
         $command = new stdClass();
 
@@ -152,10 +149,14 @@ final class DefaultParameterResolverTest extends TestCase
             }
         };
 
-        $container = $this->prophesize(ContainerInterface::class);
-        $container->get(stdClass::class)->willThrow(new ServiceNotFound(stdClass::class))->shouldBeCalledOnce();
+        $container = $this->createMock(ContainerInterface::class);
+        $container
+            ->expects($this->once())
+            ->method('get')
+            ->with(stdClass::class)
+            ->willThrowException(new ServiceNotFound(stdClass::class));
 
-        $resolver = new DefaultParameterResolver($container->reveal());
+        $resolver = new DefaultParameterResolver($container);
 
         $command = new stdClass();
 
@@ -179,10 +180,14 @@ final class DefaultParameterResolverTest extends TestCase
 
         $service = new stdClass();
 
-        $container = $this->prophesize(ContainerInterface::class);
-        $container->get(stdClass::class)->willReturn($service)->shouldBeCalledOnce();
+        $container = $this->createMock(ContainerInterface::class);
+        $container
+            ->expects($this->once())
+            ->method('get')
+            ->with(stdClass::class)
+            ->willReturn($service);
 
-        $resolver = new DefaultParameterResolver($container->reveal());
+        $resolver = new DefaultParameterResolver($container);
 
         $command = new stdClass();
 
@@ -209,10 +214,13 @@ final class DefaultParameterResolverTest extends TestCase
 
         $service = new stdClass();
 
-        $container = $this->prophesize(ContainerInterface::class);
-        $container->get('foo')->willReturn($service)->shouldBeCalledOnce();
+        $container = $this->createMock(ContainerInterface::class);
+        $container->expects($this->once())
+            ->method('get')
+            ->with('foo')
+            ->willReturn($service);
 
-        $resolver = new DefaultParameterResolver($container->reveal());
+        $resolver = new DefaultParameterResolver($container);
 
         $command = new stdClass();
 

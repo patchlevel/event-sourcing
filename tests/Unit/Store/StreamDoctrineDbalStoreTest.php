@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
 use ArrayIterator;
+use Closure;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Driver\PDO\Exception;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
@@ -34,6 +36,7 @@ use Patchlevel\EventSourcing\Store\MissingDataForStorage;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Store\WrongQueryResult;
+use Patchlevel\EventSourcing\Tests\ReturnCallback;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\BazHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
@@ -43,8 +46,6 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Psr\Clock\ClockInterface;
 use RuntimeException;
 
@@ -54,43 +55,37 @@ use function method_exists;
 #[CoversClass(StreamDoctrineDbalStore::class)]
 final class StreamDoctrineDbalStoreTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testLoadWithNoEvents(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->willReturn(new EmptyIterator());
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result->method('iterateAssociative')->willReturn(new EmptyIterator());
 
-        $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
-            [
-                'stream_0' => 'profile-1',
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn($result->reveal());
+        $connection->method('executeQuery')->with('SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC', [
+            'stream_0' => 'profile-1',
+            'from_playhead' => 0,
+            'archived' => false,
+        ], $this->isArray())->willReturn($result);
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
 
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
+        $connection->method('createExpressionBuilder')->willReturn(new ExpressionBuilder($connection));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $stream = $doctrineDbalStore->load(
@@ -107,39 +102,35 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testLoadWithLimit(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->willReturn(new EmptyIterator());
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result->method('iterateAssociative')->willReturn(new EmptyIterator());
 
-        $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC LIMIT 10',
-            [
-                'stream_0' => 'profile-1',
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn($result->reveal());
+        $connection->method('executeQuery')->with('SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC LIMIT 10', [
+            'stream_0' => 'profile-1',
+            'from_playhead' => 0,
+            'archived' => false,
+        ], $this->isArray())->willReturn($result);
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
 
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
+        $connection->method('createExpressionBuilder')->willReturn(new ExpressionBuilder($connection));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $stream = $doctrineDbalStore->load(
@@ -161,39 +152,35 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             $this->markTestSkipped('In older DBAL versions platforms did not need to support this');
         }
 
-        $connection = $this->prophesize(Connection::class);
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->willReturn(new EmptyIterator());
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result->method('iterateAssociative')->willReturn(new EmptyIterator());
 
-        $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC OFFSET 5',
-            [
-                'stream_0' => 'profile-1',
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn($result->reveal());
+        $connection->method('executeQuery')->with('SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC OFFSET 5', [
+            'stream_0' => 'profile-1',
+            'from_playhead' => 0,
+            'archived' => false,
+        ], $this->isArray())->willReturn($result);
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
 
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
+        $connection->method('createExpressionBuilder')->willReturn(new ExpressionBuilder($connection));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $stream = $doctrineDbalStore->load(
@@ -211,40 +198,36 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testLoadWithIndex(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->willReturn(new EmptyIterator());
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result->method('iterateAssociative')->willReturn(new EmptyIterator());
 
-        $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (id > :from_index) AND (archived = :archived) ORDER BY id ASC',
-            [
-                'stream_0' => 'profile-1',
-                'from_playhead' => 0,
-                'archived' => false,
-                'from_index' => 1,
-            ],
-            Argument::type('array'),
-        )->willReturn($result->reveal());
+        $connection->method('executeQuery')->with('SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (id > :from_index) AND (archived = :archived) ORDER BY id ASC', [
+            'stream_0' => 'profile-1',
+            'from_playhead' => 0,
+            'archived' => false,
+            'from_index' => 1,
+        ], $this->isArray())->willReturn($result);
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
 
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
+        $connection->method('createExpressionBuilder')->willReturn(new ExpressionBuilder($connection));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $stream = $doctrineDbalStore->load(
@@ -262,39 +245,35 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testLoadWithLike(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->willReturn(new EmptyIterator());
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result->method('iterateAssociative')->willReturn(new EmptyIterator());
 
-        $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream LIKE :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
-            [
-                'stream_0' => 'profile-%',
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn($result->reveal());
+        $connection->method('executeQuery')->with('SELECT * FROM event_store WHERE (stream LIKE :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC', [
+            'stream_0' => 'profile-%',
+            'from_playhead' => 0,
+            'archived' => false,
+        ], $this->isArray())->willReturn($result);
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
 
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
+        $connection->method('createExpressionBuilder')->willReturn(new ExpressionBuilder($connection));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $stream = $doctrineDbalStore->load(
@@ -311,37 +290,33 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testLoadWithLikeAll(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->willReturn(new EmptyIterator());
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result->method('iterateAssociative')->willReturn(new EmptyIterator());
 
-        $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
-            [
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn($result->reveal());
+        $connection->method('executeQuery')->with('SELECT * FROM event_store WHERE (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC', [
+            'from_playhead' => 0,
+            'archived' => false,
+        ], $this->isArray())->willReturn($result);
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
 
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $stream = $doctrineDbalStore->load(
@@ -358,40 +333,36 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testLoadMultipleStream(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->willReturn(new EmptyIterator());
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result->method('iterateAssociative')->willReturn(new EmptyIterator());
 
-        $connection->executeQuery(
-            'SELECT * FROM event_store WHERE ((stream LIKE :stream_0) OR (stream = :stream_1)) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
-            [
-                'stream_0' => 'profile-%',
-                'stream_1' => 'foo',
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn($result->reveal());
+        $connection->method('executeQuery')->with('SELECT * FROM event_store WHERE ((stream LIKE :stream_0) OR (stream = :stream_1)) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC', [
+            'stream_0' => 'profile-%',
+            'stream_1' => 'foo',
+            'from_playhead' => 0,
+            'archived' => false,
+        ], $this->isArray())->willReturn($result);
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
 
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
+        $connection->method('createExpressionBuilder')->willReturn(new ExpressionBuilder($connection));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $stream = $doctrineDbalStore->load(
@@ -408,9 +379,9 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testLoadWithOneEvent(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->willReturn(new ArrayIterator(
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result->method('iterateAssociative')->willReturn(new ArrayIterator(
             [
                 [
                     'id' => 1,
@@ -426,43 +397,37 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ],
         ));
 
-        $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
-            [
-                'stream_0' => 'profile-1',
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn($result->reveal());
+        $connection->method('executeQuery')->with('SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC', [
+            'stream_0' => 'profile-1',
+            'from_playhead' => 0,
+            'archived' => false,
+        ], $this->isArray())->willReturn($result);
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
 
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
-        $abstractPlatform->getDateTimeTzFormatString()->shouldBeCalledOnce()->willReturn('Y-m-d H:i:s');
+        $abstractPlatform->expects($this->once())->method('getDateTimeTzFormatString')->willReturn('Y-m-d H:i:s');
 
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
 
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
+        $connection->method('createExpressionBuilder')->willReturn(new ExpressionBuilder($connection));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->deserialize(
-            new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'),
-        )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->method('deserialize')->with(new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'))->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize('[]')->willReturn([]);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->method('deserialize')->with('[]')->willReturn([]);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $stream = $doctrineDbalStore->load(
@@ -498,74 +463,104 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testLoadWithTwoEvents(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $result = $this->prophesize(Result::class);
-        $result->iterateAssociative()->willReturn(new ArrayIterator(
-            [
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result
+            ->expects($this->once())
+            ->method('iterateAssociative')
+            ->willReturn(new ArrayIterator(
                 [
-                    'id' => 1,
-                    'stream' => 'profile-1',
-                    'playhead' => '1',
-                    'event_id' => '1',
-                    'event_name' => 'profile.created',
-                    'event_payload' => '{"profileId": "1", "email": "s"}',
-                    'recorded_on' => '2021-02-17 10:00:00',
-                    'archived' => '0',
-                    'custom_headers' => '[]',
+                    [
+                        'id' => 1,
+                        'stream' => 'profile-1',
+                        'playhead' => '1',
+                        'event_id' => '1',
+                        'event_name' => 'profile.created',
+                        'event_payload' => '{"profileId": "1", "email": "s"}',
+                        'recorded_on' => '2021-02-17 10:00:00',
+                        'archived' => '0',
+                        'custom_headers' => '[]',
+                    ],
+                    [
+                        'id' => 2,
+                        'stream' => 'profile-1',
+                        'playhead' => '2',
+                        'event_id' => '2',
+                        'event_name' => 'profile.email_changed',
+                        'event_payload' => '{"profileId": "1", "email": "d"}',
+                        'recorded_on' => '2021-02-17 11:00:00',
+                        'archived' => '0',
+                        'custom_headers' => '[]',
+                    ],
+                ],
+            ));
+
+        $connection
+            ->expects($this->once())
+            ->method('executeQuery')
+            ->with(
+                'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
+                [
+                    'stream_0' => 'profile-1',
+                    'from_playhead' => 0,
+                    'archived' => false,
+                ],
+                $this->isArray(),
+            )
+            ->willReturn($result);
+
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform
+            ->expects($this->once())
+            ->method('createSelectSQLBuilder')
+            ->willReturn(new DefaultSelectSQLBuilder(
+                $abstractPlatform,
+                'FOR UPDATE',
+                'SKIP LOCKED',
+            ));
+        $abstractPlatform
+            ->expects($this->exactly(2))
+            ->method('getDateTimeTzFormatString')
+            ->willReturn('Y-m-d H:i:s');
+
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn($abstractPlatform);
+
+        $queryBuilder = new QueryBuilder($connection);
+        $connection
+            ->expects($this->once())
+            ->method('createQueryBuilder')
+            ->willReturn($queryBuilder);
+
+        $connection
+            ->expects($this->once())
+            ->method('createExpressionBuilder')
+            ->willReturn(new ExpressionBuilder($connection));
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer
+            ->expects($this->exactly(2))
+            ->method('deserialize')
+            ->willReturnCallback(new ReturnCallback([
+                [
+                    [new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'), []],
+                    new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')),
                 ],
                 [
-                    'id' => 2,
-                    'stream' => 'profile-1',
-                    'playhead' => '2',
-                    'event_id' => '2',
-                    'event_name' => 'profile.email_changed',
-                    'event_payload' => '{"profileId": "1", "email": "d"}',
-                    'recorded_on' => '2021-02-17 11:00:00',
-                    'archived' => '0',
-                    'custom_headers' => '[]',
+                    [new SerializedEvent('profile.email_changed', '{"profileId": "1", "email": "d"}'), []],
+                    new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('d')),
                 ],
-            ],
-        ));
+            ]));
 
-        $connection->executeQuery(
-            'SELECT * FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived) ORDER BY id ASC',
-            [
-                'stream_0' => 'profile-1',
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn($result->reveal());
-
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
-            'FOR UPDATE',
-            'SKIP LOCKED',
-        ));
-        $abstractPlatform->getDateTimeTzFormatString()->shouldBeCalledTimes(2)->willReturn('Y-m-d H:i:s');
-
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
-
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
-
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->deserialize(
-            new SerializedEvent('profile.created', '{"profileId": "1", "email": "s"}'),
-        )->willReturn(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
-        $eventSerializer->deserialize(
-            new SerializedEvent('profile.email_changed', '{"profileId": "1", "email": "d"}'),
-        )->willReturn(new ProfileEmailChanged(ProfileId::fromString('1'), Email::fromString('d')));
-
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->deserialize('[]')->willReturn([]);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->method('deserialize')->with('[]')->willReturn([]);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $stream = $doctrineDbalStore->load(
@@ -620,20 +615,23 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             }
         };
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $connection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        )->shouldBeCalled();
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new SQLitePlatform());
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $store = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $store->transactional($callback(...));
@@ -652,23 +650,32 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             }
         };
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->getDatabasePlatform()->willReturn(new MySQLPlatform());
-        $connection->fetchAllAssociative('SELECT GET_LOCK("133742", -1)')->shouldBeCalledOnce()->willReturn([]);
-        $connection->fetchAllAssociative('SELECT RELEASE_LOCK("133742")')->shouldBeCalledOnce()->willReturn([]);
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new MySQLPlatform());
 
-        $connection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        )->shouldBeCalled();
+        $connection
+            ->expects($this->exactly(2))
+            ->method('fetchAllAssociative')
+            ->willReturnMap([
+                ['SELECT GET_LOCK("133742", -1)', []],
+                ['SELECT RELEASE_LOCK("133742")', []],
+            ]);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $store = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $store->transactional($callback(...));
@@ -687,23 +694,32 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             }
         };
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->getDatabasePlatform()->willReturn(new MariaDBPlatform());
-        $connection->fetchAllAssociative('SELECT GET_LOCK("133742", -1)')->shouldBeCalledOnce()->willReturn([]);
-        $connection->fetchAllAssociative('SELECT RELEASE_LOCK("133742")')->shouldBeCalledOnce()->willReturn([]);
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new MariaDBPlatform());
 
-        $connection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        )->shouldBeCalled();
+        $connection
+            ->expects($this->exactly(2))
+            ->method('fetchAllAssociative')
+            ->willReturnMap([
+                ['SELECT GET_LOCK("133742", -1)', []],
+                ['SELECT RELEASE_LOCK("133742")', []],
+            ]);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $store = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $store->transactional($callback(...));
@@ -722,22 +738,29 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             }
         };
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->getDatabasePlatform()->willReturn(new PostgreSQLPlatform());
-        $connection->executeStatement('SELECT pg_advisory_xact_lock(133742)')->shouldBeCalledOnce();
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new PostgreSQLPlatform());
 
-        $connection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        )->shouldBeCalled();
+        $connection
+            ->expects($this->once())
+            ->method('executeStatement')
+            ->with('SELECT pg_advisory_xact_lock(133742)');
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $connection
+            ->expects($this->atLeastOnce())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $store = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $store->transactional($callback(...));
@@ -756,22 +779,29 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             }
         };
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->getDatabasePlatform()->willReturn(new PostgreSQLPlatform());
-        $connection->executeStatement('SELECT pg_advisory_xact_lock(133742)')->shouldBeCalledOnce();
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new PostgreSQLPlatform());
 
-        $connection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        )->shouldBeCalledTimes(2);
+        $connection
+            ->expects($this->once())
+            ->method('executeStatement')
+            ->with('SELECT pg_advisory_xact_lock(133742)');
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $store = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $store->transactional(static function () use ($store, $callback): void {
@@ -792,22 +822,28 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             }
         };
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->getDatabasePlatform()->willReturn(new PostgreSQLPlatform());
-        $connection->executeStatement('SELECT pg_advisory_xact_lock(133742)')->shouldBeCalledTimes(2);
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(4))
+            ->method('getDatabasePlatform')
+            ->willReturn(new PostgreSQLPlatform());
+        $connection
+            ->expects($this->exactly(2))
+            ->method('executeStatement')
+            ->with('SELECT pg_advisory_xact_lock(133742)');
 
-        $connection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        )->shouldBeCalled();
+        $connection
+            ->expects($this->exactly(2))
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $store = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $store->transactional($callback(...));
@@ -825,23 +861,32 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             }
         };
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->getDatabasePlatform()->willReturn(new MariaDBPlatform());
-        $connection->fetchAllAssociative('SELECT GET_LOCK("133742", -1)')->shouldBeCalledOnce()->willReturn([]);
-        $connection->fetchAllAssociative('SELECT RELEASE_LOCK("133742")')->shouldBeCalledOnce()->willReturn([]);
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new MariaDBPlatform());
 
-        $connection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        )->shouldBeCalled();
+        $connection
+            ->expects($this->exactly(2))
+            ->method('fetchAllAssociative')
+            ->willReturnMap([
+                ['SELECT GET_LOCK("133742", -1)', []],
+                ['SELECT RELEASE_LOCK("133742")', []],
+            ]);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $store = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $this->expectException(RuntimeException::class);
@@ -858,35 +903,30 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->withHeader(new PlayheadHeader(1))
             ->withHeader(new RecordedOnHeader($recordedOn));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->expects($this->once())->method('serialize')->with($message->event())->willReturn(new SerializedEvent(
             'profile_created',
             '',
         ));
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->method('serialize')->with([])->willReturn('[]');
 
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
+        $mockedConnection = $this->createMock(Connection::class);
+        $mockedConnection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $mockedConnection->method('transactional')->willReturnCallback(
+            static fn (Closure $closure): mixed => $closure(),
         );
 
-        $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, '[]'],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
+        $mockedConnection->expects($this->once())->method('executeStatement')->with("INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?)", ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, '[]'], [
+            5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+            6 => Type::getType(Types::BOOLEAN),
+        ]);
 
         $singleTableStore = new StreamDoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $mockedConnection,
+            $eventSerializer,
+            $headersSerializer,
         );
         $singleTableStore->save($message);
     }
@@ -895,28 +935,27 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $message = Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('s')));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->expects($this->once())->method('serialize')->with($message->event())->willReturn(new SerializedEvent(
             'profile_created',
             '',
         ));
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->method('serialize')->with([])->willReturn('[]');
 
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
+        $mockedConnection = $this->createMock(Connection::class);
+        $mockedConnection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $mockedConnection->method('transactional')->willReturnCallback(
+            static fn (Closure $closure): mixed => $closure(),
         );
 
-        $mockedConnection->executeStatement(Argument::any(), Argument::any(), Argument::any())->shouldNotBeCalled();
+        $mockedConnection->expects($this->never())->method('executeStatement');
 
         $singleTableStore = new StreamDoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $mockedConnection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $this->expectException(MissingDataForStorage::class);
@@ -937,58 +976,67 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->withHeader(new RecordedOnHeader($recordedOn))
             ->withHeader(new EventIdHeader('2'));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_created',
-            '',
-        ));
-        $eventSerializer->serialize($message2->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
-            'profile_email_changed',
-            '',
-        ));
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer
+            ->expects($this->exactly(2))
+            ->method('serialize')
+            ->willReturnMap([
+                [$message1->event(), new SerializedEvent('profile_created', '')],
+                [$message2->event(), new SerializedEvent('profile_email_changed', '')],
+            ]);
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer
+            ->expects($this->exactly(2))
+            ->method('serialize')
+            ->with([])
+            ->willReturn('[]');
 
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
-        );
+        $mockedConnection = $this->createMock(Connection::class);
+        $mockedConnection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new SQLitePlatform());
+        $mockedConnection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
 
-        $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
-            [
-                'profile-1',
-                1,
-                '1',
-                'profile_created',
-                '',
-                $recordedOn,
-                false,
-                '[]',
-                'profile-1',
-                2,
-                '2',
-                'profile_email_changed',
-                '',
-                $recordedOn,
-                false,
-                '[]',
-            ],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                13 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                14 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
+        $mockedConnection
+            ->expects($this->once())
+            ->method('executeStatement')
+            ->with(
+                "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    'profile-1',
+                    1,
+                    '1',
+                    'profile_created',
+                    '',
+                    $recordedOn,
+                    false,
+                    '[]',
+                    'profile-1',
+                    2,
+                    '2',
+                    'profile_email_changed',
+                    '',
+                    $recordedOn,
+                    false,
+                    '[]',
+                ],
+                [
+                    5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                    6 => Type::getType(Types::BOOLEAN),
+                    13 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                    14 => Type::getType(Types::BOOLEAN),
+                ],
+            );
 
         $singleTableStore = new StreamDoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $mockedConnection,
+            $eventSerializer,
+            $headersSerializer,
         );
         $singleTableStore->save($message1, $message2);
     }
@@ -1007,54 +1055,57 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->withHeader(new EventIdHeader('2'))
             ->withHeader(new RecordedOnHeader($recordedOn));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message1->event())->shouldBeCalledTimes(2)->willReturn(new SerializedEvent(
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->expects($this->exactly(2))->method('serialize')->with($message1->event())->willReturn(new SerializedEvent(
             'profile_created',
             '',
         ));
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->method('serialize')->with([])->willReturn('[]');
 
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
+        $mockedConnection = $this->createMock(Connection::class);
+        $mockedConnection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $mockedConnection->method('transactional')->willReturnCallback(
+            static fn (Closure $closure): mixed => $closure(),
         );
 
-        $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
-            [
-                'profile-1',
-                1,
-                '1',
-                'profile_created',
-                '',
-                $recordedOn,
-                false,
-                '[]',
-                'profile-1',
-                1,
-                '2',
-                'profile_created',
-                '',
-                $recordedOn,
-                false,
-                '[]',
-            ],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-                13 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                14 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce()->willThrow(UniqueConstraintViolationException::class);
+        $mockedConnection
+            ->expects($this->once())
+            ->method('executeStatement')
+            ->with(
+                "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?),\n(?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    'profile-1',
+                    1,
+                    '1',
+                    'profile_created',
+                    '',
+                    $recordedOn,
+                    false,
+                    '[]',
+                    'profile-1',
+                    1,
+                    '2',
+                    'profile_created',
+                    '',
+                    $recordedOn,
+                    false,
+                    '[]',
+                ],
+                [
+                    5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                    6 => Type::getType(Types::BOOLEAN),
+                    13 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+                    14 => Type::getType(Types::BOOLEAN),
+                ],
+            )
+            ->willThrowException(new UniqueConstraintViolationException(new Exception('foo'), null));
 
         $singleTableStore = new StreamDoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $mockedConnection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $this->expectException(UniqueConstraintViolation::class);
@@ -1073,29 +1124,27 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                 ->withHeader(new RecordedOnHeader($recordedOn));
         }
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($messages[0]->event())->shouldBeCalledTimes(10000)->willReturn(new SerializedEvent(
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->expects($this->exactly(10000))->method('serialize')->with($messages[0]->event())->willReturn(new SerializedEvent(
             'profile_email_changed',
             '',
         ));
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize([])->willReturn('[]');
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->method('serialize')->with([])->willReturn('[]');
 
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
+        $mockedConnection = $this->createMock(Connection::class);
+        $mockedConnection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $mockedConnection->method('transactional')->willReturnCallback(
+            static fn (Closure $closure): mixed => $closure(),
         );
 
-        $mockedConnection->executeStatement(Argument::any(), Argument::any(), Argument::any())
-            ->shouldBeCalledTimes(2);
+        $mockedConnection->expects($this->exactly(2))->method('executeStatement');
 
         $singleTableStore = new StreamDoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $mockedConnection,
+            $eventSerializer,
+            $headersSerializer,
         );
         $singleTableStore->save(...$messages);
     }
@@ -1115,71 +1164,62 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->withHeader(new EventIdHeader('1'))
             ->withHeaders($customHeaders);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $eventSerializer->serialize($message->event())->shouldBeCalledOnce()->willReturn(new SerializedEvent(
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventSerializer->expects($this->once())->method('serialize')->with($message->event())->willReturn(new SerializedEvent(
             'profile_created',
             '',
         ));
 
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $headersSerializer->serialize($customHeaders)->willReturn('{foo: "foo", baz: "baz"}');
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $headersSerializer->method('serialize')->with($customHeaders)->willReturn('{foo: "foo", baz: "baz"}');
 
-        $mockedConnection = $this->prophesize(Connection::class);
-        $mockedConnection->getDatabasePlatform()->willReturn(new SQLitePlatform());
-        $mockedConnection->transactional(Argument::any())->will(
-        /** @param array{0: callable} $args */
-            static fn (array $args): mixed => $args[0](),
+        $mockedConnection = $this->createMock(Connection::class);
+        $mockedConnection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $mockedConnection->method('transactional')->willReturnCallback(
+            static fn (Closure $closure): mixed => $closure(),
         );
 
-        $mockedConnection->executeStatement(
-            "INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?)",
-            ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, '{foo: "foo", baz: "baz"}'],
-            [
-                5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
-                6 => Type::getType(Types::BOOLEAN),
-            ],
-        )->shouldBeCalledOnce();
+        $mockedConnection->expects($this->once())->method('executeStatement')->with("INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, recorded_on, archived, custom_headers) VALUES\n(?, ?, ?, ?, ?, ?, ?, ?)", ['profile-1', 1, '1', 'profile_created', '', $recordedOn, false, '{foo: "foo", baz: "baz"}'], [
+            5 => Type::getType(Types::DATETIMETZ_IMMUTABLE),
+            6 => Type::getType(Types::BOOLEAN),
+        ]);
 
         $singleTableStore = new StreamDoctrineDbalStore(
-            $mockedConnection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $mockedConnection,
+            $eventSerializer,
+            $headersSerializer,
         );
         $singleTableStore->save($message);
     }
 
     public function testCount(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $connection->fetchOne(
-            'SELECT COUNT(*) FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived)',
-            [
-                'stream_0' => 'profile-1',
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn('1');
+        $connection = $this->createMock(Connection::class);
+        $connection->method('fetchOne')->with('SELECT COUNT(*) FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived)', [
+            'stream_0' => 'profile-1',
+            'from_playhead' => 0,
+            'archived' => false,
+        ], $this->isArray())->willReturn('1');
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
 
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
+        $connection->method('createExpressionBuilder')->willReturn(new ExpressionBuilder($connection));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $count = $doctrineDbalStore->count(
@@ -1195,36 +1235,32 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testCountWrongResult(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $connection->fetchOne(
-            'SELECT COUNT(*) FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived)',
-            [
-                'stream_0' => 'profile-1',
-                'from_playhead' => 0,
-                'archived' => false,
-            ],
-            Argument::type('array'),
-        )->willReturn([]);
+        $connection = $this->createMock(Connection::class);
+        $connection->method('fetchOne')->with('SELECT COUNT(*) FROM event_store WHERE (stream = :stream_0) AND (playhead > :from_playhead) AND (archived = :archived)', [
+            'stream_0' => 'profile-1',
+            'from_playhead' => 0,
+            'archived' => false,
+        ], $this->isArray())->willReturn([]);
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $abstractPlatform->createSelectSQLBuilder()->shouldBeCalledOnce()->willReturn(new DefaultSelectSQLBuilder(
-            $abstractPlatform->reveal(),
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $abstractPlatform->expects($this->once())->method('createSelectSQLBuilder')->willReturn(new DefaultSelectSQLBuilder(
+            $abstractPlatform,
             'FOR UPDATE',
             'SKIP LOCKED',
         ));
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
 
-        $queryBuilder = new QueryBuilder($connection->reveal());
-        $connection->createQueryBuilder()->willReturn($queryBuilder);
-        $connection->createExpressionBuilder()->willReturn(new ExpressionBuilder($connection->reveal()));
+        $queryBuilder = new QueryBuilder($connection);
+        $connection->method('createQueryBuilder')->willReturn($queryBuilder);
+        $connection->method('createExpressionBuilder')->willReturn(new ExpressionBuilder($connection));
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $this->expectException(WrongQueryResult::class);
@@ -1239,9 +1275,13 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testSetupSubscription(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $connection->executeStatement(
-            <<<'SQL'
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(3))
+            ->method('executeStatement')
+            ->willReturnMap([
+                [
+                    <<<'SQL'
                 CREATE OR REPLACE FUNCTION notify_event_store() RETURNS TRIGGER AS $$
                     BEGIN
                         PERFORM pg_notify('event_store', NEW.stream::text);
@@ -1249,31 +1289,35 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     END;
                 $$ LANGUAGE plpgsql;
                 SQL,
-        )->shouldBeCalledOnce()->willReturn(1);
-        $connection->executeStatement('DROP TRIGGER IF EXISTS notify_trigger ON event_store;')
-            ->shouldBeCalledOnce()->willReturn(1);
-        $connection->executeStatement('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON event_store FOR EACH ROW EXECUTE PROCEDURE notify_event_store();')
-            ->shouldBeCalledOnce()->willReturn(1);
+                    1,
+                ],
+                ['DROP TRIGGER IF EXISTS notify_trigger ON event_store;', 1],
+                ['CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON event_store FOR EACH ROW EXECUTE PROCEDURE notify_event_store();', 1],
+            ]);
 
-        $abstractPlatform = $this->prophesize(PostgreSQLPlatform::class);
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $abstractPlatform = $this->createMock(PostgreSQLPlatform::class);
+        $connection->expects($this->once())->method('getDatabasePlatform')->willReturn($abstractPlatform);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
         $doctrineDbalStore->setupSubscription();
     }
 
     public function testSetupSubscriptionWithOtherStoreTableName(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $connection->executeStatement(
-            <<<'SQL'
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(3))
+            ->method('executeStatement')
+            ->willReturnMap([
+                [
+                    <<<'SQL'
                 CREATE OR REPLACE FUNCTION new.notify_event_store() RETURNS TRIGGER AS $$
                     BEGIN
                         PERFORM pg_notify('new.event_store', NEW.stream::text);
@@ -1281,24 +1325,24 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                     END;
                 $$ LANGUAGE plpgsql;
                 SQL,
-        )->shouldBeCalledOnce()->willReturn(1);
-        $connection->executeStatement('DROP TRIGGER IF EXISTS notify_trigger ON new.event_store;')
-            ->shouldBeCalledOnce()->willReturn(1);
-        $connection->executeStatement('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON new.event_store FOR EACH ROW EXECUTE PROCEDURE new.notify_event_store();')
-            ->shouldBeCalledOnce()->willReturn(1);
+                    1,
+                ],
+                ['DROP TRIGGER IF EXISTS notify_trigger ON new.event_store;', 1],
+                ['CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON new.event_store FOR EACH ROW EXECUTE PROCEDURE new.notify_event_store();', 1],
+            ]);
 
-        $abstractPlatform = $this->prophesize(PostgreSQLPlatform::class);
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $abstractPlatform = $this->createMock(PostgreSQLPlatform::class);
+        $connection->expects($this->once())->method('getDatabasePlatform')->willReturn($abstractPlatform);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
-        $clock = $this->prophesize(ClockInterface::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $clock = $this->createMock(ClockInterface::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
-            $clock->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
+            $clock,
             ['table_name' => 'new.event_store'],
         );
         $doctrineDbalStore->setupSubscription();
@@ -1306,32 +1350,19 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
     public function testSetupSubscriptionNotPostgres(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $connection->executeStatement(
-            <<<'SQL'
-                CREATE OR REPLACE FUNCTION notify_event_store() RETURNS TRIGGER AS $$
-                    BEGIN
-                        PERFORM pg_notify('event_store');
-                        RETURN NEW;
-                    END;
-                $$ LANGUAGE plpgsql;
-                SQL,
-        )->shouldNotBeCalled();
-        $connection->executeStatement('DROP TRIGGER IF EXISTS notify_trigger ON event_store;')
-            ->shouldNotBeCalled();
-        $connection->executeStatement('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON event_store FOR EACH ROW EXECUTE PROCEDURE notify_event_store();')
-            ->shouldNotBeCalled();
+        $connection = $this->createMock(Connection::class);
+        $connection->expects($this->never())->method('executeStatement');
 
-        $abstractPlatform = $this->prophesize(AbstractPlatform::class);
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $abstractPlatform = $this->createMock(AbstractPlatform::class);
+        $connection->expects($this->once())->method('getDatabasePlatform')->willReturn($abstractPlatform);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
         $doctrineDbalStore->setupSubscription();
     }
@@ -1348,55 +1379,58 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->with(PDO::FETCH_ASSOC, 100)
             ->willReturn([]);
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->executeStatement('LISTEN "event_store"')
-            ->shouldBeCalledOnce()
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->once())
+            ->method('executeStatement')
+            ->with('LISTEN "event_store"')
             ->willReturn(1);
-        $connection->getNativeConnection()
-            ->shouldBeCalledOnce()
+        $connection
+            ->expects($this->once())
+            ->method('getNativeConnection')
             ->willReturn($nativeConnection);
 
-        $abstractPlatform = $this->prophesize(PostgreSQLPlatform::class);
-        $connection->getDatabasePlatform()->willReturn($abstractPlatform->reveal());
+        $abstractPlatform = $this->createMock(PostgreSQLPlatform::class);
+        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
 
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
         $doctrineDbalStore->wait(100);
     }
 
     public function testConfigureSchemaWithDifferentConnections(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $connection = $this->createMock(Connection::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
         $schema = new Schema();
-        $doctrineDbalStore->configureSchema($schema, $this->prophesize(Connection::class)->reveal());
+        $doctrineDbalStore->configureSchema($schema, $this->createMock(Connection::class));
 
         self::assertEquals(new Schema(), $schema);
     }
 
     public function testConfigureSchema(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $eventSerializer = $this->prophesize(EventSerializer::class);
-        $headersSerializer = $this->prophesize(HeadersSerializer::class);
+        $connection = $this->createMock(Connection::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection->reveal(),
-            $eventSerializer->reveal(),
-            $headersSerializer->reveal(),
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
         );
 
         $expectedSchema = new Schema();
@@ -1431,7 +1465,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $table->addIndex(['stream', 'playhead', 'archived']);
 
         $schema = new Schema();
-        $doctrineDbalStore->configureSchema($schema, $connection->reveal());
+        $doctrineDbalStore->configureSchema($schema, $connection);
 
         self::assertEquals($expectedSchema, $schema);
     }

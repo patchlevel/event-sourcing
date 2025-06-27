@@ -14,7 +14,6 @@ use Patchlevel\Hydrator\Normalizer\InvalidArgument;
 use Patchlevel\Hydrator\Normalizer\InvalidType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Ramsey\Uuid\Exception\InvalidUuidStringException;
 use ReflectionClass;
 use ReflectionType;
@@ -24,8 +23,6 @@ use RuntimeException;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class IdNormalizerTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testNormalizeWithNull(): void
     {
         $normalizer = new IdNormalizer(CustomId::class);

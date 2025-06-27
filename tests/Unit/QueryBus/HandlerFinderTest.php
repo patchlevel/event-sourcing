@@ -11,13 +11,10 @@ use Patchlevel\EventSourcing\QueryBus\InvalidHandleMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\OtherQueryProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\QueryProfile;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\QueryBus\HandlerFinder */
 final class HandlerFinderTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testNoParameters(): void
     {
         $this->expectException(InvalidHandleMethod::class);
@@ -40,7 +37,7 @@ final class HandlerFinderTest extends TestCase
         $class = new class () {
             // phpcs:disable
             #[Answer]
-            public function handle($query): void
+            public function handle(mixed $query): void
             {
             }
             // phpcs:enable

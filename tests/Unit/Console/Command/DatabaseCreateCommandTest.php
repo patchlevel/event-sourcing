@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\Console\Command\DatabaseCreateCommand;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -17,21 +16,19 @@ use Symfony\Component\Console\Output\BufferedOutput;
 #[CoversClass(DatabaseCreateCommand::class)]
 final class DatabaseCreateCommandTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSuccessful(): void
     {
-        $connection = $this->prophesize(Connection::class);
+        $connection = $this->createMock(Connection::class);
 
-        $helper = $this->prophesize(DoctrineHelper::class);
-        $helper->copyConnectionWithoutDatabase($connection)->willReturn($connection);
-        $helper->databaseName($connection)->willReturn('test');
-        $helper->hasDatabase($connection, 'test')->willReturn(false);
-        $helper->createDatabase($connection, 'test')->shouldBeCalled();
+        $helper = $this->createMock(DoctrineHelper::class);
+        $helper->method('copyConnectionWithoutDatabase')->with($connection)->willReturn($connection);
+        $helper->method('databaseName')->with($connection)->willReturn('test');
+        $helper->method('hasDatabase')->with($connection, 'test')->willReturn(false);
+        $helper->expects($this->atLeastOnce())->method('createDatabase')->with($connection, 'test');
 
         $command = new DatabaseCreateCommand(
-            $connection->reveal(),
-            $helper->reveal(),
+            $connection,
+            $helper,
         );
 
         $input = new ArrayInput([]);
@@ -48,16 +45,16 @@ final class DatabaseCreateCommandTest extends TestCase
 
     public function testSkip(): void
     {
-        $connection = $this->prophesize(Connection::class);
+        $connection = $this->createMock(Connection::class);
 
-        $helper = $this->prophesize(DoctrineHelper::class);
-        $helper->copyConnectionWithoutDatabase($connection)->willReturn($connection);
-        $helper->databaseName($connection)->willReturn('test');
-        $helper->hasDatabase($connection, 'test')->willReturn(true);
+        $helper = $this->createMock(DoctrineHelper::class);
+        $helper->method('copyConnectionWithoutDatabase')->with($connection)->willReturn($connection);
+        $helper->method('databaseName')->with($connection)->willReturn('test');
+        $helper->method('hasDatabase')->with($connection, 'test')->willReturn(true);
 
         $command = new DatabaseCreateCommand(
-            $connection->reveal(),
-            $helper->reveal(),
+            $connection,
+            $helper,
         );
 
         $input = new ArrayInput(['--if-not-exists' => true]);
@@ -74,17 +71,17 @@ final class DatabaseCreateCommandTest extends TestCase
 
     public function testError(): void
     {
-        $connection = $this->prophesize(Connection::class);
+        $connection = $this->createMock(Connection::class);
 
-        $helper = $this->prophesize(DoctrineHelper::class);
-        $helper->copyConnectionWithoutDatabase($connection)->willReturn($connection);
-        $helper->databaseName($connection)->willReturn('test');
-        $helper->hasDatabase($connection, 'test')->willReturn(false);
-        $helper->createDatabase($connection, 'test')->willThrow(new RuntimeException('error'));
+        $helper = $this->createMock(DoctrineHelper::class);
+        $helper->method('copyConnectionWithoutDatabase')->with($connection)->willReturn($connection);
+        $helper->method('databaseName')->with($connection)->willReturn('test');
+        $helper->method('hasDatabase')->with($connection, 'test')->willReturn(false);
+        $helper->method('createDatabase')->with($connection, 'test')->willThrowException(new RuntimeException('error'));
 
         $command = new DatabaseCreateCommand(
-            $connection->reveal(),
-            $helper->reveal(),
+            $connection,
+            $helper,
         );
 
         $input = new ArrayInput([]);

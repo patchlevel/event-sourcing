@@ -32,9 +32,15 @@ final class UuidTest extends TestCase
             }
         };
 
-        RamseyUuid::setFactory($factory);
-        $id = Uuid::generate();
+        $oldFactory = RamseyUuid::getFactory();
 
-        self::assertSame('018d6a97-6aba-7104-825f-67313a77a2a4', $id->toString());
+        try {
+            RamseyUuid::setFactory($factory);
+            $id = Uuid::generate();
+
+            self::assertSame('018d6a97-6aba-7104-825f-67313a77a2a4', $id->toString());
+        } finally {
+            RamseyUuid::setFactory($oldFactory);
+        }
     }
 }

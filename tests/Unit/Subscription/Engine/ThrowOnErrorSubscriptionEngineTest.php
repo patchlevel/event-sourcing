@@ -13,24 +13,21 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 use RuntimeException;
 
 #[CoversClass(ThrowOnErrorSubscriptionEngine::class)]
 final class ThrowOnErrorSubscriptionEngineTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testSetupSuccess(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->setup($criteria, true)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('setup')->with($criteria, true)->willReturn($expectedResult);
         $result = $engine->setup($criteria, true);
 
         self::assertSame($expectedResult, $result);
@@ -40,9 +37,9 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
     {
         $this->expectException(ErrorDetected::class);
 
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result([
@@ -50,20 +47,20 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
             new Error('id2', 'error2', new RuntimeException('error2')),
         ]);
 
-        $parent->setup($criteria, false)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('setup')->with($criteria, false)->willReturn($expectedResult);
         $engine->setup($criteria);
     }
 
     public function testBootSuccess(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new ProcessedResult(5);
 
-        $parent->boot($criteria, 10)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('boot')->with($criteria, 10)->willReturn($expectedResult);
         $result = $engine->boot($criteria, 10);
 
         self::assertSame($expectedResult, $result);
@@ -73,9 +70,9 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
     {
         $this->expectException(ErrorDetected::class);
 
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new ProcessedResult(5, false, [
@@ -83,20 +80,20 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
             new Error('id2', 'error2', new RuntimeException('error2')),
         ]);
 
-        $parent->boot($criteria, 10)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('boot')->with($criteria, 10)->willReturn($expectedResult);
         $engine->boot($criteria, 10);
     }
 
     public function testRunSuccess(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new ProcessedResult(5);
 
-        $parent->run($criteria, 10)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('run')->with($criteria, 10)->willReturn($expectedResult);
         $result = $engine->run($criteria, 10);
 
         self::assertSame($expectedResult, $result);
@@ -106,9 +103,9 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
     {
         $this->expectException(ErrorDetected::class);
 
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new ProcessedResult(5, false, [
@@ -116,20 +113,20 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
             new Error('id2', 'error2', new RuntimeException('error2')),
         ]);
 
-        $parent->run($criteria, 10)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('run')->with($criteria, 10)->willReturn($expectedResult);
         $engine->run($criteria, 10);
     }
 
     public function testTeardownSuccess(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->teardown($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('teardown')->with($criteria)->willReturn($expectedResult);
         $result = $engine->teardown($criteria);
 
         self::assertSame($expectedResult, $result);
@@ -139,9 +136,9 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
     {
         $this->expectException(ErrorDetected::class);
 
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result([
@@ -149,20 +146,20 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
             new Error('id2', 'error2', new RuntimeException('error2')),
         ]);
 
-        $parent->teardown($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('teardown')->with($criteria)->willReturn($expectedResult);
         $engine->teardown($criteria);
     }
 
     public function testRemoveSuccess(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->remove($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('remove')->with($criteria)->willReturn($expectedResult);
         $result = $engine->remove($criteria);
 
         self::assertSame($expectedResult, $result);
@@ -172,9 +169,9 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
     {
         $this->expectException(ErrorDetected::class);
 
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result([
@@ -182,20 +179,20 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
             new Error('id2', 'error2', new RuntimeException('error2')),
         ]);
 
-        $parent->remove($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('remove')->with($criteria)->willReturn($expectedResult);
         $engine->remove($criteria);
     }
 
     public function testReactivateSuccess(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->reactivate($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('reactivate')->with($criteria)->willReturn($expectedResult);
         $result = $engine->reactivate($criteria);
 
         self::assertSame($expectedResult, $result);
@@ -205,9 +202,9 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
     {
         $this->expectException(ErrorDetected::class);
 
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result([
@@ -215,20 +212,20 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
             new Error('id2', 'error2', new RuntimeException('error2')),
         ]);
 
-        $parent->reactivate($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('reactivate')->with($criteria)->willReturn($expectedResult);
         $engine->reactivate($criteria);
     }
 
     public function testPauseSuccess(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result();
 
-        $parent->pause($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('pause')->with($criteria)->willReturn($expectedResult);
         $result = $engine->pause($criteria);
 
         self::assertSame($expectedResult, $result);
@@ -238,9 +235,9 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
     {
         $this->expectException(ErrorDetected::class);
 
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
         $expectedResult = new Result([
@@ -248,18 +245,18 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
             new Error('id2', 'error2', new RuntimeException('error2')),
         ]);
 
-        $parent->pause($criteria)->willReturn($expectedResult)->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('pause')->with($criteria)->willReturn($expectedResult);
         $engine->pause($criteria);
     }
 
     public function testSubscriptions(): void
     {
-        $parent = $this->prophesize(SubscriptionEngine::class);
+        $parent = $this->createMock(SubscriptionEngine::class);
 
-        $engine = new ThrowOnErrorSubscriptionEngine($parent->reveal());
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
         $criteria = new SubscriptionEngineCriteria();
 
-        $parent->subscriptions($criteria)->willReturn([])->shouldBeCalledOnce();
+        $parent->expects($this->once())->method('subscriptions')->with($criteria)->willReturn([]);
         $result = $engine->subscriptions($criteria);
 
         self::assertSame([], $result);

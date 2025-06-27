@@ -16,15 +16,12 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 use function iterator_to_array;
 
 #[CoversClass(Pipe::class)]
 final class PipeTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testEmpty(): void
     {
         $stream = new Pipe([]);

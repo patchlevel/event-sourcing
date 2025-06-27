@@ -15,60 +15,63 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(DoctrineSchemaDirector::class)]
 final class DoctrineSchemaDirectorTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testCreate(): void
     {
-        $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
+        $schemaManager = $this->createMock(AbstractSchemaManager::class);
+        $schemaManager->method('createSchemaConfig')->willReturn(new SchemaConfig());
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getCreateTablesSQL(Argument::any())->willReturn(['this is sql!']);
-        $platform->supportsSchemas()->willReturn(false);
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform->method('getCreateTablesSQL')->willReturn(['this is sql!']);
+        $platform->method('supportsSchemas')->willReturn(false);
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
-        $connection->getDatabasePlatform()->willReturn($platform->reveal());
-        $connection->executeStatement('this is sql!')->shouldBeCalledOnce();
+        $connection = $this->createMock(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($schemaManager);
+        $connection->method('getDatabasePlatform')->willReturn($platform);
+        $connection->expects($this->once())->method('executeStatement')->with('this is sql!');
 
-        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
-        $schemaConfigurator->configureSchema(Argument::type(Schema::class), $connection->reveal())->shouldBeCalledOnce();
+        $schemaConfigurator = $this->createMock(DoctrineSchemaConfigurator::class);
+        $schemaConfigurator->expects($this->once())->method('configureSchema')->with($this->isInstanceOf(Schema::class), $connection);
 
-        $doctrineSchemaManager = new DoctrineSchemaDirector(
-            $connection->reveal(),
-            $schemaConfigurator->reveal(),
-        );
-
+        $doctrineSchemaManager = new DoctrineSchemaDirector($connection, $schemaConfigurator);
         $doctrineSchemaManager->create();
     }
 
     public function testDryRunCreate(): void
     {
-        $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
+        $schemaManager = $this->createMock(AbstractSchemaManager::class);
+        $schemaManager
+            ->expects($this->once())
+            ->method('createSchemaConfig')
+            ->willReturn(new SchemaConfig());
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getCreateTablesSQL(Argument::any())->willReturn(['this is sql!']);
-        $platform->supportsSchemas()->willReturn(false);
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform
+            ->expects($this->once())
+            ->method('getCreateTablesSQL')
+            ->willReturn(['this is sql!']);
+        $platform
+            ->expects($this->once())
+            ->method('supportsSchemas')
+            ->willReturn(false);
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
-        $connection->getDatabasePlatform()->willReturn($platform->reveal());
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->once())
+            ->method('createSchemaManager')
+            ->willReturn($schemaManager);
+        $connection
+            ->expects($this->once())
+            ->method('getDatabasePlatform')
+            ->willReturn($platform);
 
-        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
-        $schemaConfigurator->configureSchema(Argument::type(Schema::class), $connection->reveal())->shouldBeCalledOnce();
+        $schemaConfigurator = $this->createMock(DoctrineSchemaConfigurator::class);
+        $schemaConfigurator->expects($this->once())->method('configureSchema')->with($this->isInstanceOf(Schema::class), $connection);
 
-        $doctrineSchemaManager = new DoctrineSchemaDirector(
-            $connection->reveal(),
-            $schemaConfigurator->reveal(),
-        );
-
+        $doctrineSchemaManager = new DoctrineSchemaDirector($connection, $schemaConfigurator);
         $sqlStatements = $doctrineSchemaManager->dryRunCreate();
 
         self::assertSame(['this is sql!'], $sqlStatements);
@@ -76,67 +79,109 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
     public function testUpdate(): void
     {
-        $diff = $this->prophesize(SchemaDiff::class);
+        $diff = $this->createMock(SchemaDiff::class);
 
-        $fromSchema = $this->prophesize(Schema::class);
+        $fromSchema = $this->createMock(Schema::class);
 
-        $comperator = $this->prophesize(Comparator::class);
-        $comperator->compareSchemas($fromSchema->reveal(), Argument::type(Schema::class))->willReturn($diff);
+        $comperator = $this->createMock(Comparator::class);
+        $comperator
+            ->expects($this->once())
+            ->method('compareSchemas')
+            ->with($fromSchema, $this->isInstanceOf(Schema::class))
+            ->willReturn($diff);
 
-        $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createComparator()->willReturn($comperator->reveal());
-        $schemaManager->introspectSchema()->willReturn($fromSchema->reveal());
-        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
+        $schemaManager = $this->createMock(AbstractSchemaManager::class);
+        $schemaManager
+            ->expects($this->once())
+            ->method('createComparator')
+            ->willReturn($comperator);
+        $schemaManager
+            ->expects($this->once())
+            ->method('introspectSchema')
+            ->willReturn($fromSchema);
+        $schemaManager
+            ->expects($this->once())
+            ->method('createSchemaConfig')
+            ->willReturn(new SchemaConfig());
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getAlterSchemaSQL($diff->reveal())->willReturn(['x', 'y']);
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform
+            ->expects($this->once())
+            ->method('getAlterSchemaSQL')
+            ->with($diff)
+            ->willReturn(['x', 'y']);
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
-        $connection->getDatabasePlatform()->willReturn($platform->reveal());
-        $connection->executeStatement('x')->shouldBeCalledOnce();
-        $connection->executeStatement('y')->shouldBeCalledOnce();
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('createSchemaManager')
+            ->willReturn($schemaManager);
+        $connection
+            ->expects($this->once())
+            ->method('getDatabasePlatform')
+            ->willReturn($platform);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('executeStatement')
+            ->willReturnMap([
+                ['x', 1],
+                ['y', 1],
+            ]);
 
-        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
-        $schemaConfigurator->configureSchema(Argument::type(Schema::class), $connection->reveal())->shouldBeCalledOnce();
+        $schemaConfigurator = $this->createMock(DoctrineSchemaConfigurator::class);
+        $schemaConfigurator->expects($this->once())->method('configureSchema')->with($this->isInstanceOf(Schema::class), $connection);
 
-        $doctrineSchemaManager = new DoctrineSchemaDirector(
-            $connection->reveal(),
-            $schemaConfigurator->reveal(),
-        );
-
+        $doctrineSchemaManager = new DoctrineSchemaDirector($connection, $schemaConfigurator);
         $doctrineSchemaManager->update();
     }
 
     public function testDryRunUpdate(): void
     {
-        $diff = $this->prophesize(SchemaDiff::class);
+        $diff = $this->createMock(SchemaDiff::class);
 
-        $fromSchema = $this->prophesize(Schema::class);
+        $fromSchema = $this->createMock(Schema::class);
 
-        $comperator = $this->prophesize(Comparator::class);
-        $comperator->compareSchemas($fromSchema->reveal(), Argument::type(Schema::class))->willReturn($diff);
+        $comperator = $this->createMock(Comparator::class);
+        $comperator
+            ->expects($this->once())
+            ->method('compareSchemas')
+            ->with($fromSchema, $this->isInstanceOf(Schema::class))
+            ->willReturn($diff);
 
-        $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createComparator()->willReturn($comperator->reveal());
-        $schemaManager->introspectSchema()->willReturn($fromSchema->reveal());
-        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
+        $schemaManager = $this->createMock(AbstractSchemaManager::class);
+        $schemaManager
+            ->expects($this->once())
+            ->method('createComparator')
+            ->willReturn($comperator);
+        $schemaManager
+            ->expects($this->once())
+            ->method('introspectSchema')
+            ->willReturn($fromSchema);
+        $schemaManager
+            ->expects($this->once())
+            ->method('createSchemaConfig')
+            ->willReturn(new SchemaConfig());
 
-        $platform = $this->prophesize(AbstractPlatform::class);
-        $platform->getAlterSchemaSQL($diff->reveal())->willReturn(['x', 'y']);
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform
+            ->expects($this->once())
+            ->method('getAlterSchemaSQL')
+            ->with($diff)->willReturn(['x', 'y']);
 
-        $connection = $this->prophesize(Connection::class);
-        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
-        $connection->getDatabasePlatform()->willReturn($platform->reveal());
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('createSchemaManager')
+            ->willReturn($schemaManager);
+        $connection
+            ->expects($this->once())
+            ->method('getDatabasePlatform')
+            ->willReturn($platform);
 
-        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
-        $schemaConfigurator->configureSchema(Argument::type(Schema::class), $connection->reveal())->shouldBeCalledOnce();
+        $schemaConfigurator = $this->createMock(DoctrineSchemaConfigurator::class);
+        $schemaConfigurator->expects($this->once())->method('configureSchema')->with($this->isInstanceOf(Schema::class), $connection);
 
-        $doctrineSchemaManager = new DoctrineSchemaDirector(
-            $connection->reveal(),
-            $schemaConfigurator->reveal(),
-        );
-
+        $doctrineSchemaManager = new DoctrineSchemaDirector($connection, $schemaConfigurator);
         $sqlStatements = $doctrineSchemaManager->dryRunUpdate();
 
         self::assertSame(['x', 'y'], $sqlStatements);
@@ -144,62 +189,69 @@ final class DoctrineSchemaDirectorTest extends TestCase
 
     public function testDrop(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $currentSchema = $this->prophesize(Schema::class);
-        $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
+        $connection = $this->createMock(Connection::class);
+        $currentSchema = $this->createMock(Schema::class);
+        $schemaManager = $this->createMock(AbstractSchemaManager::class);
+        $schemaManager->expects($this->once())->method('createSchemaConfig')->willReturn(new SchemaConfig());
 
-        $currentSchema->hasTable('foo')->willReturn(true);
-        $currentSchema->hasTable('bar')->willReturn(false);
+        $currentSchema
+            ->expects($this->exactly(2))
+            ->method('hasTable')
+            ->willReturnMap([
+                ['foo', true],
+                ['bar', false],
+            ]);
 
-        $schemaManager->introspectSchema()->willReturn($currentSchema->reveal());
-        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
+        $schemaManager->expects($this->once())->method('introspectSchema')->willReturn($currentSchema);
+        $connection->expects($this->exactly(2))->method('createSchemaManager')->willReturn($schemaManager);
 
-        $connection->executeStatement('DROP TABLE foo;')->shouldBeCalled();
-        $connection->executeStatement('DROP TABLE bar;')->shouldNotBeCalled();
+        $connection->expects($this->once())->method('executeStatement')->with('DROP TABLE foo;');
 
-        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
-        $schemaConfigurator->configureSchema(Argument::that(static function (Schema $schema) {
-            $schema->createTable('foo');
-            $schema->createTable('bar');
+        $schemaConfigurator = $this->createMock(DoctrineSchemaConfigurator::class);
+        $schemaConfigurator
+            ->expects($this->once())
+            ->method('configureSchema')
+            ->willReturnCallback(static function (Schema $schema) {
+                $schema->createTable('foo');
+                $schema->createTable('bar');
 
-            return true;
-        }), $connection->reveal())->shouldBeCalledOnce();
+                return true;
+            });
 
-        $doctrineSchemaManager = new DoctrineSchemaDirector(
-            $connection->reveal(),
-            $schemaConfigurator->reveal(),
-        );
-
+        $doctrineSchemaManager = new DoctrineSchemaDirector($connection, $schemaConfigurator);
         $doctrineSchemaManager->drop();
     }
 
     public function testDryRunDrop(): void
     {
-        $connection = $this->prophesize(Connection::class);
-        $currentSchema = $this->prophesize(Schema::class);
-        $schemaManager = $this->prophesize(AbstractSchemaManager::class);
-        $schemaManager->createSchemaConfig()->willReturn(new SchemaConfig());
+        $connection = $this->createMock(Connection::class);
+        $currentSchema = $this->createMock(Schema::class);
+        $schemaManager = $this->createMock(AbstractSchemaManager::class);
+        $schemaManager->expects($this->once())->method('createSchemaConfig')->willReturn(new SchemaConfig());
 
-        $currentSchema->hasTable('foo')->willReturn(true);
-        $currentSchema->hasTable('bar')->willReturn(false);
+        $currentSchema
+            ->expects($this->exactly(2))
+            ->method('hasTable')
+            ->willReturnMap([
+                ['foo', true],
+                ['bar', false],
+            ]);
 
-        $schemaManager->introspectSchema()->willReturn($currentSchema->reveal());
-        $connection->createSchemaManager()->willReturn($schemaManager->reveal());
+        $schemaManager->expects($this->once())->method('introspectSchema')->willReturn($currentSchema);
+        $connection->expects($this->exactly(2))->method('createSchemaManager')->willReturn($schemaManager);
 
-        $schemaConfigurator = $this->prophesize(DoctrineSchemaConfigurator::class);
-        $schemaConfigurator->configureSchema(Argument::that(static function (Schema $schema) {
-            $schema->createTable('foo');
-            $schema->createTable('bar');
+        $schemaConfigurator = $this->createMock(DoctrineSchemaConfigurator::class);
+        $schemaConfigurator
+            ->expects($this->once())
+            ->method('configureSchema')
+            ->willReturnCallback(static function (Schema $schema) {
+                $schema->createTable('foo');
+                $schema->createTable('bar');
 
-            return true;
-        }), $connection->reveal())->shouldBeCalledOnce();
+                return true;
+            });
 
-        $doctrineSchemaManager = new DoctrineSchemaDirector(
-            $connection->reveal(),
-            $schemaConfigurator->reveal(),
-        );
-
+        $doctrineSchemaManager = new DoctrineSchemaDirector($connection, $schemaConfigurator);
         $queries = $doctrineSchemaManager->dryRunDrop();
 
         self::assertSame(['DROP TABLE foo;'], $queries);

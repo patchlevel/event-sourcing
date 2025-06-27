@@ -23,16 +23,13 @@ use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 #[CoversClass(Lookup::class)]
 final class LookupTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testMissingIndexHeader(): void
     {
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
 
         $event = new class () {
         };
@@ -42,7 +39,7 @@ final class LookupTest extends TestCase
         $this->expectException(HeaderNotFound::class);
 
         new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
     }
@@ -51,12 +48,11 @@ final class LookupTest extends TestCase
     {
         $expectedResult = new ArrayStream([]);
 
-        $store = $this->prophesize(Store::class);
+        $store = $this->createMock(Store::class);
         $expectedCriteria = new Criteria(new ToIndexCriterion(1));
 
-        $store->load($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -65,7 +61,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 
@@ -82,10 +78,9 @@ final class LookupTest extends TestCase
             new ToIndexCriterion(1),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -94,7 +89,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 
@@ -111,10 +106,9 @@ final class LookupTest extends TestCase
             new ToIndexCriterion(1),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -123,7 +117,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
             new EventRegistry(['profile_created' => ProfileCreated::class]),
         );
@@ -140,10 +134,9 @@ final class LookupTest extends TestCase
             new ToIndexCriterion(1),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, null, null, true)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, true)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -152,7 +145,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 
@@ -169,10 +162,9 @@ final class LookupTest extends TestCase
             new ToIndexCriterion(1),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -181,7 +173,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 
@@ -198,10 +190,9 @@ final class LookupTest extends TestCase
             new ToIndexCriterion(1),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -210,7 +201,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 
@@ -227,10 +218,9 @@ final class LookupTest extends TestCase
             new ToIndexCriterion(1),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -239,7 +229,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 
@@ -256,10 +246,9 @@ final class LookupTest extends TestCase
             new StreamCriterion('foo'),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -269,7 +258,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 
@@ -287,10 +276,9 @@ final class LookupTest extends TestCase
             new AggregateIdCriterion('bar'),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -305,7 +293,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 
@@ -331,10 +319,9 @@ final class LookupTest extends TestCase
             new ToIndexCriterion(1),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, 1, null, false)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, 1, null, false)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -343,7 +330,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 
@@ -369,10 +356,9 @@ final class LookupTest extends TestCase
             new ToIndexCriterion(1),
         );
 
-        $store = $this->prophesize(Store::class);
-        $store->load($expectedCriteria, 1, null, true)
-            ->willReturn($expectedResult)
-            ->shouldBeCalledOnce();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, 1, null, true)
+            ->willReturn($expectedResult);
 
         $event = new class () {
         };
@@ -381,7 +367,7 @@ final class LookupTest extends TestCase
             ->withHeader(new IndexHeader(1));
 
         $lookup = new Lookup(
-            $store->reveal(),
+            $store,
             $message,
         );
 

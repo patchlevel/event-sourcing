@@ -8,13 +8,10 @@ use Patchlevel\EventSourcing\Attribute\Answer;
 use Patchlevel\EventSourcing\QueryBus\ServiceHandlerProvider;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\QueryProfile;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 /** @covers \Patchlevel\EventSourcing\QueryBus\ServiceHandlerProvider */
 final class ServiceHandlerProviderTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testEmpty(): void
     {
         $provider = new ServiceHandlerProvider([]);

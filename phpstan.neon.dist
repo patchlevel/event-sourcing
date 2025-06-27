@@ -1,7 +1,6 @@
 includes:
 	- phpstan-baseline.neon
 	- vendor/phpstan/phpstan-phpunit/extension.neon
-	- vendor/jangregor/phpstan-prophecy/extension.neon
 	- vendor/phpat/phpat/extension.neon
 
 parameters:
