@@ -3306,16 +3306,16 @@
         },
         {
             "name": "dealerdirect/phpcodesniffer-composer-installer",
-            "version": "v1.1.0",
+            "version": "v1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCSStandards/composer-installer.git",
-                "reference": "18a95476797ed480b3f2598984bc6f7e1eecc9a8"
+                "reference": "6e0fa428497bf560152ee73ffbb8af5c6a56b0dd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCSStandards/composer-installer/zipball/18a95476797ed480b3f2598984bc6f7e1eecc9a8",
-                "reference": "18a95476797ed480b3f2598984bc6f7e1eecc9a8",
+                "url": "https://api.github.com/repos/PHPCSStandards/composer-installer/zipball/6e0fa428497bf560152ee73ffbb8af5c6a56b0dd",
+                "reference": "6e0fa428497bf560152ee73ffbb8af5c6a56b0dd",
                 "shasum": ""
             },
             "require": {
@@ -3327,7 +3327,7 @@
                 "composer/composer": "^2.2",
                 "ext-json": "*",
                 "ext-zip": "*",
-                "php-parallel-lint/php-parallel-lint": "^1.3.1",
+                "php-parallel-lint/php-parallel-lint": "^1.4.0",
                 "phpcompatibility/php-compatibility": "^9.0",
                 "yoast/phpunit-polyfills": "^1.0"
             },
@@ -3398,7 +3398,7 @@
                     "type": "thanks_dev"
                 }
             ],
-            "time": "2025-05-28T16:05:48+00:00"
+            "time": "2025-06-27T17:24:01+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -3914,16 +3914,16 @@
         },
         {
             "name": "doctrine/orm",
-            "version": "3.4.2",
+            "version": "3.4.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/orm.git",
-                "reference": "b4ca0cd5fbf74b33fdd3d54d89746ab9748803b9"
+                "reference": "ef607f26c2965fe460c55733cc7c031fb7e1f2fa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/orm/zipball/b4ca0cd5fbf74b33fdd3d54d89746ab9748803b9",
-                "reference": "b4ca0cd5fbf74b33fdd3d54d89746ab9748803b9",
+                "url": "https://api.github.com/repos/doctrine/orm/zipball/ef607f26c2965fe460c55733cc7c031fb7e1f2fa",
+                "reference": "ef607f26c2965fe460c55733cc7c031fb7e1f2fa",
                 "shasum": ""
             },
             "require": {
@@ -3998,9 +3998,9 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/orm/issues",
-                "source": "https://github.com/doctrine/orm/tree/3.4.2"
+                "source": "https://github.com/doctrine/orm/tree/3.4.3"
             },
-            "time": "2025-06-26T18:51:01+00:00"
+            "time": "2025-06-27T12:14:15+00:00"
         },
         {
             "name": "doctrine/persistence",
