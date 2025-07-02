@@ -18,6 +18,7 @@ use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -56,7 +57,7 @@ final class IntegrationTest extends TestCase
         $bankAccountProjector = new BankAccountProjector($this->connection);
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             new InMemorySubscriptionStore(),
             new MetadataSubscriberAccessorRepository([$bankAccountProjector]),
         );
@@ -171,7 +172,7 @@ final class IntegrationTest extends TestCase
         $bankAccountProjector = new BankAccountProjector($this->connection);
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             new InMemorySubscriptionStore(),
             new MetadataSubscriberAccessorRepository([$bankAccountProjector]),
         );
@@ -301,7 +302,7 @@ final class IntegrationTest extends TestCase
         $bankAccountProjector = new BankAccountProjector($this->connection);
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             new InMemorySubscriptionStore(),
             new MetadataSubscriberAccessorRepository([$bankAccountProjector]),
         );

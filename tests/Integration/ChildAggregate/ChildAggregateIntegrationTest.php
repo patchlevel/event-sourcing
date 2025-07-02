@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
@@ -48,7 +49,7 @@ final class ChildAggregateIntegrationTest extends TestCase
         $profileProjector = new ProfileProjector($this->connection);
 
         $engine = new ThrowOnErrorSubscriptionEngine(new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             new InMemorySubscriptionStore(),
             new MetadataSubscriberAccessorRepository([$profileProjector]),
         ));
@@ -109,7 +110,7 @@ final class ChildAggregateIntegrationTest extends TestCase
         $profileProjection = new ProfileProjector($this->connection);
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             new InMemorySubscriptionStore(),
             new MetadataSubscriberAccessorRepository([$profileProjection]),
         );
