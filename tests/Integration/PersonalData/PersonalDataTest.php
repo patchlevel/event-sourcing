@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -120,7 +121,7 @@ final class PersonalDataTest extends TestCase
         $schemaDirector->create();
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new DeletePersonalDataProcessor($cipherKeyStore)]),
         );
@@ -202,7 +203,7 @@ final class PersonalDataTest extends TestCase
         $schemaDirector->create();
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new DeletePersonalDataProcessor($cipherKeyStore)]),
         );

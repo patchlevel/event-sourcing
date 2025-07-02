@@ -28,6 +28,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
@@ -354,14 +355,16 @@ final class SubscriptionTest extends TestCase
         $subscriber = new ErrorProducerSubscriber();
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
-            new ClockBasedRetryStrategy(
-                $clock,
-                ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
-                ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
-                2,
+            RetryStrategyRepository::withDefault(
+                new ClockBasedRetryStrategy(
+                    $clock,
+                    ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
+                    ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
+                    2,
+                ),
             ),
         );
 
@@ -553,14 +556,16 @@ final class SubscriptionTest extends TestCase
         $subscriber = new ErrorProducerWithSelfRecoverySubscriber();
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
-            new ClockBasedRetryStrategy(
-                $clock,
-                ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
-                ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
-                0,
+            RetryStrategyRepository::withDefault(
+                new ClockBasedRetryStrategy(
+                    $clock,
+                    ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
+                    ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
+                    0,
+                ),
             ),
         );
 
@@ -672,14 +677,16 @@ final class SubscriptionTest extends TestCase
         };
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
-            new ClockBasedRetryStrategy(
-                $clock,
-                ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
-                ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
-                2,
+            RetryStrategyRepository::withDefault(
+                new ClockBasedRetryStrategy(
+                    $clock,
+                    ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
+                    ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
+                    2,
+                ),
             ),
         );
 
@@ -764,7 +771,7 @@ final class SubscriptionTest extends TestCase
 
         $engine = new CatchUpSubscriptionEngine(
             new DefaultSubscriptionEngine(
-                $store,
+                new StoreMessageLoader($store),
                 $subscriptionStore,
                 $subscriberAccessorRepository,
             ),
@@ -840,7 +847,7 @@ final class SubscriptionTest extends TestCase
         $schemaDirector->create();
 
         $firstEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]),
         );
@@ -887,7 +894,7 @@ final class SubscriptionTest extends TestCase
         // deploy second version
 
         $secondEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
         );
@@ -996,7 +1003,7 @@ final class SubscriptionTest extends TestCase
         $schemaDirector->create();
 
         $firstEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]),
         );
@@ -1043,7 +1050,7 @@ final class SubscriptionTest extends TestCase
         // deploy second version
 
         $secondEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
         );
@@ -1215,7 +1222,7 @@ final class SubscriptionTest extends TestCase
         $schemaDirector->create();
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new MigrateAggregateToStreamStoreSubscriber($targetStore)]),
         );

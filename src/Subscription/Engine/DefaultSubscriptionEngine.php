@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
@@ -36,30 +35,22 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     /** @var array<string, BatchableSubscriber> */
     private array $batching = [];
 
-    private readonly MessageLoader $messageLoader;
-
     private readonly RetryStrategyRepository $retryStrategyRepository;
 
     public function __construct(
-        Store|MessageLoader $messageStore,
+        private readonly MessageLoader $messageLoader,
         SubscriptionStore $subscriptionStore,
         private readonly SubscriberAccessorRepository $subscriberRepository,
-        RetryStrategy|RetryStrategyRepository|null $retryStrategyRepository = null,
+        RetryStrategyRepository|null $retryStrategyRepository = null,
         private readonly LoggerInterface|null $logger = null,
     ) {
-        if ($messageStore instanceof MessageLoader) {
-            $this->messageLoader = $messageStore;
-        } else {
-            $this->messageLoader = new StoreMessageLoader($messageStore);
-        }
-
         $this->subscriptionManager = new SubscriptionManager($subscriptionStore);
 
         if ($retryStrategyRepository instanceof RetryStrategyRepository) {
             $this->retryStrategyRepository = $retryStrategyRepository;
         } else {
             $this->retryStrategyRepository = new RetryStrategyRepository([
-                RetryStrategyRepository::DEFAULT_STRATEGY_NAME => $retryStrategyRepository ?? new ClockBasedRetryStrategy(),
+                RetryStrategyRepository::DEFAULT_STRATEGY_NAME => new ClockBasedRetryStrategy(),
                 'no_retry' => new NoRetryStrategy(),
             ]);
         }
