@@ -36,14 +36,4 @@ final class RetryStrategyRepository
             self::DEFAULT_STRATEGY_NAME,
         );
     }
-
-    public static function noRetry(): self
-    {
-        return new self(
-            [
-                self::DEFAULT_STRATEGY_NAME => new NoRetryStrategy(),
-            ],
-            self::DEFAULT_STRATEGY_NAME,
-        );
-    }
 }
