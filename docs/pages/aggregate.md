@@ -653,7 +653,7 @@ Or for test purposes the `FrozenClock`, which always returns the same time.
 
 In some cases, it makes sense to split an aggregate into several smaller aggregates.
 This can be the case if the aggregate becomes too large or if the aggregate is used in different contexts.
-We currently support two patterns for this: Micro Aggregates and Child Aggregates (experimental).
+For these cases you can use Micro Aggregates.
 
 ### Micro Aggregates
 
@@ -740,96 +740,7 @@ final class Shipping extends BasicAggregateRoot
     }
 }
 ```
-### Child Aggregates
 
-??? example "Experimental"
-
-    This feature is still experimental and may change in the future.
-    Use it with caution.
-    
-Another way to split an aggregate is to use child aggregates.
-The difference to Micro Aggregates, child aggregates can only be accessed by the root aggregate
-and are not separate aggregates.
-
-In the following example, we have an `Order` aggregate that has a `Shipping` child aggregate.
-
-```php
-use Patchlevel\EventSourcing\Aggregate\BasicChildAggregate;
-use Patchlevel\EventSourcing\Attribute\Apply;
-
-final class Shipping extends BasicChildAggregate
-{
-    private bool $arrived = false;
-
-    public function __construct(
-        private string $trackingId,
-    ) {
-    }
-
-    public function arrive(): void
-    {
-        $this->recordThat(new Arrived());
-    }
-
-    #[Apply]
-    public function applyArrived(Arrived $event): void
-    {
-        $this->arrived = true;
-    }
-
-    public function isArrived(): bool
-    {
-        return $this->arrived;
-    }
-}
-```
-!!! warning
-
-    The apply method must be public, otherwise the root aggregate cannot call it.
-    
-!!! note
-
-    Supress missing apply methods need to be defined in the root aggregate.
-    
-And the `Order` aggregate root looks like this:
-
-```php
-use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
-use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\ChildAggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
-
-#[Aggregate('order')]
-final class Order extends BasicAggregateRoot
-{
-    #[Id]
-    private Uuid $id;
-
-    #[ChildAggregate]
-    private Shipping $shipping;
-
-    public static function create(Uuid $id, string $trackingId): static
-    {
-        $self = new static();
-        $self->recordThat(new OrderCreated($id, $trackingId));
-
-        return $self;
-    }
-
-    #[Apply]
-    public function applyOrderCreated(OrderCreated $event): void
-    {
-        $this->shipping = new Shipping($event->trackingId);
-    }
-
-    public function arrive(): void
-    {
-        $this->shipping->arrive();
-    }
-}
-```
 ## Aggregate Root Registry
 
 The library needs to know about all aggregates so that the correct aggregate class is used to load from the database.

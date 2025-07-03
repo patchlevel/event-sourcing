@@ -1,5 +1,13 @@
 # Upgrade 4.0
 
+## Aggregates
+
+### Child Aggregate
+
+We removed our experimental feature of child aggregates. 
+This was our first attempt to split aggregates into smaller parts,
+but we found a better way to do this with the `Micro Aggregate` feature.
+
 ## Subscription
 
 The constructor of the `DefaultSubscriptionEngine` class has been changed.
