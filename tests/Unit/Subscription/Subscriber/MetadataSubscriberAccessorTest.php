@@ -23,51 +23,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(MetadataSubscriberAccessor::class)]
 final class MetadataSubscriberAccessorTest extends TestCase
 {
-    public function testId(): void
-    {
-        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
-        class {
-        };
-
-        $accessor = new MetadataSubscriberAccessor(
-            $subscriber,
-            (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
-            [],
-        );
-
-        self::assertEquals('profile', $accessor->id());
-    }
-
-    public function testGroup(): void
-    {
-        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
-        class {
-        };
-
-        $accessor = new MetadataSubscriberAccessor(
-            $subscriber,
-            (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
-            [],
-        );
-
-        self::assertEquals('default', $accessor->group());
-    }
-
-    public function testRunMode(): void
-    {
-        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
-        class {
-        };
-
-        $accessor = new MetadataSubscriberAccessor(
-            $subscriber,
-            (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class),
-            [],
-        );
-
-        self::assertEquals(RunMode::FromBeginning, $accessor->runMode());
-    }
-
     public function testSubscribeMethod(): void
     {
         $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
@@ -274,6 +229,6 @@ final class MetadataSubscriberAccessorTest extends TestCase
             [],
         );
 
-        self::assertEquals($subscriber, $accessor->realSubscriber());
+        self::assertEquals($subscriber, $accessor->subscriber());
     }
 }

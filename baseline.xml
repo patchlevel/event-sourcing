@@ -149,14 +149,6 @@
       <code><![CDATA[(int)$data['playhead']]]></code>
     </ArgumentTypeCoercion>
   </file>
-  <file src="src/Subscription/Engine/DefaultSubscriptionEngine.php">
-    <DeprecatedInterface>
-      <code><![CDATA[SubscriberAccessor|null]]></code>
-    </DeprecatedInterface>
-    <DeprecatedMethod>
-      <code><![CDATA[realSubscriber]]></code>
-    </DeprecatedMethod>
-  </file>
   <file src="src/Subscription/Engine/GapResolverStoreMessageLoader.php">
     <InvalidReturnType>
       <code><![CDATA[Generator<int, Message>]]></code>
@@ -191,10 +183,6 @@
     </PossiblyNullPropertyFetch>
   </file>
   <file src="src/Subscription/Subscriber/MetadataSubscriberAccessor.php">
-    <DeprecatedInterface>
-      <code><![CDATA[MetadataSubscriberAccessor]]></code>
-      <code><![CDATA[MetadataSubscriberAccessor]]></code>
-    </DeprecatedInterface>
     <MixedAssignment>
       <code><![CDATA[$arguments[]]]></code>
     </MixedAssignment>
@@ -208,17 +196,6 @@
       <code><![CDATA[$this->subscriber->$method(...)]]></code>
       <code><![CDATA[Closure(Message, Throwable):void|null]]></code>
     </MixedReturnTypeCoercion>
-  </file>
-  <file src="src/Subscription/Subscriber/MetadataSubscriberAccessorRepository.php">
-    <DeprecatedClass>
-      <code><![CDATA[new AggregateIdArgumentResolver()]]></code>
-    </DeprecatedClass>
-  </file>
-  <file src="src/Subscription/Subscriber/SubscriberAccessorRepository.php">
-    <DeprecatedInterface>
-      <code><![CDATA[SubscriberAccessor|null]]></code>
-      <code><![CDATA[iterable<SubscriberAccessor>]]></code>
-    </DeprecatedInterface>
   </file>
   <file src="src/Subscription/ThrowableToErrorContextTransformer.php">
     <MixedAssignment>
