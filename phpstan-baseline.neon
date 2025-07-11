@@ -223,30 +223,6 @@ parameters:
 			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\Profile\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Integration/BasicImplementation/Profile.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\ProfileWithCommands\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Integration/BasicImplementation/ProfileWithCommands.php
-
-		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\ChildAggregate\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\ChildAggregate\\Profile will always evaluate to true\.$#'
-			identifier: staticMethod.alreadyNarrowedType
-			count: 2
-			path: tests/Integration/ChildAggregate/ChildAggregateIntegrationTest.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\ChildAggregate\\Profile\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Integration/ChildAggregate/Profile.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\MicroAggregate\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\MicroAggregate\\Profile will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 2
@@ -425,12 +401,6 @@ parameters:
 			identifier: property.unused
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithSuppressAll.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\WrongNormalizerBasicAggregate\:\:\$id is unused\.$#'
-			identifier: property.unused
-			count: 1
-			path: tests/Unit/Fixture/WrongNormalizerBasicAggregate.php
 
 		-
 			message: '#^Parameter \#2 \$callable of class Patchlevel\\EventSourcing\\Message\\Translator\\ReplaceEventTranslator constructor expects callable\(Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\MessagePublished\)\: object, Closure\(Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileCreated\)\: Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileVisited given\.$#'

@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
-use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
 use Throwable;
 
@@ -18,7 +17,7 @@ use function array_keys;
 use function array_map;
 
 /** @template T of object */
-final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscriberAccessor
+final class MetadataSubscriberAccessor
 {
     /** @var array<class-string, list<Closure(Message):void>> */
     private array $subscribeCache = [];
@@ -43,24 +42,6 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
     public function subscriber(): object
     {
         return $this->subscriber;
-    }
-
-    /** @deprecated use `->metadata()->id` instead */
-    public function id(): string
-    {
-        return $this->metadata->id;
-    }
-
-    /** @deprecated use `->metadata()->group` instead */
-    public function group(): string
-    {
-        return $this->metadata->group;
-    }
-
-    /** @deprecated use `->metadata()->runMode` instead */
-    public function runMode(): RunMode
-    {
-        return $this->metadata->runMode;
     }
 
     public function setupMethod(): Closure|null
@@ -179,15 +160,5 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
         }
 
         return $resolvers;
-    }
-
-    /**
-     * @deprecated use `->metadata()` instead
-     *
-     * @return T
-     */
-    public function realSubscriber(): object
-    {
-        return $this->subscriber;
     }
 }

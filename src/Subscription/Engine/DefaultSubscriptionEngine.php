@@ -16,8 +16,6 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
-use Patchlevel\EventSourcing\Subscription\Subscriber\RealSubscriberAccessor;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
@@ -875,7 +873,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         return null;
     }
 
-    private function subscriber(string $subscriberId): SubscriberAccessor|null
+    private function subscriber(string $subscriberId): MetadataSubscriberAccessor|null
     {
         return $this->subscriberRepository->get($subscriberId);
     }
@@ -959,18 +957,18 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         foreach ($this->subscriberRepository->all() as $subscriber) {
             foreach ($subscriptions as $subscription) {
-                if ($subscription->id() === $subscriber->id()) {
+                if ($subscription->id() === $subscriber->metadata()->id) {
                     continue 2;
                 }
             }
 
             $subscription = new Subscription(
-                $subscriber->id(),
-                $subscriber->group(),
-                $subscriber->runMode(),
+                $subscriber->metadata()->id,
+                $subscriber->metadata()->group,
+                $subscriber->metadata()->runMode,
             );
 
-            if ($subscriber->setupMethod() === null && $subscriber->runMode() === RunMode::FromNow) {
+            if ($subscriber->setupMethod() === null && $subscriber->metadata()->runMode === RunMode::FromNow) {
                 if ($latestIndex === null) {
                     $latestIndex = $this->messageLoader->lastIndex();
                 }
@@ -984,7 +982,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             $this->logger?->info(
                 sprintf(
                     'Subscription Engine: New Subscriber "%s" was found and added to the subscription store.',
-                    $subscriber->id(),
+                    $subscriber->metadata()->id,
                 ),
             );
         }
@@ -1021,14 +1019,14 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $subscriber = $this->subscriber($subscription->id());
 
-        if (!$subscriber instanceof MetadataSubscriberAccessor) {
+        if (!$subscriber) {
             $subscription->failed($throwable);
             $this->subscriptionManager->update($subscription);
 
             return;
         }
 
-        if ($subscriber->realSubscriber() instanceof BatchableSubscriber) {
+        if ($subscriber->subscriber() instanceof BatchableSubscriber) {
             $subscription->failed($throwable);
             $this->subscriptionManager->update($subscription);
 
@@ -1138,11 +1136,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $subscriber = $this->subscriber($subscription->id());
 
-        if (!$subscriber instanceof RealSubscriberAccessor) {
+        if (!$subscriber) {
             return null;
         }
 
-        $realSubscriber = $subscriber->realSubscriber();
+        $realSubscriber = $subscriber->subscriber();
 
         if (!$realSubscriber instanceof BatchableSubscriber) {
             return null;
