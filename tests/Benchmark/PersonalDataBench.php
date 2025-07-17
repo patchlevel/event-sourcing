@@ -11,8 +11,8 @@ use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -38,7 +38,7 @@ final class PersonalDataBench
             $cipherKeyStore,
         );
 
-        $this->store = new DoctrineDbalStore(
+        $this->store = new StreamDoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths(
                 [__DIR__ . '/BasicImplementation/Events'],

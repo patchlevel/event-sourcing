@@ -4,13 +4,14 @@
 
 ### Child Aggregate
 
-We removed our experimental feature of child aggregates. 
+We removed our experimental feature of child aggregates.
 This was our first attempt to split aggregates into smaller parts,
 but we found a better way to do this with the `Micro Aggregate` feature.
 
 ## Subscription
 
 The constructor of the `DefaultSubscriptionEngine` class has been changed.
+
 * Instead of passing a `Store` instance, you now need to pass a `MessageLoader` instance.
 * Instead of passing a `RetryStrategy` instance, you now need to pass a `RetryStrategyRepository` instance.
 

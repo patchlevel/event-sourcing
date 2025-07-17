@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -35,7 +37,9 @@ final class OutputStyleTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()));
 
         $eventSerializer = $this->createMock(EventSerializer::class);
         $eventSerializer->method('serialize')->with($event, [Encoder::OPTION_PRETTY_PRINT => true])->willReturn(new SerializedEvent(
@@ -76,7 +80,9 @@ final class OutputStyleTest extends TestCase
         $fooHeader = new FooHeader('foo');
 
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()))
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
             ->withHeader($fooHeader);
 
         $eventSerializer = $this->createMock(EventSerializer::class);

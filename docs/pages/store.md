@@ -12,73 +12,10 @@ The store is optimized to efficiently store and load events for aggregates.
 ## Configure Store
 
 We offer different stores to store the messages.
-Two stores based on [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html)
-and one in-memory store for testing purposes.
 
-### DoctrineDbalStore
-
-This is the current default store for event sourcing.
-You can create a store with the `DoctrineDbalStore` class.
-The store needs a dbal connection, an event serializer and has some optional parameters like options.
-
-```php
-use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Tools\DsnParser;
-use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
-
-$connection = DriverManager::getConnection(
-    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
-);
-
-$store = new DoctrineDbalStore(
-    $connection,
-    DefaultEventSerializer::createFromPaths(['src/Event']),
-);
-```
-!!! note
-
-    You can find out more about how to create a connection 
-    [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
-    
-Following options are available in `DoctrineDbalStore`:
-
-| Option            | Type            | Default    | Description                                  |
-|-------------------|-----------------|------------|----------------------------------------------|
-| table_name        | string          | eventstore | The name of the table in the database        |
-| aggregate_id_type | "uuid"/"string" | uuid       | The type of the `aggregate_id` column        |
-| locking           | bool            | true       | If the store should use locking for writing  |
-| lock_id           | int             | 133742     | The id of the lock                           |
-| lock_timeout      | int             | -1         | The timeout of the lock. -1 means no timeout |
-
-The table structure of the `DoctrineDbalStore` looks like this:
-
-| Column           | Type        | Description                                      |
-|------------------|-------------|--------------------------------------------------|
-| id               | bigint      | The index of the whole stream (autoincrement)    |
-| aggregate        | string      | The name of the aggregate                        |
-| aggregate_id     | uuid/string | The id of the aggregate                          |
-| playhead         | int         | The current playhead of the aggregate            |
-| event            | string      | The name of the event                            |
-| payload          | json        | The payload of the event                         |
-| recorded_on      | datetime    | The date when the event was recorded             |
-| new_stream_start | bool        | If the event is the first event of the aggregate |
-| archived         | bool        | If the event is archived                         |
-| custom_headers   | json        | Custom headers for the event                     |
-
-!!! note
-
-    The default type of the `aggregate_id` column is `uuid` if the database supports it and `string` if not.
-    You can change the type with the `aggregate_id_type` to `string` if you want use custom id.
-    
 ### StreamDoctrineDbalStore
 
-We offer a new store called `StreamDoctrineDbalStore`.
-This store is decoupled from the aggregate and can be used to store events from other sources.
-The difference to the `DoctrineDbalStore` is that the `StreamDoctrineDbalStore` merge the aggregate id
-and the aggregate name into one column named `stream`. Additionally, the column `playhead` is nullable.
-This store introduces two new methods `streams` and `remove`.
-
+We offer a store called `StreamDoctrineDbalStore`.
 The store needs a dbal connection, an event serializer and has some optional parameters like options.
 
 ```php
@@ -139,21 +76,15 @@ $store = new InMemoryStore();
 
     You can pass messages to the constructor to initialize the store with some events.
     
-### ReadOnlyStore & StreamReadOnlyStore
+### StreamReadOnlyStore
 
-Last but not least, we offer two read-only stores.
-One for the `DoctrineDbalStore` and one for the `StreamDoctrineDbalStore`.
+Last but not least, we offer a read-only store named `StreamReadOnlyStore`.
 It passes all methods to the underlying store, but throws an `StoreIsReadOnly` exception when trying to execute write
 operations.
 
 ```php
-use Patchlevel\EventSourcing\Store\ReadOnlyStore;
-use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StreamReadOnlyStore;
 use Patchlevel\EventSourcing\Store\StreamStore;
-
-/** @var Store $store */
-$readOnlyStore = new ReadOnlyStore($store);
 
 /** @var StreamStore $store */
 $readOnlyStore = new StreamReadOnlyStore($store);
@@ -456,10 +387,6 @@ use Patchlevel\EventSourcing\Store\StreamStore;
 /** @var StreamStore $store */
 $store->remove('profile-*');
 ```
-!!! note
-
-    The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
-    
 ### List Streams
 
 You can list all streams with the `streams` method.
@@ -470,10 +397,6 @@ use Patchlevel\EventSourcing\Store\StreamStore;
 /** @var StreamStore $store */
 $streams = $store->streams(); // ['profile-1', 'profile-2', 'profile-3']
 ```
-!!! note
-
-    The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
-    
 ### Transaction
 
 There is also the possibility of executing a function in a transaction.

@@ -10,8 +10,8 @@ use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
@@ -38,7 +38,7 @@ final class SubscriptionEngineBatchBench
     {
         $connection = DbalManager::createConnection();
 
-        $this->store = new DoctrineDbalStore(
+        $this->store = new StreamDoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
         );

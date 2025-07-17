@@ -19,7 +19,6 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
@@ -39,7 +38,6 @@ use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerWithSelfRecoverySubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\LookupSubscriber;
-use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\MigrateAggregateToStreamStoreSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNewProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
@@ -49,7 +47,6 @@ use RuntimeException;
 
 use function gc_collect_cycles;
 use function iterator_to_array;
-use function sprintf;
 
 #[CoversNothing]
 final class SubscriptionTest extends TestCase
@@ -73,7 +70,7 @@ final class SubscriptionTest extends TestCase
 
     public function testHappyPath(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -199,7 +196,7 @@ final class SubscriptionTest extends TestCase
 
     public function testGapResolver(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -327,7 +324,7 @@ final class SubscriptionTest extends TestCase
     {
         $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -528,7 +525,7 @@ final class SubscriptionTest extends TestCase
     {
         $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -628,7 +625,7 @@ final class SubscriptionTest extends TestCase
     {
         $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -736,7 +733,7 @@ final class SubscriptionTest extends TestCase
 
     public function testProcessor(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -817,7 +814,7 @@ final class SubscriptionTest extends TestCase
     {
         // Test Setup
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -973,7 +970,7 @@ final class SubscriptionTest extends TestCase
     {
         // Test Setup
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -1181,121 +1178,6 @@ final class SubscriptionTest extends TestCase
                 ),
             ],
             $firstEngine->subscriptions(),
-        );
-    }
-
-    public function testPipeline(): void
-    {
-        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
-
-        $store = new DoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-        );
-
-        $targetStore = new StreamDoctrineDbalStore(
-            $this->projectionConnection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            config: ['table_name' => 'new_eventstore'],
-        );
-
-        $subscriptionStore = new DoctrineSubscriptionStore(
-            $this->connection,
-            $clock,
-        );
-
-        $manager = new DefaultRepositoryManager(
-            new AggregateRootRegistry(['profile' => Profile::class]),
-            $store,
-        );
-
-        $repository = $manager->get(Profile::class);
-
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            new ChainDoctrineSchemaConfigurator([
-                $store,
-                $subscriptionStore,
-            ]),
-        );
-
-        $schemaDirector->create();
-
-        $engine = new DefaultSubscriptionEngine(
-            new StoreMessageLoader($store),
-            $subscriptionStore,
-            new MetadataSubscriberAccessorRepository([new MigrateAggregateToStreamStoreSubscriber($targetStore)]),
-        );
-
-        self::assertEquals(
-            [
-                new Subscription(
-                    'migrate',
-                    'default',
-                    RunMode::Once,
-                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
-                ),
-            ],
-            $engine->subscriptions(),
-        );
-
-        $result = $engine->setup();
-
-        self::assertEquals([], $result->errors);
-
-        self::assertTrue(
-            $this->projectionConnection->createSchemaManager()->tableExists('new_eventstore'),
-        );
-
-        $profileId = ProfileId::generate();
-        $profile = Profile::create($profileId, 'John');
-
-        for ($i = 1; $i < 1_000; $i++) {
-            $profile->changeName(sprintf('John %d', $i));
-        }
-
-        $repository->save($profile);
-
-        $result = $engine->boot();
-
-        self::assertEquals(1_000, $result->processedMessages);
-
-        self::assertEquals([], $result->errors);
-
-        self::assertEquals(
-            [
-                new Subscription(
-                    'migrate',
-                    'default',
-                    RunMode::Once,
-                    Status::Finished,
-                    1_000,
-                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
-                ),
-            ],
-            $engine->subscriptions(),
-        );
-
-        // target store check
-
-        $result = $engine->remove();
-        self::assertEquals([], $result->errors);
-
-        self::assertEquals(
-            [
-                new Subscription(
-                    'migrate',
-                    'default',
-                    RunMode::Once,
-                    Status::New,
-                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
-                ),
-            ],
-            $engine->subscriptions(),
-        );
-
-        self::assertFalse(
-            $this->projectionConnection->createSchemaManager()->tableExists('new_eventstore'),
         );
     }
 

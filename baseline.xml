@@ -82,9 +82,6 @@
     </MixedMethodCall>
   </file>
   <file src="src/Repository/DefaultRepository.php">
-    <PossiblyNullArgument>
-      <code><![CDATA[$streamName]]></code>
-    </PossiblyNullArgument>
     <PropertyTypeCoercion>
       <code><![CDATA[new WeakMap()]]></code>
     </PropertyTypeCoercion>
@@ -130,14 +127,6 @@
     <PropertyTypeCoercion>
       <code><![CDATA[$streamName]]></code>
     </PropertyTypeCoercion>
-  </file>
-  <file src="src/Store/DoctrineDbalStoreStream.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[(int)$data['playhead']]]></code>
-    </ArgumentTypeCoercion>
-    <MixedArgument>
-      <code><![CDATA[$dateTimeType->convertToPHPValue($data['recorded_on'], $platform)]]></code>
-    </MixedArgument>
   </file>
   <file src="src/Store/InMemoryStore.php">
     <MixedPropertyTypeCoercion>

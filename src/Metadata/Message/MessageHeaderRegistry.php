@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Message;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
@@ -80,7 +79,6 @@ final class MessageHeaderRegistry
             'streamName' => StreamNameHeader::class,
             'playhead' => PlayheadHeader::class,
             'recordedOn' => RecordedOnHeader::class,
-            'aggregate' => AggregateHeader::class,
             'archived' => ArchivedHeader::class,
             'newStreamStart' => StreamStartHeader::class,
             'eventId' => EventIdHeader::class,

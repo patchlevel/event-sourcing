@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Message\Translator;
 
-use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -27,13 +27,14 @@ final class RecalculatePlayheadTranslatorTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 5, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('profile'))
+            ->withHeader(new PlayheadHeader(5));
 
         $result = $translator($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
-        self::assertSame(1, $result[0]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile', $result[0]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(1, $result[0]->header(PlayheadHeader::class)->playhead);
     }
 
     public function testRecalculatePlayheadWithSamePlayhead(): void
@@ -46,7 +47,8 @@ final class RecalculatePlayheadTranslatorTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('profile'))
+            ->withHeader(new PlayheadHeader(1));
 
         $result = $translator($message);
 
@@ -63,21 +65,24 @@ final class RecalculatePlayheadTranslatorTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 5, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('profile'))
+            ->withHeader(new PlayheadHeader(5));
+
         $result = $translator($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
-        self::assertSame(1, $result[0]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile', $result[0]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(1, $result[0]->header(PlayheadHeader::class)->playhead);
 
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 8, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('profile'))
+            ->withHeader(new PlayheadHeader(8));
 
         $result = $translator($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
-        self::assertSame(2, $result[0]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile', $result[0]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(2, $result[0]->header(PlayheadHeader::class)->playhead);
     }
 
     public function testReset(): void
@@ -90,21 +95,24 @@ final class RecalculatePlayheadTranslatorTest extends TestCase
         );
 
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 5, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('profile'))
+            ->withHeader(new PlayheadHeader(5));
+
         $result = $translator($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
-        self::assertSame(1, $result[0]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile', $result[0]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(1, $result[0]->header(PlayheadHeader::class)->playhead);
 
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 8, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('profile'))
+            ->withHeader(new PlayheadHeader(8));
 
         $translator->reset();
         $result = $translator($message);
 
         self::assertCount(1, $result);
-        self::assertSame('profile', $result[0]->header(AggregateHeader::class)->aggregateName);
-        self::assertSame(1, $result[0]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile', $result[0]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(1, $result[0]->header(PlayheadHeader::class)->playhead);
     }
 }
