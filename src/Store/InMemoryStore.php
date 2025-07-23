@@ -30,7 +30,7 @@ use function str_starts_with;
 
 use const ARRAY_FILTER_USE_BOTH;
 
-final class InMemoryStore implements StreamStore
+final class InMemoryStore implements Store
 {
     /** @param array<positive-int|0, Message> $messages */
     public function __construct(

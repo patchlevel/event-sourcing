@@ -9,10 +9,10 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Psr\Log\LoggerInterface;
 
-final class StreamReadOnlyStore implements StreamStore
+final class ReadOnlyStore implements Store
 {
     public function __construct(
-        private readonly StreamStore $store,
+        private readonly Store $store,
         private readonly LoggerInterface|null $logger = null,
     ) {
     }

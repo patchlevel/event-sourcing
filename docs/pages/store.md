@@ -83,11 +83,11 @@ It passes all methods to the underlying store, but throws an `StoreIsReadOnly` e
 operations.
 
 ```php
-use Patchlevel\EventSourcing\Store\StreamReadOnlyStore;
+use Patchlevel\EventSourcing\Store\ReadOnlyStore;
 use Patchlevel\EventSourcing\Store\StreamStore;
 
 /** @var StreamStore $store */
-$readOnlyStore = new StreamReadOnlyStore($store);
+$readOnlyStore = new ReadOnlyStore($store);
 ```
 ## Schema
 

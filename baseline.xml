@@ -88,9 +88,6 @@
     <PropertyTypeCoercion>
       <code><![CDATA[new WeakMap()]]></code>
     </PropertyTypeCoercion>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[archive]]></code>
-    </UndefinedInterfaceMethod>
   </file>
   <file src="src/Schema/DoctrineHelper.php">
     <InternalMethod>

@@ -25,7 +25,6 @@ use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
-use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -253,7 +252,7 @@ final class DefaultRepository implements Repository
             );
 
             try {
-                if ($archiveTo !== null && $this->store instanceof StreamStore) {
+                if ($archiveTo !== null) {
                     $this->store->transactional(
                         function () use ($messages, $streamName, $archiveTo): void {
                             $this->store->save(...$messages);
