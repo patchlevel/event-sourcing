@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Message\Translator;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
@@ -26,19 +25,6 @@ final class RecalculatePlayheadTranslator implements Translator
 
             return [
                 $message->withHeader(new PlayheadHeader($playhead)),
-            ];
-        }
-
-        if ($message->hasHeader(AggregateHeader::class)) {
-            $header = $message->header(AggregateHeader::class);
-
-            return [
-                $message->withHeader(new AggregateHeader(
-                    $header->aggregateName,
-                    $header->aggregateId,
-                    $this->nextPlayhead($header->streamName()),
-                    $header->recordedOn,
-                )),
             ];
         }
 

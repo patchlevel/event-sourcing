@@ -49,12 +49,6 @@ parameters:
 			path: src/Repository/DefaultRepository.php
 
 		-
-			message: '#^Parameter \#1 \.\.\.\$streamName of class Patchlevel\\EventSourcing\\Store\\Criteria\\StreamCriterion constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Repository/DefaultRepository.php
-
-		-
 			message: '#^Parameter \#2 \$data of method Patchlevel\\Hydrator\\Hydrator\:\:hydrate\(\) expects array\<string, mixed\>, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -89,30 +83,6 @@ parameters:
 			identifier: assign.propertyType
 			count: 1
 			path: src/Store/Criteria/StreamCriterion.php
-
-		-
-			message: '#^Method Patchlevel\\EventSourcing\\Store\\DoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: src/Store/DoctrineDbalStoreStream.php
-
-		-
-			message: '#^Parameter \#3 \$playhead of class Patchlevel\\EventSourcing\\Aggregate\\AggregateHeader constructor expects int\<1, max\>, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Store/DoctrineDbalStoreStream.php
-
-		-
-			message: '#^Parameter \#4 \$recordedOn of class Patchlevel\\EventSourcing\\Aggregate\\AggregateHeader constructor expects DateTimeImmutable, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Store/DoctrineDbalStoreStream.php
-
-		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: src/Store/DoctrineDbalStoreStream.php
 
 		-
 			message: '#^Method Patchlevel\\EventSourcing\\Store\\StreamDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
@@ -177,7 +147,7 @@ parameters:
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BankAccountSplitStream\\\\BankAccount'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BankAccountSplitStream\\BankAccount will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
-			count: 6
+			count: 4
 			path: tests/Integration/BankAccountSplitStream/IntegrationTest.php
 
 		-

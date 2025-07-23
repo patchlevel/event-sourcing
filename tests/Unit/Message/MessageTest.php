@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Message;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 
 #[CoversClass(Message::class)]
 final class MessageTest extends TestCase
@@ -36,25 +39,18 @@ final class MessageTest extends TestCase
     {
         $recordedAt = new DateTimeImmutable('2020-05-06 13:34:24');
 
-        $message = Message::create(new class {
-        })
-            ->withHeader(new AggregateHeader(
-                'profile',
-                '1',
-                3,
-                $recordedAt,
-            ))
+        $message = Message::create(new stdClass())
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(3))
+            ->withHeader(new RecordedOnHeader($recordedAt))
             ->withHeader(new StreamStartHeader())
             ->withHeader(new ArchivedHeader());
 
         self::assertEquals(
             [
-                new AggregateHeader(
-                    'profile',
-                    '1',
-                    3,
-                    $recordedAt,
-                ),
+                new StreamNameHeader('profile-1'),
+                new PlayheadHeader(3),
+                new RecordedOnHeader($recordedAt),
                 new StreamStartHeader(),
                 new ArchivedHeader(),
             ],
@@ -64,8 +60,7 @@ final class MessageTest extends TestCase
 
     public function testCreateWithEmptyHeaders(): void
     {
-        $message = Message::createWithHeaders(new class {
-        }, []);
+        $message = Message::createWithHeaders(new stdClass(), []);
 
         self::assertSame([], $message->headers());
     }
@@ -73,19 +68,15 @@ final class MessageTest extends TestCase
     public function testCreateWithAllHeaders(): void
     {
         $headers = [
-            new AggregateHeader(
-                'profile',
-                '1',
-                3,
-                new DateTimeImmutable('2020-05-06 13:34:24'),
-            ),
+            new StreamNameHeader('profile-1'),
+            new PlayheadHeader(3),
+            new RecordedOnHeader(new DateTimeImmutable('2020-05-06 13:34:24')),
             new StreamStartHeader(),
             new ArchivedHeader(),
         ];
 
         $message = Message::createWithHeaders(
-            new class {
-            },
+            new stdClass(),
             $headers,
         );
 
@@ -94,60 +85,47 @@ final class MessageTest extends TestCase
 
     public function testHasHeader(): void
     {
-        $message = Message::create(new class {
-        })->withHeader(new AggregateHeader(
-            'profile',
-            '1',
-            1,
-            new DateTimeImmutable('2020-05-06 13:34:24'),
-        ));
+        $message = Message::create(new stdClass())
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(3))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-05-06 13:34:24')));
 
-        self::assertTrue($message->hasHeader(AggregateHeader::class));
+        self::assertTrue($message->hasHeader(StreamNameHeader::class));
         self::assertFalse($message->hasHeader(ArchivedHeader::class));
     }
 
     public function testChangeHeader(): void
     {
-        $message = Message::create(new class {
-        })->withHeader(new AggregateHeader(
-            'profile',
-            '1',
-            1,
-            new DateTimeImmutable('2020-05-06 13:34:24'),
-        ));
-        self::assertSame(1, $message->header(AggregateHeader::class)->playhead);
+        $message = Message::create(new stdClass())
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-05-06 13:34:24')));
 
-        $message = $message->withHeader(new AggregateHeader(
-            'profile',
-            '1',
-            2,
-            new DateTimeImmutable('2020-05-06 13:34:24'),
-        ));
-        self::assertSame(2, $message->header(AggregateHeader::class)->playhead);
+        self::assertSame(1, $message->header(PlayheadHeader::class)->playhead);
+
+        $message = $message->withHeader(new PlayheadHeader(2));
+
+        self::assertSame(2, $message->header(PlayheadHeader::class)->playhead);
     }
 
     public function testRemoveHeader(): void
     {
-        $message = Message::create(new class {
-        })->withHeader(new AggregateHeader(
-            'profile',
-            '1',
-            1,
-            new DateTimeImmutable('2020-05-06 13:34:24'),
-        ));
+        $message = Message::create(new stdClass())
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(3))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-05-06 13:34:24')));
 
-        $message = $message->removeHeader(AggregateHeader::class);
+        $message = $message->removeHeader(PlayheadHeader::class);
 
-        self::assertFalse($message->hasHeader(AggregateHeader::class));
+        self::assertFalse($message->hasHeader(PlayheadHeader::class));
     }
 
     public function testHeaderNotFound(): void
     {
-        $message = Message::create(new class {
-        });
+        $message = Message::create(new stdClass());
 
         $this->expectException(HeaderNotFound::class);
         /** @psalm-suppress UnusedMethodCall */
-        $message->header(AggregateHeader::class);
+        $message->header(PlayheadHeader::class);
     }
 }

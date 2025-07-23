@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Store\Crtieria;
 
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -30,8 +29,7 @@ final class CriteriaBuilderTest extends TestCase
     {
         $builder = new CriteriaBuilder();
         $criteria = $builder
-            ->aggregateName('profile')
-            ->aggregateId('1')
+            ->streamName('profile')
             ->fromIndex(1)
             ->fromPlayhead(1)
             ->archived(true)
@@ -40,8 +38,7 @@ final class CriteriaBuilderTest extends TestCase
 
         self::assertEquals(
             new Criteria(
-                new AggregateNameCriterion('profile'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile'),
                 new FromIndexCriterion(1),
                 new FromPlayheadCriterion(1),
                 new ArchivedCriterion(true),

@@ -276,7 +276,7 @@ use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
@@ -296,7 +296,7 @@ $mailer;
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create(['src/Domain/Hotel']);
 
-$eventStore = new DoctrineDbalStore(
+$eventStore = new StreamDoctrineDbalStore(
     $connection,
     $serializer,
 );

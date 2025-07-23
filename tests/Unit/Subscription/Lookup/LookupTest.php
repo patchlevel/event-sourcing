@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Lookup;
 
-use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Store\ArrayStream;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
@@ -182,62 +178,6 @@ final class LookupTest extends TestCase
         self::assertSame($expectedResult, $result);
     }
 
-    public function testAggregateName(): void
-    {
-        $expectedResult = new ArrayStream([]);
-        $expectedCriteria = new Criteria(
-            new AggregateNameCriterion('foo'),
-            new ToIndexCriterion(1),
-        );
-
-        $store = $this->createMock(Store::class);
-        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult);
-
-        $event = new class () {
-        };
-
-        $message = (new Message($event))
-            ->withHeader(new IndexHeader(1));
-
-        $lookup = new Lookup(
-            $store,
-            $message,
-        );
-
-        $result = $lookup->aggregateName('foo')->fetchAll();
-
-        self::assertSame($expectedResult, $result);
-    }
-
-    public function testAggregateId(): void
-    {
-        $expectedResult = new ArrayStream([]);
-        $expectedCriteria = new Criteria(
-            new AggregateIdCriterion('foo'),
-            new ToIndexCriterion(1),
-        );
-
-        $store = $this->createMock(Store::class);
-        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult);
-
-        $event = new class () {
-        };
-
-        $message = (new Message($event))
-            ->withHeader(new IndexHeader(1));
-
-        $lookup = new Lookup(
-            $store,
-            $message,
-        );
-
-        $result = $lookup->aggregateId('foo')->fetchAll();
-
-        self::assertSame($expectedResult, $result);
-    }
-
     public function testCurrentStream(): void
     {
         $expectedResult = new ArrayStream([]);
@@ -263,41 +203,6 @@ final class LookupTest extends TestCase
         );
 
         $result = $lookup->currentStream()->fetchAll();
-
-        self::assertSame($expectedResult, $result);
-    }
-
-    public function testCurrentAggregate(): void
-    {
-        $expectedResult = new ArrayStream([]);
-        $expectedCriteria = new Criteria(
-            new ToIndexCriterion(1),
-            new AggregateNameCriterion('foo'),
-            new AggregateIdCriterion('bar'),
-        );
-
-        $store = $this->createMock(Store::class);
-        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
-            ->willReturn($expectedResult);
-
-        $event = new class () {
-        };
-
-        $message = (new Message($event))
-            ->withHeader(new AggregateHeader(
-                'foo',
-                'bar',
-                1,
-                new DateTimeImmutable(),
-            ))
-            ->withHeader(new IndexHeader(1));
-
-        $lookup = new Lookup(
-            $store,
-            $message,
-        );
-
-        $result = $lookup->currentAggregate()->fetchAll();
 
         self::assertSame($expectedResult, $result);
     }
