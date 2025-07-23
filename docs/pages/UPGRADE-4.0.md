@@ -89,3 +89,10 @@ and replaced with the following headers:
 ### AggregateToStreamHeaderTranslator
 
 `Patchlevel\EventSourcing\Store\AggregateToStreamHeaderTranslator` has been removed.
+
+## Schema
+
+### DoctrineSchemaSubscriber
+
+The `Patchlevel\EventSourcing\Schema\DoctrineSchemaSubscriber` has been removed.
+use the `Patchlevel\EventSourcing\Schema\DoctrineSchemaListener` instead.
