@@ -28,7 +28,7 @@ final class DoctrineSchemaListenerTest extends TestCase
 
         $event = new GenerateSchemaEventArgs($em, $expectedSchema);
 
-        $doctrineSchemaSubscriber = new DoctrineSchemaListener($schemaConfigurator);
-        $doctrineSchemaSubscriber->postGenerateSchema($event);
+        $doctrineSchemaListener = new DoctrineSchemaListener($schemaConfigurator);
+        $doctrineSchemaListener->postGenerateSchema($event);
     }
 }
