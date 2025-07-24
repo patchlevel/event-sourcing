@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 
 use function array_flip;
@@ -85,6 +86,7 @@ final class MessageHeaderRegistry
             'newStreamStart' => StreamStartHeader::class,
             'eventId' => EventIdHeader::class,
             'index' => IndexHeader::class,
+            'tags' => TagsHeader::class,
         ];
 
         return new self($headerNameToClassMap + $internalHeaders);
