@@ -49,7 +49,6 @@ use RuntimeException;
 
 use function array_fill;
 use function array_filter;
-use function array_map;
 use function array_merge;
 use function array_values;
 use function class_exists;
@@ -131,7 +130,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->config['table_name'], 'events')
-            ->orderBy('id', $backwards ? 'DESC' : 'ASC');
+            ->orderBy('events.id', $backwards ? 'DESC' : 'ASC');
 
         $this->applyCriteria($builder, $criteria ?? new Criteria());
 
@@ -383,18 +382,18 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
             $parameters = [];
             $types = [];
 
-            $columnsLength = count($columns);
-            //$batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
             $position = 0;
 
             foreach ($messages as $message) {
-                $selects[] = sprintf('SELECT %s', implode(', ', array_map(
-                    static fn (string $column) => ':' . $column . $position,
-                    $columns,
-                )));
-
-                /** @var int<0, max> $offset */
-                $offset = $position * $columnsLength;
+                $selects[] = 'SELECT :stream' . $position
+                    . ', :playhead' . $position . ($this->isPostgres ? '::int' : '')
+                    . ', :event_id' . $position
+                    . ', :event_name' . $position
+                    . ', :event_payload' . $position . ($this->isPostgres ? '::jsonb' : '')
+                    . ', :tags' . $position . ($this->isPostgres ? '::jsonb' : '')
+                    . ', :recorded_on' . $position . ($this->isPostgres ? '::timestamptz' : '')
+                    . ', :archived' . $position . ($this->isPostgres ? '::boolean' : '')
+                    . ', :custom_headers' . $position . ($this->isPostgres ? '::jsonb' : '');
 
                 $data = $this->eventSerializer->serialize($message->event());
 
@@ -432,14 +431,6 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
                 $parameters['custom_headers' . $position] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
 
                 $position++;
-
-                /*
-                if ($position !== $batchSize) {
-                    continue;
-                }
-
-                $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
-                */
             }
 
             $query = sprintf(
