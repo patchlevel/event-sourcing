@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
+use Patchlevel\EventSourcing\DCB\AppendCondition;
+use Patchlevel\EventSourcing\DCB\HighestSequenceNumber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -20,7 +22,6 @@ use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
-use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -38,7 +39,7 @@ use function sprintf;
 final class TaggableDoctrineDbalStoreTest extends TestCase
 {
     private Connection $connection;
-    private StreamStore $store;
+    private TaggableDoctrineDbalStore $store;
 
     private ClockInterface $clock;
 
@@ -510,7 +511,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         try {
             $stream = $this->store->load(
                 new Criteria(
-                    new TagCriterion('profile:' . $profileId1->toString()),
+                    new TagCriterion(['profile:' . $profileId1->toString()], ['test']),
                 ),
             );
 
@@ -530,6 +531,107 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         } finally {
             $stream?->close();
         }
+    }
+
+    public function testAppend(): void
+    {
+        $profileId1 = ProfileId::generate();
+        $profileId2 = ProfileId::generate();
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId1, 'test'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+                ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()])),
+            Message::create(new ProfileCreated($profileId2, 'test'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+                ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()])),
+            Message::create(new ExternEvent('test message'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new TagsHeader([
+                    'profile:' . $profileId1->toString(),
+                    'profile:' . $profileId2->toString(),
+                ])),
+        ];
+
+        $this->store->append(
+            $messages,
+            new AppendCondition(
+                [],
+                HighestSequenceNumber::none(),
+            ),
+        );
+
+        $stream = null;
+
+        try {
+            $stream = $this->store->load(
+                new Criteria(
+                    new TagCriterion(['profile:' . $profileId1->toString()], ['test']),
+                ),
+            );
+
+            $messages = iterator_to_array($stream);
+
+            self::assertCount(2, $messages);
+
+            self::assertEquals(
+                ['profile:' . $profileId1->toString()],
+                $messages[0]->header(TagsHeader::class)->tags,
+            );
+
+            self::assertEquals(
+                ['profile:' . $profileId1->toString(), 'profile:' . $profileId2->toString()],
+                $messages[1]->header(TagsHeader::class)->tags,
+            );
+        } finally {
+            $stream?->close();
+        }
+    }
+
+    public function testAppendRaceCondition(): void
+    {
+        $profileId1 = ProfileId::generate();
+        $profileId2 = ProfileId::generate();
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId1, 'test'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+                ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()])),
+            Message::create(new ProfileCreated($profileId2, 'test'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+                ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()])),
+        ];
+
+        $this->store->append(
+            $messages,
+            new AppendCondition(
+                [],
+                HighestSequenceNumber::none(),
+            ),
+        );
+
+        $messages = [
+            Message::create(new ExternEvent('test message'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new TagsHeader([
+                    'profile:' . $profileId1->toString(),
+                    'profile:' . $profileId2->toString(),
+                ])),
+        ];
+
+        $this->expectException(UniqueConstraintViolation::class);
+
+        $this->store->append(
+            $messages,
+            new AppendCondition(
+                [['profile:' . $profileId1->toString()]],
+                HighestSequenceNumber::none(),
+            ),
+        );
     }
 
     public function testStreams(): void

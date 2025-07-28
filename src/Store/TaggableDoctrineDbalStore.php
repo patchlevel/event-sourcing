@@ -13,10 +13,13 @@ use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Schema\Name\UnqualifiedName;
+use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Clock\SystemClock;
+use Patchlevel\EventSourcing\DCB\AppendCondition;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
@@ -42,9 +45,11 @@ use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use PDO;
 use Psr\Clock\ClockInterface;
 use Ramsey\Uuid\Uuid;
+use RuntimeException;
 
 use function array_fill;
 use function array_filter;
+use function array_map;
 use function array_merge;
 use function array_values;
 use function class_exists;
@@ -55,6 +60,7 @@ use function implode;
 use function in_array;
 use function is_int;
 use function is_string;
+use function json_encode;
 use function sprintf;
 use function str_contains;
 use function str_replace;
@@ -124,7 +130,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
     ): TaggableDoctrineDbalStoreStream {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->config['table_name'])
+            ->from($this->config['table_name'], 'events')
             ->orderBy('id', $backwards ? 'DESC' : 'ASC');
 
         $this->applyCriteria($builder, $criteria ?? new Criteria());
@@ -224,17 +230,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
                     $builder->setParameter('event_id', $criterion->eventId, ArrayParameterType::STRING);
                     break;
                 case TagCriterion::class:
-                    if ($this->isSQLite) {
-                        $builder->andWhere('NOT EXISTS(SELECT value FROM JSON_EACH(:tags) WHERE value NOT IN (SELECT value FROM JSON_EACH(tags)))');
-                    } elseif ($this->isPostgres) {
-                        $builder->andWhere('tags @> :tags::jsonb');
-                    } elseif ($this->isMysql || $this->isMariaDb) {
-                        $builder->andWhere('JSON_CONTAINS(tags, :tags)');
-                    } else {
-                        throw new UnsupportedCriterion($criterion::class);
-                    }
-
-                    $builder->setParameter('tags', $criterion->tags, Types::JSON);
+                    $this->queryCondition($builder, $criterion->tags);
                     break;
                 default:
                     throw new UnsupportedCriterion($criterion::class);
@@ -286,42 +282,31 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
 
                     $data = $this->eventSerializer->serialize($message->event());
 
-                    try {
-                        $streamName = $message->header(StreamNameHeader::class)->streamName;
-                        $parameters[] = $streamName;
-                    } catch (HeaderNotFound $e) {
-                        throw new MissingDataForStorage($e->name, $e);
-                    }
+                    $parameters[] = $message->hasHeader(StreamNameHeader::class)
+                        ? $message->header(StreamNameHeader::class)->streamName
+                        : 'default';
 
-                    if ($message->hasHeader(PlayheadHeader::class)) {
-                        $parameters[] = $message->header(PlayheadHeader::class)->playhead;
-                    } else {
-                        $parameters[] = null;
-                    }
+                    $parameters[] = $message->hasHeader(PlayheadHeader::class)
+                        ? $message->header(PlayheadHeader::class)->playhead
+                        : null;
 
-                    if ($message->hasHeader(EventIdHeader::class)) {
-                        $eventId = $message->header(EventIdHeader::class)->eventId;
-                    } else {
-                        $eventId = Uuid::uuid7()->toString();
-                    }
+                    $eventId = $message->hasHeader(EventIdHeader::class)
+                        ? $message->header(EventIdHeader::class)->eventId
+                        : Uuid::uuid7()->toString();
 
                     $parameters[] = $eventId;
                     $parameters[] = $data->name;
                     $parameters[] = $data->payload;
 
-                    if ($message->hasHeader(TagsHeader::class)) {
-                        $parameters[] = $message->header(TagsHeader::class)->tags;
-                    } else {
-                        $parameters[] = [];
-                    }
+                    $parameters[] = $message->hasHeader(TagsHeader::class)
+                        ? $message->header(TagsHeader::class)->tags
+                        : [];
 
                     $types[$offset + 5] = $jsonType;
 
-                    if ($message->hasHeader(RecordedOnHeader::class)) {
-                        $parameters[] = $message->header(RecordedOnHeader::class)->recordedOn;
-                    } else {
-                        $parameters[] = $this->clock->now();
-                    }
+                    $parameters[] = $message->hasHeader(RecordedOnHeader::class)
+                        ? $message->header(RecordedOnHeader::class)->recordedOn
+                        : $this->clock->now();
 
                     $types[$offset + 6] = $dateTimeType;
 
@@ -372,6 +357,135 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
                 );
             },
         );
+    }
+
+    /** @param iterable<Message> $messages */
+    public function append(iterable $messages, AppendCondition|null $appendCondition = null): void
+    {
+        $this->transactional(function () use ($messages, $appendCondition): void {
+            $booleanType = Type::getType(Types::BOOLEAN);
+            $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
+            $jsonType = Type::getType(Types::JSON);
+
+            $columns = [
+                'stream',
+                'playhead',
+                'event_id',
+                'event_name',
+                'event_payload',
+                'tags',
+                'recorded_on',
+                'archived',
+                'custom_headers',
+            ];
+
+            $selects = [];
+            $parameters = [];
+            $types = [];
+
+            $columnsLength = count($columns);
+            //$batchSize = (int)floor(self::MAX_UNSIGNED_SMALL_INT / $columnsLength);
+            $position = 0;
+
+            foreach ($messages as $message) {
+                $selects[] = sprintf('SELECT %s', implode(', ', array_map(
+                    static fn (string $column) => ':' . $column . $position,
+                    $columns,
+                )));
+
+                /** @var int<0, max> $offset */
+                $offset = $position * $columnsLength;
+
+                $data = $this->eventSerializer->serialize($message->event());
+
+                $parameters['stream' . $position] = $message->hasHeader(StreamNameHeader::class)
+                    ? $message->header(StreamNameHeader::class)->streamName
+                    : 'default';
+
+                $parameters['playhead' . $position] = $message->hasHeader(PlayheadHeader::class)
+                    ? $message->header(PlayheadHeader::class)->playhead
+                    : null;
+
+                $eventId = $message->hasHeader(EventIdHeader::class)
+                    ? $message->header(EventIdHeader::class)->eventId
+                    : Uuid::uuid7()->toString();
+
+                $parameters['event_id' . $position] = $eventId;
+                $parameters['event_name' . $position] = $data->name;
+                $parameters['event_payload' . $position] = $data->payload;
+
+                $parameters['tags' . $position] = $message->hasHeader(TagsHeader::class)
+                    ? $message->header(TagsHeader::class)->tags
+                    : [];
+
+                $types['tags' . $position] = $jsonType;
+
+                $parameters['recorded_on' . $position] = $message->hasHeader(RecordedOnHeader::class)
+                    ? $message->header(RecordedOnHeader::class)->recordedOn
+                    : $this->clock->now();
+
+                $types['recorded_on' . $position] = $dateTimeType;
+
+                $parameters['archived' . $position] = $message->hasHeader(ArchivedHeader::class);
+                $types['archived' . $position] = $booleanType;
+
+                $parameters['custom_headers' . $position] = $this->headersSerializer->serialize($this->getCustomHeaders($message));
+
+                $position++;
+
+                /*
+                if ($position !== $batchSize) {
+                    continue;
+                }
+
+                $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
+                */
+            }
+
+            $query = sprintf(
+                'INSERT INTO %s (%s) %s',
+                $this->config['table_name'],
+                implode(', ', $columns),
+                implode(' UNION ALL ', $selects),
+            );
+
+            if ($appendCondition instanceof AppendCondition && $appendCondition->tags !== []) {
+                $queryBuilder = $this->connection->createQueryBuilder()
+                    ->select('events.id')
+                    ->from($this->config['table_name'], 'events')
+                    ->orderBy('events.id', 'DESC')
+                    ->setMaxResults(1);
+
+                $this->queryCondition($queryBuilder, $appendCondition->tags);
+
+                if ($appendCondition->expectedHighestSequenceNumber->isNone()) {
+                    $query .= ' WHERE NOT EXISTS (' . $queryBuilder->getSQL() . ')';
+                } else {
+                    $query .= ' WHERE (' . $queryBuilder->getSQL() . ') = :highestId';
+                    $parameters['highestId'] = $appendCondition->expectedHighestSequenceNumber->value;
+                }
+
+                $parameters = array_merge(
+                    $parameters,
+                    $queryBuilder->getParameters(),
+                );
+
+                $types = array_merge(
+                    $types,
+                    $queryBuilder->getParameterTypes(),
+                );
+            }
+
+            try {
+                $affectedRows = $this->connection->executeStatement($query, $parameters, $types);
+
+                if ($affectedRows === 0 && $appendCondition->expectedHighestSequenceNumber !== null) {
+                    throw new UniqueConstraintViolation();
+                }
+            } catch (UniqueConstraintViolationException $e) {
+                throw new UniqueConstraintViolation($e);
+            }
+        });
     }
 
     /**
@@ -471,7 +585,11 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
         $table->addColumn('custom_headers', Types::JSON)
             ->setNotnull(true);
 
-        $table->setPrimaryKey(['id']);
+        $table->addPrimaryKeyConstraint(
+            PrimaryKeyConstraint::editor()->setColumnNames(
+                UnqualifiedName::unquoted('id'),
+            )->create(),
+        );
         $table->addUniqueIndex(['event_id']);
         $table->addUniqueIndex(['stream', 'playhead']);
         $table->addIndex(['stream', 'playhead', 'archived']);
@@ -487,6 +605,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
             PlayheadHeader::class,
             RecordedOnHeader::class,
             ArchivedHeader::class,
+            TagsHeader::class,
         ];
 
         return array_values(
@@ -652,6 +771,58 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
 
         throw new LockingNotImplemented(
             $this->connection->getDatabasePlatform()::class,
+        );
+    }
+
+    /** @return Closure(): string */
+    private function uniqueParameterGenerator(): Closure
+    {
+        return static function () {
+            static $counter = 0;
+
+            return 'param' . ++$counter;
+        };
+    }
+
+    /** @param list<list<string>> $tagGroups */
+    private function queryCondition(QueryBuilder $builder, array $tagGroups): void
+    {
+        $subqueries = [];
+
+        $uniqueParameterGenerator = $this->uniqueParameterGenerator();
+
+        foreach ($tagGroups as $tags) {
+            $subQueryBuilder = $this->connection->createQueryBuilder()
+                ->select('id')
+                ->from($this->config['table_name']);
+
+            $parameterName = $uniqueParameterGenerator();
+
+            if ($this->isSQLite) {
+                $subQueryBuilder->andWhere("NOT EXISTS(SELECT value FROM JSON_EACH(:{$parameterName}) WHERE value NOT IN (SELECT value FROM JSON_EACH(tags)))");
+            } elseif ($this->isPostgres) {
+                $subQueryBuilder->andWhere("tags @> :{$parameterName}::jsonb");
+            } elseif ($this->isMysql || $this->isMariaDb) {
+                $subQueryBuilder->andWhere("JSON_CONTAINS(tags, :{$parameterName})");
+            } else {
+                throw new RuntimeException('x');
+            }
+
+            $builder->setParameter($parameterName, json_encode($tags));
+
+            $subqueries[] = $subQueryBuilder->getSQL();
+        }
+
+        $joinQueryBuilder = $this->connection->createQueryBuilder()
+            ->select('id')
+            ->from('(' . implode(' UNION ALL ', $subqueries) . ')', 'j')
+            ->groupBy('j.id');
+
+        $builder->innerJoin(
+            'events',
+            '(' . $joinQueryBuilder->getSQL() . ')',
+            'ej',
+            'ej.id = events.id',
         );
     }
 }

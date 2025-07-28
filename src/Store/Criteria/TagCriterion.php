@@ -4,23 +4,18 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store\Criteria;
 
-use InvalidArgumentException;
-
-use function array_unique;
 use function array_values;
 
+/** @experimental */
 final class TagCriterion
 {
-    /** @var list<string> */
+    /** @var list<list<string>> */
     public readonly array $tags;
 
+    /** @param list<string> ...$tags */
     public function __construct(
-        string ...$tags,
+        array ...$tags,
     ) {
-        $this->tags = array_values(array_unique($tags));
-
-        if ($this->tags === []) {
-            throw new InvalidArgumentException('At least one tag must be provided.');
-        }
+        $this->tags = array_values($tags);
     }
 }
