@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\DCB\AppendCondition;
-use Patchlevel\EventSourcing\DCB\HighestSequenceNumber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -557,10 +556,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
 
         $this->store->append(
             $messages,
-            new AppendCondition(
-                [],
-                HighestSequenceNumber::none(),
-            ),
+            new AppendCondition([], 0),
         );
 
         $stream = null;
@@ -608,10 +604,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
 
         $this->store->append(
             $messages,
-            new AppendCondition(
-                [],
-                HighestSequenceNumber::none(),
-            ),
+            new AppendCondition([], 0),
         );
 
         $messages = [
@@ -629,7 +622,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             $messages,
             new AppendCondition(
                 [['profile:' . $profileId1->toString()]],
-                HighestSequenceNumber::none(),
+                0,
             ),
         );
     }

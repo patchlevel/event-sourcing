@@ -11,6 +11,7 @@ use RuntimeException;
 
 use function array_keys;
 use function get_debug_type;
+use function hash;
 use function is_int;
 use function is_string;
 use function sprintf;
@@ -32,6 +33,7 @@ final class AttributeEventTagExtractor implements EventTagExtractor
                 continue;
             }
 
+            /** @var EventTag $attribute */
             $attribute = $attributes[0]->newInstance();
 
             $value = $property->getValue($event);
@@ -46,11 +48,17 @@ final class AttributeEventTagExtractor implements EventTagExtractor
                 );
             }
 
+            $value = (string)$value;
+
+            if ($attribute->hash) {
+                $value = hash($attribute->hash, $value);
+            }
+
             if ($attribute->prefix) {
                 $value = $attribute->prefix . ':' . $value;
             }
 
-            $tags[(string)$value] = true;
+            $tags[$value] = true;
         }
 
         return array_keys($tags);

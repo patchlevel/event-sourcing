@@ -449,11 +449,11 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
 
                 $this->queryCondition($queryBuilder, $appendCondition->tags);
 
-                if ($appendCondition->expectedHighestSequenceNumber->isNone()) {
+                if ($appendCondition->highestSequenceNumber === 0) {
                     $query .= ' WHERE NOT EXISTS (' . $queryBuilder->getSQL() . ')';
                 } else {
                     $query .= ' WHERE (' . $queryBuilder->getSQL() . ') = :highestId';
-                    $parameters['highestId'] = $appendCondition->expectedHighestSequenceNumber->value;
+                    $parameters['highestId'] = $appendCondition->highestSequenceNumber;
                 }
 
                 $parameters = array_merge(
@@ -470,7 +470,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
             try {
                 $affectedRows = $this->connection->executeStatement($query, $parameters, $types);
 
-                if ($affectedRows === 0 && $appendCondition->expectedHighestSequenceNumber !== null) {
+                if ($affectedRows === 0 && $appendCondition->highestSequenceNumber !== null) {
                     throw new UniqueConstraintViolation();
                 }
             } catch (UniqueConstraintViolationException $e) {

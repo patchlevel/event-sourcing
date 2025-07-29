@@ -11,6 +11,7 @@ final class EventTag
 {
     public function __construct(
         public readonly string|null $prefix = null,
+        public readonly string|null $hash = null,
     ) {
     }
 }

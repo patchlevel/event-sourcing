@@ -43,7 +43,7 @@ final class StoreDecisionModelBuilder implements DecisionModelBuilder
             $state,
             new AppendCondition(
                 $projection->groupedTagFilter(),
-                new HighestSequenceNumber($highestId ?? 0),
+                $highestId ?? 0,
             ),
         );
     }

@@ -118,8 +118,8 @@ final class SimpleSetupTaggableStoreBench
                     ProfileId::generate(),
                     'Peter',
                     null,
-                )
-            )
+                ),
+            ),
         ];
 
         $this->store->append($messages);
@@ -136,7 +136,7 @@ final class SimpleSetupTaggableStoreBench
                     ProfileId::generate(),
                     'Peter',
                     null,
-                )
+                ),
             );
         }
 
