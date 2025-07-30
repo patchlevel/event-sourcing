@@ -7,10 +7,11 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
-use Patchlevel\EventSourcing\DCB\AppendCondition;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\AppendCondition;
+use Patchlevel\EventSourcing\Store\AppendConditionNotMet;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\TagCriterion;
@@ -21,6 +22,8 @@ use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
+use Patchlevel\EventSourcing\Store\Query;
+use Patchlevel\EventSourcing\Store\QueryComponent;
 use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -510,7 +513,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         try {
             $stream = $this->store->load(
                 new Criteria(
-                    new TagCriterion(['profile:' . $profileId1->toString()], ['test']),
+                    new TagCriterion(['profile:' . $profileId1->toString()]),
                 ),
             );
 
@@ -532,7 +535,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         }
     }
 
-    public function testAppend(): void
+    public function testAppendAndQuery(): void
     {
         $profileId1 = ProfileId::generate();
         $profileId2 = ProfileId::generate();
@@ -554,19 +557,14 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
                 ])),
         ];
 
-        $this->store->append(
-            $messages,
-            new AppendCondition([], 0),
-        );
+        $this->store->append($messages);
 
         $stream = null;
 
         try {
-            $stream = $this->store->load(
-                new Criteria(
-                    new TagCriterion(['profile:' . $profileId1->toString()], ['test']),
-                ),
-            );
+            $stream = $this->store->query(new Query(
+                new QueryComponent(['profile:' . $profileId1->toString()]),
+            ));
 
             $messages = iterator_to_array($stream);
 
@@ -602,10 +600,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
                 ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()])),
         ];
 
-        $this->store->append(
-            $messages,
-            new AppendCondition([], 0),
-        );
+        $this->store->append($messages);
 
         $messages = [
             Message::create(new ExternEvent('test message'))
@@ -616,12 +611,12 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
                 ])),
         ];
 
-        $this->expectException(UniqueConstraintViolation::class);
+        $this->expectException(AppendConditionNotMet::class);
 
         $this->store->append(
             $messages,
             new AppendCondition(
-                [['profile:' . $profileId1->toString()]],
+                new Query(new QueryComponent(['profile:' . $profileId1->toString()])),
                 0,
             ),
         );

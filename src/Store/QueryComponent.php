@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Store\Criteria;
+namespace Patchlevel\EventSourcing\Store;
 
-/** @experimental */
-final class TagCriterion
+final class QueryComponent
 {
     /** @param list<string> $tags */
     public function __construct(

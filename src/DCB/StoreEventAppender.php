@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\DCB;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\AppendCondition;
+use Patchlevel\EventSourcing\Store\AppendStore;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
-use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
 
 use function array_map;
 
@@ -15,7 +16,7 @@ use function array_map;
 final class StoreEventAppender implements EventAppender
 {
     public function __construct(
-        private readonly TaggableDoctrineDbalStore $store,
+        private readonly AppendStore $store,
         private readonly EventTagExtractor $eventTagExtractor = new AttributeEventTagExtractor(),
     ) {
     }

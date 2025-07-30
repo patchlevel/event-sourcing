@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\DCB;
 use ArrayAccess;
 use LogicException;
 use OutOfBoundsException;
+use Patchlevel\EventSourcing\Store\AppendCondition;
 
 use function array_key_exists;
 

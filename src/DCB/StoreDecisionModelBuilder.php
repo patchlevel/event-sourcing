@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\DCB;
 
-use Patchlevel\EventSourcing\Store\Criteria\Criteria;
-use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\TagCriterion;
-use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\AppendCondition;
+use Patchlevel\EventSourcing\Store\AppendStore;
+use Patchlevel\EventSourcing\Store\Query;
+use Patchlevel\EventSourcing\Store\QueryComponent;
+
+use function array_map;
 
 /** @experimental */
 final class StoreDecisionModelBuilder implements DecisionModelBuilder
 {
     public function __construct(
-        private TaggableDoctrineDbalStore $store,
+        private AppendStore $store,
     ) {
     }
 
@@ -23,12 +25,12 @@ final class StoreDecisionModelBuilder implements DecisionModelBuilder
     ): DecisionModel {
         $projection = new CompositeProjection($projections);
 
-        $stream = $this->store->load(
-            new Criteria(
-                new StreamCriterion('main'),
-                new TagCriterion(...$projection->groupedTagFilter()),
-            ),
-        );
+        $query = new Query(...array_map(
+            static fn (array $tags) => new QueryComponent($tags),
+            $projection->groupedTagFilter(),
+        ));
+
+        $stream = $this->store->query($query);
 
         $state = $projection->initialState();
 
@@ -42,7 +44,7 @@ final class StoreDecisionModelBuilder implements DecisionModelBuilder
         return new DecisionModel(
             $state,
             new AppendCondition(
-                $projection->groupedTagFilter(),
+                $query,
                 $highestId ?? 0,
             ),
         );

@@ -19,7 +19,7 @@ use function sort;
  * @experimental
  * @extends Projection<array<string, mixed>>
  */
-final class CompositeProjection extends Projection
+final class CompositeProjection
 {
     /** @param array<string, Projection> $projections */
     public function __construct(

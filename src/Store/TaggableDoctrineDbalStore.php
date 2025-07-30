@@ -19,7 +19,6 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Clock\SystemClock;
-use Patchlevel\EventSourcing\DCB\AppendCondition;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
@@ -65,7 +64,7 @@ use function str_contains;
 use function str_replace;
 
 /** @experimental */
-final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
+final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, SubscriptionStore, DoctrineSchemaConfigurator
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.
@@ -129,8 +128,8 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
     ): TaggableDoctrineDbalStoreStream {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->config['table_name'], 'events')
-            ->orderBy('events.id', $backwards ? 'DESC' : 'ASC');
+            ->from($this->config['table_name'])
+            ->orderBy('id', $backwards ? 'DESC' : 'ASC');
 
         $this->applyCriteria($builder, $criteria ?? new Criteria());
 
@@ -229,7 +228,17 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
                     $builder->setParameter('event_id', $criterion->eventId, ArrayParameterType::STRING);
                     break;
                 case TagCriterion::class:
-                    $this->queryCondition($builder, $criterion->tags);
+                    if ($this->isSQLite) {
+                        $builder->andWhere('NOT EXISTS(SELECT value FROM JSON_EACH(:tags) WHERE value NOT IN (SELECT value FROM JSON_EACH(tags)))');
+                    } elseif ($this->isPostgres) {
+                        $builder->andWhere('tags @> :tags::jsonb');
+                    } elseif ($this->isMysql || $this->isMariaDb) {
+                        $builder->andWhere('JSON_CONTAINS(tags, :tags)');
+                    } else {
+                        throw new RuntimeException('x');
+                    }
+
+                    $builder->setParameter('tags', json_encode($criterion->tags));
                     break;
                 default:
                     throw new UnsupportedCriterion($criterion::class);
@@ -440,14 +449,14 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
                 implode(' UNION ALL ', $selects),
             );
 
-            if ($appendCondition instanceof AppendCondition && $appendCondition->tags !== []) {
+            if ($appendCondition instanceof AppendCondition && $appendCondition->query->components !== []) {
                 $queryBuilder = $this->connection->createQueryBuilder()
                     ->select('events.id')
                     ->from($this->config['table_name'], 'events')
                     ->orderBy('events.id', 'DESC')
                     ->setMaxResults(1);
 
-                $this->queryCondition($queryBuilder, $appendCondition->tags);
+                $this->queryCondition($queryBuilder, $appendCondition->query);
 
                 if ($appendCondition->highestSequenceNumber === 0) {
                     $query .= ' WHERE NOT EXISTS (' . $queryBuilder->getSQL() . ')';
@@ -469,14 +478,35 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
 
             try {
                 $affectedRows = $this->connection->executeStatement($query, $parameters, $types);
-
-                if ($affectedRows === 0 && $appendCondition->highestSequenceNumber !== null) {
-                    throw new UniqueConstraintViolation();
-                }
             } catch (UniqueConstraintViolationException $e) {
                 throw new UniqueConstraintViolation($e);
             }
+
+            if ($affectedRows === 0 && $appendCondition->highestSequenceNumber !== null) {
+                throw new AppendConditionNotMet($appendCondition);
+            }
         });
+    }
+
+    public function query(Query $query): Stream
+    {
+        $builder = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($this->config['table_name'], 'events')
+            ->orderBy('events.id', 'ASC');
+
+        $this->queryCondition($builder, $query);
+
+        return new TaggableDoctrineDbalStoreStream(
+            $this->connection->executeQuery(
+                $builder->getSQL(),
+                $builder->getParameters(),
+                $builder->getParameterTypes(),
+            ),
+            $this->eventSerializer,
+            $this->headersSerializer,
+            $this->connection->getDatabasePlatform(),
+        );
     }
 
     /**
@@ -775,14 +805,17 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
         };
     }
 
-    /** @param list<list<string>> $tagGroups */
-    private function queryCondition(QueryBuilder $builder, array $tagGroups): void
+    private function queryCondition(QueryBuilder $builder, Query $query): void
     {
+        if ($query->components === []) {
+            return;
+        }
+
         $subqueries = [];
 
         $uniqueParameterGenerator = $this->uniqueParameterGenerator();
 
-        foreach ($tagGroups as $tags) {
+        foreach ($query->components as $component) {
             $subQueryBuilder = $this->connection->createQueryBuilder()
                 ->select('id')
                 ->from($this->config['table_name']);
@@ -799,7 +832,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, SubscriptionStore,
                 throw new RuntimeException('x');
             }
 
-            $builder->setParameter($parameterName, json_encode($tags));
+            $builder->setParameter($parameterName, json_encode($component->tags));
 
             $subqueries[] = $subQueryBuilder->getSQL();
         }
