@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Attribute\EventTag;
 use ReflectionClass;
 use RuntimeException;
+use Stringable;
 
 use function array_keys;
 use function get_debug_type;
@@ -42,13 +43,15 @@ final class AttributeEventTagExtractor implements EventTagExtractor
                 $value = $value->toString();
             }
 
-            if (!is_string($value) && !is_int($value)) {
-                throw new RuntimeException(
-                    sprintf('Event tag value must be a string or an int, %s given', get_debug_type($value)),
-                );
+            if ($value instanceof Stringable || is_int($value)) {
+                $value = (string)$value;
             }
 
-            $value = (string)$value;
+            if (!is_string($value)) {
+                throw new RuntimeException(
+                    sprintf('Event tag value must be stringable, %s given', get_debug_type($value)),
+                );
+            }
 
             if ($attribute->hash) {
                 $value = hash($attribute->hash, $value);
