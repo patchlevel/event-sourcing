@@ -14,4 +14,17 @@ final class Query
     ) {
         $this->components = $components;
     }
+
+    public function add(QueryComponent $component): self
+    {
+        foreach ($this->components as $c) {
+            if ($c->equals($component)) {
+                return $this;
+            }
+        }
+
+        $components = [...$this->components, $component];
+
+        return new self(...$components);
+    }
 }

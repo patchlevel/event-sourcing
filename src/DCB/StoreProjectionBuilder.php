@@ -4,21 +4,24 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\DCB;
 
-use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\AppendStore;
 
 /** @experimental */
-final class StoreDecisionModelBuilder implements DecisionModelBuilder
+final class StoreProjectionBuilder implements ProjectionBuilder
 {
     public function __construct(
         private AppendStore $store,
     ) {
     }
 
-    /** @param array<string, Projection> $projections */
+    /**
+     * @param array<string, Projection> $projections
+     *
+     * @return array<string, mixed>
+     */
     public function build(
         array $projections,
-    ): DecisionModel {
+    ): array {
         $projection = new CompositeProjection($projections);
 
         $query = $projection->query();
@@ -26,19 +29,10 @@ final class StoreDecisionModelBuilder implements DecisionModelBuilder
 
         $state = $projection->initialState();
 
-        $highestId = 0;
-
         foreach ($stream as $message) {
-            $highestId = $stream->index();
             $state = $projection->apply($state, $message);
         }
 
-        return new DecisionModel(
-            $state,
-            new AppendCondition(
-                $query,
-                $highestId ?? 0,
-            ),
-        );
+        return $state;
     }
 }

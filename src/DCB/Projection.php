@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\DCB;
 use Closure;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\QueryComponent;
 use ReflectionClass;
 use RuntimeException;
 
@@ -25,6 +26,11 @@ abstract class Projection
 
     /** @return S */
     abstract public function initialState(): mixed;
+
+    public function queryComponent(): QueryComponent
+    {
+        return new QueryComponent($this->tagFilter());
+    }
 
     /**
      * @param S $state

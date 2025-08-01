@@ -5,15 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\DCB;
 
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\TagsHeader;
+use Patchlevel\EventSourcing\Store\Query;
 
-use function array_diff;
 use function array_map;
-use function array_merge;
-use function array_unique;
-use function array_values;
-use function in_array;
-use function sort;
 
 /**
  * @experimental
@@ -27,36 +21,15 @@ final class CompositeProjection
     ) {
     }
 
-    /** @return list<string> */
-    public function tagFilter(): array
+    public function query(): Query
     {
-        $tags = [];
+        $query = new Query();
 
         foreach ($this->projections as $projection) {
-            $tags = array_merge($tags, $projection->tagFilter());
+            $query = $query->add($projection->queryComponent());
         }
 
-        return array_values(array_unique($tags));
-    }
-
-    /** @return list<list<string>> */
-    public function groupedTagFilter(): array
-    {
-        $result = [];
-
-        foreach ($this->projections as $projection) {
-            $tags = $projection->tagFilter();
-
-            sort($tags);
-
-            if (in_array($tags, $result, true)) {
-                continue;
-            }
-
-            $result[] = $tags;
-        }
-
-        return $result;
+        return $query;
     }
 
     /** @return array<string, mixed> */
@@ -69,12 +42,8 @@ final class CompositeProjection
 
     public function apply(mixed $state, Message $message): mixed
     {
-        $tags = $message->header(TagsHeader::class)->tags;
-
         foreach ($this->projections as $name => $projection) {
-            $neededTags = $projection->tagFilter();
-
-            if (!$this->isSubset($neededTags, $tags)) {
+            if (!$projection->queryComponent()->match($message)) {
                 continue;
             }
 
@@ -82,14 +51,5 @@ final class CompositeProjection
         }
 
         return $state;
-    }
-
-    /**
-     * @param list<string> $needle
-     * @param list<string> $haystack
-     */
-    private function isSubset(array $needle, array $haystack): bool
-    {
-        return empty(array_diff($needle, $haystack));
     }
 }
