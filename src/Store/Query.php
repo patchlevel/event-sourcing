@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+/** @experimental */
 final class Query
 {
     /** @var list<QueryComponent> */

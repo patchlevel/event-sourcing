@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use function array_diff;
 use function sort;
 
+/** @experimental */
 final class QueryComponent
 {
     /** @param list<string> $tags */

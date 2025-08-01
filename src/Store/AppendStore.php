@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Store;
 
 use Patchlevel\EventSourcing\Message\Message;
 
+/** @experimental */
 interface AppendStore
 {
     /** @param iterable<Message> $messages */
