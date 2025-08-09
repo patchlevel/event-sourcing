@@ -7,25 +7,23 @@ namespace Patchlevel\EventSourcing\Store;
 /** @experimental */
 final class Query
 {
-    /** @var list<QueryComponent> */
-    public readonly array $components;
+    /** @var list<SubQuery> */
+    public readonly array $subQueries;
 
     public function __construct(
-        QueryComponent ...$components,
+        SubQuery ...$subQueries,
     ) {
-        $this->components = $components;
+        $this->subQueries = $subQueries;
     }
 
-    public function add(QueryComponent $component): self
+    public function add(SubQuery $subQuery): self
     {
-        foreach ($this->components as $c) {
-            if ($c->equals($component)) {
+        foreach ($this->subQueries as $query) {
+            if ($query->equals($subQuery)) {
                 return $this;
             }
         }
 
-        $components = [...$this->components, $component];
-
-        return new self(...$components);
+        return new self($subQuery, ...$this->subQueries);
     }
 }

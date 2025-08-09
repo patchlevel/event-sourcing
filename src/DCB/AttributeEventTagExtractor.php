@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\DCB;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Attribute\EventTag;
+use Patchlevel\EventSourcing\Stringable;
 use ReflectionClass;
 use RuntimeException;
-use Stringable;
+use Stringable as NativeStringable;
 
 use function array_keys;
 use function get_debug_type;
@@ -39,11 +39,11 @@ final class AttributeEventTagExtractor implements EventTagExtractor
 
             $value = $property->getValue($event);
 
-            if ($value instanceof AggregateRootId) {
+            if ($value instanceof Stringable) {
                 $value = $value->toString();
             }
 
-            if ($value instanceof Stringable || is_int($value)) {
+            if ($value instanceof NativeStringable || is_int($value)) {
                 $value = (string)$value;
             }
 

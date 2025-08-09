@@ -23,7 +23,7 @@ use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\Query;
-use Patchlevel\EventSourcing\Store\QueryComponent;
+use Patchlevel\EventSourcing\Store\SubQuery;
 use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -563,7 +563,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
 
         try {
             $stream = $this->store->query(new Query(
-                new QueryComponent(['profile:' . $profileId1->toString()]),
+                new SubQuery(['profile:' . $profileId1->toString()]),
             ));
 
             $messages = iterator_to_array($stream);
@@ -616,7 +616,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         $this->store->append(
             $messages,
             new AppendCondition(
-                new Query(new QueryComponent(['profile:' . $profileId1->toString()])),
+                new Query(new SubQuery(['profile:' . $profileId1->toString()])),
                 0,
             ),
         );

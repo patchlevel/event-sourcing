@@ -11,7 +11,7 @@ use function array_diff;
 use function sort;
 
 /** @experimental */
-final class QueryComponent
+final class SubQuery
 {
     /** @param list<string> $tags */
     public function __construct(

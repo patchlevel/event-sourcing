@@ -449,7 +449,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
                 implode(' UNION ALL ', $selects),
             );
 
-            if ($appendCondition instanceof AppendCondition && $appendCondition->query->components !== []) {
+            if ($appendCondition instanceof AppendCondition && $appendCondition->query->subQueries !== []) {
                 $queryBuilder = $this->connection->createQueryBuilder()
                     ->select('events.id')
                     ->from($this->config['table_name'], 'events')
@@ -807,7 +807,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
 
     private function queryCondition(QueryBuilder $builder, Query $query): void
     {
-        if ($query->components === []) {
+        if ($query->subQueries === []) {
             return;
         }
 
@@ -815,7 +815,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
 
         $uniqueParameterGenerator = $this->uniqueParameterGenerator();
 
-        foreach ($query->components as $component) {
+        foreach ($query->subQueries as $subQuery) {
             $subQueryBuilder = $this->connection->createQueryBuilder()
                 ->select('id')
                 ->from($this->config['table_name']);
@@ -832,7 +832,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
                 throw new RuntimeException('x');
             }
 
-            $builder->setParameter($parameterName, json_encode($component->tags));
+            $builder->setParameter($parameterName, json_encode($subQuery->tags));
 
             $subqueries[] = $subQueryBuilder->getSQL();
         }

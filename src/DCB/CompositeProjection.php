@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\DCB;
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Query;
-
 use function array_map;
 
 /**
@@ -26,7 +25,7 @@ final class CompositeProjection
         $query = new Query();
 
         foreach ($this->projections as $projection) {
-            $query = $query->add($projection->queryComponent());
+            $query = $query->add($projection->subQuery());
         }
 
         return $query;
@@ -43,10 +42,6 @@ final class CompositeProjection
     public function apply(mixed $state, Message $message): mixed
     {
         foreach ($this->projections as $name => $projection) {
-            if (!$projection->queryComponent()->match($message)) {
-                continue;
-            }
-
             $state[$name] = $projection->apply($state[$name], $message);
         }
 
