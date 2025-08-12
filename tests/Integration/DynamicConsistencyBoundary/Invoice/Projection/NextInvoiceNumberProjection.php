@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Projection;
 
-use Patchlevel\EventSourcing\DCB\ApplyTrait;
+use Patchlevel\EventSourcing\DCB\EventRouter;
 use Patchlevel\EventSourcing\DCB\Projection;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Event\InvoiceCreated;
 
 final class NextInvoiceNumberProjection implements Projection
 {
-    use ApplyTrait;
+    use EventRouter;
 
     /** @return list<string> */
     public function tagFilter(): array

@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\DCB;
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Query;
+
 use function array_map;
 
 /**

@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Projection;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\ApplyTrait;
+use Patchlevel\EventSourcing\DCB\EventRouter;
 use Patchlevel\EventSourcing\DCB\Projection;
-use Patchlevel\EventSourcing\Store\SubQuery;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\CourseId;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Event\CourseDefined;
 
 /** @implements Projection<bool> */
 final class CourseExists implements Projection
 {
-    use ApplyTrait;
+    use EventRouter;
 
     public function __construct(
         private readonly CourseId $courseId,

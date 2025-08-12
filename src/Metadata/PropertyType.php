@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Patchlevel\EventSourcing\Metadata;
 
 use ReflectionParameter;
@@ -7,6 +9,8 @@ use Symfony\Component\TypeInfo\Type;
 use Symfony\Component\TypeInfo\Type\ObjectType;
 use Symfony\Component\TypeInfo\Type\UnionType;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
+
+use function array_map;
 
 class PropertyType
 {
@@ -19,6 +23,7 @@ class PropertyType
 
     /**
      * @param class-string $class
+     *
      * @return array<string>
      */
     public function getEventClassesByPropertyTypes(ReflectionParameter $parameter): array

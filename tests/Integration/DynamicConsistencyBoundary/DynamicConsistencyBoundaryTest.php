@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider;
 use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
 use Patchlevel\EventSourcing\DCB\StoreDecisionModelBuilder;
 use Patchlevel\EventSourcing\DCB\StoreEventAppender;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
@@ -47,7 +47,7 @@ final class DynamicConsistencyBoundaryTest extends TestCase
         $store = new TaggableDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Course/Event']),
-            DefaultHeadersSerializer::createDefault(),
+            (new AttributeEventRegistryFactory())->create([__DIR__ . '/Course/Event']),
         );
 
         $decisionModelBuilder = new StoreDecisionModelBuilder($store);
@@ -85,7 +85,7 @@ final class DynamicConsistencyBoundaryTest extends TestCase
         $store = new TaggableDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Invoice/Event']),
-            DefaultHeadersSerializer::createDefault(),
+            (new AttributeEventRegistryFactory())->create([__DIR__ . '/Invoice/Event']),
         );
 
         $decisionModelBuilder = new StoreDecisionModelBuilder($store);

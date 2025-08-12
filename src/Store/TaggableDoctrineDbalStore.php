@@ -23,6 +23,7 @@ use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
@@ -48,6 +49,7 @@ use RuntimeException;
 
 use function array_fill;
 use function array_filter;
+use function array_map;
 use function array_merge;
 use function array_values;
 use function class_exists;
@@ -97,6 +99,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
+        private readonly EventRegistry $eventRegistry,
         HeadersSerializer|null $headersSerializer = null,
         ClockInterface|null $clock = null,
         array $config = [],
@@ -449,7 +452,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
                 implode(' UNION ALL ', $selects),
             );
 
-            if ($appendCondition instanceof AppendCondition && $appendCondition->query->subQueries !== []) {
+            if ($appendCondition instanceof AppendCondition) {
                 $queryBuilder = $this->connection->createQueryBuilder()
                     ->select('events.id')
                     ->from($this->config['table_name'], 'events')
@@ -816,25 +819,50 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
         $uniqueParameterGenerator = $this->uniqueParameterGenerator();
 
         foreach ($query->subQueries as $subQuery) {
+            if ($subQuery->tags === [] && $subQuery->events === []) {
+                continue;
+            }
+
             $subQueryBuilder = $this->connection->createQueryBuilder()
                 ->select('id')
                 ->from($this->config['table_name']);
 
-            $parameterName = $uniqueParameterGenerator();
+            if ($subQuery->tags !== []) {
+                $tagParameterName = $uniqueParameterGenerator();
 
-            if ($this->isSQLite) {
-                $subQueryBuilder->andWhere("NOT EXISTS(SELECT value FROM JSON_EACH(:{$parameterName}) WHERE value NOT IN (SELECT value FROM JSON_EACH(tags)))");
-            } elseif ($this->isPostgres) {
-                $subQueryBuilder->andWhere("tags @> :{$parameterName}::jsonb");
-            } elseif ($this->isMysql || $this->isMariaDb) {
-                $subQueryBuilder->andWhere("JSON_CONTAINS(tags, :{$parameterName})");
-            } else {
-                throw new RuntimeException('x');
+                if ($this->isSQLite) {
+                    $subQueryBuilder->andWhere("NOT EXISTS(SELECT value FROM JSON_EACH(:{$tagParameterName}) WHERE value NOT IN (SELECT value FROM JSON_EACH(tags)))");
+                } elseif ($this->isPostgres) {
+                    $subQueryBuilder->andWhere("tags @> :{$tagParameterName}::jsonb");
+                } elseif ($this->isMysql || $this->isMariaDb) {
+                    $subQueryBuilder->andWhere("JSON_CONTAINS(tags, :{$tagParameterName})");
+                } else {
+                    throw new RuntimeException('x');
+                }
+
+                $builder->setParameter($tagParameterName, json_encode($subQuery->tags));
             }
 
-            $builder->setParameter($parameterName, json_encode($subQuery->tags));
+            if ($subQuery->events !== []) {
+                $eventParameterName = $uniqueParameterGenerator();
+
+                $subQueryBuilder->andWhere("event_name IN (:{$eventParameterName})");
+
+                $builder->setParameter(
+                    $eventParameterName,
+                    array_map(
+                        fn (string $event) => $this->eventRegistry->eventName($event),
+                        $subQuery->events,
+                    ),
+                    ArrayParameterType::STRING,
+                );
+            }
 
             $subqueries[] = $subQueryBuilder->getSQL();
+        }
+
+        if ($subqueries === []) {
+            return;
         }
 
         $joinQueryBuilder = $this->connection->createQueryBuilder()

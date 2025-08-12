@@ -12,16 +12,15 @@ use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionUnionType;
+
 use function array_key_exists;
 use function array_keys;
 use function array_map;
 use function array_merge;
 use function class_exists;
 
-/**
- * @experimental
- */
-trait ApplyTrait
+/** @experimental */
+trait EventRouter
 {
     /** @param array<class-string, string>|null $applyMethods */
     private array|null $applyMethods = null;
@@ -46,10 +45,11 @@ trait ApplyTrait
     {
         return new SubQuery(
             $this->tagFilter(),
-            // $this->eventTypeFilter(),
+            $this->eventTypeFilter(),
         );
     }
 
+    /** @return list<class-string> */
     public function eventTypeFilter(): array
     {
         return array_keys($this->applyMethods());
@@ -162,5 +162,5 @@ trait ApplyTrait
     }
 
     /** @return list<string> */
-    public abstract function tagFilter(): array;
+    abstract public function tagFilter(): array;
 }
