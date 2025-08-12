@@ -626,6 +626,36 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         $this->expectedStreamEquals([$message1, $message2], $stream);
     }
 
+    public function testQueryStream(): void
+    {
+        $profileId1 = ProfileId::generate();
+        $profileId2 = ProfileId::generate();
+
+        $message1 = Message::create(new ProfileCreated($profileId1, 'test'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()]));
+        $message2 = Message::create(new ProfileCreated($profileId2, 'test'))
+            ->withHeader(new StreamNameHeader('bar'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()]));
+        $message3 = Message::create(new ExternEvent('test message'))
+            ->withHeader(new StreamNameHeader('baz'))
+            ->withHeader(new TagsHeader([
+                'profile:' . $profileId1->toString(),
+                'profile:' . $profileId2->toString(),
+            ]));
+
+        $this->store->append([$message1, $message2, $message3]);
+
+        $stream = $this->store->query(new Query(
+            new SubQuery(streamName: 'foo'),
+            new SubQuery(streamName: 'baz'),
+        ));
+
+        $this->expectedStreamEquals([$message1, $message3], $stream);
+    }
+
     public function testQueryTagAndEvent(): void
     {
         $profileId1 = ProfileId::generate();
@@ -669,21 +699,25 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
             ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()]));
         $message3 = Message::create(new ExternEvent('test message'))
-            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new StreamNameHeader('main'))
             ->withHeader(new TagsHeader([
                 'profile:' . $profileId1->toString(),
                 'profile:' . $profileId2->toString(),
             ]));
+        $message4 = Message::create(new ExternEvent('test message'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new TagsHeader([]));
 
-        $this->store->append([$message1, $message2, $message3]);
+        $this->store->append([$message1, $message2, $message3, $message4]);
 
         $stream = $this->store->query(new Query(
             new SubQuery(['profile:' . $profileId1->toString()], [ProfileCreated::class]),
             new SubQuery(['profile:' . $profileId2->toString()]),
             new SubQuery(events: [ExternEvent::class]),
+            new SubQuery(streamName: 'foo'),
         ));
 
-        $this->expectedStreamEquals([$message1, $message2, $message3], $stream);
+        $this->expectedStreamEquals([$message1, $message2, $message3, $message4], $stream);
     }
 
     public function testAppendRaceCondition(): void

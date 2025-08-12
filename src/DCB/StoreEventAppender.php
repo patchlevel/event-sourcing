@@ -18,15 +18,19 @@ final class StoreEventAppender implements EventAppender
     public function __construct(
         private readonly AppendStore $store,
         private readonly EventTagExtractor $eventTagExtractor = new AttributeEventTagExtractor(),
+        private readonly string $defaultStreamName = 'main',
     ) {
     }
 
     /** @param iterable<object> $events */
-    public function append(iterable $events, AppendCondition|null $appendCondition = null): void
-    {
+    public function append(
+        iterable $events,
+        AppendCondition|null $appendCondition = null,
+        string|null $streamName = null,
+    ): void {
         $messages = array_map(
             fn (object $event) => Message::create($event)
-                ->withHeader(new StreamNameHeader('main'))
+                ->withHeader(new StreamNameHeader($streamName ?? $this->defaultStreamName))
                 ->withHeader(new TagsHeader($this->eventTagExtractor->extract($event))),
             $events,
         );

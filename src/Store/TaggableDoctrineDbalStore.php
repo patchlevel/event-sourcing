@@ -113,6 +113,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
             'lock_id' => self::DEFAULT_LOCK_ID,
             'lock_timeout' => -1,
             'keep_index' => false,
+            'default_stream_name' => 'main',
         ], $config);
 
         $platform = $this->connection->getDatabasePlatform();
@@ -295,7 +296,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
 
                     $parameters[] = $message->hasHeader(StreamNameHeader::class)
                         ? $message->header(StreamNameHeader::class)->streamName
-                        : 'default';
+                        : $this->config['default_stream_name'];
 
                     $parameters[] = $message->hasHeader(PlayheadHeader::class)
                         ? $message->header(PlayheadHeader::class)->playhead
@@ -411,7 +412,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
 
                 $parameters['stream' . $position] = $message->hasHeader(StreamNameHeader::class)
                     ? $message->header(StreamNameHeader::class)->streamName
-                    : 'default';
+                    : $this->config['default_stream_name'];
 
                 $parameters['playhead' . $position] = $message->hasHeader(PlayheadHeader::class)
                     ? $message->header(PlayheadHeader::class)->playhead
@@ -819,13 +820,20 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
         $uniqueParameterGenerator = $this->uniqueParameterGenerator();
 
         foreach ($query->subQueries as $subQuery) {
-            if ($subQuery->tags === [] && $subQuery->events === []) {
+            if ($subQuery->empty()) {
                 continue;
             }
 
             $subQueryBuilder = $this->connection->createQueryBuilder()
                 ->select('id')
                 ->from($this->config['table_name']);
+
+            if ($subQuery->streamName !== null) {
+                $streamNameParameterName = $uniqueParameterGenerator();
+
+                $subQueryBuilder->andWhere("stream = :{$streamNameParameterName}");
+                $builder->setParameter($streamNameParameterName, $subQuery->streamName);
+            }
 
             if ($subQuery->tags !== []) {
                 $tagParameterName = $uniqueParameterGenerator();

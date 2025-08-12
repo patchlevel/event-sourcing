@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 
 use function array_diff;
@@ -21,6 +22,7 @@ final class SubQuery
     public function __construct(
         public readonly array $tags = [],
         public readonly array $events = [],
+        public readonly string|null $streamName = null,
     ) {
         sort($tags);
         sort($events);
@@ -36,6 +38,10 @@ final class SubQuery
             return false;
         }
 
+        if ($this->streamName !== null && $message->header(StreamNameHeader::class)->streamName !== $this->streamName) {
+            return false;
+        }
+
         if ($this->events !== [] && !in_array($message->event()::class, $this->events, true)) {
             return false;
         }
@@ -45,7 +51,8 @@ final class SubQuery
 
     public function equals(self $queryComponent): bool
     {
-        return $this->tags === $queryComponent->tags
+        return $this->streamName === $queryComponent->streamName
+            && $this->tags === $queryComponent->tags
             && $this->events === $queryComponent->events;
     }
 
@@ -56,5 +63,10 @@ final class SubQuery
     private function isSubset(array $needle, array $haystack): bool
     {
         return empty(array_diff($needle, $haystack));
+    }
+
+    public function empty(): bool
+    {
+        return $this->streamName === null && $this->tags === [] && $this->events === [];
     }
 }

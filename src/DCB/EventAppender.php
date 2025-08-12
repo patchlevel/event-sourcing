@@ -10,5 +10,9 @@ use Patchlevel\EventSourcing\Store\AppendCondition;
 interface EventAppender
 {
     /** @param iterable<object> $events */
-    public function append(iterable $events, AppendCondition|null $appendCondition = null): void;
+    public function append(
+        iterable $events,
+        AppendCondition|null $appendCondition = null,
+        string|null $streamName = null,
+    ): void;
 }

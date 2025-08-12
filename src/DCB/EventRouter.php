@@ -46,6 +46,7 @@ trait EventRouter
         return new SubQuery(
             $this->tagFilter(),
             $this->eventTypeFilter(),
+            $this->streamName(),
         );
     }
 
@@ -163,4 +164,9 @@ trait EventRouter
 
     /** @return list<string> */
     abstract public function tagFilter(): array;
+
+    public function streamName(): string|null
+    {
+        return null;
+    }
 }
