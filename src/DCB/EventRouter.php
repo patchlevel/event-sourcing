@@ -21,8 +21,8 @@ use function class_exists;
 
 /**
  * @experimental
- * @require-implements Projection<S>
- * @template S of mixed
+ * @require-implements Projection
+ * @template S = mixed
  */
 trait EventRouter
 {
