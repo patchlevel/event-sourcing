@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+use function array_values;
+
 /** @experimental */
 final class Query
 {
@@ -13,7 +15,7 @@ final class Query
     public function __construct(
         SubQuery ...$subQueries,
     ) {
-        $this->subQueries = $subQueries;
+        $this->subQueries = array_values($subQueries);
     }
 
     public function add(SubQuery $subQuery): self

@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Store\SubQuery;
 
 /**
  * @experimental
- * @template S as mixed
+ * @template S of mixed
  */
 interface Projection
 {

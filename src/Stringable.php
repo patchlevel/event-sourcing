@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing;
 
 use Patchlevel\EventSourcing\Serializer\Normalizer\StringableNormalizer;
 
+/** @experimental */
 #[StringableNormalizer]
 interface Stringable
 {

@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -33,6 +34,7 @@ final class SimpleSetupTaggableStoreBench
         $this->store = new TaggableDoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
+            (new AttributeEventRegistryFactory())->create([__DIR__ . '/BasicImplementation/Events']),
         );
 
         $this->repository = new DefaultRepository($this->store, Profile::metadata());

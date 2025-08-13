@@ -14,11 +14,12 @@ use function array_key_exists;
 /**
  * @experimental
  * @psalm-immutable
- * @implements ArrayAccess<string, mixed>
+ * @implements ArrayAccess<key-of<T>, value-of<T>>
+ * @template T as array<string, mixed>
  */
 final class DecisionModel implements ArrayAccess
 {
-    /** @param array<string, mixed> $state */
+    /** @param T $state */
     public function __construct(
         public readonly array $state,
         public readonly AppendCondition $appendCondition,
@@ -30,6 +31,13 @@ final class DecisionModel implements ArrayAccess
         return array_key_exists($offset, $this->state);
     }
 
+    /**
+     * @param TKey $offset
+     *
+     * @return T[TKey]
+     *
+     * @template TKey of key-of<T>
+     */
     public function offsetGet(mixed $offset): mixed
     {
         if (!$this->offsetExists($offset)) {

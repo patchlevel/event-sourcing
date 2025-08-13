@@ -9,10 +9,7 @@ use Patchlevel\EventSourcing\Store\Query;
 
 use function array_map;
 
-/**
- * @experimental
- * @extends Projection<array<string, mixed>>
- */
+/** @experimental */
 final class CompositeProjection
 {
     /** @param array<string, Projection> $projections */
@@ -40,6 +37,11 @@ final class CompositeProjection
         }, $this->projections);
     }
 
+    /**
+     * @param array<string, mixed> $state
+     *
+     * @return array<string, mixed>
+     */
     public function apply(mixed $state, Message $message): mixed
     {
         foreach ($this->projections as $name => $projection) {

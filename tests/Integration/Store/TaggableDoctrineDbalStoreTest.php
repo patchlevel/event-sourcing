@@ -480,6 +480,8 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             $stream?->close();
         }
 
+        $stream = null;
+
         try {
             $stream = $this->store->load(new Criteria(new StreamCriterion('*-*')));
 

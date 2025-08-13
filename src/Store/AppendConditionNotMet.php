@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 /** @experimental */
-class AppendConditionNotMet extends StoreException
+final class AppendConditionNotMet extends StoreException
 {
     public function __construct(
         public readonly AppendCondition $appendCondition,

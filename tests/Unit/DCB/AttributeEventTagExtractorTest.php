@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Attribute\EventTag;
 use Patchlevel\EventSourcing\DCB\AttributeEventTagExtractor;
 use PHPUnit\Framework\TestCase;
 
-class AttributeEventTagExtractorTest extends TestCase
+final class AttributeEventTagExtractorTest extends TestCase
 {
     public function testExtractEmpty(): void
     {

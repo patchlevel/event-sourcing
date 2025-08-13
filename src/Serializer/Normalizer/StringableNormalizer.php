@@ -13,8 +13,10 @@ use Patchlevel\Hydrator\Normalizer\TypeAwareNormalizer;
 use Symfony\Component\TypeInfo\Type;
 use Symfony\Component\TypeInfo\Type\ObjectType;
 
+use function is_a;
 use function is_string;
 
+/** @experimental */
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_CLASS)]
 final class StringableNormalizer implements Normalizer, TypeAwareNormalizer
 {
@@ -72,6 +74,10 @@ final class StringableNormalizer implements Normalizer, TypeAwareNormalizer
 
         if (!$type instanceof ObjectType) {
             return;
+        }
+
+        if (is_a($type->getClassName(), Stringable::class, true) === false) {
+            throw InvalidType::unsupportedType(Stringable::class, $type->getClassName());
         }
 
         $this->stringableClass = $type->getClassName();

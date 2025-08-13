@@ -82,7 +82,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
 
     private readonly ClockInterface $clock;
 
-    /** @var array{table_name: string, locking: bool, lock_id: int, lock_timeout: int, keep_index: bool} */
+    /** @var array{table_name: string, locking: bool, lock_id: int, lock_timeout: int, keep_index: bool, default_stream_name: string} */
     private readonly array $config;
 
     private bool $hasLock = false;
@@ -95,7 +95,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
 
     private readonly bool $isSQLite;
 
-    /** @param array{table_name?: string, locking?: bool, lock_id?: int, lock_timeout?: int, keep_index?: bool} $config */
+    /** @param array{table_name?: string, locking?: bool, lock_id?: int, lock_timeout?: int, keep_index?: bool, default_stream_name?: string} $config */
     public function __construct(
         private readonly Connection $connection,
         private readonly EventSerializer $eventSerializer,
@@ -486,7 +486,7 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
                 throw new UniqueConstraintViolation($e);
             }
 
-            if ($affectedRows === 0 && $appendCondition->highestSequenceNumber !== null) {
+            if ($affectedRows === 0 && $appendCondition && $appendCondition->highestSequenceNumber !== null) {
                 throw new AppendConditionNotMet($appendCondition);
             }
         });
@@ -805,7 +805,9 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
         return static function () {
             static $counter = 0;
 
-            return 'param' . ++$counter;
+            ++$counter;
+
+            return 'param' . $counter;
         };
     }
 

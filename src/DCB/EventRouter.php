@@ -19,10 +19,14 @@ use function array_map;
 use function array_merge;
 use function class_exists;
 
-/** @experimental */
+/**
+ * @experimental
+ * @require-implements Projection<S>
+ * @template S of mixed
+ */
 trait EventRouter
 {
-    /** @param array<class-string, string>|null $applyMethods */
+    /** @var array<class-string, string>|null $applyMethods */
     private array|null $applyMethods = null;
 
     public function apply(mixed $state, Message $message): mixed
@@ -35,6 +39,7 @@ trait EventRouter
         $applyMethods = $this->applyMethods();
 
         if (array_key_exists($event::class, $applyMethods)) {
+            /* @phpstan-ignore return.type */
             return $this->{$applyMethods[$event::class]}($state, $event);
         }
 
@@ -90,7 +95,9 @@ trait EventRouter
                 }
 
                 if ($hasOneEmptyApply) {
-                    throw new DuplicateEmptyApplyAttribute($method->getName());
+                    throw ApplyMethodDetectionError::duplicateEmptyApplyAttribute(
+                        $method->getName(),
+                    );
                 }
 
                 $hasOneEmptyApply = true;
@@ -98,16 +105,22 @@ trait EventRouter
             }
 
             if ($hasOneEmptyApply && $hasOneNonEmptyApply) {
-                throw new MixedApplyAttributeUsage($method->getName());
+                throw ApplyMethodDetectionError::mixedApplyAttributeUsage(
+                    $method->getName(),
+                );
             }
 
             foreach ($eventClasses as $eventClass) {
                 if (!class_exists($eventClass)) {
-                    throw new ArgumentTypeIsNotAClass($method->getName(), $eventClass);
+                    throw ApplyMethodDetectionError::argumentTypeIsNotAClass(
+                        $method->getName(),
+                        $eventClass,
+                    );
                 }
 
                 if (array_key_exists($eventClass, $this->applyMethods)) {
-                    throw new DuplicateApplyMethod(
+                    throw ApplyMethodDetectionError::duplicateApplyMethod(
+                        static::class,
                         $eventClass,
                         $this->applyMethods[$eventClass],
                         $method->getName(),
@@ -127,18 +140,18 @@ trait EventRouter
         $parameters = $method->getParameters();
 
         if (array_key_exists(1, $parameters) === false) {
-            throw new ParameterIsMissing($method->getName(), 1);
+            throw ApplyMethodDetectionError::parameterIsMissing($method->getName(), 1);
         }
 
         $propertyType = $parameters[1]->getType();
         $methodName = $method->getName();
 
         if ($propertyType === null) {
-            throw new ArgumentTypeIsMissing($methodName);
+            throw ApplyMethodDetectionError::argumentTypeIsMissing($methodName);
         }
 
         if ($propertyType instanceof ReflectionIntersectionType) {
-            throw new ArgumentTypeIsMissing($methodName);
+            throw ApplyMethodDetectionError::argumentTypeIsMissing($methodName);
         }
 
         if ($propertyType instanceof ReflectionNamedType) {
@@ -150,7 +163,7 @@ trait EventRouter
                 static function (ReflectionNamedType|ReflectionIntersectionType $reflectionType) use ($methodName,
                 ): string {
                     if ($reflectionType instanceof ReflectionIntersectionType) {
-                        throw new ArgumentTypeIsMissing($methodName);
+                        throw ApplyMethodDetectionError::argumentTypeIsMissing($methodName);
                     }
 
                     return $reflectionType->getName();

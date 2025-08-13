@@ -22,9 +22,9 @@ final class StoreEventAppender implements EventAppender
     ) {
     }
 
-    /** @param iterable<object> $events */
+    /** @param list<object> $events */
     public function append(
-        iterable $events,
+        array $events,
         AppendCondition|null $appendCondition = null,
         string|null $streamName = null,
     ): void {

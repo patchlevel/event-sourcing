@@ -77,6 +77,8 @@ final class DynamicConsistencyBoundaryTest extends TestCase
         $commandBus->dispatch(new SubscribeStudentToCourse($student1Id, $courseId));
         $commandBus->dispatch(new SubscribeStudentToCourse($student2Id, $courseId));
 
+        $stream = $store->load();
+
         $this->assertTrue(true);
     }
 
