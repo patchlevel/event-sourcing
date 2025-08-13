@@ -52,6 +52,7 @@ trait EventRouter
             $this->tagFilter(),
             $this->eventTypeFilter(),
             $this->streamName(),
+            $this->lastEventIsEnough(),
         );
     }
 
@@ -181,5 +182,10 @@ trait EventRouter
     public function streamName(): string|null
     {
         return null;
+    }
+
+    public function lastEventIsEnough(): bool
+    {
+        return false;
     }
 }

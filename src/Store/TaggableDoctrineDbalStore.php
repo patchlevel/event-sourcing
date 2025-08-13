@@ -803,11 +803,10 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
     private function uniqueParameterGenerator(): Closure
     {
         return static function () {
+            /** @var int $counter */
             static $counter = 0;
 
-            ++$counter;
-
-            return 'param' . $counter;
+            return 'param' . ++$counter;
         };
     }
 
@@ -866,6 +865,10 @@ final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, Subsc
                     ),
                     ArrayParameterType::STRING,
                 );
+            }
+
+            if ($subQuery->onlyLastEvent) {
+                $subQueryBuilder->select('MAX(id) AS id');
             }
 
             $subqueries[] = $subQueryBuilder->getSQL();

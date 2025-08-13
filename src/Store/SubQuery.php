@@ -23,6 +23,7 @@ final class SubQuery
         public readonly array $tags = [],
         public readonly array $events = [],
         public readonly string|null $streamName = null,
+        public readonly bool $onlyLastEvent = false,
     ) {
         sort($tags);
         sort($events);
@@ -53,7 +54,8 @@ final class SubQuery
     {
         return $this->streamName === $queryComponent->streamName
             && $this->tags === $queryComponent->tags
-            && $this->events === $queryComponent->events;
+            && $this->events === $queryComponent->events
+            && $this->onlyLastEvent === $queryComponent->onlyLastEvent;
     }
 
     /**
@@ -67,6 +69,8 @@ final class SubQuery
 
     public function empty(): bool
     {
-        return $this->streamName === null && $this->tags === [] && $this->events === [];
+        return $this->streamName === null
+            && $this->tags === []
+            && $this->events === [];
     }
 }

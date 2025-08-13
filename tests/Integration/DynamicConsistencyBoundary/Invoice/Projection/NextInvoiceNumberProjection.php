@@ -27,6 +27,11 @@ final class NextInvoiceNumberProjection implements Projection
     #[Apply]
     public function applyInvoiceCreated(int $state, InvoiceCreated $event): int
     {
-        return $state + 1;
+        return $event->invoiceNumber + 1;
+    }
+
+    public function lastEventIsEnough(): bool
+    {
+        return true;
     }
 }
