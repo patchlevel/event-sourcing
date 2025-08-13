@@ -24,19 +24,17 @@ use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\Query;
-use Patchlevel\EventSourcing\Store\Stream;
 use Patchlevel\EventSourcing\Store\SubQuery;
 use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ExternEvent;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\PhpunitHelper;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Psr\Clock\ClockInterface;
-use RuntimeException;
 
-use function count;
 use function iterator_to_array;
 use function json_decode;
 use function sprintf;
@@ -44,6 +42,8 @@ use function sprintf;
 #[CoversNothing]
 final class TaggableDoctrineDbalStoreTest extends TestCase
 {
+    use PhpunitHelper;
+
     private Connection $connection;
     private TaggableDoctrineDbalStore $store;
 
@@ -567,7 +567,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         ];
 
         $this->store->append($messages);
-        $this->expectedStream($messages);
+        self::assertStreamEquals($messages, $this->store->load());
     }
 
     public function testQueryTags(): void
@@ -596,7 +596,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             new SubQuery(['profile:' . $profileId1->toString()]),
         ));
 
-        $this->expectedStreamEquals([$message1, $message3], $stream);
+        self::assertStreamEquals([$message1, $message3], $stream);
     }
 
     public function testQueryEvents(): void
@@ -625,7 +625,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             new SubQuery(events: [ProfileCreated::class]),
         ));
 
-        $this->expectedStreamEquals([$message1, $message2], $stream);
+        self::assertStreamEquals([$message1, $message2], $stream);
     }
 
     public function testQueryStream(): void
@@ -655,7 +655,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             new SubQuery(streamName: 'baz'),
         ));
 
-        $this->expectedStreamEquals([$message1, $message3], $stream);
+        self::assertStreamEquals([$message1, $message3], $stream);
     }
 
     public function testQueryTagAndEvent(): void
@@ -684,7 +684,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             new SubQuery(['profile:' . $profileId1->toString()], [ProfileCreated::class]),
         ));
 
-        $this->expectedStreamEquals([$message1], $stream);
+        self::assertStreamEquals([$message1], $stream);
     }
 
     public function testComplexQuery(): void
@@ -719,7 +719,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             new SubQuery(streamName: 'foo'),
         ));
 
-        $this->expectedStreamEquals([$message1, $message2, $message3, $message4], $stream);
+        self::assertStreamEquals([$message1, $message2, $message3, $message4], $stream);
     }
 
     public function testAppendRaceCondition(): void
@@ -831,7 +831,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             ),
         );
 
-        $this->expectedStream([...$messages, $message]);
+        self::assertStreamEquals([...$messages, $message], $this->store->load());
     }
 
     public function testStreams(): void
@@ -892,38 +892,5 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         $streams = $this->store->streams();
 
         self::assertEquals(['foo'], $streams);
-    }
-
-    /** @param list<Message> $messages */
-    private function expectedStream(array $messages): void
-    {
-        $this->expectedStreamEquals($messages, $this->store->load());
-    }
-
-    /** @param list<Message> $expectedMessages */
-    private function expectedStreamEquals(array $expectedMessages, Stream $stream): void
-    {
-        $index = 0;
-
-        $messages = iterator_to_array($stream);
-
-        self::assertEquals(count($expectedMessages), count($messages), 'Expected and actual message count do not match');
-
-        foreach ($messages as $message) {
-            $expectedMessage = $expectedMessages[$index] ?? null;
-
-            if ($expectedMessage === null) {
-                throw new RuntimeException(sprintf('Expected message at index %d not found', $index));
-            }
-
-            $this->assertEquals(
-                $expectedMessage->header(StreamNameHeader::class)->streamName,
-                $message->header(StreamNameHeader::class)->streamName,
-            );
-
-            $this->assertEquals($expectedMessage->event(), $message->event());
-
-            ++$index;
-        }
     }
 }

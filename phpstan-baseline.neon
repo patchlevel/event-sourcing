@@ -109,6 +109,36 @@ parameters:
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
+			message: '#^Cannot use \+\+ on mixed\.$#'
+			identifier: preInc.type
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStore.php
+
+		-
+			message: '#^Method Patchlevel\\EventSourcing\\Store\\TaggableDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Parameter \#1 \$playhead of class Patchlevel\\EventSourcing\\Store\\Header\\PlayheadHeader constructor expects int\<1, max\>, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Parameter \#1 \$tags of class Patchlevel\\EventSourcing\\Store\\Header\\TagsHeader constructor expects list\<string\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
 			message: '#^Generator expects key type int, int\<1, max\>\|null given\.$#'
 			identifier: generator.keyType
 			count: 1
