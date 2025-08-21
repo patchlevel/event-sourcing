@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\DCB;
 
+use Patchlevel\EventSourcing\Aggregate\CustomId;
 use Patchlevel\EventSourcing\Attribute\EventTag;
 use Patchlevel\EventSourcing\DCB\AttributeEventTagExtractor;
 use PHPUnit\Framework\TestCase;
@@ -15,6 +16,22 @@ final class AttributeEventTagExtractorTest extends TestCase
         $extractor = new AttributeEventTagExtractor();
 
         $event = new class {
+        };
+
+        $tags = $extractor->extract($event);
+
+        self::assertSame([], $tags);
+    }
+
+    public function testExtractClassWithoutAttributes(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class {
+            public function __construct(
+                public string $name = 'baz',
+            ) {
+            }
         };
 
         $tags = $extractor->extract($event);
@@ -39,6 +56,23 @@ final class AttributeEventTagExtractorTest extends TestCase
         $tags = $extractor->extract($event);
 
         self::assertSame(['foo', 'bar:baz'], $tags);
+    }
+
+    public function testExtractStringable(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class (new CustomId('foo')) {
+            public function __construct(
+                #[EventTag]
+                public CustomId $id,
+            ) {
+            }
+        };
+
+        $tags = $extractor->extract($event);
+
+        self::assertSame(['foo'], $tags);
     }
 
     public function testExtractWithHash(): void

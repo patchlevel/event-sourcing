@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
+use function array_merge;
 use function array_values;
 
 /** @experimental */
@@ -20,12 +21,33 @@ final class Query
 
     public function add(SubQuery $subQuery): self
     {
-        foreach ($this->subQueries as $query) {
-            if ($query->equals($subQuery)) {
-                return $this;
+        return new self(...array_merge($this->subQueries, [$subQuery]));
+    }
+
+    /**
+     * Optimize the query by removing sub-queries that are included in other sub-queries.
+     */
+    public function optimize(): Query
+    {
+        $queries = $this->subQueries;
+
+        foreach ($queries as $key => $a) {
+            foreach ($queries as $b) {
+                if ($a === $b) {
+                    continue;
+                }
+
+                if ($b->empty() && !$b->onlyLastEvent) {
+                    return new self();
+                }
+
+                if ($b->includes($a)) {
+                    unset($queries[$key]);
+                    continue 2;
+                }
             }
         }
 
-        return new self($subQuery, ...$this->subQueries);
+        return new self(...$queries);
     }
 }

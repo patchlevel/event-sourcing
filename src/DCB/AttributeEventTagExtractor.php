@@ -7,15 +7,12 @@ namespace Patchlevel\EventSourcing\DCB;
 use Patchlevel\EventSourcing\Attribute\EventTag;
 use Patchlevel\EventSourcing\Stringable;
 use ReflectionClass;
-use RuntimeException;
 use Stringable as NativeStringable;
 
 use function array_keys;
-use function get_debug_type;
 use function hash;
 use function is_int;
 use function is_string;
-use function sprintf;
 
 /** @experimental */
 final class AttributeEventTagExtractor implements EventTagExtractor
@@ -48,8 +45,10 @@ final class AttributeEventTagExtractor implements EventTagExtractor
             }
 
             if (!is_string($value)) {
-                throw new RuntimeException(
-                    sprintf('Event tag value must be stringable, %s given', get_debug_type($value)),
+                throw EventTagExtractorError::invalidValueType(
+                    $event::class,
+                    $property->getName(),
+                    $value,
                 );
             }
 

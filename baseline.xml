@@ -176,15 +176,6 @@
       <code><![CDATA[(int)$data['playhead']]]></code>
     </ArgumentTypeCoercion>
   </file>
-  <file src="src/Store/TaggableDoctrineDbalStore.php">
-    <MixedAssignment>
-      <code><![CDATA[$counter]]></code>
-    </MixedAssignment>
-    <MixedOperand>
-      <code><![CDATA[$counter]]></code>
-      <code><![CDATA[$counter]]></code>
-    </MixedOperand>
-  </file>
   <file src="src/Store/TaggableDoctrineDbalStoreStream.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[(int)$data['playhead']]]></code>

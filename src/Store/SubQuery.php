@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 
 use function array_diff;
 use function in_array;
-use function sort;
 
 /** @experimental */
 final class SubQuery
@@ -25,52 +24,57 @@ final class SubQuery
         public readonly string|null $streamName = null,
         public readonly bool $onlyLastEvent = false,
     ) {
-        sort($tags);
-        sort($events);
     }
 
     public function match(Message $message): bool
     {
-        if ($this->tags === [] && $this->events === []) {
-            return true;
-        }
-
-        if (!$message->hasHeader(TagsHeader::class)) {
+        if (
+            $this->streamName !== null
+            && (!$message->hasHeader(StreamNameHeader::class)
+                || $message->header(StreamNameHeader::class)->streamName !== $this->streamName)
+        ) {
             return false;
         }
 
-        if ($this->streamName !== null && $message->header(StreamNameHeader::class)->streamName !== $this->streamName) {
+        if (
+            $this->tags !== []
+            && (!$message->hasHeader(TagsHeader::class)
+                || !self::isSubset($this->tags, $message->header(TagsHeader::class)->tags))
+        ) {
             return false;
         }
 
-        if ($this->events !== [] && !in_array($message->event()::class, $this->events, true)) {
-            return false;
-        }
-
-        return $this->isSubset($this->tags, $message->header(TagsHeader::class)->tags);
-    }
-
-    public function equals(self $queryComponent): bool
-    {
-        return $this->streamName === $queryComponent->streamName
-            && $this->tags === $queryComponent->tags
-            && $this->events === $queryComponent->events
-            && $this->onlyLastEvent === $queryComponent->onlyLastEvent;
-    }
-
-    /**
-     * @param list<string> $needle
-     * @param list<string> $haystack
-     */
-    private function isSubset(array $needle, array $haystack): bool
-    {
-        return empty(array_diff($needle, $haystack));
+        return $this->events === [] || in_array($message->event()::class, $this->events, true);
     }
 
     public function empty(): bool
     {
-        return $this->streamName === null
-            && $this->tags === []
-            && $this->events === [];
+        return $this->streamName === null && $this->tags === [] && $this->events === [];
+    }
+
+    public function includes(SubQuery $other): bool
+    {
+        if ($this->streamName !== null && $this->streamName !== $other->streamName) {
+            return false;
+        }
+
+        if (!self::isSubset($this->tags, $other->tags)) {
+            return false;
+        }
+
+        if (!self::isSubset($this->events, $other->events)) {
+            return false;
+        }
+
+        return !$this->onlyLastEvent || $other->onlyLastEvent;
+    }
+
+    /**
+     * @param list<string> $subject
+     * @param list<string> $off
+     */
+    private static function isSubset(array $subject, array $off): bool
+    {
+        return empty(array_diff($subject, $off));
     }
 }

@@ -20,13 +20,14 @@ final class CompositeProjection
 
     public function query(): Query
     {
-        $query = new Query();
+        $query = new Query(
+            ...array_map(
+                static fn (Projection $projection) => $projection->subQuery(),
+                $this->projections,
+            ),
+        );
 
-        foreach ($this->projections as $projection) {
-            $query = $query->add($projection->subQuery());
-        }
-
-        return $query;
+        return $query->optimize();
     }
 
     /** @return array<string, mixed> */
