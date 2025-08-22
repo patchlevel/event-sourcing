@@ -21,14 +21,14 @@ DCB is a great fit when business rules span multiple streams.
 Since this approach differs slightly from the standard "aggregate" event sourcing principle, 
 we will use the [Getting Started](./getting_started.md) example and build it as a DCB variant.
 
-In our litt le getting started example, we manage hotels.
+In our little getting started example, we manage hotels.
 We keep the example small, so we can only create hotels and let guests check in and check out.
 
 ## Define some events
 
 First we define the events that happen in our system.
 
-A hotel can be created with a `name` and a `id`:
+A hotel can be created with an ID and a name. In DCB we also tag the hotelId so projections can filter by this hotel.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
@@ -46,248 +46,226 @@ final class HotelCreated
     }
 }
 ```
-A guest can check in by `name`:
+
+A guest can check in. 
+We tag the hotelId and the guest name so projections can filter by this combination.
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Attribute\EventTag;
 
 #[Event('hotel.guest_checked_in')]
 final class GuestIsCheckedIn
 {
     public function __construct(
+        #[EventTag(prefix: 'hotel')]
+        public readonly Uuid $hotelId,
+        #[EventTag(prefix: 'guest')]
         public readonly string $guestName,
     ) {
     }
 }
 ```
-And also check out again:
+
+A guest can check out again. Here we tag the hotelId and the guest name again.
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Attribute\EventTag;
 
 #[Event('hotel.guest_checked_out')]
 final class GuestIsCheckedOut
 {
     public function __construct(
+        #[EventTag(prefix: 'hotel')]
+        public readonly Uuid $hotelId,
+        #[EventTag(prefix: 'guest')]
         public readonly string $guestName,
     ) {
     }
 }
 ```
+
 !!! note
 
     You can find out more about events [here](events.md).    
 
+## Define Commands
+
+Unlike in the [Getting Started](./getting_started.md) section, we're working with the [Command Bus](./command_bus.md) here. 
+This allows us to express our interaction with the system using commands. We can do the following with our system:
+
+The following command creates a new hotel. It carries the hotel ID and name.
+
+```php
+class CreateHotel {
+    public function __construct(
+        public HotelId $hotelId,
+        public readonly string $hotelName,
+   ) {    
+   }
+}
+```
+
+Next, this command checks a guest in to a specific hotel.
+It contains the hotel ID and the guest name.
+
+```php
+class CheckIn {
+    public function __construct(
+        public HotelId $hotelId,
+        public readonly string $guestName,
+   ) {    
+   }
+}
+```
+
+Last but not least, this command checks a guest out of a specific hotel.
+It also provides the hotel ID and guest name.
+
+```php
+class CheckOut {
+    public function __construct(
+        public HotelId $hotelId,
+        public readonly string $guestName,
+   ) {    
+   }
+}
+```
 
 ## Define projections
 
-DCB builds a tiny, purpose-built state just for the current decision using projections.
-A projection selects events via tags, processes those events and yields a small value.
+With DCB we don’t load an aggregate. 
+Instead, we assemble the minimal state for a single decision from lightweight projections. 
 
-We use the EventRouter trait which wires `#[Apply]` methods and builds a SubQuery from filters.
+Each projection:
 
-Course exists:
+* Declares an initial state
+* Applies only the few events relevant to compute the decision value
+* Optionally filters events by tags
+
+The first projection answers only whether the hotel already exists.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\DCB\BasicProjection;
 
-/** @extends BasicProjection<bool> */
-final class CourseExists extends BasicProjection
+final class HotelExists extends BasicProjection
 {
-    public function __construct(private readonly CourseId $courseId) {}
+    public function __construct(
+        private readonly Uuid $hotelId
+    ) {
+    }
 
-    public function initialState(): bool
-    {
-        return false;
+    public function initialState(): bool 
+    { 
+        return false; 
     }
 
     /** @return list<string> */
-    public function tagFilter(): array
+    protected function tagFilter(): array
     {
-        return ["course:{$this->courseId->toString()}"];
+        return ["hotel:{$this->hotelId->toString()}"];
     }
 
     #[Apply]
-    public function applyCourseDefined(bool $state, CourseDefined $event): bool
+    public function applyHotelCreated(bool $state, HotelCreated $event): bool
     {
         return true;
     }
 }
 ```
 
-Current capacity of a course:
+The second projection counts the guests currently checked in.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\DCB\BasicProjection;
 
-final class CourseCapacityProjection extends BasicProjection
-{
-    public function __construct(private readonly CourseId $courseId) {}
-
-    public function initialState(): int
-    {
-        return 0;
-    }
-
-    /** @return list<string> */
-    public function tagFilter(): array
-    {
-        return ["course:{$this->courseId->toString()}"];
-    }
-
-    #[Apply]
-    public function applyCourseDefined(int $state, CourseDefined $event): int
-    {
-        return $event->capacity;
-    }
-
-    #[Apply]
-    public function applyCourseCapacityChanged(int $state, CourseCapacityChanged $event): int
-    {
-        return $event->capacity;
-    }
-}
-```
-
-Count subscriptions of a course:
-
-```php
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\BasicProjection;
-
-final class NumberOfCourseSubscriptionsProjection extends BasicProjection
-{
-    public function __construct(private readonly CourseId $courseId) {}
-
-    public function initialState(): int
-    {
-        return 0;
-    }
-
-    /** @return list<string> */
-    public function tagFilter(): array
-    {
-        return ["course:{$this->courseId->toString()}"];
-    }
-
-    #[Apply]
-    public function applyStudentSubscribedToCourse(int $state, StudentSubscribedToCourse $event): int
-    {
-        return $state + 1;
-    }
-}
-```
-
-Count subscriptions of a student:
-
-```php
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\BasicProjection;
-use Patchlevel\EventSourcing\DCB\Projection;
-
-final class NumberOfStudentSubscriptionsProjection extends BasicProjection
-{
-    public function __construct(private readonly StudentId $studentId) {}
-
-    public function initialState(): int
-    {
-        return 0;
-    }
-
-    /** @return list<string> */
-    public function tagFilter(): array
-    {
-        return ["student:{$this->studentId->toString()}"];
-    }
-
-    #[Apply]
-    public function applyStudentSubscribedToCourse(int $state, StudentSubscribedToCourse $event): int
-    {
-        return $state + 1;
-    }
-}
-```
-
-Has the student already subscribed to this course:
-
-```php
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\BasicProjection;
-
-/** @extends  BasicProjection<bool> */
-final class StudentAlreadySubscribedProjection extends BasicProjection
+final class NumberOfGuestsInHotel extends BasicProjection
 {
     public function __construct(
-        private readonly StudentId $studentId,
-        private readonly CourseId $courseId,
-    ) {}
+        private readonly Uuid $hotelId
+    ) {
+    }
 
-    public function initialState(): bool
-    {
-        return false;
+    public function initialState(): int 
+    { 
+        return 0; 
     }
 
     /** @return list<string> */
-    public function tagFilter(): array
+    protected function tagFilter(): array
+    {
+        return ["hotel:{$this->hotelId->toString()}"]; // same tag as above
+    }
+
+    #[Apply]
+    public function applyGuestIsCheckedIn(int $state, GuestIsCheckedIn $event): int
+    {
+        return $state + 1;
+    }
+
+    #[Apply]
+    public function applyGuestIsCheckedOut(int $state, GuestIsCheckedOut $event): int
+    {
+        return $state - 1;
+    }
+}
+```
+
+The third projection answers whether the given guest is already checked into this hotel.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\DCB\BasicProjection;
+
+final class GuestAlreadyCheckedIn extends BasicProjection
+{
+    public function __construct(
+        private readonly Uuid $hotelId,
+        private readonly string $guestName,
+    ) {}
+
+    public function initialState(): bool { return false; }
+
+    /** @return list<string> */
+    protected function tagFilter(): array
     {
         return [
-            "student:{$this->studentId->toString()}",
-            "course:{$this->courseId->toString()}",
+            "hotel:{$this->hotelId->toString()}",
+            "guest:{$this->guestName}",
         ];
     }
 
     #[Apply]
-    public function applyStudentSubscribedToCourse(bool $state, StudentSubscribedToCourse $event): bool
+    public function applyGuestIsCheckedIn(bool $state, GuestIsCheckedIn $event): bool
     {
         return true;
     }
-}
-```
-
-Next invoice number from the last event only:
-
-```php
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\BasicProjection;
-
-final class NextInvoiceNumberProjection extends BasicProjection
-{
-    public function initialState(): int
-    {
-        return 1;
-    }
 
     #[Apply]
-    public function applyInvoiceCreated(int $state, InvoiceCreated $event): int
+    public function applyGuestIsCheckedOut(bool $state, GuestIsCheckedOut $event): bool
     {
-        return $event->invoiceNumber + 1;
-    }
-
-    public function lastEventIsEnough(): bool
-    {
-        return true; // optimize: only the last matching event is needed
+        return false;
     }
 }
 ```
 
-!!! tip
+## Define handlers
 
-    `#[Apply]` methods can be named freely. The second parameter’s type determines which event is routed.
+We’ll implement three command handlers corresponding to our commands.
 
-## Write handlers
-
-Now we can build decisions and append new events atomically by using the DecisionModelBuilder and EventAppender.
-
-Define a course only if it does not exist yet:
+First, we implement the handler for the `CreateHotel` command.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\DCB\DecisionModelBuilder;
 use Patchlevel\EventSourcing\DCB\EventAppender;
 
-final class DefineCourseHandler
+final class CreateHotelHandler
 {
     public function __construct(
         private readonly DecisionModelBuilder $decisionModelBuilder,
@@ -295,216 +273,178 @@ final class DefineCourseHandler
     ) {}
 
     #[Handle]
-    public function __invoke(DefineCourse $command): void
+    public function __invoke(CreateHotel $command): void
     {
         $state = $this->decisionModelBuilder->build([
-            'courseExists' => new CourseExists($command->courseId),
+            'hotelExists' => new HotelExists($command->hotelId),
         ]);
 
-        if ($state['courseExists']) {
-            throw new RuntimeException('Course already exists');
+        if ($state['hotelExists']) {
+            throw new RuntimeException('Hotel already exists');
         }
 
         $this->eventAppender->append([
-            new CourseDefined($command->courseId, $command->capacity),
+            new HotelCreated($command->hotelId, $command->hotelName),
         ], $state->appendCondition);
     }
 }
-```
-
-Change capacity if different:
-
-```php
-use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\DCB\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DCB\EventAppender;
-
-final class ChangeCourseCapacityHandler
-{
-    public function __construct(
-        private readonly DecisionModelBuilder $decisionModelBuilder,
-        private readonly EventAppender $eventAppender,
-    ) {}
-
-    #[Handle]
-    public function __invoke(ChangeCourseCapacity $command): void
-    {
-        $state = $this->decisionModelBuilder->build([
-            'courseExists' => new CourseExists($command->courseId),
-            'courseCapacity' => new CourseCapacityProjection($command->courseId),
-        ]);
-
-        if (!$state['courseExists']) {
-            throw new RuntimeException('Course does not exist');
-        }
-
-        if ($state['courseCapacity'] === $command->capacity) {
-            return;
-        }
-
-        $this->eventAppender->append([
-            new CourseCapacityChanged($command->courseId, $command->capacity),
-        ], $state->appendCondition);
-    }
-}
-```
-
-Subscribe a student with multiple checks atomically:
-
-```php
-use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\DCB\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DCB\EventAppender;
-
-final class SubscribeStudentToCourseHandler
-{
-    public function __construct(
-        private readonly DecisionModelBuilder $decisionModelBuilder,
-        private readonly EventAppender $eventAppender,
-    ) {}
-
-    #[Handle]
-    public function __invoke(SubscribeStudentToCourse $command): void
-    {
-        $state = $this->decisionModelBuilder->build([
-            'courseExists' => new CourseExists($command->courseId),
-            'courseCapacity' => new CourseCapacityProjection($command->courseId),
-            'numberOfCourseSubscriptions' => new NumberOfCourseSubscriptionsProjection($command->courseId),
-            'numberOfStudentSubscriptions' => new NumberOfStudentSubscriptionsProjection($command->studentId),
-            'studentAlreadySubscribed' => new StudentAlreadySubscribedProjection($command->studentId, $command->courseId),
-        ]);
-
-        if (!$state['courseExists']) {
-            throw new RuntimeException("Course {$command->courseId->toString()} does not exist");
-        }
-
-        if ($state['numberOfCourseSubscriptions'] >= $state['courseCapacity']) {
-            throw new RuntimeException("Course {$command->courseId->toString()} is not available");
-        }
-
-        if ($state['studentAlreadySubscribed']) {
-            throw new RuntimeException("Student {$command->studentId->toString()} is already subscribed to course {$command->courseId->toString()}");
-        }
-
-        if ($state['numberOfStudentSubscriptions'] >= 5) {
-            throw new RuntimeException("Student {$command->studentId->toString()} is already subscribed to 5 courses");
-        }
-
-        $this->eventAppender->append([
-            new StudentSubscribedToCourse($command->studentId, $command->courseId),
-        ], $state->appendCondition);
-    }
-}
-```
-
-Create invoices while safely generating the next number from the last event only:
-
-```php
-use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\DCB\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DCB\EventAppender;
-
-final class CreateInvoiceHandler
-{
-    public function __construct(
-        private readonly DecisionModelBuilder $decisionModelBuilder,
-        private readonly EventAppender $eventAppender,
-    ) {}
-
-    #[Handle]
-    public function __invoke(CreateInvoice $command): void
-    {
-        $state = $this->decisionModelBuilder->build([
-            'nextInvoiceNumber' => new NextInvoiceNumberProjection(),
-        ]);
-
-        $this->eventAppender->append([
-            new InvoiceCreated($state['nextInvoiceNumber'], $command->money),
-        ], $state->appendCondition);
-    }
-}
-```
-
-!!! tip
-
-    If any concurrent writer changes the queried subset in between build() and append(), the store will reject the write (optimistic concurrency). You can retry if appropriate.
-
-## Configuration
-
-Now we plug the whole thing together. We use the TaggableDoctrineDbalStore plus the DCB builder and appender.
-
-```php
-use Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider;
-use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
-use Patchlevel\EventSourcing\DCB\StoreDecisionModelBuilder;
-use Patchlevel\EventSourcing\DCB\StoreEventAppender;
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
-use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
-
-$store = new TaggableDoctrineDbalStore(
-    $connection,
-    DefaultEventSerializer::createFromPaths([__DIR__ . '/Event']),
-    (new AttributeEventRegistryFactory())->create([__DIR__ . '/Event']),
-);
-
-$decisionModelBuilder = new StoreDecisionModelBuilder($store);
-$eventAppender = new StoreEventAppender($store);
-
-$commandBus = new SyncCommandBus(
-    new ServiceHandlerProvider([
-        new DefineCourseHandler($decisionModelBuilder, $eventAppender),
-        new ChangeCourseCapacityHandler($decisionModelBuilder, $eventAppender),
-        new SubscribeStudentToCourseHandler($decisionModelBuilder, $eventAppender),
-        new CreateInvoiceHandler($decisionModelBuilder, $eventAppender),
-    ]),
-);
-```
-
-## Database setup
-
-To actually write data to the database we need to create the event table.
-
-```php
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
-
-$schemaDirector = new DoctrineSchemaDirector($connection, $store);
-$schemaDirector->create();
 ```
 
 !!! note
 
-    You can also use the predefined CLI commands to create and drop the schema. See the CLI documentation.
+    Handlers build a Decision Model from the projections and then append events with an optimistic AppendCondition. 
+    If any relevant event arrives between read and write, the append fails and you can retry.
+
+The next handler implements the `CheckIn` command.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\DCB\DecisionModelBuilder;
+use Patchlevel\EventSourcing\DCB\EventAppender;
+
+final class CheckInHandler
+{
+    public function __construct(
+        private readonly DecisionModelBuilder $decisionModelBuilder,
+        private readonly EventAppender $eventAppender,
+    ) {}
+
+    #[Handle]
+    public function __invoke(CheckIn $command): void
+    {
+        $state = $this->decisionModelBuilder->build([
+            'hotelExists' => new HotelExists($command->hotelId),
+            'guestCount' => new NumberOfGuestsInHotel($command->hotelId),
+            'alreadyIn' => new GuestAlreadyCheckedIn($command->hotelId, $command->guestName),
+        ]);
+
+        if (!$state['hotelExists']) {
+            throw new RuntimeException('Hotel does not exist');
+        }
+
+        if ($state['alreadyIn']) {
+            throw new RuntimeException(sprintf('Guest "%s" already checked in', $command->guestName));
+        }
+
+        // Optional policy example: max 5 guests
+        if ($state['guestCount'] >= 5) {
+            throw new RuntimeException('Hotel is full');
+        }
+
+        $this->eventAppender->append([
+            new GuestIsCheckedIn($command->hotelId, $command->guestName),
+        ], $state->appendCondition);
+    }
+}
+```
+
+And the last handler implements the `CheckOut` command.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\DCB\DecisionModelBuilder;
+use Patchlevel\EventSourcing\DCB\EventAppender;
+
+final class CheckOutHandler
+{
+    public function __construct(
+        private readonly DecisionModelBuilder $decisionModelBuilder,
+        private readonly EventAppender $eventAppender,
+    ) {}
+
+    #[Handle]
+    public function __invoke(CheckOut $command): void
+    {
+        $state = $this->decisionModelBuilder->build([
+            'hotelExists' => new HotelExists($command->hotelId),
+            'alreadyIn' => new GuestAlreadyCheckedIn($command->hotelId, $command->guestName),
+        ]);
+
+        if (!$state['hotelExists']) {
+            throw new RuntimeException('Hotel does not exist');
+        }
+
+        if (!$state['alreadyIn']) {
+            throw new RuntimeException(sprintf('Guest "%s" is not checked in', $command->guestName));
+        }
+
+        $this->eventAppender->append([
+            new GuestIsCheckedOut($command->hotelId, $command->guestName),
+        ], $state->appendCondition);
+    }
+}
+```
+
+## Configuration
+
+Now we can wire everything together.
+
+```php
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
+use Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider;
+use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
+use Patchlevel\EventSourcing\DCB\StoreDecisionModelBuilder;
+use Patchlevel\EventSourcing\DCB\StoreEventAppender;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
+
+$connection = DriverManager::getConnection((new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'));
+$serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
+
+$eventStore = new TaggableDoctrineDbalStore($connection, $serializer, $eventRegistry);
+
+$decisionModelBuilder = new StoreDecisionModelBuilder($eventStore);
+$eventAppender = new StoreEventAppender($eventStore);
+
+$provider = new ServiceHandlerProvider([
+    new CreateHotelHandler($decisionModelBuilder, $eventAppender),
+    new CheckInHandler($decisionModelBuilder, $eventAppender),
+    new CheckOutHandler($decisionModelBuilder, $eventAppender),
+]);
+
+$commandBus = new SyncCommandBus($provider);
+```
+
+## Database setup
+
+The last step is to create the database schema.
+
+```php
+use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
+use Patchlevel\EventSourcing\Store\Store;
+
+$schemaDirector = new DoctrineSchemaDirector(
+    $connection,
+    new ChainDoctrineSchemaConfigurator([$eventStore]),
+);
+$schemaDirector->create();
+```
 
 ## Usage
 
-We are now ready to use DCB. We can dispatch commands and DCB will keep each decision consistent.
+Now we can use our command bus to execute our commands.
 
 ```php
-$courseId = CourseId::generate();
-$student1 = StudentId::generate();
-$student2 = StudentId::generate();
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 
-$commandBus->dispatch(new DefineCourse($courseId, 10));
-$commandBus->dispatch(new ChangeCourseCapacity($courseId, 2));
-$commandBus->dispatch(new SubscribeStudentToCourse($student1, $courseId));
-$commandBus->dispatch(new SubscribeStudentToCourse($student2, $courseId));
-
-$commandBus->dispatch(new CreateInvoice(10));
-$commandBus->dispatch(new CreateInvoice(10));
+$hotelId = Uuid::generate();
+$commandBus->dispatch(new CreateHotel($hotelId, 'HOTEL'));
+$commandBus->dispatch(new CheckIn($hotelId, 'David'));
+$commandBus->dispatch(new CheckIn($hotelId, 'Daniel'));
+$commandBus->dispatch(new CheckOut($hotelId, 'David'));
 ```
 
-## Result
+## Conclusion
 
-!!! success
-
-    We have successfully implemented and used DCB to make consistent decisions across multiple streams without loading aggregates.
-    Feel free to browse further in the documentation for more detailed information.
+We've seen how to use DCB to make decisions consistently.
+In this example we skipped the subscription part,
+but you can add it by following the [Getting Started](./getting_started.md) section.
 
 ## Learn more
 
-* [How to use command bus](command_bus.md)
-* [How to use aggregates](aggregate.md)
-* [How to use aggregate id](aggregate_id.md)
-* [How to use clock](clock.md)
+* [Events](./events.md)
+* [Command Bus](./command_bus.md)
+* [Store](./store.md)
 

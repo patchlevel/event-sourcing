@@ -109,12 +109,6 @@ parameters:
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
-			message: '#^Cannot use \+\+ on mixed\.$#'
-			identifier: preInc.type
-			count: 1
-			path: src/Store/TaggableDoctrineDbalStore.php
-
-		-
 			message: '#^Method Patchlevel\\EventSourcing\\Store\\TaggableDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
 			identifier: return.unusedType
 			count: 1
