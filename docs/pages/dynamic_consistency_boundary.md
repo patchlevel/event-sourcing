@@ -1,85 +1,83 @@
 # Dynamic Consistency Boundary
 
-In our little DCB getting-started example, we decide things atomically across multiple event streams without loading aggregates.
-We keep the example small and show how to validate a course subscription and how to generate invoice numbers using the DCB API.
+??? example "Experimental"
+
+    This feature is still experimental and may change in the future.
+    Use it with caution.
+
+Dynamic Consistency Boundary (DCB) is an event‑sourcing approach for making consistent, 
+cross‑stream decisions without loading full aggregates. 
+For each decision, it builds a minimal, purpose‑built state from a targeted subset of events selected via tags. 
+Lightweight projections compute just the values needed to validate commands and derive new events. 
+The decision evaluation and event append are coupled by an optimistic append condition to prevent race conditions; 
+if the queried subset changes concurrently, the write is rejected and can be retried. 
+This makes handlers simple, fast, and scalable, since only relevant events are processed. 
+DCB is a great fit when business rules span multiple streams.
 
 !!! note
 
-    DCB is marked as experimental. APIs may change.
+    You can read more about Dynamic Consistency Boundary on page [dcb.events](https://dcb.events/).
+
+Since this approach differs slightly from the standard "aggregate" event sourcing principle, 
+we will use the [Getting Started](./getting_started.md) example and build it as a DCB variant.
+
+In our litt le getting started example, we manage hotels.
+We keep the example small, so we can only create hotels and let guests check in and check out.
 
 ## Define some events
 
 First we define the events that happen in our system.
 
-A course can be defined with a capacity:
+A hotel can be created with a `name` and a `id`:
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Attribute\EventTag;
 
-#[Event('course.defined')]
-final class CourseDefined
+#[Event('hotel.created')]
+final class HotelCreated
 {
     public function __construct(
-        #[EventTag(prefix: 'course')]
-        public CourseId $courseId,
-        public int $capacity,
+        #[EventTag(prefix: 'hotel')]
+        public readonly Uuid $hotelId,
+        public readonly string $hotelName,
     ) {
     }
 }
 ```
-A course capacity can change later:
+A guest can check in by `name`:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Attribute\EventTag;
 
-#[Event('course.capacity_changed')]
-final class CourseCapacityChanged
+#[Event('hotel.guest_checked_in')]
+final class GuestIsCheckedIn
 {
     public function __construct(
-        #[EventTag(prefix: 'course')]
-        public CourseId $courseId,
-        public int $capacity,
+        public readonly string $guestName,
     ) {
     }
 }
 ```
-A student can subscribe to a course. We tag the event with both student and course, so that DCB projections can select the exact subset of events:
+And also check out again:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Attribute\EventTag;
 
-#[Event('course.student_subscribed')]
-final class StudentSubscribedToCourse
+#[Event('hotel.guest_checked_out')]
+final class GuestIsCheckedOut
 {
     public function __construct(
-        #[EventTag(prefix: 'student')]
-        public readonly StudentId $studentId,
-        #[EventTag(prefix: 'course')]
-        public readonly CourseId $courseId,
+        public readonly string $guestName,
     ) {
     }
 }
 ```
-And finally, an invoice can be created with a monotonically increasing number:
+!!! note
 
-```php
-use Patchlevel\EventSourcing\Attribute\Event;
-use Patchlevel\EventSourcing\Attribute\EventTag;
+    You can find out more about events [here](events.md).    
 
-#[Event('invoice.created')]
-final class InvoiceCreated
-{
-    public function __construct(
-        #[EventTag(prefix: 'invoice')]
-        public readonly int $invoiceNumber,
-        public readonly int $money,
-    ) {
-    }
-}
-```
 
 ## Define projections
 
@@ -93,13 +91,10 @@ Course exists:
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\DCB\BasicProjection;
-use Patchlevel\EventSourcing\DCB\Projection;
 
-/** @implements Projection<bool> */
-final class CourseExists implements Projection
+/** @extends BasicProjection<bool> */
+final class CourseExists extends BasicProjection
 {
-    use BasicProjection;
-
     public function __construct(private readonly CourseId $courseId) {}
 
     public function initialState(): bool
@@ -126,12 +121,9 @@ Current capacity of a course:
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\DCB\BasicProjection;
-use Patchlevel\EventSourcing\DCB\Projection;
 
-final class CourseCapacityProjection implements Projection
+final class CourseCapacityProjection extends BasicProjection
 {
-    use BasicProjection;
-
     public function __construct(private readonly CourseId $courseId) {}
 
     public function initialState(): int
@@ -164,12 +156,9 @@ Count subscriptions of a course:
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\DCB\BasicProjection;
-use Patchlevel\EventSourcing\DCB\Projection;
 
-final class NumberOfCourseSubscriptionsProjection implements Projection
+final class NumberOfCourseSubscriptionsProjection extends BasicProjection
 {
-    use BasicProjection;
-
     public function __construct(private readonly CourseId $courseId) {}
 
     public function initialState(): int
@@ -198,10 +187,8 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\DCB\BasicProjection;
 use Patchlevel\EventSourcing\DCB\Projection;
 
-final class NumberOfStudentSubscriptionsProjection implements Projection
+final class NumberOfStudentSubscriptionsProjection extends BasicProjection
 {
-    use BasicProjection;
-
     public function __construct(private readonly StudentId $studentId) {}
 
     public function initialState(): int
@@ -228,13 +215,10 @@ Has the student already subscribed to this course:
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\DCB\BasicProjection;
-use Patchlevel\EventSourcing\DCB\Projection;
 
-/** @implements Projection<bool> */
-final class StudentAlreadySubscribedProjection implements Projection
+/** @extends  BasicProjection<bool> */
+final class StudentAlreadySubscribedProjection extends BasicProjection
 {
-    use BasicProjection;
-
     public function __construct(
         private readonly StudentId $studentId,
         private readonly CourseId $courseId,
@@ -267,12 +251,9 @@ Next invoice number from the last event only:
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\DCB\BasicProjection;
-use Patchlevel\EventSourcing\DCB\Projection;
 
-final class NextInvoiceNumberProjection implements Projection
+final class NextInvoiceNumberProjection extends BasicProjection
 {
-    use BasicProjection;
-
     public function initialState(): int
     {
         return 1;
