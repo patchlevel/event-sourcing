@@ -21,14 +21,19 @@ use function class_exists;
 
 /**
  * @experimental
- * @require-implements Projection
  * @template S = mixed
+ * @implements Projection<S>
  */
-trait EventRouter
+abstract class BasicProjection implements Projection, SubQueryProvider
 {
     /** @var array<class-string, string>|null $applyMethods */
     private array|null $applyMethods = null;
 
+    /**
+     * @param S $state
+     *
+     * @return S
+     */
     public function apply(mixed $state, Message $message): mixed
     {
         if (!$this->subQuery()->match($message)) {
@@ -57,7 +62,7 @@ trait EventRouter
     }
 
     /** @return list<class-string> */
-    public function eventTypeFilter(): array
+    protected function eventTypeFilter(): array
     {
         return array_keys($this->applyMethods());
     }
@@ -177,14 +182,14 @@ trait EventRouter
     }
 
     /** @return list<string> */
-    abstract public function tagFilter(): array;
+    abstract protected function tagFilter(): array;
 
-    public function streamName(): string|null
+    protected function streamName(): string|null
     {
         return null;
     }
 
-    public function lastEventIsEnough(): bool
+    protected function lastEventIsEnough(): bool
     {
         return false;
     }

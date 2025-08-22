@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\EventRouter;
-use Patchlevel\EventSourcing\DCB\Projection;
+use Patchlevel\EventSourcing\DCB\BasicProjection;
 
-final class IncrementProjection implements Projection
+final class IncrementProjection extends BasicProjection
 {
-    use EventRouter;
-
     /** @param list<string> $tags */
     public function __construct(
         private readonly int $initial,

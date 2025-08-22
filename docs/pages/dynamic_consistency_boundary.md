@@ -92,13 +92,13 @@ Course exists:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\EventRouter;
+use Patchlevel\EventSourcing\DCB\BasicProjection;
 use Patchlevel\EventSourcing\DCB\Projection;
 
 /** @implements Projection<bool> */
 final class CourseExists implements Projection
 {
-    use EventRouter;
+    use BasicProjection;
 
     public function __construct(private readonly CourseId $courseId) {}
 
@@ -125,12 +125,12 @@ Current capacity of a course:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\EventRouter;
+use Patchlevel\EventSourcing\DCB\BasicProjection;
 use Patchlevel\EventSourcing\DCB\Projection;
 
 final class CourseCapacityProjection implements Projection
 {
-    use EventRouter;
+    use BasicProjection;
 
     public function __construct(private readonly CourseId $courseId) {}
 
@@ -163,12 +163,12 @@ Count subscriptions of a course:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\EventRouter;
+use Patchlevel\EventSourcing\DCB\BasicProjection;
 use Patchlevel\EventSourcing\DCB\Projection;
 
 final class NumberOfCourseSubscriptionsProjection implements Projection
 {
-    use EventRouter;
+    use BasicProjection;
 
     public function __construct(private readonly CourseId $courseId) {}
 
@@ -195,12 +195,12 @@ Count subscriptions of a student:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\EventRouter;
+use Patchlevel\EventSourcing\DCB\BasicProjection;
 use Patchlevel\EventSourcing\DCB\Projection;
 
 final class NumberOfStudentSubscriptionsProjection implements Projection
 {
-    use EventRouter;
+    use BasicProjection;
 
     public function __construct(private readonly StudentId $studentId) {}
 
@@ -227,13 +227,13 @@ Has the student already subscribed to this course:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\EventRouter;
+use Patchlevel\EventSourcing\DCB\BasicProjection;
 use Patchlevel\EventSourcing\DCB\Projection;
 
 /** @implements Projection<bool> */
 final class StudentAlreadySubscribedProjection implements Projection
 {
-    use EventRouter;
+    use BasicProjection;
 
     public function __construct(
         private readonly StudentId $studentId,
@@ -266,12 +266,12 @@ Next invoice number from the last event only:
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\EventRouter;
+use Patchlevel\EventSourcing\DCB\BasicProjection;
 use Patchlevel\EventSourcing\DCB\Projection;
 
 final class NextInvoiceNumberProjection implements Projection
 {
-    use EventRouter;
+    use BasicProjection;
 
     public function initialState(): int
     {

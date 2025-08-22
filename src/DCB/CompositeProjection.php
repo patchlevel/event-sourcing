@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\DCB;
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Query;
+use Patchlevel\EventSourcing\Store\SubQuery;
 
 use function array_map;
 
@@ -20,12 +21,19 @@ final class CompositeProjection
 
     public function query(): Query
     {
-        $query = new Query(
-            ...array_map(
-                static fn (Projection $projection) => $projection->subQuery(),
-                $this->projections,
-            ),
-        );
+        $subQueries = [];
+
+        foreach ($this->projections as $projection) {
+            if ($projection instanceof SubQueryProvider) {
+                $subQueries[] = $projection->subQuery();
+
+                continue;
+            }
+
+            $subQueries[] = new SubQuery();
+        }
+
+        $query = new Query(...$subQueries);
 
         return $query->optimize();
     }

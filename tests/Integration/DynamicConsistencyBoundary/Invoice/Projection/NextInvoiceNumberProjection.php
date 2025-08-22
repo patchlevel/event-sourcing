@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Projection;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\EventRouter;
-use Patchlevel\EventSourcing\DCB\Projection;
+use Patchlevel\EventSourcing\DCB\BasicProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Event\InvoiceCreated;
 
-final class NextInvoiceNumberProjection implements Projection
+final class NextInvoiceNumberProjection extends BasicProjection
 {
-    use EventRouter;
-
     /** @return list<string> */
     public function tagFilter(): array
     {
