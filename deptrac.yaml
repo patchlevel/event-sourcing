@@ -29,10 +29,6 @@ deptrac:
       collectors:
         - type: directory
           value: src/Cryptography/.*
-    - name: Debug
-      collectors:
-        - type: directory
-          value: src/Debug/.*
     - name: EventBus
       collectors:
         - type: directory
@@ -72,6 +68,10 @@ deptrac:
               value: MetadataMessage
             - type: layer
               value: MetadataSubscriber
+    - name: QueryBus
+      collectors:
+        - type: directory
+          value: src/QueryBus/.*
     - name: Repository
       collectors:
         - type: directory
@@ -123,9 +123,6 @@ deptrac:
       - Store
       - Subscription
     Cryptography:
-      - Aggregate
-      - MetadataAggregate
-      - MetadataEvent
       - Schema
     Debug:
       - Attribute
@@ -168,6 +165,8 @@ deptrac:
       - Repository
       - Schema
       - Store
+    QueryBus:
+      - Attribute
     Repository:
       - Aggregate
       - Clock
