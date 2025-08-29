@@ -159,7 +159,6 @@ Each projector is then responsible for a specific projection.
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
