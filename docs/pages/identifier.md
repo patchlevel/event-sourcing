@@ -1,24 +1,78 @@
 # Identifier
 
-The `aggregate id` is a unique identifier for an aggregate.
-It is used to identify the aggregate in the event store.
-The `aggregate` does not care how the id is generated,
-since only an aggregate-wide unique string is expected in the store.
+Identifiers are small, immutable value objects that represent IDs across the library in a type‑safe and consistent way. They are primarily used for aggregate root IDs, but can also be applied anywhere a stable string identifier is required (snapshots, repositories, your own domain objects, etc.).
 
-This library provides you with a few options for generating the id.
+All identifiers must implement `Patchlevel\EventSourcing\Identifier\Identifier` and provide a stable string representation for storage and serialization.
 
-!!! warning
+## Interface
 
-    Performance reasons, the default configuration of the store require an uuid string for `aggregate id`.
-    But technically, for the library, it can be any string.
-    If you want to use a custom id, you have to change the `aggregate_id_type` in the [store](store.md) configuration.
+```php
+interface Identifier
+{
+    public function toString(): string;
+
+    public static function fromString(string $id): static;
+}
+```
+The string value returned by `toString()` is what gets persisted (e.g. in the event store) and serialized. `fromString()` reconstructs the value object from that string.
+
+## Built‑in identifiers
+
+We provide two ready‑to‑use implementations:
+
+### `Uuid`
+
+`Uuid` wraps [ramsey/uuid](https://github.com/ramsey/uuid) and uses UUID v7 by default, which is a good fit for event‑sourcing.
+
+```php
+use Patchlevel\EventSourcing\Identifier\Uuid;
+
+$uuid = Uuid::generate();
+$uuid = Uuid::fromString('d6e8d7a0-4b0b-4e6a-8a9a-3a0b2d9d0e4e');
+```
+!!! note
+
+    UUID v7 provides k‑sortable identifiers that work well with append‑only streams and database indexes. See the ramsey docs for details.
     
-## Uuid
+### `CustomId`
 
-The easiest way is to use an `uuid` as an aggregate ID.
-For this, we have the `Uuid` class, which is a simple wrapper for the [ramsey/uuid](https://github.com/ramsey/uuid) library.
+`CustomId` is a minimal string‑backed identifier. Use it if you want full control over the string format or if your IDs are provided by an external system.
 
-You can use it like this:
+```php
+use Patchlevel\EventSourcing\Identifier\CustomId;
+
+$id = CustomId::fromString('my-id');
+```
+## Domain‑specific identifiers
+
+For better domain modeling, define your own identifier types by implementing `Identifier` and encapsulating creation rules and validation. Two traits are available to make this easy:
+
+- `RamseyUuidV7Behaviour` for UUID v7 identifiers
+- `CustomIdBehaviour` for string‑backed identifiers
+
+```php
+use Patchlevel\EventSourcing\Identifier\Identifier;
+use Patchlevel\EventSourcing\Identifier\RamseyUuidV7Behaviour;
+
+final class ProfileId implements Identifier
+{
+    use RamseyUuidV7Behaviour;
+}
+```
+or
+
+```php
+use Patchlevel\EventSourcing\Identifier\CustomIdBehaviour;
+use Patchlevel\EventSourcing\Identifier\Identifier;
+
+final class OrderNumber implements Identifier
+{
+    use CustomIdBehaviour;
+}
+```
+## Using identifiers with aggregates
+
+Aggregates expose and persist their IDs as `Identifier` instances. You can choose the concrete implementation that fits your domain.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -33,78 +87,7 @@ final class Profile extends BasicAggregateRoot
     private Uuid $id;
 }
 ```
-You have multiple options for generating an uuid:
-
-```php
-use Patchlevel\EventSourcing\Identifier\Uuid;
-
-$uuid = Uuid::generate();
-$uuid = Uuid::fromString('d6e8d7a0-4b0b-4e6a-8a9a-3a0b2d9d0e4e');
-```
-!!! Note
-
-    We implemented the version 7 of the uuid, because it is most suitable for event sourcing.
-    More information about uuid versions can be found [here](https://uuid.ramsey.dev/en/stable/rfc4122.html).
-    
-## Custom ID
-
-If you don't want to use an uuid, you can also use the custom ID implementation.
-This is a value object that holds any string.
-
-```php
-use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
-use Patchlevel\EventSourcing\Identifier\CustomId;
-
-#[Aggregate('profile')]
-final class Profile extends BasicAggregateRoot
-{
-    #[Id]
-    private CustomId $id;
-}
-```
-!!! warning
-
-    If you want to use a custom id that is not an uuid, 
-    you need to change the `aggregate_id_type` to `string` in the store configuration.
-    More information can be found [here](store.md).
-    
-So you can use any string as an id:
-
-```php
-use Patchlevel\EventSourcing\Identifier\CustomId;
-
-$id = CustomId::fromString('my-id');
-```
-## Implement own ID
-
-Or even better, you create your own aggregate-specific ID class.
-This allows you to ensure that the correct id is always used.
-The whole thing looks like this:
-
-```php
-use Patchlevel\EventSourcing\Identifier\Identifier;
-
-class ProfileId implements Identifier
-{
-    private function __construct(
-        private readonly string $id,
-    ) {
-    }
-
-    public function toString(): string
-    {
-        return $this->id;
-    }
-
-    public static function fromString(string $id): static
-    {
-        return new self($id);
-    }
-}
-```
-So you can use it like this:
+Or use your domain‑specific identifier:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -118,29 +101,21 @@ final class Profile extends BasicAggregateRoot
     private ProfileId $id;
 }
 ```
-We also offer you some traits, so that you don't have to implement the `AggregateRootId` interface yourself.
-Here for the uuid:
+## Serialization and normalization
 
-```php
-use Patchlevel\EventSourcing\Identifier\Identifier;
-use Patchlevel\EventSourcing\Identifier\RamseyUuidV7Behaviour;
+Identifiers integrate with the serializer via `IdNormalizer`. The `Identifier` interface is annotated so that instances are automatically normalized to strings and denormalized back to the correct class.
 
-class ProfileId implements Identifier
-{
-    use RamseyUuidV7Behaviour;
-}
-```
-Or for the custom id:
+This means you can safely use identifier types in command payloads, events, or snapshots without writing custom normalizers.
 
-```php
-use Patchlevel\EventSourcing\Identifier\CustomIdBehaviour;
-use Patchlevel\EventSourcing\Identifier\Identifier;
+## Testing
 
-class ProfileId implements Identifier
-{
-    use CustomIdBehaviour;
-}
-```
+For deterministic tests involving UUIDs, use `FakeRamseyUuidFactory` to generate predictable UUID v7 values.
+
+## Notes
+
+- Identifiers are stored as strings in the backing store, but you should always use concrete identifier types in your domain code for type‑safety and clarity.
+- You can use identifiers beyond aggregates wherever an opaque, stable ID is needed.
+
 ### Learn more
 
 * [How to create an aggregate](aggregate.md)
