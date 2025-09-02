@@ -14,7 +14,7 @@ jobs:
     services:
       postgres:
         # Docker Hub image
-        image: "postgres:17.5"
+        image: "postgres:17.6"
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
@@ -29,7 +29,7 @@ jobs:
         dependencies:
           - "locked"
         php-version:
-          - "8.3"
+          - "8.4"
         operating-system:
           - "ubuntu-latest"
 
@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: "Install PHP"
-        uses: "shivammathur/setup-php@2.34.1"
+        uses: "shivammathur/setup-php@2.35.4"
         with:
           coverage: none
           php-version: "${{ matrix.php-version }}"
@@ -46,7 +46,7 @@ jobs:
           extensions: pdo_sqlite
 
       - name: "Checkout base"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.base_ref }}
 
@@ -58,7 +58,7 @@ jobs:
         run: "vendor/bin/phpbench run tests/Benchmark --progress=none --report=default --tag=base"
 
       - name: "Checkout"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: false
 

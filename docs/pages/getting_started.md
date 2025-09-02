@@ -26,12 +26,14 @@ final class HotelCreated
 A guest can check in by `name`:
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
 
 #[Event('hotel.guest_checked_in')]
 final class GuestIsCheckedIn
 {
     public function __construct(
+        public readonly Uuid $hotelId,
         public readonly string $guestName,
     ) {
     }
@@ -40,12 +42,14 @@ final class GuestIsCheckedIn
 And also check out again:
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
 
 #[Event('hotel.guest_checked_out')]
 final class GuestIsCheckedOut
 {
     public function __construct(
+        public readonly Uuid $hotelId,
         public readonly string $guestName,
     ) {
     }
@@ -105,7 +109,7 @@ final class Hotel extends BasicAggregateRoot
             throw new GuestHasAlreadyCheckedIn($guestName);
         }
 
-        $this->recordThat(new GuestIsCheckedIn($guestName));
+        $this->recordThat(new GuestIsCheckedIn($this->id, $guestName));
     }
 
     public function checkOut(string $guestName): void
@@ -114,7 +118,7 @@ final class Hotel extends BasicAggregateRoot
             throw new IsNotAGuest($guestName);
         }
 
-        $this->recordThat(new GuestIsCheckedOut($guestName));
+        $this->recordThat(new GuestIsCheckedOut($this->id, $guestName));
     }
 
     #[Apply]
@@ -155,7 +159,6 @@ Each projector is then responsible for a specific projection.
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -179,12 +182,12 @@ final class HotelProjector
     }
 
     #[Subscribe(HotelCreated::class)]
-    public function handleHotelCreated(HotelCreated $event, Uuid $aggregateId): void
+    public function handleHotelCreated(HotelCreated $event): void
     {
         $this->db->insert(
             $this->table(),
             [
-                'id' => $aggregateId->toString(),
+                'id' => $event->hotelId->toString(),
                 'name' => $event->hotelName,
                 'guests' => 0,
             ],
@@ -192,20 +195,20 @@ final class HotelProjector
     }
 
     #[Subscribe(GuestIsCheckedIn::class)]
-    public function handleGuestIsCheckedIn(Uuid $aggregateId): void
+    public function handleGuestIsCheckedIn(GuestIsCheckedIn $event): void
     {
         $this->db->executeStatement(
             "UPDATE {$this->table()} SET guests = guests + 1 WHERE id = ?;",
-            [$aggregateId->toString()],
+            [$event->hotelId->toString()],
         );
     }
 
     #[Subscribe(GuestIsCheckedOut::class)]
-    public function handleGuestIsCheckedOut(Uuid $aggregateId): void
+    public function handleGuestIsCheckedOut(GuestIsCheckedOut $event): void
     {
         $this->db->executeStatement(
             "UPDATE {$this->table()} SET guests = guests - 1 WHERE id = ?;",
-            [$aggregateId->toString()],
+            [$event->hotelId->toString()],
         );
     }
 
