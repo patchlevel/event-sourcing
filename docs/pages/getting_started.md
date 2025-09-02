@@ -163,7 +163,6 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
 #[Projector('hotel')]

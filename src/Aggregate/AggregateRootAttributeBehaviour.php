@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Aggregate;
 use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\Hydrator\Attribute\Ignore;
 use ReflectionProperty;
+
 use function array_key_exists;
 
 trait AggregateRootAttributeBehaviour

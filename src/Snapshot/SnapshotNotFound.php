@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Snapshot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Identifier\Identifier;
 use Throwable;
+
 use function sprintf;
 
 final class SnapshotNotFound extends SnapshotException

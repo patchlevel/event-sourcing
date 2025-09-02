@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Identifier\Identifier;
+
 use function sprintf;
 
 final class AggregateOutdated extends RepositoryException

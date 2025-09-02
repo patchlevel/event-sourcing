@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Identifier\Identifier;
+
 use function sprintf;
 
 final class AggregateNotFound extends RepositoryException

@@ -13,6 +13,7 @@ use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
 use Patchlevel\Hydrator\Hydrator;
 use Patchlevel\Hydrator\MetadataHydrator;
 use Throwable;
+
 use function array_key_exists;
 use function is_array;
 use function sprintf;

@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Identifier\CustomId;
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+
 use function count;
 use function fclose;
 use function fopen;

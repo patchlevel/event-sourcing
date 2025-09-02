@@ -72,7 +72,7 @@ final class IdNormalizerTest extends TestCase
     public function testAutoDetect(): void
     {
         $normalizer = new IdNormalizer();
-        $normalizer->handleType(Type::object(ProfileId::class));;
+        $normalizer->handleType(Type::object(ProfileId::class));
 
         self::assertEquals(ProfileId::class, $normalizer->identifierClass());
     }

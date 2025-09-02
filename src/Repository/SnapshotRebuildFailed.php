@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Repository;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Identifier\Identifier;
 use Throwable;
+
 use function sprintf;
 
 final class SnapshotRebuildFailed extends RepositoryException

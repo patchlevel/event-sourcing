@@ -8,8 +8,10 @@ use DateTimeInterface;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidFactory;
 use Ramsey\Uuid\UuidInterface;
+
 use function sprintf;
 use function str_pad;
+
 use const STR_PAD_LEFT;
 
 final class FakeRamseyUuidFactory extends UuidFactory

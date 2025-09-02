@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
-use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
@@ -17,6 +16,7 @@ use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use PhpBench\Attributes as Bench;
+
 use function sprintf;
 
 #[Bench\BeforeMethods('setUp')]
@@ -25,7 +25,7 @@ final class SplitStreamBench
     private Store $store;
     private Repository $repository;
 
-    private Identifier $id;
+    private ProfileId $id;
 
     public function setUp(): void
     {

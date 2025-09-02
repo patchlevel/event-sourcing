@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Aggregate;
 
 use Patchlevel\EventSourcing\Identifier\Identifier;
 use RuntimeException;
+
 use function get_debug_type;
 use function sprintf;
 

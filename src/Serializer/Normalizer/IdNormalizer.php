@@ -13,6 +13,7 @@ use Patchlevel\Hydrator\Normalizer\TypeAwareNormalizer;
 use Symfony\Component\TypeInfo\Type;
 use Symfony\Component\TypeInfo\Type\NullableType;
 use Symfony\Component\TypeInfo\Type\ObjectType;
+
 use function is_string;
 
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_CLASS)]
