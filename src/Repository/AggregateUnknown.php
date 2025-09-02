@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use function sprintf;
 
 final class AggregateUnknown extends RepositoryException
 {
     /** @param class-string<AggregateRoot> $aggregateRootClass */
-    public function __construct(string $aggregateRootClass, AggregateRootId $aggregateRootId)
+    public function __construct(string $aggregateRootClass, Identifier $aggregateRootId)
     {
         parent::__construct(
             sprintf(

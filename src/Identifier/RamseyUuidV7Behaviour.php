@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Aggregate;
+namespace Patchlevel\EventSourcing\Identifier;
 
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -14,7 +14,7 @@ trait RamseyUuidV7Behaviour
     ) {
     }
 
-    public static function fromString(string $id): self
+    public static function fromString(string $id): static
     {
         return new self(Uuid::fromString($id));
     }

@@ -61,7 +61,6 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
     RetryStrategyRepository::withDefault($retryStrategy),
 );
 ```
-
 ## Store
 
 ### DoctrineDbalStore

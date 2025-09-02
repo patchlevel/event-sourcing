@@ -275,7 +275,7 @@ final class DTO
 If you have your own AggregateRootId, you can use the `IdNormalizer`.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 final class DTO
@@ -291,7 +291,7 @@ final class DTO
 Optional you can also define the type of the id.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 
 final class DTO

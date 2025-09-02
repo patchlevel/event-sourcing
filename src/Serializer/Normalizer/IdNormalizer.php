@@ -5,22 +5,22 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Serializer\Normalizer;
 
 use Attribute;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\Hydrator\Normalizer\InvalidArgument;
 use Patchlevel\Hydrator\Normalizer\InvalidType;
 use Patchlevel\Hydrator\Normalizer\Normalizer;
-use Patchlevel\Hydrator\Normalizer\ReflectionTypeAwareNormalizer;
-use Patchlevel\Hydrator\Normalizer\ReflectionTypeUtil;
-use ReflectionType;
-
+use Patchlevel\Hydrator\Normalizer\TypeAwareNormalizer;
+use Symfony\Component\TypeInfo\Type;
+use Symfony\Component\TypeInfo\Type\NullableType;
+use Symfony\Component\TypeInfo\Type\ObjectType;
 use function is_string;
 
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_CLASS)]
-final class IdNormalizer implements Normalizer, ReflectionTypeAwareNormalizer
+final class IdNormalizer implements Normalizer, TypeAwareNormalizer
 {
     public function __construct(
-        /** @var class-string<AggregateRootId>|null */
-        private string|null $aggregateIdClass = null,
+        /** @var class-string<Identifier>|null */
+        private string|null $identifierClass = null,
     ) {
     }
 
@@ -30,16 +30,16 @@ final class IdNormalizer implements Normalizer, ReflectionTypeAwareNormalizer
             return null;
         }
 
-        $class = $this->aggregateIdClass();
+        $class = $this->identifierClass();
 
-        if (!$value instanceof AggregateRootId) {
+        if (!$value instanceof Identifier) {
             throw InvalidArgument::withWrongType($class, $value);
         }
 
         return $value->toString();
     }
 
-    public function denormalize(mixed $value): AggregateRootId|null
+    public function denormalize(mixed $value): Identifier|null
     {
         if ($value === null) {
             return null;
@@ -49,30 +49,35 @@ final class IdNormalizer implements Normalizer, ReflectionTypeAwareNormalizer
             throw InvalidArgument::withWrongType('string', $value);
         }
 
-        $class = $this->aggregateIdClass();
+        $class = $this->identifierClass();
 
         return $class::fromString($value);
     }
 
-    public function handleReflectionType(ReflectionType|null $reflectionType): void
+    /** @return class-string<Identifier> */
+    public function identifierClass(): string
     {
-        if ($this->aggregateIdClass !== null || $reflectionType === null) {
-            return;
-        }
-
-        $this->aggregateIdClass = ReflectionTypeUtil::classStringInstanceOf(
-            $reflectionType,
-            AggregateRootId::class,
-        );
-    }
-
-    /** @return class-string<AggregateRootId> */
-    public function aggregateIdClass(): string
-    {
-        if ($this->aggregateIdClass === null) {
+        if ($this->identifierClass === null) {
             throw InvalidType::missingType();
         }
 
-        return $this->aggregateIdClass;
+        return $this->identifierClass;
+    }
+
+    public function handleType(Type|null $type): void
+    {
+        if ($this->identifierClass !== null || $type === null) {
+            return;
+        }
+
+        if ($type instanceof NullableType) {
+            $type = $type->getWrappedType();
+        }
+
+        if (!$type instanceof ObjectType) {
+            return;
+        }
+
+        $this->identifierClass = $type->getClassName();
     }
 }

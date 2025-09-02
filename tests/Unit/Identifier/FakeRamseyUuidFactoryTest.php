@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Test;
+namespace Patchlevel\EventSourcing\Tests\Unit\Identifier;
 
-use Patchlevel\EventSourcing\Aggregate\Uuid;
-use Patchlevel\EventSourcing\Test\IncrementalRamseyUuidFactory;
+use Patchlevel\EventSourcing\Identifier\FakeRamseyUuidFactory;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid as RamseyUuid;
 
-#[CoversClass(IncrementalRamseyUuidFactory::class)]
-final class IncrementalRamseyUuidFactoryTest extends TestCase
+#[CoversClass(FakeRamseyUuidFactory::class)]
+final class FakeRamseyUuidFactoryTest extends TestCase
 {
     public function testGenerate(): void
     {
-        $factory = new IncrementalRamseyUuidFactory();
+        $factory = new FakeRamseyUuidFactory();
 
         self::assertSame('10000000-7000-0000-0000-000000000001', $factory->uuid7()->toString());
         self::assertSame('10000000-7000-0000-0000-000000000002', $factory->uuid7()->toString());
@@ -31,7 +31,7 @@ final class IncrementalRamseyUuidFactoryTest extends TestCase
         $previousFactory = RamseyUuid::getFactory();
 
         try {
-            RamseyUuid::setFactory(new IncrementalRamseyUuidFactory());
+            RamseyUuid::setFactory(new FakeRamseyUuidFactory());
 
             self::assertSame('10000000-7000-0000-0000-000000000001', Uuid::generate()->toString());
             self::assertSame('10000000-7000-0000-0000-000000000002', Uuid::generate()->toString());

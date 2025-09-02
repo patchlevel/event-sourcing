@@ -24,9 +24,9 @@ To make it easy to register with a name, we also add the `Aggregate` attribute. 
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -50,7 +50,7 @@ final class Profile extends BasicAggregateRoot
     
 !!! tip
 
-    Find out more about aggregate IDs [here](./aggregate_id.md).
+    Find out more about aggregate IDs [here](./identifier.md).
     
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
@@ -94,8 +94,8 @@ For our aggregate we create the Event `ProfileRegistered` with an ID and a name.
 We also give the event a unique name using the `Event` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Event('profile.registered')]
 final class ProfileRegistered
@@ -115,10 +115,10 @@ After we have defined the event, we have to adapt the profile aggregate:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -190,10 +190,10 @@ This method then creates the event `NameChanged` and records it:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -466,10 +466,10 @@ We can now use the value object `Name` in our aggregate:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -587,9 +587,9 @@ But you can pass this information by yourself.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -614,9 +614,9 @@ But if you still want to make sure that the time is "now" and not in the past or
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Psr\Clock\ClockInterface;
 
 #[Aggregate('profile')]
@@ -663,10 +663,10 @@ The order handle the order itself and the shipping handle the shipping of the or
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('order')]
 final class Order extends BasicAggregateRoot
@@ -694,11 +694,11 @@ In this case, the `Shipping` aggregate listens to the `OrderCreated` event to in
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Stream;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('shipping')]
 #[Stream(Order::class)]
@@ -756,7 +756,7 @@ $aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create([/* p
 ```
 ## Learn more
 
-* [How to create own aggregate id](aggregate_id.md)
+* [How to create own aggregate id](identifier.md)
 * [How to store and load aggregates](repository.md)
 * [How to snapshot aggregates](snapshots.md)
 * [How to create Projections](subscription.md)

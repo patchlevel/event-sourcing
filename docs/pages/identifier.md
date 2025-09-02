@@ -1,4 +1,4 @@
-# Aggregate ID
+# Identifier
 
 The `aggregate id` is a unique identifier for an aggregate.
 It is used to identify the aggregate in the event store.
@@ -22,9 +22,9 @@ You can use it like this:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -36,7 +36,7 @@ final class Profile extends BasicAggregateRoot
 You have multiple options for generating an uuid:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 $uuid = Uuid::generate();
 $uuid = Uuid::fromString('d6e8d7a0-4b0b-4e6a-8a9a-3a0b2d9d0e4e');
@@ -53,9 +53,9 @@ This is a value object that holds any string.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\CustomId;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\CustomId;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -73,7 +73,7 @@ final class Profile extends BasicAggregateRoot
 So you can use any string as an id:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\CustomId;
+use Patchlevel\EventSourcing\Identifier\CustomId;
 
 $id = CustomId::fromString('my-id');
 ```
@@ -84,9 +84,9 @@ This allows you to ensure that the correct id is always used.
 The whole thing looks like this:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 
-class ProfileId implements AggregateRootId
+class ProfileId implements Identifier
 {
     private function __construct(
         private readonly string $id,
@@ -98,7 +98,7 @@ class ProfileId implements AggregateRootId
         return $this->id;
     }
 
-    public static function fromString(string $id): self
+    public static function fromString(string $id): static
     {
         return new self($id);
     }
@@ -122,10 +122,10 @@ We also offer you some traits, so that you don't have to implement the `Aggregat
 Here for the uuid:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\Aggregate\RamseyUuidV7Behaviour;
+use Patchlevel\EventSourcing\Identifier\Identifier;
+use Patchlevel\EventSourcing\Identifier\RamseyUuidV7Behaviour;
 
-class ProfileId implements AggregateRootId
+class ProfileId implements Identifier
 {
     use RamseyUuidV7Behaviour;
 }
@@ -133,10 +133,10 @@ class ProfileId implements AggregateRootId
 Or for the custom id:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\Aggregate\CustomIdBehaviour;
+use Patchlevel\EventSourcing\Identifier\CustomIdBehaviour;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 
-class ProfileId implements AggregateRootId
+class ProfileId implements Identifier
 {
     use CustomIdBehaviour;
 }

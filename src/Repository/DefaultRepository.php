@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\EventBus\EventBus;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
@@ -33,7 +33,6 @@ use Psr\Log\NullLogger;
 use Throwable;
 use Traversable;
 use WeakMap;
-
 use function array_map;
 use function assert;
 use function count;
@@ -67,7 +66,7 @@ final class DefaultRepository implements Repository
     }
 
     /** @return T */
-    public function load(AggregateRootId $id): AggregateRoot
+    public function load(Identifier $id): AggregateRoot
     {
         if ($this->snapshotStore && $this->metadata->snapshot) {
             try {
@@ -162,7 +161,7 @@ final class DefaultRepository implements Repository
         return $aggregate;
     }
 
-    public function has(AggregateRootId $id): bool
+    public function has(Identifier $id): bool
     {
         $criteria = new Criteria(
             new StreamCriterion($this->metadata->streamName($id->toString())),
@@ -315,7 +314,7 @@ final class DefaultRepository implements Repository
      *
      * @return T
      */
-    private function loadFromSnapshot(string $aggregateClass, AggregateRootId $id): AggregateRoot
+    private function loadFromSnapshot(string $aggregateClass, Identifier $id): AggregateRoot
     {
         assert($this->snapshotStore instanceof SnapshotStore);
 

@@ -101,7 +101,7 @@ nav:
     - Event Bus:  event_bus.md
     - Query Bus:  query_bus.md
   - Advanced:
-    - Aggregate ID: aggregate_id.md
+    - Identifier: identifier.md
     - Normalizer: normalizer.md
     - Snapshots: snapshots.md
     - Personal Data: personal_data.md
