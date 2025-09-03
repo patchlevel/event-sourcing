@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\AbstractSQLiteDriver;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use RuntimeException;
@@ -45,6 +46,14 @@ final class DbalManager
         $databases = $schemaManager->listDatabases();
 
         if (in_array($dbName, $databases, true)) {
+            if ($tempConnection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+                $tempConnection->executeStatement("
+                    SELECT pg_terminate_backend(pid)
+                    FROM pg_stat_activity
+                    WHERE datname = '{$dbName}';
+                ");
+            }
+
             $schemaManager->dropDatabase($dbName);
         }
 

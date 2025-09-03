@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Schema\Schema;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -223,5 +224,39 @@ final class DoctrineDbalStoreTest extends TestCase
         } finally {
             $stream?->close();
         }
+    }
+
+    public function testConfigureSchemaSameDatabase(): void
+    {
+        $connection = DbalManager::createConnection();
+        $otherConnection = DbalManager::createConnection();
+
+        $store = new DoctrineDbalStore(
+            $connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $schema = new Schema();
+
+        $store->configureSchema($schema, $otherConnection);
+
+        self::assertTrue($schema->hasTable('eventstore'));
+    }
+
+    public function testConfigureSchemaNotSameDatabase(): void
+    {
+        $connection = DbalManager::createConnection();
+        $otherConnection = DbalManager::createConnection('other');
+
+        $store = new DoctrineDbalStore(
+            $connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $schema = new Schema();
+
+        $store->configureSchema($schema, $otherConnection);
+
+        self::assertFalse($schema->hasTable('eventstore'));
     }
 }
