@@ -15,6 +15,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Clock\SystemClock;
+use Patchlevel\EventSourcing\Schema\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
@@ -208,6 +209,10 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
 
     public function configureSchema(Schema $schema, Connection $connection): void
     {
+        if (!DoctrineHelper::sameDatabase($this->connection, $connection)) {
+            return;
+        }
+
         $table = $schema->createTable($this->tableName);
 
         $table->addColumn('id', Types::STRING)

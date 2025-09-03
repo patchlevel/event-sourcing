@@ -1375,9 +1375,11 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore->wait(100);
     }
 
-    public function testConfigureSchemaWithDifferentConnections(): void
+    public function testConfigureSchemaWithDifferentDatabase(): void
     {
         $connection = $this->createMock(Connection::class);
+        $connection->expects($this->once())->method('getParams')->willReturn(['dbname' => 'db']);
+
         $eventSerializer = $this->createMock(EventSerializer::class);
         $headersSerializer = $this->createMock(HeadersSerializer::class);
 
@@ -1386,8 +1388,12 @@ final class DoctrineDbalStoreTest extends TestCase
             $eventSerializer,
             $headersSerializer,
         );
+
+        $differentConnection = $this->createMock(Connection::class);
+        $differentConnection->expects($this->once())->method('getParams')->willReturn(['dbname' => 'db2']);
+
         $schema = new Schema();
-        $doctrineDbalStore->configureSchema($schema, $this->createMock(Connection::class));
+        $doctrineDbalStore->configureSchema($schema, $differentConnection);
 
         self::assertEquals(new Schema(), $schema);
     }

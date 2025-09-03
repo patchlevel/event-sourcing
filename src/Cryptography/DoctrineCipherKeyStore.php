@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Cryptography;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
+use Patchlevel\EventSourcing\Schema\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\Hydrator\Cryptography\Cipher\CipherKey;
 use Patchlevel\Hydrator\Cryptography\Store\CipherKeyNotExists;
@@ -80,7 +81,7 @@ final class DoctrineCipherKeyStore implements CipherKeyStore, DoctrineSchemaConf
 
     public function configureSchema(Schema $schema, Connection $connection): void
     {
-        if ($connection !== $this->connection) {
+        if (!DoctrineHelper::sameDatabase($this->connection, $connection)) {
             return;
         }
 

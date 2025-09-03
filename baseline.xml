@@ -95,6 +95,12 @@
       <code><![CDATA[archive]]></code>
     </UndefinedInterfaceMethod>
   </file>
+  <file src="src/Schema/DoctrineHelper.php">
+    <InternalMethod>
+      <code><![CDATA[getParams]]></code>
+      <code><![CDATA[getParams]]></code>
+    </InternalMethod>
+  </file>
   <file src="src/Schema/DoctrineSchemaDirector.php">
     <InternalMethod>
       <code><![CDATA[getName]]></code>
