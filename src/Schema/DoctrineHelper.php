@@ -20,6 +20,10 @@ final class DoctrineHelper
             return true;
         }
 
+        if ($connectionA->getParams() === $connectionB->getParams()) {
+            return true;
+        }
+
         $checkTable = 'same_db_check_' . bin2hex(random_bytes(7));
         $connectionA->executeStatement(sprintf('CREATE TABLE %s (id INTEGER NOT NULL)', $checkTable));
 
