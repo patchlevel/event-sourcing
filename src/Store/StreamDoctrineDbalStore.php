@@ -21,6 +21,7 @@ use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Schema\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
@@ -396,7 +397,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
     public function configureSchema(Schema $schema, Connection $connection): void
     {
-        if ($this->connection !== $connection) {
+        if (!DoctrineHelper::sameDatabase($this->connection, $connection)) {
             return;
         }
 

@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Schema\Schema;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -537,5 +538,41 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $streams = $this->store->streams();
 
         self::assertEquals(['foo'], $streams);
+    }
+
+    public function testConfigureSchemaSameDatabase(): void
+    {
+        $connection = DbalManager::createConnection();
+        $otherConnection = DbalManager::createConnection();
+
+        $store = new StreamDoctrineDbalStore(
+            $connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            clock: $this->clock,
+        );
+
+        $schema = new Schema();
+
+        $store->configureSchema($schema, $otherConnection);
+
+        self::assertTrue($schema->hasTable('event_store'));
+    }
+
+    public function testConfigureSchemaNotSameDatabase(): void
+    {
+        $connection = DbalManager::createConnection();
+        $otherConnection = DbalManager::createConnection('other');
+
+        $store = new StreamDoctrineDbalStore(
+            $connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            clock: $this->clock,
+        );
+
+        $schema = new Schema();
+
+        $store->configureSchema($schema, $otherConnection);
+
+        self::assertFalse($schema->hasTable('event_store'));
     }
 }
