@@ -105,15 +105,9 @@
     </InternalMethod>
   </file>
   <file src="src/Serializer/Normalizer/IdNormalizer.php">
-    <DeprecatedClass>
-      <code><![CDATA[ReflectionTypeUtil::classStringInstanceOf(
-            $reflectionType,
-            AggregateRootId::class,
-        )]]></code>
-    </DeprecatedClass>
-    <DeprecatedInterface>
-      <code><![CDATA[IdNormalizer]]></code>
-    </DeprecatedInterface>
+    <PropertyTypeCoercion>
+      <code><![CDATA[$type->getClassName()]]></code>
+    </PropertyTypeCoercion>
   </file>
   <file src="src/Serializer/Upcast/Upcast.php">
     <MixedAssignment>

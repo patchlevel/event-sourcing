@@ -362,5 +362,5 @@ $provider = new ChainHandlerProvider([
 * [How to use aggregates](aggregate.md)
 * [How to use events](events.md)
 * [How to use clock](clock.md)
-* [How to use aggregate id](aggregate_id.md)
+* [How to use aggregate id](identifier.md)
 * [How to use query bus](query_bus.md)

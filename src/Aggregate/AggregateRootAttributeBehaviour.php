@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\Hydrator\Attribute\Ignore;
 use ReflectionProperty;
 
@@ -15,7 +16,7 @@ trait AggregateRootAttributeBehaviour
     use AggregateRootMetadataAwareBehaviour;
 
     #[Ignore]
-    private AggregateRootId|null $cachedAggregateRootId = null;
+    private Identifier|null $cachedAggregateRootId = null;
 
     protected function apply(object $event): void
     {
@@ -34,9 +35,9 @@ trait AggregateRootAttributeBehaviour
         $this->$method($event);
     }
 
-    public function aggregateRootId(): AggregateRootId
+    public function aggregateRootId(): Identifier
     {
-        if ($this->cachedAggregateRootId instanceof AggregateRootId) {
+        if ($this->cachedAggregateRootId instanceof Identifier) {
             return $this->cachedAggregateRootId;
         }
 
@@ -47,7 +48,7 @@ trait AggregateRootAttributeBehaviour
         /** @var mixed $aggregateRootId */
         $aggregateRootId = $reflection->getValue($this);
 
-        if (!$aggregateRootId instanceof AggregateRootId) {
+        if (!$aggregateRootId instanceof Identifier) {
             throw new AggregateRootIdNotSupported($this::class, $aggregateRootId);
         }
 

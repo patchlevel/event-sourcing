@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
+namespace Patchlevel\EventSourcing\Tests\Unit\Identifier;
 
-use Patchlevel\EventSourcing\Aggregate\CustomId;
+use Patchlevel\EventSourcing\Identifier\CustomId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

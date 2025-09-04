@@ -49,6 +49,12 @@ parameters:
 			path: src/Repository/DefaultRepository.php
 
 		-
+			message: '#^Property Patchlevel\\EventSourcing\\Serializer\\Normalizer\\IdNormalizer\:\:\$identifierClass \(class\-string\<Patchlevel\\EventSourcing\\Identifier\\Identifier\>\|null\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Serializer/Normalizer/IdNormalizer.php
+
+		-
 			message: '#^Parameter \#2 \$data of method Patchlevel\\Hydrator\\Hydrator\:\:hydrate\(\) expects array\<string, mixed\>, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -137,12 +143,6 @@ parameters:
 			identifier: cast.string
 			count: 3
 			path: src/Subscription/ThrowableToErrorContextTransformer.php
-
-		-
-			message: '#^Parameter \#1 \$id of static method Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\Profile\:\:create\(\) expects Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileId, Patchlevel\\EventSourcing\\Aggregate\\AggregateRootId given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Benchmark/SplitStreamBench.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BankAccountSplitStream\\\\BankAccount'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BankAccountSplitStream\\BankAccount will always evaluate to true\.$#'

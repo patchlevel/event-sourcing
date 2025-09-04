@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -28,7 +28,7 @@ final class SnapshotsBench
 
     private InMemorySnapshotAdapter $adapter;
 
-    private AggregateRootId $id;
+    private Identifier $id;
 
     public function setUp(): void
     {

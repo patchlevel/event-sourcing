@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
@@ -26,7 +25,7 @@ final class SplitStreamBench
     private Store $store;
     private Repository $repository;
 
-    private AggregateRootId $id;
+    private ProfileId $id;
 
     public function setUp(): void
     {

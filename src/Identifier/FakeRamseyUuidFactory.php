@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Test;
+namespace Patchlevel\EventSourcing\Identifier;
 
 use DateTimeInterface;
 use Ramsey\Uuid\Uuid;
@@ -14,7 +14,7 @@ use function str_pad;
 
 use const STR_PAD_LEFT;
 
-final class IncrementalRamseyUuidFactory extends UuidFactory
+final class FakeRamseyUuidFactory extends UuidFactory
 {
     private int $counter = 0;
 

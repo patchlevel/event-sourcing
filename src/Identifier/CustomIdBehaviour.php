@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Aggregate;
+namespace Patchlevel\EventSourcing\Identifier;
 
 trait CustomIdBehaviour
 {
@@ -11,7 +11,7 @@ trait CustomIdBehaviour
     ) {
     }
 
-    public static function fromString(string $id): self
+    public static function fromString(string $id): static
     {
         return new self($id);
     }

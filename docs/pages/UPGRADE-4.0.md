@@ -2,11 +2,33 @@
 
 ## Aggregates
 
+### Aggregate Root
+
+Method `aggregateRootId` return typehint has been changed from `AggregateRootId` to `Identifier`.
+
+### Aggregate Root Id
+
+`AggregateRootId` was renamed to `Identifier` and moved to the `Patchlevel\EventSourcing\Identifier` namespace.
+
+Following classes have been moved to the `Patchlevel\EventSourcing\Identifier` namespace too:
+
+* `CustomId`
+* `CustomIdBehaviour`
+* `RamseyUuidV7Behaviour`
+* `Uuid`
+
+Return typehint of `fromString` method has been changed from `self` to `static`.
+All typehints of other classes `AggregateRootId` have been changed to `Identifier`.
+
 ### Child Aggregate
 
 We removed our experimental feature of child aggregates.
 This was our first attempt to split aggregates into smaller parts,
 but we found a better way to do this with the `Micro Aggregate` feature.
+
+## Aggregate Repository
+
+Typehints for the `AggregateRepository` have been changed, from `AggregateRootId` to `Identifier`.
 
 ## Subscription
 
@@ -61,7 +83,6 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
     RetryStrategyRepository::withDefault($retryStrategy),
 );
 ```
-
 ## Store
 
 ### DoctrineDbalStore

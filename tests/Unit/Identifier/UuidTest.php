@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Aggregate;
+namespace Patchlevel\EventSourcing\Tests\Unit\Identifier;
 
 use DateTimeInterface;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid as RamseyUuid;
