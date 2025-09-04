@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\DCB;
 
-use Patchlevel\EventSourcing\Aggregate\CustomId;
 use Patchlevel\EventSourcing\Attribute\EventTag;
 use Patchlevel\EventSourcing\DCB\AttributeEventTagExtractor;
+use Patchlevel\EventSourcing\Identifier\CustomId;
 use PHPUnit\Framework\TestCase;
 
 final class AttributeEventTagExtractorTest extends TestCase

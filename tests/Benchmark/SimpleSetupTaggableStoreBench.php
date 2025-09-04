@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
@@ -24,8 +24,8 @@ final class SimpleSetupTaggableStoreBench
     private TaggableDoctrineDbalStore $store;
     private Repository $repository;
 
-    private AggregateRootId $singleEventId;
-    private AggregateRootId $multipleEventsId;
+    private Identifier $singleEventId;
+    private Identifier $multipleEventsId;
 
     public function setUp(): void
     {

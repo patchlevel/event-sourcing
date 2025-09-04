@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\DCB;
 
 use Patchlevel\EventSourcing\Attribute\EventTag;
-use Patchlevel\EventSourcing\Stringable;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use ReflectionClass;
-use Stringable as NativeStringable;
+use Stringable;
 
 use function array_keys;
 use function hash;
@@ -36,12 +36,12 @@ final class AttributeEventTagExtractor implements EventTagExtractor
 
             $value = $property->getValue($event);
 
-            if ($value instanceof Stringable) {
-                $value = $value->toString();
+            if ($value instanceof Stringable || is_int($value)) {
+                $value = (string)$value;
             }
 
-            if ($value instanceof NativeStringable || is_int($value)) {
-                $value = (string)$value;
+            if ($value instanceof Identifier) {
+                $value = $value->toString();
             }
 
             if (!is_string($value)) {
