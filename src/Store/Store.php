@@ -31,4 +31,11 @@ interface Store
      * @template ClosureReturn
      */
     public function transactional(Closure $function): void;
+
+    /** @return list<string> */
+    public function streams(): array;
+
+    public function remove(Criteria|null $criteria = null): void;
+
+    public function archive(Criteria|null $criteria = null): void;
 }

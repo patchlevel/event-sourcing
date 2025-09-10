@@ -29,7 +29,6 @@ use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
@@ -324,6 +323,10 @@ final class DefaultRepositoryTest extends TestCase
 
                 return $message->header(PlayheadHeader::class)->playhead === 1;
             });
+
+        $store->expects($this->once())->method('transactional')->willReturnCallback(static function (callable $callback): void {
+            $callback();
+        });
 
         $repository = new DefaultRepository(
             $store,
@@ -693,7 +696,7 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testSaveAggregateInOtherStream(): void
     {
-        $store = $this->createMock(StreamStore::class);
+        $store = $this->createMock(Store::class);
         $store
             ->expects($this->once())
             ->method('save')
@@ -717,7 +720,7 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testLoadAggregateFromOtherStream(): void
     {
-        $store = $this->createMock(StreamStore::class);
+        $store = $this->createMock(Store::class);
 
         $store
             ->expects($this->once())

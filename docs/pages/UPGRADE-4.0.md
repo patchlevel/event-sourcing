@@ -85,6 +85,10 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
 ```
 ## Store
 
+### StreamStore
+
+`StreamStore` interface was merged with `Store` interface.
+
 ### DoctrineDbalStore
 
 `DoctrineDbalStore` has been removed in favor of `StreamDoctrineDbalStore`.
@@ -94,7 +98,10 @@ And all the associated classes:
 * `Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion`
 * `Patchlevel\EventSourcing\Store\DoctrineDbalStore`
 * `Patchlevel\EventSourcing\Store\DoctrineDbalStoreStream`
-* `Patchlevel\EventSourcing\Store\ReadOnlyStore`
+
+### StreamReadOnlyStore
+
+`StreamReadOnlyStore` was been merged in `ReadOnlyStore`.
 
 ## Message
 
