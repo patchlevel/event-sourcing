@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\DCB;
+namespace Patchlevel\EventSourcing\DecisionModel;
+
+use Patchlevel\EventSourcing\Projection\Projection;
 
 /** @experimental */
 interface DecisionModelBuilder

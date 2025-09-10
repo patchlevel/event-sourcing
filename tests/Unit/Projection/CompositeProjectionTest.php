@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\DCB;
+namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
-use Patchlevel\EventSourcing\DCB\CompositeProjection;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Projection\CompositeProjection;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\Query;

@@ -2,16 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\DCB;
+namespace Patchlevel\EventSourcing\Tests\Unit\DecisionModel;
 
 use LogicException;
 use OutOfBoundsException;
-use Patchlevel\EventSourcing\DCB\DecisionModel;
+use Patchlevel\EventSourcing\DecisionModel\DecisionModel;
 use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\Query;
 use Patchlevel\EventSourcing\Store\SubQuery;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(DecisionModel::class)]
 final class DecisionModelTest extends TestCase
 {
     private function createAppendCondition(): AppendCondition

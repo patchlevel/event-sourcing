@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Handler;
 
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\DCB\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DCB\EventAppender;
+use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
+use Patchlevel\EventSourcing\DecisionModel\EventAppender;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Command\CreateInvoice;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Event\InvoiceCreated;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Projection\NextInvoiceNumberProjection;

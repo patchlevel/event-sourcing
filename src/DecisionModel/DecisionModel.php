@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\DCB;
+namespace Patchlevel\EventSourcing\DecisionModel;
 
 use ArrayAccess;
 use LogicException;

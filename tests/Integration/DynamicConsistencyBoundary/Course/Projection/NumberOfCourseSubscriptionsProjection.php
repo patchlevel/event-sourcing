@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Projection;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\BasicProjection;
+use Patchlevel\EventSourcing\Projection\BasicProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\CourseId;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Event\StudentSubscribedToCourse;
 

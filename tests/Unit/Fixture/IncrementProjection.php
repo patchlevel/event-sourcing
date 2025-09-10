@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\BasicProjection;
+use Patchlevel\EventSourcing\Projection\BasicProjection;
 
 final class IncrementProjection extends BasicProjection
 {

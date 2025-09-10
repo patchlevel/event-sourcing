@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\DCB;
+namespace Patchlevel\EventSourcing\DecisionModel;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Serializer\AttributeEventTagExtractor;
+use Patchlevel\EventSourcing\Serializer\EventTagExtractor;
 use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\AppendStore;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;

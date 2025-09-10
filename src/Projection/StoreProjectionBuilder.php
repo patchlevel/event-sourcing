@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\DCB;
+namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Store\AppendStore;
 

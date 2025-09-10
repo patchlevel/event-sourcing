@@ -33,21 +33,7 @@
       <code><![CDATA[setPrimaryKey]]></code>
     </DeprecatedMethod>
   </file>
-  <file src="src/DCB/AttributeEventTagExtractor.php">
-    <RiskyTruthyFalsyComparison>
-      <code><![CDATA[$attribute->hash]]></code>
-      <code><![CDATA[$attribute->prefix]]></code>
-    </RiskyTruthyFalsyComparison>
-  </file>
-  <file src="src/DCB/CompositeProjection.php">
-    <MissingClosureReturnType>
-      <code><![CDATA[static function (Projection $projection) {]]></code>
-    </MissingClosureReturnType>
-    <MixedAssignment>
-      <code><![CDATA[$state[$name]]]></code>
-    </MixedAssignment>
-  </file>
-  <file src="src/DCB/DecisionModel.php">
+  <file src="src/DecisionModel/DecisionModel.php">
     <ImplementedReturnTypeMismatch>
       <code><![CDATA[T[TKey]]]></code>
     </ImplementedReturnTypeMismatch>
@@ -97,6 +83,19 @@
       <code><![CDATA[require_once $file]]></code>
     </UnresolvableInclude>
   </file>
+  <file src="src/Projection/BasicProjection.php">
+    <MixedReturnStatement>
+      <code><![CDATA[$this->{$applyMethods[$event::class]}($state, $event)]]></code>
+    </MixedReturnStatement>
+  </file>
+  <file src="src/Projection/CompositeProjection.php">
+    <MissingClosureReturnType>
+      <code><![CDATA[static function (Projection $projection) {]]></code>
+    </MissingClosureReturnType>
+    <MixedAssignment>
+      <code><![CDATA[$state[$name]]]></code>
+    </MixedAssignment>
+  </file>
   <file src="src/QueryBus/ServiceHandlerProvider.php">
     <MixedArgument>
       <code><![CDATA[$service::{$handler->method}(...)]]></code>
@@ -123,12 +122,13 @@
       <code><![CDATA[getName]]></code>
     </InternalMethod>
   </file>
-  <file src="src/Serializer/Normalizer/IdNormalizer.php">
-    <PropertyTypeCoercion>
-      <code><![CDATA[$type->getClassName()]]></code>
-    </PropertyTypeCoercion>
+  <file src="src/Serializer/AttributeEventTagExtractor.php">
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$attribute->hash]]></code>
+      <code><![CDATA[$attribute->prefix]]></code>
+    </RiskyTruthyFalsyComparison>
   </file>
-  <file src="src/Serializer/Normalizer/StringableNormalizer.php">
+  <file src="src/Serializer/Normalizer/IdNormalizer.php">
     <PropertyTypeCoercion>
       <code><![CDATA[$type->getClassName()]]></code>
     </PropertyTypeCoercion>
@@ -183,14 +183,6 @@
     <MixedArgument>
       <code><![CDATA[json_decode($data['tags'], true, 512, JSON_THROW_ON_ERROR)]]></code>
     </MixedArgument>
-  </file>
-  <file src="src/Subscription/Engine/DefaultSubscriptionEngine.php">
-    <DeprecatedInterface>
-      <code><![CDATA[SubscriberAccessor|null]]></code>
-    </DeprecatedInterface>
-    <DeprecatedMethod>
-      <code><![CDATA[realSubscriber]]></code>
-    </DeprecatedMethod>
   </file>
   <file src="src/Subscription/Engine/GapResolverStoreMessageLoader.php">
     <InvalidReturnType>

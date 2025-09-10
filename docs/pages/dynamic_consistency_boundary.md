@@ -149,8 +149,7 @@ Each projection:
 The first projection answers only whether the hotel already exists.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\BasicProjection;
+use Patchlevel\EventSourcing\Attribute\Apply;use Patchlevel\EventSourcing\Projection\BasicProjection;
 
 final class HotelExists extends BasicProjection
 {
@@ -181,8 +180,7 @@ final class HotelExists extends BasicProjection
 The second projection counts the guests currently checked in.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\BasicProjection;
+use Patchlevel\EventSourcing\Attribute\Apply;use Patchlevel\EventSourcing\Projection\BasicProjection;
 
 final class NumberOfGuestsInHotel extends BasicProjection
 {
@@ -219,8 +217,7 @@ final class NumberOfGuestsInHotel extends BasicProjection
 The third projection answers whether the given guest is already checked into this hotel.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\DCB\BasicProjection;
+use Patchlevel\EventSourcing\Attribute\Apply;use Patchlevel\EventSourcing\Projection\BasicProjection;
 
 final class GuestAlreadyCheckedIn extends BasicProjection
 {

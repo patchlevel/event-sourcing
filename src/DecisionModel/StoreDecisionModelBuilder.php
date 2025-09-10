@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\DCB;
+namespace Patchlevel\EventSourcing\DecisionModel;
 
+use Patchlevel\EventSourcing\Projection\CompositeProjection;
+use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\AppendStore;
 

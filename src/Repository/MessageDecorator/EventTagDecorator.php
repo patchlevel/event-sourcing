@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Repository\MessageDecorator;
 
-use Patchlevel\EventSourcing\DCB\AttributeEventTagExtractor;
-use Patchlevel\EventSourcing\DCB\EventTagExtractor;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Serializer\AttributeEventTagExtractor;
+use Patchlevel\EventSourcing\Serializer\EventTagExtractor;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 
 /** @experimental */

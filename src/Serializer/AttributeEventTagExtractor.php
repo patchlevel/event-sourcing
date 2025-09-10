@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\DCB;
+namespace Patchlevel\EventSourcing\Serializer;
 
 use Patchlevel\EventSourcing\Attribute\EventTag;
 use Patchlevel\EventSourcing\Identifier\Identifier;
