@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e47b04b41df0b48268165ffc8e103455",
+    "content-hash": "9c3ea614fd226ed4bf541ba10f1b36a2",
     "packages": [
         {
             "name": "brick/math",
@@ -5807,26 +5807,27 @@
         },
         {
             "name": "phpat/phpat",
-            "version": "0.11.9",
+            "version": "0.12.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/carlosas/phpat.git",
-                "reference": "3f039d180852d1d552ef87ace3ffc910f5e88d0f"
+                "reference": "f1d0eccdba0a6862b7a639cbd020147c35b63763"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/carlosas/phpat/zipball/3f039d180852d1d552ef87ace3ffc910f5e88d0f",
-                "reference": "3f039d180852d1d552ef87ace3ffc910f5e88d0f",
+                "url": "https://api.github.com/repos/carlosas/phpat/zipball/f1d0eccdba0a6862b7a639cbd020147c35b63763",
+                "reference": "f1d0eccdba0a6862b7a639cbd020147c35b63763",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.4 || ^8.0",
-                "phpstan/phpstan": "^2.0"
+                "php": "^8.1",
+                "phpstan/phpstan": "^2.1"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.60",
-                "kubawerlos/php-cs-fixer-custom-fixers": "3.18.*",
-                "phpunit/phpunit": "^9.0 || 10.5.*"
+                "friendsofphp/php-cs-fixer": "^3.87",
+                "kubawerlos/php-cs-fixer-custom-fixers": "3.32.*",
+                "phpunit/phpunit": "^10.5",
+                "vimeo/psalm": "^6.13"
             },
             "type": "phpstan-extension",
             "extra": {
@@ -5857,9 +5858,9 @@
             "description": "PHP Architecture Tester",
             "support": {
                 "issues": "https://github.com/carlosas/phpat/issues",
-                "source": "https://github.com/carlosas/phpat/tree/0.11.9"
+                "source": "https://github.com/carlosas/phpat/tree/0.12.0"
             },
-            "time": "2025-07-29T09:05:31+00:00"
+            "time": "2025-09-11T19:00:27+00:00"
         },
         {
             "name": "phpbench/container",
