@@ -66,7 +66,7 @@ use function str_contains;
 use function str_replace;
 
 /** @experimental */
-final class TaggableDoctrineDbalStore implements StreamStore, AppendStore, SubscriptionStore, DoctrineSchemaConfigurator
+final class TaggableDoctrineDbalStore implements Store, AppendStore, SubscriptionStore, DoctrineSchemaConfigurator
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.
