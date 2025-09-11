@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7b2b7576c07c4fac71ebb40d0e45c8e5",
+    "content-hash": "a90902ae3e8b9b481f8e364c976d60e9",
     "packages": [
         {
             "name": "brick/math",
@@ -5629,16 +5629,16 @@
         },
         {
             "name": "patchlevel/event-sourcing-phpstan-extension",
-            "version": "1.0.0",
+            "version": "dev-event-sourcing-4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/patchlevel/event-sourcing-phpstan-extension.git",
-                "reference": "fb72d87091a5ed55f8079c8b2bacdec2f547143c"
+                "reference": "9506a696eb0422b1dce1816747b15b9af76eab4b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/patchlevel/event-sourcing-phpstan-extension/zipball/fb72d87091a5ed55f8079c8b2bacdec2f547143c",
-                "reference": "fb72d87091a5ed55f8079c8b2bacdec2f547143c",
+                "url": "https://api.github.com/repos/patchlevel/event-sourcing-phpstan-extension/zipball/9506a696eb0422b1dce1816747b15b9af76eab4b",
+                "reference": "9506a696eb0422b1dce1816747b15b9af76eab4b",
                 "shasum": ""
             },
             "require": {
@@ -5680,9 +5680,9 @@
             ],
             "support": {
                 "issues": "https://github.com/patchlevel/event-sourcing-phpstan-extension/issues",
-                "source": "https://github.com/patchlevel/event-sourcing-phpstan-extension/tree/1.0.0"
+                "source": "https://github.com/patchlevel/event-sourcing-phpstan-extension/tree/event-sourcing-4.0"
             },
-            "time": "2025-08-13T08:14:47+00:00"
+            "time": "2025-09-11T09:07:49+00:00"
         },
         {
             "name": "patchlevel/event-sourcing-psalm-plugin",
@@ -9702,7 +9702,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "patchlevel/event-sourcing-phpstan-extension": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

@@ -277,6 +277,12 @@ parameters:
 			path: tests/Integration/Subscription/SubscriptionTest.php
 
 		-
+			message: '#^Cannot use array destructuring on list\<mixed\>\|null\.$#'
+			identifier: offsetAccess.nonArray
+			count: 1
+			path: tests/ReturnCallback.php
+
+		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Metadata\\\\AggregateRoot\\\\AggregateRootMetadata'' and Patchlevel\\EventSourcing\\Metadata\\AggregateRoot\\AggregateRootMetadata\<Patchlevel\\EventSourcing\\Aggregate\\BasicAggregateRoot\> will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1
