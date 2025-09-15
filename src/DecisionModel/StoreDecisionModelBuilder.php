@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Store\AppendStore;
 final class StoreDecisionModelBuilder implements DecisionModelBuilder
 {
     public function __construct(
-        private AppendStore $store,
+        private readonly AppendStore $store,
     ) {
     }
 
@@ -31,7 +31,7 @@ final class StoreDecisionModelBuilder implements DecisionModelBuilder
         $highestId = 0;
 
         foreach ($stream as $message) {
-            $highestId = $stream->index();
+            $highestId = $stream->index() ?? 0;
             $state = $projection->apply($state, $message);
         }
 
@@ -39,7 +39,7 @@ final class StoreDecisionModelBuilder implements DecisionModelBuilder
             $state,
             new AppendCondition(
                 $query,
-                $highestId ?? 0,
+                $highestId,
             ),
         );
     }

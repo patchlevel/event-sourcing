@@ -29,6 +29,8 @@ abstract class BasicProjection implements Projection, SubQueryProvider
     /** @var array<class-string, string>|null $applyMethods */
     private array|null $applyMethods = null;
 
+    private SubQuery|null $subQuery = null;
+
     /**
      * @param S $state
      *
@@ -53,12 +55,16 @@ abstract class BasicProjection implements Projection, SubQueryProvider
 
     public function subQuery(): SubQuery
     {
-        return new SubQuery(
-            $this->tagFilter(),
-            $this->eventTypeFilter(),
-            $this->streamName(),
-            $this->lastEventIsEnough(),
-        );
+        if ($this->subQuery === null) {
+            $this->subQuery = new SubQuery(
+                $this->tagFilter(),
+                $this->eventTypeFilter(),
+                $this->streamName(),
+                $this->lastEventIsEnough(),
+            );
+        }
+
+        return $this->subQuery;
     }
 
     /** @return list<class-string> */

@@ -30,6 +30,10 @@ final class StoreEventAppender implements EventAppender
         AppendCondition|null $appendCondition = null,
         string|null $streamName = null,
     ): void {
+        if ($events === []) {
+            return;
+        }
+
         $messages = array_map(
             fn (object $event) => Message::create($event)
                 ->withHeader(new StreamNameHeader($streamName ?? $this->defaultStreamName))

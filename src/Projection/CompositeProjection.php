@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Query;
-use Patchlevel\EventSourcing\Store\SubQuery;
 
 use function array_map;
 
@@ -24,13 +23,11 @@ final class CompositeProjection
         $subQueries = [];
 
         foreach ($this->projections as $projection) {
-            if ($projection instanceof SubQueryProvider) {
-                $subQueries[] = $projection->subQuery();
-
-                continue;
+            if (!$projection instanceof SubQueryProvider) {
+                return new Query();
             }
 
-            $subQueries[] = new SubQuery();
+            $subQueries[] = $projection->subQuery();
         }
 
         $query = new Query(...$subQueries);
