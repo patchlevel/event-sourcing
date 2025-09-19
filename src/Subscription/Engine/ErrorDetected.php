@@ -6,8 +6,7 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use RuntimeException;
 
-use function array_map;
-use function implode;
+use function count;
 use function sprintf;
 
 final class ErrorDetected extends RuntimeException
@@ -16,15 +15,14 @@ final class ErrorDetected extends RuntimeException
     public function __construct(
         public readonly array $errors,
     ) {
-        $sentences = array_map(
-            static fn (Error $error) => sprintf(
-                'Subscription %s: %s',
-                $error->subscriptionId,
-                $error->message,
+        parent::__construct(
+            sprintf(
+                '%s error(s) in subscription engine detected. First error is in "%s" subscription: %s',
+                count($errors),
+                $errors[0]->subscriptionId,
+                $errors[0]->message,
             ),
-            $errors,
+            previous: $errors[0]->throwable,
         );
-
-        parent::__construct("Error in subscription engine detected.\n" . implode("\n", $sentences));
     }
 }

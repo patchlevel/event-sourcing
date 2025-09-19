@@ -24,8 +24,12 @@ final class ErrorDetectedTest extends TestCase
 
         self::assertSame($errors, $errorDetected->errors);
         self::assertSame(
-            "Error in subscription engine detected.\nSubscription id1: error1\nSubscription id2: error2",
+            '2 error(s) in subscription engine detected. First error is in "id1" subscription: error1',
             $errorDetected->getMessage(),
+        );
+        self::assertSame(
+            $errors[0]->throwable,
+            $errorDetected->getPrevious(),
         );
     }
 }
