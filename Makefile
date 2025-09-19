@@ -74,7 +74,7 @@ test: phpunit                                                                   
 
 .PHONY: benchmark
 benchmark: vendor                                                               ## run benchmarks
-	DB_URL=sqlite3:///:memory: php -d memory_limit=512M vendor/bin/phpbench run tests/Benchmark --report=default --filter=benchAppend100Events
+	DB_URL=sqlite3:///:memory: php -d memory_limit=512M vendor/bin/phpbench run tests/Benchmark --report=default
 
 .PHONY: benchmark-base
 benchmark-base: vendor                                                   	## run benchmarks

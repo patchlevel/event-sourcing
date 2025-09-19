@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use function array_merge;
 use function array_values;
 
 /** @experimental */
@@ -21,7 +20,7 @@ final class Query
 
     public function add(SubQuery $subQuery): self
     {
-        return new self(...array_merge($this->subQueries, [$subQuery]));
+        return new self(...[...$this->subQueries, $subQuery]);
     }
 
     /**

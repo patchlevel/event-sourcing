@@ -302,6 +302,10 @@ final class CreateHotelHandler
     Handlers build a Decision Model from the projections and then append events with an optimistic AppendCondition. 
     If any relevant event arrives between read and write, the append fails and you can retry.
     
+!!! tip
+
+    To get type security, you can use our [phpstan extension](https://github.com/patchlevel/event-sourcing-phpstan-extension).
+
 The next handler implements the `CheckIn` command.
 
 ```php
@@ -445,7 +449,8 @@ $commandBus->dispatch(new CheckOut($hotelId, 'David'));
 
 We've seen how to use DCB to make decisions consistently.
 In this example we skipped the subscription part,
-but you can add it by following the [Getting Started](./getting_started.md) section.
+as it is the same as before with aggregates.
+You can find this [Getting Started](./getting_started.md) section.
 
 ## Learn more
 
