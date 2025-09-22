@@ -101,6 +101,7 @@ nav:
     - Event Bus:  event_bus.md
     - Query Bus:  query_bus.md
   - Advanced:
+    - Dynamic Consistency Boundary: dynamic_consistency_boundary.md
     - Identifier: identifier.md
     - Normalizer: normalizer.md
     - Snapshots: snapshots.md

@@ -33,6 +33,14 @@
       <code><![CDATA[setPrimaryKey]]></code>
     </DeprecatedMethod>
   </file>
+  <file src="src/DecisionModel/DecisionModel.php">
+    <ImplementedReturnTypeMismatch>
+      <code><![CDATA[T[TKey]]]></code>
+    </ImplementedReturnTypeMismatch>
+    <InvalidCast>
+      <code><![CDATA[$offset]]></code>
+    </InvalidCast>
+  </file>
   <file src="src/EventBus/AttributeListenerProvider.php">
     <MixedMethodCall>
       <code><![CDATA[$method->getName()]]></code>
@@ -75,6 +83,19 @@
       <code><![CDATA[require_once $file]]></code>
     </UnresolvableInclude>
   </file>
+  <file src="src/Projection/BasicProjection.php">
+    <MixedReturnStatement>
+      <code><![CDATA[$this->{$applyMethods[$event::class]}($state, $event)]]></code>
+    </MixedReturnStatement>
+  </file>
+  <file src="src/Projection/CompositeProjection.php">
+    <MissingClosureReturnType>
+      <code><![CDATA[static function (Projection $projection) {]]></code>
+    </MissingClosureReturnType>
+    <MixedAssignment>
+      <code><![CDATA[$state[$name]]]></code>
+    </MixedAssignment>
+  </file>
   <file src="src/QueryBus/ServiceHandlerProvider.php">
     <MixedArgument>
       <code><![CDATA[$service::{$handler->method}(...)]]></code>
@@ -100,6 +121,12 @@
       <code><![CDATA[getName]]></code>
       <code><![CDATA[getName]]></code>
     </InternalMethod>
+  </file>
+  <file src="src/Serializer/AttributeEventTagExtractor.php">
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$attribute->hash]]></code>
+      <code><![CDATA[$attribute->prefix]]></code>
+    </RiskyTruthyFalsyComparison>
   </file>
   <file src="src/Serializer/Normalizer/IdNormalizer.php">
     <PropertyTypeCoercion>
@@ -148,6 +175,14 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[(int)$data['playhead']]]></code>
     </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Store/TaggableDoctrineDbalStoreStream.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[(int)$data['playhead']]]></code>
+    </ArgumentTypeCoercion>
+    <MixedArgument>
+      <code><![CDATA[json_decode($data['tags'], true, 512, JSON_THROW_ON_ERROR)]]></code>
+    </MixedArgument>
   </file>
   <file src="src/Subscription/Engine/GapResolverStoreMessageLoader.php">
     <InvalidReturnType>

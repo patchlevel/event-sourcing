@@ -109,6 +109,30 @@ parameters:
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
+			message: '#^Method Patchlevel\\EventSourcing\\Store\\TaggableDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Parameter \#1 \$playhead of class Patchlevel\\EventSourcing\\Store\\Header\\PlayheadHeader constructor expects int\<1, max\>, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Parameter \#1 \$tags of class Patchlevel\\EventSourcing\\Store\\Header\\TagsHeader constructor expects list\<string\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
 			message: '#^Generator expects key type int, int\<1, max\>\|null given\.$#'
 			identifier: generator.keyType
 			count: 1
@@ -251,6 +275,12 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: tests/Integration/Subscription/SubscriptionTest.php
+
+		-
+			message: '#^Cannot use array destructuring on list\<mixed\>\|null\.$#'
+			identifier: offsetAccess.nonArray
+			count: 1
+			path: tests/ReturnCallback.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Metadata\\\\AggregateRoot\\\\AggregateRootMetadata'' and Patchlevel\\EventSourcing\\Metadata\\AggregateRoot\\AggregateRootMetadata\<Patchlevel\\EventSourcing\\Aggregate\\BasicAggregateRoot\> will always evaluate to true\.$#'
