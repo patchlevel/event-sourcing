@@ -235,6 +235,7 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ->setLength(32)
             ->setNotnull(false);
         $table->addColumn('error_context', Types::JSON)
+            ->setPlatformOption('jsonb', true)
             ->setNotnull(false);
         $table->addColumn('retry_attempt', Types::INTEGER)
             ->setNotnull(true);
