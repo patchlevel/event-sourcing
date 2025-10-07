@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\RecordedOnArgumentResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +36,7 @@ final class RecordedOnArgumentResolverTest extends TestCase
         );
     }
 
-    public function testResolve(): void
+    public function testResolveFromAggregateHeader(): void
     {
         $date = new DateTimeImmutable();
 
@@ -48,6 +49,22 @@ final class RecordedOnArgumentResolverTest extends TestCase
                 $date,
             ),
         );
+
+        self::assertSame(
+            $date,
+            $resolver->resolve(
+                new ArgumentMetadata('foo', DateTimeImmutable::class),
+                $message,
+            ),
+        );
+    }
+
+    public function testResolveFromRecordedOnHeader(): void
+    {
+        $date = new DateTimeImmutable();
+
+        $resolver = new RecordedOnArgumentResolver();
+        $message = (new Message(new stdClass()))->withHeader(new RecordedOnHeader($date));
 
         self::assertSame(
             $date,
