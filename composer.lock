@@ -3622,6 +3622,7 @@
                 "issues": "https://github.com/doctrine/annotations/issues",
                 "source": "https://github.com/doctrine/annotations/tree/2.0.2"
             },
+            "abandoned": true,
             "time": "2024-09-05T10:17:24+00:00"
         },
         {
@@ -9654,5 +9655,5 @@
     "platform-dev": {
         "ext-pdo_sqlite": "~8.2.0 || ~8.3.0 || ~8.4.0"
     },
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
