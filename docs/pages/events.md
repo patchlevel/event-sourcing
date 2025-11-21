@@ -89,8 +89,8 @@ You can do that too. However, you must define a normalizer for this
 so that the library knows how to write this data to the database and load it again.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 

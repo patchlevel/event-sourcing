@@ -10,7 +10,7 @@ use function array_shift;
 
 final class ReturnCallback
 {
-    /** @param array{list<mixed>, mixed} $series */
+    /** @param list<array{list<mixed>, mixed}> $series */
     public function __construct(
         private array $series,
     ) {

@@ -4,27 +4,17 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
-use InvalidArgumentException;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\ReadOnlyStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StoreIsReadOnly;
-use Patchlevel\EventSourcing\Store\StreamStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ReadOnlyStore::class)]
 final class ReadOnlyStoreTest extends TestCase
 {
-    public function testUnsupportedStore(): void
-    {
-        $parentStore = $this->createMock(StreamStore::class);
-
-        $this->expectException(InvalidArgumentException::class);
-        new ReadOnlyStore($parentStore);
-    }
-
     public function testLoad(): void
     {
         $criteria = new Criteria();
@@ -70,5 +60,39 @@ final class ReadOnlyStoreTest extends TestCase
 
         $store = new ReadOnlyStore($parentStore);
         $store->transactional($callback);
+    }
+
+    public function testStreams(): void
+    {
+        $parentStore = $this->createMock(Store::class);
+        $parentStore->expects($this->atLeastOnce())->method('streams')->willReturn(['foo', 'bar']);
+
+        $store = new ReadOnlyStore($parentStore);
+
+        self::assertEquals(['foo', 'bar'], $store->streams());
+    }
+
+    public function testRemove(): void
+    {
+        $criteria = new Criteria();
+
+        $parentStore = $this->createMock(Store::class);
+        $parentStore->expects($this->never())->method('remove')->with($criteria);
+
+        $store = new ReadOnlyStore($parentStore);
+        $this->expectException(StoreIsReadOnly::class);
+        $store->remove($criteria);
+    }
+
+    public function testArchive(): void
+    {
+        $criteria = new Criteria();
+
+        $parentStore = $this->createMock(Store::class);
+        $parentStore->expects($this->never())->method('archive')->with($criteria);
+
+        $store = new ReadOnlyStore($parentStore);
+        $this->expectException(StoreIsReadOnly::class);
+        $store->archive($criteria);
     }
 }

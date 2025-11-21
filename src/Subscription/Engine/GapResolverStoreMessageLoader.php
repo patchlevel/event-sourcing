@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use DateInterval;
 use Generator;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
@@ -82,10 +81,6 @@ final class GapResolverStoreMessageLoader implements MessageLoader
 
         if ($message->hasHeader(RecordedOnHeader::class)) {
             return $message->header(RecordedOnHeader::class)->recordedOn > $this->clock->now()->sub($this->detectionWindow);
-        }
-
-        if ($message->hasHeader(AggregateHeader::class)) {
-            return $message->header(AggregateHeader::class)->recordedOn > $this->clock->now()->sub($this->detectionWindow);
         }
 
         return true;

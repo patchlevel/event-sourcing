@@ -29,10 +29,18 @@ deptrac:
       collectors:
         - type: directory
           value: src/Cryptography/.*
+    - name: DecisionModel
+      collectors:
+        - type: directory
+          value: src/DecisionModel/.*
     - name: EventBus
       collectors:
         - type: directory
           value: src/EventBus/.*
+    - name: Identifier
+      collectors:
+        - type: directory
+          value: src/Identifier/.*
     - name: Message
       collectors:
         - type: directory
@@ -68,6 +76,10 @@ deptrac:
               value: MetadataMessage
             - type: layer
               value: MetadataSubscriber
+    - name: Projection
+      collectors:
+        - type: directory
+          value: src/Projection/.*
     - name: QueryBus
       collectors:
         - type: directory
@@ -96,22 +108,20 @@ deptrac:
       collectors:
         - type: directory
           value: src/Subscription/.*
-    - name: Test
-      collectors:
-        - type: directory
-          value: src/Test/.*
-
   ruleset:
     Aggregate:
       - Attribute
+      - Identifier
       - MetadataAggregate
     Attribute:
     Clock:
     CommandBus:
       - Aggregate
       - Attribute
+      - Identifier
       - MetadataAggregate
       - Repository
+      - Store
     Console:
       - Aggregate
       - Message
@@ -124,11 +134,12 @@ deptrac:
       - Subscription
     Cryptography:
       - Schema
-    Debug:
+    DecisionModel:
       - Attribute
       - Message
-      - Repository
-      - Subscription
+      - Projection
+      - Serializer
+      - Store
     EventBus:
       - Attribute
       - Message
@@ -155,40 +166,49 @@ deptrac:
       - Attribute
       - Metadata
       - Subscription
-    Subscription:
-      - Aggregate
+    Projection:
       - Attribute
-      - Clock
       - Message
-      - MetadataEvent
-      - MetadataSubscriber
-      - Repository
-      - Schema
       - Store
     QueryBus:
       - Attribute
     Repository:
       - Aggregate
       - Clock
+      - Identifier
       - Message
       - MetadataAggregate
       - MetadataEvent
       - EventBus
+      - Serializer
       - Snapshot
       - Store
     Schema:
     Serializer:
-      - Aggregate
+      - Attribute
       - Cryptography
+      - Identifier
       - MetadataEvent
     Snapshot:
       - Aggregate
       - Cryptography
+      - Identifier
       - MetadataAggregate
     Store:
       - Clock
       - Message
       - Metadata
+      - MetadataEvent
       - Schema
       - Serializer
-    Test:
+    Subscription:
+      - Aggregate
+      - Attribute
+      - Clock
+      - Identifier
+      - Message
+      - MetadataEvent
+      - MetadataSubscriber
+      - Repository
+      - Schema
+      - Store

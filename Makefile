@@ -26,7 +26,7 @@ phpstan-baseline: vendor                                                        
 
 .PHONY: psalm
 psalm: vendor                                                                   ## run psalm static code analyser
-	vendor/bin/psalm
+	php -d memory_limit=312M vendor/bin/psalm
 
 .PHONY: psalm-baseline
 psalm-baseline: vendor                                                          ## run psalm static code analyser

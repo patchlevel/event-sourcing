@@ -58,7 +58,7 @@ use function sprintf;
 use function str_contains;
 use function str_replace;
 
-final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
+final class StreamDoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchemaConfigurator
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.

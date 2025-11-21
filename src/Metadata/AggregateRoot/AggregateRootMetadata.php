@@ -25,8 +25,6 @@ final class AggregateRootMetadata
         public readonly array $suppressEvents,
         public readonly bool $suppressAll,
         public readonly Snapshot|null $snapshot,
-        /** @var list<string> */
-        public readonly array $childAggregates = [],
         string|null $streamName = null,
     ) {
         $this->streamName = $streamName ?? $this->name . '-{id}';

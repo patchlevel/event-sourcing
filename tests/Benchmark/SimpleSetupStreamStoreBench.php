@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -22,8 +22,8 @@ final class SimpleSetupStreamStoreBench
     private Store $store;
     private Repository $repository;
 
-    private AggregateRootId $singleEventId;
-    private AggregateRootId $multipleEventsId;
+    private Identifier $singleEventId;
+    private Identifier $multipleEventsId;
 
     public function setUp(): void
     {

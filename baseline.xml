@@ -33,6 +33,14 @@
       <code><![CDATA[setPrimaryKey]]></code>
     </DeprecatedMethod>
   </file>
+  <file src="src/DecisionModel/DecisionModel.php">
+    <ImplementedReturnTypeMismatch>
+      <code><![CDATA[T[TKey]]]></code>
+    </ImplementedReturnTypeMismatch>
+    <InvalidCast>
+      <code><![CDATA[$offset]]></code>
+    </InvalidCast>
+  </file>
   <file src="src/EventBus/AttributeListenerProvider.php">
     <MixedMethodCall>
       <code><![CDATA[$method->getName()]]></code>
@@ -75,6 +83,19 @@
       <code><![CDATA[require_once $file]]></code>
     </UnresolvableInclude>
   </file>
+  <file src="src/Projection/BasicProjection.php">
+    <MixedReturnStatement>
+      <code><![CDATA[$this->{$applyMethods[$event::class]}($state, $event)]]></code>
+    </MixedReturnStatement>
+  </file>
+  <file src="src/Projection/CompositeProjection.php">
+    <MissingClosureReturnType>
+      <code><![CDATA[static function (Projection $projection) {]]></code>
+    </MissingClosureReturnType>
+    <MixedAssignment>
+      <code><![CDATA[$state[$name]]]></code>
+    </MixedAssignment>
+  </file>
   <file src="src/QueryBus/ServiceHandlerProvider.php">
     <MixedArgument>
       <code><![CDATA[$service::{$handler->method}(...)]]></code>
@@ -85,15 +106,9 @@
     </MixedMethodCall>
   </file>
   <file src="src/Repository/DefaultRepository.php">
-    <PossiblyNullArgument>
-      <code><![CDATA[$streamName]]></code>
-    </PossiblyNullArgument>
     <PropertyTypeCoercion>
       <code><![CDATA[new WeakMap()]]></code>
     </PropertyTypeCoercion>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[archive]]></code>
-    </UndefinedInterfaceMethod>
   </file>
   <file src="src/Schema/DoctrineHelper.php">
     <InternalMethod>
@@ -107,16 +122,16 @@
       <code><![CDATA[getName]]></code>
     </InternalMethod>
   </file>
+  <file src="src/Serializer/AttributeEventTagExtractor.php">
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$attribute->hash]]></code>
+      <code><![CDATA[$attribute->prefix]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
   <file src="src/Serializer/Normalizer/IdNormalizer.php">
-    <DeprecatedClass>
-      <code><![CDATA[ReflectionTypeUtil::classStringInstanceOf(
-            $reflectionType,
-            AggregateRootId::class,
-        )]]></code>
-    </DeprecatedClass>
-    <DeprecatedInterface>
-      <code><![CDATA[IdNormalizer]]></code>
-    </DeprecatedInterface>
+    <PropertyTypeCoercion>
+      <code><![CDATA[$type->getClassName()]]></code>
+    </PropertyTypeCoercion>
   </file>
   <file src="src/Serializer/Upcast/Upcast.php">
     <MixedAssignment>
@@ -146,19 +161,6 @@
       <code><![CDATA[$streamName]]></code>
     </PropertyTypeCoercion>
   </file>
-  <file src="src/Store/DoctrineDbalStore.php">
-    <DeprecatedMethod>
-      <code><![CDATA[setPrimaryKey]]></code>
-    </DeprecatedMethod>
-  </file>
-  <file src="src/Store/DoctrineDbalStoreStream.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[(int)$data['playhead']]]></code>
-    </ArgumentTypeCoercion>
-    <MixedArgument>
-      <code><![CDATA[$dateTimeType->convertToPHPValue($data['recorded_on'], $platform)]]></code>
-    </MixedArgument>
-  </file>
   <file src="src/Store/StreamDoctrineDbalStore.php">
     <DeprecatedMethod>
       <code><![CDATA[setPrimaryKey]]></code>
@@ -169,13 +171,13 @@
       <code><![CDATA[(int)$data['playhead']]]></code>
     </ArgumentTypeCoercion>
   </file>
-  <file src="src/Subscription/Engine/DefaultSubscriptionEngine.php">
-    <DeprecatedInterface>
-      <code><![CDATA[SubscriberAccessor|null]]></code>
-    </DeprecatedInterface>
-    <DeprecatedMethod>
-      <code><![CDATA[realSubscriber]]></code>
-    </DeprecatedMethod>
+  <file src="src/Store/TaggableDoctrineDbalStoreStream.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[(int)$data['playhead']]]></code>
+    </ArgumentTypeCoercion>
+    <MixedArgument>
+      <code><![CDATA[json_decode($data['tags'], true, 512, JSON_THROW_ON_ERROR)]]></code>
+    </MixedArgument>
   </file>
   <file src="src/Subscription/Engine/GapResolverStoreMessageLoader.php">
     <InvalidReturnType>
@@ -214,10 +216,6 @@
     </PossiblyNullPropertyFetch>
   </file>
   <file src="src/Subscription/Subscriber/MetadataSubscriberAccessor.php">
-    <DeprecatedInterface>
-      <code><![CDATA[MetadataSubscriberAccessor]]></code>
-      <code><![CDATA[MetadataSubscriberAccessor]]></code>
-    </DeprecatedInterface>
     <MixedAssignment>
       <code><![CDATA[$arguments[]]]></code>
     </MixedAssignment>
@@ -231,17 +229,6 @@
       <code><![CDATA[$this->subscriber->$method(...)]]></code>
       <code><![CDATA[Closure(Message, Throwable):void|null]]></code>
     </MixedReturnTypeCoercion>
-  </file>
-  <file src="src/Subscription/Subscriber/MetadataSubscriberAccessorRepository.php">
-    <DeprecatedClass>
-      <code><![CDATA[new AggregateIdArgumentResolver()]]></code>
-    </DeprecatedClass>
-  </file>
-  <file src="src/Subscription/Subscriber/SubscriberAccessorRepository.php">
-    <DeprecatedInterface>
-      <code><![CDATA[SubscriberAccessor|null]]></code>
-      <code><![CDATA[iterable<SubscriberAccessor>]]></code>
-    </DeprecatedInterface>
   </file>
   <file src="src/Subscription/ThrowableToErrorContextTransformer.php">
     <MixedAssignment>

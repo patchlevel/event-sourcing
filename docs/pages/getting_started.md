@@ -10,8 +10,8 @@ First we define the events that happen in our system.
 A hotel can be created with a `name` and a `id`:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Event('hotel.created')]
 final class HotelCreated
@@ -69,10 +69,10 @@ Last but not least, we need the associated apply methods to change the state.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('hotel')]
 final class Hotel extends BasicAggregateRoot
@@ -279,7 +279,7 @@ use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
@@ -299,7 +299,7 @@ $mailer;
 $serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create(['src/Domain/Hotel']);
 
-$eventStore = new DoctrineDbalStore(
+$eventStore = new StreamDoctrineDbalStore(
     $connection,
     $serializer,
 );
@@ -373,7 +373,7 @@ $engine->setup(skipBooting: true);
 We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Repository\Repository;
 
 $hotel1 = Hotel::create(Uuid::generate(), 'HOTEL');
@@ -393,7 +393,7 @@ $hotels = $hotelProjection->getHotels();
 !!! note
 
     You can also use other forms of IDs such as uuid version 6 or a custom format. 
-    You can find more about this [here](aggregate_id.md).
+    You can find more about this [here](identifier.md).
     
 ## Result
 

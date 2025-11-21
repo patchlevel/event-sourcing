@@ -62,7 +62,6 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
                 $customResolver,
                 new ArgumentResolver\MessageArgumentResolver(),
                 new ArgumentResolver\EventArgumentResolver(),
-                new ArgumentResolver\AggregateIdArgumentResolver(),
                 new ArgumentResolver\RecordedOnArgumentResolver(),
             ],
         );
