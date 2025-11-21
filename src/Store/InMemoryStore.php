@@ -6,20 +6,29 @@ namespace Patchlevel\EventSourcing\Store;
 
 use Closure;
 use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
+use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Psr\Clock\ClockInterface;
+use Ramsey\Uuid\Uuid;
+use Throwable;
 
 use function array_filter;
-use function array_keys;
 use function array_map;
 use function array_reverse;
 use function array_slice;
@@ -27,7 +36,6 @@ use function array_unique;
 use function array_values;
 use function count;
 use function in_array;
-use function max;
 use function mb_substr;
 use function str_ends_with;
 use function str_starts_with;
@@ -37,19 +45,15 @@ use const ARRAY_FILTER_USE_BOTH;
 final class InMemoryStore implements StreamStore
 {
     /** @var array<positive-int, Message> */
-    private array $messages;
+    private array $messages = [];
 
-    /** @param array<Message> $messages Input messages (will be re-indexed to 1-based) */
+    /** @param list<Message> $messages */
     public function __construct(
         array $messages = [],
+        private readonly EventRegistry|null $eventRegistry = null,
+        private readonly ClockInterface $clock = new SystemClock(),
     ) {
-        // Re-index to ensure 1-based indexing
-        $this->messages = [];
-        $index = 1;
-        foreach ($messages as $message) {
-            $this->messages[$index] = $message;
-            $index++;
-        }
+        $this->save(...$messages);
     }
 
     public function load(
@@ -82,15 +86,27 @@ final class InMemoryStore implements StreamStore
 
     public function save(Message ...$messages): void
     {
-        // Get the next index (1-based)
-        $keys = array_keys($this->messages);
-        /** @var positive-int $nextIndex */
-        $nextIndex = count($keys) > 0 ? max($keys) + 1 : 1;
+        $this->transactional(function () use ($messages): void {
+            $count = count($this->messages);
 
-        foreach ($messages as $message) {
-            $this->messages[$nextIndex] = $message;
-            $nextIndex++;
-        }
+            foreach ($messages as $message) {
+                $count++;
+
+                if (!$message->hasHeader(IndexHeader::class)) {
+                    $message = $message->withHeader(new IndexHeader($count));
+                }
+
+                if (!$message->hasHeader(EventIdHeader::class)) {
+                    $message = $message->withHeader(new EventIdHeader(Uuid::uuid7()->toString()));
+                }
+
+                if (!$message->hasHeader(RecordedOnHeader::class)) {
+                    $message = $message->withHeader(new RecordedOnHeader($this->clock->now()));
+                }
+
+                $this->messages[$count] = $message;
+            }
+        });
     }
 
     /**
@@ -100,7 +116,14 @@ final class InMemoryStore implements StreamStore
      */
     public function transactional(Closure $function): void
     {
-        $function();
+        $messages = $this->messages;
+        try {
+            $function();
+        } catch (Throwable $e) {
+            $this->messages = $messages;
+
+            throw $e;
+        }
     }
 
     /** @return list<string> */
@@ -153,9 +176,11 @@ final class InMemoryStore implements StreamStore
             return $this->messages;
         }
 
+        $eventRegistry = $this->eventRegistry;
+
         return array_filter(
             $this->messages,
-            static function (Message $message, int $index) use ($criteria): bool {
+            static function (Message $message) use ($criteria, $eventRegistry): bool {
                 foreach ($criteria->all() as $criterion) {
                     switch ($criterion::class) {
                         case AggregateIdCriterion::class:
@@ -241,7 +266,35 @@ final class InMemoryStore implements StreamStore
 
                             break;
                         case FromIndexCriterion::class:
+                            try {
+                                $index = $message->header(IndexHeader::class)->index;
+                            } catch (HeaderNotFound) {
+                                return false;
+                            }
+
                             if ($index <= $criterion->fromIndex) {
+                                return false;
+                            }
+
+                            break;
+                        case ToIndexCriterion::class:
+                            try {
+                                $index = $message->header(IndexHeader::class)->index;
+                            } catch (HeaderNotFound) {
+                                return false;
+                            }
+
+                            if ($index >= $criterion->toIndex) {
+                                return false;
+                            }
+
+                            break;
+                        case EventsCriterion::class:
+                            if ($eventRegistry === null) {
+                                throw new MissingEventRegistry($criterion::class);
+                            }
+
+                            if (!in_array($eventRegistry->eventName($message->event()::class), $criterion->events)) {
                                 return false;
                             }
 

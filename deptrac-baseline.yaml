@@ -14,3 +14,12 @@ deptrac:
       - Patchlevel\EventSourcing\Aggregate\AggregateRoot
     Patchlevel\EventSourcing\Attribute\Subscriber:
       - Patchlevel\EventSourcing\Subscription\RunMode
+    Patchlevel\EventSourcing\Store\DoctrineDbalStore:
+      - Patchlevel\EventSourcing\Aggregate\AggregateHeader
+    Patchlevel\EventSourcing\Store\DoctrineDbalStoreStream:
+      - Patchlevel\EventSourcing\Aggregate\AggregateHeader
+    Patchlevel\EventSourcing\Store\InMemoryStore:
+      - Patchlevel\EventSourcing\Aggregate\AggregateHeader
+      - Patchlevel\EventSourcing\Metadata\Event\EventRegistry
+    Patchlevel\EventSourcing\Store\MissingEventRegistry:
+      - Patchlevel\EventSourcing\Metadata\Event\EventRegistry
