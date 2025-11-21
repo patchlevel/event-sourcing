@@ -186,8 +186,6 @@ deptrac:
       - Cryptography
       - MetadataAggregate
     Store:
-      - Aggregate
-      - Attribute
       - Clock
       - Message
       - Metadata
