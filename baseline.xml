@@ -161,11 +161,6 @@
       <code><![CDATA[$streamName]]></code>
     </PropertyTypeCoercion>
   </file>
-  <file src="src/Store/InMemoryStore.php">
-    <MixedPropertyTypeCoercion>
-      <code><![CDATA[$this->messages]]></code>
-    </MixedPropertyTypeCoercion>
-  </file>
   <file src="src/Store/StreamDoctrineDbalStore.php">
     <DeprecatedMethod>
       <code><![CDATA[setPrimaryKey]]></code>

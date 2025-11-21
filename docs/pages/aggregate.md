@@ -561,7 +561,7 @@ final class Hotel extends BasicAggregateRoot
             throw new NoPlaceException($name);
         }
 
-        $this->recordThat(new RoomBocked($name));
+        $this->recordThat(new RoomBooked($name));
 
         if ($this->people !== self::SIZE) {
             return;
@@ -571,7 +571,7 @@ final class Hotel extends BasicAggregateRoot
     }
 
     #[Apply]
-    protected function applyRoomBocked(RoomBocked $event): void
+    protected function applyRoomBooked(RoomBooked $event): void
     {
         $this->people++;
     }

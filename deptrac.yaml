@@ -195,8 +195,6 @@ deptrac:
       - Identifier
       - MetadataAggregate
     Store:
-      - Aggregate
-      - Attribute
       - Clock
       - Message
       - Metadata

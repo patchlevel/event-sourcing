@@ -35,7 +35,7 @@ final class RecordedOnArgumentResolverTest extends TestCase
         );
     }
 
-    public function testResolve(): void
+    public function testResolveFromAggregateHeader(): void
     {
         $date = new DateTimeImmutable();
 
@@ -43,6 +43,22 @@ final class RecordedOnArgumentResolverTest extends TestCase
         $message = (new Message(new stdClass()))->withHeader(
             new RecordedOnHeader($date),
         );
+
+        self::assertSame(
+            $date,
+            $resolver->resolve(
+                new ArgumentMetadata('foo', DateTimeImmutable::class),
+                $message,
+            ),
+        );
+    }
+
+    public function testResolveFromRecordedOnHeader(): void
+    {
+        $date = new DateTimeImmutable();
+
+        $resolver = new RecordedOnArgumentResolver();
+        $message = (new Message(new stdClass()))->withHeader(new RecordedOnHeader($date));
 
         self::assertSame(
             $date,
