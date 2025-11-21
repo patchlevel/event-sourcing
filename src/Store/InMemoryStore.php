@@ -19,14 +19,15 @@ use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 
 use function array_filter;
+use function array_keys;
 use function array_map;
-use function array_push;
 use function array_reverse;
 use function array_slice;
 use function array_unique;
 use function array_values;
 use function count;
 use function in_array;
+use function max;
 use function mb_substr;
 use function str_ends_with;
 use function str_starts_with;
@@ -35,10 +36,20 @@ use const ARRAY_FILTER_USE_BOTH;
 
 final class InMemoryStore implements StreamStore
 {
-    /** @param array<positive-int|0, Message> $messages */
+    /** @var array<positive-int, Message> */
+    private array $messages;
+
+    /** @param array<Message> $messages Input messages (will be re-indexed to 1-based) */
     public function __construct(
-        private array $messages = [],
+        array $messages = [],
     ) {
+        // Re-index to ensure 1-based indexing
+        $this->messages = [];
+        $index = 1;
+        foreach ($messages as $message) {
+            $this->messages[$index] = $message;
+            $index++;
+        }
     }
 
     public function load(
@@ -71,7 +82,15 @@ final class InMemoryStore implements StreamStore
 
     public function save(Message ...$messages): void
     {
-        array_push($this->messages, ...$messages);
+        // Get the next index (1-based)
+        $keys = array_keys($this->messages);
+        /** @var positive-int $nextIndex */
+        $nextIndex = count($keys) > 0 ? max($keys) + 1 : 1;
+
+        foreach ($messages as $message) {
+            $this->messages[$nextIndex] = $message;
+            $nextIndex++;
+        }
     }
 
     /**
@@ -127,7 +146,7 @@ final class InMemoryStore implements StreamStore
         }
     }
 
-    /** @return array<positive-int|0, Message> */
+    /** @return array<positive-int, Message> */
     private function filter(Criteria|null $criteria): array
     {
         if (!$criteria) {
@@ -222,7 +241,7 @@ final class InMemoryStore implements StreamStore
 
                             break;
                         case FromIndexCriterion::class:
-                            if ($index < $criterion->fromIndex) {
+                            if ($index <= $criterion->fromIndex) {
                                 return false;
                             }
 
