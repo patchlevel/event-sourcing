@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Attribute\SubscriptionId;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
@@ -19,6 +20,9 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSetupMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSubscribeMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateTeardownMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberHasMultipleSubscriptionIds;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriptionIdMissing;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriptionIdWrongType;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -53,6 +57,80 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         self::assertNull($metadata->setupMethod);
         self::assertNull($metadata->teardownMethod);
         self::assertSame('foo', $metadata->id);
+    }
+
+    public function testSubscriberWithoutId(): void
+    {
+        $subscriber = new #[Subscriber(null, RunMode::FromBeginning)]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+
+        $this->expectException(SubscriptionIdMissing::class);
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testSubscriberWithSubscriptionIdAsConst(): void
+    {
+        $subscriber = new #[Subscriber(null, RunMode::FromBeginning)]
+        class {
+            #[SubscriptionId]
+            public const NAME = 'my_name';
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertSame([], $metadata->subscribeMethods);
+        self::assertNull($metadata->setupMethod);
+        self::assertNull($metadata->teardownMethod);
+        self::assertSame('my_name', $metadata->id);
+    }
+
+    public function testSubscriberWithMultipleSubscriptionIdsSubscriberAndConst(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[SubscriptionId]
+            public const NAME = 'my_name';
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+
+        $this->expectException(SubscriberHasMultipleSubscriptionIds::class);
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testSubscriberWithMultipleSubscriptionIdsInConsts(): void
+    {
+        $subscriber = new #[Subscriber(null, RunMode::FromBeginning)]
+        class {
+            #[SubscriptionId]
+            public const NAME = 'my_name';
+
+            #[SubscriptionId]
+            public const NAME_AGAIN = 'my_name_2';
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+
+        $this->expectException(SubscriberHasMultipleSubscriptionIds::class);
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testSubscriberWithSubscriptionIdAsInteger(): void
+    {
+        $subscriber = new #[Subscriber(null, RunMode::FromBeginning)]
+        class {
+            #[SubscriptionId]
+            public const NAME = 123;
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+
+        $this->expectException(SubscriptionIdWrongType::class);
+        $metadataFactory->metadata($subscriber::class);
     }
 
     public function testProjector(): void

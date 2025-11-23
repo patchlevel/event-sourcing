@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Subscription\Subscriber;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadataFactory;
 
+/** @deprecated since 3.15.0 will be removed with 4.0.0, use #[SubscriberId] instead */
 trait SubscriberUtil
 {
     private static SubscriberMetadataFactory|null $metadataFactory = null;

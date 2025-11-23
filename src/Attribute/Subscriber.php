@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Subscription\RunMode;
 class Subscriber
 {
     public function __construct(
-        public readonly string $id,
+        public readonly string|null $id,
         public readonly RunMode $runMode,
         public readonly string $group = 'default',
     ) {

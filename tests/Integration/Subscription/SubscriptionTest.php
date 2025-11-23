@@ -112,7 +112,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
@@ -132,7 +132,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -154,7 +154,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -181,7 +181,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::New,
@@ -238,7 +238,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
@@ -258,7 +258,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -280,7 +280,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -307,7 +307,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::New,
@@ -853,7 +853,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -873,7 +873,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -898,7 +898,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -906,7 +906,7 @@ final class SubscriptionTest extends TestCase
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
                 new Subscription(
-                    'profile_2',
+                    'projection_profile_2',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -924,7 +924,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Detached,
@@ -932,7 +932,7 @@ final class SubscriptionTest extends TestCase
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
                 new Subscription(
-                    'profile_2',
+                    'projection_profile_2',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -950,7 +950,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_2',
+                    'projection_profile_2',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -1009,7 +1009,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -1029,7 +1029,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -1054,7 +1054,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -1062,7 +1062,7 @@ final class SubscriptionTest extends TestCase
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
                 new Subscription(
-                    'profile_2',
+                    'projection_profile_2',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -1080,7 +1080,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Detached,
@@ -1088,7 +1088,7 @@ final class SubscriptionTest extends TestCase
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
                 new Subscription(
-                    'profile_2',
+                    'projection_profile_2',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -1107,7 +1107,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Detached,
@@ -1115,7 +1115,7 @@ final class SubscriptionTest extends TestCase
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
                 new Subscription(
-                    'profile_2',
+                    'projection_profile_2',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -1129,7 +1129,7 @@ final class SubscriptionTest extends TestCase
         // reactivating detached subscription
 
         $firstEngine->reactivate(new SubscriptionEngineCriteria(
-            ids: ['profile_1'],
+            ids: ['projection_profile_1'],
         ));
 
         // switch traffic
@@ -1139,7 +1139,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,
@@ -1147,7 +1147,7 @@ final class SubscriptionTest extends TestCase
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
                 new Subscription(
-                    'profile_2',
+                    'projection_profile_2',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Detached,
@@ -1165,7 +1165,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals(
             [
                 new Subscription(
-                    'profile_1',
+                    'projection_profile_1',
                     'projector',
                     RunMode::FromBeginning,
                     Status::Active,

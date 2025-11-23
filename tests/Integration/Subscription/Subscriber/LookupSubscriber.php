@@ -9,20 +9,21 @@ use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Attribute\SubscriptionId;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Reducer;
 use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
 use Patchlevel\EventSourcing\Subscription\RunMode;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\AdminPromoted;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
-#[Subscriber('lookup', RunMode::FromBeginning)]
+#[Subscriber(null, runMode: RunMode::FromBeginning)]
 final class LookupSubscriber
 {
-    use SubscriberUtil;
+    #[SubscriptionId]
+    private const TABLE_NAME = 'projection_lookup';
 
     public function __construct(
         private Connection $connection,
@@ -51,7 +52,7 @@ final class LookupSubscriber
             ->reduce($messages);
 
         $this->connection->insert(
-            $this->tableName(),
+            self::TABLE_NAME,
             [
                 'id' => $event->profileId->toString(),
                 'name' => $state['name'],
@@ -62,7 +63,7 @@ final class LookupSubscriber
     #[Setup]
     public function create(): void
     {
-        $table = new Table($this->tableName());
+        $table = new Table(self::TABLE_NAME);
         $table->addColumn('id', 'string')->setLength(36);
         $table->addColumn('name', 'string')->setLength(255);
         $table->setPrimaryKey(['id']);
@@ -73,11 +74,6 @@ final class LookupSubscriber
     #[Teardown]
     public function drop(): void
     {
-        $this->connection->createSchemaManager()->dropTable($this->tableName());
-    }
-
-    private function tableName(): string
-    {
-        return 'projection_' . $this->subscriberId();
+        $this->connection->createSchemaManager()->dropTable(self::TABLE_NAME);
     }
 }

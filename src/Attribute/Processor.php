@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Subscription\RunMode;
 final class Processor extends Subscriber
 {
     public function __construct(
-        string $id,
+        string|null $id = null,
         string $group = 'processor',
         RunMode $runMode = RunMode::FromNow,
     ) {

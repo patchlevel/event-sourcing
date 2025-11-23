@@ -9,14 +9,15 @@ use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\SubscriptionId;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
-#[Projector('profile_2')]
+#[Projector]
 final class ProfileNewProjection
 {
-    use SubscriberUtil;
+    #[SubscriptionId]
+    private const TABLE_NAME = 'projection_profile_2';
 
     public function __construct(
         private Connection $connection,
@@ -26,7 +27,7 @@ final class ProfileNewProjection
     #[Setup]
     public function create(): void
     {
-        $table = new Table($this->tableName());
+        $table = new Table(self::TABLE_NAME);
         $table->addColumn('id', 'string')->setLength(36);
         $table->addColumn('firstname', 'string')->setLength(255);
         $table->setPrimaryKey(['id']);
@@ -37,23 +38,18 @@ final class ProfileNewProjection
     #[Teardown]
     public function drop(): void
     {
-        $this->connection->createSchemaManager()->dropTable($this->tableName());
+        $this->connection->createSchemaManager()->dropTable(self::TABLE_NAME);
     }
 
     #[Subscribe(ProfileCreated::class)]
     public function handleProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->executeStatement(
-            'INSERT INTO ' . $this->tableName() . ' (id, firstname) VALUES(:id, :firstname);',
+            'INSERT INTO ' . self::TABLE_NAME . ' (id, firstname) VALUES(:id, :firstname);',
             [
                 'id' => $profileCreated->profileId->toString(),
                 'firstname' => $profileCreated->name,
             ],
         );
-    }
-
-    private function tableName(): string
-    {
-        return 'projection_' . $this->subscriberId();
     }
 }

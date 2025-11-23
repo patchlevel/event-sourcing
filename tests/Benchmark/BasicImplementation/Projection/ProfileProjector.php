@@ -9,16 +9,19 @@ use Patchlevel\EventSourcing\Attribute\Answer;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\SubscriptionId;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Query\QueryProfileName;
 
+use function sprintf;
+
 #[Projector('profile')]
 final class ProfileProjector
 {
-    use SubscriberUtil;
+    #[SubscriptionId]
+    private const TABLE_NAME = 'projection_profile';
 
     public function __construct(
         private Connection $connection,
@@ -28,20 +31,23 @@ final class ProfileProjector
     #[Setup]
     public function create(): void
     {
-        $this->connection->executeStatement("CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR);");
+        $this->connection->executeStatement(sprintf(
+            'CREATE TABLE IF NOT EXISTS %s (id VARCHAR PRIMARY KEY, name VARCHAR);',
+            self::TABLE_NAME,
+        ));
     }
 
     #[Teardown]
     public function drop(): void
     {
-        $this->connection->executeStatement("DROP TABLE IF EXISTS {$this->table()};");
+        $this->connection->executeStatement(sprintf('DROP TABLE IF EXISTS %s;', self::TABLE_NAME));
     }
 
     #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->insert(
-            $this->table(),
+            self::TABLE_NAME,
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
@@ -53,7 +59,7 @@ final class ProfileProjector
     public function onNameChanged(NameChanged $nameChanged): void
     {
         $this->connection->update(
-            $this->table(),
+            self::TABLE_NAME,
             ['name' => $nameChanged->name],
             ['id' => $nameChanged->profileId->toString()],
         );
@@ -63,13 +69,8 @@ final class ProfileProjector
     public function getProfileName(QueryProfileName $queryProfileName): string
     {
         return $this->connection->fetchAssociative(
-            "SELECT name FROM {$this->table()} WHERE id = :id;",
+            sprintf('SELECT name FROM %s WHERE id = :id;', self::TABLE_NAME),
             ['id' => $queryProfileName->id->toString()],
         )['name'];
-    }
-
-    public function table(): string
-    {
-        return 'projection_' . $this->subscriberId();
     }
 }

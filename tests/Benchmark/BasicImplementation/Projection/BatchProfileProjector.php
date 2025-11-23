@@ -8,16 +8,19 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\SubscriptionId;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 
-#[Projector('profile')]
+use function sprintf;
+
+#[Projector]
 final class BatchProfileProjector implements BatchableSubscriber
 {
-    use SubscriberUtil;
+    #[SubscriptionId]
+    private const TABLE_NAME = 'projection_profile';
 
     /** @var array<string, string> */
     private array $nameChanged = [];
@@ -30,20 +33,23 @@ final class BatchProfileProjector implements BatchableSubscriber
     #[Setup]
     public function create(): void
     {
-        $this->connection->executeStatement("CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR);");
+        $this->connection->executeStatement(sprintf(
+            'CREATE TABLE IF NOT EXISTS %s (id VARCHAR PRIMARY KEY, name VARCHAR);',
+            self::TABLE_NAME,
+        ));
     }
 
     #[Teardown]
     public function drop(): void
     {
-        $this->connection->executeStatement("DROP TABLE IF EXISTS {$this->table()};");
+        $this->connection->executeStatement(sprintf('DROP TABLE IF EXISTS %s;', self::TABLE_NAME));
     }
 
     #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->insert(
-            $this->table(),
+            self::TABLE_NAME,
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
@@ -57,11 +63,6 @@ final class BatchProfileProjector implements BatchableSubscriber
         $this->nameChanged[$nameChanged->profileId->toString()] = $nameChanged->name;
     }
 
-    public function table(): string
-    {
-        return 'projection_' . $this->subscriberId();
-    }
-
     public function beginBatch(): void
     {
         $this->nameChanged = [];
@@ -73,7 +74,7 @@ final class BatchProfileProjector implements BatchableSubscriber
             $this->connection->transactional(function (): void {
                 foreach ($this->nameChanged as $profileId => $name) {
                     $this->connection->update(
-                        $this->table(),
+                        self::TABLE_NAME,
                         ['name' => $name],
                         ['id' => $profileId],
                     );

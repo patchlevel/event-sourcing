@@ -9,15 +9,16 @@ use Doctrine\DBAL\Schema\Table;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\SubscriptionId;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
-#[Projector('profile_1')]
+#[Projector]
 final class ProfileProjection implements BatchableSubscriber
 {
-    use SubscriberUtil;
+    #[SubscriptionId]
+    private const TABLE_NAME = 'projection_profile_1';
 
     public function __construct(
         private Connection $connection,
@@ -27,7 +28,7 @@ final class ProfileProjection implements BatchableSubscriber
     #[Setup]
     public function create(): void
     {
-        $table = new Table($this->tableName());
+        $table = new Table(self::TABLE_NAME);
         $table->addColumn('id', 'string')->setLength(36);
         $table->addColumn('name', 'string')->setLength(255);
         $table->setPrimaryKey(['id']);
@@ -38,24 +39,19 @@ final class ProfileProjection implements BatchableSubscriber
     #[Teardown]
     public function drop(): void
     {
-        $this->connection->createSchemaManager()->dropTable($this->tableName());
+        $this->connection->createSchemaManager()->dropTable(self::TABLE_NAME);
     }
 
     #[Subscribe(ProfileCreated::class)]
     public function handleProfileCreated(ProfileCreated $profileCreated): void
     {
         $this->connection->executeStatement(
-            'INSERT INTO ' . $this->tableName() . ' (id, name) VALUES(:id, :name);',
+            'INSERT INTO ' . self::TABLE_NAME . ' (id, name) VALUES(:id, :name);',
             [
                 'id' => $profileCreated->profileId->toString(),
                 'name' => $profileCreated->name,
             ],
         );
-    }
-
-    private function tableName(): string
-    {
-        return 'projection_' . $this->subscriberId();
     }
 
     public function beginBatch(): void

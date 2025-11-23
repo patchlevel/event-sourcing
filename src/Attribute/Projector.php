@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Subscription\RunMode;
 final class Projector extends Subscriber
 {
     public function __construct(
-        string $id,
+        string|null $id = null,
         string $group = 'projector',
         RunMode $runMode = RunMode::FromBeginning,
     ) {

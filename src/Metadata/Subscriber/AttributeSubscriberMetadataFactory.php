@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Attribute\SubscriptionId;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use ReflectionAttribute;
 use ReflectionClass;
@@ -17,6 +18,7 @@ use ReflectionNamedType;
 
 use function array_key_exists;
 use function count;
+use function is_string;
 
 final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFactory
 {
@@ -109,8 +111,35 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             throw DuplicateSubscribeMethod::mixedWithAll($subscriber);
         }
 
+        $subscriptionId = $subscriberInfo->id;
+
+        foreach ($reflector->getReflectionConstants() as $constant) {
+            if (!$constant->getAttributes(SubscriptionId::class)) {
+                continue;
+            }
+
+            $subscriptionIdValue = $constant->getValue();
+
+            if (!is_string($subscriptionIdValue)) {
+                throw new SubscriptionIdWrongType($subscriber, $subscriptionIdValue);
+            }
+
+            if ($subscriptionId !== null) {
+                throw new SubscriberHasMultipleSubscriptionIds(
+                    $subscriber,
+                    [$subscriptionId, $subscriptionIdValue],
+                );
+            }
+
+            $subscriptionId = $subscriptionIdValue;
+        }
+
+        if ($subscriptionId === null) {
+            throw new SubscriptionIdMissing($subscriber);
+        }
+
         $metadata = new SubscriberMetadata(
-            $subscriberInfo->id,
+            $subscriptionId,
             $subscriberInfo->group,
             $subscriberInfo->runMode,
             $subscribeMethods,

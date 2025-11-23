@@ -157,16 +157,16 @@ parameters:
 			path: src/Subscription/Store/DoctrineSubscriptionStore.php
 
 		-
+			message: '#^Trait Patchlevel\\EventSourcing\\Subscription\\Subscriber\\SubscriberUtil is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: src/Subscription/Subscriber/SubscriberUtil.php
+
+		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 3
 			path: src/Subscription/ThrowableToErrorContextTransformer.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileWithCommands\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Benchmark/BasicImplementation/ProfileWithCommands.php
 
 		-
 			message: '#^Cannot access offset ''name'' on array\<string, mixed\>\|false\.$#'
@@ -463,7 +463,7 @@ parameters:
 			path: tests/Unit/Message/Translator/ReplaceEventTranslatorTest.php
 
 		-
-			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:212\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
+			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:290\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
 			path: tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php
