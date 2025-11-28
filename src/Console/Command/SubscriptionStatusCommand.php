@@ -18,7 +18,7 @@ use function array_map;
 use function is_array;
 use function sprintf;
 
-/** @psalm-import-type Context from SubscriptionError */
+/** @phpstan-import-type Context from SubscriptionError */
 #[AsCommand(
     'event-sourcing:subscription:status',
     'View the current status of the subscriptions',

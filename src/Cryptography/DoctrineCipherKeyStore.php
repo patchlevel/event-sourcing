@@ -17,7 +17,7 @@ use function base64_decode;
 use function base64_encode;
 
 /**
- * @psalm-type Row = array{
+ * @phpstan-type Row = array{
  *     subject_id: non-empty-string,
  *     crypto_key: non-empty-string,
  *     crypto_method: non-empty-string,

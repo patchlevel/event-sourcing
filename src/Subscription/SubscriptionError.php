@@ -7,8 +7,8 @@ namespace Patchlevel\EventSourcing\Subscription;
 use Throwable;
 
 /**
- * @psalm-type Trace = array{file?: string, line?: int, function?: string, class?: string, type?: string, args?: array<array-key, mixed>}
- * @psalm-type Context = array{namespace: string, short_name: string, class: class-string, message: string, code: int|string, file: string, line: int, trace: list<Trace>}
+ * @phpstan-type Trace = array{file?: string, line?: int, function?: string, class?: string, type?: string, args?: array<array-key, mixed>}
+ * @phpstan-type Context = array{namespace: string, short_name: string, class: class-string, message: string, code: int|string, file: string, line: int, trace: list<Trace>}
  */
 final class SubscriptionError
 {

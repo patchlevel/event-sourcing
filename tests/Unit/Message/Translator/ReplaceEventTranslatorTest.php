@@ -46,7 +46,6 @@ final class ReplaceEventTranslatorTest extends TestCase
 
     public function testReplaceInvalidClass(): void
     {
-        /** @psalm-suppress InvalidArgument */
         $translator = new ReplaceEventTranslator(
             MessagePublished::class,
             static function (ProfileCreated $event) {

@@ -30,7 +30,7 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-/** @psalm-type Data = array{
+/** @phpstan-type Data = array{
  *     id: string,
  *     group_name: string,
  *     run_mode: string,

@@ -11,7 +11,7 @@ use function is_a;
 
 /**
  * @template-covariant T of object = object
- * @psalm-immutable
+ * @immutable
  */
 final class Message
 {

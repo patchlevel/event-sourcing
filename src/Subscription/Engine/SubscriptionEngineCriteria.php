@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
-/** @psalm-immutable */
+/** @immutable */
 final class SubscriptionEngineCriteria
 {
     /**

@@ -63,11 +63,7 @@ final class Lookup
         return $self;
     }
 
-    /**
-     * @param string|list<string>|null $stream
-     *
-     * @return $this
-     */
+    /** @param string|list<string>|null $stream */
     public function stream(string|array|null $stream): self
     {
         $self = clone $this;
