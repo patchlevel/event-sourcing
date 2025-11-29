@@ -151,8 +151,8 @@ final class StreamDoctrineDbalStoreStream implements Stream, IteratorAggregate
     }
 
     /**
-     * @psalm-assert !null $this->result
-     * @psalm-assert !null $this->generator
+     * @phpstan-assert !null $this->result
+     * @phpstan-assert !null $this->generator
      */
     private function assertNotClosed(): void
     {

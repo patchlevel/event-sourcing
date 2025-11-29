@@ -97,7 +97,7 @@ final class Reducer
      * @param iterable<Message> $messages
      *
      * @return OUT|STATE
-     * @psalm-return (OUT is STATE ? STATE : OUT)
+     * @phpstan-return (OUT is STATE ? STATE : OUT)
      */
     public function reduce(iterable $messages): array
     {

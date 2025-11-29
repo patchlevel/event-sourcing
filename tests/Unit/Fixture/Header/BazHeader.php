@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture\Header;
 
 use Patchlevel\EventSourcing\Attribute\Header;
 
-/** @psalm-immutable */
+/** @immutable */
 #[Header('baz')]
 final class BazHeader
 {

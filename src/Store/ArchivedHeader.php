@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-/** @psalm-immutable */
+/** @immutable */
 final class ArchivedHeader
 {
 }

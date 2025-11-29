@@ -123,7 +123,7 @@ final class ArrayStream implements Stream, IteratorAggregate
         }
     }
 
-    /** @psalm-assert !null $this->iterator */
+    /** @phpstan-assert !null $this->iterator */
     private function assertNotClosed(): void
     {
         if ($this->iterator === null) {

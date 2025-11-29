@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store\Header;
 
-/** @psalm-immutable */
+/** @immutable */
 final class EventIdHeader
 {
     public function __construct(

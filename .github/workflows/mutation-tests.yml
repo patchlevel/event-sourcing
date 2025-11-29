@@ -20,7 +20,7 @@ jobs:
                 dependencies:
                     - "locked"
                 php-version:
-                    - "8.4"
+                    - "8.5"
                 operating-system:
                     - "ubuntu-latest"
 
@@ -41,6 +41,6 @@ jobs:
                 dependency-versions: ${{ matrix.dependencies }}
 
             - name: "Infection"
-              run: "vendor/bin/roave-infection-static-analysis-plugin --threads=max"
+              run: "vendor/bin/infection --threads=max"
               env:
                   STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}

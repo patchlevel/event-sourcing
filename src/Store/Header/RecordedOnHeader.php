@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Store\Header;
 
 use DateTimeImmutable;
 
-/** @psalm-immutable */
+/** @immutable */
 final class RecordedOnHeader
 {
     public function __construct(

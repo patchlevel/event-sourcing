@@ -10,7 +10,7 @@ use function array_shift;
 
 final class ReturnCallback
 {
-    /** @param array{list<mixed>, mixed} $series */
+    /** @param list<array{0: list<mixed>, 1?: mixed}> $series */
     public function __construct(
         private array $series,
     ) {
@@ -18,9 +18,10 @@ final class ReturnCallback
 
     public function __invoke(mixed ...$args): mixed
     {
-        [$expectedArgs, $return] = array_shift($this->series);
-        Assert::assertEquals($expectedArgs, $args);
+        $paramReturnTuple = array_shift($this->series);
+        Assert::assertNotNull($paramReturnTuple);
+        Assert::assertEquals($paramReturnTuple[0], $args);
 
-        return $return;
+        return $paramReturnTuple[1] ?? null;
     }
 }

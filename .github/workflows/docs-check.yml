@@ -19,7 +19,7 @@ jobs:
                 dependencies:
                     - "locked"
                 php-version:
-                    - "8.4"
+                    - "8.5"
                 operating-system:
                     - "ubuntu-latest"
 
@@ -33,7 +33,6 @@ jobs:
                   coverage: none
                   php-version: "${{ matrix.php-version }}"
                   ini-values: memory_limit=-1, opcache.enable_cli=1
-                  extensions: pdo_sqlite
 
             - uses: ramsey/composer-install@3.1.1
               with:
