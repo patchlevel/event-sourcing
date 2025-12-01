@@ -198,7 +198,7 @@ Uuids are randomly generated and can be a problem in tests.
 If you want deterministic tests, you can use the `IncrementalRamseyUuidFactory` from the library.
 
 ```php
-use Patchlevel\EventSourcing\Test\IncrementalRamseyUuidFactory;
+use Patchlevel\EventSourcing\Identifier\FakeRamseyUuidFactory;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
@@ -206,7 +206,7 @@ final class ProfileTest extends TestCase
 {
     public function setUp(): void
     {
-        Uuid::setFactory(new IncrementalRamseyUuidFactory());
+        Uuid::setFactory(new FakeRamseyUuidFactory());
     }
 
     public function testCreateProfile(): void

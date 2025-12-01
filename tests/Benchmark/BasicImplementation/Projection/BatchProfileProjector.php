@@ -13,7 +13,6 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
 #[Projector('profile')]
 final class BatchProfileProjector implements BatchableSubscriber
@@ -53,9 +52,9 @@ final class BatchProfileProjector implements BatchableSubscriber
     }
 
     #[Subscribe(NameChanged::class)]
-    public function onNameChanged(NameChanged $nameChanged, ProfileId $profileId): void
+    public function onNameChanged(NameChanged $nameChanged): void
     {
-        $this->nameChanged[$profileId->toString()] = $nameChanged->name;
+        $this->nameChanged[$nameChanged->profileId->toString()] = $nameChanged->name;
     }
 
     public function table(): string

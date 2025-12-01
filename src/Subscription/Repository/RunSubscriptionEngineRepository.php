@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Subscription\Engine\AlreadyProcessing;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
@@ -33,12 +33,12 @@ final class RunSubscriptionEngineRepository implements Repository
     }
 
     /** @return T */
-    public function load(AggregateRootId $id): AggregateRoot
+    public function load(Identifier $id): AggregateRoot
     {
         return $this->repository->load($id);
     }
 
-    public function has(AggregateRootId $id): bool
+    public function has(Identifier $id): bool
     {
         return $this->repository->has($id);
     }

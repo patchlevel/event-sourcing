@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
@@ -154,64 +153,6 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
         ], $stream);
     }
 
-    public function testGapAndInDetectionWindowForAggregateHeader(): void
-    {
-        $clock = $this->createMock(ClockInterface::class);
-        $clock
-            ->expects($this->exactly(5))
-            ->method('now')
-            ->willReturn(new DateTimeImmutable('2023-10-01 00:00:03'));
-
-        $store = $this->createMock(Store::class);
-        $store
-            ->expects($this->exactly(5))
-            ->method('load')
-            ->willReturnCallback(fn (Criteria $criteria) => match ($criteria->get(FromIndexCriterion::class)->fromIndex) {
-                5 => new ArrayStream([
-                    6 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:00')),
-                    7 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:01')),
-                    9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-                ]),
-                7 => new ArrayStream([
-                    9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-                ]),
-                default => new RuntimeException('Unmatched case!')
-            });
-
-        $loader = new GapResolverStoreMessageLoader($store, $clock);
-        $stream = $loader->load(5, []);
-
-        $this->assertEqualsStream([
-            6 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:00')),
-            7 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:01')),
-            9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-        ], $stream);
-    }
-
-    public function testGapAndNotInDetectionWindowForAggregateHeader(): void
-    {
-        $store = $this->createMock(Store::class);
-        $clock = $this->createMock(ClockInterface::class);
-
-        $clock->expects($this->exactly(1))->method('now')->willReturn(new DateTimeImmutable('2023-12-01 00:00:00'));
-
-        $store->expects($this->once())->method('load')->with(new Criteria(new FromIndexCriterion(5)))->willReturn(new ArrayStream([
-            6 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:00')),
-            7 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:01')),
-            9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-        ]));
-
-        $loader = new GapResolverStoreMessageLoader($store, $clock);
-
-        $stream = $loader->load(5, []);
-
-        $this->assertEqualsStream([
-            6 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:00')),
-            7 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:01')),
-            9 => $this->createMessageWithAggregateHeader(new DateTimeImmutable('2023-10-01 00:00:02')),
-        ], $stream);
-    }
-
     public function testGapAndInDetectionWindowForRecordedOnHeader(): void
     {
         $clock = $this->createMock(ClockInterface::class);
@@ -271,12 +212,6 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
             7 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:01')),
             9 => $this->createMessageWithRecordedOn(new DateTimeImmutable('2023-10-01 00:00:02')),
         ], $stream);
-    }
-
-    private function createMessageWithAggregateHeader(DateTimeImmutable $dateTime): Message
-    {
-        return (new Message(new stdClass()))
-            ->withHeader(new AggregateHeader('foo', '1', 1, $dateTime));
     }
 
     private function createMessageWithRecordedOn(DateTimeImmutable $dateTime): Message

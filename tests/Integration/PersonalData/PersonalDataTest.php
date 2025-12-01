@@ -13,8 +13,9 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -43,7 +44,7 @@ final class PersonalDataTest extends TestCase
         $cipherKeyStore = new DoctrineCipherKeyStore($this->connection);
         $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl($cipherKeyStore);
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events'], cryptographer: $cryptographer),
         );
@@ -77,14 +78,14 @@ final class PersonalDataTest extends TestCase
         self::assertSame(1, $profile->playhead());
         self::assertSame('John', $profile->name());
 
-        $result = $this->connection->fetchAllAssociative('SELECT * FROM eventstore');
+        $result = $this->connection->fetchAllAssociative('SELECT * FROM event_store');
 
         self::assertCount(1, $result);
         self::assertArrayHasKey(0, $result);
 
         $row = $result[0];
 
-        self::assertStringNotContainsString('John', $row['payload']);
+        self::assertStringNotContainsString('John', $row['event_payload']);
     }
 
     public function testRemoveKeyWithEvent(): void
@@ -96,7 +97,7 @@ final class PersonalDataTest extends TestCase
             $this->connection,
         );
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events'], cryptographer: $cryptographer),
         );
@@ -120,7 +121,7 @@ final class PersonalDataTest extends TestCase
         $schemaDirector->create();
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new DeletePersonalDataProcessor($cipherKeyStore)]),
         );
@@ -171,7 +172,7 @@ final class PersonalDataTest extends TestCase
             $this->connection,
         );
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events'], cryptographer: $cryptographer),
         );
@@ -202,7 +203,7 @@ final class PersonalDataTest extends TestCase
         $schemaDirector->create();
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new DeletePersonalDataProcessor($cipherKeyStore)]),
         );

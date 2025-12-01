@@ -17,7 +17,7 @@ final class AggregateRootIdNotSupportedTest extends TestCase
         $exception = new AggregateRootIdNotSupported(Profile::class, 1);
 
         self::assertSame(
-            'aggregate root id in class "Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile" must be instance of "Patchlevel\EventSourcing\Aggregate\AggregateRootId", got "int"',
+            'aggregate root id in class "Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile" must be instance of "Patchlevel\EventSourcing\Identifier\Identifier", got "int"',
             $exception->getMessage(),
         );
         self::assertSame(0, $exception->getCode());

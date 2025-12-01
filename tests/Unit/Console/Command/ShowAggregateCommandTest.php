@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Console\Command\ShowAggregateCommand;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
@@ -15,9 +14,11 @@ use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\ArrayStream;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -36,14 +37,15 @@ final class ShowAggregateCommandTest extends TestCase
     {
         $event = new ProfileVisited(ProfileId::fromString('1'));
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()));
 
         $store = $this->createMock(Store::class);
         $store
             ->method('load')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile-1'),
             ))
             ->willReturn(new ArrayStream([$message]));
 
@@ -173,8 +175,7 @@ JSON,
     {
         $store = $this->createMock(Store::class);
         $store->method('load')->with(new Criteria(
-            new AggregateNameCriterion('profile'),
-            new AggregateIdCriterion('test'),
+            new StreamCriterion('profile-test'),
         ))->willReturn(new ArrayStream());
 
         $serializer = $this->createMock(EventSerializer::class);
@@ -199,7 +200,10 @@ JSON,
 
         $content = $output->fetch();
 
-        self::assertStringContainsString('[ERROR] aggregate "profile" => "test" not found', $content);
+        self::assertStringContainsString(
+            '[ERROR] aggregate "profile" with id "test" in stream "profile-test" not found',
+            $content,
+        );
     }
 
     public function testInteractiveMissingAggregateShouldRaiseException(): void
@@ -239,12 +243,13 @@ JSON,
     {
         $event = new ProfileVisited(ProfileId::fromString('1'));
         $message = Message::create($event)
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()));
+            ->withHeader(new StreamNameHeader('profile-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()));
 
         $store = $this->createMock(Store::class);
         $store->method('load')->with(new Criteria(
-            new AggregateNameCriterion('profile'),
-            new AggregateIdCriterion('1'),
+            new StreamCriterion('profile-1'),
         ))->willReturn(
             new ArrayStream([$message]),
         );

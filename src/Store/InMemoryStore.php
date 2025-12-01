@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 use Closure;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
@@ -42,7 +39,7 @@ use function str_starts_with;
 
 use const ARRAY_FILTER_USE_BOTH;
 
-final class InMemoryStore implements StreamStore
+final class InMemoryStore implements Store
 {
     /** @var array<0|positive-int, Message> */
     private array $messages = [];
@@ -135,13 +132,9 @@ final class InMemoryStore implements StreamStore
                     array_map(
                         static function (Message $message): string|null {
                             try {
-                                return $message->header(AggregateHeader::class)->streamName();
+                                return $message->header(StreamNameHeader::class)->streamName;
                             } catch (HeaderNotFound) {
-                                try {
-                                    return $message->header(StreamNameHeader::class)->streamName;
-                                } catch (HeaderNotFound) {
-                                    return null;
-                                }
+                                return null;
                             }
                         },
                         $this->messages,
@@ -183,39 +176,15 @@ final class InMemoryStore implements StreamStore
             static function (Message $message) use ($criteria, $eventRegistry): bool {
                 foreach ($criteria->all() as $criterion) {
                     switch ($criterion::class) {
-                        case AggregateIdCriterion::class:
-                            try {
-                                if ($message->header(AggregateHeader::class)->aggregateId !== $criterion->aggregateId) {
-                                    return false;
-                                }
-                            } catch (HeaderNotFound) {
-                                return false;
-                            }
-
-                            break;
-                        case AggregateNameCriterion::class:
-                            try {
-                                if ($message->header(AggregateHeader::class)->aggregateName !== $criterion->aggregateName) {
-                                    return false;
-                                }
-                            } catch (HeaderNotFound) {
-                                return false;
-                            }
-
-                            break;
                         case StreamCriterion::class:
                             if ($criterion->all()) {
                                 break;
                             }
 
                             try {
-                                $messageStreamName = $message->header(AggregateHeader::class)->streamName();
+                                $messageStreamName = $message->header(StreamNameHeader::class)->streamName;
                             } catch (HeaderNotFound) {
-                                try {
-                                    $messageStreamName = $message->header(StreamNameHeader::class)->streamName;
-                                } catch (HeaderNotFound) {
-                                    return false;
-                                }
+                                return false;
                             }
 
                             $match = false;
@@ -245,13 +214,9 @@ final class InMemoryStore implements StreamStore
                             $playhead = null;
 
                             try {
-                                $playhead = $message->header(AggregateHeader::class)->playhead;
+                                $playhead = $message->header(PlayheadHeader::class)->playhead;
                             } catch (HeaderNotFound) {
-                                try {
-                                    $playhead = $message->header(PlayheadHeader::class)->playhead;
-                                } catch (HeaderNotFound) {
-                                    return false;
-                                }
+                                return false;
                             }
 
                             if ($playhead < $criterion->fromPlayhead) {

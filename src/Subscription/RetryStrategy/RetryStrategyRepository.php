@@ -28,4 +28,12 @@ final class RetryStrategyRepository
     {
         return $this->get($this->defaultStrategy);
     }
+
+    public static function withDefault(RetryStrategy $retryStrategy): self
+    {
+        return new self(
+            [self::DEFAULT_STRATEGY_NAME => $retryStrategy],
+            self::DEFAULT_STRATEGY_NAME,
+        );
+    }
 }

@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Subscription\Subscriber;
 
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadataFactory;
-use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\AggregateIdArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
@@ -41,7 +40,6 @@ final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRe
             [
                 new MessageArgumentResolver(),
                 new EventArgumentResolver(),
-                new AggregateIdArgumentResolver(),
                 new RecordedOnArgumentResolver(),
             ],
         );

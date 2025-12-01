@@ -20,11 +20,11 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -58,7 +58,7 @@ final class BasicIntegrationTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             DefaultHeadersSerializer::createFromPaths([
@@ -69,7 +69,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjector = new ProfileProjector($this->connection);
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             new InMemorySubscriptionStore(),
             new MetadataSubscriberAccessorRepository([
                 $profileProjector,
@@ -124,7 +124,7 @@ final class BasicIntegrationTest extends TestCase
 
     public function testSnapshot(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             DefaultHeadersSerializer::createFromPaths([
@@ -135,7 +135,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection = new ProfileProjector($this->connection);
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             new InMemorySubscriptionStore(),
             new MetadataSubscriberAccessorRepository([
                 $profileProjection,
@@ -190,7 +190,7 @@ final class BasicIntegrationTest extends TestCase
 
     public function testTempProjection(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             DefaultHeadersSerializer::createFromPaths([
@@ -237,8 +237,7 @@ final class BasicIntegrationTest extends TestCase
             ->reduce(
                 new Pipe(
                     $store->load(new Criteria(
-                        new AggregateIdCriterion($profileId->toString()),
-                        new AggregateNameCriterion('profile'),
+                        new StreamCriterion('profile-' . $profileId->toString()),
                     )),
                     new UntilEventTranslator(new DateTimeImmutable()),
                 ),
@@ -249,7 +248,7 @@ final class BasicIntegrationTest extends TestCase
 
     public function testCommandBus(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             DefaultHeadersSerializer::createFromPaths([
@@ -270,7 +269,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection = new ProfileProjector($this->connection);
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             new InMemorySubscriptionStore(),
             new MetadataSubscriberAccessorRepository([
                 $profileProjection,
