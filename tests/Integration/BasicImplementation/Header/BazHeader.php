@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Header;
 
 use Patchlevel\EventSourcing\Attribute\Header;
 
-/** @psalm-immutable */
+/** @immutable */
 #[Header('baz')]
 final class BazHeader
 {

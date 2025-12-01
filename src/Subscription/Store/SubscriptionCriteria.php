@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Subscription\Store;
 
 use Patchlevel\EventSourcing\Subscription\Status;
 
-/** @psalm-immutable */
+/** @immutable */
 final class SubscriptionCriteria
 {
     /**

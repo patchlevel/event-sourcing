@@ -24,14 +24,6 @@ phpstan: vendor                                                                 
 phpstan-baseline: vendor                                                        ## run phpstan static code analyser
 	php -d memory_limit=312M vendor/bin/phpstan analyse --generate-baseline
 
-.PHONY: psalm
-psalm: vendor                                                                   ## run psalm static code analyser
-	php -d memory_limit=312M vendor/bin/psalm
-
-.PHONY: psalm-baseline
-psalm-baseline: vendor                                                          ## run psalm static code analyser
-	vendor/bin/psalm --update-baseline --set-baseline=baseline.xml
-
 .PHONY: phpunit
 phpunit: vendor phpunit-unit phpunit-integration                              	## run phpunit tests
 
@@ -53,11 +45,11 @@ phpunit-unit: vendor                                             				## run phpu
 
 .PHONY: infection
 infection: vendor                                                               ## run infection
-	php -d memory_limit=312M vendor/bin/roave-infection-static-analysis-plugin --threads=max
+	php -d memory_limit=312M vendor/bin/infection --threads=5
 
 .PHONY: infection-diff
 infection-diff: vendor                                                          ## run infection on differences
-	php -d memory_limit=312M vendor/bin/roave-infection-static-analysis-plugin --threads=max --git-diff-lines --git-diff-base=origin/HEAD --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=95
+	php -d memory_limit=312M vendor/bin/infection --threads=max --git-diff-lines --git-diff-base=origin/HEAD --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=95
 
 .PHONY: deptrac
 deptrac: vendor-tools                                                           ## run deptrac
@@ -68,7 +60,7 @@ deptrac-baseline: vendor-tools                                                 #
 	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml --formatter=baseline --output=../deptrac-baseline.yaml
 
 .PHONY: static
-static: psalm phpstan cs                                              			 ## run static analyser
+static: phpstan cs                                              			 ## run static analyser
 
 test: phpunit                                                                   ## run tests
 

@@ -188,7 +188,6 @@ final class DefaultRepositoryTest extends TestCase
 
         $this->expectException(WrongAggregate::class);
 
-        /** @psalm-suppress InvalidArgument */
         $repository->save($aggregate);
     }
 

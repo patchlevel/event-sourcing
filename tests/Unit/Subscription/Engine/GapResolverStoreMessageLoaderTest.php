@@ -226,7 +226,10 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
         $result = [];
 
         foreach ($actual as $message) {
-            $result[$actual->index()] = $message;
+            $index = $actual->index();
+            self::assertNotNull($index);
+
+            $result[$index] = $message;
         }
 
         self::assertEquals($expected, $result);

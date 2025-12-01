@@ -233,7 +233,7 @@ JSON,
         );
 
         // Select "test" in first question
-        $commandTest->setInputs([0]);
+        $commandTest->setInputs(['0']);
 
         $this->expectException(MissingInputException::class);
         $commandTest->execute([]);
@@ -273,7 +273,7 @@ JSON,
             ),
         );
 
-        $commandTest->setInputs([0, 1]);
+        $commandTest->setInputs(['0', '1']);
         $commandTest->execute([]);
 
         $display = $commandTest->getDisplay(true);

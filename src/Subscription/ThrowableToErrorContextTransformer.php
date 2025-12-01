@@ -23,8 +23,8 @@ use function mb_strlen;
 use function mb_substr;
 
 /**
- * @psalm-import-type Context from SubscriptionError
- * @psalm-import-type Trace from SubscriptionError
+ * @phpstan-import-type Context from SubscriptionError
+ * @phpstan-import-type Trace from SubscriptionError
  */
 final class ThrowableToErrorContextTransformer
 {

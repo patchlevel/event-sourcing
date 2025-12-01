@@ -125,7 +125,6 @@ final class MessageTest extends TestCase
         $message = Message::create(new stdClass());
 
         $this->expectException(HeaderNotFound::class);
-        /** @psalm-suppress UnusedMethodCall */
         $message->header(PlayheadHeader::class);
     }
 }

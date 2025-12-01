@@ -15,7 +15,6 @@ class DoctrineHelper
 {
     public function databaseName(Connection $connection): string
     {
-        /** @psalm-suppress InternalMethod */
         $params = $connection->getParams();
 
         if (isset($params['path'])) {
@@ -34,10 +33,8 @@ class DoctrineHelper
     /** @codeCoverageIgnore */
     public function copyConnectionWithoutDatabase(Connection $connection): Connection
     {
-        /** @psalm-suppress InternalMethod */
         $params = $connection->getParams();
 
-        /** @psalm-suppress InvalidArrayOffset */
         unset($params['dbname'], $params['path'], $params['url']);
 
         return DriverManager::getConnection($params);

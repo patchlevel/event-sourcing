@@ -16,7 +16,7 @@ jobs:
                 dependencies:
                     - "locked"
                 php-version:
-                    - "8.4"
+                    - "8.5"
                 operating-system:
                     - "ubuntu-latest"
 
@@ -27,7 +27,7 @@ jobs:
                 fetch-depth: 0
 
             - name: "Install PHP"
-              uses: "shivammathur/setup-php@2.35.5"
+              uses: "shivammathur/setup-php@2.36.0"
               with:
                   coverage: "pcov"
                   php-version: "${{ matrix.php-version }}"
@@ -39,4 +39,4 @@ jobs:
                   dependency-versions: ${{ matrix.dependencies }}
 
             - name: "Infection"
-              run: "vendor/bin/roave-infection-static-analysis-plugin --threads=max --git-diff-lines --git-diff-base=origin/$GITHUB_BASE_REF --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=95"
+              run: "vendor/bin/infection --threads=max --git-diff-lines --git-diff-base=origin/$GITHUB_BASE_REF --ignore-msi-with-no-mutations --with-uncovered --min-msi=90 --min-covered-msi=95"
