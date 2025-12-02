@@ -1,0 +1,134 @@
+[
+  {
+    "slug": "event-sourcing",
+    "title": "Introduction",
+    "subEntries": null
+  },
+  {
+    "slug": "event-sourcing/getting_started",
+    "title": "Getting Started",
+    "subEntries": null
+  },
+  {
+    "slug": "event-sourcing/basics",
+    "title": "Basics",
+    "subEntries": [
+      {
+        "slug": "event-sourcing/aggregate",
+        "title": "Aggregate",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/events",
+        "title": "Events",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/repository",
+        "title": "Repository",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/message",
+        "title": "Message",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/store",
+        "title": "Store",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/subscription",
+        "title": "Subscription",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/command_bus",
+        "title": "Command Bus",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/event_bus",
+        "title": "Event Bus",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/query_bus",
+        "title": "Query Bus",
+        "subEntries": null
+      }
+    ]
+  },
+  {
+    "slug": "event-sourcing/advanced",
+    "title": "Advanced",
+    "subEntries": [
+      {
+        "slug": "event-sourcing/aggregate_id",
+        "title": "Aggregate ID",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/normalizer",
+        "title": "Normalizer",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/snapshots",
+        "title": "Snapshots",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/personal_data",
+        "title": "Personal Data",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/upcasting",
+        "title": "Upcasting",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/message_decorator",
+        "title": "Message Decorator",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/split_stream",
+        "title": "Split Stream",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/clock",
+        "title": "Time / Clock",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/testing",
+        "title": "Testing",
+        "subEntries": null
+      },
+      {
+        "slug": "event-sourcing/cli",
+        "title": "CLI",
+        "subEntries": null
+      }
+    ]
+  },
+  {
+    "slug": "event-sourcing/supported-versions",
+    "title": "Supported Versions",
+    "subEntries": null
+  },
+  {
+    "slug": "event-sourcing/our-backward-compatibility-promise",
+    "title": "Our BC Promise",
+    "subEntries": null
+  },
+  {
+    "slug": "event-sourcing/UPGRADE-3.0",
+    "title": "Upgrade from 2.x",
+    "subEntries": null
+  }
+]
