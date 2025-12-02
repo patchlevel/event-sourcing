@@ -41,7 +41,7 @@ use const ARRAY_FILTER_USE_BOTH;
 
 final class InMemoryStore implements Store
 {
-    /** @var array<0|positive-int, Message> */
+    /** @var array<positive-int, Message> */
     private array $messages = [];
 
     /** @param list<Message> $messages */
@@ -101,7 +101,7 @@ final class InMemoryStore implements Store
                     $message = $message->withHeader(new RecordedOnHeader($this->clock->now()));
                 }
 
-                $this->messages[] = $message;
+                $this->messages[$count] = $message;
             }
         });
     }
@@ -162,7 +162,7 @@ final class InMemoryStore implements Store
         }
     }
 
-    /** @return array<positive-int|0, Message> */
+    /** @return array<positive-int, Message> */
     private function filter(Criteria|null $criteria): array
     {
         if (!$criteria) {
