@@ -1,9 +1,9 @@
 # Dynamic Consistency Boundary
 
-??? example "Experimental"
-
-    This feature is still experimental and may change in the future.
-    Use it with caution.
+:::experimental
+This feature is still experimental and may change in the future.
+Use it with caution.
+:::
     
 Dynamic Consistency Boundary (DCB) is an event‑sourcing approach for making consistent,
 cross‑stream decisions without loading full aggregates.
@@ -14,12 +14,12 @@ if the queried subset changes concurrently, the write is rejected and can be ret
 This makes handlers simple, fast, and scalable, since only relevant events are processed.
 DCB is a great fit when business rules span multiple streams.
 
-!!! note
-
-    You can read more about Dynamic Consistency Boundary on page [dcb.events](https://dcb.events/).
+:::note
+You can read more about Dynamic Consistency Boundary on page [dcb.events](https://dcb.events/).
+:::
     
 Since this approach differs slightly from the standard "aggregate" event sourcing principle,
-we will use the [Getting Started](./getting_started.md) example and build it as a DCB variant.
+we will use the [Getting Started](./getting-started.md) example and build it as a DCB variant.
 
 In our little getting started example, we manage hotels.
 We keep the example small, so we can only create hotels and let guests check in and check out.
@@ -85,13 +85,14 @@ final class GuestIsCheckedOut
     }
 }
 ```
-!!! note
 
-    You can find out more about events [here](events.md).    
-    
+:::note
+You can find out more about events [here](events.md).    
+:::    
+
 ## Define Commands
 
-Unlike in the [Getting Started](./getting_started.md) section, we're working with the [Command Bus](./command_bus.md) here.
+Unlike in the [Getting Started](./getting-started.md) section, we're working with the [Command Bus](./command-bus.md) here.
 This allows us to express our interaction with the system using commands. We can do the following with our system:
 
 The following command creates a new hotel. It carries the hotel ID and name.
@@ -297,14 +298,15 @@ final class CreateHotelHandler
     }
 }
 ```
-!!! note
 
-    Handlers build a Decision Model from the projections and then append events with an optimistic AppendCondition. 
-    If any relevant event arrives between read and write, the append fails and you can retry.
+:::note
+Handlers build a Decision Model from the projections and then append events with an optimistic AppendCondition. 
+If any relevant event arrives between read and write, the append fails and you can retry.
+:::
     
-!!! tip
-
-    To get type security, you can use our [phpstan extension](https://github.com/patchlevel/event-sourcing-phpstan-extension).
+:::tip
+To get type security, you can use our [phpstan extension](https://github.com/patchlevel/event-sourcing-phpstan-extension).
+:::
 
 The next handler implements the `CheckIn` command.
 
@@ -450,10 +452,10 @@ $commandBus->dispatch(new CheckOut($hotelId, 'David'));
 We've seen how to use DCB to make decisions consistently.
 In this example we skipped the subscription part,
 as it is the same as before with aggregates.
-You can find this [Getting Started](./getting_started.md) section.
+You can find this [Getting Started](./getting-started.md) section.
 
 ## Learn more
 
 * [Events](./events.md)
-* [Command Bus](./command_bus.md)
+* [Command Bus](./command-bus.md)
 * [Store](./store.md)

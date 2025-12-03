@@ -4,11 +4,11 @@ The linchpin of event-sourcing is the aggregate. These aggregates can be imagine
 One main difference is that we don't save the current state, but only the individual events that led to the state.
 This means it is always possible to build the current state again from the events.
 
-!!! note
-
-    The term aggregate itself comes from DDD and has nothing to do with event sourcing and can be used independently as a pattern. 
-    You can find out more about Aggregates [here](https://martinfowler.com/bliki/DDD_Aggregate.html).
-    
+:::note
+The term aggregate itself comes from DDD and has nothing to do with event sourcing and can be used independently as a pattern. 
+You can find out more about Aggregates [here](https://martinfowler.com/bliki/DDD_Aggregate.html).
+:::
+ 
 An aggregate must fulfill a few points so that we can use it in event-sourcing:
 
 * It must implement the `AggregateRoot` interface.
@@ -44,14 +44,14 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! warning
+:::warning
+The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
+:::    
 
-    The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
-    
-!!! tip
-
-    Find out more about aggregate IDs [here](./identifier.md).
-    
+:::tip
+Find out more about aggregate IDs [here](./identifier.md).
+:::   
+ 
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
 But it is possible to define different named constructors for different use-cases like `import`.
@@ -76,17 +76,17 @@ final class CreateProfileHandler
     }
 }
 ```
-!!! warning
+:::warning
+If you look in the database now, you would see that nothing has been saved.
+This is because only events are stored in the database and as long as no events exist,
+nothing happens.
+:::    
 
-    If you look in the database now, you would see that nothing has been saved.
-    This is because only events are stored in the database and as long as no events exist,
-    nothing happens.
-    
-!!! tip
+:::tip
+A **command bus** system is not necessary, only recommended.
+The interaction can also easily take place in a controller or service.
+:::
 
-    A **command bus** system is not necessary, only recommended.
-    The interaction can also easily take place in a controller or service.
-    
 ## Create a new aggregate
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
@@ -107,10 +107,11 @@ final class ProfileRegistered
     }
 }
 ```
-!!! note
 
-    You can find out more about events [here](./events.md).
-    
+:::note
+You can find out more about events [here](./events.md).
+:::
+
 After we have defined the event, we have to adapt the profile aggregate:
 
 ```php
@@ -148,9 +149,9 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! tip
-
-    Prefixing the apply methods with "apply" improves readability.
+:::tip
+Prefixing the apply methods with "apply" improves readability.
+:::
     
 In our named constructor `register` we have now created the event and recorded it with the method `recordThat`.
 The aggregate remembers all new recorded events in order to save them later.
@@ -160,9 +161,9 @@ So that the AggregateRoot also knows which method it should call,
 we have to mark it with the `Apply` attribute. We did that in the `applyProfileRegistered` method.
 In there we then change the state of the aggregate by filling the properties with the values from the event.
 
-!!! success
-
-    The aggregate is now ready to be saved!
+:::success
+The aggregate is now ready to be saved!
+:::
     
 ### Modify an aggregate
 
@@ -181,9 +182,10 @@ final class NameChanged
     }
 }
 ```
-!!! note
 
-    Events should best be written in the past, as they describe a state that has happened.
+:::note
+Events should best be written in the past, as they describe a state that has happened.
+:::
     
 After we have defined the event, we can define a new public method called `changeName` to change the profile name.
 This method then creates the event `NameChanged` and records it:
@@ -257,13 +259,14 @@ final class ChangeNameHandler
     }
 }
 ```
-!!! success
 
-    Our aggregate can now be changed and saved.
-    
-!!! note
-
-    You can read more about Repository [here](./repository.md).
+:::success
+Our aggregate can now be changed and saved.
+:::  
+  
+:::note
+You can read more about Repository [here](./repository.md).
+:::
     
 Here the aggregate is loaded from the `repository` by fetching all events from the database.
 These events are then executed again with the `apply` methods in order to rebuild the current state.
@@ -354,9 +357,9 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! warning
-
-    When all events are suppressed, debugging becomes more difficult if you forget an apply method.
+:::warning
+When all events are suppressed, debugging becomes more difficult if you forget an apply method.
+:::
     
 ## Stream Name
 
@@ -393,9 +396,10 @@ final class GuestList extends BasicAggregateRoot
     // ...
 }
 ```
-!!! tip
 
-    You can find more about splitting aggregates [here](./aggregate.md#splitting-aggregates).
+:::tip
+You can find more about splitting aggregates [here](./aggregate.md#splitting-aggregates).
+:::
     
 ## Business rules
 
@@ -435,11 +439,12 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! danger
 
-    Validations during "apply" should not happen, they will break the rebuilding of the aggregate!
-    Instead validate the data *before* the event will be recorded.
-    
+:::danger
+Validations during "apply" should not happen, they will break the rebuilding of the aggregate!
+Instead validate the data *before* the event will be recorded.
+::: 
+   
 We have now ensured that this rule takes effect when a name is changed with the method `changeName`.
 But when we create a new profile this rule does not currently apply.
 
@@ -521,14 +526,15 @@ final class NameChanged
     }
 }
 ```
-!!! warning
 
-    You need to create a normalizer for the `Name` value object.
-    So the payload must be serializable and unserializable as json.
+:::warning
+You need to create a normalizer for the `Name` value object.
+So the payload must be serializable and unserializable as json.
+:::
     
-!!! note
-
-    You can find out more about normalizer [here](./normalizer.md).
+:::note
+You can find out more about normalizer [here](./normalizer.md).
+:::
     
 There are also cases where business rules have to be defined depending on the aggregate state.
 Sometimes also from states, which were changed in the same method.
@@ -641,9 +647,9 @@ final class Profile extends BasicAggregateRoot
 Now you can pass the `SystemClock` to determine the current time.
 Or for test purposes the `FrozenClock`, which always returns the same time.
 
-!!! note
-
-    You can find out more about clock [here](./clock.md).
+:::note
+You can find out more about clock [here](./clock.md).
+:::
     
 ## Splitting Aggregates
 
@@ -760,4 +766,4 @@ $aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create([/* p
 * [How to store and load aggregates](repository.md)
 * [How to snapshot aggregates](snapshots.md)
 * [How to create Projections](subscription.md)
-* [How to split streams](split_stream.md)
+* [How to split streams](split-stream.md)

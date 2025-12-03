@@ -3,9 +3,9 @@
 In the end, the messages have to be saved somewhere.
 Each message contains an event and the associated headers.
 
-!!! note
-
-    More information about the message can be found [here](message.md).
+:::note
+More information about the message can be found [here](message.md).
+:::
     
 The store is optimized to efficiently store and load events for aggregates.
 
@@ -33,10 +33,11 @@ $store = new StreamDoctrineDbalStore(
     DefaultEventSerializer::createFromPaths(['src/Event']),
 );
 ```
-!!! note
 
-    You can find out more about how to create a connection 
-    [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
+:::note
+You can find out more about how to create a connection 
+[here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
+:::
     
 Following options are available in `StreamDoctrineDbalStore`:
 
@@ -72,9 +73,10 @@ use Patchlevel\EventSourcing\Store\InMemoryStore;
 
 $store = new InMemoryStore();
 ```
-!!! tip
 
-    You can pass messages to the constructor to initialize the store with some events.
+:::tip
+You can pass messages to the constructor to initialize the store with some events.
+:::
     
 ### StreamReadOnlyStore
 
@@ -93,9 +95,9 @@ $readOnlyStore = new ReadOnlyStore($store);
 
 With the help of the `SchemaDirector`, the database structure can be created, updated and deleted.
 
-!!! tip
-
-    You can also use doctrine migration to create and keep your schema in sync.
+:::tip
+You can also use doctrine migration to create and keep your schema in sync.
+:::
     
 ### Doctrine Schema Director
 
@@ -117,9 +119,10 @@ $schemaDirector = new DoctrineSchemaDirector(
     $store,
 );
 ```
-!!! note
 
-    How to setup cli commands for schema director can be found [here](cli.md).
+:::note
+How to setup cli commands for schema director can be found [here](cli.md).
+:::
     
 #### Create schema
 
@@ -221,14 +224,15 @@ $dependencyFactory->setService(
     $schemaProvider,
 );
 ```
-!!! note
 
-    Here you can find more information on how to 
-    [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
+:::note
+Here you can find more information on how to 
+[configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
+:::
     
-!!! note
-
-    How to setup cli commands for doctrine migration can be found [here](cli.md).
+:::note
+How to setup cli commands for doctrine migration can be found [here](cli.md).
+:::
     
 ## Usage
 
@@ -313,14 +317,15 @@ foreach ($stream as $message) {
     $message->event(); // get the event
 }
 ```
-!!! note
 
-    You can find more information about the `Message` object [here](message.md).
+:::note
+You can find more information about the `Message` object [here](message.md).
+:::
     
-!!! warning
-
-    The stream cannot rewind, so you can only iterate over it once.
-    If you want to iterate over it again, you have to call the `load` method again.
+:::warning
+The stream cannot rewind, so you can only iterate over it once.
+If you want to iterate over it again, you have to call the `load` method again.
+:::
     
 ### Count
 
@@ -363,14 +368,15 @@ $store->save($message);
 $store->save($message1, $message2, $message3);
 $store->save(...$messages);
 ```
-!!! note
 
-    The saving happens in a transaction, so all messages are saved or none.    
-    The store lock the table for writing during each save by default.
+:::note
+The saving happens in a transaction, so all messages are saved or none.    
+The store lock the table for writing during each save by default.
+:::
     
-!!! tip
-
-    Use transactional method if you want call multiple save methods in a transaction.
+:::tip
+Use transactional method if you want call multiple save methods in a transaction.
+:::
     
 ### Update
 
@@ -417,14 +423,15 @@ $store->transactional(static function () use ($command, $bankAccountRepository):
     $bankAccountRepository->save($accountTo);
 });
 ```
-!!! note
 
-    The store lock the table for writing during the transaction by default.
+:::note
+The store lock the table for writing during the transaction by default.
+:::
     
-!!! tip
-
-    If you want save only one aggregate, so you don't have to use the transactional method.
-    The save method in store/repository is already transactional.
+:::tip
+If you want save only one aggregate, so you don't have to use the transactional method.
+The save method in store/repository is already transactional.
+:::
     
 ## Learn more
 

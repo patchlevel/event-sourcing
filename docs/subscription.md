@@ -26,16 +26,17 @@ final class DoStuffSubscriber
 {
 }
 ```
-!!! note
 
-    For each subsciber ID, the engine will create a subscription.
-    If the subscriber ID changes, a new subscription will be created.
-    In some cases like projections, you want to change the subscriber ID to rebuild the projection.
+:::note
+For each subsciber ID, the engine will create a subscription.
+If the subscriber ID changes, a new subscription will be created.
+In some cases like projections, you want to change the subscriber ID to rebuild the projection.
+:::
     
-!!! tip
-
-    You can use specific attributes for specific subscribers like `Projector` or `Processor`.
-    So you don't have to define the group and run mode every time.
+:::tip
+You can use specific attributes for specific subscribers like `Projector` or `Processor`.
+So you don't have to define the group and run mode every time.
+:::
     
 ### Projector
 
@@ -73,16 +74,17 @@ final class ProfileProjector
     }
 }
 ```
-!!! warning
 
-    MySQL and MariaDB don't support transactions for DDL statements.
-    So you must use a different database connection for your subscriptions.
+:::warning
+MySQL and MariaDB don't support transactions for DDL statements.
+So you must use a different database connection for your subscriptions.
+:::
     
-!!! tip
-
-    Add a version as suffix to the subscriber id
-    so you can increment it when the subscription changes.
-    Like `profile_1` to `profile_2`.
+:::tip
+Add a version as suffix to the subscriber id
+so you can increment it when the subscription changes.
+Like `profile_1` to `profile_2`.
+:::
     
 ### Processor
 
@@ -147,10 +149,11 @@ final class DoStuffSubscriber
     }
 }
 ```
-!!! tip
 
-    If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
-    to make the event method return the correct type.
+:::tip
+If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
+to make the event method return the correct type.
+:::
     
 ### Subscribe all events
 
@@ -271,9 +274,10 @@ final class PublicProfileProjection
     // ... setup, teardown, ...
 }
 ```
-!!! note
 
-    More about reducers you can find [here](./message.md#reducer)
+:::note
+More about reducers you can find [here](./message.md#reducer)
+:::
     
 ##### Recorded On Resolver
 
@@ -335,23 +339,24 @@ final class ProfileProjector
     }
 }
 ```
-!!! danger
 
-    MySQL and MariaDB don't support transactions for DDL statements.
-    So you must use a different database connection in your projectors, 
-    otherwise you will get an error when the subscription tries to create the table.
+:::danger
+MySQL and MariaDB don't support transactions for DDL statements.
+So you must use a different database connection in your projectors, 
+otherwise you will get an error when the subscription tries to create the table.
+:::
     
-!!! warning
-
-    If you change the subscriber id, you must also change the table/collection name.
-    The subscription engine will create a new subscription with the new subscriber id.
-    That means the setup method will be called again and the table/collection will conflict with the old existing projection.
-    You can use the `SubscriberUtil` to build the table/collection name.
+:::warning
+If you change the subscriber id, you must also change the table/collection name.
+The subscription engine will create a new subscription with the new subscriber id.
+That means the setup method will be called again and the table/collection will conflict with the old existing projection.
+You can use the `SubscriberUtil` to build the table/collection name.
+:::
     
-!!! note
-
-    Most databases have a limit on the length of the table/collection name.
-    The limit is usually 64 characters.
+:::note
+Most databases have a limit on the length of the table/collection name.
+The limit is usually 64 characters.
+:::
     
 ### On Failed
 
@@ -384,13 +389,14 @@ final class InvoiceProcessor
     }
 }
 ```
-!!! warning
 
-    Currently, the `OnFailed` method is only available for non-batchable subscribers.
+:::warning
+Currently, the `OnFailed` method is only available for non-batchable subscribers.
+:::
     
-!!! note
-
-    The `OnFailed` method is called after the retry strategy has decided that the subscription should be set to failed.
+:::note
+The `OnFailed` method is called after the retry strategy has decided that the subscription should be set to failed.
+:::
     
 ### Versioning
 
@@ -407,16 +413,17 @@ final class ProfileSubscriber
    // ...
 }
 ```
-!!! warning
 
-    If you change the `subscriberID`, you must also change the table/collection name.
-    Otherwise the table/collection will conflict with the old subscription.
+:::warning
+If you change the `subscriberID`, you must also change the table/collection name.
+Otherwise the table/collection will conflict with the old subscription.
+:::
     
-!!! tip
-
-    Add a version as suffix to the subscriber id
-    so you can increment it when the subscription changes.
-    Like `profile_1` to `profile_2`.
+:::tip
+Add a version as suffix to the subscriber id
+so you can increment it when the subscription changes.
+Like `profile_1` to `profile_2`.
+:::
     
 ### Grouping
 
@@ -433,13 +440,14 @@ final class ProfileSubscriber
    // ...
 }
 ```
-!!! note
 
-    The different attributes has different default group.
+:::note
+The different attributes has different default group.
     
-    * `Subscriber` - `default`
-    * `Projector` - `projector`
-    * `Processor` - `processor`
+* `Subscriber` - `default`
+* `Projector` - `projector`
+* `Processor` - `processor`
+:::
     
 ### Run Mode
 
@@ -461,9 +469,10 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
-!!! tip
 
-    If you want create projections and run from the beginning, you can use the `Projector` attribute.
+:::tip
+If you want create projections and run from the beginning, you can use the `Projector` attribute.
+:::
     
 #### From Now
 
@@ -481,9 +490,10 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
-!!! tip
 
-    If you want process events from now, you can use the `Processor` attribute.
+:::tip
+If you want process events from now, you can use the `Processor` attribute.
+:::
     
 #### Once
 
@@ -603,20 +613,20 @@ The method `forceCommit` is called after each handled event,
 and you can decide whether the batch commit process should start now.
 This helps to determine the batch size and thus avoid memory overflow.
 
-!!! danger
-
-    Make sure to fully process the data in `commitBatch` and close any open transactions.
-    Otherwise, it may lead to inconsistent data.
+:::danger
+Make sure to fully process the data in `commitBatch` and close any open transactions.
+Otherwise, it may lead to inconsistent data.
+:::
     
-!!! note
-
-    The position of the subscriber is only updated after a successful commit.
-    In case of an error, the position remains at the state before the batch started.
+:::note
+The position of the subscriber is only updated after a successful commit.
+In case of an error, the position remains at the state before the batch started.
+:::
     
-!!! tip
-
-    Use `forceCommit` to prevent memory leaks.
-    This allows you to decide when it's suitable to process the data and then release the memory.
+:::tip
+Use `forceCommit` to prevent memory leaks.
+This allows you to decide when it's suitable to process the data and then release the memory.
+:::
     
 ## Subscription Engine
 
@@ -627,12 +637,12 @@ and keeping all subscriptions up to date.
 He also takes care that new subscribers are booted and old ones are removed again.
 If something breaks, the subscription engine marks the individual subscriptions as faulty and retries them.
 
-!!! tip
-
-    The Subscription Engine was inspired by the following two blog posts:
+:::tip
+The Subscription Engine was inspired by the following two blog posts:
     
-    * [Projection Building Blocks: What you'll need to build projections](https://barryosull.com/blog/projection-building-blocks-what-you-ll-need-to-build-projections/)
-    * [Managing projectors is harder than you think](https://barryosull.com/blog/managing-projectors-is-harder-than-you-think/)
+* [Projection Building Blocks: What you'll need to build projections](https://barryosull.com/blog/projection-building-blocks-what-you-ll-need-to-build-projections/)
+* [Managing projectors is harder than you think](https://barryosull.com/blog/managing-projectors-is-harder-than-you-think/)
+:::
     
 ## Subscription ID
 
@@ -762,9 +772,9 @@ The subscription engine needs a message loader to load the messages.
 We provide two implementations by default.
 Which one has a better performance depends on the use case.
 
-!!! tip
-
-    We recommend the `GapResolverStoreMessageLoader` as it handles gaps in the stream.
+:::tip
+We recommend the `GapResolverStoreMessageLoader` as it handles gaps in the stream.
+:::
     
 #### Store Message Loader
 
@@ -862,9 +872,10 @@ $schemaDirector = new DoctrineSchemaDirector(
     ]),
 );
 ```
-!!! note
 
-    You can find more about schema configurator [here](./store.md) 
+:::note
+You can find more about schema configurator [here](./store.md) 
+:::
     
 ### Retry Strategy
 
@@ -920,13 +931,14 @@ $retryStrategyRepository = new RetryStrategyRepository([
     'no_retry' => new NoRetryStrategy(),
 ]);
 ```
-!!! note
 
-    This is what our default configuration looks like if you do not define the retry strategy.
+:::note
+This is what our default configuration looks like if you do not define the retry strategy.
+:::
     
-!!! tip
-
-    You can change the default retry strategy by define the name in the constructor as second parameter.
+:::tip
+You can change the default retry strategy by define the name in the constructor as second parameter.
+:::
     
 ### Subscriber Accessor
 
@@ -988,9 +1000,10 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $catchupSubscriptionEngine = new CatchUpSubscriptionEngine($subscriptionEngine);
 ```
-!!! tip
 
-    You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
+:::tip
+You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
+:::
     
 ### Throw on error Subscription Engine
 
@@ -1004,10 +1017,11 @@ use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $throwOnErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscriptionEngine);
 ```
-!!! warning
 
-    This is only for testing or development. Don't use it in production.
-    The subscription engine has an build in retry strategy to retry subscriptions that have failed.
+:::warning
+This is only for testing or development. Don't use it in production.
+The subscription engine has an build in retry strategy to retry subscriptions that have failed.
+:::
     
 ### Run Subscription Engine after save
 
@@ -1031,20 +1045,21 @@ $eventBus = new RunSubscriptionEngineRepositoryManager(
     100, // limit the number of messages
 );
 ```
-!!! danger
 
-    By using this, you can't wrap the repository in a transaction.
-    A rollback is not supported and can break the subscription engine.
-    Internally, the events are saved in a transaction to ensure data consistency.
+:::danger
+By using this, you can't wrap the repository in a transaction.
+A rollback is not supported and can break the subscription engine.
+Internally, the events are saved in a transaction to ensure data consistency.
+:::
     
-!!! note
-
-    More about repository manager and repository can be found [here](./repository.md).
+:::note
+More about repository manager and repository can be found [here](./repository.md).
+:::
     
-!!! tip
-
-    You can perfectly use it in development or testing.
-    Especially in combination with the `CatchUpSubscriptionEngine` and `ThrowOnErrorSubscriptionEngine` decorators.
+:::tip
+You can perfectly use it in development or testing.
+Especially in combination with the `CatchUpSubscriptionEngine` and `ThrowOnErrorSubscriptionEngine` decorators.
+:::
     
 ## Usage
 
@@ -1059,9 +1074,10 @@ $criteria = new SubscriptionEngineCriteria(
     groups: ['default'],
 );
 ```
-!!! note
 
-    An `OR` check is made for the respective criteria and all criteria are checked with an `AND`.
+:::note
+An `OR` check is made for the respective criteria and all criteria are checked with an `AND`.
+:::
     
 ### Setup
 
@@ -1076,9 +1092,10 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 /** @var SubscriptionEngine $subscriptionEngine */
 $subscriptionEngine->setup(new SubscriptionEngineCriteria());
 ```
-!!! tip
 
-    You can skip the booting step with the second boolean parameter named `skipBooting`.
+:::tip
+You can skip the booting step with the second boolean parameter named `skipBooting`.
+:::
     
 ### Boot
 

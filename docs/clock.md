@@ -61,9 +61,10 @@ $clock = new FrozenClock($firstDate);
 
 $clock->sleep(10); // sleep 10 seconds
 ```
-!!! note
 
-    The instance of the frozen datetime will be cloned internally, so the it's not the same instance but equals.
+:::note
+The instance of the frozen datetime will be cloned internally, so the it's not the same instance but equals.
+:::
     
 ## Learn more
 

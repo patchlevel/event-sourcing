@@ -27,21 +27,21 @@ final class ProfileCreated
     }
 }
 ```
-!!! warning
+:::warning
+The payload must be serializable and unserializable as json.
+:::
+    
+:::tip
+An event should be named in the past because it has already happened.
 
-    The payload must be serializable and unserializable as json.
-    
-!!! tip
+Best practice is to prefix the event names with the aggregate name, lowercase everything, and replace spaces with underscores.
+Here are some examples:
 
-    An event should be named in the past because it has already happened.
-    
-    Best practice is to prefix the event names with the aggregate name, lowercase everything, and replace spaces with underscores.
-    Here are some examples:
-    
-    * `profile.created`
-    * `profile.name_changed`
-    * `hotel.guest_checked_out`
-    
+* `profile.created`
+* `profile.name_changed`
+* `hotel.guest_checked_out`
+:::
+
 ## Alias
 
 You also have the option to set aliases for the events.
@@ -57,15 +57,15 @@ final class ProfileRegistered
 ```
 When saving, the name will always be used. However, when loading, aliases will also be taken into account.
 
-!!! note
+:::note
+In the database, the name of the event is always stored,
+allowing the class to be renamed without encountering any issues.
+:::    
 
-    In the database, the name of the event is always stored,
-    allowing the class to be renamed without encountering any issues.
-    
-!!! tip
-
-    If you want to make significant changes to an event,
-    you can take a look at the [Upcaster](upcasting.md).
+:::tip
+If you want to make significant changes to an event,
+you can take a look at the [Upcaster](upcasting.md).
+:::
     
 ## Serializer
 
@@ -108,14 +108,15 @@ final class ProfileCreated
     }
 }
 ```
-!!! tip
 
-    Built-in normalizers like `IdNormalizer` and `DateTimeImmutableNormalizer` can be inferred from the type hint 
-    and so you don't have to specify them. If you want to configure the Normalizer, you still have to do it.
+:::tip
+Built-in normalizers like `IdNormalizer` and `DateTimeImmutableNormalizer` can be inferred from the type hint 
+and so you don't have to specify them. If you want to configure the Normalizer, you still have to do it.
+:::
     
-!!! note
-
-    You can find out more about normalizer [here](normalizer.md).    
+:::note
+You can find out more about normalizer [here](normalizer.md).    
+:::
     
 ## Event Registry
 

@@ -40,8 +40,7 @@ compatibility promise.
 
 In our docs the features are marked like this:
 
-??? example "Experimental"
-
-    This feature is still experimental and may change in the future.
-    Use it with caution.
-    
+:::experimental
+This feature is still experimental and may change in the future.
+Use it with caution.
+:::

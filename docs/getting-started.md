@@ -55,9 +55,9 @@ final class GuestIsCheckedOut
     }
 }
 ```
-!!! note
-
-    You can find out more about events [here](events.md).    
+:::note 
+You can find out more about events [here](events.md).    
+:::
     
 ## Define aggregates
 
@@ -147,9 +147,9 @@ final class Hotel extends BasicAggregateRoot
     }
 }
 ```
-!!! note
-
-    You can find out more about aggregates [here](aggregate.md).
+:::note
+You can find out more about aggregates [here](aggregate.md).
+:::
     
 ## Define projections
 
@@ -230,10 +230,10 @@ final class HotelProjector
     }
 }
 ```
-!!! note
+:::note
+You can find out more about projector [here](subscription.md).
+:::
 
-    You can find out more about projector [here](subscription.md).
-    
 ## Processor
 
 In our example we also want to email the head office as soon as a guest is checked in.
@@ -261,17 +261,17 @@ final class SendCheckInEmailProcessor
     }
 }
 ```
-!!! note
+:::note
+You can find out more about processor [here](subscription.md).
+:::
 
-    You can find out more about processor [here](subscription.md).
-    
 ## Configuration
 
 After we have defined everything, we still have to plug the whole thing together:
 
-!!! tip
-
-    If you use symfony, you can use our [symfony bundle](https://event-sourcing-bundle.patchlevel.io/latest/installation/) to skip this step.
+:::tip
+If you use symfony, you can use our [symfony bundle](https://event-sourcing-bundle.patchlevel.io/latest/installation/) to skip this step.
+:::
     
 ```php
 use Doctrine\DBAL\DriverManager;
@@ -329,9 +329,10 @@ $repositoryManager = new RunSubscriptionEngineRepositoryManager(
 
 $hotelRepository = $repositoryManager->get(Hotel::class);
 ```
-!!! note
 
-    You can find out more about stores [here](store.md).
+:::note
+You can find out more about stores [here](store.md).
+:::
     
 ## Database setup
 
@@ -364,9 +365,10 @@ $schemaDirector->create();
 /** @var SubscriptionEngine $engine */
 $engine->setup(skipBooting: true);
 ```
-!!! note
 
-    you can use the predefined [cli commands](cli.md) for this.
+:::note
+you can use the predefined [cli commands](cli.md) for this.
+:::
     
 ## Usage
 
@@ -390,19 +392,20 @@ $hotelRepository->save($hotel2);
 
 $hotels = $hotelProjection->getHotels();
 ```
-!!! note
 
-    You can also use other forms of IDs such as uuid version 6 or a custom format. 
-    You can find more about this [here](identifier.md).
+:::note
+You can also use other forms of IDs such as uuid version 6 or a custom format. 
+You can find more about this [here](identifier.md).
+:::
     
 ## Result
 
-!!! success
-
-    We have successfully implemented and used event sourcing.
+:::success
+We have successfully implemented and used event sourcing.
     
-    Feel free to browse further in the documentation for more detailed information. 
-    If there are still open questions, create a ticket on Github and we will try to help you.
+Feel free to browse further in the documentation for more detailed information. 
+If there are still open questions, create a ticket on Github and we will try to help you.
+:::
     
 ## Learn more
 
