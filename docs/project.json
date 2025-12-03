@@ -1,0 +1,110 @@
+{
+  "navigation": [
+    {
+      "title": "Introduction",
+      "file": "index.md"
+    },
+    {
+      "title": "Getting Started",
+      "file": "getting-started.md"
+    },
+    {
+      "title": "Basics",
+      "subEntries": [
+        {
+          "title": "Aggregate",
+          "file": "aggregate.md"
+        },
+        {
+          "title": "Events",
+          "file": "events.md"
+        },
+        {
+          "title": "Repository",
+          "file": "repository.md"
+        },
+        {
+          "title": "Message",
+          "file": "message.md"
+        },
+        {
+          "title": "Store",
+          "file": "store.md"
+        },
+        {
+          "title": "Subscription",
+          "file": "subscription.md"
+        },
+        {
+          "title": "Command Bus",
+          "file": "command-bus.md"
+        },
+        {
+          "title": "Event Bus",
+          "file": "event-bus.md"
+        },
+        {
+          "title": "Query Bus",
+          "file": "query-bus.md"
+        }
+      ]
+    },
+    {
+      "title": "Advanced",
+      "subEntries": [
+        {
+          "title": "Identifier",
+          "file": "identifier.md"
+        },
+        {
+          "title": "Normalizer",
+          "file": "normalizer.md"
+        },
+        {
+          "title": "Snapshots",
+          "file": "snapshots.md"
+        },
+        {
+          "title": "Personal Data",
+          "file": "personal-data.md"
+        },
+        {
+          "title": "Upcasting",
+          "file": "upcasting.md"
+        },
+        {
+          "title": "Message Decorator",
+          "file": "message-decorator.md"
+        },
+        {
+          "title": "Split Stream",
+          "file": "split-stream.md"
+        },
+        {
+          "title": "Time / Clock",
+          "file": "clock.md"
+        },
+        {
+          "title": "Testing",
+          "file": "testing.md"
+        },
+        {
+          "title": "CLI",
+          "file": "cli.md"
+        }
+      ]
+    },
+    {
+      "title": "Supported Versions",
+      "file": "supported-versions.md"
+    },
+    {
+      "title": "Our BC Promise",
+      "file": "backward-compatibility.md"
+    },
+    {
+      "title": "Upgrade from 3.x",
+      "file": "UPGRADE-4.0.md"
+    }
+  ]
+}

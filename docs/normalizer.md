@@ -4,10 +4,10 @@ Sometimes you also want to add more complex data in events as payload or in aggr
 For example DateTime, enums or value objects.
 Here you can use the normalizer to define how the data should be saved and loaded.
 
-!!! note
-
-    The underlying system called hydrator exists as a library. 
-    You can find out more details [here](https://github.com/patchlevel/hydrator).
+:::note
+The underlying system called hydrator exists as a library. 
+You can find out more details [here](https://github.com/patchlevel/hydrator).
+:::
     
 ## Usage
 
@@ -28,10 +28,10 @@ Most built-in normalizers can be inferred from the type hint:
 * `Enum` => `EnumNormalizer`
 * `AggregateRootId` => `IdNormalizer`
 
-!!! note
-
-    `ObjectNormalizer` will not be inferred. You have to specify it yourself.
-    This should prevent you from accidentally serializing objects that you don't want to serialize.
+:::note
+`ObjectNormalizer` will not be inferred. You have to specify it yourself.
+This should prevent you from accidentally serializing objects that you don't want to serialize.
+:::
     
 The other way is to specify the normalizer to the properties directly.
 This example is equivalent to the previous one.
@@ -75,9 +75,9 @@ final class Item
     }
 }
 ```
-!!! note
-
-    With the `ObjectNormalizer`, you can seraialize and deserialize recursively.
+:::note
+With the `ObjectNormalizer`, you can seraialize and deserialize recursively.
+:::
     
 ### Event
 
@@ -99,9 +99,10 @@ final class CreateHotel
     }
 }
 ```
-!!! note
 
-    If you have personal data, you can use [crypto-shredding](personal_data.md).
+:::note
+If you have personal data, you can use [crypto-shredding](personal-data.md).
+:::
     
 ### Aggregate
 
@@ -125,9 +126,10 @@ final class Hotel extends BasicAggregateRoot
     // ...
 }
 ```
-!!! note
 
-    You can learn more about snapshots [here](snapshots.md).
+:::note
+You can learn more about snapshots [here](snapshots.md).
+:::
     
 ## Built-in Normalizer
 
@@ -150,9 +152,10 @@ final class DTO
     public array $dates;
 }
 ```
-!!! note
 
-    The keys from the arrays are taken over here.
+:::note
+The keys from the arrays are taken over here.
+:::
     
 ### DateTimeImmutable
 
@@ -168,9 +171,10 @@ final class DTO
     public DateTimeImmutable $date;
 }
 ```
-!!! tip
 
-    You can let the hydrator guess the normalizer from the type hint.
+:::tip
+You can let the hydrator guess the normalizer from the type hint.
+:::
     
 You can also define the format. Either describe it yourself as a string or use one of the existing constants.
 The default is `DateTimeImmutable::ATOM`.
@@ -184,9 +188,10 @@ final class DTO
     public DateTimeImmutable $date;
 }
 ```
-!!! note
 
-    You can read about how the format is structured in the [php docs](https://www.php.net/manual/de/datetime.format.php).
+:::note
+You can read about how the format is structured in the [php docs](https://www.php.net/manual/de/datetime.format.php).
+:::
     
 ### DateTime
 
@@ -201,9 +206,10 @@ final class DTO
     public DateTime $date;
 }
 ```
-!!! tip
 
-    You can let the hydrator guess the normalizer from the type hint.
+:::tip
+You can let the hydrator guess the normalizer from the type hint.
+:::
     
 You can also specify the format here. The default is `DateTime::ATOM`.
 
@@ -216,15 +222,16 @@ final class DTO
     public DateTime $date;
 }
 ```
-!!! warning
 
-    It is highly recommended to only ever use DateTimeImmutable objects and the DateTimeImmutableNormalizer. 
-    This prevents you from accidentally changing the state of the DateTime and thereby causing bugs.
+:::warning
+It is highly recommended to only ever use DateTimeImmutable objects and the DateTimeImmutableNormalizer. 
+This prevents you from accidentally changing the state of the DateTime and thereby causing bugs.
+:::
     
-!!! note
+:::note
+You can read about how the format is structured in the [php docs](https://www.php.net/manual/de/datetime.format.php).
+:::
 
-    You can read about how the format is structured in the [php docs](https://www.php.net/manual/de/datetime.format.php).
-    
 ### DateTimeZone
 
 To normalize a `DateTimeZone` one can use the `DateTimeZoneNormalizer`.
@@ -238,9 +245,10 @@ final class DTO
     public DateTimeZone $timeZone;
 }
 ```
-!!! tip
 
-    You can let the hydrator guess the normalizer from the type hint.
+:::tip
+You can let the hydrator guess the normalizer from the type hint.
+:::
     
 ### Enum
 
@@ -255,9 +263,10 @@ final class DTO
     public Status $status;
 }
 ```
-!!! tip
 
-    You can let the hydrator guess the normalizer from the type hint.
+:::tip
+You can let the hydrator guess the normalizer from the type hint.
+:::
     
 You can also specify the enum class.
 
@@ -284,9 +293,10 @@ final class DTO
     public Uuid $id;
 }
 ```
-!!! tip
 
-    You can let the hydrator guess the normalizer from the type hint.
+:::tip
+You can let the hydrator guess the normalizer from the type hint.
+:::
     
 Optional you can also define the type of the id.
 
@@ -383,9 +393,10 @@ class NameNormalizer implements Normalizer
     }
 }
 ```
-!!! warning
 
-    The important thing is that the result of Normalize is serializable!
+:::warning
+The important thing is that the result of Normalize is serializable!
+:::
     
 Now we can also use the normalizer directly.
 
@@ -396,9 +407,10 @@ final class DTO
     public Name $name;
 }
 ```
-!!! tip
 
-    Every normalizer, including the custom normalizer, can be used both for the events and for the snapshots.
+:::tip
+Every normalizer, including the custom normalizer, can be used both for the events and for the snapshots.
+:::
     
 Or define it on class level, so you don't have to specify it for each property.
 
@@ -430,15 +442,16 @@ The whole thing looks like this
   "profile_name": "David"
 }
 ```
-!!! tip
 
-    You can also rename properties to events without having a backwards compatibility break by keeping the serialized name.
+:::tip
+You can also rename properties to events without having a backwards compatibility break by keeping the serialized name.
+:::
     
-!!! note
-
-    NormalizedName also works for snapshots. 
-    But since a snapshot is just a cache, you can also just invalidate it, 
-    if you have backwards compatibility break in the property name
+:::note
+NormalizedName also works for snapshots. 
+But since a snapshot is just a cache, you can also just invalidate it, 
+if you have backwards compatibility break in the property name
+:::
     
 ## Ignore
 
@@ -459,4 +472,4 @@ final class DTO
 * [How to define aggregates](aggregate.md)
 * [How to define events](events.md)
 * [How to snapshot aggregates](snapshots.md)
-* [How to work with personal data](personal_data.md)
+* [How to work with personal data](personal-data.md)

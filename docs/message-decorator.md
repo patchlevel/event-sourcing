@@ -10,7 +10,7 @@ We offer a few decorators that you can use.
 
 ### SplitStreamDecorator
 
-In order to use the [split stream](split_stream.md) feature, the `SplitStreamDecorator` must be added.
+In order to use the [split stream](split-stream.md) feature, the `SplitStreamDecorator` must be added.
 
 ```php
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
@@ -66,9 +66,9 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-!!! note
-
-    You can find out more about repository [here](repository.md).
+:::note
+You can find out more about repository [here](repository.md).
+:::
     
 ## Create own decorator
 
@@ -97,13 +97,13 @@ final class OnSystemRecordedDecorator implements MessageDecorator
     }
 }
 ```
-!!! note
-
-    The Message is immutable, for more information look up [here](message.md).
+:::note
+The Message is immutable, for more information look up [here](message.md).
+:::
     
-!!! tip
-
-    You can also set multiple headers with `withHeaders` which expects an hashmap.
+:::tip
+You can also set multiple headers with `withHeaders` which expects an hashmap.
+:::
     
 ## Learn more
 

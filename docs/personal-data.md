@@ -39,10 +39,11 @@ final class EmailChanged
     }
 }
 ```
-!!! tip
 
-    You can use the `DataSubjectId` in aggregates for snapshots too.
-    
+:::tip
+You can use the `DataSubjectId` in aggregates for snapshots too.
+:::
+
 ### PersonalData
 
 Next, you have to mark the properties that should be encrypted with the `#[PersonalData]` attribute.
@@ -63,9 +64,10 @@ final class EmailChanged
     }
 }
 ```
-!!! tip
 
-    You can use the `PersonalData` in aggregates for snapshots too.
+:::tip
+You can use the `PersonalData` in aggregates for snapshots too.
+:::
     
 If the information could not be decrypted, then a fallback value will be used.
 The default fallback value is `null`.
@@ -92,13 +94,14 @@ final class ProfileChanged
     }
 }
 ```
-!!! danger
 
-    You have to deal with this case in your business logic such as aggregates and subscriptions.
+:::danger
+You have to deal with this case in your business logic such as aggregates and subscriptions.
+:::
     
-!!! note
-
-    The normalized data is encrypted. This means that this happens after the `extract` or before the `hydrate`.
+:::note
+The normalized data is encrypted. This means that this happens after the `extract` or before the `hydrate`.
+:::
     
 ## Setup
 
@@ -149,9 +152,10 @@ use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
 /** @var CipherKeyStore $cipherKeyStore */
 $cryptographer = PersonalDataPayloadCryptographer::createWithDefaultSettings($cipherKeyStore);
 ```
-!!! tip
 
-    You can specify the cipher method with the second parameter.
+:::tip
+You can specify the cipher method with the second parameter.
+:::
     
 ### Event Serializer Integration
 
@@ -167,9 +171,10 @@ DefaultEventSerializer::createFromPaths(
     cryptographer: $cryptographer,
 );
 ```
-!!! note
 
-    More information about the events can be found [here](./events.md).
+:::note
+More information about the events can be found [here](./events.md).
+:::
     
 ### Snapshot Store Integration
 
@@ -187,13 +192,14 @@ $snapshotStore = DefaultSnapshotStore::createDefault(
     $cryptographer,
 );
 ```
-!!! note
 
-    More information about the snapshot store can be found [here](./snapshots.md).
+:::note
+More information about the snapshot store can be found [here](./snapshots.md).
+:::
     
-!!! success
-
-    Now you can save and read events with personal data.
+:::success
+Now you can save and read events with personal data.
+:::
     
 ## Remove personal data
 

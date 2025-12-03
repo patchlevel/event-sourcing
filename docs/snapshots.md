@@ -5,13 +5,13 @@ This is not a problem if there are a few hundred.
 But if the number gets bigger at some point, then loading and rebuilding can become slow.
 The `snapshot` system can be used to control this.
 
-!!! tip
-
-    Use snapshots only if you have a performance problems,
-    because it introduces additional complexity.
+:::tip
+Use snapshots only if you have a performance problems,
+because it introduces additional complexity.
     
-    In our benchmarks we can load 10 000 events for one aggregate in 50ms.
-    Of course, this can vary from system to system.
+In our benchmarks we can load 10 000 events for one aggregate in 50ms.
+Of course, this can vary from system to system.
+:::
     
 Normally, the events are all applied again on the aggregate in order to rebuild the current state.
 With a `snapshot`, we can shorten the way in which we temporarily save the current state of the aggregate.
@@ -55,9 +55,10 @@ $repositoryManager = new DefaultRepositoryManager(
     $snapshotStore,
 );
 ```
-!!! note
 
-    You can read more about Repository [here](./repository.md).
+:::note
+You can read more about Repository [here](./repository.md).
+:::
     
 Next we need to tell the Aggregate to take a snapshot of it. We do this using the snapshot attribute.
 There we also specify where it should be saved.
@@ -99,19 +100,20 @@ final class Profile extends BasicAggregateRoot
     // ...
 }
 ```
-!!! danger
 
-    If anything changes in the properties of the aggregate, then the cache must be cleared.
-    Or the snapshot version needs to be changed so that the previous snapshot is invalid.
+:::danger
+If anything changes in the properties of the aggregate, then the cache must be cleared.
+Or the snapshot version needs to be changed so that the previous snapshot is invalid.
+:::
     
-!!! warning
-
-    In the end it the complete aggregate must be serializeable as json, also the aggregate Id.
+:::warning
+In the end it the complete aggregate must be serializeable as json, also the aggregate Id.
+:::
     
-!!! note
-
-    The [hydrator](https://github.com/patchlevel/hydrator) is used internally and you can use all of its features.
-    You can find more about normalizer also [here](normalizer.md).
+:::note
+The [hydrator](https://github.com/patchlevel/hydrator) is used internally and you can use all of its features.
+You can find more about normalizer also [here](normalizer.md).
+:::
     
 ### Snapshot batching
 
@@ -154,17 +156,18 @@ final class Profile extends BasicAggregateRoot
     // ...
 }
 ```
-!!! warning
 
-    If the snapshots are discarded, a load peak can occur since the aggregates have to be rebuilt.
-    You should update the snapshot version only when necessary.
+:::warning
+If the snapshots are discarded, a load peak can occur since the aggregates have to be rebuilt.
+You should update the snapshot version only when necessary.
+:::
     
-!!! tip
-
-    If you have aggregates with a lot of events, 
-    you should consider using [split streams](split_stream.md) if it make sense in your domain.
-    Then the load peak is not so high anymore, 
-    because only the events from new stream start are loaded to rebuild the aggregate.
+:::tip
+If you have aggregates with a lot of events, 
+you should consider using [split streams](split-stream.md) if it make sense in your domain.
+Then the load peak is not so high anymore, 
+because only the events from new stream start are loaded to rebuild the aggregate.
+:::
     
 ## Adapter
 
@@ -229,11 +232,12 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
  */
 $snapshotStore->save($aggregate);
 ```
-!!! danger
 
-    If the state of an aggregate is saved as a snapshot without being saved to the event store (database), 
-    it can lead to data loss or broken aggregates!
-    
+:::danger
+If the state of an aggregate is saved as a snapshot without being saved to the event store (database), 
+it can lead to data loss or broken aggregates!
+:::
+
 ### Load
 
 You can also load an aggregate from the snapshot store:
@@ -251,14 +255,14 @@ The method returns the Aggregate if it was loaded successfully.
 If the aggregate was not found, then a `SnapshotNotFound` is thrown.
 And if the version is no longer correct and the snapshot is therefore invalid, then a `SnapshotVersionInvalid` is thrown.
 
-!!! warning
-
-    The aggregate may be in an old state as the snapshot may lag behind. 
-    You still have to bring the aggregate up to date by loading the missing events from the event store.
+:::warning
+The aggregate may be in an old state as the snapshot may lag behind. 
+You still have to bring the aggregate up to date by loading the missing events from the event store.
+:::
     
 ## Learn more
 
 * [How to define aggregates](aggregate.md)
 * [How to store and load aggregates](repository.md)
-* [How to split streams](split_stream.md)
-* [How to work with personal data](personal_data.md)
+* [How to split streams](split-stream.md)
+* [How to work with personal data](personal-data.md)

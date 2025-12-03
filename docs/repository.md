@@ -31,9 +31,10 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-!!! note
 
-    The same repository instance is always returned for a specific aggregate.
+:::note
+The same repository instance is always returned for a specific aggregate.
+:::
     
 ### Event Bus
 
@@ -60,20 +61,21 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-!!! warning
 
-    If you use the event bus, you should be aware that the events are dispatched synchronously.
-    You may encounter [at least once](https://softwaremill.com/message-delivery-and-deduplication-strategies/) problems.
+:::warning
+If you use the event bus, you should be aware that the events are dispatched synchronously.
+You may encounter [at least once](https://softwaremill.com/message-delivery-and-deduplication-strategies/) problems.
+:::
     
-!!! note
+:::note
+You can find out more about event bus [here](event-bus.md).
+:::
 
-    You can find out more about event bus [here](event_bus.md).
-    
-!!! tip
-
-    In most cases it is better to react to events asynchronously, 
-    that's why we recommend the subscription engine.
-    More information can be found [here](subscription.md).
+:::tip
+In most cases it is better to react to events asynchronously, 
+that's why we recommend the subscription engine.
+More information can be found [here](subscription.md).
+:::
     
 ### Snapshots
 
@@ -105,9 +107,9 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-!!! note
-
-    You can find out more about snapshots [here](snapshots.md).
+:::note
+You can find out more about snapshots [here](snapshots.md).
+:::
     
 ### Decorator
 
@@ -134,13 +136,14 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-!!! note
 
-    You can find out more about message decorator [here](message_decorator.md).
+:::note
+You can find out more about message decorator [here](message-decorator.md).
+:::
     
-!!! tip
-
-    If you have multiple decorators, you can use the `ChainMessageDecorator` to chain them.
+:::tip
+If you have multiple decorators, you can use the `ChainMessageDecorator` to chain them.
+:::
     
 ## Use the repository
 
@@ -163,24 +166,25 @@ $profile = Profile::create($id, 'david.badura@patchlevel.de');
 /** @var Repository $repository */
 $repository->save($profile);
 ```
-!!! warning
 
-    All events are written to the database with one transaction in order to ensure data consistency.
-    If an exception occurs during the save process, 
-    the transaction is rolled back and the aggregate is not valid anymore.
-    You can not save the aggregate again and you need to load it again.
+:::warning
+All events are written to the database with one transaction in order to ensure data consistency.
+If an exception occurs during the save process, 
+the transaction is rolled back and the aggregate is not valid anymore.
+You can not save the aggregate again and you need to load it again.
+:::
     
-!!! note
+:::note
+Due to the nature of the aggregate having a playhead, 
+we have a unique constraint that ensures that no race condition happens here.
+An `AggregateOutdated` exception is thrown if a conflict occurs.
+:::
 
-    Due to the nature of the aggregate having a playhead, 
-    we have a unique constraint that ensures that no race condition happens here.
-    An `AggregateOutdated` exception is thrown if a conflict occurs.
-    
-!!! tip
+:::tip
+If you use the Command Bus, you can use the [RetryOutdatedAggregateCommandBus](command-bus.md#retry-outdated-aggregate-command-bus)
+to retry the command when an `AggregateOutdated` exception occurs automatically.
+:::
 
-    If you use the Command Bus, you can use the [RetryOutdatedAggregateCommandBus](command_bus.md#retry-outdated-aggregate-command-bus)
-    to retry the command when an `AggregateOutdated` exception occurs automatically.
-    
 ### Load an aggregate
 
 An `aggregate` can be loaded using the `load` method.
@@ -195,15 +199,16 @@ $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
 /** @var Repository $repository */
 $profile = $repository->load($id);
 ```
-!!! warning
 
-    When the method is called, the aggregate is always reloaded and rebuilt from the database.
+:::warning
+When the method is called, the aggregate is always reloaded and rebuilt from the database.
+:::
     
-!!! note
+:::note
+You can only fetch one aggregate at a time and don't do any complex queries either. 
+Projections are used for this purpose.
+:::
 
-    You can only fetch one aggregate at a time and don't do any complex queries either. 
-    Projections are used for this purpose.
-    
 ### Has an aggregate
 
 You can also check whether an `aggregate` with a certain id exists.
@@ -220,10 +225,11 @@ if ($repository->has($id)) {
     // ...
 }
 ```
-!!! note
 
-    The query is fast and does not load any event. 
-    This means that the state of the aggregate is not rebuild either.
+:::note
+The query is fast and does not load any event. 
+This means that the state of the aggregate is not rebuild either.
+:::
     
 ## Custom Repository
 
@@ -271,6 +277,6 @@ class ProfileRepository
 * [How to create an event](events.md)
 * [How to work with the store](store.md)
 * [How to use snapshots](snapshots.md)
-* [How to split streams](split_stream.md)
-* [How to use the event bus](event_bus.md)
+* [How to split streams](split-stream.md)
+* [How to use the event bus](event-bus.md)
 * [How to create messages](message.md)
