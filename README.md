@@ -53,12 +53,12 @@ But we can only really support the databases if we can also automatically ensure
 > [!TIP]
 > We recommend using PostgreSQL.
 
-| Database   | Version                               |
-|------------|---------------------------------------|
-| PostgreSQL | 12.20, 13.16, 14.13, 15.8, 16.4, 17.0 |
-| MariaDB    | 10.5, 10.6, 10.11, 11.1, 11.4         |
-| MySQL      | 5.7, 8.0, 8.4, 9.0                    |
-| SQLite     | 3.x                                   |
+| Database   | Version                         |
+|------------|---------------------------------|
+| PostgreSQL | 14.20, 15.15, 16.11, 17.7, 18.1 |
+| MariaDB    | 10.6, 10.11, 11.4, 11.8, 12.1   |
+| MySQL      | 8.0, 8.4, 9.5                   |
+| SQLite     | 3.x                             |
 
 ## Sponsors
 
