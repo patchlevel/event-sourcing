@@ -184,13 +184,14 @@ final class ProfileTest extends AggregateRootTestCase
     }
 }
 ```
-!!! note
 
-    You can find out more about the clock [here](clock.md).
+:::note
+You can find out more about the clock [here](clock.md).
+:::
     
-!!! tip
-
-    You can use the FreezeClock in you integration tests to test the time-based behavior of your application.
+:::tip
+You can use the FreezeClock in you integration tests to test the time-based behavior of your application.
+:::
     
 ## Tests with UUID
 
@@ -216,8 +217,8 @@ final class ProfileTest extends TestCase
     }
 }
 ```
-!!! warning
 
-    The `IncrementalRamseyUuidFactory` is only for testing purposes
-    and supports only the version 7 what is used by the library.
-    
+:::warning
+The `IncrementalRamseyUuidFactory` is only for testing purposes
+and supports only the version 7 what is used by the library.
+:::    

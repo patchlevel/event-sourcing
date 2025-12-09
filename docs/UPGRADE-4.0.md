@@ -1,3 +1,6 @@
+---
+searchable: false
+---
 # Upgrade 4.0
 
 ## Aggregates
