@@ -43,12 +43,6 @@ parameters:
 			path: src/Message/Serializer/DefaultHeadersSerializer.php
 
 		-
-			message: '#^Call to an undefined method Patchlevel\\EventSourcing\\Store\\Store\:\:archive\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Repository/DefaultRepository.php
-
-		-
 			message: '#^Parameter \#1 \.\.\.\$streamName of class Patchlevel\\EventSourcing\\Store\\Criteria\\StreamCriterion constructor expects string, string\|null given\.$#'
 			identifier: argument.type
 			count: 1
@@ -169,6 +163,24 @@ parameters:
 			path: src/Subscription/ThrowableToErrorContextTransformer.php
 
 		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileWithCommands\:\:\$id is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: tests/Benchmark/BasicImplementation/ProfileWithCommands.php
+
+		-
+			message: '#^Cannot access offset ''name'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Benchmark/BasicImplementation/Projection/ProfileProjector.php
+
+		-
+			message: '#^Method Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\Projection\\ProfileProjector\:\:getProfileName\(\) should return string but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Benchmark/BasicImplementation/Projection/ProfileProjector.php
+
+		-
 			message: '#^Parameter \#1 \$id of static method Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\Profile\:\:create\(\) expects Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileId, Patchlevel\\EventSourcing\\Aggregate\\AggregateRootId given\.$#'
 			identifier: argument.type
 			count: 1
@@ -233,6 +245,18 @@ parameters:
 			identifier: property.onlyWritten
 			count: 1
 			path: tests/Integration/BasicImplementation/ProfileWithCommands.php
+
+		-
+			message: '#^Cannot access offset ''name'' on array\<string, mixed\>\|false\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Integration/BasicImplementation/Projection/ProfileProjector.php
+
+		-
+			message: '#^Method Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\Projection\\ProfileProjector\:\:getProfileName\(\) should return string but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Integration/BasicImplementation/Projection/ProfileProjector.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\ChildAggregate\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\ChildAggregate\\Profile will always evaluate to true\.$#'
