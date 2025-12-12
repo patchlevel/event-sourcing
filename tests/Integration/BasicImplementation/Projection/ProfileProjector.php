@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Project
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
+use Patchlevel\EventSourcing\Attribute\Answer;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -13,6 +14,7 @@ use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Query\QueryProfileName;
 
 #[Projector('profile-1')]
 final class ProfileProjector
@@ -61,5 +63,14 @@ final class ProfileProjector
                 'name' => $nameChanged->name,
             ],
         );
+    }
+
+    #[Answer]
+    public function getProfileName(QueryProfileName $queryProfileName): string
+    {
+        return $this->connection->fetchAssociative(
+            'SELECT name FROM projection_profile WHERE id = :id',
+            ['id' => $queryProfileName->id->toString()],
+        )['name'];
     }
 }

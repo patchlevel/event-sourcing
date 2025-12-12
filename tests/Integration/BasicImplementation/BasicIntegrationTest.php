@@ -15,6 +15,8 @@ use Patchlevel\EventSourcing\Message\Reducer;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Translator\UntilEventTranslator;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\QueryBus\ServiceHandlerProvider;
+use Patchlevel\EventSourcing\QueryBus\SyncQueryBus;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -36,6 +38,7 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\Profil
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\ProfileProjector;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Query\QueryProfileName;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Psr\Clock\ClockInterface;
@@ -323,5 +326,70 @@ final class BasicIntegrationTest extends TestCase
         self::assertSame(2, $profile->playhead());
         self::assertSame('John Doe', $profile->name());
         self::assertSame(1, SendEmailMock::count());
+    }
+
+    public function testQueryBus(): void
+    {
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            DefaultHeadersSerializer::createFromPaths([
+                __DIR__ . '/Header',
+            ]),
+        );
+
+        $aggregateRootRegistry = new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]);
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]),
+            $store,
+            null,
+            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            new FooMessageDecorator(),
+        );
+
+        $profileProjection = new ProfileProjector($this->connection);
+
+        $engine = new DefaultSubscriptionEngine(
+            $store,
+            new InMemorySubscriptionStore(),
+            new MetadataSubscriberAccessorRepository([
+                $profileProjection,
+                new SendEmailProcessor(),
+            ]),
+        );
+
+        $manager = new RunSubscriptionEngineRepositoryManager(
+            $manager,
+            $engine,
+        );
+
+        $commandBus = SyncCommandBus::createForAggregateHandlers(
+            $aggregateRootRegistry,
+            $manager,
+            new ServiceLocator([
+                ClockInterface::class => new SystemClock(),
+                'env' => 'test',
+            ]),
+        );
+
+        $queryBus = new SyncQueryBus(new ServiceHandlerProvider([$profileProjection]));
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store,
+        );
+
+        $schemaDirector->create();
+        $engine->setup(skipBooting: true);
+
+        $profileId = ProfileId::generate();
+
+        $commandBus->dispatch(new CreateProfile($profileId, 'John'));
+        $commandBus->dispatch(new ChangeProfileName($profileId, 'John Doe'));
+
+        $result = $queryBus->dispatch(new QueryProfileName($profileId));
+
+        self::assertSame('John Doe', $result);
     }
 }
