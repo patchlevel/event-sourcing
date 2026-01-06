@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFact
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadataFactory;
 
+/** @deprecated since 3.15.0 will be removed with 4.0.0 */
 final class SubscriberHelper
 {
     public function __construct(
