@@ -163,12 +163,12 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
-#[Projector('hotel')]
+#[Projector(self::TABLE)]
 final class HotelProjector
 {
-    use SubscriberUtil;
+    // use a const for easier access in the projector & to keep projector id and table name in sync
+    private const TABLE = 'hotel';
 
     public function __construct(
         private readonly Connection $db,
@@ -178,14 +178,14 @@ final class HotelProjector
     /** @return list<array{id: string, name: string, guests: int}> */
     public function getHotels(): array
     {
-        return $this->db->fetchAllAssociative("SELECT id, name, guests FROM {$this->table()};");
+        return $this->db->fetchAllAssociative(sprintf('SELECT id, name, guests FROM %s;'), self::TABLE);
     }
 
     #[Subscribe(HotelCreated::class)]
     public function handleHotelCreated(HotelCreated $event): void
     {
         $this->db->insert(
-            $this->table(),
+            self::TABLE,
             [
                 'id' => $event->hotelId->toString(),
                 'name' => $event->hotelName,
@@ -198,7 +198,7 @@ final class HotelProjector
     public function handleGuestIsCheckedIn(GuestIsCheckedIn $event): void
     {
         $this->db->executeStatement(
-            "UPDATE {$this->table()} SET guests = guests + 1 WHERE id = ?;",
+            sprintf('UPDATE %s SET guests = guests + 1 WHERE id = ?;', self::TABLE),
             [$event->hotelId->toString()],
         );
     }
@@ -207,7 +207,7 @@ final class HotelProjector
     public function handleGuestIsCheckedOut(GuestIsCheckedOut $event): void
     {
         $this->db->executeStatement(
-            "UPDATE {$this->table()} SET guests = guests - 1 WHERE id = ?;",
+            sprintf('UPDATE %s SET guests = guests - 1 WHERE id = ?;', self::TABLE),
             [$event->hotelId->toString()],
         );
     }
@@ -215,18 +215,13 @@ final class HotelProjector
     #[Setup]
     public function create(): void
     {
-        $this->db->executeStatement("CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);");
+        $this->db->executeStatement(sprintf('CREATE TABLE IF NOT EXISTS %s (id VARCHAR PRIMARY KEY, name VARCHAR, guests INTEGER);', self::TABLE));
     }
 
     #[Teardown]
     public function drop(): void
     {
-        $this->db->executeStatement("DROP TABLE IF EXISTS {$this->table()};");
-    }
-
-    private function table(): string
-    {
-        return 'projection_' . $this->subscriberId();
+        $this->db->executeStatement(sprintf('DROP TABLE IF EXISTS %s;', self::TABLE));
     }
 }
 ```
