@@ -13,7 +13,6 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
-use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Query\QueryProfileName;
 
 #[Projector('profile-1')]

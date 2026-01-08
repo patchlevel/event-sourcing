@@ -329,7 +329,7 @@ final class BasicIntegrationTest extends TestCase
 
     public function testQueryBus(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             DefaultHeadersSerializer::createFromPaths([
@@ -350,7 +350,7 @@ final class BasicIntegrationTest extends TestCase
         $profileProjection = new ProfileProjector($this->connection);
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             new InMemorySubscriptionStore(),
             new MetadataSubscriberAccessorRepository([
                 $profileProjection,
