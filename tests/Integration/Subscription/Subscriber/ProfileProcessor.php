@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Profile;
-use Patchlevel\EventSourcing\Tests\Integration\Subscription\ProfileId;
 
 #[Processor('profile')]
 final class ProfileProcessor
@@ -33,11 +32,11 @@ final class ProfileProcessor
     }
 
     #[Subscribe(NameChanged::class)]
-    public function handleNameChanged(NameChanged $nameChanged, ProfileId $profileId): void
+    public function handleNameChanged(NameChanged $nameChanged): void
     {
         $repository = $this->repositoryManager->get(Profile::class);
 
-        $profile = $repository->load($profileId);
+        $profile = $repository->load($nameChanged->profileId);
 
         if ($profile->name() !== 'admin') {
             return;

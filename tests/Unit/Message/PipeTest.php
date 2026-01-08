@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Message;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Pipe;
 use Patchlevel\EventSourcing\Message\Translator\ExcludeEventTranslator;
 use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -65,16 +67,16 @@ final class PipeTest extends TestCase
         self::assertCount(3, $resultMessages);
 
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[0]->event());
-        self::assertSame('1', $resultMessages[0]->header(AggregateHeader::class)->aggregateId);
-        self::assertSame(2, $resultMessages[0]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile-1', $resultMessages[0]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(2, $resultMessages[0]->header(PlayheadHeader::class)->playhead);
 
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[1]->event());
-        self::assertSame('1', $resultMessages[1]->header(AggregateHeader::class)->aggregateId);
-        self::assertSame(3, $resultMessages[1]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile-1', $resultMessages[1]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(3, $resultMessages[1]->header(PlayheadHeader::class)->playhead);
 
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[2]->event());
-        self::assertSame('2', $resultMessages[2]->header(AggregateHeader::class)->aggregateId);
-        self::assertSame(2, $resultMessages[2]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile-2', $resultMessages[2]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(2, $resultMessages[2]->header(PlayheadHeader::class)->playhead);
     }
 
     public function testWithMiddlewares(): void
@@ -92,16 +94,16 @@ final class PipeTest extends TestCase
         self::assertCount(3, $resultMessages);
 
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[0]->event());
-        self::assertSame('1', $resultMessages[0]->header(AggregateHeader::class)->aggregateId);
-        self::assertSame(1, $resultMessages[0]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile-1', $resultMessages[0]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(1, $resultMessages[0]->header(PlayheadHeader::class)->playhead);
 
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[1]->event());
-        self::assertSame('1', $resultMessages[1]->header(AggregateHeader::class)->aggregateId);
-        self::assertSame(2, $resultMessages[1]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile-1', $resultMessages[1]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(2, $resultMessages[1]->header(PlayheadHeader::class)->playhead);
 
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[2]->event());
-        self::assertSame('2', $resultMessages[2]->header(AggregateHeader::class)->aggregateId);
-        self::assertSame(1, $resultMessages[2]->header(AggregateHeader::class)->playhead);
+        self::assertSame('profile-2', $resultMessages[2]->header(StreamNameHeader::class)->streamName);
+        self::assertSame(1, $resultMessages[2]->header(PlayheadHeader::class)->playhead);
     }
 
     /** @return list<Message> */
@@ -114,34 +116,25 @@ final class PipeTest extends TestCase
                     Email::fromString('hallo@patchlevel.de'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '1',
-                    1,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-1'))
+                ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '1',
-                    2,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-1'))
+                ->withHeader(new PlayheadHeader(2))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '1',
-                    3,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-1'))
+                ->withHeader(new PlayheadHeader(3))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
 
             Message::create(
                 new ProfileCreated(
@@ -149,24 +142,18 @@ final class PipeTest extends TestCase
                     Email::fromString('hallo@patchlevel.de'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '2',
-                    1,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-2'))
+                ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
 
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('2'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '2',
-                    2,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-2'))
+                ->withHeader(new PlayheadHeader(2))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
         ];
     }
 }

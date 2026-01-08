@@ -45,7 +45,7 @@ final class ProfileWithCommands extends BasicAggregateRoot
         #[Inject('env')]
         string $env,
     ): void {
-        $this->recordThat(new NameChanged($command->name));
+        $this->recordThat(new NameChanged($this->id, $command->name));
     }
 
     #[Apply]

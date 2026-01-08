@@ -36,7 +36,7 @@ final class Profile extends BasicAggregateRoot
 
     public function removePersonalData(): void
     {
-        $this->recordThat(new PersonalDataRemoved());
+        $this->recordThat(new PersonalDataRemoved($this->id));
     }
 
     public function changeName(string $name): void

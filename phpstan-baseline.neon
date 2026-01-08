@@ -43,10 +43,10 @@ parameters:
 			path: src/Message/Serializer/DefaultHeadersSerializer.php
 
 		-
-			message: '#^Parameter \#1 \.\.\.\$streamName of class Patchlevel\\EventSourcing\\Store\\Criteria\\StreamCriterion constructor expects string, string\|null given\.$#'
-			identifier: argument.type
+			message: '#^Property Patchlevel\\EventSourcing\\Serializer\\Normalizer\\IdNormalizer\:\:\$identifierClass \(class\-string\<Patchlevel\\EventSourcing\\Identifier\\Identifier\>\|null\) does not accept string\.$#'
+			identifier: assign.propertyType
 			count: 1
-			path: src/Repository/DefaultRepository.php
+			path: src/Serializer/Normalizer/IdNormalizer.php
 
 		-
 			message: '#^Parameter \#2 \$data of method Patchlevel\\Hydrator\\Hydrator\:\:hydrate\(\) expects array\<string, mixed\>, mixed given\.$#'
@@ -85,30 +85,6 @@ parameters:
 			path: src/Store/Criteria/StreamCriterion.php
 
 		-
-			message: '#^Method Patchlevel\\EventSourcing\\Store\\DoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: src/Store/DoctrineDbalStoreStream.php
-
-		-
-			message: '#^Parameter \#3 \$playhead of class Patchlevel\\EventSourcing\\Aggregate\\AggregateHeader constructor expects int\<1, max\>, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Store/DoctrineDbalStoreStream.php
-
-		-
-			message: '#^Parameter \#4 \$recordedOn of class Patchlevel\\EventSourcing\\Aggregate\\AggregateHeader constructor expects DateTimeImmutable, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Store/DoctrineDbalStoreStream.php
-
-		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: src/Store/DoctrineDbalStoreStream.php
-
-		-
 			message: '#^Method Patchlevel\\EventSourcing\\Store\\StreamDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
 			identifier: return.unusedType
 			count: 1
@@ -125,6 +101,30 @@ parameters:
 			identifier: ternary.alwaysTrue
 			count: 1
 			path: src/Store/StreamDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Method Patchlevel\\EventSourcing\\Store\\TaggableDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Parameter \#1 \$playhead of class Patchlevel\\EventSourcing\\Store\\Header\\PlayheadHeader constructor expects int\<1, max\>, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Parameter \#1 \$tags of class Patchlevel\\EventSourcing\\Store\\Header\\TagsHeader constructor expects list\<string\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStoreStream.php
 
 		-
 			message: '#^Generator expects key type int, int\<1, max\>\|null given\.$#'
@@ -163,12 +163,6 @@ parameters:
 			path: src/Subscription/ThrowableToErrorContextTransformer.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileWithCommands\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Benchmark/BasicImplementation/ProfileWithCommands.php
-
-		-
 			message: '#^Cannot access offset ''name'' on array\<string, mixed\>\|false\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
@@ -181,15 +175,15 @@ parameters:
 			path: tests/Benchmark/BasicImplementation/Projection/ProfileProjector.php
 
 		-
-			message: '#^Parameter \#1 \$id of static method Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\Profile\:\:create\(\) expects Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileId, Patchlevel\\EventSourcing\\Aggregate\\AggregateRootId given\.$#'
+			message: '#^Parameter \#1 \$messageLoader of class Patchlevel\\EventSourcing\\Subscription\\Engine\\DefaultSubscriptionEngine constructor expects Patchlevel\\EventSourcing\\Subscription\\Engine\\MessageLoader, Patchlevel\\EventSourcing\\Store\\StreamDoctrineDbalStore given\.$#'
 			identifier: argument.type
 			count: 1
-			path: tests/Benchmark/SplitStreamBench.php
+			path: tests/Benchmark/CommandToQueryBench.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BankAccountSplitStream\\\\BankAccount'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BankAccountSplitStream\\BankAccount will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
-			count: 6
+			count: 4
 			path: tests/Integration/BankAccountSplitStream/IntegrationTest.php
 
 		-
@@ -235,16 +229,28 @@ parameters:
 			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\Profile\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
+			message: '#^Instantiated class Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\DoctrineDbalStore not found\.$#'
+			identifier: class.notFound
 			count: 1
-			path: tests/Integration/BasicImplementation/Profile.php
+			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\ProfileWithCommands\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
+			message: '#^Parameter \#1 \$messageLoader of class Patchlevel\\EventSourcing\\Subscription\\Engine\\DefaultSubscriptionEngine constructor expects Patchlevel\\EventSourcing\\Subscription\\Engine\\MessageLoader, Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\DoctrineDbalStore given\.$#'
+			identifier: argument.type
 			count: 1
-			path: tests/Integration/BasicImplementation/ProfileWithCommands.php
+			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
+
+		-
+			message: '#^Parameter \#2 \$schemaConfigurator of class Patchlevel\\EventSourcing\\Schema\\DoctrineSchemaDirector constructor expects Patchlevel\\EventSourcing\\Schema\\DoctrineSchemaConfigurator, Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\DoctrineDbalStore given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
+
+		-
+			message: '#^Parameter \#2 \$store of class Patchlevel\\EventSourcing\\Repository\\DefaultRepositoryManager constructor expects Patchlevel\\EventSourcing\\Store\\Store, Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\DoctrineDbalStore given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
 
 		-
 			message: '#^Cannot access offset ''name'' on array\<string, mixed\>\|false\.$#'
@@ -257,18 +263,6 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: tests/Integration/BasicImplementation/Projection/ProfileProjector.php
-
-		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\ChildAggregate\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\ChildAggregate\\Profile will always evaluate to true\.$#'
-			identifier: staticMethod.alreadyNarrowedType
-			count: 2
-			path: tests/Integration/ChildAggregate/ChildAggregateIntegrationTest.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\ChildAggregate\\Profile\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Integration/ChildAggregate/Profile.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\MicroAggregate\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\MicroAggregate\\Profile will always evaluate to true\.$#'
@@ -451,19 +445,13 @@ parameters:
 			path: tests/Unit/Fixture/ProfileWithSuppressAll.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\WrongNormalizerBasicAggregate\:\:\$id is unused\.$#'
-			identifier: property.unused
-			count: 1
-			path: tests/Unit/Fixture/WrongNormalizerBasicAggregate.php
-
-		-
 			message: '#^Parameter \#2 \$callable of class Patchlevel\\EventSourcing\\Message\\Translator\\ReplaceEventTranslator constructor expects callable\(Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\MessagePublished\)\: object, Closure\(Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileCreated\)\: Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileVisited given\.$#'
 			identifier: argument.type
 			count: 1
 			path: tests/Unit/Message/Translator/ReplaceEventTranslatorTest.php
 
 		-
-			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:212\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
+			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:211\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
 			path: tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php

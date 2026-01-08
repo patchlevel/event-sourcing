@@ -54,12 +54,12 @@ final class ProfileProjector
     }
 
     #[Subscribe(NameChanged::class)]
-    public function handleNameChanged(NameChanged $nameChanged, ProfileId $profileId): void
+    public function handleNameChanged(NameChanged $nameChanged): void
     {
         $this->connection->executeStatement(
             'UPDATE projection_profile SET name = :name WHERE id = :id;',
             [
-                'id' => $profileId->toString(),
+                'id' => $nameChanged->profileId->toString(),
                 'name' => $nameChanged->name,
             ],
         );

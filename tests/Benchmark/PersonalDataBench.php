@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -25,8 +25,8 @@ final class PersonalDataBench
     private Store $store;
     private Repository $repository;
 
-    private AggregateRootId $singleEventId;
-    private AggregateRootId $multipleEventsId;
+    private Identifier $singleEventId;
+    private Identifier $multipleEventsId;
 
     public function setUp(): void
     {
@@ -38,7 +38,7 @@ final class PersonalDataBench
             $cipherKeyStore,
         );
 
-        $this->store = new DoctrineDbalStore(
+        $this->store = new StreamDoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths(
                 [__DIR__ . '/BasicImplementation/Events'],
