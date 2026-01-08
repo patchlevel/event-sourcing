@@ -77,28 +77,28 @@ final class SubscriptionManager
     public function add(Subscription ...$subscriptions): void
     {
         foreach ($subscriptions as $sub) {
-            $this->forAdd->attach($sub);
+            $this->forAdd->offsetSet($sub);
         }
     }
 
     public function update(Subscription ...$subscriptions): void
     {
         foreach ($subscriptions as $sub) {
-            $this->forUpdate->attach($sub);
+            $this->forUpdate->offsetSet($sub);
         }
     }
 
     public function remove(Subscription ...$subscriptions): void
     {
         foreach ($subscriptions as $sub) {
-            $this->forRemove->attach($sub);
+            $this->forRemove->offsetSet($sub);
         }
     }
 
     public function flush(): void
     {
         foreach ($this->forAdd as $subscription) {
-            if ($this->forRemove->contains($subscription)) {
+            if ($this->forRemove->offsetExists($subscription)) {
                 continue;
             }
 
@@ -106,11 +106,11 @@ final class SubscriptionManager
         }
 
         foreach ($this->forUpdate as $subscription) {
-            if ($this->forAdd->contains($subscription)) {
+            if ($this->forAdd->offsetExists($subscription)) {
                 continue;
             }
 
-            if ($this->forRemove->contains($subscription)) {
+            if ($this->forRemove->offsetExists($subscription)) {
                 continue;
             }
 
@@ -118,7 +118,7 @@ final class SubscriptionManager
         }
 
         foreach ($this->forRemove as $subscription) {
-            if ($this->forAdd->contains($subscription)) {
+            if ($this->forAdd->offsetExists($subscription)) {
                 continue;
             }
 

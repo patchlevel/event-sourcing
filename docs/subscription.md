@@ -234,8 +234,6 @@ use Patchlevel\EventSourcing\Subscription\Lookup;
 #[Projector('public_profile')]
 final class PublicProfileProjection
 {
-    use SubscriberUtil;
-
     // ... constructor
 
     #[Subscribe(Published::class)]
@@ -310,12 +308,11 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 
-#[Projector('profile_1')]
+#[Projector(self::TABLE)]
 final class ProfileProjector
 {
-    use SubscriberUtil;
+    private const TABLE = 'profile_v1';
 
     private Connection $connection;
 
@@ -323,19 +320,14 @@ final class ProfileProjector
     public function create(): void
     {
         $this->connection->executeStatement(
-            "CREATE TABLE IF NOT EXISTS {$this->table()} (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);",
+            sprintf('CREATE TABLE IF NOT EXISTS %s (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);', self::TABLE),
         );
     }
 
     #[Teardown]
     public function drop(): void
     {
-        $this->connection->executeStatement("DROP TABLE IF EXISTS {$this->table()};");
-    }
-
-    private function table(): string
-    {
-        return 'projection_' . $this->subscriberId();
+        $this->connection->executeStatement(sprintf('DROP TABLE IF EXISTS %s;', self::TABLE));
     }
 }
 ```
@@ -345,12 +337,11 @@ MySQL and MariaDB don't support transactions for DDL statements.
 So you must use a different database connection in your projectors, 
 otherwise you will get an error when the subscription tries to create the table.
 :::
-    
+
 :::warning
 If you change the subscriber id, you must also change the table/collection name.
 The subscription engine will create a new subscription with the new subscriber id.
 That means the setup method will be called again and the table/collection will conflict with the old existing projection.
-You can use the `SubscriberUtil` to build the table/collection name.
 :::
     
 :::note

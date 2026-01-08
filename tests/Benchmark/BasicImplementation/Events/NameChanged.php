@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
 #[Event('profile.name_changed')]
-final class NameChanged
+final readonly class NameChanged
 {
     public function __construct(
         public ProfileId $profileId,
