@@ -10,14 +10,13 @@ use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 
-#[Projector('profile')]
+#[Projector(self::SUBSCRIBER_ID)]
 final class BatchProfileProjector implements BatchableSubscriber
 {
-    use SubscriberUtil;
+    private const SUBSCRIBER_ID = 'profile';
 
     /** @var array<string, string> */
     private array $nameChanged = [];
@@ -59,7 +58,7 @@ final class BatchProfileProjector implements BatchableSubscriber
 
     public function table(): string
     {
-        return 'projection_' . $this->subscriberId();
+        return 'projection_' . self::SUBSCRIBER_ID;
     }
 
     public function beginBatch(): void
