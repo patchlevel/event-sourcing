@@ -11,6 +11,7 @@ final class Subscription
 {
     public const DEFAULT_GROUP = 'default';
 
+    /** @param list<object>|null $cleanupTasks */
     public function __construct(
         private readonly string $id,
         private readonly string $group = self::DEFAULT_GROUP,
@@ -20,6 +21,7 @@ final class Subscription
         private SubscriptionError|null $error = null,
         private int $retryAttempt = 0,
         private DateTimeImmutable|null $lastSavedAt = null,
+        private array|null $cleanupTasks = null,
     ) {
     }
 
@@ -189,5 +191,16 @@ final class Subscription
     public function updateLastSavedAt(DateTimeImmutable $lastSavedAt): void
     {
         $this->lastSavedAt = $lastSavedAt;
+    }
+
+    /** @return list<object>|null */
+    public function cleanupTasks(): array|null
+    {
+        return $this->cleanupTasks;
+    }
+
+    public function hasCleanupTasks(): bool
+    {
+        return $this->cleanupTasks !== null;
     }
 }

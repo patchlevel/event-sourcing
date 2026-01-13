@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Cleaner;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
@@ -46,6 +47,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         private readonly SubscriberAccessorRepository $subscriberRepository,
         RetryStrategy|RetryStrategyRepository|null $retryStrategyRepository = null,
         private readonly LoggerInterface|null $logger = null,
+        private readonly Cleaner|null $cleaner = null,
     ) {
         if ($messageStore instanceof MessageLoader) {
             $this->messageLoader = $messageStore;
@@ -528,12 +530,22 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $errors = [];
 
                 foreach ($subscriptions as $subscription) {
+                    if ($subscription->hasCleanupTasks()) {
+                        $error = $this->cleanup($subscription);
+
+                        if ($error) {
+                            $errors[] = $error;
+                        }
+
+                        continue;
+                    }
+
                     $subscriber = $this->subscriber($subscription->id());
 
                     if (!$subscriber) {
                         $this->logger?->warning(
                             sprintf(
-                                'Subscription Engine: Subscriber for "%s" to teardown not found, skipped.',
+                                'Subscription Engine: Subscriber for "%s" to teardown or cleanup not found, skipped.',
                                 $subscription->id(),
                             ),
                         );
@@ -626,6 +638,16 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                                 $subscription->id(),
                             ),
                         );
+
+                        continue;
+                    }
+
+                    if ($subscription->hasCleanupTasks()) {
+                        $error = $this->cleanup($subscription);
+
+                        if ($error) {
+                            $errors[] = $error;
+                        }
 
                         continue;
                     }
@@ -977,6 +999,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $subscriber->id(),
                 $subscriber->group(),
                 $subscriber->runMode(),
+                cleanupTasks: $this->cleanupTasks($subscriber),
             );
 
             if ($subscriber->setupMethod() === null && $subscriber->runMode() === RunMode::FromNow) {
@@ -1001,8 +1024,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->subscriptionManager->flush();
     }
 
-    private function handleError(Subscription $subscription, Throwable $throwable, Message|null $message = null, int|null $index = null): void
-    {
+    private function handleError(
+        Subscription $subscription,
+        Throwable $throwable,
+        Message|null $message = null,
+        int|null $index = null,
+    ): void {
         if ($this->needRollback($subscription)) {
             $this->rollback($subscription);
         }
@@ -1019,8 +1046,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->handleFailed($subscription, $throwable, $message, $index);
     }
 
-    private function handleFailed(Subscription $subscription, Throwable $throwable, Message|null $message = null, int|null $index = null): void
-    {
+    private function handleFailed(
+        Subscription $subscription,
+        Throwable $throwable,
+        Message|null $message = null,
+        int|null $index = null,
+    ): void {
         if (!$message || $index === null) {
             $subscription->failed($throwable);
             $this->subscriptionManager->update($subscription);
@@ -1209,5 +1240,61 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         }
 
         return $this->retryStrategyRepository->get($retryStrategy);
+    }
+
+    private function cleanup(Subscription $subscription): Error|null
+    {
+        if (!$this->cleaner) {
+            throw new UnexpectedError('Cleaner is not configured.');
+        }
+
+        try {
+            $this->cleaner->cleanup($subscription);
+            $this->logger?->debug(
+                sprintf(
+                    'Subscription Engine: For Subscription "%s" the cleanup tasks have been executed.',
+                    $subscription->id(),
+                ),
+            );
+        } catch (Throwable $e) {
+            $this->logger?->error(
+                sprintf(
+                    'Subscription Engine: Subscription "%s" has an error in the cleanup tasks: %s',
+                    $subscription->id(),
+                    $e->getMessage(),
+                ),
+            );
+
+            return new Error(
+                $subscription->id(),
+                $e->getMessage(),
+                $e,
+            );
+        }
+
+        $this->subscriptionManager->remove($subscription);
+
+        $this->logger?->info(sprintf(
+            'Subscription Engine: Subscription "%s" removed.',
+            $subscription->id(),
+        ));
+
+        return null;
+    }
+
+    /** @return list<object>|null */
+    private function cleanupTasks(SubscriberAccessor $subscriber): array|null
+    {
+        if (!$subscriber instanceof MetadataSubscriberAccessor) {
+            return null;
+        }
+
+        $method = $subscriber->cleanupMethod();
+
+        if (!$method) {
+            return null;
+        }
+
+        return array_values([...$method()]);
     }
 }
