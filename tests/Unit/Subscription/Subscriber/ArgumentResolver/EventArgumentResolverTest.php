@@ -22,14 +22,14 @@ final class EventArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileCreated::class),
+                new ArgumentMetadata('foo', ProfileCreated::class, false),
                 ProfileCreated::class,
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileVisited::class),
+                new ArgumentMetadata('foo', ProfileVisited::class, false),
                 ProfileCreated::class,
             ),
         );
@@ -45,7 +45,7 @@ final class EventArgumentResolverTest extends TestCase
         self::assertSame(
             $event,
             $resolver->resolve(
-                new ArgumentMetadata('foo', ProfileVisited::class),
+                new ArgumentMetadata('foo', ProfileVisited::class, false),
                 $message,
             ),
         );
