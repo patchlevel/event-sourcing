@@ -26,21 +26,21 @@ final class AggregateIdArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('aggregateId', Uuid::class),
+                new ArgumentMetadata('aggregateId', Uuid::class, false),
                 ProfileCreated::class,
             ),
         );
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('aggregateRootId', ProfileId::class),
+                new ArgumentMetadata('aggregateRootId', ProfileId::class, false),
                 ProfileCreated::class,
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileCreated::class),
+                new ArgumentMetadata('foo', ProfileCreated::class, false),
                 ProfileCreated::class,
             ),
         );
@@ -58,7 +58,7 @@ final class AggregateIdArgumentResolverTest extends TestCase
         self::assertEquals(
             new CustomId('bar'),
             $resolver->resolve(
-                new ArgumentMetadata('foo', CustomId::class),
+                new ArgumentMetadata('foo', CustomId::class, false),
                 $message,
             ),
         );

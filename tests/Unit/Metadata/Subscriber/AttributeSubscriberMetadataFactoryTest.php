@@ -191,13 +191,38 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
             [
                 ProfileVisited::class => [
                     new SubscribeMethodMetadata('profileVisited', [
-                        new ArgumentMetadata('message', Message::class),
+                        new ArgumentMetadata('message', Message::class, false),
                     ]),
                 ],
                 ProfileCreated::class => [
                     new SubscribeMethodMetadata('profileCreated', [
-                        new ArgumentMetadata('profileCreated', ProfileCreated::class),
-                        new ArgumentMetadata('aggregateId', 'string'),
+                        new ArgumentMetadata('profileCreated', ProfileCreated::class, false),
+                        new ArgumentMetadata('aggregateId', 'string', false),
+                    ]),
+                ],
+            ],
+            $metadata->subscribeMethods,
+        );
+    }
+
+    public function testSubscribeNullableAttribute(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function profileVisited(ProfileVisited|null $message): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertEquals(
+            [
+                ProfileVisited::class => [
+                    new SubscribeMethodMetadata('profileVisited', [
+                        new ArgumentMetadata('message', ProfileVisited::class, true),
                     ]),
                 ],
             ],

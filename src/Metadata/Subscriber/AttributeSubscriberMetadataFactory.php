@@ -151,6 +151,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $arguments[] = new ArgumentMetadata(
                 $parameter->getName(),
                 $type->getName(),
+                $parameter->allowsNull(),
             );
         }
 

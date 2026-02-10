@@ -23,14 +23,14 @@ final class RecordedOnArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', DateTimeImmutable::class),
+                new ArgumentMetadata('foo', DateTimeImmutable::class, false),
                 'qux',
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', 'bar'),
+                new ArgumentMetadata('foo', 'bar', false),
                 'qux',
             ),
         );
@@ -53,7 +53,7 @@ final class RecordedOnArgumentResolverTest extends TestCase
         self::assertSame(
             $date,
             $resolver->resolve(
-                new ArgumentMetadata('foo', DateTimeImmutable::class),
+                new ArgumentMetadata('foo', DateTimeImmutable::class, false),
                 $message,
             ),
         );
@@ -69,7 +69,7 @@ final class RecordedOnArgumentResolverTest extends TestCase
         self::assertSame(
             $date,
             $resolver->resolve(
-                new ArgumentMetadata('foo', DateTimeImmutable::class),
+                new ArgumentMetadata('foo', DateTimeImmutable::class, false),
                 $message,
             ),
         );
