@@ -293,6 +293,12 @@ final class DoStuffSubscriber
     }
 }
 ```
+
+##### Custom Resolvers
+
+You can provide your own argument resolvers by implementing the `ArgumentResolver` interface.
+This can be useful for providing direct access to custom headers or other data.
+
 ### Setup and Teardown
 
 Subscribers can have one `setup` and `teardown` method that is executed when the subscription is created or deleted.
