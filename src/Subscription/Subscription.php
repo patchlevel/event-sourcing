@@ -14,8 +14,8 @@ final class Subscription
     /** @param list<object>|null $cleanupTasks */
     public function __construct(
         private readonly string $id,
-        private readonly string $group = self::DEFAULT_GROUP,
-        private readonly RunMode $runMode = RunMode::FromBeginning,
+        private string $group = self::DEFAULT_GROUP,
+        private RunMode $runMode = RunMode::FromBeginning,
         private Status $status = Status::New,
         private int $position = 0,
         private SubscriptionError|null $error = null,
@@ -35,9 +35,19 @@ final class Subscription
         return $this->group;
     }
 
+    public function changeGroup(string $group): void
+    {
+        $this->group = $group;
+    }
+
     public function runMode(): RunMode
     {
         return $this->runMode;
+    }
+
+    public function changeRunMode(RunMode $runMode): void
+    {
+        $this->runMode = $runMode;
     }
 
     public function status(): Status

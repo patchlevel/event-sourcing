@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
+use LogicException;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
 use function array_merge;
 
 use const PHP_INT_MAX;
 
-final class CatchUpSubscriptionEngine implements SubscriptionEngine
+final class CatchUpSubscriptionEngine implements SubscriptionEngine, SubscriptionRefreshable
 {
     public function __construct(
         private readonly SubscriptionEngine $parent,
@@ -84,6 +85,19 @@ final class CatchUpSubscriptionEngine implements SubscriptionEngine
     public function subscriptions(SubscriptionEngineCriteria|null $criteria = null): array
     {
         return $this->parent->subscriptions($criteria);
+    }
+
+    public function refreshSubscriptions(SubscriptionEngineCriteria|null $criteria = null): Result
+    {
+        if (!$this->parent instanceof SubscriptionRefreshable) {
+            throw new LogicException(sprintf(
+                '"%s" does not implement "%s" and can therefore not refresh subscriptions.',
+                $this->parent::class,
+                SubscriptionRefreshable::class,
+            ));
+        }
+
+        return $this->parent->refreshSubscriptions($criteria);
     }
 
     private function mergeResult(ProcessedResult ...$results): ProcessedResult

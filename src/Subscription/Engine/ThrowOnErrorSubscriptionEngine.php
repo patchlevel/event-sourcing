@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
+use LogicException;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
-final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine
+final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine, SubscriptionRefreshable
 {
     public function __construct(
         private readonly SubscriptionEngine $parent,
@@ -52,6 +53,19 @@ final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine
     public function subscriptions(SubscriptionEngineCriteria|null $criteria = null): array
     {
         return $this->parent->subscriptions($criteria);
+    }
+
+    public function refreshSubscriptions(SubscriptionEngineCriteria|null $criteria = null): Result
+    {
+        if (!$this->parent instanceof SubscriptionRefreshable) {
+            throw new LogicException(sprintf(
+                '"%s" does not implement "%s" and can therefore not refresh subscriptions.',
+                $this->parent::class,
+                SubscriptionRefreshable::class,
+            ));
+        }
+
+        return $this->throwOnError($this->parent->refreshSubscriptions($criteria));
     }
 
     /**
