@@ -1185,6 +1185,12 @@ final class SubscriptionTest extends TestCase
     {
         // Test Setup
 
+        $cleaner = new DefaultCleaner([
+            new DbalCleanupHandler(
+                $this->projectionConnection,
+            ),
+        ]);
+
         $store = new DoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
@@ -1218,6 +1224,7 @@ final class SubscriptionTest extends TestCase
             $store,
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileProjectionWithCleanup($this->projectionConnection)]),
+            cleaner: $cleaner,
         );
 
         // Deploy first version
@@ -1267,11 +1274,7 @@ final class SubscriptionTest extends TestCase
             $store,
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
-            cleaner: new DefaultCleaner([
-                new DbalCleanupHandler(
-                    $this->projectionConnection,
-                ),
-            ]),
+            cleaner: $cleaner,
         );
 
         $secondEngine->setup();

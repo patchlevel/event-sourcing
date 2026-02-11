@@ -11,7 +11,7 @@ final class DefaultCleaner implements Cleaner
 {
     /** @param iterable<CleanupHandler> $handlers */
     public function __construct(
-        private readonly iterable $handlers,
+        private readonly iterable $handlers = [],
     ) {
     }
 

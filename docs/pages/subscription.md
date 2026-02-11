@@ -299,7 +299,7 @@ final class DoStuffSubscriber
 You can provide your own argument resolvers by implementing the `ArgumentResolver` interface.
 This can be useful for providing direct access to custom headers or other data.
 
-### Setup and Teardown
+### Setup
 
 Subscribers can have one `setup` method that is executed when the subscription is created.
 For this there is the attributes `Setup`. The method name itself doesn't matter.
@@ -377,7 +377,8 @@ final class ProfileProjector
 
 !!! warning
 
-    A teardown can only be performed for a subscription if the subscriber with that subscriber ID still exists.
+    A teardown can only be performed for a subscription if the code for the subscriber with that subscriber ID still exists.
+    A another option is to use the `Cleanup` option.
     
 !!! note
 
@@ -385,8 +386,11 @@ final class ProfileProjector
 
 ### Cleanup
 
-The cleanup option allows you to delete the subscription from the database after the subscription has finished.
-This is especially useful for projectors,
+Alternativ, you can use a `cleanup` method for cleanup tasks.
+Unlike Teardown, this method is called when the subscription is created.
+The tasks are then saved in the Subscription Store.
+When removing the subscription, the subscriber is not necessary anymore, 
+as the cleanup can be performed using the tasks in the store and an associated external handler.
 
 ```php
 use Doctrine\DBAL\Connection;
@@ -416,9 +420,18 @@ final class ProfileProjector
 
     You can not mix the `cleanup` method with the `teardown` method.
 
+#### Dbal Cleanup Tasks
+
+Default, we provide the following cleanup tasks for `doctrine/dbal`:
+
+| Task            | Description                  |
+|-----------------|------------------------------|
+| `DropIndexTask` | Drops an index from a table. |
+| `DropTableTask` | Drops a table.               |
+
 !!! tip
 
-    You can create your own cleanup tasks and add them to the array.
+    You can create your own cleanup tasks and handler.
     For more information, see [Cleanup Handler](#cleanup-handler).
 
 ### On Failed
@@ -998,11 +1011,9 @@ $retryStrategyRepository = new RetryStrategyRepository([
 
 ### Cleanup Handler
 
-You can also create your own cleanup tasks.
-The subscription engine will call the method `__invoke` on the task object.
-For example, you can create a task that drops a collection from a MongoDB database.
-
-First, create a task class, that holds the collection name.
+You can also create your own cleanup tasks with associated handlers.
+First, create a task class that has all necessary information for the task.
+In our example, we create a task that deletes a collection from MongoDB.
 
 ```php
 final class DropCollection {
@@ -1016,7 +1027,8 @@ final class DropCollection {
 
     The task class must be serializable. It will be stored in the subscription store.
 
-Then create a handler that supports this task.
+The next step is to create a handler for the task. 
+The handler must implement the `CleanupHandler` interface.
 
 ```php
 use MongoDb\Database;
@@ -1041,7 +1053,8 @@ final class MongodbCleanupHandler implements CleanupHandler {
 }
 ```
 
-Last step, you need to add the handler to the `DefaultCleaner`, that is used by the subscription engine.
+Lastly, we have to add the new handler to `DefaultCleaner`,
+which is responsible for cleaning up subscriptions.
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
@@ -1051,6 +1064,10 @@ $cleaner = new DefaultCleaner([
     new MongodbCleanupHandler($mongodbDatabase),
 ]);
 ```
+
+!!! warning
+
+    You need to pass the Cleaner to the Subscription Engine.
 
 ### Subscriber Accessor
 
@@ -1105,7 +1122,7 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
     $logger, // optional
     new DefaultCleaner([
         new DbalCleanupHandler($projectionConnection)
-    ]), // required, if you want to use the cleanup feature
+    ]), // optional but required if you want to use the cleanup feature
 );
 ```
 ### Catch up Subscription Engine

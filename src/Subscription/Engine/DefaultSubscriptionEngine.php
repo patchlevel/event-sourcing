@@ -25,6 +25,7 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+use function array_values;
 use function count;
 use function sprintf;
 
@@ -1245,7 +1246,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     private function cleanup(Subscription $subscription): Error|null
     {
         if (!$this->cleaner) {
-            throw new UnexpectedError('Cleaner is not configured.');
+            throw new CleanerNotConfigured();
         }
 
         try {
@@ -1293,6 +1294,10 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         if (!$method) {
             return null;
+        }
+
+        if (!$this->cleaner) {
+            throw new CleanerNotConfigured();
         }
 
         return array_values([...$method()]);
