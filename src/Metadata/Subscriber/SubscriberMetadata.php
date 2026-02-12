@@ -19,6 +19,7 @@ final class SubscriberMetadata
         public readonly string|null $teardownMethod = null,
         public readonly string|null $failedMethod = null,
         public readonly string|null $retryStrategy = null,
+        public readonly string|null $cleanupMethod = null,
     ) {
     }
 }

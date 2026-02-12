@@ -157,16 +157,16 @@ parameters:
 			path: src/Subscription/Store/DoctrineSubscriptionStore.php
 
 		-
+			message: '#^Parameter \#9 \$cleanupTasks of class Patchlevel\\EventSourcing\\Subscription\\Subscription constructor expects list\<object\>\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Subscription/Store/DoctrineSubscriptionStore.php
+
+		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 3
 			path: src/Subscription/ThrowableToErrorContextTransformer.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileWithCommands\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Benchmark/BasicImplementation/ProfileWithCommands.php
 
 		-
 			message: '#^Cannot access offset ''name'' on array\<string, mixed\>\|false\.$#'

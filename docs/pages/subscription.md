@@ -293,23 +293,21 @@ final class DoStuffSubscriber
     }
 }
 ```
-
 ##### Custom Resolvers
 
 You can provide your own argument resolvers by implementing the `ArgumentResolver` interface.
 This can be useful for providing direct access to custom headers or other data.
 
-### Setup and Teardown
+### Setup
 
-Subscribers can have one `setup` and `teardown` method that is executed when the subscription is created or deleted.
-For this there are the attributes `Setup` and `Teardown`. The method name itself doesn't matter.
+Subscribers can have one `setup` method that is executed when the subscription is created.
+For this there is the attributes `Setup`. The method name itself doesn't matter.
 This is especially helpful for projectors, as they can create the necessary structures for the projection here.
 
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
-use Patchlevel\EventSourcing\Attribute\Teardown;
 
 #[Projector(self::TABLE)]
 final class ProfileProjector
@@ -324,12 +322,6 @@ final class ProfileProjector
         $this->connection->executeStatement(
             sprintf('CREATE TABLE IF NOT EXISTS %s (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);', self::TABLE),
         );
-    }
-
-    #[Teardown]
-    public function drop(): void
-    {
-        $this->connection->executeStatement(sprintf('DROP TABLE IF EXISTS %s;', self::TABLE));
     }
 }
 ```
@@ -349,6 +341,91 @@ final class ProfileProjector
 
     Most databases have a limit on the length of the table/collection name.
     The limit is usually 64 characters.
+    
+### Teardown
+
+Subscribers can have one `teardown` method that is executed when the subscription is removed.
+For this there is the attributes `Teardown`.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Teardown;
+
+#[Projector(self::TABLE)]
+final class ProfileProjector
+{
+    private const TABLE = 'profile_v1';
+
+    private Connection $connection;
+
+    #[Teardown]
+    public function drop(): void
+    {
+        $this->connection->executeStatement(sprintf('DROP TABLE IF EXISTS %s;', self::TABLE));
+    }
+}
+```
+!!! danger
+
+    MySQL and MariaDB don't support transactions for DDL statements.
+    So you must use a different database connection in your projectors, 
+    otherwise you will get an error when the subscription tries to create the table.
+    
+!!! warning
+
+    A teardown can only be performed for a subscription if the code for the subscriber with that subscriber ID still exists.
+    A another option is to use the `Cleanup` option.
+    
+!!! note
+
+    You can not mix the `cleanup` method with the `teardown` method.
+    
+### Cleanup
+
+Alternativ, you can use a `cleanup` method for cleanup tasks.
+Unlike Teardown, this method is called when the subscription is created.
+The tasks are then saved in the Subscription Store.
+When removing the subscription, the subscriber is not necessary anymore,
+as the cleanup can be performed using the tasks in the store and an associated external handler.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Cleanup;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropIndexTask;
+
+#[Projector(self::TABLE)]
+final class ProfileProjector
+{
+    private const TABLE = 'profile_v1';
+
+    private Connection $connection;
+
+    #[Cleanup]
+    public function drop(): array
+    {
+        return [new DropIndexTask(self::TABLE)];
+    }
+}
+```
+!!! note
+
+    You can not mix the `cleanup` method with the `teardown` method.
+    
+#### Dbal Cleanup Tasks
+
+Default, we provide the following cleanup tasks for `doctrine/dbal`:
+
+| Task            | Description                  |
+|-----------------|------------------------------|
+| `DropIndexTask` | Drops an index from a table. |
+| `DropTableTask` | Drops a table.               |
+
+!!! tip
+
+    You can create your own cleanup tasks and handler.
+    For more information, see [Cleanup Handler](#cleanup-handler).
     
 ### On Failed
 
@@ -925,6 +1002,70 @@ $retryStrategyRepository = new RetryStrategyRepository([
 
     You can change the default retry strategy by define the name in the constructor as second parameter.
     
+### Cleanup Handler
+
+You can also create your own cleanup tasks with associated handlers.
+First, create a task class that has all necessary information for the task.
+In our example, we create a task that deletes a collection from MongoDB.
+
+```php
+final class DropCollection
+{
+    public function __construct(
+        public readonly string $collectionName,
+    ) {
+    }
+}
+```
+!!! warning
+
+    The task class must be serializable. It will be stored in the subscription store.
+    
+The next step is to create a handler for the task.
+The handler must implement the `CleanupHandler` interface.
+
+```php
+use MongoDb\Database;
+use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskHandler;
+
+final class MongodbCleanupTaskHandler implements CleanupTaskHandler
+{
+    public function __construct(
+        private readonly Database $database,
+    ) {
+    }
+
+    public function __invoke(object $task): void
+    {
+        if (!($task instanceof DropCollection)) {
+            return;
+        }
+
+        $this->database->dropCollection($task->collectionName);
+    }
+
+    public function supports(object $task): bool
+    {
+        return $task instanceof DropCollection;
+    }
+}
+```
+Lastly, we have to add the new handler to `DefaultCleaner`,
+which is responsible for cleaning up subscriptions.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
+
+$cleaner = new DefaultCleaner([
+    new DbalCleanupTaskHandler($projectionConnection),
+    new MongodbCleanupTaskHandler($mongodbDatabase),
+]);
+```
+!!! warning
+
+    You need to pass the Cleaner to the Subscription Engine.
+    
 ### Subscriber Accessor
 
 The subscriber accessor repository is responsible for providing the subscribers to the subscription engine.
@@ -949,8 +1090,12 @@ $subscriberAccessorRepository = new MetadataSubscriberAccessorRepository([
 Now we can create the subscription engine and plug together the necessary services.
 The message loader is needed to load the messages, the Subscription Store to store the subscription state
 and we need the subscriber accessor repository. Optionally, we can also pass a retry strategy.
+Finally, if we want to use the cleanup feature, we need to pass the cleanup handlers.
 
 ```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
@@ -962,12 +1107,16 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorR
  * @var DoctrineSubscriptionStore $subscriptionStore
  * @var MetadataSubscriberAccessorRepository $subscriberAccessorRepository
  * @var RetryStrategyRepository $retryStrategyRepository
+ * @var LoggerInterface $logger
+ * @var Connection $projectionConnection
  */
 $subscriptionEngine = new DefaultSubscriptionEngine(
     $messageLoader,
     $subscriptionStore,
     $subscriberAccessorRepository,
     $retryStrategyRepository, // optional, if not set the default retry strategy is used
+    $logger, // optional
+    new DefaultCleaner([new DbalCleanupTaskHandler($projectionConnection)]), // optional but required if you want to use the cleanup feature
 );
 ```
 ### Catch up Subscription Engine

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
+use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Setup;
@@ -45,6 +46,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $subscribeMethods = [];
         $setupMethod = null;
         $teardownMethod = null;
+        $cleanupMethod = null;
         $failedMethod = null;
 
         foreach ($methods as $method) {
@@ -90,6 +92,26 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 $setupMethod = $method->getName();
             }
 
+            if ($method->getAttributes(Cleanup::class)) {
+                if ($cleanupMethod !== null) {
+                    throw new DuplicateCleanupMethod(
+                        $subscriber,
+                        $cleanupMethod,
+                        $method->getName(),
+                    );
+                }
+
+                if ($teardownMethod !== null) {
+                    throw new MixedTeardownAndCleanupMethods(
+                        $subscriber,
+                        $teardownMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $cleanupMethod = $method->getName();
+            }
+
             if (!$method->getAttributes(Teardown::class)) {
                 continue;
             }
@@ -99,6 +121,14 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                     $subscriber,
                     $teardownMethod,
                     $method->getName(),
+                );
+            }
+
+            if ($cleanupMethod !== null) {
+                throw new MixedTeardownAndCleanupMethods(
+                    $subscriber,
+                    $method->getName(),
+                    $cleanupMethod,
                 );
             }
 
@@ -118,6 +148,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $teardownMethod,
             $failedMethod,
             $this->retryStrategy($reflector),
+            $cleanupMethod,
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;

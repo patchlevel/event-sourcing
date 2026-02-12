@@ -86,6 +86,18 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
         return $this->subscriber->$method(...);
     }
 
+    /** @return Closure():iterable<object>|null */
+    public function cleanupMethod(): Closure|null
+    {
+        $method = $this->metadata->cleanupMethod;
+
+        if ($method === null) {
+            return null;
+        }
+
+        return $this->subscriber->$method(...);
+    }
+
     /** @return Closure(Message, Throwable):void|null */
     public function failedMethod(): Closure|null
     {
