@@ -9,7 +9,7 @@ use Throwable;
 
 final class DefaultCleaner implements Cleaner
 {
-    /** @param iterable<CleanupHandler> $handlers */
+    /** @param iterable<CleanupTaskHandler> $handlers */
     public function __construct(
         private readonly iterable $handlers = [],
     ) {

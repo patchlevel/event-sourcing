@@ -1026,9 +1026,9 @@ The handler must implement the `CleanupHandler` interface.
 
 ```php
 use MongoDb\Database;
-use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskHandler;
 
-final class MongodbCleanupHandler implements CleanupHandler
+final class MongodbCleanupTaskHandler implements CleanupTaskHandler
 {
     public function __construct(
         private readonly Database $database,
@@ -1054,11 +1054,12 @@ Lastly, we have to add the new handler to `DefaultCleaner`,
 which is responsible for cleaning up subscriptions.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 
 $cleaner = new DefaultCleaner([
-    new DbalCleanupHandler($projectionConnection),
-    new MongodbCleanupHandler($mongodbDatabase),
+    new DbalCleanupTaskHandler($projectionConnection),
+    new MongodbCleanupTaskHandler($mongodbDatabase),
 ]);
 ```
 !!! warning
@@ -1093,7 +1094,7 @@ Finally, if we want to use the cleanup feature, we need to pass the cleanup hand
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
@@ -1115,7 +1116,7 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
     $subscriberAccessorRepository,
     $retryStrategyRepository, // optional, if not set the default retry strategy is used
     $logger, // optional
-    new DefaultCleaner([new DbalCleanupHandler($projectionConnection)]), // optional but required if you want to use the cleanup feature
+    new DefaultCleaner([new DbalCleanupTaskHandler($projectionConnection)]), // optional but required if you want to use the cleanup feature
 );
 ```
 ### Catch up Subscription Engine

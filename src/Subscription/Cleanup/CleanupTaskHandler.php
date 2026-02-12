@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Cleanup;
 
-interface CleanupHandler
+interface CleanupTaskHandler
 {
     public function __invoke(object $task): void;
 

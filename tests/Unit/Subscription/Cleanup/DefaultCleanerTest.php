@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Cleanup;
 
-use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 use Patchlevel\EventSourcing\Subscription\Cleanup\NoHandlerForCleanupTask;
@@ -18,7 +18,7 @@ final class DefaultCleanerTest extends TestCase
 {
     public function testClean(): void
     {
-        $handler = new class implements CleanupHandler {
+        $handler = new class implements CleanupTaskHandler {
             public bool $called = false;
 
             public function __invoke(object $task): void
@@ -42,7 +42,7 @@ final class DefaultCleanerTest extends TestCase
 
     public function testCleanupFailed(): void
     {
-        $handler = new class implements CleanupHandler {
+        $handler = new class implements CleanupTaskHandler {
             public function __invoke(object $task): void
             {
                 throw new RuntimeException('Failed to cleanup');
@@ -64,7 +64,7 @@ final class DefaultCleanerTest extends TestCase
 
     public function testNoTasks(): void
     {
-        $handler = new class implements CleanupHandler {
+        $handler = new class implements CleanupTaskHandler {
             public bool $called = false;
 
             public function __invoke(object $task): void

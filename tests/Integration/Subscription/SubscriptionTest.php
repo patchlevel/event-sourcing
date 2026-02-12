@@ -21,7 +21,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
-use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
@@ -1186,7 +1186,7 @@ final class SubscriptionTest extends TestCase
         // Test Setup
 
         $cleaner = new DefaultCleaner([
-            new DbalCleanupHandler(
+            new DbalCleanupTaskHandler(
                 $this->projectionConnection,
             ),
         ]);
