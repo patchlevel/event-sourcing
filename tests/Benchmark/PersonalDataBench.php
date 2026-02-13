@@ -16,7 +16,10 @@ use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 use Patchlevel\EventSourcing\Tests\DbalManager;
-use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer;
+use Patchlevel\Hydrator\Extension\Cryptography\CryptographyExtension;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 use PhpBench\Attributes as Bench;
 
 #[Bench\BeforeMethods('setUp')]
@@ -34,15 +37,20 @@ final class PersonalDataBench
 
         $cipherKeyStore = new DoctrineCipherKeyStore($connection);
 
-        $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl(
+        $cryptographer = BaseCryptographer::createWithOpenssl(
             $cipherKeyStore,
         );
+
+        $hydrator = (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->useExtension(new CryptographyExtension($cryptographer))
+            ->build();
 
         $this->store = new StreamDoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths(
                 [__DIR__ . '/BasicImplementation/Events'],
-                cryptographer: $cryptographer,
+                $hydrator,
             ),
         );
 

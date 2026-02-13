@@ -153,7 +153,7 @@ final class BasicIntegrationTest extends TestCase
                 new AggregateRootRegistry(['profile' => Profile::class]),
                 $store,
                 null,
-                new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+                DefaultSnapshotStore::createDefault(['default' => new InMemorySnapshotAdapter()]),
                 new FooMessageDecorator(),
             ),
             $engine,
@@ -207,7 +207,7 @@ final class BasicIntegrationTest extends TestCase
             new AggregateRootRegistry(['profile' => Profile::class]),
             $store,
             null,
-            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            DefaultSnapshotStore::createDefault(['default' => new InMemorySnapshotAdapter()]),
             new FooMessageDecorator(),
         );
 
@@ -266,7 +266,7 @@ final class BasicIntegrationTest extends TestCase
             new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]),
             $store,
             null,
-            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            DefaultSnapshotStore::createDefault(['default' => new InMemorySnapshotAdapter()]),
             new FooMessageDecorator(),
         );
 
@@ -344,7 +344,7 @@ final class BasicIntegrationTest extends TestCase
             new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]),
             $store,
             null,
-            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            DefaultSnapshotStore::createDefault(['default' => new InMemorySnapshotAdapter()]),
             new FooMessageDecorator(),
         );
 
@@ -409,7 +409,7 @@ final class BasicIntegrationTest extends TestCase
             $aggregateRootRegistry,
             $store,
             null,
-            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            DefaultSnapshotStore::createDefault(['default' => new InMemorySnapshotAdapter()]),
             new FooMessageDecorator(),
         );
 

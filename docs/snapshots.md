@@ -261,4 +261,4 @@ You still have to bring the aggregate up to date by loading the missing events f
 * [How to define aggregates](aggregate.md)
 * [How to store and load aggregates](repository.md)
 * [How to split streams](split-stream.md)
-* [How to work with personal data](personal-data.md)
+* [How to work with personal data](sensitive-data.md)

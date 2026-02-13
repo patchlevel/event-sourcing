@@ -41,7 +41,7 @@ final class SnapshotsBench
 
         $this->adapter = new InMemorySnapshotAdapter();
 
-        $this->snapshotStore = new DefaultSnapshotStore(['default' => $this->adapter]);
+        $this->snapshotStore = DefaultSnapshotStore::createDefault(['default' => $this->adapter]);
 
         $this->repository = new DefaultRepository($this->store, Profile::metadata(), null, $this->snapshotStore);
 

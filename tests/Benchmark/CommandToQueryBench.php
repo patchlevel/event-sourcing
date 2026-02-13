@@ -59,7 +59,7 @@ final class CommandToQueryBench
             $aggregateRootRegistry,
             $store,
             null,
-            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            DefaultSnapshotStore::createDefault(['default' => new InMemorySnapshotAdapter()]),
         );
 
         $projectionConnection = DbalManager::createConnection();

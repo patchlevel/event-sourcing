@@ -9,37 +9,24 @@ use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
-use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
+use Patchlevel\Hydrator\CoreExtension;
 use Patchlevel\Hydrator\Hydrator;
-use Patchlevel\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 use Throwable;
 
 use function array_key_exists;
-use function is_array;
 use function sprintf;
 
 final class DefaultSnapshotStore implements SnapshotStore
 {
-    private AdapterRepository $adapterRepository;
+    private readonly Hydrator $hydrator;
 
-    private Hydrator $hydrator;
-
-    private AggregateRootMetadataFactory $metadataFactory;
-
-    /** @param array<string, SnapshotAdapter>|AdapterRepository $adapterRepository */
     public function __construct(
-        array|AdapterRepository $adapterRepository,
+        private readonly AdapterRepository $adapterRepository,
         Hydrator|null $hydrator = null,
-        AggregateRootMetadataFactory|null $metadataFactory = null,
+        private readonly AggregateRootMetadataFactory $metadataFactory = new AggregateRootMetadataAwareMetadataFactory(),
     ) {
-        if (is_array($adapterRepository)) {
-            $this->adapterRepository = new ArrayAdapterRepository($adapterRepository);
-        } else {
-            $this->adapterRepository = $adapterRepository;
-        }
-
-        $this->hydrator = $hydrator ?? new MetadataHydrator();
-        $this->metadataFactory = $metadataFactory ?? new AggregateRootMetadataAwareMetadataFactory();
+        $this->hydrator = $hydrator ?? self::defaultHydrator();
     }
 
     public function save(AggregateRoot $aggregateRoot): void
@@ -118,11 +105,18 @@ final class DefaultSnapshotStore implements SnapshotStore
     }
 
     /** @param array<string, SnapshotAdapter> $snapshotAdapters */
-    public static function createDefault(array $snapshotAdapters, PayloadCryptographer|null $cryptographer = null): self
+    public static function createDefault(array $snapshotAdapters, Hydrator|null $hydrator = null): self
     {
         return new self(
             new ArrayAdapterRepository($snapshotAdapters),
-            new MetadataHydrator(cryptographer: $cryptographer),
+            $hydrator,
         );
+    }
+
+    private static function defaultHydrator(): Hydrator
+    {
+        return (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->build();
     }
 }

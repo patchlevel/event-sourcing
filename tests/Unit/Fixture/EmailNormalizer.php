@@ -14,7 +14,8 @@ use function is_string;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class EmailNormalizer implements Normalizer
 {
-    public function normalize(mixed $value): string
+    /** @param array<string, mixed> $context */
+    public function normalize(mixed $value, array $context): string
     {
         if (!$value instanceof Email) {
             throw new InvalidArgumentException();
@@ -23,7 +24,8 @@ final class EmailNormalizer implements Normalizer
         return $value->toString();
     }
 
-    public function denormalize(mixed $value): Email|null
+    /** @param array<string, mixed> $context */
+    public function denormalize(mixed $value, array $context): Email|null
     {
         if ($value === null) {
             return null;

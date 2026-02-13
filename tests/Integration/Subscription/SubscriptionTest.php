@@ -61,6 +61,8 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNe
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjectionWithCleanup;
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -1377,7 +1379,10 @@ final class SubscriptionTest extends TestCase
     public function testLookup(): void
     {
         $eventRegistry = (new AttributeEventRegistryFactory())->create([__DIR__ . '/Events']);
-        $serializer = new DefaultEventSerializer($eventRegistry);
+        $serializer = new DefaultEventSerializer(
+            $eventRegistry,
+            (new StackHydratorBuilder())->useExtension(new CoreExtension())->build(),
+        );
 
         $store = new StreamDoctrineDbalStore(
             $this->connection,

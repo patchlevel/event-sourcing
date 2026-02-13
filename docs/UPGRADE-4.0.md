@@ -327,3 +327,277 @@ and replaced with the following headers:
 
 The `Patchlevel\EventSourcing\Schema\DoctrineSchemaSubscriber` has been removed.
 use the `Patchlevel\EventSourcing\Schema\DoctrineSchemaListener` instead.
+
+## Serializer
+
+The library now uses `patchlevel/hydrator` 2.0. The `Patchlevel\Hydrator\MetadataHydrator`
+has been removed. Build a hydrator with the `StackHydratorBuilder` and the `CoreExtension` instead.
+Upcasting and crypto-shredding are no longer wired through the serializer factories,
+you register them on the hydrator as middleware or extension.
+
+before:
+
+```php
+use Patchlevel\Hydrator\Hydrator;
+use Patchlevel\Hydrator\MetadataHydrator;
+
+$hydrator = new MetadataHydrator();
+```
+after:
+
+```php
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Hydrator;
+use Patchlevel\Hydrator\StackHydratorBuilder;
+
+$hydrator = (new StackHydratorBuilder())
+    ->useExtension(new CoreExtension())
+    ->build();
+```
+
+### DefaultEventSerializer
+
+`createFromPaths()` no longer accepts an `$upcaster` or a `$cryptographer` argument.
+The second argument is now an optional `Hydrator`, a default one is built when it is `null`.
+Register upcasting via the `UpcastExtension` and crypto-shredding via the `CryptographyExtension`
+on the hydrator you pass in.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
+
+/**
+ * @var Upcaster $upcaster
+ * @var PayloadCryptographer $cryptographer
+ */
+$serializer = DefaultEventSerializer::createFromPaths(
+    [__DIR__ . '/Events'],
+    $upcaster,
+    $cryptographer,
+);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer;
+use Patchlevel\Hydrator\Extension\Cryptography\CryptographyExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\Extension\Upcast\Upcaster;
+use Patchlevel\Hydrator\Extension\Upcast\UpcastExtension;
+use Patchlevel\Hydrator\StackHydratorBuilder;
+
+/**
+ * @var Upcaster $upcaster
+ * @var CipherKeyStore $cipherKeyStore
+ */
+$hydrator = (new StackHydratorBuilder())
+    ->useExtension(new CoreExtension())
+    ->useExtension(new CryptographyExtension(BaseCryptographer::createWithOpenssl($cipherKeyStore)))
+    ->useExtension(new UpcastExtension(beforeEncoding: [$upcaster]))
+    ->build();
+
+$serializer = DefaultEventSerializer::createFromPaths(
+    [__DIR__ . '/Events'],
+    $hydrator,
+);
+```
+
+### Upcasting
+
+The event-sourcing upcasting classes have been removed in favor of the hydrator upcast extension:
+
+* `Patchlevel\EventSourcing\Serializer\Upcast\Upcaster`
+* `Patchlevel\EventSourcing\Serializer\Upcast\Upcast`
+* `Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain`
+
+Implement `Patchlevel\Hydrator\Extension\Upcast\Upcaster` (or use `CallbackUpcaster`) instead and register
+your upcasters with the `UpcastExtension`. The upcaster no longer receives an `Upcast` object, it now
+works on the payload array directly and selects the event by the class name from the metadata.
+Renaming an event through an upcaster is no longer possible, use event aliases instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+
+final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
+{
+    public function __invoke(Upcast $upcast): Upcast
+    {
+        if ($upcast->eventName !== 'profile.created') {
+            return $upcast;
+        }
+
+        return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']));
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\Hydrator\Extension\Upcast\Upcaster;
+use Patchlevel\Hydrator\Metadata\ClassMetadata;
+
+final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
+{
+    /**
+     * @param ClassMetadata<object> $metadata
+     * @param array<string, mixed>  $data
+     * @param array<string, mixed>  $context
+     *
+     * @return array<string, mixed>
+     */
+    public function upcast(ClassMetadata $metadata, array $data, array $context): array
+    {
+        if ($metadata->className !== ProfileCreated::class) {
+            return $data;
+        }
+
+        $data['email'] = strtolower($data['email']);
+
+        return $data;
+    }
+}
+```
+
+### DefaultHeadersSerializer
+
+The `$hydrator` argument of the constructor, `createFromPaths()` and `createDefault()`
+is now an optional `Hydrator` defaulting to `null`. The `MetadataHydrator` default has been removed.
+
+## Snapshots
+
+### DefaultSnapshotStore
+
+The constructor no longer accepts an array of adapters as its first argument,
+it now requires an `AdapterRepository`. Pass adapters as an array through `createDefault()` instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+
+$snapshotStore = new DefaultSnapshotStore(['default' => $adapter]);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+
+$snapshotStore = DefaultSnapshotStore::createDefault(['default' => $adapter]);
+```
+
+The `$cryptographer` argument of `createDefault()` has been replaced by an optional `Hydrator`.
+Build the hydrator with the `CryptographyExtension` like for the event serializer.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
+
+/** @var PayloadCryptographer $cryptographer */
+$snapshotStore = DefaultSnapshotStore::createDefault(
+    ['default' => $adapter],
+    $cryptographer,
+);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\Hydrator\Hydrator;
+
+/** @var Hydrator $hydrator */
+$snapshotStore = DefaultSnapshotStore::createDefault(
+    ['default' => $adapter],
+    $hydrator,
+);
+```
+
+## Sensitive Data
+
+The crypto-shredding stack moved to the cryptography extension of `patchlevel/hydrator` 2.0.
+
+### Attributes
+
+The attributes moved namespace and `PersonalData` was renamed to `SensitiveData`:
+
+* `Patchlevel\Hydrator\Attribute\DataSubjectId` -> `Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId`
+* `Patchlevel\Hydrator\Attribute\PersonalData` -> `Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData`
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\Hydrator\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Attribute\PersonalData;
+
+final class EmailChanged
+{
+    public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
+        #[PersonalData(fallback: 'unknown')]
+        public readonly string $email,
+    ) {
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData;
+
+final class EmailChanged
+{
+    public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
+        #[SensitiveData(fallback: 'unknown')]
+        public readonly string $email,
+    ) {
+    }
+}
+```
+
+### DoctrineCipherKeyStore
+
+The legacy `Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore` and
+`Patchlevel\EventSourcing\Cryptography\ExtensionDoctrineCipherKeyStore` have been merged into a
+single `Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore` that implements the new
+`Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore`. The default table name changed
+from `crypto_keys` to `cryptography_keys`, and keys are now stored per id with a subject index.
+
+To erase the data of a subject, call `removeWithSubjectId()`, the `remove()` method now deletes by key id.
+
+before:
+
+```php
+$cipherKeyStore->remove($subjectId);
+```
+after:
+
+```php
+$cipherKeyStore->removeWithSubjectId($subjectId);
+```
+
+:::danger
+The key table layout changed (`crypto_keys` -> `cryptography_keys` with new columns).
+Existing keys must be migrated, otherwise stored sensitive data can no longer be decrypted.
+:::
+
+### Cryptographer
+
+`Patchlevel\Hydrator\Cryptography\PayloadCryptographer` and its implementations
+(`PersonalDataPayloadCryptographer`, `SensitiveDataPayloadCryptographer`) have been removed.
+Create a `Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer` and register it on the
+hydrator through the `CryptographyExtension` (see the Serializer section above).
