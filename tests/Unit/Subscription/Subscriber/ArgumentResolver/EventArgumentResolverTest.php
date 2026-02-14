@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\TypeInfo\Type;
 
 #[CoversClass(EventArgumentResolver::class)]
 final class EventArgumentResolverTest extends TestCase
@@ -22,14 +23,14 @@ final class EventArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileCreated::class, false),
+                new ArgumentMetadata('foo', Type::object(ProfileCreated::class)),
                 ProfileCreated::class,
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileVisited::class, false),
+                new ArgumentMetadata('foo', Type::object(ProfileVisited::class)),
                 ProfileCreated::class,
             ),
         );
@@ -45,7 +46,7 @@ final class EventArgumentResolverTest extends TestCase
         self::assertSame(
             $event,
             $resolver->resolve(
-                new ArgumentMetadata('foo', ProfileVisited::class, false),
+                new ArgumentMetadata('foo', Type::object(ProfileVisited::class)),
                 $message,
             ),
         );

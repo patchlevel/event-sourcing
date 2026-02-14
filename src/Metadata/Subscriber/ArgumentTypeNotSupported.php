@@ -21,16 +21,4 @@ final class ArgumentTypeNotSupported extends MetadataException
             ),
         );
     }
-
-    public static function onlyNamedTypeSupported(string $class, string $method, string $argumentName): self
-    {
-        return new self(
-            sprintf(
-                'Argument type for method "%s" in class "%s" is not supported. Argument "%s" must not have a union or intersection type.',
-                $method,
-                $class,
-                $argumentName,
-            ),
-        );
-    }
 }

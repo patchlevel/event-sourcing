@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\RecordedOn
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Symfony\Component\TypeInfo\Type;
 
 #[CoversClass(RecordedOnArgumentResolver::class)]
 final class RecordedOnArgumentResolverTest extends TestCase
@@ -22,14 +23,14 @@ final class RecordedOnArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', DateTimeImmutable::class, false),
+                new ArgumentMetadata('foo', Type::object(DateTimeImmutable::class)),
                 'qux',
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', 'bar', false),
+                new ArgumentMetadata('foo', Type::string()),
                 'qux',
             ),
         );
@@ -47,7 +48,7 @@ final class RecordedOnArgumentResolverTest extends TestCase
         self::assertSame(
             $date,
             $resolver->resolve(
-                new ArgumentMetadata('foo', DateTimeImmutable::class, false),
+                new ArgumentMetadata('foo', Type::object(DateTimeImmutable::class)),
                 $message,
             ),
         );
@@ -63,7 +64,7 @@ final class RecordedOnArgumentResolverTest extends TestCase
         self::assertSame(
             $date,
             $resolver->resolve(
-                new ArgumentMetadata('foo', DateTimeImmutable::class, false),
+                new ArgumentMetadata('foo', Type::object(DateTimeImmutable::class)),
                 $message,
             ),
         );

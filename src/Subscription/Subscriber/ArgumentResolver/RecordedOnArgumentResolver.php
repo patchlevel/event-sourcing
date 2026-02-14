@@ -18,6 +18,6 @@ final class RecordedOnArgumentResolver implements ArgumentResolver
 
     public function support(ArgumentMetadata $argument, string $eventClass): bool
     {
-        return $argument->type === DateTimeImmutable::class;
+        return $argument->type->isIdentifiedBy(DateTimeImmutable::class);
     }
 }
