@@ -27,6 +27,8 @@ use function array_map;
 use function assert;
 use function json_decode;
 use function json_encode;
+use function serialize;
+use function unserialize;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -41,6 +43,7 @@ use const JSON_THROW_ON_ERROR;
  *     error_context: string|null,
  *     retry_attempt: int,
  *     last_saved_at: string,
+ *     cleanup_tasks: string|null,
  * }
  */
 final class DoctrineSubscriptionStore implements LockableSubscriptionStore, DoctrineSchemaConfigurator
@@ -139,6 +142,7 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
                 'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
                 'retry_attempt' => $subscription->retryAttempt(),
                 'last_saved_at' => $subscription->lastSavedAt(),
+                'cleanup_tasks' => $subscription->cleanupTasks() !== null ? serialize($subscription->cleanupTasks()) : null,
             ],
             [
                 'last_saved_at' => Types::DATETIME_IMMUTABLE,
@@ -164,6 +168,7 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
                 'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
                 'retry_attempt' => $subscription->retryAttempt(),
                 'last_saved_at' => $subscription->lastSavedAt(),
+                'cleanup_tasks' => $subscription->cleanupTasks() !== null ? serialize($subscription->cleanupTasks()) : null,
             ],
             [
                 'id' => $subscription->id(),
@@ -240,6 +245,8 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ->setNotnull(true);
         $table->addColumn('last_saved_at', Types::DATETIMETZ_IMMUTABLE)
             ->setNotnull(true);
+        $table->addColumn('cleanup_tasks', Types::TEXT)
+            ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
@@ -265,6 +272,7 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ) : null,
             $row['retry_attempt'],
             self::normalizeDateTime($row['last_saved_at'], $this->connection->getDatabasePlatform()),
+            $row['cleanup_tasks'] !== null ? unserialize($row['cleanup_tasks']) : null,
         );
     }
 

@@ -1,7 +1,7 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Cannot unset offset ''url'' on array\{application_name\?\: string, charset\?\: string, dbname\?\: string, defaultTableOptions\?\: array\<string, mixed\>, driver\?\: ''ibm_db2''\|''mysqli''\|''oci8''\|''pdo_mysql''\|''pdo_oci''\|''pdo_pgsql''\|''pdo_sqlite''\|''pdo_sqlsrv''\|''pgsql''\|''sqlite3''\|''sqlsrv'', driverClass\?\: class\-string\<Doctrine\\DBAL\\Driver\>, driverOptions\?\: array\<mixed\>, host\?\: string, \.\.\.\}\.$#'
+			message: '#^Cannot unset offset ''url'' on array\{application_name\?\: string, charset\?\: string, defaultTableOptions\?\: array\<string, mixed\>, driver\?\: ''ibm_db2''\|''mysqli''\|''oci8''\|''pdo_mysql''\|''pdo_oci''\|''pdo_pgsql''\|''pdo_sqlite''\|''pdo_sqlsrv''\|''pgsql''\|''sqlite3''\|''sqlsrv'', driverClass\?\: class\-string\<Doctrine\\DBAL\\Driver\>, driverOptions\?\: array\<mixed\>, host\?\: string, keepReplica\?\: bool, \.\.\.\}\.$#'
 			identifier: unset.offset
 			count: 1
 			path: src/Console/DoctrineHelper.php
@@ -157,6 +157,12 @@ parameters:
 			path: src/Subscription/Store/DoctrineSubscriptionStore.php
 
 		-
+			message: '#^Parameter \#9 \$cleanupTasks of class Patchlevel\\EventSourcing\\Subscription\\Subscription constructor expects list\<object\>\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Subscription/Store/DoctrineSubscriptionStore.php
+
+		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 3
@@ -173,12 +179,6 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: tests/Benchmark/BasicImplementation/Projection/ProfileProjector.php
-
-		-
-			message: '#^Parameter \#1 \$messageLoader of class Patchlevel\\EventSourcing\\Subscription\\Engine\\DefaultSubscriptionEngine constructor expects Patchlevel\\EventSourcing\\Subscription\\Engine\\MessageLoader, Patchlevel\\EventSourcing\\Store\\StreamDoctrineDbalStore given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Benchmark/CommandToQueryBench.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BankAccountSplitStream\\\\BankAccount'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BankAccountSplitStream\\BankAccount will always evaluate to true\.$#'
@@ -225,30 +225,6 @@ parameters:
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BasicImplementation\\\\ProfileWithCommands'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\ProfileWithCommands will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
-			count: 1
-			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
-
-		-
-			message: '#^Instantiated class Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\DoctrineDbalStore not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
-
-		-
-			message: '#^Parameter \#1 \$messageLoader of class Patchlevel\\EventSourcing\\Subscription\\Engine\\DefaultSubscriptionEngine constructor expects Patchlevel\\EventSourcing\\Subscription\\Engine\\MessageLoader, Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\DoctrineDbalStore given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
-
-		-
-			message: '#^Parameter \#2 \$schemaConfigurator of class Patchlevel\\EventSourcing\\Schema\\DoctrineSchemaDirector constructor expects Patchlevel\\EventSourcing\\Schema\\DoctrineSchemaConfigurator, Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\DoctrineDbalStore given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
-
-		-
-			message: '#^Parameter \#2 \$store of class Patchlevel\\EventSourcing\\Repository\\DefaultRepositoryManager constructor expects Patchlevel\\EventSourcing\\Store\\Store, Patchlevel\\EventSourcing\\Tests\\Integration\\BasicImplementation\\DoctrineDbalStore given\.$#'
-			identifier: argument.type
 			count: 1
 			path: tests/Integration/BasicImplementation/BasicIntegrationTest.php
 
@@ -315,6 +291,12 @@ parameters:
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 2 and array\{Patchlevel\\EventSourcing\\Message\\Message, Patchlevel\\EventSourcing\\Message\\Message, Patchlevel\\EventSourcing\\Message\\Message\} will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/Subscription/SubscriptionTest.php
+
+		-
+			message: '#^Instantiated class Patchlevel\\EventSourcing\\Tests\\Integration\\Subscription\\MigrateAggregateToStreamStoreSubscriber not found\.$#'
+			identifier: class.notFound
 			count: 1
 			path: tests/Integration/Subscription/SubscriptionTest.php
 
@@ -451,7 +433,7 @@ parameters:
 			path: tests/Unit/Message/Translator/ReplaceEventTranslatorTest.php
 
 		-
-			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:211\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
+			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:236\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
 			path: tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php

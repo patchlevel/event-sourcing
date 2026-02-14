@@ -20,14 +20,14 @@ final class MessageArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', Message::class),
+                new ArgumentMetadata('foo', Message::class, false),
                 'qux',
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', 'bar'),
+                new ArgumentMetadata('foo', 'bar', false),
                 'qux',
             ),
         );
@@ -41,7 +41,7 @@ final class MessageArgumentResolverTest extends TestCase
         self::assertSame(
             $message,
             $resolver->resolve(
-                new ArgumentMetadata('foo', Message::class),
+                new ArgumentMetadata('foo', Message::class, false),
                 $message,
             ),
         );

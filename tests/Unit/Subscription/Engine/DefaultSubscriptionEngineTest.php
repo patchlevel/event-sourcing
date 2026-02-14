@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
 use Generator;
+use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy as RetryStrategyName;
 use Patchlevel\EventSourcing\Attribute\Setup;
@@ -13,7 +14,15 @@ use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\ArrayStream;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupFailed;
+use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
+use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 use Patchlevel\EventSourcing\Subscription\Engine\AlreadyProcessing;
+use Patchlevel\EventSourcing\Subscription\Engine\CleanerNotConfigured;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
@@ -3191,6 +3200,168 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $engine->teardown($engineCriteria);
     }
 
+    public function testTeardownWithCleanupAndWithoutCleaner(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            /** @return iterable<object> */
+            #[Cleanup]
+            public function cleanup(): iterable
+            {
+                return [
+                    new DropTableTask('test'),
+                ];
+            }
+        };
+
+        $subscription = new Subscription(
+            $subscriptionId,
+            Subscription::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            Status::Detached,
+            cleanupTasks: [
+                new DropTableTask('test'),
+            ],
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $this->expectException(CleanerNotConfigured::class);
+
+        $engine->teardown();
+    }
+
+    public function testTeardownWithCleanupAndSubscriber(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            /** @return iterable<object> */
+            #[Cleanup]
+            public function cleanup(): iterable
+            {
+                return [
+                    new DropTableTask('test'),
+                ];
+            }
+        };
+
+        $task = new DropTableTask('test');
+
+        $subscription = new Subscription(
+            $subscriptionId,
+            Subscription::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            Status::Detached,
+            cleanupTasks: [$task],
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $cleanupHandler = $this->createMock(CleanupTaskHandler::class);
+        $cleanupHandler->expects($this->once())->method('supports')->with($task)->willReturn(true);
+        $cleanupHandler->expects($this->once())->method('__invoke')->with($task);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+            cleaner: new DefaultCleaner([$cleanupHandler]),
+        );
+
+        $result = $engine->teardown();
+
+        self::assertEquals([], $result->errors);
+
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
+    }
+
+    public function testTeardownWithCleanupAndWithoutSubscriber(): void
+    {
+        $subscriptionId = 'test';
+
+        $task = new DropTableTask('test');
+
+        $subscription = new Subscription(
+            $subscriptionId,
+            Subscription::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            Status::Detached,
+            cleanupTasks: [$task],
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $cleanupHandler = $this->createMock(CleanupTaskHandler::class);
+        $cleanupHandler->expects($this->once())->method('supports')->with($task)->willReturn(true);
+        $cleanupHandler->expects($this->once())->method('__invoke')->with($task);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
+            cleaner: new DefaultCleaner([$cleanupHandler]),
+        );
+
+        $result = $engine->teardown();
+
+        self::assertEquals([], $result->errors);
+
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
+    }
+
+    public function testTeardownWithCleanupHandlerError(): void
+    {
+        $subscriptionId = 'test';
+
+        $task = new DropTableTask('test');
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Detached,
+                cleanupTasks: [$task],
+            ),
+        ]);
+
+        $cleanupHandler = $this->createMock(CleanupTaskHandler::class);
+        $cleanupHandler->expects($this->once())->method('supports')->with($task)->willReturn(true);
+        $cleanupHandler->expects($this->once())->method('__invoke')->with($task)->willThrowException(new RuntimeException('ERROR'));
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
+            cleaner: new DefaultCleaner([$cleanupHandler]),
+        );
+
+        $result = $engine->teardown();
+
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertInstanceOf(CleanupFailed::class, $error->throwable);
+
+        $subscriptionStore->assertNoChanges();
+    }
+
     public function testRemoveDiscoverNewSubscribers(): void
     {
         $subscriptionId = 'test';
@@ -3448,6 +3619,168 @@ final class DefaultSubscriptionEngineTest extends TestCase
         );
 
         $engine->remove($engineCriteria);
+    }
+
+    public function testRemoveWithCleanupAndWithoutCleaner(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            /** @return iterable<object> */
+            #[Cleanup]
+            public function cleanup(): iterable
+            {
+                return [
+                    new DropTableTask('test'),
+                ];
+            }
+        };
+
+        $subscription = new Subscription(
+            $subscriptionId,
+            Subscription::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            Status::Detached,
+            cleanupTasks: [
+                new DropTableTask('test'),
+            ],
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+        );
+
+        $this->expectException(CleanerNotConfigured::class);
+
+        $engine->remove();
+    }
+
+    public function testRemoveWithCleanupAndSubscriber(): void
+    {
+        $subscriptionId = 'test';
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            /** @return iterable<object> */
+            #[Cleanup]
+            public function cleanup(): iterable
+            {
+                return [
+                    new DropTableTask('test'),
+                ];
+            }
+        };
+
+        $task = new DropTableTask('test');
+
+        $subscription = new Subscription(
+            $subscriptionId,
+            Subscription::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            Status::Detached,
+            cleanupTasks: [$task],
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $cleanupHandler = $this->createMock(CleanupTaskHandler::class);
+        $cleanupHandler->expects($this->once())->method('supports')->with($task)->willReturn(true);
+        $cleanupHandler->expects($this->once())->method('__invoke')->with($task);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+            cleaner: new DefaultCleaner([$cleanupHandler]),
+        );
+
+        $result = $engine->remove();
+
+        self::assertEquals([], $result->errors);
+
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
+    }
+
+    public function testRemoveWithCleanupAndWithoutSubscriber(): void
+    {
+        $subscriptionId = 'test';
+
+        $task = new DropTableTask('test');
+
+        $subscription = new Subscription(
+            $subscriptionId,
+            Subscription::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            Status::Detached,
+            cleanupTasks: [$task],
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $cleanupHandler = $this->createMock(CleanupTaskHandler::class);
+        $cleanupHandler->expects($this->once())->method('supports')->with($task)->willReturn(true);
+        $cleanupHandler->expects($this->once())->method('__invoke')->with($task);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
+            cleaner: new DefaultCleaner([$cleanupHandler]),
+        );
+
+        $result = $engine->remove();
+
+        self::assertEquals([], $result->errors);
+
+        $subscriptionStore->assertNoUpdated();
+        $subscriptionStore->assertRemoved($subscription);
+    }
+
+    public function testRemoveWithCleanupHandlerError(): void
+    {
+        $subscriptionId = 'test';
+
+        $task = new DropTableTask('test');
+
+        $subscriptionStore = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Detached,
+                cleanupTasks: [$task],
+            ),
+        ]);
+
+        $cleanupHandler = $this->createMock(CleanupTaskHandler::class);
+        $cleanupHandler->expects($this->once())->method('supports')->with($task)->willReturn(true);
+        $cleanupHandler->expects($this->once())->method('__invoke')->with($task)->willThrowException(new RuntimeException('ERROR'));
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([]),
+            logger: new NullLogger(),
+            cleaner: new DefaultCleaner([$cleanupHandler]),
+        );
+
+        $result = $engine->remove();
+
+        self::assertCount(1, $result->errors);
+
+        $error = $result->errors[0];
+
+        self::assertEquals($subscriptionId, $error->subscriptionId);
+        self::assertInstanceOf(CleanupFailed::class, $error->throwable);
+
+        $subscriptionStore->assertNoChanges();
     }
 
     public function testReactiveDiscoverNewSubscribers(): void

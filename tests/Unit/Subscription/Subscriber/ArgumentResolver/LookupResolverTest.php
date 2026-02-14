@@ -29,14 +29,14 @@ final class LookupResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('lookup', Lookup::class),
+                new ArgumentMetadata('lookup', Lookup::class, false),
                 ProfileCreated::class,
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileCreated::class),
+                new ArgumentMetadata('foo', ProfileCreated::class, false),
                 ProfileCreated::class,
             ),
         );
@@ -56,7 +56,7 @@ final class LookupResolverTest extends TestCase
         );
 
         $lookup = $resolver->resolve(
-            new ArgumentMetadata('foo', Lookup::class),
+            new ArgumentMetadata('foo', Lookup::class, false),
             $message,
         );
 

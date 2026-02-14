@@ -204,6 +204,29 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         );
     }
 
+    public function testSubscribeNullableAttribute(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function profileVisited(ProfileVisited|null $message): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertEquals(
+            [
+                ProfileVisited::class => new SubscribeMethodMetadata('profileVisited', [
+                    new ArgumentMetadata('message', ProfileVisited::class, true),
+                ]),
+            ],
+            $metadata->subscribeMethods,
+        );
+    }
+
     public function testMissingArgumentType(): void
     {
         $this->expectException(ArgumentTypeNotSupported::class);
