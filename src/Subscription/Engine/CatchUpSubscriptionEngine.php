@@ -8,6 +8,7 @@ use LogicException;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
 use function array_merge;
+use function sprintf;
 
 use const PHP_INT_MAX;
 

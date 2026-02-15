@@ -873,6 +873,20 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, Subscriptio
                 );
             }
 
+            $cleanupTasks = $this->cleanupTasks($subscriber);
+
+            if ($subscription->cleanupTasks() !== $cleanupTasks) {
+                $changed = true;
+                $subscription->replaceCleanupTasks($cleanupTasks);
+
+                $this->logger?->info(
+                    sprintf(
+                        'Subscription Engine: Subscription "%s" cleanup tasks changed.',
+                        $subscription->id(),
+                    ),
+                );
+            }
+
             if (!$changed) {
                 continue;
             }

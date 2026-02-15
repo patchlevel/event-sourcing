@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 use LogicException;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
+use function sprintf;
+
 final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine, SubscriptionRefreshable
 {
     public function __construct(

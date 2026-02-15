@@ -203,6 +203,12 @@ final class Subscription
         $this->lastSavedAt = $lastSavedAt;
     }
 
+    /** @param list<object>|null $cleanupTask */
+    public function replaceCleanupTasks(array|null $cleanupTask): void
+    {
+        $this->cleanupTasks = $cleanupTask;
+    }
+
     /** @return list<object>|null */
     public function cleanupTasks(): array|null
     {
