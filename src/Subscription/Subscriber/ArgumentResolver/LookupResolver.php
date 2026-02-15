@@ -29,6 +29,6 @@ final class LookupResolver implements ArgumentResolver
 
     public function support(ArgumentMetadata $argument, string $eventClass): bool
     {
-        return $argument->type === Lookup::class;
+        return $argument->type->isIdentifiedBy(Lookup::class);
     }
 }

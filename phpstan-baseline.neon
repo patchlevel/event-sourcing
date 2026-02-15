@@ -295,12 +295,6 @@ parameters:
 			path: tests/Integration/Subscription/SubscriptionTest.php
 
 		-
-			message: '#^Instantiated class Patchlevel\\EventSourcing\\Tests\\Integration\\Subscription\\MigrateAggregateToStreamStoreSubscriber not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: tests/Integration/Subscription/SubscriptionTest.php
-
-		-
 			message: '#^Parameter \#4 \$maxAttempts of class Patchlevel\\EventSourcing\\Subscription\\RetryStrategy\\ClockBasedRetryStrategy constructor expects int\<1, max\>, 0 given\.$#'
 			identifier: argument.type
 			count: 1
@@ -433,7 +427,7 @@ parameters:
 			path: tests/Unit/Message/Translator/ReplaceEventTranslatorTest.php
 
 		-
-			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:236\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
+			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:234\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
 			path: tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php

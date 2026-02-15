@@ -16,6 +16,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\TypeInfo\Type;
 
 #[CoversClass(LookupResolver::class)]
 final class LookupResolverTest extends TestCase
@@ -29,14 +30,14 @@ final class LookupResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('lookup', Lookup::class, false),
+                new ArgumentMetadata('lookup', Type::object(Lookup::class)),
                 ProfileCreated::class,
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileCreated::class, false),
+                new ArgumentMetadata('foo', Type::object(ProfileCreated::class)),
                 ProfileCreated::class,
             ),
         );
@@ -56,7 +57,7 @@ final class LookupResolverTest extends TestCase
         );
 
         $lookup = $resolver->resolve(
-            new ArgumentMetadata('foo', Lookup::class, false),
+            new ArgumentMetadata('foo', Type::object(Lookup::class)),
             $message,
         );
 

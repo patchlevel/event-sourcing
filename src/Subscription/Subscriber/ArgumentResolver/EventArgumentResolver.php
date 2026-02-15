@@ -7,9 +7,6 @@ namespace Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 
-use function class_exists;
-use function is_a;
-
 final class EventArgumentResolver implements ArgumentResolver
 {
     public function resolve(ArgumentMetadata $argument, Message $message): object
@@ -19,6 +16,6 @@ final class EventArgumentResolver implements ArgumentResolver
 
     public function support(ArgumentMetadata $argument, string $eventClass): bool
     {
-        return class_exists($argument->type) && is_a($eventClass, $argument->type, true);
+        return $argument->type->isIdentifiedBy($eventClass);
     }
 }

@@ -16,6 +16,6 @@ final class MessageArgumentResolver implements ArgumentResolver
 
     public function support(ArgumentMetadata $argument, string $eventClass): bool
     {
-        return $argument->type === Message::class;
+        return $argument->type->isIdentifiedBy(Message::class);
     }
 }
