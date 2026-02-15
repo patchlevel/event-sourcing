@@ -219,6 +219,11 @@ final class DoStuffSubscriber
     }
 }
 ```
+
+:::tip
+You can also subscribe to multiple events and specify your argument using union type.
+:::
+
 ##### Lookup Resolver
 
 Sometimes you need to query previous events to build a projection.
