@@ -29,7 +29,7 @@ use function array_values;
 use function count;
 use function sprintf;
 
-final class DefaultSubscriptionEngine implements SubscriptionEngine, SubscriptionRefreshable
+final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshSubscriptions
 {
     private SubscriptionManager $subscriptionManager;
 

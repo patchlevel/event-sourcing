@@ -12,7 +12,7 @@ use function sprintf;
 
 use const PHP_INT_MAX;
 
-final class CatchUpSubscriptionEngine implements SubscriptionEngine, SubscriptionRefreshable
+final class CatchUpSubscriptionEngine implements SubscriptionEngine, CanRefreshSubscriptions
 {
     public function __construct(
         private readonly SubscriptionEngine $parent,
@@ -90,11 +90,11 @@ final class CatchUpSubscriptionEngine implements SubscriptionEngine, Subscriptio
 
     public function refreshSubscriptions(SubscriptionEngineCriteria|null $criteria = null): Result
     {
-        if (!$this->parent instanceof SubscriptionRefreshable) {
+        if (!$this->parent instanceof CanRefreshSubscriptions) {
             throw new LogicException(sprintf(
                 '"%s" does not implement "%s" and can therefore not refresh subscriptions.',
                 $this->parent::class,
-                SubscriptionRefreshable::class,
+                CanRefreshSubscriptions::class,
             ));
         }
 

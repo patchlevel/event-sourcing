@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use LogicException;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionRefreshable;
+use Patchlevel\EventSourcing\Subscription\Engine\CanRefreshSubscriptions;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,11 +20,11 @@ final class SubscriptionRefreshCommand extends SubscriptionCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (!$this->engine instanceof SubscriptionRefreshable) {
+        if (!$this->engine instanceof CanRefreshSubscriptions) {
             throw new LogicException(sprintf(
                 '"%s" does not implement "%s" and can therefore not refresh subscriptions.',
                 $this->engine::class,
-                SubscriptionRefreshable::class,
+                CanRefreshSubscriptions::class,
             ));
         }
 

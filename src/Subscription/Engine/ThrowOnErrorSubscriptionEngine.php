@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 
 use function sprintf;
 
-final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine, SubscriptionRefreshable
+final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine, CanRefreshSubscriptions
 {
     public function __construct(
         private readonly SubscriptionEngine $parent,
@@ -59,11 +59,11 @@ final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine, Subscr
 
     public function refreshSubscriptions(SubscriptionEngineCriteria|null $criteria = null): Result
     {
-        if (!$this->parent instanceof SubscriptionRefreshable) {
+        if (!$this->parent instanceof CanRefreshSubscriptions) {
             throw new LogicException(sprintf(
                 '"%s" does not implement "%s" and can therefore not refresh subscriptions.',
                 $this->parent::class,
-                SubscriptionRefreshable::class,
+                CanRefreshSubscriptions::class,
             ));
         }
 
