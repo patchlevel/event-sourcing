@@ -36,6 +36,25 @@ final class EventArgumentResolverTest extends TestCase
         );
     }
 
+    public function testSupportUnionType(): void
+    {
+        $resolver = new EventArgumentResolver();
+
+        self::assertTrue(
+            $resolver->support(
+                new ArgumentMetadata('foo', Type::union(Type::object(ProfileCreated::class), Type::object(ProfileVisited::class))),
+                ProfileCreated::class,
+            ),
+        );
+
+        self::assertTrue(
+            $resolver->support(
+                new ArgumentMetadata('foo', Type::union(Type::object(ProfileCreated::class), Type::object(ProfileVisited::class))),
+                ProfileVisited::class,
+            ),
+        );
+    }
+
     public function testResolve(): void
     {
         $event = new ProfileVisited(ProfileId::fromString('1'));
