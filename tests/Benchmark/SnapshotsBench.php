@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\StreamDoctrineDbalStoreAdapter;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
@@ -43,7 +44,12 @@ final class SnapshotsBench
 
         $this->snapshotStore = new DefaultSnapshotStore(['default' => $this->adapter]);
 
-        $this->repository = new DefaultRepository($this->store, Profile::metadata(), null, $this->snapshotStore);
+        $this->repository = new DefaultRepository(
+            new StreamDoctrineDbalStoreAdapter($this->store),
+            Profile::metadata(),
+            null,
+            $this->snapshotStore
+        );
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,

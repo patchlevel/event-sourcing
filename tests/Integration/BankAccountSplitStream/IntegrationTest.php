@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\ChainMessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\StreamDoctrineDbalStoreAdapter;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
@@ -59,7 +60,7 @@ final class IntegrationTest extends TestCase
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
-            $store,
+            new StreamDoctrineDbalStoreAdapter($store),
             null,
             null,
             new ChainMessageDecorator([
@@ -98,7 +99,7 @@ final class IntegrationTest extends TestCase
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
-            $store,
+            new StreamDoctrineDbalStoreAdapter($store),
             null,
             null,
             new ChainMessageDecorator([
@@ -137,7 +138,7 @@ final class IntegrationTest extends TestCase
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
-            $store,
+            new StreamDoctrineDbalStoreAdapter($store),
             null,
             null,
             new ChainMessageDecorator([
@@ -174,7 +175,7 @@ final class IntegrationTest extends TestCase
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
-            $store,
+            new StreamDoctrineDbalStoreAdapter($store),
             null,
             null,
             new ChainMessageDecorator([
@@ -213,7 +214,7 @@ final class IntegrationTest extends TestCase
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
-            $store,
+            new StreamDoctrineDbalStoreAdapter($store),
             null,
             null,
             new ChainMessageDecorator([
@@ -252,7 +253,7 @@ final class IntegrationTest extends TestCase
 
         $manager = new DefaultRepositoryManager(
             new AggregateRootRegistry(['bank_account' => BankAccount::class]),
-            $store,
+            new StreamDoctrineDbalStoreAdapter($store),
             null,
             null,
             new ChainMessageDecorator([

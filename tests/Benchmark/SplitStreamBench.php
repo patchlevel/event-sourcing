@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\StreamDoctrineDbalStoreAdapter;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\Store;
@@ -37,7 +38,7 @@ final class SplitStreamBench
         );
 
         $this->repository = new DefaultRepository(
-            $this->store,
+            new StreamDoctrineDbalStoreAdapter($this->store),
             Profile::metadata(),
             null,
             null,

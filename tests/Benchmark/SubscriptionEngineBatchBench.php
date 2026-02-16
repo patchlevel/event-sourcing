@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark;
 use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\StreamDoctrineDbalStoreAdapter;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
@@ -43,7 +44,10 @@ final class SubscriptionEngineBatchBench
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
         );
 
-        $this->repository = new DefaultRepository($this->store, Profile::metadata());
+        $this->repository = new DefaultRepository(
+            new StreamDoctrineDbalStoreAdapter($this->store),
+            Profile::metadata()
+        );
 
         $subscriptionStore = new DoctrineSubscriptionStore(
             $connection,

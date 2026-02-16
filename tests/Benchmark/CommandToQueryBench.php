@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\QueryBus\QueryBus;
 use Patchlevel\EventSourcing\QueryBus\ServiceHandlerProvider;
 use Patchlevel\EventSourcing\QueryBus\SyncQueryBus;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\StreamDoctrineDbalStoreAdapter;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
@@ -56,7 +57,7 @@ final class CommandToQueryBench
 
         $manager = new DefaultRepositoryManager(
             $aggregateRootRegistry,
-            $store,
+            new StreamDoctrineDbalStoreAdapter($store),
             null,
             new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
         );
