@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Cleaner;
 use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupFailed;
 use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
@@ -4571,5 +4572,263 @@ final class DefaultSubscriptionEngineTest extends TestCase
     private function criteria(int $fromIndex = 0): Criteria
     {
         return new Criteria(new FromIndexCriterion($fromIndex));
+    }
+
+    public function testRefreshSubscriptionsNoChanges(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning, group: 'default')]
+        class {
+        };
+
+        $subscription = new Subscription(
+            'test',
+            'default',
+            RunMode::FromBeginning,
+            Status::Active,
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(Store::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+            cleaner: $this->createMock(Cleaner::class),
+        );
+
+        $engine->refreshSubscriptions();
+
+        $subscriptionStore->assertNoChanges();
+    }
+
+    public function testRefreshSubscriptionsChangeRunMode(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromNow)]
+        class {
+        };
+
+        $subscription = new Subscription(
+            'test',
+            'default',
+            RunMode::FromBeginning,
+            Status::Active,
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(Store::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+            cleaner: $this->createMock(Cleaner::class),
+        );
+
+        $engine->refreshSubscriptions();
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                'test',
+                'default',
+                RunMode::FromNow,
+                Status::Active,
+            ),
+        );
+    }
+
+    public function testRefreshSubscriptionsChangeGroup(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning, group: 'new-group')]
+        class {
+        };
+
+        $subscription = new Subscription(
+            'test',
+            'default',
+            RunMode::FromBeginning,
+            Status::Active,
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(Store::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+            cleaner: $this->createMock(Cleaner::class),
+        );
+
+        $engine->refreshSubscriptions();
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                'test',
+                'new-group',
+                RunMode::FromBeginning,
+                Status::Active,
+            ),
+        );
+    }
+
+    public function testRefreshSubscriptionsChangeCleanupTasks(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            /** @return iterable<object> */
+            #[Cleanup]
+            public function cleanup(): iterable
+            {
+                yield new DropTableTask('test');
+            }
+        };
+
+        $subscription = new Subscription(
+            'test',
+            'default',
+            RunMode::FromBeginning,
+            Status::Active,
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(Store::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+            cleaner: $this->createMock(Cleaner::class),
+        );
+
+        $engine->refreshSubscriptions();
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                'test',
+                'default',
+                RunMode::FromBeginning,
+                Status::Active,
+                cleanupTasks: [new DropTableTask('test')],
+            ),
+        );
+    }
+
+    public function testRefreshSubscriptionsMultipleChanges(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromNow, group: 'new-group')]
+        class {
+            /** @return iterable<object> */
+            #[Cleanup]
+            public function cleanup(): iterable
+            {
+                yield new DropTableTask('test');
+            }
+        };
+
+        $subscription = new Subscription(
+            'test',
+            'default',
+            RunMode::FromBeginning,
+            Status::Active,
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(Store::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+            cleaner: $this->createMock(Cleaner::class),
+        );
+
+        $engine->refreshSubscriptions();
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                'test',
+                'new-group',
+                RunMode::FromNow,
+                Status::Active,
+                cleanupTasks: [new DropTableTask('test')],
+            ),
+        );
+    }
+
+    public function testRefreshSubscriptionsWithCriteria(): void
+    {
+        $subscriber1 = new #[Subscriber('test1', RunMode::FromNow)]
+        class {
+        };
+
+        $subscriber2 = new #[Subscriber('test2', RunMode::FromNow)]
+        class {
+        };
+
+        $subscription1 = new Subscription(
+            'test1',
+            'default',
+            RunMode::FromBeginning,
+            Status::Active,
+        );
+
+        $subscription2 = new Subscription(
+            'test2',
+            'default',
+            RunMode::FromBeginning,
+            Status::Active,
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription1, $subscription2]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(Store::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber1, $subscriber2]),
+            logger: new NullLogger(),
+            cleaner: $this->createMock(Cleaner::class),
+        );
+
+        $engine->refreshSubscriptions(new SubscriptionEngineCriteria(['test1']));
+
+        $subscriptionStore->assertUpdated(
+            new Subscription(
+                'test1',
+                'default',
+                RunMode::FromNow,
+                Status::Active,
+            ),
+        );
+
+        self::assertCount(1, $subscriptionStore->updatedSubscriptions);
+    }
+
+    public function testRefreshSubscriptionsDiscoverNewSubscribers(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+        };
+
+        $subscriptionStore = new DummySubscriptionStore();
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(Store::class),
+            $subscriptionStore,
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            logger: new NullLogger(),
+            cleaner: $this->createMock(Cleaner::class),
+        );
+
+        $engine->refreshSubscriptions();
+
+        $subscriptionStore->assertAdded(
+            new Subscription(
+                'test',
+                'default',
+                RunMode::FromBeginning,
+                Status::New,
+            ),
+        );
     }
 }
