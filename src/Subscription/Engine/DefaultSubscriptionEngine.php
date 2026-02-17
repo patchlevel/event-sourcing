@@ -29,7 +29,7 @@ use function array_values;
 use function count;
 use function sprintf;
 
-final class DefaultSubscriptionEngine implements SubscriptionEngine
+final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshSubscriptions
 {
     private SubscriptionManager $subscriptionManager;
 
@@ -821,6 +821,82 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 groups: $criteria->groups,
             ),
         );
+    }
+
+    public function refresh(SubscriptionEngineCriteria|null $criteria = null): Result
+    {
+        $criteria ??= new SubscriptionEngineCriteria();
+
+        $this->discoverNewSubscriptions();
+
+        $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria(
+            ids: $criteria->ids,
+            groups: $criteria->groups,
+        ));
+
+        foreach ($subscriptions as $subscription) {
+            $subscriber = $this->subscriber($subscription->id());
+
+            if (!$subscriber) {
+                continue;
+            }
+
+            $changed = false;
+
+            if ($subscription->runMode() !== $subscriber->runMode()) {
+                $changed = true;
+                $oldRunMode = $subscription->runMode();
+                $subscription->changeRunMode($subscriber->runMode());
+
+                $this->logger?->info(
+                    sprintf(
+                        'Subscription Engine: Subscription "%s" run mode changed from "%s" to "%s".',
+                        $subscription->id(),
+                        $oldRunMode->value,
+                        $subscription->runMode()->value,
+                    ),
+                );
+            }
+
+            if ($subscription->group() !== $subscriber->group()) {
+                $changed = true;
+                $oldGroup = $subscription->group();
+                $subscription->changeGroup($subscriber->group());
+
+                $this->logger?->info(
+                    sprintf(
+                        'Subscription Engine: Subscription "%s" group changed from "%s" to "%s".',
+                        $subscription->id(),
+                        $oldGroup,
+                        $subscription->group(),
+                    ),
+                );
+            }
+
+            $cleanupTasks = $this->cleanupTasks($subscriber);
+
+            if ($subscription->cleanupTasks() !== $cleanupTasks) {
+                $changed = true;
+                $subscription->replaceCleanupTasks($cleanupTasks);
+
+                $this->logger?->info(
+                    sprintf(
+                        'Subscription Engine: Subscription "%s" cleanup tasks changed.',
+                        $subscription->id(),
+                    ),
+                );
+            }
+
+            if (!$changed) {
+                continue;
+            }
+
+            $this->subscriptionManager->update($subscription);
+        }
+
+        $this->subscriptionManager->flush();
+
+        return new Result();
     }
 
     private function handleMessage(int $index, Message $message, Subscription $subscription): Error|null

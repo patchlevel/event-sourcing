@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
+use LogicException;
+use Patchlevel\EventSourcing\Subscription\Engine\CanRefreshSubscriptions;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\ErrorDetected;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
@@ -260,5 +262,53 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
         $result = $engine->subscriptions($criteria);
 
         self::assertSame([], $result);
+    }
+
+    public function testRefreshSubscriptionsSuccess(): void
+    {
+        $parent = $this->createMockForIntersectionOfInterfaces([
+            SubscriptionEngine::class,
+            CanRefreshSubscriptions::class,
+        ]);
+
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
+        $criteria = new SubscriptionEngineCriteria();
+
+        $expectedResult = new Result();
+
+        $parent->expects($this->once())->method('refresh')->with($criteria)->willReturn($expectedResult);
+        $result = $engine->refresh($criteria);
+
+        self::assertSame($expectedResult, $result);
+    }
+
+    public function testRefreshSubscriptionsError(): void
+    {
+        $this->expectException(ErrorDetected::class);
+
+        $parent = $this->createMockForIntersectionOfInterfaces([
+            SubscriptionEngine::class,
+            CanRefreshSubscriptions::class,
+        ]);
+
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
+        $criteria = new SubscriptionEngineCriteria();
+
+        $expectedResult = new Result([
+            new Error('id1', 'error1', new RuntimeException('error1')),
+        ]);
+
+        $parent->expects($this->once())->method('refresh')->with($criteria)->willReturn($expectedResult);
+        $engine->refresh($criteria);
+    }
+
+    public function testRefreshSubscriptionsNotSupported(): void
+    {
+        $parent = $this->createMock(SubscriptionEngine::class);
+
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
+
+        $this->expectException(LogicException::class);
+        $engine->refresh();
     }
 }
