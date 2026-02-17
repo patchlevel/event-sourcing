@@ -1315,6 +1315,18 @@ foreach ($subscriptions as $subscription) {
     echo $subscription->status()->value;
 }
 ```
+### Refresh
+
+If you change the metadata of a subscriber in the code (e.g. `runMode`, `group` or `cleanupTasks`),
+you can use the `refresh` method to update the existing subscriptions in the store.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->refresh(new SubscriptionEngineCriteria());
+```
 ## Learn more
 
 * [How to use CLI commands](./cli.md)
