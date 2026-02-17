@@ -823,7 +823,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshS
         );
     }
 
-    public function refreshSubscriptions(SubscriptionEngineCriteria|null $criteria = null): Result
+    public function refresh(SubscriptionEngineCriteria|null $criteria = null): Result
     {
         $criteria ??= new SubscriptionEngineCriteria();
 

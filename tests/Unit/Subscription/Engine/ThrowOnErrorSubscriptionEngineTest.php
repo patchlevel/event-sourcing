@@ -276,8 +276,8 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
 
         $expectedResult = new Result();
 
-        $parent->expects($this->once())->method('refreshSubscriptions')->with($criteria)->willReturn($expectedResult);
-        $result = $engine->refreshSubscriptions($criteria);
+        $parent->expects($this->once())->method('refresh')->with($criteria)->willReturn($expectedResult);
+        $result = $engine->refresh($criteria);
 
         self::assertSame($expectedResult, $result);
     }
@@ -298,8 +298,8 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
             new Error('id1', 'error1', new RuntimeException('error1')),
         ]);
 
-        $parent->expects($this->once())->method('refreshSubscriptions')->with($criteria)->willReturn($expectedResult);
-        $engine->refreshSubscriptions($criteria);
+        $parent->expects($this->once())->method('refresh')->with($criteria)->willReturn($expectedResult);
+        $engine->refresh($criteria);
     }
 
     public function testRefreshSubscriptionsNotSupported(): void
@@ -309,6 +309,6 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
         $engine = new ThrowOnErrorSubscriptionEngine($parent);
 
         $this->expectException(LogicException::class);
-        $engine->refreshSubscriptions();
+        $engine->refresh();
     }
 }

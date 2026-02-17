@@ -6,5 +6,5 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 interface CanRefreshSubscriptions
 {
-    public function refreshSubscriptions(SubscriptionEngineCriteria|null $criteria = null): Result;
+    public function refresh(SubscriptionEngineCriteria|null $criteria = null): Result;
 }

@@ -1623,7 +1623,7 @@ final class SubscriptionTest extends TestCase
             $newSubscriberRepository,
         );
 
-        $engine->refreshSubscriptions();
+        $engine->refresh();
 
         $subscriptions = $engine->subscriptions();
         self::assertCount(1, $subscriptions);

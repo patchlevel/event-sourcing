@@ -231,8 +231,8 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
         $expectedResult = new Result();
 
-        $parent->expects($this->once())->method('refreshSubscriptions')->with($criteria)->willReturn($expectedResult);
-        $result = $engine->refreshSubscriptions($criteria);
+        $parent->expects($this->once())->method('refresh')->with($criteria)->willReturn($expectedResult);
+        $result = $engine->refresh($criteria);
 
         self::assertSame($expectedResult, $result);
     }
@@ -244,6 +244,6 @@ final class CatchUpSubscriptionEngineTest extends TestCase
         $engine = new CatchUpSubscriptionEngine($parent);
 
         $this->expectException(LogicException::class);
-        $engine->refreshSubscriptions();
+        $engine->refresh();
     }
 }

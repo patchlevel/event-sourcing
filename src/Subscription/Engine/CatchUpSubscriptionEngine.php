@@ -88,17 +88,17 @@ final class CatchUpSubscriptionEngine implements SubscriptionEngine, CanRefreshS
         return $this->parent->subscriptions($criteria);
     }
 
-    public function refreshSubscriptions(SubscriptionEngineCriteria|null $criteria = null): Result
+    public function refresh(SubscriptionEngineCriteria|null $criteria = null): Result
     {
         if (!$this->parent instanceof CanRefreshSubscriptions) {
             throw new LogicException(sprintf(
-                '"%s" does not implement "%s" and can therefore not refresh subscriptions.',
+                '"%s" does not implement "%s" and cannot call refresh.',
                 $this->parent::class,
                 CanRefreshSubscriptions::class,
             ));
         }
 
-        return $this->parent->refreshSubscriptions($criteria);
+        return $this->parent->refresh($criteria);
     }
 
     private function mergeResult(ProcessedResult ...$results): ProcessedResult

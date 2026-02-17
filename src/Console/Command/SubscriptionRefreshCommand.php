@@ -22,14 +22,14 @@ final class SubscriptionRefreshCommand extends SubscriptionCommand
     {
         if (!$this->engine instanceof CanRefreshSubscriptions) {
             throw new LogicException(sprintf(
-                '"%s" does not implement "%s" and can therefore not refresh subscriptions.',
+                '"%s" does not implement "%s" and cannot call refresh.',
                 $this->engine::class,
                 CanRefreshSubscriptions::class,
             ));
         }
 
         $criteria = $this->subscriptionEngineCriteria($input);
-        $this->engine->refreshSubscriptions($criteria);
+        $this->engine->refresh($criteria);
 
         return 0;
     }

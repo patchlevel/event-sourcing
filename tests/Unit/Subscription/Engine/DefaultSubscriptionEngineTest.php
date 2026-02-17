@@ -4597,7 +4597,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             cleaner: $this->createMock(Cleaner::class),
         );
 
-        $engine->refreshSubscriptions();
+        $engine->refresh();
 
         $subscriptionStore->assertNoChanges();
     }
@@ -4625,7 +4625,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             cleaner: $this->createMock(Cleaner::class),
         );
 
-        $engine->refreshSubscriptions();
+        $engine->refresh();
 
         $subscriptionStore->assertUpdated(
             new Subscription(
@@ -4660,7 +4660,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             cleaner: $this->createMock(Cleaner::class),
         );
 
-        $engine->refreshSubscriptions();
+        $engine->refresh();
 
         $subscriptionStore->assertUpdated(
             new Subscription(
@@ -4701,7 +4701,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             cleaner: $this->createMock(Cleaner::class),
         );
 
-        $engine->refreshSubscriptions();
+        $engine->refresh();
 
         $subscriptionStore->assertUpdated(
             new Subscription(
@@ -4743,7 +4743,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             cleaner: $this->createMock(Cleaner::class),
         );
 
-        $engine->refreshSubscriptions();
+        $engine->refresh();
 
         $subscriptionStore->assertUpdated(
             new Subscription(
@@ -4790,7 +4790,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             cleaner: $this->createMock(Cleaner::class),
         );
 
-        $engine->refreshSubscriptions(new SubscriptionEngineCriteria(['test1']));
+        $engine->refresh(new SubscriptionEngineCriteria(['test1']));
 
         $subscriptionStore->assertUpdated(
             new Subscription(
@@ -4820,7 +4820,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
             cleaner: $this->createMock(Cleaner::class),
         );
 
-        $engine->refreshSubscriptions();
+        $engine->refresh();
 
         $subscriptionStore->assertAdded(
             new Subscription(
