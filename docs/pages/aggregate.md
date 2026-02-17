@@ -303,6 +303,11 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
+!!! tip
+
+    You don't necessarily need to define multiple `Apply` attributes with the event class 
+    if you define the event types in the method using a union type.
+    
 ## Suppress missing apply methods
 
 Sometimes you have events that do not change the state of the aggregate itself,
@@ -357,6 +362,38 @@ final class Profile extends BasicAggregateRoot
 !!! warning
 
     When all events are suppressed, debugging becomes more difficult if you forget an apply method.
+    
+## Shared apply context
+
+When working with [micro-aggregates](./aggregate.md#micro-aggregates), 
+it’s common that events are applied by different aggregates.
+As a result, an aggregate may receive events it does not handle, which can lead to multiple “missing apply” warnings.
+
+The `SharedApplyContext` attribute allows you to declare that several aggregates share the same apply context.
+With this configuration, a missing apply is only reported if none of the shared aggregates handle the event.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
+use Patchlevel\EventSourcing\Attribute\Stream;
+
+#[Aggregate('profile')]
+#[SharedApplyContext([PersonalInformation::class])]
+final class Profile extends BasicAggregateRoot
+{
+}
+
+#[Aggregate('personal_information')]
+#[Stream(Profile::class)]
+#[SharedApplyContext([Profile::class])]
+final class PersonalInformation extends BasicAggregateRoot
+{
+}
+```
+!!! warning
+
+    You need to define the `SharedApplyContext` attribute on all aggregates that share the apply context.
     
 ## Stream Name
 
@@ -675,8 +712,10 @@ use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
 
 #[Aggregate('order')]
+#[SharedApplyContext([Shipping::class])]
 final class Order extends BasicAggregateRoot
 {
     #[Id]
@@ -706,10 +745,12 @@ use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
 use Patchlevel\EventSourcing\Attribute\Stream;
 
 #[Aggregate('shipping')]
 #[Stream(Order::class)]
+#[SharedApplyContext([Order::class])]
 final class Shipping extends BasicAggregateRoot
 {
     #[Id]
@@ -740,6 +781,11 @@ final class Shipping extends BasicAggregateRoot
     }
 }
 ```
+!!! tip
+
+    With the [SharedApplyContext](./aggregate.md#shared-apply-context) attribute,
+    you can suppress missing applies for events that are handled by other aggregates.
+    
 ### Child Aggregates
 
 ??? example "Experimental"

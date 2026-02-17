@@ -445,6 +445,12 @@ parameters:
 			path: tests/Unit/Fixture/ProfileWithHandler.php
 
 		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithSharedApplyContext\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithSharedApplyContext.php
+
+		-
 			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithSuppressAll\:\:\$id is unused\.$#'
 			identifier: property.unused
 			count: 1
