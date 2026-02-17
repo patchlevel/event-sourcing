@@ -66,8 +66,7 @@ final class Profile extends BasicAggregateRoot
         $this->recordThat(new SplittingEvent($this->email, $this->visits));
     }
 
-    #[Apply(ProfileCreated::class)]
-    #[Apply(ProfileVisited::class)]
+    #[Apply]
     protected function applyProfileCreated(ProfileCreated|ProfileVisited $event): void
     {
         if ($event instanceof ProfileCreated) {
