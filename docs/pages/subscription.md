@@ -422,6 +422,11 @@ Default, we provide the following cleanup tasks for `doctrine/dbal`:
 | `DropIndexTask` | Drops an index from a table. |
 | `DropTableTask` | Drops a table.               |
 
+!!! note
+
+    If you are passing connection registry, you can use the connection name as parameter.
+    The `connectionName` parameter is optional and defaults to the default connection.
+    
 !!! tip
 
     You can create your own cleanup tasks and handler.
@@ -1054,11 +1059,9 @@ Lastly, we have to add the new handler to `DefaultCleaner`,
 which is responsible for cleaning up subscriptions.
 
 ```php
-use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 
 $cleaner = new DefaultCleaner([
-    new DbalCleanupTaskHandler($projectionConnection),
     new MongodbCleanupTaskHandler($mongodbDatabase),
 ]);
 ```
@@ -1066,6 +1069,35 @@ $cleaner = new DefaultCleaner([
 
     You need to pass the Cleaner to the Subscription Engine.
     
+#### Dbal Cleanup Task Handler
+
+We provide a Dbal cleanup task handler by default.
+More information about the available tasks can be found in the [Dbal Cleanup Tasks](#dbal-cleanup-tasks) documentation.
+
+```php
+use Doctrine\Dbal\Connection;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
+
+/** @var Connection $connection */
+$cleaner = new DefaultCleaner([
+    new DbalCleanupTaskHandler($connection),
+]);
+```
+If you have multiple database connections and want to use the `DbalCleanupTaskHandler` to clean up the respective databases,
+you can also pass a `ConnectionRegistry` (from `doctrine/persistence`) to the `DbalCleanupTaskHandler`.
+Then you can pass the connection name as parameter in the cleanup task and the handler will use the corresponding connection to execute the task.
+
+```php
+use Doctrine\Persistence\ConnectionRegistry;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
+
+/** @var ConnectionRegistry $connectionRegistry */
+$cleaner = new DefaultCleaner([
+    new DbalCleanupTaskHandler($connectionRegistry),
+]);
+```
 ### Subscriber Accessor
 
 The subscriber accessor repository is responsible for providing the subscribers to the subscription engine.

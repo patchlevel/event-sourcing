@@ -8,6 +8,7 @@ final class DropTableTask
 {
     public function __construct(
         public readonly string $table,
+        public readonly string|null $connectionName = null,
     ) {
     }
 }

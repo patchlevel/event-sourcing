@@ -365,7 +365,7 @@ final class Profile extends BasicAggregateRoot
     
 ## Shared apply context
 
-When working with [micro-aggregates](./aggregate.md#micro-aggregates), 
+When working with [micro-aggregates](./aggregate.md#micro-aggregates),
 it’s common that events are applied by different aggregates.
 As a result, an aggregate may receive events it does not handle, which can lead to multiple “missing apply” warnings.
 
