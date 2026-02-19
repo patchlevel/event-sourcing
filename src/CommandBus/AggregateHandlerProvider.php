@@ -11,6 +11,9 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Psr\Container\ContainerInterface;
 
+use function class_implements;
+use function class_parents;
+
 final class AggregateHandlerProvider implements HandlerProvider
 {
     private bool $initialized = false;
@@ -36,7 +39,9 @@ final class AggregateHandlerProvider implements HandlerProvider
             $this->initialize();
         }
 
-        return $this->handlers[$commandClass] ?? [];
+        foreach (self::resolveClasses($commandClass) as $class) {
+            yield from $this->handlers[$class] ?? [];
+        }
     }
 
     private function initialize(): void
@@ -68,5 +73,20 @@ final class AggregateHandlerProvider implements HandlerProvider
         }
 
         $this->initialized = true;
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @return array<class-string, class-string>
+     */
+    private static function resolveClasses(string $class): array
+    {
+        /** @var array<class-string, class-string> $classes */
+        $classes = [$class => $class]
+            + class_parents($class)
+            + class_implements($class);
+
+        return $classes;
     }
 }

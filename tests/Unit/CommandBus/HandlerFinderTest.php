@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\CommandBus\HandlerFinder;
 use Patchlevel\EventSourcing\CommandBus\HandlerReference;
 use Patchlevel\EventSourcing\CommandBus\InvalidHandleMethod;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ChangeProfileName;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\CreateProfile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -103,6 +104,41 @@ final class HandlerFinderTest extends TestCase
 
         self::assertEquals([
             new HandlerReference(CreateProfile::class, 'handle', false),
+        ], $result);
+    }
+
+    public function testWithUnionTypeGuessing(): void
+    {
+        $class = new class () {
+            #[Handle]
+            public function handle(CreateProfile|ChangeProfileName $command): void
+            {
+            }
+        };
+
+        $result = [...HandlerFinder::findInClass($class::class)];
+
+        self::assertEquals([
+            new HandlerReference(ChangeProfileName::class, 'handle', false),
+            new HandlerReference(CreateProfile::class, 'handle', false),
+        ], $result);
+    }
+
+    public function testWithMultipleAttributes(): void
+    {
+        $class = new class () {
+            #[Handle(CreateProfile::class)]
+            #[Handle(ChangeProfileName::class)]
+            public function handle(CreateProfile $command): void
+            {
+            }
+        };
+
+        $result = [...HandlerFinder::findInClass($class::class)];
+
+        self::assertEquals([
+            new HandlerReference(CreateProfile::class, 'handle', false),
+            new HandlerReference(ChangeProfileName::class, 'handle', false),
         ], $result);
     }
 }
