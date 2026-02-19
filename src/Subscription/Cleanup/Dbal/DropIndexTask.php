@@ -9,6 +9,7 @@ final class DropIndexTask
     public function __construct(
         public readonly string $index,
         public readonly string $table,
+        public readonly string|null $connectionName = null,
     ) {
     }
 }
