@@ -31,8 +31,10 @@ use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineReposi
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\AdjustStockForProduct;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\ChangeProfileName;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\CreateProfile;
+use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\DecreaseStockForProduct;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\MessageDecorator\FooMessageDecorator;
@@ -391,5 +393,51 @@ final class BasicIntegrationTest extends TestCase
         $result = $queryBus->dispatch(new QueryProfileName($profileId));
 
         self::assertSame('John Doe', $result);
+    }
+
+    public function testAggregateInitialization(): void
+    {
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            DefaultHeadersSerializer::createFromPaths([
+                __DIR__ . '/Header',
+            ]),
+        );
+
+        $aggregateRootRegistry = new AggregateRootRegistry(['stock' => Stock::class]);
+
+        $manager = new DefaultRepositoryManager(
+            $aggregateRootRegistry,
+            $store,
+            null,
+            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+            new FooMessageDecorator(),
+        );
+
+        $commandBus = SyncCommandBus::createForAggregateHandlers(
+            $aggregateRootRegistry,
+            $manager,
+        );
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            $store,
+        );
+
+        $schemaDirector->create();
+
+        $stockId = StockId::create();
+        $productId = ProductId::generate();
+
+        $commandBus->dispatch(new AdjustStockForProduct($stockId, $productId, 5));
+        $commandBus->dispatch(new DecreaseStockForProduct($stockId, $productId, 3));
+
+        $repository = $manager->get(Stock::class);
+        $stock = $repository->load($stockId);
+
+        self::assertEquals($stockId, $stock->aggregateRootId());
+        self::assertSame(3, $stock->playhead());
+        self::assertSame(2, $stock->stockFor($productId));
     }
 }

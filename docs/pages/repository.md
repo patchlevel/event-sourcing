@@ -198,12 +198,17 @@ $profile = $repository->load($id);
 !!! warning
 
     When the method is called, the aggregate is always reloaded and rebuilt from the database.
-    
+
 !!! note
 
     You can only fetch one aggregate at a time and don't do any complex queries either. 
     Projections are used for this purpose.
-    
+
+!!! tip
+
+    If you want to automatically initialize an aggregate if it cannot be found in the store, 
+    you can use the [Auto Initialize](aggregate.md#auto-initialize) feature.
+
 ### Has an aggregate
 
 You can also check whether an `aggregate` with a certain id exists.

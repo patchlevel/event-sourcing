@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\AutoInitialize;
 use Patchlevel\EventSourcing\Attribute\ChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
@@ -52,6 +53,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflectionClass);
         $applyMethods = $this->findApplyMethods($reflectionClass, $aggregate, $childAggregates);
         $snapshot = $this->findSnapshot($reflectionClass);
+        $autoInitializeMethod = $this->findAutoInitializeMethod($reflectionClass);
 
         $metadata = new AggregateRootMetadata(
             $aggregate,
@@ -63,6 +65,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $snapshot,
             array_map(static fn (array $list) => $list[0], $childAggregates),
             $this->findStreamName($reflectionClass),
+            $autoInitializeMethod,
         );
 
         $this->aggregateMetadata[$aggregate] = $metadata;
@@ -174,6 +177,19 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         }
 
         return $attributes[0]->newInstance()->name;
+    }
+
+    private function findAutoInitializeMethod(ReflectionClass $reflector): string|null
+    {
+        foreach ($reflector->getMethods() as $method) {
+            $attributes = $method->getAttributes(AutoInitialize::class);
+
+            if ($attributes !== []) {
+                return $method->getName();
+            }
+        }
+
+        return null;
     }
 
     /** @return list<array{string, ReflectionClass}> */

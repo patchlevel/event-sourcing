@@ -191,6 +191,11 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
+!!! tip
+
+    If you want to automatically initialize an aggregate if it cannot be found in the store, 
+    you can use the [Auto Initialize](aggregate.md#auto-initialize) feature.
+
 #### Inject Service
 
 You can inject services into aggregate handler methods.
