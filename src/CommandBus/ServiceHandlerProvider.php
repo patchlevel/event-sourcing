@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus;
 
+use function class_implements;
+use function class_parents;
+
 final class ServiceHandlerProvider implements HandlerProvider
 {
     private bool $initialized = false;
@@ -28,7 +31,9 @@ final class ServiceHandlerProvider implements HandlerProvider
             $this->initialize();
         }
 
-        return $this->handlers[$commandClass] ?? [];
+        foreach (self::resolveClasses($commandClass) as $class) {
+            yield from $this->handlers[$class] ?? [];
+        }
     }
 
     private function initialize(): void
@@ -50,5 +55,20 @@ final class ServiceHandlerProvider implements HandlerProvider
         }
 
         $this->initialized = true;
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @return array<class-string, class-string>
+     */
+    private static function resolveClasses(string $class): array
+    {
+        /** @var array<class-string, class-string> $classes */
+        $classes = [$class => $class]
+            + class_parents($class)
+            + class_implements($class);
+
+        return $classes;
     }
 }
