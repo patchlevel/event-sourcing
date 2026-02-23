@@ -876,6 +876,53 @@ final class Order extends BasicAggregateRoot
     }
 }
 ```
+
+## Auto Initialize
+
+??? example "Experimental"
+
+    This feature is still experimental and may change in the future.
+    Use it with caution.
+
+Sometimes you want to be able to access an aggregate even if it has not yet been created in the system. 
+In this case, the aggregate should be automatically initialized if it cannot be found in the store. 
+To achieve this, the aggregate must mark the initialization method with the `AutoInitialize` attribute.
+The method must be static, receives the aggregate ID as an argument and must return an instance of the aggregate.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\AutoInitialize;
+use Patchlevel\EventSourcing\Attribute\Id;
+
+#[Aggregate('profile')]
+final class Profile extends BasicAggregateRoot
+{
+    #[Id]
+    private Uuid $id;
+
+    #[AutoInitialize]
+    public static function initialize(Uuid $id): static
+    {
+        $self = new static();
+        $self->recordThat(new ProfileCreated($id));
+
+        return $self;
+    }
+
+    #[Apply]
+    public function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->id;
+    }
+}
+```
+!!! note
+
+    Recording events in the `initialize` method is optional but recommended.
+
 ## Aggregate Root Registry
 
 The library needs to know about all aggregates so that the correct aggregate class is used to load from the database.

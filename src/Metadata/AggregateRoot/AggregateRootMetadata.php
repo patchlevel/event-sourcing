@@ -28,6 +28,7 @@ final class AggregateRootMetadata
         /** @var list<string> */
         public readonly array $childAggregates = [],
         string|null $streamName = null,
+        public readonly string|null $autoInitializeMethod = null,
     ) {
         $this->streamName = $streamName ?? $this->name . '-{id}';
     }
