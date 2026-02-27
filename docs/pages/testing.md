@@ -26,10 +26,21 @@ final class ProfileTest extends AggregateRootTestCase
     {
         $this
             ->when(static fn () => Profile::createProfile(new CreateProfile(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de'))))
-            ->then(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de')));
+            ->then(
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de')),
+                static function (Profile $profile): void {
+                    self::assertSame('1', $profile->id()->toString());
+                    self::assertSame('hq@patchlevel.de', $profile->email()->toString());
+                    self::assertSame(0, $profile->visited());
+                },
+            );
     }
 }
 ```
+In addition to expected events, you can pass `Closure`s to `then`.
+The closure receives the aggregate instance after `when`, so you can run PHPUnit assertions on aggregate state.
+This support is available since `patchlevel/event-sourcing-phpunit` `1.5`.
+
 You can also prepare the aggregate with events to set it to a specific state and then test whether it behaves as
 expected.
 
@@ -50,7 +61,14 @@ final class ProfileTest extends AggregateRootTestCase
                 ),
             )
             ->when(static fn (Profile $profile) => $profile->visitProfile(ProfileId::fromString('2')))
-            ->then(new ProfileVisited(ProfileId::fromString('2')));
+            ->then(
+                new ProfileVisited(ProfileId::fromString('2')),
+                static function (Profile $profile): void {
+                    self::assertSame('1', $profile->id()->toString());
+                    self::assertSame('hq@patchlevel.de', $profile->email()->toString());
+                    self::assertSame(1, $profile->visited());
+                },
+            );
     }
 }
 ```
@@ -70,7 +88,10 @@ final class ProfileTest extends AggregateRootTestCase
     {
         $this
             ->when(new CreateProfile(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de')))
-            ->then(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de')));
+            ->then(
+                new ProfileCreated(ProfileId::fromString('1'), Email::fromString('hq@patchlevel.de')),
+                static fn (Profile $profile) => self::assertSame('hq@patchlevel.de', $profile->email()->toString()),
+            );
     }
 }
 ```
@@ -99,6 +120,7 @@ final class ProfileTest extends AggregateRootTestCase
             )
             ->then(
                 new ProfileVisited(ProfileId::fromString('2'), 'Extra Parameter / Dependency'),
+                static fn (Profile $profile) => self::assertSame(1, $profile->visited()),
             );
     }
 }
@@ -176,11 +198,14 @@ final class ProfileTest extends AggregateRootTestCase
                 new ChangeEmail(ProfileId::fromString('1'), Email::fromString('new-hq@patchlevel.de')),
                 $clock,
             )
-            ->then(new EmailChanged(
-                ProfileId::fromString('1'),
-                Email::fromString('new-hq@patchlevel.de'),
-                new DateTimeImmutable('2021-01-01 00:00:10'),
-            ));
+            ->then(
+                new EmailChanged(
+                    ProfileId::fromString('1'),
+                    Email::fromString('new-hq@patchlevel.de'),
+                    new DateTimeImmutable('2021-01-01 00:00:10'),
+                ),
+                static fn (Profile $profile) => self::assertSame('new-hq@patchlevel.de', $profile->email()->toString()),
+            );
     }
 }
 ```
