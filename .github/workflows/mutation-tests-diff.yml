@@ -32,7 +32,7 @@ jobs:
                   coverage: "pcov"
                   php-version: "${{ matrix.php-version }}"
                   ini-values: memory_limit=-1
-                  extensions: pdo_sqlite
+                  extensions: pdo_sqlite, pdo_pgsql
 
             - uses: ramsey/composer-install@3.1.1
               with:
