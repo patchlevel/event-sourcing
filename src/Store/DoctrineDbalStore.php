@@ -34,6 +34,7 @@ use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use PDO;
+use Pdo\Pgsql;
 
 use function array_fill;
 use function array_filter;
@@ -48,6 +49,8 @@ use function in_array;
 use function is_int;
 use function is_string;
 use function sprintf;
+
+use const PHP_VERSION_ID;
 
 final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchemaConfigurator
 {
@@ -386,10 +389,15 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
 
         $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->config['table_name']));
 
-        /** @var PDO $nativeConnection */
-        $nativeConnection = $this->connection->getNativeConnection();
-
-        $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        if (PHP_VERSION_ID >= 80400) {
+            /** @var Pgsql $nativeConnection */
+            $nativeConnection = $this->connection->getNativeConnection();
+            $nativeConnection->getNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        } else {
+            /** @var PDO $nativeConnection */
+            $nativeConnection = $this->connection->getNativeConnection();
+            $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        }
     }
 
     public function setupSubscription(): void

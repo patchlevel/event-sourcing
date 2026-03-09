@@ -41,6 +41,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileEmailChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PDO;
+use Pdo\Pgsql;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
@@ -1343,7 +1344,39 @@ final class DoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore->setupSubscription();
     }
 
+    #[RequiresPhp('>= 8.4')]
     public function testWait(): void
+    {
+        $nativeConnection = $this->createMock(Pgsql::class);
+        $nativeConnection
+            ->expects($this->once())
+            ->method('getNotify')
+            ->with(PDO::FETCH_ASSOC, 100)
+            ->willReturn([]);
+
+        $connection = $this->createMock(Connection::class);
+        $connection->expects($this->once())->method('executeStatement')->with('LISTEN "eventstore"')
+            ->willReturn(1);
+        $connection->expects($this->once())->method('getNativeConnection')
+            ->willReturn($nativeConnection);
+
+        $abstractPlatform = $this->createMock(PostgreSQLPlatform::class);
+        $connection->expects($this->once())->method('getDatabasePlatform')->willReturn($abstractPlatform);
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $doctrineDbalStore = new DoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
+        );
+
+        $doctrineDbalStore->wait(100);
+    }
+
+    #[RequiresPhp('< 8.4')]
+    public function testWaitDeprecatedFunction(): void
     {
         $nativeConnection = $this->getMockBuilder(PDO::class)
             ->disableOriginalConstructor()

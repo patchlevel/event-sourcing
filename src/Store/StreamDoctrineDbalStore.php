@@ -39,6 +39,7 @@ use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use PDO;
+use Pdo\Pgsql;
 use Psr\Clock\ClockInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -57,6 +58,8 @@ use function is_string;
 use function sprintf;
 use function str_contains;
 use function str_replace;
+
+use const PHP_VERSION_ID;
 
 final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
 {
@@ -465,10 +468,15 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
         $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->config['table_name']));
 
-        /** @var PDO $nativeConnection */
-        $nativeConnection = $this->connection->getNativeConnection();
-
-        $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        if (PHP_VERSION_ID >= 80400) {
+            /** @var Pgsql $nativeConnection */
+            $nativeConnection = $this->connection->getNativeConnection();
+            $nativeConnection->getNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        } else {
+            /** @var PDO $nativeConnection */
+            $nativeConnection = $this->connection->getNativeConnection();
+            $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        }
     }
 
     public function setupSubscription(): void
