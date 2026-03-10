@@ -416,16 +416,16 @@
         },
         {
             "name": "patchlevel/hydrator",
-            "version": "1.16.0",
+            "version": "1.17.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/patchlevel/hydrator.git",
-                "reference": "27b29f806f366194752cbaaa241e426bed2d942f"
+                "reference": "9c10c8781000abee812448da3f61ba12a005646f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/27b29f806f366194752cbaaa241e426bed2d942f",
-                "reference": "27b29f806f366194752cbaaa241e426bed2d942f",
+                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/9c10c8781000abee812448da3f61ba12a005646f",
+                "reference": "9c10c8781000abee812448da3f61ba12a005646f",
                 "shasum": ""
             },
             "require": {
@@ -474,9 +474,9 @@
             ],
             "support": {
                 "issues": "https://github.com/patchlevel/hydrator/issues",
-                "source": "https://github.com/patchlevel/hydrator/tree/1.16.0"
+                "source": "https://github.com/patchlevel/hydrator/tree/1.17.0"
             },
-            "time": "2026-02-17T11:56:35+00:00"
+            "time": "2026-03-09T15:44:23+00:00"
         },
         {
             "name": "patchlevel/worker",
