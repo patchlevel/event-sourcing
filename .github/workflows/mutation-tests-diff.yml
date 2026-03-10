@@ -34,7 +34,7 @@ jobs:
                   ini-values: memory_limit=-1
                   extensions: pdo_sqlite, pdo_pgsql
 
-            - uses: ramsey/composer-install@3.1.1
+            - uses: ramsey/composer-install@3.2.0
               with:
                   dependency-versions: ${{ matrix.dependencies }}
 
