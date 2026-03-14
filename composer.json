@@ -4,8 +4,20 @@
   "license": "MIT",
   "description": "A lightweight but also all-inclusive event sourcing library with a focus on developer experience",
   "keywords": [
+    "events",
+    "aggregates",
+    "messages",
     "event-sourcing",
-    "ddd"
+    "domain driven design",
+    "ddd",
+    "cqrs",
+    "projection",
+    "processor",
+    "event driven",
+    "message driven",
+    "dcb",
+    "dynamic consistency boundary",
+    "patchlevel"
   ],
   "homepage": "https://event-sourcing.patchlevel.io",
   "authors": [
