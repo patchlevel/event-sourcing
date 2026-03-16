@@ -35,11 +35,11 @@ jobs:
                   php-version: "${{ matrix.php-version }}"
                   ini-values: memory_limit=-1
 
-            - uses: ramsey/composer-install@3.2.0
+            - uses: ramsey/composer-install@3.2.1
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
-            - uses: ramsey/composer-install@3.2.0
+            - uses: ramsey/composer-install@3.2.1
               with:
                   dependency-versions: ${{ matrix.dependencies }}
                   working-directory: 'tools'
