@@ -4398,16 +4398,16 @@
         },
         {
             "name": "phpat/phpat",
-            "version": "0.12.3",
+            "version": "0.12.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/carlosas/phpat.git",
-                "reference": "2412a8959254a076e751498cbba8cf29406e0cf4"
+                "reference": "5319264270c335f548451209bb0f32b55aa59924"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/carlosas/phpat/zipball/2412a8959254a076e751498cbba8cf29406e0cf4",
-                "reference": "2412a8959254a076e751498cbba8cf29406e0cf4",
+                "url": "https://api.github.com/repos/carlosas/phpat/zipball/5319264270c335f548451209bb0f32b55aa59924",
+                "reference": "5319264270c335f548451209bb0f32b55aa59924",
                 "shasum": ""
             },
             "require": {
@@ -4449,9 +4449,9 @@
             "description": "PHP Architecture Tester",
             "support": {
                 "issues": "https://github.com/carlosas/phpat/issues",
-                "source": "https://github.com/carlosas/phpat/tree/0.12.3"
+                "source": "https://github.com/carlosas/phpat/tree/0.12.4"
             },
-            "time": "2026-02-20T11:15:22+00:00"
+            "time": "2026-03-17T16:47:43+00:00"
         },
         {
             "name": "phpbench/container",
@@ -4652,11 +4652,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.1.41",
+            "version": "2.1.42",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/a2eae8f20856b3afe74bf1f9726ce8c11438e300",
-                "reference": "a2eae8f20856b3afe74bf1f9726ce8c11438e300",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/1279e1ce86ba768f0780c9d889852b4e02ff40d0",
+                "reference": "1279e1ce86ba768f0780c9d889852b4e02ff40d0",
                 "shasum": ""
             },
             "require": {
@@ -4701,7 +4701,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-03-16T18:24:10+00:00"
+            "time": "2026-03-17T14:58:32+00:00"
         },
         {
             "name": "phpstan/phpstan-phpunit",
