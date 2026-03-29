@@ -223,6 +223,18 @@ parameters:
 			path: src/Subscription/RetryStrategy/ClockBasedRetryStrategy.php
 
 		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Subscription/StatefulSubscriber/DoctrineStatefulSubscriberStore.php
+
+		-
+			message: '#^Parameter \#2 \$data of method Patchlevel\\Hydrator\\HydratorWithContext\:\:hydrate\(\) expects array\<string, mixed\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Subscription/StatefulSubscriber/DoctrineStatefulSubscriberStore.php
+
+		-
 			message: '#^Parameter \#3 \$errorContext of class Patchlevel\\EventSourcing\\Subscription\\SubscriptionError constructor expects list\<array\{namespace\: string, short_name\: string, class\: class\-string, message\: string, code\: int\|string, file\: string, line\: int, trace\: list\<array\{file\?\: string, line\?\: int, function\?\: string, class\?\: string, type\?\: string, args\?\: array\<mixed\>\}\>\}\>\|null, mixed given\.$#'
 			identifier: argument.type
 			count: 1

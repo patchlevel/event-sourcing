@@ -33,6 +33,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Subscription\StatefulSubscriber\DoctrineStatefulSubscriberStore;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupResolver;
@@ -43,6 +44,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProd
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerWithSelfRecoverySubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\LookupSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\MigrateAggregateToStreamStoreSubscriber;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileInlineStatefulSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNewProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
@@ -53,6 +55,7 @@ use RuntimeException;
 
 use function gc_collect_cycles;
 use function iterator_to_array;
+use function json_decode;
 use function sprintf;
 
 #[CoversNothing]
@@ -1630,6 +1633,132 @@ final class SubscriptionTest extends TestCase
         self::assertEquals('test', $subscriptions[0]->id());
         self::assertEquals('new-group', $subscriptions[0]->group());
         self::assertEquals(RunMode::FromNow, $subscriptions[0]->runMode());
+    }
+
+    public function testStatefulSubscriber(): void
+    {
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $stateStore = new DoctrineStatefulSubscriberStore($this->connection);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+                $stateStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([
+            new ProfileInlineStatefulSubscriber(
+                $stateStore,
+            ),
+        ]);
+
+        $engine = new DefaultSubscriptionEngine(
+            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_inline',
+                    'projector',
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $engine->subscriptions(),
+        );
+
+        $result = $engine->setup();
+
+        self::assertEquals([], $result->errors);
+
+        $result = $engine->boot();
+
+        self::assertEquals(0, $result->processedMessages);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_inline',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $engine->subscriptions(),
+        );
+
+        $profileId = ProfileId::fromString('019d3991-e575-73b2-a18c-7da3fd7f5d70');
+        $profile = Profile::create($profileId, 'John');
+        $repository->save($profile);
+
+        $result = $engine->run();
+
+        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals([], $result->errors);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'profile_inline',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    1,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $engine->subscriptions(),
+        );
+
+        $result = $this->connection->fetchAssociative(
+            'SELECT * FROM stateful_subscriber_state WHERE id = ?',
+            ['profile_inline'],
+        );
+
+        self::assertIsArray($result);
+        self::assertArrayHasKey('id', $result);
+        self::assertEquals('profile_inline', $result['id']);
+
+        self::assertArrayHasKey('state', $result);
+        self::assertIsString($result['state']);
+
+        self::assertEquals(
+            ['profiles' => ['019d3991-e575-73b2-a18c-7da3fd7f5d70' => 'John']],
+            json_decode($result['state'], true),
+        );
+
+        $projection = new ProfileInlineStatefulSubscriber(
+            $stateStore,
+        );
+
+        self::assertEquals(['019d3991-e575-73b2-a18c-7da3fd7f5d70' => 'John'], $projection->profiles);
     }
 
     /** @param list<Subscription> $subscriptions */
