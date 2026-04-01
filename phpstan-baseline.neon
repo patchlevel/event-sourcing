@@ -127,12 +127,6 @@ parameters:
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
-			message: '#^Parameter \#1 \$tableName of method Doctrine\\DBAL\\Schema\\AbstractSchemaManager\<Doctrine\\DBAL\\Platforms\\AbstractPlatform\>\:\:introspectTableIndexesByUnquotedName\(\) expects non\-empty\-string, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Subscription/Cleanup/Dbal/DbalCleanupTaskHandler.php
-
-		-
 			message: '#^Generator expects key type int, int\<1, max\>\|null given\.$#'
 			identifier: generator.keyType
 			count: 1
@@ -317,6 +311,12 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: tests/Integration/Store/StreamDoctrineDbalStoreTest.php
+
+		-
+			message: '#^Parameter \#1 \$table of class Patchlevel\\EventSourcing\\Subscription\\Cleanup\\Dbal\\DropTableTask constructor expects non\-empty\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/Subscription/Subscriber/ProfileProjectionWithCleanup.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 0 and array\{Patchlevel\\EventSourcing\\Subscription\\Subscription\} will always evaluate to true\.$#'
