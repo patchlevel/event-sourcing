@@ -9,6 +9,8 @@ use Doctrine\Persistence\ConnectionRegistry;
 use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskNotSupported;
 
+use function strtolower;
+
 final class DbalCleanupTaskHandler implements CleanupTaskHandler
 {
     public function __construct(
@@ -19,13 +21,27 @@ final class DbalCleanupTaskHandler implements CleanupTaskHandler
     public function __invoke(object $task): void
     {
         if ($task instanceof DropTableTask) {
-            $this->connection($task->connectionName)->createSchemaManager()->dropTable($task->table);
+            $schemaManager = $this->connection($task->connectionName)->createSchemaManager();
+            if ($schemaManager->tablesExist([$task->table])) {
+                $schemaManager->dropTable($task->table);
+            }
 
             return;
         }
 
         if ($task instanceof DropIndexTask) {
-            $this->connection($task->connectionName)->createSchemaManager()->dropIndex($task->index, $task->table);
+            $schemaManager = $this->connection($task->connectionName)->createSchemaManager();
+
+            if (!$schemaManager->tablesExist([$task->table])) {
+                return;
+            }
+
+            foreach ($schemaManager->introspectTableIndexesByUnquotedName($task->table) as $index) {
+                if (strtolower($index->getObjectName()->toString()) === strtolower($task->index)) {
+                    $schemaManager->dropIndex($task->index, $task->table);
+                    break;
+                }
+            }
 
             return;
         }
