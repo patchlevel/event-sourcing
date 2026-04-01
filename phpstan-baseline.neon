@@ -127,6 +127,12 @@ parameters:
 			path: src/Store/StreamDoctrineDbalStoreStream.php
 
 		-
+			message: '#^Parameter \#1 \$tableName of method Doctrine\\DBAL\\Schema\\AbstractSchemaManager\<Doctrine\\DBAL\\Platforms\\AbstractPlatform\>\:\:introspectTableIndexesByUnquotedName\(\) expects non\-empty\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Subscription/Cleanup/Dbal/DbalCleanupTaskHandler.php
+
+		-
 			message: '#^Generator expects key type int, int\<1, max\>\|null given\.$#'
 			identifier: generator.keyType
 			count: 1
@@ -337,18 +343,6 @@ parameters:
 			path: tests/Unit/Aggregate/AggregateRootTest.php
 
 		-
-			message: '#^Cannot access offset 0 on iterable\<int, Patchlevel\\EventSourcing\\CommandBus\\HandlerDescriptor\>\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Unit/CommandBus/AggregateHandlerProviderTest.php
-
-		-
-			message: '#^Cannot call method callable\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: tests/Unit/CommandBus/AggregateHandlerProviderTest.php
-
-		-
 			message: '#^Parameter \#2 \$aggregateClass of class Patchlevel\\EventSourcing\\CommandBus\\Handler\\CreateAggregateHandler constructor expects class\-string\<Patchlevel\\EventSourcing\\Aggregate\\AggregateRoot\>, string given\.$#'
 			identifier: argument.type
 			count: 1
@@ -365,18 +359,6 @@ parameters:
 			identifier: argument.type
 			count: 5
 			path: tests/Unit/CommandBus/InstantRetryCommandBusTest.php
-
-		-
-			message: '#^Cannot access offset 0 on iterable\<int, Patchlevel\\EventSourcing\\CommandBus\\HandlerDescriptor\>\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Unit/CommandBus/ServiceHandlerProviderTest.php
-
-		-
-			message: '#^Cannot call method callable\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: tests/Unit/CommandBus/ServiceHandlerProviderTest.php
 
 		-
 			message: '#^Parameter \#1 \$data of static method Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\Message\:\:fromArray\(\) expects array\{id\: string, text\: string, createdAt\: string\}, array\<mixed, mixed\> given\.$#'
