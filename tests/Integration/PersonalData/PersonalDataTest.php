@@ -6,7 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData;
 
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
+use Patchlevel\EventSourcing\Cryptography\ExtensionDoctrineCipherKeyStore;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
@@ -19,7 +21,11 @@ use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Processor\DeletePersonalDataProcessor;
+use Patchlevel\Hydrator\CoreExtension;
 use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
+use Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer;
+use Patchlevel\Hydrator\Extension\Cryptography\CryptographyExtension;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
@@ -231,5 +237,163 @@ final class PersonalDataTest extends TestCase
         self::assertEquals($profileId, $profile->aggregateRootId());
         self::assertSame(2, $profile->playhead());
         self::assertSame('unknown', $profile->name());
+    }
+
+    public function testWithStackHydrator(): void
+    {
+        $cipherKeyStore = new ExtensionDoctrineCipherKeyStore($this->connection);
+        $extension = new CryptographyExtension(
+            BaseCryptographer::createWithOpenssl($cipherKeyStore),
+        );
+
+        $eventSerializer = new DefaultEventSerializer(
+            (new AttributeEventRegistryFactory())->create([__DIR__ . '/Events']),
+            (new StackHydratorBuilder())
+                ->useExtension(new CoreExtension())
+                ->useExtension($extension)
+                ->build(),
+        );
+
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            $eventSerializer,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $cipherKeyStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $profileId = ProfileId::generate();
+        $profile = Profile::create($profileId, 'John');
+
+        $repository->save($profile);
+
+        $profile = $repository->load($profileId);
+
+        self::assertInstanceOf(Profile::class, $profile);
+        self::assertEquals($profileId, $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
+        self::assertSame('John', $profile->name());
+
+        $result = $this->connection->fetchAllAssociative('SELECT * FROM eventstore');
+
+        self::assertCount(1, $result);
+        self::assertArrayHasKey(0, $result);
+
+        $row = $result[0];
+
+        self::assertStringNotContainsString('John', $row['payload']);
+    }
+
+    public function testWithStackHydratorWithLegacyFallback(): void
+    {
+        $extensionCipherKeyStore = new ExtensionDoctrineCipherKeyStore($this->connection);
+        $legacyCipherKeyStore = new DoctrineCipherKeyStore($this->connection);
+
+        $cryptographer = PersonalDataPayloadCryptographer::createWithOpenssl($legacyCipherKeyStore);
+
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events'], cryptographer: $cryptographer),
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $legacyCipherKeyStore,
+                $extensionCipherKeyStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $profileId = ProfileId::generate();
+        $profile = Profile::create($profileId, 'John');
+
+        $repository->save($profile);
+
+        // switch to new hydrator
+
+        $extension = new CryptographyExtension(
+            BaseCryptographer::createWithOpenssl($extensionCipherKeyStore),
+            PersonalDataPayloadCryptographer::createWithOpenssl($legacyCipherKeyStore),
+        );
+
+        $eventSerializer = new DefaultEventSerializer(
+            (new AttributeEventRegistryFactory())->create([__DIR__ . '/Events']),
+            (new StackHydratorBuilder())
+                ->useExtension(new CoreExtension())
+                ->useExtension($extension)
+                ->build(),
+        );
+
+        $store = new DoctrineDbalStore(
+            $this->connection,
+            $eventSerializer,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+        $profile = $repository->load($profileId);
+
+        self::assertInstanceOf(Profile::class, $profile);
+        self::assertEquals($profileId, $profile->aggregateRootId());
+        self::assertSame(1, $profile->playhead());
+        self::assertSame('John', $profile->name());
+
+        $result = $this->connection->fetchAllAssociative('SELECT * FROM eventstore');
+
+        self::assertCount(1, $result);
+        self::assertArrayHasKey(0, $result);
+
+        $row = $result[0];
+
+        self::assertStringNotContainsString('John', $row['payload']);
+
+        $result = $this->connection->fetchAllAssociative('SELECT * FROM crypto_keys');
+
+        self::assertCount(1, $result);
+        self::assertArrayHasKey(0, $result);
+
+        $row = $result[0];
+
+        self::assertEquals($profileId->toString(), $row['subject_id']);
+
+        $result = $this->connection->fetchAllAssociative('SELECT * FROM cryptography_keys');
+
+        self::assertCount(0, $result);
+
+        $profile->changeName('John 2');
+        $repository->save($profile);
+
+        $result = $this->connection->fetchAllAssociative('SELECT * FROM cryptography_keys');
+
+        self::assertCount(1, $result);
+        self::assertEquals($profileId->toString(), $row['subject_id']);
     }
 }
