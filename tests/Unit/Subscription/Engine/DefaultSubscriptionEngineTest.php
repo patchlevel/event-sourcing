@@ -3785,15 +3785,15 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         $task = new DropTableTask('test');
 
-        $subscriptionStore = new DummySubscriptionStore([
-            new Subscription(
-                $subscriptionId,
-                Subscription::DEFAULT_GROUP,
-                RunMode::FromBeginning,
-                Status::Detached,
-                cleanupTasks: [$task],
-            ),
-        ]);
+        $subscription = new Subscription(
+            $subscriptionId,
+            Subscription::DEFAULT_GROUP,
+            RunMode::FromBeginning,
+            Status::Detached,
+            cleanupTasks: [$task],
+        );
+
+        $subscriptionStore = new DummySubscriptionStore([$subscription]);
 
         $streamableStore = $this->createMock(Store::class);
 
@@ -3818,7 +3818,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         self::assertEquals($subscriptionId, $error->subscriptionId);
         self::assertInstanceOf(CleanupFailed::class, $error->throwable);
 
-        $subscriptionStore->assertNoChanges();
+        $subscriptionStore->assertRemoved($subscription);
     }
 
     public function testReactiveDiscoverNewSubscribers(): void
