@@ -644,7 +644,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshS
                     }
 
                     if ($subscription->hasCleanupTasks()) {
-                        $error = $this->cleanup($subscription);
+                        $error = $this->cleanup($subscription, true);
 
                         if ($error) {
                             $errors[] = $error;
@@ -1319,7 +1319,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshS
         return $this->retryStrategyRepository->get($retryStrategy);
     }
 
-    private function cleanup(Subscription $subscription): Error|null
+    private function cleanup(Subscription $subscription, bool $force = false): Error|null
     {
         if (!$this->cleaner) {
             throw new CleanerNotConfigured();
@@ -1341,6 +1341,15 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshS
                     $e->getMessage(),
                 ),
             );
+
+            if ($force) {
+                $this->subscriptionManager->remove($subscription);
+
+                $this->logger?->info(sprintf(
+                    'Subscription Engine: Subscription "%s" removed.',
+                    $subscription->id(),
+                ));
+            }
 
             return new Error(
                 $subscription->id(),
