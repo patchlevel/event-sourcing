@@ -72,9 +72,9 @@ final class ExtensionDoctrineCipherKeyStore implements CipherKeyStore, DoctrineS
 
         return new CipherKey(
             $result['id'],
+            $result['subject_id'],
             base64_decode($result['crypto_key']),
             $result['crypto_method'],
-            base64_decode($result['crypto_iv']),
             $this->dateTimeType->convertToPHPValue($result['created_at'], $this->connection->getDatabasePlatform()),
         );
     }
