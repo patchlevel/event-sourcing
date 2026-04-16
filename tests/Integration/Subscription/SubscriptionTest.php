@@ -1670,7 +1670,7 @@ final class SubscriptionTest extends TestCase
         $schemaDirector->create();
 
         $subscriberRepository = new MetadataSubscriberAccessorRepository([
-            new ProfileInlineStatefulSubscriber(
+            ProfileInlineStatefulSubscriber::createLazy(
                 $stateStore,
             ),
         ]);
