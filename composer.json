@@ -78,7 +78,8 @@
   },
   "autoload": {
     "psr-4": {
-      "Patchlevel\\EventSourcing\\": "src/"
+      "Patchlevel\\EventSourcing\\": "src/",
+      " Symfony\\Component\\": "extern/"
     }
   },
   "autoload-dev": {
