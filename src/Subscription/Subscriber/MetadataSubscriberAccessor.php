@@ -9,17 +9,15 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
-use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
 use Throwable;
 
 use function array_key_exists;
 use function array_keys;
 use function array_map;
-use function array_merge;
 
 /** @template T of object */
-final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscriberAccessor
+final class MetadataSubscriberAccessor
 {
     /** @var array<class-string, list<Closure(Message):void>> */
     private array $subscribeCache = [];
@@ -44,24 +42,6 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
     public function subscriber(): object
     {
         return $this->subscriber;
-    }
-
-    /** @deprecated use `->metadata()->id` instead */
-    public function id(): string
-    {
-        return $this->metadata->id;
-    }
-
-    /** @deprecated use `->metadata()->group` instead */
-    public function group(): string
-    {
-        return $this->metadata->group;
-    }
-
-    /** @deprecated use `->metadata()->runMode` instead */
-    public function runMode(): RunMode
-    {
-        return $this->metadata->runMode;
     }
 
     public function setupMethod(): Closure|null
@@ -127,10 +107,15 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
             return $this->subscribeCache[$eventClass];
         }
 
-        $methods = array_merge(
-            $this->metadata->subscribeMethods[$eventClass] ?? [],
-            $this->metadata->subscribeMethods[Subscribe::ALL] ?? [],
-        );
+        $methods = [];
+
+        if (array_key_exists($eventClass, $this->metadata->subscribeMethods)) {
+            $methods[] = $this->metadata->subscribeMethods[$eventClass];
+        }
+
+        if (array_key_exists(Subscribe::ALL, $this->metadata->subscribeMethods)) {
+            $methods[] = $this->metadata->subscribeMethods[Subscribe::ALL];
+        }
 
         $this->subscribeCache[$eventClass] = array_map(
             fn (SubscribeMethodMetadata $method): Closure => $this->createClosure($eventClass, $method),
@@ -187,15 +172,5 @@ final class MetadataSubscriberAccessor implements SubscriberAccessor, RealSubscr
         }
 
         return $resolvers;
-    }
-
-    /**
-     * @deprecated use `->metadata()` instead
-     *
-     * @return T
-     */
-    public function realSubscriber(): object
-    {
-        return $this->subscriber;
     }
 }

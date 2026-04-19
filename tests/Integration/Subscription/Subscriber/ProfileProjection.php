@@ -11,13 +11,12 @@ use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
-#[Projector('profile_1')]
+#[Projector(self::SUBSCRIBER_ID)]
 final class ProfileProjection implements BatchableSubscriber
 {
-    use SubscriberUtil;
+    private const SUBSCRIBER_ID = 'profile_1';
 
     public function __construct(
         private Connection $connection,
@@ -55,7 +54,7 @@ final class ProfileProjection implements BatchableSubscriber
 
     private function tableName(): string
     {
-        return 'projection_' . $this->subscriberId();
+        return 'projection_' . self::SUBSCRIBER_ID;
     }
 
     public function beginBatch(): void

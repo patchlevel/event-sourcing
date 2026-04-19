@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
@@ -22,8 +21,6 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\ArrayStream;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
@@ -32,7 +29,6 @@ use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\AutoInitializableProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -57,15 +53,11 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->atLeastOnce())
             ->method('save')
             ->willReturnCallback(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
+                if ($message->header(StreamNameHeader::class)->streamName !== 'profile-1') {
                     return false;
                 }
 
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 1;
+                return $message->header(PlayheadHeader::class)->playhead === 1;
             });
 
         $repository = new DefaultRepository($store, Profile::metadata());
@@ -86,19 +78,15 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->exactly(2))
             ->method('save')
             ->willReturnCallback(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
+                if ($message->header(StreamNameHeader::class)->streamName !== 'profile-1') {
                     return false;
                 }
 
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->playhead === 1 && $message->event()::class === ProfileCreated::class) {
+                if ($message->header(PlayheadHeader::class)->playhead === 1 && $message->event()::class === ProfileCreated::class) {
                     return true;
                 }
 
-                return $message->header(AggregateHeader::class)->playhead === 2 && $message->event()::class === ProfileVisited::class;
+                return $message->header(PlayheadHeader::class)->playhead === 2 && $message->event()::class === ProfileVisited::class;
             });
 
         $repository = new DefaultRepository($store, Profile::metadata());
@@ -122,19 +110,15 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->exactly(2))
             ->method('dispatch')
             ->willReturnCallback(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
+                if ($message->header(StreamNameHeader::class)->streamName !== 'profile-1') {
                     return false;
                 }
 
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->playhead === 1 && $message->event()::class === ProfileCreated::class) {
+                if ($message->header(PlayheadHeader::class)->playhead === 1 && $message->event()::class === ProfileCreated::class) {
                     return true;
                 }
 
-                return $message->header(AggregateHeader::class)->playhead === 2 && $message->event()::class === ProfileVisited::class;
+                return $message->header(PlayheadHeader::class)->playhead === 2 && $message->event()::class === ProfileVisited::class;
             });
 
         $repository = new DefaultRepository($store, Profile::metadata(), $eventBus);
@@ -155,11 +139,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->atLeastOnce())
             ->method('save')
             ->willReturnCallback(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
-                    return false;
-                }
-
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
+                if ($message->header(StreamNameHeader::class)->streamName !== 'profile-1') {
                     return false;
                 }
 
@@ -167,7 +147,7 @@ final class DefaultRepositoryTest extends TestCase
                     return false;
                 }
 
-                return $message->header(AggregateHeader::class)->playhead === 1;
+                return $message->header(PlayheadHeader::class)->playhead === 1;
             });
 
         $decorator = new class implements MessageDecorator {
@@ -219,15 +199,11 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('save')
             ->willReturnCallback(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
+                if ($message->header(StreamNameHeader::class)->streamName !== 'profile-1') {
                     return false;
                 }
 
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 1;
+                return $message->header(PlayheadHeader::class)->playhead === 1;
             });
 
         $repository = new DefaultRepository($store, Profile::metadata());
@@ -341,16 +317,16 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->atLeastOnce())
             ->method('save')
             ->willReturnCallback(static function (Message $message) {
-                if ($message->header(AggregateHeader::class)->aggregateName !== 'profile') {
+                if ($message->header(StreamNameHeader::class)->streamName !== 'profile-1') {
                     return false;
                 }
 
-                if ($message->header(AggregateHeader::class)->aggregateId !== '1') {
-                    return false;
-                }
-
-                return $message->header(AggregateHeader::class)->playhead === 1;
+                return $message->header(PlayheadHeader::class)->playhead === 1;
             });
+
+        $store->expects($this->once())->method('transactional')->willReturnCallback(static function (callable $callback): void {
+            $callback();
+        });
 
         $repository = new DefaultRepository(
             $store,
@@ -377,8 +353,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('load')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile-1'),
                 new ArchivedCriterion(false),
             ))->willReturn(new ArrayStream([
                 Message::create(
@@ -386,7 +361,10 @@ final class DefaultRepositoryTest extends TestCase
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de'),
                     ),
-                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                )
+                    ->withHeader(new StreamNameHeader('profile-1'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
             ]));
 
         $repository = new DefaultRepository($store, Profile::metadata());
@@ -406,8 +384,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->exactly(2))
             ->method('load')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile-1'),
                 new ArchivedCriterion(false),
             ))->willReturn(
                 new ArrayStream([
@@ -416,7 +393,10 @@ final class DefaultRepositoryTest extends TestCase
                             ProfileId::fromString('1'),
                             Email::fromString('hallo@patchlevel.de'),
                         ),
-                    )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                    )
+                        ->withHeader(new StreamNameHeader('profile-1'))
+                        ->withHeader(new PlayheadHeader(1))
+                        ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
                 ]),
                 new ArrayStream([
                     Message::create(
@@ -424,7 +404,10 @@ final class DefaultRepositoryTest extends TestCase
                             ProfileId::fromString('1'),
                             Email::fromString('hallo@patchlevel.de'),
                         ),
-                    )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                    )
+                        ->withHeader(new StreamNameHeader('profile-1'))
+                        ->withHeader(new PlayheadHeader(1))
+                        ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
                 ]),
             );
 
@@ -446,8 +429,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('load')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile-1'),
                 new ArchivedCriterion(false),
             ))
             ->willReturn(new ArrayStream());
@@ -464,8 +446,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('count')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile-1'),
             ))
             ->willReturn(1);
 
@@ -481,8 +462,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('count')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile-1'),
             ))
             ->willReturn(0);
 
@@ -505,8 +485,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('load')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile_with_snapshot'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile_with_snapshot-1'),
                 new FromPlayheadCriterion(1),
             ))
             ->willReturn(new ArrayStream());
@@ -536,8 +515,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('load')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile_with_snapshot'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile_with_snapshot-1'),
                 new ArchivedCriterion(false),
             ))
             ->willReturn(
@@ -547,17 +525,26 @@ final class DefaultRepositoryTest extends TestCase
                             ProfileId::fromString('1'),
                             Email::fromString('hallo@patchlevel.de'),
                         ),
-                    )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                    )
+                        ->withHeader(new StreamNameHeader('profile_with_snapshot-1'))
+                        ->withHeader(new PlayheadHeader(1))
+                        ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
                     Message::create(
                         new ProfileVisited(
                             ProfileId::fromString('1'),
                         ),
-                    )->withHeader(new AggregateHeader('profile', '1', 2, new DateTimeImmutable())),
+                    )
+                        ->withHeader(new StreamNameHeader('profile_with_snapshot-1'))
+                        ->withHeader(new PlayheadHeader(2))
+                        ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
                     Message::create(
                         new ProfileVisited(
                             ProfileId::fromString('1'),
                         ),
-                    )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
+                    )
+                        ->withHeader(new StreamNameHeader('profile_with_snapshot-1'))
+                        ->withHeader(new PlayheadHeader(3))
+                        ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
                 ]),
             );
 
@@ -606,8 +593,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('load')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile_with_snapshot'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile_with_snapshot-1'),
                 new FromPlayheadCriterion(1),
             ))
             ->willReturn(new ArrayStream([
@@ -615,17 +601,26 @@ final class DefaultRepositoryTest extends TestCase
                     new ProfileVisited(
                         ProfileId::fromString('1'),
                     ),
-                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                )
+                    ->withHeader(new StreamNameHeader('profile-1'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
                 Message::create(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
                     ),
-                )->withHeader(new AggregateHeader('profile', '1', 2, new DateTimeImmutable())),
+                )
+                    ->withHeader(new StreamNameHeader('profile-1'))
+                    ->withHeader(new PlayheadHeader(2))
+                    ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
                 Message::create(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
                     ),
-                )->withHeader(new AggregateHeader('profile', '1', 3, new DateTimeImmutable())),
+                )
+                    ->withHeader(new StreamNameHeader('profile-1'))
+                    ->withHeader(new PlayheadHeader(3))
+                    ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
             ]));
 
         $snapshotStore = $this->createMock(SnapshotStore::class);
@@ -662,8 +657,7 @@ final class DefaultRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('load')
             ->with(new Criteria(
-                new AggregateNameCriterion('profile_with_snapshot'),
-                new AggregateIdCriterion('1'),
+                new StreamCriterion('profile_with_snapshot-1'),
                 new ArchivedCriterion(false),
             ))
             ->willReturn(new ArrayStream([
@@ -672,7 +666,10 @@ final class DefaultRepositoryTest extends TestCase
                         ProfileId::fromString('1'),
                         Email::fromString('hallo@patchlevel.de'),
                     ),
-                )->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable())),
+                )
+                    ->withHeader(new StreamNameHeader('profile-1'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
             ]));
 
         $snapshotStore = $this->createMock(SnapshotStore::class);
@@ -699,7 +696,7 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testSaveAggregateInOtherStream(): void
     {
-        $store = $this->createMock(StreamStore::class);
+        $store = $this->createMock(Store::class);
         $store
             ->expects($this->once())
             ->method('save')
@@ -723,7 +720,7 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testLoadAggregateFromOtherStream(): void
     {
-        $store = $this->createMock(StreamStore::class);
+        $store = $this->createMock(Store::class);
 
         $store
             ->expects($this->once())

@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArg
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Symfony\Component\TypeInfo\Type;
 
 #[CoversClass(MessageArgumentResolver::class)]
 final class MessageArgumentResolverTest extends TestCase
@@ -20,14 +21,14 @@ final class MessageArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', Message::class, false),
+                new ArgumentMetadata('foo', Type::object(Message::class)),
                 'qux',
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', 'bar', false),
+                new ArgumentMetadata('foo', Type::string()),
                 'qux',
             ),
         );
@@ -41,7 +42,7 @@ final class MessageArgumentResolverTest extends TestCase
         self::assertSame(
             $message,
             $resolver->resolve(
-                new ArgumentMetadata('foo', Message::class, false),
+                new ArgumentMetadata('foo', Type::object(Message::class)),
                 $message,
             ),
         );

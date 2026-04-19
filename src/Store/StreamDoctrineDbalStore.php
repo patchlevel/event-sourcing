@@ -61,7 +61,7 @@ use function str_replace;
 
 use const PHP_VERSION_ID;
 
-final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
+final class StreamDoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchemaConfigurator
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.

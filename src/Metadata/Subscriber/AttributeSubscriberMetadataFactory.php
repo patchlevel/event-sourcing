@@ -14,13 +14,20 @@ use Patchlevel\EventSourcing\Attribute\Teardown;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
-use ReflectionNamedType;
+use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
 use function array_key_exists;
 use function count;
 
 final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFactory
 {
+    private readonly TypeResolver $typeResolver;
+
+    public function __construct()
+    {
+        $this->typeResolver = TypeResolver::create();
+    }
+
     /** @var array<class-string, SubscriberMetadata> */
     private array $subscriberMetadata = [];
 
@@ -60,12 +67,12 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                     throw DuplicateSubscribeMethod::duplicateEvent(
                         $subscriber,
                         $eventClass,
-                        $subscribeMethods[$eventClass][0]->name,
+                        $subscribeMethods[$eventClass]->name,
                         $method->getName(),
                     );
                 }
 
-                $subscribeMethods[$eventClass][] = $this->subscribeMethod($method);
+                $subscribeMethods[$eventClass] = $this->subscribeMethod($method);
             }
 
             if ($method->getAttributes(OnFailed::class)) {
@@ -171,18 +178,9 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 );
             }
 
-            if (!$type instanceof ReflectionNamedType) {
-                throw ArgumentTypeNotSupported::onlyNamedTypeSupported(
-                    $method->getDeclaringClass()->getName(),
-                    $method->getName(),
-                    $parameter->getName(),
-                );
-            }
-
             $arguments[] = new ArgumentMetadata(
                 $parameter->getName(),
-                $type->getName(),
-                $parameter->allowsNull(),
+                $this->typeResolver->resolve($type),
             );
         }
 

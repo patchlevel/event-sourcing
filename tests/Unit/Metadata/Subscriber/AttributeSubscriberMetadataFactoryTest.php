@@ -24,7 +24,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Stringable;
+use Symfony\Component\TypeInfo\Type;
 
 #[CoversClass(AttributeSubscriberMetadataFactory::class)]
 final class AttributeSubscriberMetadataFactoryTest extends TestCase
@@ -114,9 +114,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => [
-                    new SubscribeMethodMetadata('handle', []),
-                ],
+                ProfileVisited::class => new SubscribeMethodMetadata('handle', []),
             ],
             $metadata->subscribeMethods,
         );
@@ -141,8 +139,8 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => [new SubscribeMethodMetadata('handle', [])],
-                ProfileCreated::class => [new SubscribeMethodMetadata('handle', [])],
+                ProfileVisited::class => new SubscribeMethodMetadata('handle', []),
+                ProfileCreated::class => new SubscribeMethodMetadata('handle', []),
             ],
             $metadata->subscribeMethods,
         );
@@ -163,7 +161,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                '*' => [new SubscribeMethodMetadata('handle', [])],
+                '*' => new SubscribeMethodMetadata('handle', []),
             ],
             $metadata->subscribeMethods,
         );
@@ -189,17 +187,18 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => [
-                    new SubscribeMethodMetadata('profileVisited', [
-                        new ArgumentMetadata('message', Message::class, false),
-                    ]),
-                ],
-                ProfileCreated::class => [
-                    new SubscribeMethodMetadata('profileCreated', [
-                        new ArgumentMetadata('profileCreated', ProfileCreated::class, false),
-                        new ArgumentMetadata('aggregateId', 'string', false),
-                    ]),
-                ],
+                ProfileVisited::class => new SubscribeMethodMetadata(
+                    'profileVisited',
+                    [new ArgumentMetadata('message', Type::object(Message::class))],
+                ),
+
+                ProfileCreated::class => new SubscribeMethodMetadata(
+                    'profileCreated',
+                    [
+                        new ArgumentMetadata('profileCreated', Type::object(ProfileCreated::class)),
+                        new ArgumentMetadata('aggregateId', Type::string()),
+                    ],
+                ),
             ],
             $metadata->subscribeMethods,
         );
@@ -220,11 +219,9 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         self::assertEquals(
             [
-                ProfileVisited::class => [
-                    new SubscribeMethodMetadata('profileVisited', [
-                        new ArgumentMetadata('message', ProfileVisited::class, true),
-                    ]),
-                ],
+                ProfileVisited::class => new SubscribeMethodMetadata('profileVisited', [
+                    new ArgumentMetadata('message', Type::nullable(Type::object(ProfileVisited::class))),
+                ]),
             ],
             $metadata->subscribeMethods,
         );
@@ -242,38 +239,6 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
             {
             }
             // phpcs:enable
-        };
-
-        $metadataFactory = new AttributeSubscriberMetadataFactory();
-        $metadataFactory->metadata($subscriber::class);
-    }
-
-    public function testUnionTypeNotSupported(): void
-    {
-        $this->expectException(ArgumentTypeNotSupported::class);
-
-        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
-        class {
-            #[Subscribe(ProfileVisited::class)]
-            public function profileVisited(ProfileVisited|ProfileCreated $event): void
-            {
-            }
-        };
-
-        $metadataFactory = new AttributeSubscriberMetadataFactory();
-        $metadataFactory->metadata($subscriber::class);
-    }
-
-    public function testIntersectionTypeNotSupported(): void
-    {
-        $this->expectException(ArgumentTypeNotSupported::class);
-
-        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
-        class {
-            #[Subscribe(ProfileVisited::class)]
-            public function profileVisited(ProfileVisited&Stringable $event): void
-            {
-            }
         };
 
         $metadataFactory = new AttributeSubscriberMetadataFactory();

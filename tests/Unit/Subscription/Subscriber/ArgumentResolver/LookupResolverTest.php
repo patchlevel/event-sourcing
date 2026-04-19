@@ -4,23 +4,21 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentResolver;
 
-use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
-use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\AggregateIdArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupResolver;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\TypeInfo\Type;
 
-#[CoversClass(AggregateIdArgumentResolver::class)]
+#[CoversClass(LookupResolver::class)]
 final class LookupResolverTest extends TestCase
 {
     public function testSupport(): void
@@ -32,14 +30,14 @@ final class LookupResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('lookup', Lookup::class, false),
+                new ArgumentMetadata('lookup', Type::object(Lookup::class)),
                 ProfileCreated::class,
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileCreated::class, false),
+                new ArgumentMetadata('foo', Type::object(ProfileCreated::class)),
                 ProfileCreated::class,
             ),
         );
@@ -55,13 +53,11 @@ final class LookupResolverTest extends TestCase
         $resolver = new LookupResolver($store, $eventRegistry);
 
         $message = (new Message($event))->withHeader(
-            new AggregateHeader('foo', 'bar', 1, new DateTimeImmutable()),
-        )->withHeader(
             new IndexHeader(1),
         );
 
         $lookup = $resolver->resolve(
-            new ArgumentMetadata('foo', Lookup::class, false),
+            new ArgumentMetadata('foo', Type::object(Lookup::class)),
             $message,
         );
 
