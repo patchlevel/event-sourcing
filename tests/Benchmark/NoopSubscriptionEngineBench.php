@@ -19,15 +19,14 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
-use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Processor\SendEmailProcessor;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
-use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection\ProfileProjector;
+use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection\NoopProjector;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use PhpBench\Attributes as Bench;
 
 #[Bench\BeforeMethods('setUp')]
-final class SubscriptionEngineBench
+final class NoopSubscriptionEngineBench
 {
     private Store $store;
     private Repository $repository;
@@ -72,8 +71,7 @@ final class SubscriptionEngineBench
 
         $subscriberAccessorRepository = new MetadataSubscriberAccessorRepository(
             [
-                new ProfileProjector($connection),
-                new SendEmailProcessor(),
+                new NoopProjector(),
             ],
         );
 
