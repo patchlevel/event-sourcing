@@ -1,6 +1,36 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Patchlevel\\EventSourcing\\Aggregate\\AggregateRootId should not depend on Patchlevel\\EventSourcing\\Serializer\\Normalizer\\IdNormalizer$#'
+			identifier: phpat.testAggregateCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Aggregate/AggregateRootId.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Attribute\\Processor should not depend on Patchlevel\\EventSourcing\\Subscription\\RunMode$#'
+			identifier: phpat.testAttributeCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Attribute/Processor.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Attribute\\Projector should not depend on Patchlevel\\EventSourcing\\Subscription\\RunMode$#'
+			identifier: phpat.testAttributeCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Attribute/Projector.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Attribute\\SharedApplyContext should not depend on Patchlevel\\EventSourcing\\Aggregate\\AggregateRoot$#'
+			identifier: phpat.testAttributeCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Attribute/SharedApplyContext.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Attribute\\Subscriber should not depend on Patchlevel\\EventSourcing\\Subscription\\RunMode$#'
+			identifier: phpat.testAttributeCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Attribute/Subscriber.php
+
+		-
 			message: '#^Cannot unset offset ''url'' on array\{application_name\?\: string, charset\?\: string, defaultTableOptions\?\: array\<string, mixed\>, driver\?\: ''ibm_db2''\|''mysqli''\|''oci8''\|''pdo_mysql''\|''pdo_oci''\|''pdo_pgsql''\|''pdo_sqlite''\|''pdo_sqlsrv''\|''pgsql''\|''sqlite3''\|''sqlsrv'', driverClass\?\: class\-string\<Doctrine\\DBAL\\Driver\>, driverOptions\?\: array\<mixed\>, host\?\: string, keepReplica\?\: bool, \.\.\.\}\.$#'
 			identifier: unset.offset
 			count: 1
@@ -97,6 +127,12 @@ parameters:
 			path: src/Store/Criteria/StreamCriterion.php
 
 		-
+			message: '#^Patchlevel\\EventSourcing\\Store\\DoctrineDbalStore should not depend on Patchlevel\\EventSourcing\\Aggregate\\AggregateHeader$#'
+			identifier: phpat.testStoreCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Store/DoctrineDbalStore.php
+
+		-
 			message: '#^Method Patchlevel\\EventSourcing\\Store\\DoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
 			identifier: return.unusedType
 			count: 1
@@ -115,10 +151,34 @@ parameters:
 			path: src/Store/DoctrineDbalStoreStream.php
 
 		-
+			message: '#^Patchlevel\\EventSourcing\\Store\\DoctrineDbalStoreStream should not depend on Patchlevel\\EventSourcing\\Aggregate\\AggregateHeader$#'
+			identifier: phpat.testStoreCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Store/DoctrineDbalStoreStream.php
+
+		-
 			message: '#^Ternary operator condition is always true\.$#'
 			identifier: ternary.alwaysTrue
 			count: 1
 			path: src/Store/DoctrineDbalStoreStream.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Store\\InMemoryStore should not depend on Patchlevel\\EventSourcing\\Aggregate\\AggregateHeader$#'
+			identifier: phpat.testStoreCanOnlyDependOnAllowedLayers
+			count: 5
+			path: src/Store/InMemoryStore.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Store\\InMemoryStore should not depend on Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry$#'
+			identifier: phpat.testStoreCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Store/InMemoryStore.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Store\\MissingEventRegistry should not depend on Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry$#'
+			identifier: phpat.testStoreCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Store/MissingEventRegistry.php
 
 		-
 			message: '#^Method Patchlevel\\EventSourcing\\Store\\StreamDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
