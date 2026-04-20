@@ -46,6 +46,10 @@
         {
           "title": "Query Bus",
           "file": "query-bus.md"
+        },
+        {
+          "title": "Container",
+          "file": "container.md"
         }
       ]
     },

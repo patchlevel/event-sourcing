@@ -39,6 +39,11 @@ phpunit-integration-postgres: vendor                                            
 phpunit-integration-mysql: vendor                                               ## run phpunit integration tests on mysql
 	DB_URL="pdo-mysql://root@127.0.0.1:3306/eventstore?charset=utf8" vendor/bin/phpunit --testsuite=integration
 
+.PHONY: phpunit-container
+phpunit-container: vendor                                                       ## run phpunit integration tests with third party containers (changes composer.json)
+	composer require --dev php-di/php-di laminas/laminas-servicemanager league/container
+	vendor/bin/phpunit --no-coverage tests/Integration/Container
+
 .PHONY: phpunit-unit
 phpunit-unit: vendor                                             				## run phpunit unit tests
 	XDEBUG_MODE=coverage vendor/bin/phpunit --testsuite=unit

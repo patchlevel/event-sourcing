@@ -12,16 +12,20 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
+use Patchlevel\EventSourcing\Container\Factory;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
@@ -43,6 +47,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -1870,5 +1875,50 @@ final class SubscriptionTest extends TestCase
         }
 
         self::fail('subscription not found');
+    }
+
+    public function testEventEmitterWithContainer(): void
+    {
+        $collector = new NotificationCollector();
+
+        $configuration = [
+            'connection' => ['service' => 'app.connection'],
+            'aggregates' => [__DIR__],
+            'events' => [__DIR__ . '/Events'],
+            'clock' => ['freeze' => '2021-01-01T00:00:00'],
+            'subscription' => [
+                'subscribers' => [new NotificationEmittingProjection(), $collector],
+                'event_emitter' => true,
+            ],
+            'services' => ['app.connection' => $this->connection],
+        ];
+        $container = Factory::create($configuration);
+
+        $container->get(SchemaDirector::class)->create();
+
+        $store = $container->get(Store::class);
+        $engine = $container->get(SubscriptionEngine::class);
+        $repository = $container->get(RepositoryManager::class)->get(Profile::class);
+
+        $engine->execute(new SetupCommand());
+        $engine->execute(new Boot());
+
+        $profileId = ProfileId::generate();
+        $repository->save(Profile::create($profileId, 'John'));
+
+        do {
+            $result = $engine->execute(new Run());
+
+            self::assertInstanceOf(ProcessedResult::class, $result);
+            self::assertEquals([], $result->errors);
+        } while ($result->processedMessages > 0);
+
+        self::assertSame(1, $store->count(new Criteria(new StreamCriterion('subscription_emitting'))));
+        self::assertCount(1, $collector->notifications);
+        self::assertEquals($profileId, $collector->notifications[0]->profileId);
+
+        $engine->execute(new Remove());
+
+        self::assertNotContains('subscription_emitting', $store->streams());
     }
 }
