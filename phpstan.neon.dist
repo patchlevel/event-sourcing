@@ -9,6 +9,9 @@ parameters:
 	paths:
 		- src
 		- tests
+	excludePaths:
+		# needs third party containers, see .github/workflows/container-integration.yml
+		- tests/Integration/Container/*Test.php
 	ignoreErrors:
 		-
 			identifier: missingType.generics

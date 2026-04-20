@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Patchlevel\EventSourcing\Container\Configuration;
+use Patchlevel\EventSourcing\Container\ConfigurationShapeGenerator;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$file = __DIR__ . '/../src/Container/Configuration.php';
+
+file_put_contents(
+    $file,
+    (new ConfigurationShapeGenerator())->generate(Configuration::tree(), (string)file_get_contents($file)),
+);

@@ -428,6 +428,10 @@ You can create it with the [schema commands](#schema-commands).
 
 ## CLI example
 
+:::tip
+If you use the [container](container.md), `Factory::commands()` returns all commands already configured.
+:::
+
 A cli php file can look like this:
 
 ```php
@@ -545,5 +549,6 @@ Here you can find more information on how to
 ## Learn more
 
 * [How to configure store](store.md)
+* [How to configure the container](container.md)
 * [How to configure subscription engine](subscription.md)
 * [How to use subscriptions](subscription.md#usage)
