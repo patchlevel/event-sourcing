@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\ReadOnlyStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -19,11 +20,15 @@ final class ReadOnlyStoreTest extends TestCase
     {
         $criteria = new Criteria();
 
+        $stream = new Stream();
+
         $parentStore = $this->createMock(Store::class);
-        $parentStore->expects($this->atLeastOnce())->method('load')->with($criteria, 8, 42, true);
+        $parentStore->expects($this->atLeastOnce())->method('load')->with($criteria, 8, 42, true)->willReturn($stream);
 
         $store = new ReadOnlyStore($parentStore);
-        $store->load($criteria, 8, 42, true);
+        $result = $store->load($criteria, 8, 42, true);
+
+        self::assertSame($stream, $result);
     }
 
     public function testCount(): void

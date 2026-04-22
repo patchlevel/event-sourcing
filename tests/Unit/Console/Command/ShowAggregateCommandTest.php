@@ -9,11 +9,11 @@ use InvalidArgumentException;
 use Patchlevel\EventSourcing\Console\Command\ShowAggregateCommand;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
-use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
@@ -47,7 +47,7 @@ final class ShowAggregateCommandTest extends TestCase
             ->with(new Criteria(
                 new StreamCriterion('profile-1'),
             ))
-            ->willReturn(new ArrayStream([$message]));
+            ->willReturn(new Stream([$message]));
 
         $serializer = $this->createMock(EventSerializer::class);
         $serializer
@@ -176,7 +176,7 @@ JSON,
         $store = $this->createMock(Store::class);
         $store->method('load')->with(new Criteria(
             new StreamCriterion('profile-test'),
-        ))->willReturn(new ArrayStream());
+        ))->willReturn(new Stream());
 
         $serializer = $this->createMock(EventSerializer::class);
 
@@ -251,7 +251,7 @@ JSON,
         $store->method('load')->with(new Criteria(
             new StreamCriterion('profile-1'),
         ))->willReturn(
-            new ArrayStream([$message]),
+            new Stream([$message]),
         );
 
         $eventSerializer = $this->createMock(EventSerializer::class);

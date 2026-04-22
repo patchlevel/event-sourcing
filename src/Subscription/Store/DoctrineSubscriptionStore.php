@@ -36,7 +36,7 @@ use const JSON_THROW_ON_ERROR;
  *     id: string,
  *     group_name: string,
  *     run_mode: string,
- *     position: int,
+ *     position: int|null,
  *     status: string,
  *     error_message: string|null,
  *     error_previous_status: string|null,
@@ -230,7 +230,7 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ->setLength(16)
             ->setNotnull(true);
         $table->addColumn('position', Types::INTEGER)
-            ->setNotnull(true);
+            ->setNotnull(false);
         $table->addColumn('status', Types::STRING)
             ->setLength(32)
             ->setNotnull(true);

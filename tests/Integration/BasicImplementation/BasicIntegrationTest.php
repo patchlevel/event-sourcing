@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\CommandBus\ServiceLocator;
 use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Pipe;
 use Patchlevel\EventSourcing\Message\Reducer;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Translator\UntilEventTranslator;
@@ -240,10 +239,9 @@ final class BasicIntegrationTest extends TestCase
                 },
             ])
             ->reduce(
-                new Pipe(
-                    $store->load(new Criteria(
-                        new StreamCriterion('profile-' . $profileId->toString()),
-                    )),
+                $store->load(new Criteria(
+                    new StreamCriterion('profile-' . $profileId->toString()),
+                ))->transform(
                     new UntilEventTranslator(new DateTimeImmutable()),
                 ),
             );

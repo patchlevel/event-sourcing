@@ -13,7 +13,7 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\ArrayStream;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Cleaner;
 use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupFailed;
 use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskHandler;
@@ -594,7 +594,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -653,7 +653,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -720,7 +720,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -792,7 +792,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -860,7 +860,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -952,7 +952,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1015,7 +1015,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1090,7 +1090,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1154,7 +1154,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([
             1 => $message1,
             3 => $message2,
         ]));
@@ -1211,7 +1211,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message1]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message1]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1265,7 +1265,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message1]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message1]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1314,11 +1314,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             ->willReturnCallback(new ReturnCallback([
                 [
                     [0, [$subscription]],
-                    new ArrayStream([$message]),
+                    new Stream([1 => $message]),
                 ],
                 [
                     [1, [$subscription]],
-                    new ArrayStream([]),
+                    new Stream([]),
                 ],
             ]));
 
@@ -1383,7 +1383,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1417,7 +1417,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1469,9 +1469,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([
-            $message1,
-            $message2,
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([
+            1 => $message1,
+            2 => $message2,
         ]));
 
         $engine = new DefaultSubscriptionEngine(
@@ -1523,7 +1523,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1582,7 +1582,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1641,7 +1641,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1701,7 +1701,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1846,7 +1846,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1902,7 +1902,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
 
         $streamableStore = $this->createMock(MessageLoader::class);
         $streamableStore->expects($this->once())->method('load')->with(0)
-            ->willReturn(new ArrayStream([$message1, $message2]));
+            ->willReturn(new Stream([1 => $message1, 2 => $message2]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -1975,7 +1975,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2040,7 +2040,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2107,7 +2107,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2179,7 +2179,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2247,7 +2247,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2384,7 +2384,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([
             1 => $message1,
             3 => $message2,
         ]));
@@ -2441,7 +2441,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message1]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message1]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2495,7 +2495,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message1]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message1]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2544,11 +2544,11 @@ final class DefaultSubscriptionEngineTest extends TestCase
             ->willReturnCallback(new ReturnCallback([
                 [
                     [0, [$subscription]],
-                    new ArrayStream([$message]),
+                    new Stream([1 => $message]),
                 ],
                 [
                     [1, [$subscription]],
-                    new ArrayStream([]),
+                    new Stream([]),
                 ],
             ]));
 
@@ -2604,7 +2604,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2655,9 +2655,9 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([
-            $message1,
-            $message2,
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([
+            1 => $message1,
+            2 => $message2,
         ]));
 
         $engine = new DefaultSubscriptionEngine(
@@ -2708,7 +2708,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2767,7 +2767,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2826,7 +2826,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -2886,7 +2886,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $engine = new DefaultSubscriptionEngine(
             $streamableStore,
@@ -4305,7 +4305,7 @@ final class DefaultSubscriptionEngineTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $streamableStore = $this->createMock(MessageLoader::class);
-        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new ArrayStream([$message]));
+        $streamableStore->expects($this->once())->method('load')->with(0)->willReturn(new Stream([1 => $message]));
 
         $subscription = new Subscription(
             $subscriptionId,
