@@ -51,14 +51,14 @@ jobs:
               uses: actions/checkout@v6
 
             - name: "Install PHP"
-              uses: "shivammathur/setup-php@2.36.0"
+              uses: "shivammathur/setup-php@2.37.0"
               with:
                   coverage: "pcov"
                   php-version: "${{ matrix.php-version }}"
                   ini-values: memory_limit=-1
                   extensions: pdo_pgsql
 
-            - uses: ramsey/composer-install@3.1.1
+            - uses: ramsey/composer-install@4.0.0
               with:
                 dependency-versions: ${{ matrix.dependencies }}
                 composer-options: ${{ matrix.composer-options }}
@@ -106,14 +106,14 @@ jobs:
           uses: actions/checkout@v6
 
         - name: "Install PHP"
-          uses: "shivammathur/setup-php@2.36.0"
+          uses: "shivammathur/setup-php@2.37.0"
           with:
             coverage: "pcov"
             php-version: "${{ matrix.php-version }}"
             ini-values: memory_limit=-1
             extensions: pdo_mysql
 
-        - uses: ramsey/composer-install@3.1.1
+        - uses: ramsey/composer-install@4.0.0
           with:
             dependency-versions: ${{ matrix.dependencies }}
             composer-options: ${{ matrix.composer-options }}
@@ -160,14 +160,14 @@ jobs:
           uses: actions/checkout@v6
 
         - name: "Install PHP"
-          uses: "shivammathur/setup-php@2.36.0"
+          uses: "shivammathur/setup-php@2.37.0"
           with:
             coverage: "pcov"
             php-version: "${{ matrix.php-version }}"
             ini-values: memory_limit=-1
             extensions: pdo_mysql
 
-        - uses: ramsey/composer-install@3.1.1
+        - uses: ramsey/composer-install@4.0.0
           with:
             dependency-versions: ${{ matrix.dependencies }}
             composer-options: ${{ matrix.composer-options }}
@@ -194,14 +194,14 @@ jobs:
           uses: actions/checkout@v6
 
         - name: "Install PHP"
-          uses: "shivammathur/setup-php@2.36.0"
+          uses: "shivammathur/setup-php@2.37.0"
           with:
             coverage: "pcov"
             php-version: "${{ matrix.php-version }}"
             ini-values: memory_limit=-1
             extensions: pdo_sqlite
 
-        - uses: ramsey/composer-install@3.1.1
+        - uses: ramsey/composer-install@4.0.0
           with:
             dependency-versions: ${{ matrix.dependencies }}
             composer-options: ${{ matrix.composer-options }}

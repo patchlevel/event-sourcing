@@ -36,6 +36,8 @@ use WeakMap;
 use function array_map;
 use function assert;
 use function count;
+use function is_a;
+use function is_object;
 use function sprintf;
 
 /**
@@ -123,6 +125,30 @@ final class DefaultRepository implements Repository
             $firstMessage = $stream->current();
 
             if ($firstMessage === null) {
+                if ($this->metadata->autoInitializeMethod) {
+                    $aggregate = $this->metadata->className::{$this->metadata->autoInitializeMethod}($id);
+
+                    if (!is_object($aggregate) || !is_a($aggregate, $this->metadata->className, true)) {
+                        throw new InvalidAggregate(
+                            $this->metadata->autoInitializeMethod,
+                            $this->metadata->className,
+                            $aggregate,
+                        );
+                    }
+
+                    $this->logger->debug(
+                        sprintf(
+                            'Repository: Auto initialize aggregate "%s" with the id "%s".',
+                            $this->metadata->name,
+                            $id->toString(),
+                        ),
+                    );
+
+                    $this->aggregateIsValid[$aggregate] = true;
+
+                    return $aggregate;
+                }
+
                 $this->logger->debug(
                     sprintf(
                         'Repository: Aggregate "%s" with the id "%s" not found.',

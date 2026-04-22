@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
+use LogicException;
+use Patchlevel\EventSourcing\Subscription\Engine\CanRefreshSubscriptions;
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
@@ -215,5 +217,33 @@ final class CatchUpSubscriptionEngineTest extends TestCase
         $subscriptions = $engine->subscriptions($criteria);
 
         self::assertEquals($expectedSubscriptions, $subscriptions);
+    }
+
+    public function testRefreshSubscriptions(): void
+    {
+        $parent = $this->createMockForIntersectionOfInterfaces([
+            SubscriptionEngine::class,
+            CanRefreshSubscriptions::class,
+        ]);
+
+        $engine = new CatchUpSubscriptionEngine($parent);
+        $criteria = new SubscriptionEngineCriteria();
+
+        $expectedResult = new Result();
+
+        $parent->expects($this->once())->method('refresh')->with($criteria)->willReturn($expectedResult);
+        $result = $engine->refresh($criteria);
+
+        self::assertSame($expectedResult, $result);
+    }
+
+    public function testRefreshSubscriptionsNotSupported(): void
+    {
+        $parent = $this->createMock(SubscriptionEngine::class);
+
+        $engine = new CatchUpSubscriptionEngine($parent);
+
+        $this->expectException(LogicException::class);
+        $engine->refresh();
     }
 }

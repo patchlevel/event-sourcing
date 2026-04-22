@@ -4,8 +4,20 @@
   "license": "MIT",
   "description": "A lightweight but also all-inclusive event sourcing library with a focus on developer experience",
   "keywords": [
+    "events",
+    "aggregates",
+    "messages",
     "event-sourcing",
-    "ddd"
+    "domain driven design",
+    "ddd",
+    "cqrs",
+    "projection",
+    "processor",
+    "event driven",
+    "message driven",
+    "dcb",
+    "dynamic consistency boundary",
+    "patchlevel"
   ],
   "homepage": "https://event-sourcing.patchlevel.io",
   "authors": [
@@ -20,7 +32,7 @@
   ],
   "require": {
     "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
-    "doctrine/dbal": "^4.0.0",
+    "doctrine/dbal": "^4.4.0",
     "doctrine/migrations": "^3.3.2",
     "patchlevel/hydrator": "^1.8.0",
     "patchlevel/worker": "^1.4.0",
@@ -41,7 +53,7 @@
     "infection/infection": "^0.32.0",
     "league/commonmark": "^2.6.1",
     "patchlevel/coding-standard": "^1.3.0",
-    "patchlevel/event-sourcing-phpstan-extension": "dev-event-sourcing-4.0",
+    "patchlevel/event-sourcing-phpstan-extension": "^1.2.0",
     "phpat/phpat": "^0.12.0",
     "phpbench/phpbench": "^1.4.1",
     "phpstan/phpstan": "^2.1.11",

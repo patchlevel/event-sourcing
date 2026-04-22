@@ -41,10 +41,60 @@ final class CreateProfileHandler
 :::note
 To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
 :::
-    
-:::tip
-A class can have multiple handle methods.
-:::
+
+
+### Multiple Handle Attributes
+
+A method can also have multiple `#[Handle]` attributes.
+This is useful if you want to handle different commands with the same method.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Handle;
+
+final class CreateProfileHandler
+{
+    #[Handle(CreateProfile::class)]
+    #[Handle(UpdateProfile::class)]
+    public function __invoke(object $command): void
+    {
+        // handle both commands
+    }
+}
+```
+
+### Union Types
+
+You can also use union types to handle multiple commands and the library will automatically detect the commands.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Handle;
+
+final class CreateProfileHandler
+{
+    #[Handle]
+    public function __invoke(CreateProfile|UpdateProfile $command): void
+    {
+        // handle both commands
+    }
+}
+```
+
+### Inheritance
+
+The handler will also be invoked if the command implements an interface or extends a class that the handler expects.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Handle;
+
+final class CreateProfileHandler
+{
+    #[Handle]
+    public function __invoke(CommandInterface $command): void
+    {
+        // handle all commands that implement CommandInterface
+    }
+}
+```
     
 ### Aggregate Handler
 
@@ -139,6 +189,13 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
+
+:::tip
+If you want to automatically initialize an aggregate if it cannot be found in the store,
+you can use the [Auto Initialize](aggregate.md#auto-initialize) feature.
+:::
+    
+
 #### Inject Service
 
 You can inject services into aggregate handler methods.

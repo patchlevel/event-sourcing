@@ -19,6 +19,18 @@ parameters:
 			path: src/Cryptography/DoctrineCipherKeyStore.php
 
 		-
+			message: '#^Parameter \#3 \$key of class Patchlevel\\Hydrator\\Extension\\Cryptography\\Cipher\\CipherKey constructor expects non\-empty\-string, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Cryptography/ExtensionDoctrineCipherKeyStore.php
+
+		-
+			message: '#^Parameter \#5 \$createdAt of class Patchlevel\\Hydrator\\Extension\\Cryptography\\Cipher\\CipherKey constructor expects DateTimeImmutable, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Cryptography/ExtensionDoctrineCipherKeyStore.php
+
+		-
 			message: '#^Call to function method_exists\(\) with ReflectionFunction and ''isAnonymous'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -241,6 +253,12 @@ parameters:
 			path: tests/Integration/BasicImplementation/Projection/ProfileProjector.php
 
 		-
+			message: '#^Parameter \#1 \$invoiceNumber of class Patchlevel\\EventSourcing\\Tests\\Integration\\DynamicConsistencyBoundary\\Invoice\\Event\\InvoiceCreated constructor expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/DynamicConsistencyBoundary/Invoice/Handler/CreateInvoiceHandler.php
+
+		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\MicroAggregate\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\MicroAggregate\\Profile will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 2
@@ -255,19 +273,19 @@ parameters:
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 0 and array\{array\<string, mixed\>\} will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
-			count: 1
+			count: 4
 			path: tests/Integration/PersonalData/PersonalDataTest.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\PersonalData\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\PersonalData\\Profile will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
-			count: 6
+			count: 8
 			path: tests/Integration/PersonalData/PersonalDataTest.php
 
 		-
 			message: '#^Parameter \#2 \$haystack of static method PHPUnit\\Framework\\Assert\:\:assertStringNotContainsString\(\) expects string, mixed given\.$#'
 			identifier: argument.type
-			count: 1
+			count: 3
 			path: tests/Integration/PersonalData/PersonalDataTest.php
 
 		-
@@ -281,6 +299,12 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: tests/Integration/Store/StreamDoctrineDbalStoreTest.php
+
+		-
+			message: '#^Parameter \#1 \$table of class Patchlevel\\EventSourcing\\Subscription\\Cleanup\\Dbal\\DropTableTask constructor expects non\-empty\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/Subscription/Subscriber/ProfileProjectionWithCleanup.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 0 and array\{Patchlevel\\EventSourcing\\Subscription\\Subscription\} will always evaluate to true\.$#'
@@ -307,18 +331,6 @@ parameters:
 			path: tests/Unit/Aggregate/AggregateRootTest.php
 
 		-
-			message: '#^Cannot access offset 0 on iterable\<int, Patchlevel\\EventSourcing\\CommandBus\\HandlerDescriptor\>\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Unit/CommandBus/AggregateHandlerProviderTest.php
-
-		-
-			message: '#^Cannot call method callable\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: tests/Unit/CommandBus/AggregateHandlerProviderTest.php
-
-		-
 			message: '#^Parameter \#2 \$aggregateClass of class Patchlevel\\EventSourcing\\CommandBus\\Handler\\CreateAggregateHandler constructor expects class\-string\<Patchlevel\\EventSourcing\\Aggregate\\AggregateRoot\>, string given\.$#'
 			identifier: argument.type
 			count: 1
@@ -335,18 +347,6 @@ parameters:
 			identifier: argument.type
 			count: 5
 			path: tests/Unit/CommandBus/InstantRetryCommandBusTest.php
-
-		-
-			message: '#^Cannot access offset 0 on iterable\<int, Patchlevel\\EventSourcing\\CommandBus\\HandlerDescriptor\>\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Unit/CommandBus/ServiceHandlerProviderTest.php
-
-		-
-			message: '#^Cannot call method callable\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: tests/Unit/CommandBus/ServiceHandlerProviderTest.php
 
 		-
 			message: '#^Parameter \#1 \$data of static method Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\Message\:\:fromArray\(\) expects array\{id\: string, text\: string, createdAt\: string\}, array\<mixed, mixed\> given\.$#'
@@ -413,6 +413,12 @@ parameters:
 			identifier: property.unused
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithHandler.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithSharedApplyContext\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithSharedApplyContext.php
 
 		-
 			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithSuppressAll\:\:\$id is unused\.$#'

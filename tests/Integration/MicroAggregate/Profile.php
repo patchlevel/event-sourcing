@@ -8,14 +8,13 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
-use Patchlevel\EventSourcing\Attribute\SuppressMissingApply;
-use Patchlevel\EventSourcing\Tests\Integration\MicroAggregate\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\MicroAggregate\Events\ProfileCreated;
 
 #[Aggregate('profile')]
 #[Snapshot('default', 1)]
-#[SuppressMissingApply([NameChanged::class])]
+#[SharedApplyContext([PersonalInformation::class])]
 final class Profile extends BasicAggregateRoot
 {
     #[Id]

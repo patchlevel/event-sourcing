@@ -27,6 +27,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
@@ -1452,6 +1453,72 @@ final class SubscriptionTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('Hans', $result['name']);
+    }
+
+    public function testRefreshSubscriptions(): void
+    {
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning, group: 'default')]
+        class {
+        };
+
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([$subscriber]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        $engine->setup();
+
+        $subscriptions = $engine->subscriptions();
+        self::assertCount(1, $subscriptions);
+        self::assertEquals('test', $subscriptions[0]->id());
+        self::assertEquals('default', $subscriptions[0]->group());
+        self::assertEquals(RunMode::FromBeginning, $subscriptions[0]->runMode());
+
+        // change subscriber metadata
+        $newSubscriber = new #[Subscriber('test', RunMode::FromNow, group: 'new-group')]
+        class {
+        };
+
+        $newSubscriberRepository = new MetadataSubscriberAccessorRepository([$newSubscriber]);
+
+        $engine = new DefaultSubscriptionEngine(
+            $this->createMock(MessageLoader::class),
+            $subscriptionStore,
+            $newSubscriberRepository,
+        );
+
+        $engine->refresh();
+
+        $subscriptions = $engine->subscriptions();
+        self::assertCount(1, $subscriptions);
+        self::assertEquals('test', $subscriptions[0]->id());
+        self::assertEquals('new-group', $subscriptions[0]->group());
+        self::assertEquals(RunMode::FromNow, $subscriptions[0]->runMode());
     }
 
     /** @param list<Subscription> $subscriptions */

@@ -30,6 +30,7 @@ use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\AutoInitializableProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -746,5 +747,21 @@ final class DefaultRepositoryTest extends TestCase
         self::assertSame(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
         self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
+    }
+
+    public function testLoadInitializableAggregate(): void
+    {
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->willReturn(new ArrayStream([]));
+
+        $repository = new DefaultRepository($store, AutoInitializableProfile::metadata());
+        $aggregate = $repository->load(ProfileId::fromString('1'));
+
+        self::assertInstanceOf(AutoInitializableProfile::class, $aggregate);
+        self::assertSame(1, $aggregate->playhead());
+        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
     }
 }

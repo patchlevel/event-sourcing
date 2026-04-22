@@ -306,6 +306,13 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
+
+:::tip
+You don't necessarily need to define multiple `Apply` attributes with the event class
+if you define the event types in the method using a union type.
+:::
+    
+    
 ## Suppress missing apply methods
 
 Sometimes you have events that do not change the state of the aggregate itself,
@@ -360,6 +367,39 @@ final class Profile extends BasicAggregateRoot
 :::warning
 When all events are suppressed, debugging becomes more difficult if you forget an apply method.
 :::
+    
+## Shared apply context
+
+When working with [micro-aggregates](./aggregate.md#micro-aggregates),
+it’s common that events are applied by different aggregates.
+As a result, an aggregate may receive events it does not handle, which can lead to multiple “missing apply” warnings.
+
+The `SharedApplyContext` attribute allows you to declare that several aggregates share the same apply context.
+With this configuration, a missing apply is only reported if none of the shared aggregates handle the event.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
+use Patchlevel\EventSourcing\Attribute\Stream;
+
+#[Aggregate('profile')]
+#[SharedApplyContext([PersonalInformation::class])]
+final class Profile extends BasicAggregateRoot
+{
+}
+
+#[Aggregate('personal_information')]
+#[Stream(Profile::class)]
+#[SharedApplyContext([Profile::class])]
+final class PersonalInformation extends BasicAggregateRoot
+{
+}
+```
+:::warning
+You need to define the `SharedApplyContext` attribute on all aggregates that share the apply context.
+:::
+    
     
 ## Stream Name
 
@@ -672,9 +712,11 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
 use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('order')]
+#[SharedApplyContext([Shipping::class])]
 final class Order extends BasicAggregateRoot
 {
     #[Id]
@@ -703,11 +745,13 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
 use Patchlevel\EventSourcing\Attribute\Stream;
 use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('shipping')]
 #[Stream(Order::class)]
+#[SharedApplyContext([Order::class])]
 final class Shipping extends BasicAggregateRoot
 {
     #[Id]
@@ -738,6 +782,61 @@ final class Shipping extends BasicAggregateRoot
     }
 }
 ```
+
+:::tip
+With the [SharedApplyContext](./aggregate.md#shared-apply-context) attribute,
+you can suppress missing applies for events that are handled by other aggregates
+:::
+
+
+## Auto Initialize
+
+:::experimental
+This feature is still experimental and may change in the future.
+Use it with caution.
+:::
+
+Sometimes you want to be able to access an aggregate even if it has not yet been created in the system. 
+In this case, the aggregate should be automatically initialized if it cannot be found in the store. 
+To achieve this, the aggregate must mark the initialization method with the `AutoInitialize` attribute.
+The method must be static, receives the aggregate ID as an argument and must return an instance of the aggregate.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Attribute\Aggregate;
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\AutoInitialize;
+use Patchlevel\EventSourcing\Attribute\Id;
+
+#[Aggregate('profile')]
+final class Profile extends BasicAggregateRoot
+{
+    #[Id]
+    private Uuid $id;
+
+    #[AutoInitialize]
+    public static function initialize(Uuid $id): static
+    {
+        $self = new static();
+        $self->recordThat(new ProfileCreated($id));
+
+        return $self;
+    }
+
+    #[Apply]
+    public function applyProfileCreated(ProfileCreated $event): void
+    {
+        $this->id = $event->id;
+    }
+}
+```
+
+:::note
+Recording events in the `initialize` method is optional but recommended.
+:::
+
+
 ## Aggregate Root Registry
 
 The library needs to know about all aggregates so that the correct aggregate class is used to load from the database.

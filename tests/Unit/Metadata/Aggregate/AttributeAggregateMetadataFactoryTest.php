@@ -18,7 +18,9 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyIntersecti
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyMultipleApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyNoType;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithEmptyApply;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSharedApplyContext;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithStream;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSuppressAll;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -106,5 +108,23 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
         $this->expectException(MixedApplyAttributeUsage::class);
 
         $metadataFactory->metadata(ProfileWithBrokenApplyBothUsage::class);
+    }
+
+    public function testSuppressAll(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+        $metadata = $metadataFactory->metadata(ProfileWithSuppressAll::class);
+
+        self::assertTrue($metadata->suppressAll);
+        self::assertSame([], $metadata->suppressEvents);
+    }
+
+    public function testSharedApplyContext(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+        $metadata = $metadataFactory->metadata(ProfileWithSharedApplyContext::class);
+
+        self::assertFalse($metadata->suppressAll);
+        self::assertSame([ProfileCreated::class => true], $metadata->suppressEvents);
     }
 }

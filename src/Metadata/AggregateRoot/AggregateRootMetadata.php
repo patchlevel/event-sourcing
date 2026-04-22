@@ -26,6 +26,7 @@ final class AggregateRootMetadata
         public readonly bool $suppressAll,
         public readonly Snapshot|null $snapshot,
         string|null $streamName = null,
+        public readonly string|null $autoInitializeMethod = null,
     ) {
         $this->streamName = $streamName ?? $this->name . '-{id}';
     }

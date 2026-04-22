@@ -8,12 +8,14 @@ use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
 use Patchlevel\EventSourcing\Attribute\Stream;
 use Patchlevel\EventSourcing\Tests\Integration\MicroAggregate\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\MicroAggregate\Events\ProfileCreated;
 
 #[Aggregate('personal_information')]
 #[Stream(Profile::class)]
+#[SharedApplyContext([Profile::class])]
 final class PersonalInformation extends BasicAggregateRoot
 {
     #[Id]

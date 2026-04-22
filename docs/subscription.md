@@ -376,20 +376,20 @@ final class ProfileProjector
     }
 }
 ```
-!!! danger
+:::danger
+MySQL and MariaDB don't support transactions for DDL statements.
+So you must use a different database connection in your projectors,
+otherwise you will get an error when the subscription tries to create the table.
+:::
 
-    MySQL and MariaDB don't support transactions for DDL statements.
-    So you must use a different database connection in your projectors, 
-    otherwise you will get an error when the subscription tries to create the table.
-    
-!!! warning
+:::warning
+A teardown can only be performed for a subscription if the code for the subscriber with that subscriber ID still exists.
+A another option is to use the `Cleanup` option.
+:::
 
-    A teardown can only be performed for a subscription if the code for the subscriber with that subscriber ID still exists.
-    A another option is to use the `Cleanup` option.
-    
-!!! note
-
-    You can not mix the `cleanup` method with the `teardown` method.
+:::note
+You can not mix the `cleanup` method with the `teardown` method.
+:::
     
 ### Cleanup
 
@@ -419,9 +419,9 @@ final class ProfileProjector
     }
 }
 ```
-!!! note
-
-    You can not mix the `cleanup` method with the `teardown` method.
+:::note
+You can not mix the `cleanup` method with the `teardown` method.
+:::
     
 #### Dbal Cleanup Tasks
 
@@ -432,10 +432,17 @@ Default, we provide the following cleanup tasks for `doctrine/dbal`:
 | `DropIndexTask` | Drops an index from a table. |
 | `DropTableTask` | Drops a table.               |
 
-!!! tip
 
-    You can create your own cleanup tasks and handler.
-    For more information, see [Cleanup Handler](#cleanup-handler).
+:::note
+If you are passing connection registry, you can use the connection name as parameter.
+The `connectionName` parameter is optional and defaults to the default connection.
+:::
+
+:::tip
+You can create your own cleanup tasks and handler.
+For more information, see [Cleanup Handler](#cleanup-handler).
+:::
+
     
 ### On Failed
 
@@ -1034,9 +1041,10 @@ final class DropCollection
     }
 }
 ```
-!!! warning
 
-    The task class must be serializable. It will be stored in the subscription store.
+:::warning
+The task class must be serializable. It will be stored in the subscription store.
+:::
     
 The next step is to create a handler for the task.
 The handler must implement the `CleanupHandler` interface.
@@ -1071,18 +1079,45 @@ Lastly, we have to add the new handler to `DefaultCleaner`,
 which is responsible for cleaning up subscriptions.
 
 ```php
-use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 
 $cleaner = new DefaultCleaner([
-    new DbalCleanupTaskHandler($projectionConnection),
     new MongodbCleanupTaskHandler($mongodbDatabase),
 ]);
 ```
-!!! warning
-
-    You need to pass the Cleaner to the Subscription Engine.
+:::warning
+You need to pass the Cleaner to the Subscription Engine.
+:::
     
+#### Dbal Cleanup Task Handler
+
+We provide a Dbal cleanup task handler by default.
+More information about the available tasks can be found in the [Dbal Cleanup Tasks](#dbal-cleanup-tasks) documentation.
+
+```php
+use Doctrine\Dbal\Connection;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
+
+/** @var Connection $connection */
+$cleaner = new DefaultCleaner([
+    new DbalCleanupTaskHandler($connection),
+]);
+```
+If you have multiple database connections and want to use the `DbalCleanupTaskHandler` to clean up the respective databases,
+you can also pass a `ConnectionRegistry` (from `doctrine/persistence`) to the `DbalCleanupTaskHandler`.
+Then you can pass the connection name as parameter in the cleanup task and the handler will use the corresponding connection to execute the task.
+
+```php
+use Doctrine\Persistence\ConnectionRegistry;
+use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
+use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
+
+/** @var ConnectionRegistry $connectionRegistry */
+$cleaner = new DefaultCleaner([
+    new DbalCleanupTaskHandler($connectionRegistry),
+]);
+```
 ### Subscriber Accessor
 
 The subscriber accessor repository is responsible for providing the subscribers to the subscription engine.
@@ -1336,6 +1371,18 @@ $subscriptions = $subscriptionEngine->subscriptions(new SubscriptionEngineCriter
 foreach ($subscriptions as $subscription) {
     echo $subscription->status()->value;
 }
+```
+### Refresh
+
+If you change the metadata of a subscriber in the code (e.g. `runMode`, `group` or `cleanupTasks`),
+you can use the `refresh` method to update the existing subscriptions in the store.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->refresh(new SubscriptionEngineCriteria());
 ```
 ## Learn more
 
