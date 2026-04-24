@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 
 /** @experimental */
 interface AppendStore

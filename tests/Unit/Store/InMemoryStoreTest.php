@@ -62,9 +62,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame($expected, $messages);
+        self::assertSame($expected, $stream->toList());
     }
 
     public function testLoadByStreamName(): void
@@ -88,9 +86,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new StreamCriterion('bar')));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2], $messages);
+        self::assertSame([$message2], $stream->toList());
     }
 
     public function testLoadByStreamNameWithLike(): void
@@ -115,9 +111,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new StreamCriterion('bar-*')));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2, $message3], $messages);
+        self::assertSame([$message2, $message3], $stream->toList());
     }
 
     public function testLoadFromPlayhead(): void
@@ -147,9 +141,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new FromPlayheadCriterion(2)));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2, $message3], $messages);
+        self::assertSame([$message2, $message3], $stream->toList());
     }
 
     public function testLoadFromIndex(): void
@@ -179,7 +171,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new FromIndexCriterion(2)));
 
-        $messages = iterator_to_array($stream);
+        $messages = $stream->toList();
 
         self::assertCount(2, $messages);
         self::assertSame(
@@ -226,7 +218,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new ToIndexCriterion(3)));
 
-        $messages = iterator_to_array($stream);
+        $messages = $stream->toList();
 
         self::assertCount(2, $messages);
         self::assertSame(
@@ -269,9 +261,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new StreamCriterion('*')));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message1, $message2, $message3], $messages);
+        self::assertSame([$message1, $message2, $message3], $stream->toList());
     }
 
     public function testLoadArchived(): void
@@ -290,9 +280,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new ArchivedCriterion(true)));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message1], $messages);
+        self::assertSame([$message1], $stream->toList());
     }
 
     public function testLoadByEventName(): void
@@ -321,15 +309,13 @@ final class InMemoryStoreTest extends TestCase
         );
 
         $stream = $store->load(new Criteria(new EventsCriterion(['profile_created'])));
-        $messages = iterator_to_array($stream);
 
-        self::assertSame([$message1], $messages);
+        self::assertSame([$message1], $stream->toList());
 
         $stream = $store->load(new Criteria(new EventsCriterion(['profile_visited'])));
-        $messages = iterator_to_array($stream);
 
-        self::assertSame([$message2, $message3], $messages);
-        self::assertSame([], iterator_to_array($store->load(new Criteria(new EventsCriterion(['profile_deleted'])))));
+        self::assertSame([$message2, $message3], $stream->toList());
+        self::assertSame([], $store->load(new Criteria(new EventsCriterion(['profile_deleted'])))->toList());
     }
 
     public function testLoadByEventNameWithoutRegistry(): void
@@ -388,9 +374,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(null, 1);
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message1], $messages);
+        self::assertSame([$message1], $stream->toList());
     }
 
     public function testLoadOffset(): void
@@ -408,9 +392,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(null, null, 1);
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2], $messages);
+        self::assertSame([$message2], $stream->toList());
     }
 
     public function testLoadBackwards(): void
@@ -428,9 +410,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(null, null, null, true);
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2, $message1], $messages);
+        self::assertSame([$message2, $message1], $stream->toList());
     }
 
     public function testCount(): void
@@ -469,9 +449,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame($expected, $messages);
+        self::assertSame($expected, $stream->toList());
     }
 
     public function testSaveWithExistingMessages(): void
@@ -498,9 +476,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([...$startMessages, $message1], $messages);
+        self::assertSame([...$startMessages, $message1], $stream->toList());
     }
 
     public function testSaveWithoutHeaders(): void
@@ -509,7 +485,7 @@ final class InMemoryStoreTest extends TestCase
         $store->save(new Message(new ProfileVisited(ProfileId::fromString('1'))));
 
         $stream = $store->load();
-        $messages = iterator_to_array($stream);
+        $messages = $stream->toList();
 
         self::assertCount(2, $messages);
 
@@ -575,9 +551,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message1, $message4], $messages);
+        self::assertSame([$message1, $message4], $stream->toList());
     }
 
     public function testTransactional(): void
@@ -658,8 +632,6 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([], $messages);
+        self::assertSame([], $stream->toList());
     }
 }

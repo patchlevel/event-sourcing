@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Store;
+namespace Patchlevel\EventSourcing\Message;
 
 use RuntimeException;
 

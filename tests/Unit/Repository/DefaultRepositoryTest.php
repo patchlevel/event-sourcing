@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Repository;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\AggregateAlreadyExists;
 use Patchlevel\EventSourcing\Repository\AggregateDetached;
@@ -20,7 +21,6 @@ use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
-use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
@@ -355,7 +355,7 @@ final class DefaultRepositoryTest extends TestCase
             ->with(new Criteria(
                 new StreamCriterion('profile-1'),
                 new ArchivedCriterion(false),
-            ))->willReturn(new ArrayStream([
+            ))->willReturn(new Stream([
                 Message::create(
                     new ProfileCreated(
                         ProfileId::fromString('1'),
@@ -387,7 +387,7 @@ final class DefaultRepositoryTest extends TestCase
                 new StreamCriterion('profile-1'),
                 new ArchivedCriterion(false),
             ))->willReturn(
-                new ArrayStream([
+                new Stream([
                     Message::create(
                         new ProfileCreated(
                             ProfileId::fromString('1'),
@@ -398,7 +398,7 @@ final class DefaultRepositoryTest extends TestCase
                         ->withHeader(new PlayheadHeader(1))
                         ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
                 ]),
-                new ArrayStream([
+                new Stream([
                     Message::create(
                         new ProfileCreated(
                             ProfileId::fromString('1'),
@@ -432,7 +432,7 @@ final class DefaultRepositoryTest extends TestCase
                 new StreamCriterion('profile-1'),
                 new ArchivedCriterion(false),
             ))
-            ->willReturn(new ArrayStream());
+            ->willReturn(new Stream());
 
         $repository = new DefaultRepository($store, Profile::metadata());
 
@@ -488,7 +488,7 @@ final class DefaultRepositoryTest extends TestCase
                 new StreamCriterion('profile_with_snapshot-1'),
                 new FromPlayheadCriterion(1),
             ))
-            ->willReturn(new ArrayStream());
+            ->willReturn(new Stream());
 
         $snapshotStore = $this->createMock(SnapshotStore::class);
         $snapshotStore->method('load')->with(ProfileWithSnapshot::class, $id)->willReturn($profile);
@@ -519,7 +519,7 @@ final class DefaultRepositoryTest extends TestCase
                 new ArchivedCriterion(false),
             ))
             ->willReturn(
-                new ArrayStream([
+                new Stream([
                     Message::create(
                         new ProfileCreated(
                             ProfileId::fromString('1'),
@@ -596,7 +596,7 @@ final class DefaultRepositoryTest extends TestCase
                 new StreamCriterion('profile_with_snapshot-1'),
                 new FromPlayheadCriterion(1),
             ))
-            ->willReturn(new ArrayStream([
+            ->willReturn(new Stream([
                 Message::create(
                     new ProfileVisited(
                         ProfileId::fromString('1'),
@@ -660,7 +660,7 @@ final class DefaultRepositoryTest extends TestCase
                 new StreamCriterion('profile_with_snapshot-1'),
                 new ArchivedCriterion(false),
             ))
-            ->willReturn(new ArrayStream([
+            ->willReturn(new Stream([
                 Message::create(
                     new ProfileCreated(
                         ProfileId::fromString('1'),
@@ -729,7 +729,7 @@ final class DefaultRepositoryTest extends TestCase
                 new StreamCriterion('other-1'),
                 new ArchivedCriterion(false),
             ))
-            ->willReturn(new ArrayStream([
+            ->willReturn(new Stream([
                 Message::create(
                     new ProfileCreated(
                         ProfileId::fromString('1'),
@@ -755,7 +755,7 @@ final class DefaultRepositoryTest extends TestCase
         $store
             ->expects($this->once())
             ->method('load')
-            ->willReturn(new ArrayStream([]));
+            ->willReturn(new Stream([]));
 
         $repository = new DefaultRepository($store, AutoInitializableProfile::metadata());
         $aggregate = $repository->load(ProfileId::fromString('1'));

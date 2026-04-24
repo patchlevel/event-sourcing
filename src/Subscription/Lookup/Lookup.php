@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Lookup;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
@@ -13,7 +14,6 @@ use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\Stream;
 
 use function array_map;
 use function array_values;

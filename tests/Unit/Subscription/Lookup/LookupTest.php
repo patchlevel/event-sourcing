@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Lookup;
 
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
-use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
@@ -42,7 +42,7 @@ final class LookupTest extends TestCase
 
     public function testEmpty(): void
     {
-        $expectedResult = new ArrayStream([]);
+        $expectedResult = new Stream([]);
 
         $store = $this->createMock(Store::class);
         $expectedCriteria = new Criteria(new ToIndexCriterion(1));
@@ -68,7 +68,7 @@ final class LookupTest extends TestCase
 
     public function testEvents(): void
     {
-        $expectedResult = new ArrayStream([]);
+        $expectedResult = new Stream([]);
         $expectedCriteria = new Criteria(
             new EventsCriterion(['foo']),
             new ToIndexCriterion(1),
@@ -96,7 +96,7 @@ final class LookupTest extends TestCase
 
     public function testEventClasses(): void
     {
-        $expectedResult = new ArrayStream([]);
+        $expectedResult = new Stream([]);
         $expectedCriteria = new Criteria(
             new EventsCriterion(['foo', 'profile_created']),
             new ToIndexCriterion(1),
@@ -125,7 +125,7 @@ final class LookupTest extends TestCase
 
     public function testBackwards(): void
     {
-        $expectedResult = new ArrayStream([]);
+        $expectedResult = new Stream([]);
         $expectedCriteria = new Criteria(
             new ToIndexCriterion(1),
         );
@@ -152,7 +152,7 @@ final class LookupTest extends TestCase
 
     public function testStream(): void
     {
-        $expectedResult = new ArrayStream([]);
+        $expectedResult = new Stream([]);
         $expectedCriteria = new Criteria(
             new StreamCriterion('foo'),
             new ToIndexCriterion(1),
@@ -180,7 +180,7 @@ final class LookupTest extends TestCase
 
     public function testCurrentStream(): void
     {
-        $expectedResult = new ArrayStream([]);
+        $expectedResult = new Stream([]);
         $expectedCriteria = new Criteria(
             new ToIndexCriterion(1),
             new StreamCriterion('foo'),
@@ -215,7 +215,7 @@ final class LookupTest extends TestCase
         $message2 = new Message(new class () {
         });
 
-        $expectedResult = new ArrayStream([
+        $expectedResult = new Stream([
             $message1,
             $message2,
         ]);
@@ -252,7 +252,7 @@ final class LookupTest extends TestCase
         $message2 = new Message(new class () {
         });
 
-        $expectedResult = new ArrayStream([
+        $expectedResult = new Stream([
             $message2,
             $message1,
         ]);

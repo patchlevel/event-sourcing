@@ -526,7 +526,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
                 ),
             );
 
-            $messages = iterator_to_array($stream);
+            $messages = $stream->toList();
 
             self::assertCount(2, $messages);
 

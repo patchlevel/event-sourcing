@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
-use Patchlevel\EventSourcing\Store\Stream;
 use RuntimeException;
 
 use function count;

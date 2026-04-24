@@ -6,9 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Unit\DecisionModel;
 
 use Patchlevel\EventSourcing\DecisionModel\StoreDecisionModelBuilder;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\AppendStore;
-use Patchlevel\EventSourcing\Store\ArrayStream;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\Query;
 use Patchlevel\EventSourcing\Store\SubQuery;
@@ -25,7 +25,7 @@ final class StoreDecisionModelBuilderTest extends TestCase
     public function testEmpty(): void
     {
         $store = $this->createMock(AppendStore::class);
-        $store->expects($this->once())->method('query')->with(new Query())->willReturn(new ArrayStream([]));
+        $store->expects($this->once())->method('query')->with(new Query())->willReturn(new Stream());
 
         $builder = new StoreDecisionModelBuilder($store);
 
@@ -54,7 +54,7 @@ final class StoreDecisionModelBuilderTest extends TestCase
             ),
         );
 
-        $store->expects($this->once())->method('query')->with($expectedQuery)->willReturn(new ArrayStream([$message]));
+        $store->expects($this->once())->method('query')->with($expectedQuery)->willReturn(new Stream([1 => $message]));
 
         $builder = new StoreDecisionModelBuilder($store);
 
@@ -78,7 +78,7 @@ final class StoreDecisionModelBuilderTest extends TestCase
             ),
         );
 
-        $store->expects($this->once())->method('query')->with($expectedQuery)->willReturn(new ArrayStream());
+        $store->expects($this->once())->method('query')->with($expectedQuery)->willReturn(new Stream());
 
         $builder = new StoreDecisionModelBuilder($store);
 

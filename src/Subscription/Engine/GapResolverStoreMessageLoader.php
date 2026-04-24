@@ -8,11 +8,11 @@ use DateInterval;
 use Generator;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\Stream;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Clock\ClockInterface;
 
@@ -30,9 +30,9 @@ final class GapResolverStoreMessageLoader implements MessageLoader
     }
 
     /** @param list<Subscription> $subscriptions */
-    public function load(int $startIndex, array $subscriptions): Stream
+    public function load(int|null $startIndex, array $subscriptions): Stream
     {
-        return new GeneratorStream(
+        return new Stream(
             $this->generator($startIndex),
         );
     }
@@ -45,29 +45,41 @@ final class GapResolverStoreMessageLoader implements MessageLoader
     }
 
     /** @return Generator<int, Message> */
-    private function generator(int $startIndex, int $retry = 0): Generator
+    private function generator(int|null $startIndex, int $retry = 0): Generator
     {
-        $currentIndex = $startIndex + 1;
-        $stream = $this->store->load(new Criteria(new FromIndexCriterion($startIndex)));
+        $expectedNextIndex = $startIndex ? $startIndex + 1 : null;
 
-        foreach ($stream as $message) {
-            if ($currentIndex !== $stream->index() && $this->inDetectionWindow($message)) {
+        $criteria = new Criteria();
+
+        if ($startIndex !== null) {
+            $criteria = $criteria->add(new FromIndexCriterion($startIndex));
+        }
+
+        $stream = $this->store->load($criteria);
+
+        foreach ($stream as $currentIndex => $message) {
+            if ($expectedNextIndex !== null && $expectedNextIndex !== $currentIndex && $this->inDetectionWindow($message)) {
                 $sleep = $this->retriesInMs[$retry] ?? null;
 
                 if ($sleep !== null) {
                     $stream->close();
                     usleep($sleep * 1000);
 
-                    yield from $this->generator($currentIndex - 1, $retry + 1);
+                    yield from $this->generator($expectedNextIndex - 1, $retry + 1);
 
                     break;
                 }
             }
 
-            $retry = 0;
-            $currentIndex++;
+            if ($expectedNextIndex === null) {
+                $expectedNextIndex = $currentIndex + 1;
+            } else {
+                $expectedNextIndex++;
+            }
 
-            yield $stream->index() => $message;
+            $retry = 0;
+
+            yield $currentIndex => $message;
         }
 
         $stream->close();

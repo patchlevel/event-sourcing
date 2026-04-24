@@ -13,17 +13,22 @@ use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\DateTimeTzImmutableType;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
+use Generator;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Schema\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventIdCriterion;
@@ -107,7 +112,7 @@ final class StreamDoctrineDbalStore implements Store, SubscriptionStore, Doctrin
         int|null $limit = null,
         int|null $offset = null,
         bool $backwards = false,
-    ): StreamDoctrineDbalStoreStream {
+    ): Stream {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->config['table_name'])
@@ -118,15 +123,14 @@ final class StreamDoctrineDbalStore implements Store, SubscriptionStore, Doctrin
         $builder->setMaxResults($limit);
         $builder->setFirstResult($offset ?? 0);
 
-        return new StreamDoctrineDbalStoreStream(
-            $this->connection->executeQuery(
-                $builder->getSQL(),
-                $builder->getParameters(),
-                $builder->getParameterTypes(),
+        return new Stream(
+            $this->buildGenerator(
+                $this->connection->executeQuery(
+                    $builder->getSQL(),
+                    $builder->getParameters(),
+                    $builder->getParameterTypes(),
+                ),
             ),
-            $this->eventSerializer,
-            $this->headersSerializer,
-            $this->connection->getDatabasePlatform(),
         );
     }
 
@@ -616,5 +620,39 @@ final class StreamDoctrineDbalStore implements Store, SubscriptionStore, Doctrin
         }
 
         throw new LockingNotImplemented($platform::class);
+    }
+
+    /** @return Generator<int, Message> */
+    private function buildGenerator(Result $result): Generator
+    {
+        /** @var DateTimeTzImmutableType $dateTimeType */
+        $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
+        $platform = $this->connection->getDatabasePlatform();
+
+        /** @var array{id: positive-int, stream: string, playhead: int|string|null, event_id: string, event_name: string, event_payload: string, recorded_on: string, archived: int|string, custom_headers: string} $data */
+        foreach ($result->iterateAssociative() as $data) {
+            $event = $this->eventSerializer->deserialize(new SerializedEvent(
+                $data['event_name'],
+                $data['event_payload'],
+            ));
+
+            $message = Message::create($event)
+                ->withHeader(new IndexHeader($data['id']))
+                ->withHeader(new StreamNameHeader($data['stream']))
+                ->withHeader(new RecordedOnHeader($dateTimeType->convertToPHPValue($data['recorded_on'], $platform)))
+                ->withHeader(new EventIdHeader($data['event_id']));
+
+            if ($data['playhead'] !== null) {
+                $message = $message->withHeader(new PlayheadHeader((int)$data['playhead']));
+            }
+
+            if ($data['archived']) {
+                $message = $message->withHeader(new ArchivedHeader());
+            }
+
+            $customHeaders = $this->headersSerializer->deserialize($data['custom_headers']);
+
+            yield $data['id'] => $message->withHeaders($customHeaders);
+        }
     }
 }

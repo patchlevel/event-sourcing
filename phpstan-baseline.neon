@@ -55,6 +55,12 @@ parameters:
 			path: src/Message/Serializer/DefaultHeadersSerializer.php
 
 		-
+			message: '#^Property Patchlevel\\EventSourcing\\Message\\Stream\:\:\$iterator \(Iterator\<int, Patchlevel\\EventSourcing\\Message\\Message\>\|null\) does not accept IteratorIterator\<mixed, mixed, Traversable\<TKey, TValue\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Message/Stream.php
+
+		-
 			message: '#^Property Patchlevel\\EventSourcing\\Serializer\\Normalizer\\IdNormalizer\:\:\$identifierClass \(class\-string\<Patchlevel\\EventSourcing\\Identifier\\Identifier\>\|null\) does not accept string\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -65,24 +71,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Snapshot/DefaultSnapshotStore.php
-
-		-
-			message: '#^Method Patchlevel\\EventSourcing\\Store\\ArrayStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: src/Store/ArrayStream.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Store\\ArrayStream\:\:\$index \(int\<1, max\>\|null\) does not accept int\<0, max\>\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: src/Store/ArrayStream.php
-
-		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: src/Store/ArrayStream.php
 
 		-
 			message: '#^Method Patchlevel\\EventSourcing\\Store\\Criteria\\Criteria\:\:get\(\) should return T of object but returns object\.$#'
@@ -97,58 +85,22 @@ parameters:
 			path: src/Store/Criteria/StreamCriterion.php
 
 		-
-			message: '#^Method Patchlevel\\EventSourcing\\Store\\StreamDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
-			identifier: return.unusedType
+			message: '#^Parameter \#1 \$playhead of class Patchlevel\\EventSourcing\\Store\\Header\\PlayheadHeader constructor expects int\<1, max\>, int given\.$#'
+			identifier: argument.type
 			count: 1
-			path: src/Store/StreamDoctrineDbalStoreStream.php
+			path: src/Store/StreamDoctrineDbalStore.php
 
 		-
 			message: '#^Parameter \#1 \$playhead of class Patchlevel\\EventSourcing\\Store\\Header\\PlayheadHeader constructor expects int\<1, max\>, int given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/Store/StreamDoctrineDbalStoreStream.php
-
-		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: src/Store/StreamDoctrineDbalStoreStream.php
-
-		-
-			message: '#^Method Patchlevel\\EventSourcing\\Store\\TaggableDoctrineDbalStoreStream\:\:current\(\) never returns null so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: src/Store/TaggableDoctrineDbalStoreStream.php
-
-		-
-			message: '#^Parameter \#1 \$playhead of class Patchlevel\\EventSourcing\\Store\\Header\\PlayheadHeader constructor expects int\<1, max\>, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Store/TaggableDoctrineDbalStoreStream.php
+			path: src/Store/TaggableDoctrineDbalStore.php
 
 		-
 			message: '#^Parameter \#1 \$tags of class Patchlevel\\EventSourcing\\Store\\Header\\TagsHeader constructor expects list\<string\>, mixed given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/Store/TaggableDoctrineDbalStoreStream.php
-
-		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: src/Store/TaggableDoctrineDbalStoreStream.php
-
-		-
-			message: '#^Generator expects key type int, int\<1, max\>\|null given\.$#'
-			identifier: generator.keyType
-			count: 1
-			path: src/Subscription/Engine/GapResolverStoreMessageLoader.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Subscription\\Engine\\GeneratorStream\:\:\$index \(int\<1, max\>\|null\) does not accept int\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: src/Subscription/Engine/GeneratorStream.php
+			path: src/Store/TaggableDoctrineDbalStore.php
 
 		-
 			message: '#^Parameter \#1 \$eventClass of method Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry\:\:eventName\(\) expects class\-string, string given\.$#'
@@ -293,12 +245,6 @@ parameters:
 			identifier: property.onlyWritten
 			count: 1
 			path: tests/Integration/Store/Profile.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Patchlevel\\EventSourcing\\Store\\Stream\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: tests/Integration/Store/StreamDoctrineDbalStoreTest.php
 
 		-
 			message: '#^Parameter \#1 \$table of class Patchlevel\\EventSourcing\\Subscription\\Cleanup\\Dbal\\DropTableTask constructor expects non\-empty\-string, string given\.$#'

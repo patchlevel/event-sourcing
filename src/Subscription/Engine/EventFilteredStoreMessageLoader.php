@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\Stream;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -26,9 +26,13 @@ final class EventFilteredStoreMessageLoader implements MessageLoader
     }
 
     /** @param list<Subscription> $subscriptions */
-    public function load(int $startIndex, array $subscriptions): Stream
+    public function load(int|null $startIndex, array $subscriptions): Stream
     {
-        $criteria = new Criteria(new FromIndexCriterion($startIndex));
+        $criteria = new Criteria();
+
+        if ($startIndex !== null) {
+            $criteria = $criteria->add(new FromIndexCriterion($startIndex));
+        }
 
         $events = $this->events($subscriptions);
 

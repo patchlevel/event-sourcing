@@ -8,6 +8,7 @@ use Closure;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
@@ -58,7 +59,7 @@ final class InMemoryStore implements Store
         int|null $limit = null,
         int|null $offset = null,
         bool $backwards = false,
-    ): ArrayStream {
+    ): Stream {
         $messages = $this->filter($criteria);
 
         if ($backwards) {
@@ -73,7 +74,7 @@ final class InMemoryStore implements Store
             $messages = array_slice($messages, 0, $limit);
         }
 
-        return new ArrayStream($messages);
+        return new Stream($messages);
     }
 
     public function count(Criteria|null $criteria = null): int

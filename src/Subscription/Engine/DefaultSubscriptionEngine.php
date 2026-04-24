@@ -220,18 +220,14 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshS
                     $errors = [];
                     $stream = null;
                     $messageCounter = 0;
+                    $lastIndex = null;
 
                     try {
                         $stream = $this->messageLoader->load($startIndex, $subscriptions->toArray());
 
-                        foreach ($stream as $message) {
+                        foreach ($stream as $index => $message) {
                             $messageCounter++;
-
-                            $index = $stream->index();
-
-                            if ($index === null) {
-                                throw new UnexpectedError('Stream index is null, this should not happen.');
-                            }
+                            $lastIndex = $index;
 
                             foreach ($subscriptions as $subscription) {
                                 if ($subscription->position() >= $index) {
@@ -289,12 +285,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshS
                             }
                         }
                     } finally {
-                        $endIndex = $stream?->index() ?: $startIndex;
                         $stream?->close();
 
-                        if ($messageCounter > 0) {
+                        if ($lastIndex !== null && $messageCounter > 0) {
                             foreach ($subscriptions as $subscription) {
-                                $error = $this->ensureCommitBatch($subscription, $endIndex);
+                                $error = $this->ensureCommitBatch($subscription, $lastIndex);
 
                                 if ($error) {
                                     $errors[] = $error;
@@ -391,18 +386,14 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshS
                     $errors = [];
                     $stream = null;
                     $messageCounter = 0;
+                    $lastIndex = null;
 
                     try {
                         $stream = $this->messageLoader->load($startIndex, $subscriptions->toArray());
 
-                        foreach ($stream as $message) {
+                        foreach ($stream as $index => $message) {
                             $messageCounter++;
-
-                            $index = $stream->index();
-
-                            if ($index === null) {
-                                throw new UnexpectedError('Stream index is null, this should not happen.');
-                            }
+                            $lastIndex = $index;
 
                             foreach ($subscriptions as $subscription) {
                                 if ($subscription->position() >= $index) {
@@ -454,12 +445,11 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshS
                             }
                         }
                     } finally {
-                        $endIndex = $stream?->index() ?: $startIndex;
                         $stream?->close();
 
-                        if ($messageCounter > 0) {
+                        if ($lastIndex !== null && $messageCounter > 0) {
                             foreach ($subscriptions as $subscription) {
-                                $error = $this->ensureCommitBatch($subscription, $endIndex);
+                                $error = $this->ensureCommitBatch($subscription, $lastIndex);
 
                                 if ($error) {
                                     $errors[] = $error;
@@ -489,7 +479,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine, CanRefreshS
                     $this->logger?->info(
                         sprintf(
                             'Subscription Engine: End of stream on position "%d" has been reached, finish processing.',
-                            $endIndex,
+                            $lastIndex,
                         ),
                     );
 
