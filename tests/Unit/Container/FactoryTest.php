@@ -247,13 +247,11 @@ final class FactoryTest extends TestCase
         self::assertInstanceOf(BaseCryptographer::class, $container->get(Cryptographer::class));
     }
 
-
     public function testCreateWithDefaultSettingsAndThrowOnError(): void
     {
         $configuration = Configuration::createWithConnectionUrl('sqlite3:///:memory:')
             ->withDefaultSettings()
             ->withSubscriptionEngineThrowOnError();
-        ;
         $container = Factory::create($configuration);
 
         self::assertInstanceOf(StreamDoctrineDbalStore::class, $container->get(Store::class));
@@ -302,6 +300,7 @@ final class FactoryTest extends TestCase
         self::assertInstanceOf(ExtensionDoctrineCipherKeyStore::class, $container->get(CipherKeyStore::class));
         self::assertInstanceOf(BaseCryptographer::class, $container->get(Cryptographer::class));
     }
+
     public function testCreateWithDefaultSettingsAndCatchUpAndThrowOnError(): void
     {
         $configuration = Configuration::createWithConnectionUrl('sqlite3:///:memory:')
@@ -361,8 +360,7 @@ final class FactoryTest extends TestCase
     {
         $configuration = Configuration::createWithConnectionUrl('sqlite3:///:memory:')
             ->withDefaultSettings()
-            ->withEventBus()
-        ;
+            ->withEventBus();
         $container = Factory::create($configuration);
 
         self::assertInstanceOf(StreamDoctrineDbalStore::class, $container->get(Store::class));
@@ -416,8 +414,7 @@ final class FactoryTest extends TestCase
     {
         $configuration = Configuration::createWithConnectionUrl('sqlite3:///:memory:')
             ->withDefaultSettings()
-            ->withSnapshotAdapters(['default' => new InMemorySnapshotAdapter()])
-        ;
+            ->withSnapshotAdapters(['default' => new InMemorySnapshotAdapter()]);
         $container = Factory::create($configuration);
 
         self::assertInstanceOf(StreamDoctrineDbalStore::class, $container->get(Store::class));
@@ -471,8 +468,7 @@ final class FactoryTest extends TestCase
     {
         $configuration = Configuration::createWithConnectionUrl('sqlite3:///:memory:')
             ->withDefaultSettings()
-            ->withSubscriptionRetryDefaults()
-        ;
+            ->withSubscriptionRetryDefaults();
         $container = Factory::create($configuration);
 
         self::assertInstanceOf(StreamDoctrineDbalStore::class, $container->get(Store::class));

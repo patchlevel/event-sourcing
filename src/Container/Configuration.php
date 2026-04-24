@@ -425,7 +425,7 @@ final class Configuration
     }
 
     /**
-     * @param positive-int $defaultMaxRetries
+     * @param positive-int                  $defaultMaxRetries
      * @param list<class-string<Throwable>> $defaultExceptions
      */
     public function withCommandBusInstantRetry(
@@ -476,9 +476,7 @@ final class Configuration
         return $newConfiguration;
     }
 
-    /**
-     * @param positive-int $maxAttempts
-     */
+    /** @param positive-int $maxAttempts */
     public function withSubscriptionRetryDefaults(
         int $baseDelay = 5,
         float $delayFactor = 2.0,
@@ -491,8 +489,8 @@ final class Configuration
                     'base_delay' => $baseDelay,
                     'delay_factor' => $delayFactor,
                     'max_attempts' => $maxAttempts,
-                ]
-            ]
+                ],
+            ],
         ]);
     }
 

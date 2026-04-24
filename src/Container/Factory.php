@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Container;
 
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
@@ -36,7 +35,6 @@ use Patchlevel\EventSourcing\Console\Command\SubscriptionStatusCommand;
 use Patchlevel\EventSourcing\Console\Command\SubscriptionTeardownCommand;
 use Patchlevel\EventSourcing\Console\Command\WatchCommand;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
-use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
 use Patchlevel\EventSourcing\Cryptography\ExtensionDoctrineCipherKeyStore;
 use Patchlevel\EventSourcing\EventBus\AttributeListenerProvider;
 use Patchlevel\EventSourcing\EventBus\Consumer;
@@ -111,20 +109,11 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepositor
 use Patchlevel\Hydrator\CoreExtension;
 use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
 use Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer;
-use Patchlevel\Hydrator\Extension\Cryptography\Cipher\Cipher;
-use Patchlevel\Hydrator\Extension\Cryptography\Cipher\CipherKeyFactory;
-use Patchlevel\Hydrator\Extension\Cryptography\Cipher\OpensslCipher;
-use Patchlevel\Hydrator\Extension\Cryptography\Cipher\OpensslCipherKeyFactory;
 use Patchlevel\Hydrator\Extension\Cryptography\Cryptographer;
 use Patchlevel\Hydrator\Extension\Cryptography\CryptographyExtension;
 use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
 use Patchlevel\Hydrator\Extension\Lifecycle\LifecycleExtension;
-use Patchlevel\Hydrator\Guesser\BuiltInGuesser;
-use Patchlevel\Hydrator\Guesser\ChainGuesser;
 use Patchlevel\Hydrator\Hydrator;
-use Patchlevel\Hydrator\Metadata\AttributeMetadataFactory;
-use Patchlevel\Hydrator\Metadata\MetadataFactory;
-use Patchlevel\Hydrator\MetadataHydrator;
 use Patchlevel\Hydrator\StackHydrator;
 use Patchlevel\Hydrator\StackHydratorBuilder;
 use Psr\Clock\ClockInterface;
@@ -133,6 +122,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use function array_filter;
+use function array_key_exists;
 use function sprintf;
 
 /**
@@ -156,7 +146,7 @@ final class Factory
         }
 
         foreach ($configuration->parameters as $id => $parameter) {
-            $container->bind($id, static fn() => $parameter);
+            $container->bind($id, static fn () => $parameter);
         }
 
         self::configureClock($configuration, $container);
@@ -257,7 +247,7 @@ final class Factory
     {
         $container->bind(
             UpcasterChain::class,
-            static fn(): UpcasterChain => new UpcasterChain($configuration->upcasters),
+            static fn (): UpcasterChain => new UpcasterChain($configuration->upcasters),
         );
         $container->alias(Upcaster::class, UpcasterChain::class);
     }
@@ -277,7 +267,7 @@ final class Factory
 
         $container->bind(
             DefaultEventSerializer::class,
-            static fn(Container $container): DefaultEventSerializer => new DefaultEventSerializer(
+            static fn (Container $container): DefaultEventSerializer => new DefaultEventSerializer(
                 $container->get(EventRegistry::class),
                 $container->get(Hydrator::class),
                 $container->get(Encoder::class),
@@ -351,7 +341,7 @@ final class Factory
 
         $container->bind(
             SyncCommandBus::class,
-            static fn(Container $container
+            static fn (Container $container,
             ): SyncCommandBus => new SyncCommandBus($container->get(HandlerProvider::class)),
         );
         $container->alias(CommandBus::class, SyncCommandBus::class);
@@ -463,7 +453,7 @@ final class Factory
 
         $container->bind(
             SyncQueryBus::class,
-            static fn(Container $container,
+            static fn (Container $container,
             ) => new SyncQueryBus($container->get(\Patchlevel\EventSourcing\QueryBus\HandlerProvider::class)),
         );
         $container->alias(QueryBus::class, SyncQueryBus::class);
@@ -498,13 +488,13 @@ final class Factory
 
             $container->bind(
                 self::CONNECTION_ID,
-                static fn(): Connection => $factory::createConnection($configuration->connectionUrl),
+                static fn (): Connection => $factory::createConnection($configuration->connectionUrl),
             );
 
             if ($configuration->dedicatedProjectionConnection) {
                 $container->bind(
                     self::PUBLIC_CONNECTION_ID,
-                    static fn(): Connection => $factory::createConnection($configuration->connectionUrl),
+                    static fn (): Connection => $factory::createConnection($configuration->connectionUrl),
                 );
 
                 $container->alias(Connection::class, self::PUBLIC_CONNECTION_ID);
@@ -540,7 +530,7 @@ final class Factory
 
         $container->bind(
             LoggerInterface::class,
-            static fn(Container $container): LoggerInterface => $container->get($configuration->loggerService),
+            static fn (Container $container): LoggerInterface => $container->get($configuration->loggerService),
         );
     }
 
@@ -616,7 +606,7 @@ final class Factory
 
         $container->bind(
             DefaultSnapshotStore::class,
-            static fn(Container $container): DefaultSnapshotStore => new DefaultSnapshotStore(
+            static fn (Container $container): DefaultSnapshotStore => new DefaultSnapshotStore(
                 $container->get(AdapterRepository::class),
                 $container->get(Hydrator::class),
                 $container->get(AggregateRootMetadataFactory::class),
@@ -655,7 +645,6 @@ final class Factory
         );
         $container->alias(RepositoryManager::class, DefaultRepositoryManager::class);
     }
-
 
     private static function configureCommands(Configuration $configuration, Container $container): void
     {
@@ -741,7 +730,6 @@ final class Factory
             static function (Container $container) {
                 return new SubscriptionRemoveCommand(
                     $container->get(SubscriptionEngine::class),
-
                 );
             },
         );
@@ -790,15 +778,17 @@ final class Factory
                     $services[] = $container->get(CipherKeyStore::class);
                 }
 
-                return new ChainDoctrineSchemaConfigurator(array_filter($services,
-                    static fn($service) => $service instanceof DoctrineSchemaConfigurator));
+                return new ChainDoctrineSchemaConfigurator(array_filter(
+                    $services,
+                    static fn ($service) => $service instanceof DoctrineSchemaConfigurator,
+                ));
             },
         );
         $container->alias(DoctrineSchemaConfigurator::class, ChainDoctrineSchemaConfigurator::class);
 
         $container->bind(
             DoctrineSchemaDirector::class,
-            static fn(Container $container): DoctrineSchemaDirector => new DoctrineSchemaDirector(
+            static fn (Container $container): DoctrineSchemaDirector => new DoctrineSchemaDirector(
                 $container->get(self::CONNECTION_ID),
                 $container->get(DoctrineSchemaConfigurator::class),
             ),
@@ -810,7 +800,7 @@ final class Factory
 
         $container->bind(
             DatabaseCreateCommand::class,
-            static fn(Container $container): DatabaseCreateCommand => new DatabaseCreateCommand(
+            static fn (Container $container): DatabaseCreateCommand => new DatabaseCreateCommand(
                 $container->get(self::CONNECTION_ID),
                 $container->get(DoctrineHelper::class),
             ),
@@ -818,7 +808,7 @@ final class Factory
 
         $container->bind(
             DatabaseDropCommand::class,
-            static fn(Container $container): DatabaseDropCommand => new DatabaseDropCommand(
+            static fn (Container $container): DatabaseDropCommand => new DatabaseDropCommand(
                 $container->get(self::CONNECTION_ID),
                 $container->get(DoctrineHelper::class),
             ),
@@ -826,21 +816,21 @@ final class Factory
 
         $container->bind(
             SchemaCreateCommand::class,
-            static fn(Container $container): SchemaCreateCommand => new SchemaCreateCommand(
+            static fn (Container $container): SchemaCreateCommand => new SchemaCreateCommand(
                 $container->get(SchemaDirector::class),
             ),
         );
 
         $container->bind(
             SchemaUpdateCommand::class,
-            static fn(Container $container): SchemaUpdateCommand => new SchemaUpdateCommand(
+            static fn (Container $container): SchemaUpdateCommand => new SchemaUpdateCommand(
                 $container->get(SchemaDirector::class),
             ),
         );
 
         $container->bind(
             SchemaDropCommand::class,
-            static fn(Container $container): SchemaDropCommand => new SchemaDropCommand(
+            static fn (Container $container): SchemaDropCommand => new SchemaDropCommand(
                 $container->get(SchemaDirector::class),
             ),
         );
@@ -884,8 +874,10 @@ final class Factory
         foreach ($configuration->subscriptionRetryStrategyDefinitions as $name => $retryStrategyDefinition) {
             if ($retryStrategyDefinition['type'] === Configuration::SUBSCRIPTION_RETRY_CLOCK_BASED) {
                 if (!array_key_exists('options', $retryStrategyDefinition)) {
-                    throw new InvalidArgumentException(sprintf('Missing options for subscription retry strategy "%s".',
-                        $name));
+                    throw new InvalidArgumentException(sprintf(
+                        'Missing options for subscription retry strategy "%s".',
+                        $name,
+                    ));
                 }
 
                 $strategies[$name] = new ClockBasedRetryStrategy(
@@ -949,7 +941,7 @@ final class Factory
                 }
             };
 
-            $container->bind(InMemorySubscriptionStore::class, static fn() => $factory::create());
+            $container->bind(InMemorySubscriptionStore::class, static fn () => $factory::create());
             $container->alias(SubscriptionStore::class, InMemorySubscriptionStore::class);
         }
 
@@ -1122,11 +1114,10 @@ final class Factory
 
             $container->bind(
                 self::NEW_STORE_ID,
-                static fn(Container $container): Store => $container->get($configuration->storeMigrationService)
+                static fn (Container $container): Store => $container->get($configuration->storeMigrationService),
             );
         }
 
         throw new InvalidArgumentException(sprintf('Unknown store type "%s"', $configuration->storeMigrationType));
     }
-
 }
