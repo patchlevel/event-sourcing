@@ -38,7 +38,7 @@ final class Container implements ContainerInterface
      *
      * @return ($id is class-string<T> ? T : object)
      *
-     * @template T object
+     * @template T of object
      */
     public function get(string $id): mixed
     {
