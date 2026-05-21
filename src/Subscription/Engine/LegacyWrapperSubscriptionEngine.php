@@ -48,6 +48,7 @@ final class LegacyWrapperSubscriptionEngine implements SubscriptionEngine, CanRe
         return $this->engine->run(new Setup(
             $criteria->ids,
             $criteria->groups,
+            $skipBooting,
         ));
     }
 

@@ -8,7 +8,8 @@ use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
-use Patchlevel\EventSourcing\Subscription\Engine\Event\OnResult;
+use Patchlevel\EventSourcing\Subscription\Engine\Error;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnProcessingFinished;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -21,7 +22,7 @@ use function sprintf;
 /** @internal */
 class BatchSubscriber implements EventSubscriberInterface
 {
-    /** @var array<string, BatchableSubscriber> */
+    /** @var array<string, array{subscriber: BatchableSubscriber, subscription: Subscription}> */
     private array $batching = [];
 
     public function __construct(
@@ -55,7 +56,10 @@ class BatchSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->batching[$subscriberId] = $realSubscriber;
+        $this->batching[$subscriberId] = [
+            'subscriber' => $realSubscriber,
+            'subscription' => $event->subscription,
+        ];
 
         $this->logger?->debug(sprintf(
             'Subscription Engine: Subscriber "%s" starts a new batch.',
@@ -89,7 +93,7 @@ class BatchSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $subscriber = $this->batching[$subscriberId];
+        $subscriber = $this->batching[$subscriberId]['subscriber'];
         unset($this->batching[$subscriberId]);
 
         $this->logger?->debug(sprintf(
@@ -111,8 +115,36 @@ class BatchSubscriber implements EventSubscriberInterface
         }
     }
 
-    public function onResult(OnResult $event): void
+    public function onProcessingFinished(OnProcessingFinished $event): void
     {
+        $lastIndex = $event->lastIndex;
+
+        if ($lastIndex === null) {
+            return;
+        }
+
+        foreach ($this->batching as $subscriberId => ['subscriber' => $subscriber, 'subscription' => $subscription]) {
+            unset($this->batching[$subscriberId]);
+
+            $this->logger?->debug(sprintf(
+                'Subscription Engine: Subscriber "%s" commits the batch.',
+                $subscriberId,
+            ));
+
+            try {
+                $subscriber->commitBatch();
+                $subscription->changePosition($lastIndex);
+            } catch (Throwable $e) {
+                $this->logger?->error(sprintf(
+                    'Subscription Engine: Subscriber "%s" has an error in the commit batch method: %s',
+                    $subscriberId,
+                    $e->getMessage(),
+                ));
+
+                $subscription->error($e);
+                $event->errors[] = new Error($subscriberId, $e->getMessage(), $e);
+            }
+        }
     }
 
     private function shouldCommitBatch(Subscription $subscription): bool
@@ -121,7 +153,7 @@ class BatchSubscriber implements EventSubscriberInterface
             return false;
         }
 
-        return $this->batching[$subscription->id()]->forceCommit();
+        return $this->batching[$subscription->id()]['subscriber']->forceCommit();
     }
 
     public function onError(OnHandleMessageError $event): void
@@ -132,7 +164,7 @@ class BatchSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $subscriber = $this->batching[$subscriptionId];
+        $subscriber = $this->batching[$subscriptionId]['subscriber'];
 
         unset($this->batching[$subscriptionId]);
 
@@ -159,6 +191,7 @@ class BatchSubscriber implements EventSubscriberInterface
             OnHandleMessage::class => 'onHandleMessage',
             OnHandleMessageSuccess::class => 'onHandleMessageSuccess',
             OnHandleMessageError::class => 'onError',
+            OnProcessingFinished::class => 'onProcessingFinished',
         ];
     }
 }

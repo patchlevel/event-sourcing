@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine\Listener;
 
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptions;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -13,12 +14,13 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function array_values;
 use function sprintf;
 
 /** @internal */
-final class DiscoverListener
+final class DiscoverListener implements EventSubscriberInterface
 {
     public function __construct(
         private readonly MessageLoader $messageLoader,
@@ -28,16 +30,27 @@ final class DiscoverListener
     ) {
     }
 
-    public function __invoke(OnCommand $event): void
+    public function onCommand(OnCommand $event): void
     {
-        $command = $event->command;
+        $this->discover();
+    }
 
-        // todo define when to discover
+    public function onSubscriptions(OnSubscriptions $event): void
+    {
+        $this->discover();
+    }
 
-        $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria(
-            // ids: $command->ids,
-            // groups: $command->groups,
-        ));
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            OnCommand::class => ['onCommand', 64],
+            OnSubscriptions::class => 'onSubscriptions',
+        ];
+    }
+
+    private function discover(): void
+    {
+        $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria());
 
         $latestIndex = null;
 

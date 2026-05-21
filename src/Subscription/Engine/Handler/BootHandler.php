@@ -147,13 +147,14 @@ final class BootHandler implements Handler
                                 ),
                             );
 
-                            $this->eventDispatcher->dispatch(
-                                new OnProcessingFinished(
-                                    $command,
-                                    OnProcessingFinished::REASON_LIMIT_REACHED,
-                                    $messageCounter,
-                                ),
+                            $limitEvent = new OnProcessingFinished(
+                                $command,
+                                OnProcessingFinished::REASON_LIMIT_REACHED,
+                                $messageCounter,
+                                $lastIndex,
                             );
+                            $this->eventDispatcher->dispatch($limitEvent);
+                            $errors = array_merge($errors, $limitEvent->errors);
 
                             return new ProcessedResult(
                                 $messageCounter,
@@ -163,13 +164,14 @@ final class BootHandler implements Handler
                         }
                     }
 
-                    $this->eventDispatcher->dispatch(
-                        new OnProcessingFinished(
-                            $command,
-                            OnProcessingFinished::REASON_STREAM_ENDED,
-                            $messageCounter,
-                        ),
+                    $finishedEvent = new OnProcessingFinished(
+                        $command,
+                        OnProcessingFinished::REASON_STREAM_ENDED,
+                        $messageCounter,
+                        $lastIndex,
                     );
+                    $this->eventDispatcher->dispatch($finishedEvent);
+                    $errors = array_merge($errors, $finishedEvent->errors);
                 } finally {
                     $stream?->close();
 

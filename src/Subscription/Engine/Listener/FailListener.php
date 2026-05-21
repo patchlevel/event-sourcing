@@ -5,17 +5,19 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine\Listener;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Throwable;
 
 use function sprintf;
 
 /** @internal */
-class FailListener
+class FailListener implements EventSubscriberInterface
 {
     public function __construct(
         private readonly SubscriptionManager $subscriptionManager,
@@ -37,7 +39,7 @@ class FailListener
             return;
         }
 
-        $subscriber = $this->subscriber($subscription->id());
+        $subscriber = $this->subscriberRepository->get($subscription->id());
 
         if (!$subscriber) {
             $subscription->failed($throwable);
@@ -78,5 +80,21 @@ class FailListener
             $subscription->failed($throwable);
             $this->subscriptionManager->update($subscription);
         }
+    }
+
+    public function onHandleMessageError(OnHandleMessageError $event): void
+    {
+        if (!$event->transitionToFailed) {
+            return;
+        }
+
+        $this->handleFailed($event->subscription, $event->throwable, $event->message, $event->index);
+    }
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            OnHandleMessageError::class => ['onHandleMessageError', -8],
+        ];
     }
 }

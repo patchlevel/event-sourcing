@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Cleaner;
+use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Pause;
@@ -17,6 +18,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnResult;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptions;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\BootHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\Handler;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\PauseHandler;
@@ -29,6 +31,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Handler\TeardownHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\BatchSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DetachListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DiscoverListener;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
@@ -72,6 +75,12 @@ final class NextSubscriptionEngine
             ]);
         }
 
+        $cleanupRunner = new CleanupRunner(
+            $this->subscriptionManager,
+            $this->cleaner,
+            $this->logger,
+        );
+
         $messageProcessor = new MessageProcessor(
             $this->subscriberRepository,
             $this->eventDispatcher,
@@ -104,7 +113,7 @@ final class NextSubscriptionEngine
             Remove::class => new RemoveHandler(
                 $this->subscriptionManager,
                 $this->subscriberRepository,
-                $this->cleaner,
+                $cleanupRunner,
                 $this->logger,
             ),
             Run::class => new RunHandler(
@@ -119,24 +128,24 @@ final class NextSubscriptionEngine
                 $this->messageLoader,
                 $this->subscriptionManager,
                 $this->subscriberRepository,
+                $this->retryStrategyRepository,
                 $this->logger,
             ),
             Teardown::class => new TeardownHandler(
                 $this->subscriptionManager,
                 $this->subscriberRepository,
+                $cleanupRunner,
                 $this->logger,
             ),
         ];
 
-        $this->eventDispatcher->addListener(
-            OnCommand::class,
+        $this->eventDispatcher->addSubscriber(
             new DiscoverListener(
                 $this->messageLoader,
                 $this->subscriptionManager,
                 $this->subscriberRepository,
                 $this->logger,
             ),
-            64,
         );
 
         $this->eventDispatcher->addSubscriber(
@@ -150,6 +159,14 @@ final class NextSubscriptionEngine
 
         $this->eventDispatcher->addSubscriber(
             new BatchSubscriber(
+                $this->subscriberRepository,
+                $this->logger,
+            ),
+        );
+
+        $this->eventDispatcher->addSubscriber(
+            new FailListener(
+                $this->subscriptionManager,
                 $this->subscriberRepository,
                 $this->logger,
             ),
@@ -200,7 +217,7 @@ final class NextSubscriptionEngine
     {
         $criteria ??= new SubscriptionEngineCriteria();
 
-        // todo dispatch event for discover
+        $this->eventDispatcher->dispatch(new OnSubscriptions($criteria));
 
         return $this->subscriptionManager->find(
             new SubscriptionCriteria(

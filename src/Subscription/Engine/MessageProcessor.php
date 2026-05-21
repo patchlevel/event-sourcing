@@ -37,10 +37,6 @@ final class MessageProcessor
         $subscribeMethods = $subscriber->subscribeMethods($message->event()::class);
 
         if ($subscribeMethods === []) {
-            if (!isset($this->batching[$subscription->id()])) {
-                $subscription->changePosition($index);
-            }
-
             $this->logger?->debug(
                 sprintf(
                     'Subscription Engine: Subscriber "%s" for "%s" has no subscribe methods for "%s", continue.',
@@ -49,6 +45,13 @@ final class MessageProcessor
                     $message->event()::class,
                 ),
             );
+
+            $event = new OnHandleMessageSuccess($subscription, $message, $index);
+            $this->eventDispatcher->dispatch($event);
+
+            if ($event->shouldChangePosition) {
+                $subscription->changePosition($index);
+            }
 
             return null;
         }
@@ -61,6 +64,15 @@ final class MessageProcessor
 
             $this->eventDispatcher->dispatch($event);
         } catch (Throwable $e) {
+            $this->eventDispatcher->dispatch(
+                new OnHandleMessageError(
+                    $subscription,
+                    $e,
+                    $message,
+                    $index,
+                ),
+            );
+
             return new Error(
                 $subscription->id(),
                 $e->getMessage(),

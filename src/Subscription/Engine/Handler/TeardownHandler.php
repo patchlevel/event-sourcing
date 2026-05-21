@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine\Handler;
 
+use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
@@ -13,6 +14,7 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 use function sprintf;
 
@@ -26,6 +28,7 @@ final class TeardownHandler implements Handler
     public function __construct(
         private readonly SubscriptionManager $subscriptionManager,
         private readonly SubscriberAccessorRepository $subscriberRepository,
+        private readonly CleanupRunner $cleanupRunner,
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -46,7 +49,7 @@ final class TeardownHandler implements Handler
 
                 foreach ($subscriptions as $subscription) {
                     if ($subscription->hasCleanupTasks()) {
-                        $error = $this->cleanup($subscription);
+                        $error = $this->cleanupRunner->cleanup($subscription);
 
                         if ($error) {
                             $errors[] = $error;

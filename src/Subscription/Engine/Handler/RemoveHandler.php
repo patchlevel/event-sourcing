@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine\Handler;
 
-use Patchlevel\EventSourcing\Subscription\Cleanup\Cleaner;
+use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
@@ -28,7 +28,7 @@ final class RemoveHandler implements Handler
     public function __construct(
         private readonly SubscriptionManager $subscriptionManager,
         private readonly SubscriberAccessorRepository $subscriberRepository,
-        private readonly Cleaner|null $cleaner = null,
+        private readonly CleanupRunner $cleanupRunner,
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -59,7 +59,7 @@ final class RemoveHandler implements Handler
                     }
 
                     if ($subscription->hasCleanupTasks()) {
-                        $error = $this->cleanup($subscription, true);
+                        $error = $this->cleanupRunner->cleanup($subscription, true);
 
                         if ($error) {
                             $errors[] = $error;

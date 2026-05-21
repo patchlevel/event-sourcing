@@ -12,10 +12,14 @@ use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriberNotFound;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionCollection;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -33,6 +37,7 @@ final class SetupHandler implements Handler
         private readonly MessageLoader $messageLoader,
         private readonly SubscriptionManager $subscriptionManager,
         private readonly SubscriberAccessorRepository $subscriberRepository,
+        private readonly RetryStrategyRepository $retryStrategyRepository,
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -129,5 +134,21 @@ final class SetupHandler implements Handler
                 return new Result($errors);
             },
         );
+    }
+
+    private function handleError(Subscription $subscription, Throwable $throwable): void
+    {
+        $subscriber = $this->subscriberRepository->get($subscription->id());
+        $retryStrategy = $subscriber instanceof MetadataSubscriberAccessor && $subscriber->metadata()->retryStrategy !== null
+            ? $this->retryStrategyRepository->get($subscriber->metadata()->retryStrategy)
+            : $this->retryStrategyRepository->getDefaultRetryStrategy();
+
+        if (!$retryStrategy instanceof ConditionalRetryStrategy || $retryStrategy->canRetry($subscription)) {
+            $subscription->error($throwable);
+        } else {
+            $subscription->failed($throwable);
+        }
+
+        $this->subscriptionManager->update($subscription);
     }
 }
