@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine\Listener;
 
+use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
-use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnProcessingFinished;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
@@ -20,7 +20,7 @@ use Throwable;
 use function sprintf;
 
 /** @internal */
-class BatchSubscriber implements EventSubscriberInterface
+final class BatchSubscriber implements EventSubscriberInterface
 {
     /** @var array<string, array{subscriber: BatchableSubscriber, subscription: Subscription}> */
     private array $batching = [];
@@ -149,10 +149,6 @@ class BatchSubscriber implements EventSubscriberInterface
 
     private function shouldCommitBatch(Subscription $subscription): bool
     {
-        if (!isset($this->batching[$subscription->id()])) {
-            return false;
-        }
-
         return $this->batching[$subscription->id()]['subscriber']->forceCommit();
     }
 
@@ -184,6 +180,7 @@ class BatchSubscriber implements EventSubscriberInterface
         }
     }
 
+    /** @return array<class-string, string|array{string, int}> */
     public static function getSubscribedEvents(): array
     {
         return [

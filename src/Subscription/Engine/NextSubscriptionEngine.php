@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Cleaner;
-use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Pause;
@@ -30,8 +29,8 @@ use Patchlevel\EventSourcing\Subscription\Engine\Handler\SetupHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\TeardownHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\BatchSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DetachListener;
-use Patchlevel\EventSourcing\Subscription\Engine\Listener\DiscoverListener;
-use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailListener;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\DiscoverSubscriber;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
@@ -140,7 +139,7 @@ final class NextSubscriptionEngine
         ];
 
         $this->eventDispatcher->addSubscriber(
-            new DiscoverListener(
+            new DiscoverSubscriber(
                 $this->messageLoader,
                 $this->subscriptionManager,
                 $this->subscriberRepository,
@@ -165,7 +164,7 @@ final class NextSubscriptionEngine
         );
 
         $this->eventDispatcher->addSubscriber(
-            new FailListener(
+            new FailSubscriber(
                 $this->subscriptionManager,
                 $this->subscriberRepository,
                 $this->logger,

@@ -20,6 +20,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepositor
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+use function array_merge;
 use function count;
 use function sprintf;
 
@@ -103,7 +104,7 @@ final class RunHandler implements Handler
 
                             if (count($subscriptions) === 0) {
                                 $this->logger?->info(
-                                    'Subscription Engine: No subscriptions in booting status, finish booting.',
+                                    'Subscription Engine: No subscriptions in active status, finish processing.',
                                 );
 
                                 break 2;

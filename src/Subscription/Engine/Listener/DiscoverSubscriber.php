@@ -20,7 +20,7 @@ use function array_values;
 use function sprintf;
 
 /** @internal */
-final class DiscoverListener implements EventSubscriberInterface
+final class DiscoverSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly MessageLoader $messageLoader,
@@ -40,6 +40,7 @@ final class DiscoverListener implements EventSubscriberInterface
         $this->discover();
     }
 
+    /** @return array<class-string, string|array{string, int}> */
     public static function getSubscribedEvents(): array
     {
         return [

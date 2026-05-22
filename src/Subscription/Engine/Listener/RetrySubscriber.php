@@ -126,6 +126,7 @@ final class RetrySubscriber implements EventSubscriberInterface
         return $this->retryStrategyRepository->get($retryStrategy);
     }
 
+    /** @return array<class-string, string|array{string, int}> */
     public static function getSubscribedEvents(): array
     {
         return [

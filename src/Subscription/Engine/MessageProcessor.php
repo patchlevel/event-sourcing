@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
 use function sprintf;
@@ -21,7 +21,7 @@ final class MessageProcessor
 {
     public function __construct(
         private readonly SubscriberAccessorRepository $subscriberRepository,
-        private readonly EventDispatcher $eventDispatcher,
+        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -57,13 +57,23 @@ final class MessageProcessor
         }
 
         try {
-            $event =  new OnHandleMessage(
+            $event = new OnHandleMessage(
                 $subscription,
                 $message,
             );
 
             $this->eventDispatcher->dispatch($event);
         } catch (Throwable $e) {
+            $this->logger?->error(
+                sprintf(
+                    'Subscription Engine: Subscriber "%s" for "%s" could not process the event "%s": %s',
+                    $subscriber::class,
+                    $subscription->id(),
+                    $message->event()::class,
+                    $e->getMessage(),
+                ),
+            );
+
             $this->eventDispatcher->dispatch(
                 new OnHandleMessageError(
                     $subscription,

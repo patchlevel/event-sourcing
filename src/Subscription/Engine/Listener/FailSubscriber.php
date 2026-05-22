@@ -17,7 +17,7 @@ use Throwable;
 use function sprintf;
 
 /** @internal */
-class FailListener implements EventSubscriberInterface
+final class FailSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly SubscriptionManager $subscriptionManager,
@@ -91,6 +91,7 @@ class FailListener implements EventSubscriberInterface
         $this->handleFailed($event->subscription, $event->throwable, $event->message, $event->index);
     }
 
+    /** @return array<class-string, string|array{string, int}> */
     public static function getSubscribedEvents(): array
     {
         return [

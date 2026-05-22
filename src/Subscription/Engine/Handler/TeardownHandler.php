@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Subscription\Engine\Handler;
 
 use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionCollection;
@@ -21,7 +22,7 @@ use function sprintf;
 /**
  * @internal
  *
- * @implements Handler<null>
+ * @implements Handler<Teardown>
  */
 final class TeardownHandler implements Handler
 {
