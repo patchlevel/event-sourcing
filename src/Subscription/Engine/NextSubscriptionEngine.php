@@ -118,7 +118,6 @@ final class NextSubscriptionEngine
             Run::class => new RunHandler(
                 $this->messageLoader,
                 $this->subscriptionManager,
-                $this->subscriberRepository,
                 $messageProcessor,
                 $this->eventDispatcher,
                 $this->logger,

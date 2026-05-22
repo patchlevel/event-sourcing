@@ -16,7 +16,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -34,7 +33,6 @@ final class RunHandler implements Handler
     public function __construct(
         private readonly MessageLoader $messageLoader,
         private readonly SubscriptionManager $subscriptionManager,
-        private readonly SubscriberAccessorRepository $subscriberRepository,
         private readonly MessageProcessor $messageProcessor,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface|null $logger = null,

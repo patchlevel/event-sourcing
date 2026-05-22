@@ -19,6 +19,8 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepositor
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 
+use function assert;
+
 final class LegacyWrapperSubscriptionEngine implements SubscriptionEngine, CanRefreshSubscriptions
 {
     private readonly NextSubscriptionEngine $engine;
@@ -58,11 +60,15 @@ final class LegacyWrapperSubscriptionEngine implements SubscriptionEngine, CanRe
     ): ProcessedResult {
         $criteria ??= new SubscriptionEngineCriteria();
 
-        return $this->engine->run(new Boot(
+        $result = $this->engine->run(new Boot(
             $criteria->ids,
             $criteria->groups,
             $limit,
         ));
+
+        assert($result instanceof ProcessedResult);
+
+        return $result;
     }
 
     public function run(
@@ -71,11 +77,15 @@ final class LegacyWrapperSubscriptionEngine implements SubscriptionEngine, CanRe
     ): ProcessedResult {
         $criteria ??= new SubscriptionEngineCriteria();
 
-        return $this->engine->run(new Run(
+        $result = $this->engine->run(new Run(
             $criteria->ids,
             $criteria->groups,
             $limit,
         ));
+
+        assert($result instanceof ProcessedResult);
+
+        return $result;
     }
 
     public function teardown(SubscriptionEngineCriteria|null $criteria = null): Result
