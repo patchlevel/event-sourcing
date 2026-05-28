@@ -327,6 +327,14 @@ $hotelRepository = $repositoryManager->get(Hotel::class);
 !!! note
 
     You can find out more about stores [here](store.md).
+
+!!! note
+
+    The `RunSubscriptionEngineRepositoryManager` is a decorator that triggers the 
+    Subscription Engine when an Aggregate is saved. Normally, you'd use the 
+    `DefaultRepositoryManager` and a worker to run the Subscription Engine.
+    
+    Learn more [here](subscription.md).
     
 ## Database setup
 

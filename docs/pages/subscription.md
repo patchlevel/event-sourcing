@@ -75,7 +75,7 @@ final class ProfileProjector
 ```
 !!! warning
 
-    MySQL and MariaDB don't support transactions for DDL statements.
+    PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
     So you must use a different database connection for your subscriptions.
     
 !!! tip
@@ -327,7 +327,7 @@ final class ProfileProjector
 ```
 !!! danger
 
-    MySQL and MariaDB don't support transactions for DDL statements.
+    PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
     So you must use a different database connection in your projectors, 
     otherwise you will get an error when the subscription tries to create the table.
     
@@ -368,7 +368,7 @@ final class ProfileProjector
 ```
 !!! danger
 
-    MySQL and MariaDB don't support transactions for DDL statements.
+    PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
     So you must use a different database connection in your projectors, 
     otherwise you will get an error when the subscription tries to create the table.
     
