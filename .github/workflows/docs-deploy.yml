@@ -18,5 +18,5 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.ORGANIZATION_ADMIN_TOKEN }}" \
             -H "X-GitHub-Api-Version: 2026-03-10" \
-            https://api.github.com/repos/patchlevel/patchlevel.dev/actions/workflows/prod-deployment.yml/dispatches \
+            https://api.github.com/repos/patchlevel/patchlevel.dev/actions/workflows/prod-deployment.yaml/dispatches \
             -d '{"ref":"main"}'
