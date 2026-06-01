@@ -1184,6 +1184,12 @@ $catchupSubscriptionEngine = new CatchUpSubscriptionEngine($subscriptionEngine);
 !!! tip
 
     You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
+
+!!! Note
+
+    Learn more about the worker [here](./cli.md#subscription-commands).
+    
+## Subscription Lifecycle
     
 ### Throw on error Subscription Engine
 
@@ -1237,7 +1243,10 @@ $eventBus = new RunSubscriptionEngineRepositoryManager(
 !!! tip
 
     You can perfectly use it in development or testing.
-    Especially in combination with the `CatchUpSubscriptionEngine` and `ThrowOnErrorSubscriptionEngine` decorators.
+    Especially in combination with the `CatchUpSubscriptionEngine` and `ThrowOnErrorSubscriptionEngine` 
+    decorators.
+    Do note that, if you use this, you still need to make sure subscriptions are set up and booted. 
+    Otherwise, subscriptions will only be processed on subsequent requests.
     
 ## Usage
 
@@ -1255,7 +1264,9 @@ $criteria = new SubscriptionEngineCriteria(
 !!! note
 
     An `OR` check is made for the respective criteria and all criteria are checked with an `AND`.
-    
+
+All of the following steps have equivalent commands in the [CLI](./cli.md).
+
 ### Setup
 
 New subscriptions need to be set up before they can be used.
@@ -1374,6 +1385,16 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 /** @var SubscriptionEngine $subscriptionEngine */
 $subscriptionEngine->refresh(new SubscriptionEngineCriteria());
 ```
+
+## Basic workflow for the worker
+
+Use `event-sourcing:subscription:boot --setup` to first run the setup of any new subscriptions
+and immediately boot them.
+
+The `event-sourcing:subscription:run` command will continue to run and process new events
+until the process is killed. After adding a new subscriber and booting it, you should
+restart the `run` command.
+
 ## Learn more
 
 * [How to use CLI commands](./cli.md)

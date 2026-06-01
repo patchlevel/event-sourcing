@@ -43,7 +43,7 @@ To manage your subscriptions there are the following cli commands.
 !!! note
 
     You can find out more about subscriptions [here](subscription.md).
-    
+
 ## Inspector commands
 
 The inspector is a tool to inspect the event streams.
