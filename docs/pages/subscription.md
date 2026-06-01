@@ -838,13 +838,28 @@ In order for the subscription engine to be able to do its work, you have to asse
 ### Message Loader
 
 The subscription engine needs a message loader to load the messages.
-We provide two implementations by default.
+We provide three implementations by default.
 Which one has a better performance depends on the use case.
 
 !!! tip
 
-    We recommend the `GapResolverStoreMessageLoader` as it handles gaps in the stream.
+    We recommend the recent `GapResolverStoreMessageLoader` as it handles gaps in the stream.
+
+!!! note
+
+    If you followed the confiration in the [Getting Started](./getting_started.md#configuration) section,
+    the Message Loader implementation replaces the $eventStore in the DefaultSubscriptionEngine.
     
+    ```php
+        $messageLoader = // whatever implementation you choose
+        $engine = new DefaultSubscriptionEngine(
+    -       $eventStore,
+    +       $messageLoader,
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+    ```
+
 #### Store Message Loader
 
 The store message loader loads all the messages from the event store.
