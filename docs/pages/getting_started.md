@@ -335,6 +335,12 @@ $hotelRepository = $repositoryManager->get(Hotel::class);
     `DefaultRepositoryManager` and a worker to run the Subscription Engine.
     
     Learn more [here](subscription.md).
+
+!!! warning
+    From version 4.x onward, a MessageLoader will be required for the SubscriptionEngine 
+    instead of a Store implementation. 
+    Read more about it [here](./subscription.md#message-loader). In current versions, 
+    you can still provide a Store, the SubscriptionEngine will wrap it internally. 
     
 ## Database setup
 
