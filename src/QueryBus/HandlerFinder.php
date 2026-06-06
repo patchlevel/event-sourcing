@@ -67,7 +67,6 @@ final class HandlerFinder
                 );
             }
 
-            /** @var class-string $commandClass */
             $commandClass = $type->getClassName();
 
             yield new HandlerReference(

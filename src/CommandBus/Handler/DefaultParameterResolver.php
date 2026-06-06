@@ -19,7 +19,6 @@ final class DefaultParameterResolver implements ParameterResolver
     ) {
     }
 
-    /** @return iterable<int, mixed> */
     public function resolve(ReflectionMethod $method, object $command): iterable
     {
         foreach ($method->getParameters() as $index => $parameter) {
@@ -34,7 +33,7 @@ final class DefaultParameterResolver implements ParameterResolver
             }
 
             try {
-                yield $this->container->get(self::serviceName($method, $parameter));
+                yield $this->container->get($this->serviceName($method, $parameter));
             } catch (ContainerExceptionInterface $exception) {
                 throw ServiceNotResolvable::missingService(
                     $method->getDeclaringClass()->getName(),

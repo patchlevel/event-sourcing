@@ -8,6 +8,6 @@ use ReflectionMethod;
 
 interface ParameterResolver
 {
-    /** @return iterable<mixed> */
+    /** @return iterable<int, mixed> */
     public function resolve(ReflectionMethod $method, object $command): iterable;
 }

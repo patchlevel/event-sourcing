@@ -43,6 +43,7 @@ final class ErrorContextTest extends TestCase
 
         $firstTrace = $error['trace'][0];
 
+        self::assertIsArray($firstTrace);
         self::assertArrayHasKey('file', $firstTrace);
         self::assertSame(__FILE__, $firstTrace['file'] ?? null);
         self::assertArrayHasKey('line', $firstTrace);
