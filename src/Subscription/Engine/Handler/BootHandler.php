@@ -43,10 +43,6 @@ final class BootHandler implements Handler
 
     public function __invoke(Command $command): ProcessedResult
     {
-        $this->logger?->info(
-            'Subscription Engine: Start booting.',
-        );
-
         return $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $command->ids,
@@ -209,8 +205,6 @@ final class BootHandler implements Handler
                         $subscription->id(),
                     ));
                 }
-
-                $this->logger?->info('Subscription Engine: Finish booting.');
 
                 return new ProcessedResult(
                     $messageCounter,

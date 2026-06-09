@@ -183,7 +183,15 @@ final class NextSubscriptionEngine
 
     public function run(Command $command): Result
     {
+        $this->logger?->info(
+            'Subscription Engine: ' . $command::class . ' command received.',
+        );
+
         if ($this->processing) {
+            $this->logger?->error(
+                'Subscription Engine: Already processing, skip.',
+            );
+
             throw new AlreadyProcessing();
         }
 
@@ -196,6 +204,10 @@ final class NextSubscriptionEngine
                 throw new InvalidArgumentException('No handler found for command: ' . $command::class);
             }
 
+            $this->logger?->debug(
+                'Subscription Engine: ' . $command::class . ' command handled by ' . $handler::class,
+            );
+
             $event = new OnCommand($command);
             $this->eventDispatcher->dispatch($event);
 
@@ -206,6 +218,10 @@ final class NextSubscriptionEngine
 
             return $result;
         } finally {
+            $this->logger?->info(
+                'Subscription Engine: ' . $command::class . ' command processed.',
+            );
+
             $this->processing = false;
         }
     }

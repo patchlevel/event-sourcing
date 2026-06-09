@@ -36,8 +36,6 @@ final class TeardownHandler implements Handler
 
     public function __invoke(Command $command): Result
     {
-        $this->logger?->info('Subscription Engine: Start teardown detached subscriptions.');
-
         return $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $command->ids,
@@ -124,8 +122,6 @@ final class TeardownHandler implements Handler
                         ),
                     );
                 }
-
-                $this->logger?->info('Subscription Engine: Finish teardown.');
 
                 return new Result($errors);
             },

@@ -44,10 +44,6 @@ final class SetupHandler implements Handler
 
     public function __invoke(Command $command): Result
     {
-        $this->logger?->info(
-            'Subscription Engine: Start to setup.',
-        );
-
         return $this->subscriptionManager->findForUpdate(
             new SubscriptionCriteria(
                 ids: $command->ids,
