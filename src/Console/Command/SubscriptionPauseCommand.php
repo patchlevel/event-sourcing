@@ -18,7 +18,7 @@ final class SubscriptionPauseCommand extends SubscriptionCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $criteria = $this->subscriptionEngineCriteria($input);
-        $this->engine->run(new Pause(
+        $this->engine->execute(new Pause(
             $criteria->ids,
             $criteria->groups,
         ));

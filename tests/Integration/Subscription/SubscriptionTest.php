@@ -131,11 +131,11 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
-        $result = $engine->run(new SetupCommand());
+        $result = $engine->execute(new SetupCommand());
 
         self::assertEquals([], $result->errors);
 
-        $result = $engine->run(new Boot());
+        $result = $engine->execute(new Boot());
 
         self::assertEquals(0, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -157,7 +157,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -186,7 +186,7 @@ final class SubscriptionTest extends TestCase
         self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
 
-        $result = $engine->run(new Remove());
+        $result = $engine->execute(new Remove());
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -257,11 +257,11 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
-        $result = $engine->run(new SetupCommand());
+        $result = $engine->execute(new SetupCommand());
 
         self::assertEquals([], $result->errors);
 
-        $result = $engine->run(new Boot());
+        $result = $engine->execute(new Boot());
 
         self::assertEquals(0, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -283,7 +283,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -312,7 +312,7 @@ final class SubscriptionTest extends TestCase
         self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
 
-        $result = $engine->run(new Remove());
+        $result = $engine->execute(new Remove());
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -378,10 +378,10 @@ final class SubscriptionTest extends TestCase
             ),
         );
 
-        $result = $engine->run(new SetupCommand());
+        $result = $engine->execute(new SetupCommand());
         self::assertEquals([], $result->errors);
 
-        $result = $engine->run(new Boot());
+        $result = $engine->execute(new Boot());
         self::assertEquals(0, $result->processedMessages);
         self::assertEquals([], $result->errors);
 
@@ -400,7 +400,7 @@ final class SubscriptionTest extends TestCase
 
         // first run, error
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertCount(1, $result->errors);
@@ -419,7 +419,7 @@ final class SubscriptionTest extends TestCase
 
         // second run, time has not passed yet, no retry, no error
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(0, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -434,7 +434,7 @@ final class SubscriptionTest extends TestCase
         // third run, time has passed, 1. retry, error again
 
         $clock->sleep(5);
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertCount(1, $result->errors);
@@ -454,7 +454,7 @@ final class SubscriptionTest extends TestCase
         // fourth run, time has passed, 2. retry, max retries reached, failed
 
         $clock->sleep(10);
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertCount(1, $result->errors);
@@ -474,7 +474,7 @@ final class SubscriptionTest extends TestCase
         // fifth run, time has passed, skip failed subscription
 
         $clock->sleep(20);
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(0, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -488,7 +488,7 @@ final class SubscriptionTest extends TestCase
 
         // reactivated subscription
 
-        $engine->run(new Reactivate(
+        $engine->execute(new Reactivate(
             ids: ['error_producer'],
         ));
 
@@ -500,7 +500,7 @@ final class SubscriptionTest extends TestCase
 
         // sixth run, error again
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertCount(1, $result->errors);
@@ -522,7 +522,7 @@ final class SubscriptionTest extends TestCase
         $clock->sleep(5);
         $subscriber->subscribeError = false;
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -579,7 +579,7 @@ final class SubscriptionTest extends TestCase
             ),
         );
 
-        $result = $engine->run(new SetupCommand(skipBooting: true));
+        $result = $engine->execute(new SetupCommand(skipBooting: true));
         self::assertEquals([], $result->errors);
 
         // add data
@@ -593,7 +593,7 @@ final class SubscriptionTest extends TestCase
 
         // first run, failed -> self recovery
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertCount(1, $result->errors);
@@ -617,7 +617,7 @@ final class SubscriptionTest extends TestCase
         // second run, failed -> self recovery failed
 
         $subscriber->onFailedError = true;
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertCount(1, $result->errors);
@@ -700,10 +700,10 @@ final class SubscriptionTest extends TestCase
             ),
         );
 
-        $result = $engine->run(new SetupCommand());
+        $result = $engine->execute(new SetupCommand());
         self::assertEquals([], $result->errors);
 
-        $result = $engine->run(new Boot());
+        $result = $engine->execute(new Boot());
         self::assertEquals(0, $result->processedMessages);
         self::assertEquals([], $result->errors);
 
@@ -720,7 +720,7 @@ final class SubscriptionTest extends TestCase
 
         $subscriber->subscribeError = true;
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertCount(1, $result->errors);
@@ -803,7 +803,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
-        $engine->run(new Run());
+        $engine->execute(new Run());
 
         $subscriptions = $engine->subscriptions();
 
@@ -864,8 +864,8 @@ final class SubscriptionTest extends TestCase
 
         // Deploy first version
 
-        $firstEngine->run(new SetupCommand());
-        $firstEngine->run(new Boot());
+        $firstEngine->execute(new SetupCommand());
+        $firstEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -885,7 +885,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
-        $firstEngine->run(new Run());
+        $firstEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -909,8 +909,8 @@ final class SubscriptionTest extends TestCase
             new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
         );
 
-        $secondEngine->run(new SetupCommand());
-        $secondEngine->run(new Boot());
+        $secondEngine->execute(new SetupCommand());
+        $secondEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -936,7 +936,7 @@ final class SubscriptionTest extends TestCase
 
         // switch traffic
 
-        $secondEngine->run(new Run());
+        $secondEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -962,7 +962,7 @@ final class SubscriptionTest extends TestCase
 
         // shutdown first version
 
-        $firstEngine->run(new TeardownCommand());
+        $firstEngine->execute(new TeardownCommand());
 
         self::assertEquals(
             [
@@ -1020,8 +1020,8 @@ final class SubscriptionTest extends TestCase
 
         // Deploy first version
 
-        $firstEngine->run(new SetupCommand());
-        $firstEngine->run(new Boot());
+        $firstEngine->execute(new SetupCommand());
+        $firstEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1041,7 +1041,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
-        $firstEngine->run(new Run());
+        $firstEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1065,8 +1065,8 @@ final class SubscriptionTest extends TestCase
             new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
         );
 
-        $secondEngine->run(new SetupCommand());
-        $secondEngine->run(new Boot());
+        $secondEngine->execute(new SetupCommand());
+        $secondEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1092,7 +1092,7 @@ final class SubscriptionTest extends TestCase
 
         // switch traffic
 
-        $secondEngine->run(new Run());
+        $secondEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1118,8 +1118,8 @@ final class SubscriptionTest extends TestCase
 
         // rollback
 
-        $firstEngine->run(new SetupCommand());
-        $firstEngine->run(new Boot());
+        $firstEngine->execute(new SetupCommand());
+        $firstEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1145,13 +1145,13 @@ final class SubscriptionTest extends TestCase
 
         // reactivating detached subscription
 
-        $firstEngine->run(new Reactivate(
+        $firstEngine->execute(new Reactivate(
             ids: ['profile_1'],
         ));
 
         // switch traffic
 
-        $firstEngine->run(new Run());
+        $firstEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1177,7 +1177,7 @@ final class SubscriptionTest extends TestCase
 
         // shutdown second version
 
-        $secondEngine->run(new TeardownCommand());
+        $secondEngine->execute(new TeardownCommand());
 
         self::assertEquals(
             [
@@ -1242,8 +1242,8 @@ final class SubscriptionTest extends TestCase
 
         // Deploy first version
 
-        $firstEngine->run(new SetupCommand());
-        $firstEngine->run(new Boot());
+        $firstEngine->execute(new SetupCommand());
+        $firstEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1264,7 +1264,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
-        $firstEngine->run(new Run());
+        $firstEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1290,8 +1290,8 @@ final class SubscriptionTest extends TestCase
             cleaner: $cleaner,
         );
 
-        $secondEngine->run(new SetupCommand());
-        $secondEngine->run(new Boot());
+        $secondEngine->execute(new SetupCommand());
+        $secondEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1318,7 +1318,7 @@ final class SubscriptionTest extends TestCase
 
         // switch traffic
 
-        $secondEngine->run(new Run());
+        $secondEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1345,7 +1345,7 @@ final class SubscriptionTest extends TestCase
 
         // shutdown second version (with cleanup)
 
-        $secondEngine->run(new TeardownCommand());
+        $secondEngine->execute(new TeardownCommand());
 
         self::assertEquals(
             [
@@ -1418,11 +1418,11 @@ final class SubscriptionTest extends TestCase
             $subscriberRepository,
         );
 
-        $result = $engine->run(new SetupCommand());
+        $result = $engine->execute(new SetupCommand());
 
         self::assertEquals([], $result->errors);
 
-        $result = $engine->run(new Boot());
+        $result = $engine->execute(new Boot());
 
         self::assertEquals(0, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -1431,7 +1431,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(1, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -1447,7 +1447,7 @@ final class SubscriptionTest extends TestCase
         $profile->promoteToAdmin();
         $repository->save($profile);
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertEquals(2, $result->processedMessages);
         self::assertEquals([], $result->errors);
@@ -1499,7 +1499,7 @@ final class SubscriptionTest extends TestCase
             $subscriberRepository,
         );
 
-        $engine->run(new SetupCommand());
+        $engine->execute(new SetupCommand());
 
         $subscriptions = $engine->subscriptions();
         self::assertCount(1, $subscriptions);
@@ -1520,7 +1520,7 @@ final class SubscriptionTest extends TestCase
             $newSubscriberRepository,
         );
 
-        $engine->run(new Refresh());
+        $engine->execute(new Refresh());
 
         $subscriptions = $engine->subscriptions();
         self::assertCount(1, $subscriptions);

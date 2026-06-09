@@ -82,7 +82,7 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
         $defaultRepository->expects($this->once())->method('save')->with($aggregate);
 
         $engine = $this->createMock(SubscriptionEngine::class);
-        $engine->expects($this->once())->method('run')->with($command)->willReturn(new ProcessedResult(21));
+        $engine->expects($this->once())->method('execute')->with($command)->willReturn(new ProcessedResult(21));
 
         $repository = new RunSubscriptionEngineRepository(
             $defaultRepository,
@@ -112,7 +112,7 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
         $defaultRepository->expects($this->once())->method('save')->with($aggregate);
 
         $engine = $this->createMock(SubscriptionEngine::class);
-        $engine->expects($this->once())->method('run')->with($command)->willThrowException(new AlreadyProcessing());
+        $engine->expects($this->once())->method('execute')->with($command)->willThrowException(new AlreadyProcessing());
 
         $repository = new RunSubscriptionEngineRepository(
             $defaultRepository,

@@ -28,7 +28,7 @@ final class SubscriptionRemoveCommand extends SubscriptionCommand
             }
         }
 
-        $this->engine->run(new Remove($criteria->ids, $criteria->groups));
+        $this->engine->execute(new Remove($criteria->ids, $criteria->groups));
 
         return 0;
     }

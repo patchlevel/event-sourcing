@@ -49,7 +49,7 @@ final class RunSubscriptionEngineRepository implements Repository
         $this->repository->save($aggregate);
 
         try {
-            $this->engine->run(
+            $this->engine->execute(
                 new Run(
                     $this->ids,
                     $this->groups,

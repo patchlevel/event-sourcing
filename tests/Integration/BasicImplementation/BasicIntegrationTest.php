@@ -101,7 +101,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->run(new Setup(skipBooting: true));
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
@@ -167,7 +167,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->run(new Setup(skipBooting: true));
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
@@ -301,7 +301,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->run(new Setup(skipBooting: true));
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
 
@@ -381,7 +381,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->run(new Setup(skipBooting: true));
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
 

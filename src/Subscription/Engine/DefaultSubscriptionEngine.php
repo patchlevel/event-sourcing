@@ -181,7 +181,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         );
     }
 
-    public function run(Command $command): Result
+    public function execute(Command $command): Result
     {
         $this->logger?->info(
             'Subscription Engine: ' . $command::class . ' command received.',

@@ -19,14 +19,14 @@ final class CatchUpSubscriptionEngine implements SubscriptionEngine
     ) {
     }
 
-    public function run(Command $command): Result
+    public function execute(Command $command): Result
     {
         $mergedResult = new ProcessedResult(0);
 
         $catchupLimit = $this->limit ?? PHP_INT_MAX;
 
         for ($i = 0; $i < $catchupLimit; $i++) {
-            $result = $this->parent->run($command);
+            $result = $this->parent->execute($command);
 
             if (!$result instanceof ProcessedResult) {
                 return $result;

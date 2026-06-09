@@ -27,8 +27,8 @@ final class CatchUpSubscriptionEngineTest extends TestCase
         $expectedResult = new ProcessedResult(0);
         $command = new Run();
 
-        $parent->expects($this->once())->method('run')->with($command)->willReturn($expectedResult);
-        $result = $engine->run($command);
+        $parent->expects($this->once())->method('execute')->with($command)->willReturn($expectedResult);
+        $result = $engine->execute($command);
 
         self::assertEquals($expectedResult, $result);
     }
@@ -46,11 +46,11 @@ final class CatchUpSubscriptionEngineTest extends TestCase
             new RuntimeException('baz'),
         );
 
-        $parent->expects($this->exactly(2))->method('run')->with($command)->willReturn(
+        $parent->expects($this->exactly(2))->method('execute')->with($command)->willReturn(
             new ProcessedResult(1, true, [$error]),
             new ProcessedResult(0),
         );
-        $result = $engine->run($command);
+        $result = $engine->execute($command);
 
         self::assertEquals(new ProcessedResult(1, false, [$error]), $result);
     }
@@ -62,12 +62,12 @@ final class CatchUpSubscriptionEngineTest extends TestCase
         $engine = new CatchUpSubscriptionEngine($parent, 2);
         $command = new Run();
 
-        $parent->expects($this->exactly(2))->method('run')->with($command)->willReturn(
+        $parent->expects($this->exactly(2))->method('execute')->with($command)->willReturn(
             new ProcessedResult(1),
             new ProcessedResult(1),
         );
 
-        $result = $engine->run($command);
+        $result = $engine->execute($command);
 
         self::assertEquals(new ProcessedResult(2), $result);
     }

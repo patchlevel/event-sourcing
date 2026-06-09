@@ -77,7 +77,7 @@ final class MicroAggregateIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->run(new Setup(skipBooting: true));
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
@@ -143,7 +143,7 @@ final class MicroAggregateIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->run(new Setup(skipBooting: true));
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');

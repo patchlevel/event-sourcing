@@ -77,8 +77,8 @@ final class IntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->run(new Setup());
-        $engine->run(new Boot());
+        $engine->execute(new Setup());
+        $engine->execute(new Boot());
 
         $bankAccountId = AccountId::generate();
         $bankAccount = BankAccount::create($bankAccountId, 'John');
@@ -86,7 +86,7 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(500);
         $repository->save($bankAccount);
 
-        $engine->run(new Run());
+        $engine->execute(new Run());
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_bank_account WHERE id = ?',
@@ -125,7 +125,7 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(200);
         $repository->save($bankAccount);
 
-        $engine->run(new Run());
+        $engine->execute(new Run());
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_bank_account WHERE id = ?',
@@ -192,8 +192,8 @@ final class IntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->run(new Setup());
-        $engine->run(new Boot());
+        $engine->execute(new Setup());
+        $engine->execute(new Boot());
 
         $bankAccountId = AccountId::generate();
         $bankAccount = BankAccount::create($bankAccountId, 'John');
@@ -201,7 +201,7 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(500);
         $repository->save($bankAccount);
 
-        $engine->run(new Run());
+        $engine->execute(new Run());
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_bank_account WHERE id = ?',
@@ -240,7 +240,7 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(200);
         $repository->save($bankAccount);
 
-        $engine->run(new Run());
+        $engine->execute(new Run());
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_bank_account WHERE id = ?',

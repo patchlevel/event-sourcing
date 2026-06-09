@@ -1305,7 +1305,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->run(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new SubscriptionEngineCriteria());
 ```
 ### Teardown
 

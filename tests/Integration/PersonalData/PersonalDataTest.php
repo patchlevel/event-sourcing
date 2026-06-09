@@ -134,13 +134,13 @@ final class PersonalDataTest extends TestCase
             new MetadataSubscriberAccessorRepository([new DeletePersonalDataProcessor($cipherKeyStore)]),
         );
 
-        $engine->run(new Setup(skipBooting: true));
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
 
         $repository->save($profile);
-        $engine->run(new Run());
+        $engine->execute(new Run());
 
         $profile = $repository->load($profileId);
 
@@ -151,7 +151,7 @@ final class PersonalDataTest extends TestCase
 
         $profile->removePersonalData();
         $repository->save($profile);
-        $engine->run(new Run());
+        $engine->execute(new Run());
 
         $profile = $repository->load($profileId);
 
@@ -216,14 +216,14 @@ final class PersonalDataTest extends TestCase
             new MetadataSubscriberAccessorRepository([new DeletePersonalDataProcessor($cipherKeyStore)]),
         );
 
-        $engine->run(new Setup(skipBooting: true));
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
         $profile->changeName('John 2');
 
         $repository->save($profile);
-        $engine->run(new Run());
+        $engine->execute(new Run());
 
         $profile = $repository->load($profileId);
 

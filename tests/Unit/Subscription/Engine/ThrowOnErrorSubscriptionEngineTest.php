@@ -28,8 +28,8 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
 
         $command = new Setup();
 
-        $parent->expects($this->once())->method('run')->with($command)->willReturn($expectedResult);
-        $result = $engine->run($command);
+        $parent->expects($this->once())->method('execute')->with($command)->willReturn($expectedResult);
+        $result = $engine->execute($command);
 
         self::assertSame($expectedResult, $result);
     }
@@ -49,8 +49,8 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
             new Error('id2', 'error2', new RuntimeException('error2')),
         ]);
 
-        $parent->expects($this->once())->method('run')->with($command)->willReturn($expectedResult);
-        $engine->run($command);
+        $parent->expects($this->once())->method('execute')->with($command)->willReturn($expectedResult);
+        $engine->execute($command);
     }
 
     public function testSubscriptions(): void

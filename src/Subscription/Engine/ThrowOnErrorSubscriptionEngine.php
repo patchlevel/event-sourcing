@@ -14,9 +14,9 @@ final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine
     ) {
     }
 
-    public function run(Command $command): Result
+    public function execute(Command $command): Result
     {
-        $result = $this->parent->run($command);
+        $result = $this->parent->execute($command);
         $errors = $result->errors;
 
         if ($errors !== []) {

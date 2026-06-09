@@ -98,7 +98,7 @@ final class SubscriptionRunCommand extends SubscriptionCommand
 
         $worker = DefaultWorker::create(
             function () use ($criteria, $messageLimit, $sleep): void {
-                $this->engine->run(new Run($criteria->ids, $criteria->groups, $messageLimit));
+                $this->engine->execute(new Run($criteria->ids, $criteria->groups, $messageLimit));
 
                 if (!$this->store instanceof SubscriptionStore) {
                     return;
@@ -116,8 +116,8 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         );
 
         if ($rebuild) {
-            $this->engine->run(new Remove($criteria->ids, $criteria->groups));
-            $this->engine->run(new Boot($criteria->ids, $criteria->groups));
+            $this->engine->execute(new Remove($criteria->ids, $criteria->groups));
+            $this->engine->execute(new Boot($criteria->ids, $criteria->groups));
         }
 
         $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();

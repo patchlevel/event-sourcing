@@ -18,7 +18,7 @@ final class SubscriptionRefreshCommand extends SubscriptionCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $criteria = $this->subscriptionEngineCriteria($input);
-        $this->engine->run(new Refresh($criteria->ids, $criteria->groups));
+        $this->engine->execute(new Refresh($criteria->ids, $criteria->groups));
 
         return 0;
     }

@@ -90,7 +90,7 @@ final class SubscriptionBootCommand extends SubscriptionCommand
         $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
         if ($setup) {
-            $this->engine->run(new Setup(
+            $this->engine->execute(new Setup(
                 $criteria->ids,
                 $criteria->groups,
             ));
@@ -101,7 +101,7 @@ final class SubscriptionBootCommand extends SubscriptionCommand
 
         $worker = DefaultWorker::create(
             function (Closure $stop) use ($criteria, $messageLimit, &$finished): void {
-                $result = $this->engine->run(new Boot(
+                $result = $this->engine->execute(new Boot(
                     $criteria->ids,
                     $criteria->groups,
                     $messageLimit,

@@ -18,7 +18,7 @@ final class SubscriptionReactivateCommand extends SubscriptionCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $criteria = $this->subscriptionEngineCriteria($input);
-        $this->engine->run(new Reactivate(
+        $this->engine->execute(new Reactivate(
             $criteria->ids,
             $criteria->groups,
         ));

@@ -40,7 +40,7 @@ final class NextSubscriptionEngineTest extends TestCase
             #[Subscribe(ProfileVisited::class)]
             public function handle(): void
             {
-                $this->engine?->run(new Boot());
+                $this->engine?->execute(new Boot());
             }
         };
 
@@ -62,7 +62,7 @@ final class NextSubscriptionEngineTest extends TestCase
 
         $subscriber->engine = $engine;
 
-        $result = $engine->run(new Boot());
+        $result = $engine->execute(new Boot());
 
         self::assertCount(1, $result->errors);
         self::assertInstanceOf(AlreadyProcessing::class, $result->errors[0]->throwable);
@@ -79,7 +79,7 @@ final class NextSubscriptionEngineTest extends TestCase
             #[Subscribe(ProfileVisited::class)]
             public function handle(): void
             {
-                $this->engine?->run(new Run());
+                $this->engine?->execute(new Run());
             }
         };
 
@@ -101,7 +101,7 @@ final class NextSubscriptionEngineTest extends TestCase
 
         $subscriber->engine = $engine;
 
-        $result = $engine->run(new Run());
+        $result = $engine->execute(new Run());
 
         self::assertCount(1, $result->errors);
         self::assertInstanceOf(AlreadyProcessing::class, $result->errors[0]->throwable);

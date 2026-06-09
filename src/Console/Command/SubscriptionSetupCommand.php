@@ -35,7 +35,7 @@ final class SubscriptionSetupCommand extends SubscriptionCommand
         $skipBooting = InputHelper::bool($input->getOption('skip-booting'));
 
         $criteria = $this->subscriptionEngineCriteria($input);
-        $this->engine->run(new Setup($criteria->ids, $criteria->groups, $skipBooting));
+        $this->engine->execute(new Setup($criteria->ids, $criteria->groups, $skipBooting));
 
         return 0;
     }
