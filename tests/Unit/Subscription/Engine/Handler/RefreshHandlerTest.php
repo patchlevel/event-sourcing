@@ -22,6 +22,7 @@ use Psr\Log\NullLogger;
 #[CoversClass(RefreshHandler::class)]
 final class RefreshHandlerTest extends TestCase
 {
+    /** @param iterable<object> $subscribers */
     private function createHandler(DummySubscriptionStore $store, array $subscribers = []): RefreshHandler
     {
         return new RefreshHandler(

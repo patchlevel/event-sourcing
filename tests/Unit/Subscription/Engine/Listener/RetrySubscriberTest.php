@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine\Listener;
 
 use Generator;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
@@ -25,11 +24,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use RuntimeException;
 
 #[CoversClass(RetrySubscriber::class)]
 final class RetrySubscriberTest extends TestCase
 {
+    /** @param iterable<object> $subscribers */
     private function createListener(
         DummySubscriptionStore $store,
         array $subscribers,

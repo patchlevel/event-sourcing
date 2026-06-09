@@ -39,6 +39,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 #[CoversClass(BootHandler::class)]
 final class BootHandlerTest extends TestCase
 {
+    /** @param iterable<object> $subscribers */
     private function createHandler(
         MessageLoader $messageLoader,
         DummySubscriptionStore $store,

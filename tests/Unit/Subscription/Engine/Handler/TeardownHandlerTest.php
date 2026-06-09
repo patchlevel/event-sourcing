@@ -10,8 +10,8 @@ use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupFailed;
 use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
-use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\CleanerNotConfigured;
+use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown as TeardownCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\TeardownHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
@@ -28,6 +28,7 @@ use RuntimeException;
 #[CoversClass(TeardownHandler::class)]
 final class TeardownHandlerTest extends TestCase
 {
+    /** @param iterable<object> $subscribers */
     private function createHandler(
         DummySubscriptionStore $store,
         array $subscribers = [],

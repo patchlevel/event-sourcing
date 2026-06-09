@@ -21,6 +21,7 @@ use Psr\Log\NullLogger;
 #[CoversClass(ReactivateHandler::class)]
 final class ReactivateHandlerTest extends TestCase
 {
+    /** @param iterable<object> $subscribers */
     private function createHandler(DummySubscriptionStore $store, array $subscribers = []): ReactivateHandler
     {
         return new ReactivateHandler(

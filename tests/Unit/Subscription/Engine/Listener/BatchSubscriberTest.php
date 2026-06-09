@@ -34,6 +34,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Subscription\DummySubscriptionStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[CoversClass(BatchSubscriber::class)]
@@ -181,7 +182,7 @@ final class BatchSubscriberTest extends TestCase
     public function testBootBatchingWithHandleError(): void
     {
         $subscriber = new BatchingSubscriber(
-            throwForMessage: new \RuntimeException('ERROR'),
+            throwForMessage: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -207,7 +208,7 @@ final class BatchSubscriberTest extends TestCase
         $error = $result->errors[0];
         self::assertEquals($subscriber::ID, $error->subscriptionId);
         self::assertEquals('ERROR', $error->message);
-        self::assertInstanceOf(\RuntimeException::class, $error->throwable);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         $store->assertUpdated(
             new Subscription(
@@ -233,7 +234,7 @@ final class BatchSubscriberTest extends TestCase
     public function testBootBatchingWithBeginBatchError(): void
     {
         $subscriber = new BatchingSubscriber(
-            throwForBeginBatch: new \RuntimeException('ERROR'),
+            throwForBeginBatch: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -259,7 +260,7 @@ final class BatchSubscriberTest extends TestCase
         $error = $result->errors[0];
         self::assertEquals($subscriber::ID, $error->subscriptionId);
         self::assertEquals('ERROR', $error->message);
-        self::assertInstanceOf(\RuntimeException::class, $error->throwable);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         $store->assertUpdated(
             new Subscription(
@@ -285,7 +286,7 @@ final class BatchSubscriberTest extends TestCase
     public function testBootBatchingWithCommitBatchError(): void
     {
         $subscriber = new BatchingSubscriber(
-            throwForCommitBatch: new \RuntimeException('ERROR'),
+            throwForCommitBatch: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -311,7 +312,7 @@ final class BatchSubscriberTest extends TestCase
         $error = $result->errors[0];
         self::assertEquals($subscriber::ID, $error->subscriptionId);
         self::assertEquals('ERROR', $error->message);
-        self::assertInstanceOf(\RuntimeException::class, $error->throwable);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         $store->assertUpdated(
             new Subscription(
@@ -337,8 +338,8 @@ final class BatchSubscriberTest extends TestCase
     public function testBootBatchingWithRollbackBatchError(): void
     {
         $subscriber = new BatchingSubscriber(
-            throwForMessage: new \RuntimeException('ERROR'),
-            throwForRollbackBatch: new \RuntimeException('ERROR'),
+            throwForMessage: new RuntimeException('ERROR'),
+            throwForRollbackBatch: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -364,7 +365,7 @@ final class BatchSubscriberTest extends TestCase
         $error = $result->errors[0];
         self::assertEquals($subscriber::ID, $error->subscriptionId);
         self::assertEquals('ERROR', $error->message);
-        self::assertInstanceOf(\RuntimeException::class, $error->throwable);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         $store->assertUpdated(
             new Subscription(
@@ -482,7 +483,7 @@ final class BatchSubscriberTest extends TestCase
     public function testRunningBatchingWithHandleError(): void
     {
         $subscriber = new BatchingSubscriber(
-            throwForMessage: new \RuntimeException('ERROR'),
+            throwForMessage: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -509,7 +510,7 @@ final class BatchSubscriberTest extends TestCase
         $error = $result->errors[0];
         self::assertEquals($subscriber::ID, $error->subscriptionId);
         self::assertEquals('ERROR', $error->message);
-        self::assertInstanceOf(\RuntimeException::class, $error->throwable);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         $store->assertUpdated(
             new Subscription(
@@ -535,7 +536,7 @@ final class BatchSubscriberTest extends TestCase
     public function testRunningBatchingWithBeginBatchError(): void
     {
         $subscriber = new BatchingSubscriber(
-            throwForBeginBatch: new \RuntimeException('ERROR'),
+            throwForBeginBatch: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -562,7 +563,7 @@ final class BatchSubscriberTest extends TestCase
         $error = $result->errors[0];
         self::assertEquals($subscriber::ID, $error->subscriptionId);
         self::assertEquals('ERROR', $error->message);
-        self::assertInstanceOf(\RuntimeException::class, $error->throwable);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         $store->assertUpdated(
             new Subscription(
@@ -588,7 +589,7 @@ final class BatchSubscriberTest extends TestCase
     public function testRunningBatchingWithCommitBatchError(): void
     {
         $subscriber = new BatchingSubscriber(
-            throwForCommitBatch: new \RuntimeException('ERROR'),
+            throwForCommitBatch: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -615,7 +616,7 @@ final class BatchSubscriberTest extends TestCase
         $error = $result->errors[0];
         self::assertEquals($subscriber::ID, $error->subscriptionId);
         self::assertEquals('ERROR', $error->message);
-        self::assertInstanceOf(\RuntimeException::class, $error->throwable);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         $store->assertUpdated(
             new Subscription(
@@ -641,8 +642,8 @@ final class BatchSubscriberTest extends TestCase
     public function testRunningBatchingWithRollbackBatchError(): void
     {
         $subscriber = new BatchingSubscriber(
-            throwForMessage: new \RuntimeException('ERROR'),
-            throwForRollbackBatch: new \RuntimeException('ERROR'),
+            throwForMessage: new RuntimeException('ERROR'),
+            throwForRollbackBatch: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -669,7 +670,7 @@ final class BatchSubscriberTest extends TestCase
         $error = $result->errors[0];
         self::assertEquals($subscriber::ID, $error->subscriptionId);
         self::assertEquals('ERROR', $error->message);
-        self::assertInstanceOf(\RuntimeException::class, $error->throwable);
+        self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         $store->assertUpdated(
             new Subscription(

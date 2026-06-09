@@ -30,7 +30,11 @@ use RuntimeException;
 #[CoversClass(FailSubscriber::class)]
 final class FailSubscriberTest extends TestCase
 {
-    /** @return array{FailSubscriber, SubscriptionManager} */
+    /**
+     * @param iterable<object> $subscribers
+     *
+     * @return array{FailSubscriber, SubscriptionManager}
+     */
     private function createListener(DummySubscriptionStore $store, array $subscribers = []): array
     {
         $subscriptionManager = new SubscriptionManager($store);

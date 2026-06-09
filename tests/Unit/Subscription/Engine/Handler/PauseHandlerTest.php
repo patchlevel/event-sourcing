@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine\Handler;
 
-use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Pause as PauseCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\PauseHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
