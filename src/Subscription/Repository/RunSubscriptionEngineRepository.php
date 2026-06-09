@@ -8,8 +8,8 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Subscription\Engine\AlreadyProcessing;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /**
  * @template T of AggregateRoot
@@ -18,7 +18,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 final class RunSubscriptionEngineRepository implements Repository
 {
     /**
-     * @param Repository<T>     $repository
+     * @param Repository<T> $repository
      * @param list<string>|null $ids
      * @param list<string>|null $groups
      * @param positive-int|null $limit
@@ -50,11 +50,11 @@ final class RunSubscriptionEngineRepository implements Repository
 
         try {
             $this->engine->run(
-                new SubscriptionEngineCriteria(
+                new Run(
                     $this->ids,
                     $this->groups,
+                    $this->limit,
                 ),
-                $this->limit,
             );
         } catch (AlreadyProcessing) {
             // do nothing

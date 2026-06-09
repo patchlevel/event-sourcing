@@ -7,6 +7,9 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\SubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -95,7 +98,7 @@ final class SubscriptionRunCommand extends SubscriptionCommand
 
         $worker = DefaultWorker::create(
             function () use ($criteria, $messageLimit, $sleep): void {
-                $this->engine->run($criteria, $messageLimit);
+                $this->engine->run(new Run($criteria->ids, $criteria->groups, $messageLimit));
 
                 if (!$this->store instanceof SubscriptionStore) {
                     return;
@@ -113,8 +116,8 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         );
 
         if ($rebuild) {
-            $this->engine->remove($criteria);
-            $this->engine->boot($criteria);
+            $this->engine->run(new Remove($criteria->ids, $criteria->groups));
+            $this->engine->run(new Boot($criteria->ids, $criteria->groups));
         }
 
         $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();

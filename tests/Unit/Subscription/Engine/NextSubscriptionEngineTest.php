@@ -12,7 +12,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\AlreadyProcessing;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
-use Patchlevel\EventSourcing\Subscription\Engine\NextSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -24,7 +24,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-#[CoversClass(NextSubscriptionEngine::class)]
+#[CoversClass(DefaultSubscriptionEngine::class)]
 final class NextSubscriptionEngineTest extends TestCase
 {
     public function testAlreadyProcessingOnBoot(): void
@@ -35,7 +35,7 @@ final class NextSubscriptionEngineTest extends TestCase
 
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
-            public NextSubscriptionEngine|null $engine = null;
+            public DefaultSubscriptionEngine|null $engine = null;
 
             #[Subscribe(ProfileVisited::class)]
             public function handle(): void
@@ -53,7 +53,7 @@ final class NextSubscriptionEngineTest extends TestCase
             new Stream([1 => new Message(new ProfileVisited(ProfileId::fromString('test')))]),
         );
 
-        $engine = new NextSubscriptionEngine(
+        $engine = new DefaultSubscriptionEngine(
             $messageLoader,
             $store,
             new MetadataSubscriberAccessorRepository([$subscriber]),
@@ -74,7 +74,7 @@ final class NextSubscriptionEngineTest extends TestCase
 
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
-            public NextSubscriptionEngine|null $engine = null;
+            public DefaultSubscriptionEngine|null $engine = null;
 
             #[Subscribe(ProfileVisited::class)]
             public function handle(): void
@@ -92,7 +92,7 @@ final class NextSubscriptionEngineTest extends TestCase
             new Stream([1 => new Message(new ProfileVisited(ProfileId::fromString('test')))]),
         );
 
-        $engine = new NextSubscriptionEngine(
+        $engine = new DefaultSubscriptionEngine(
             $messageLoader,
             $store,
             new MetadataSubscriberAccessorRepository([$subscriber]),

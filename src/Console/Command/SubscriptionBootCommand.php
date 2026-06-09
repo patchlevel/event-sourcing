@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Closure;
+use LogicException;
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
+use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -86,7 +90,10 @@ final class SubscriptionBootCommand extends SubscriptionCommand
         $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
         if ($setup) {
-            $this->engine->setup($criteria);
+            $this->engine->run(new Setup(
+                $criteria->ids,
+                $criteria->groups,
+            ));
         }
 
         $logger = new ConsoleLogger($output);
@@ -94,7 +101,15 @@ final class SubscriptionBootCommand extends SubscriptionCommand
 
         $worker = DefaultWorker::create(
             function (Closure $stop) use ($criteria, $messageLimit, &$finished): void {
-                $result = $this->engine->boot($criteria, $messageLimit);
+                $result = $this->engine->run(new Boot(
+                    $criteria->ids,
+                    $criteria->groups,
+                    $messageLimit,
+                ));
+
+                if (!$result instanceof ProcessedResult) {
+                    throw new LogicException('Expected ProcessedResult');
+                }
 
                 if (!$result->finished) {
                     return;

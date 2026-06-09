@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Repository;
 
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Subscription\Engine\AlreadyProcessing;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
@@ -66,9 +67,10 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
 
     public function testSave(): void
     {
-        $criteria = new SubscriptionEngineCriteria(
+        $command = new Run(
             ['id1', 'id2'],
             ['group1', 'group2'],
+            42,
         );
 
         $aggregate = Profile::createProfile(
@@ -80,7 +82,7 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
         $defaultRepository->expects($this->once())->method('save')->with($aggregate);
 
         $engine = $this->createMock(SubscriptionEngine::class);
-        $engine->expects($this->once())->method('run')->with($criteria, 42)->willReturn(new ProcessedResult(21));
+        $engine->expects($this->once())->method('run')->with($command)->willReturn(new ProcessedResult(21));
 
         $repository = new RunSubscriptionEngineRepository(
             $defaultRepository,
@@ -95,9 +97,10 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
 
     public function testSaveWithAlreadyProcessing(): void
     {
-        $criteria = new SubscriptionEngineCriteria(
+        $command = new Run(
             ['id1', 'id2'],
             ['group1', 'group2'],
+            42,
         );
 
         $aggregate = Profile::createProfile(
@@ -109,7 +112,7 @@ final class RunSubscriptionEngineRepositoryTest extends TestCase
         $defaultRepository->expects($this->once())->method('save')->with($aggregate);
 
         $engine = $this->createMock(SubscriptionEngine::class);
-        $engine->expects($this->once())->method('run')->with($criteria, 42)->willThrowException(new AlreadyProcessing());
+        $engine->expects($this->once())->method('run')->with($command)->willThrowException(new AlreadyProcessing());
 
         $repository = new RunSubscriptionEngineRepository(
             $defaultRepository,

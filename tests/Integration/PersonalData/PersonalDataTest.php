@@ -16,6 +16,8 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
@@ -132,13 +134,13 @@ final class PersonalDataTest extends TestCase
             new MetadataSubscriberAccessorRepository([new DeletePersonalDataProcessor($cipherKeyStore)]),
         );
 
-        $engine->setup(skipBooting: true);
+        $engine->run(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
 
         $repository->save($profile);
-        $engine->run();
+        $engine->run(new Run());
 
         $profile = $repository->load($profileId);
 
@@ -149,7 +151,7 @@ final class PersonalDataTest extends TestCase
 
         $profile->removePersonalData();
         $repository->save($profile);
-        $engine->run();
+        $engine->run(new Run());
 
         $profile = $repository->load($profileId);
 
@@ -214,14 +216,14 @@ final class PersonalDataTest extends TestCase
             new MetadataSubscriberAccessorRepository([new DeletePersonalDataProcessor($cipherKeyStore)]),
         );
 
-        $engine->setup(skipBooting: true);
+        $engine->run(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
         $profile->changeName('John 2');
 
         $repository->save($profile);
-        $engine->run();
+        $engine->run(new Run());
 
         $profile = $repository->load($profileId);
 
