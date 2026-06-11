@@ -86,6 +86,60 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
     RetryStrategyRepository::withDefault($retryStrategy),
 );
 ```
+### Subscription Engine Commands
+
+The `SubscriptionEngine` interface has been changed.
+The methods `setup`, `boot`, `run`, `teardown`, `remove`, `reactivate`, `pause` and `refresh` have been replaced
+by a single `execute` method that takes a command object.
+The `ids` and `groups` filters, previously passed via `SubscriptionEngineCriteria`,
+are now constructor parameters of the command objects.
+The `SubscriptionEngineCriteria` is now only used for the `subscriptions` method.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->setup(new SubscriptionEngineCriteria(ids: ['profile_1']), skipBooting: true);
+$subscriptionEngine->boot(new SubscriptionEngineCriteria(ids: ['profile_1']), limit: 100);
+$subscriptionEngine->run(new SubscriptionEngineCriteria(ids: ['profile_1']), limit: 100);
+$subscriptionEngine->teardown(new SubscriptionEngineCriteria(ids: ['profile_1']));
+$subscriptionEngine->remove(new SubscriptionEngineCriteria(ids: ['profile_1']));
+$subscriptionEngine->reactivate(new SubscriptionEngineCriteria(ids: ['profile_1']));
+$subscriptionEngine->pause(new SubscriptionEngineCriteria(ids: ['profile_1']));
+$subscriptionEngine->refresh(new SubscriptionEngineCriteria(ids: ['profile_1']));
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Pause;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Reactivate;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Refresh;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(new Setup(ids: ['profile_1'], skipBooting: true));
+$subscriptionEngine->execute(new Boot(ids: ['profile_1'], limit: 100));
+$subscriptionEngine->execute(new Run(ids: ['profile_1'], limit: 100));
+$subscriptionEngine->execute(new Teardown(ids: ['profile_1']));
+$subscriptionEngine->execute(new Remove(ids: ['profile_1']));
+$subscriptionEngine->execute(new Reactivate(ids: ['profile_1']));
+$subscriptionEngine->execute(new Pause(ids: ['profile_1']));
+$subscriptionEngine->execute(new Refresh(ids: ['profile_1']));
+```
+Further changes:
+
+* The `CanRefreshSubscriptions` interface has been removed. Refresh is now part of the `SubscriptionEngine` interface via the `Refresh` command.
+* `ProcessedResult` now extends `Result`, so the `execute` method always returns a `Result`. The `Boot` and `Run` commands return a `ProcessedResult`.
+* The `DefaultSubscriptionEngine` accepts an optional `EventDispatcherInterface` as last constructor argument to hook into the engine with own listeners.
+
 ## Store
 
 ### StreamStore
