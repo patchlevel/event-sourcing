@@ -22,7 +22,7 @@ use Psr\Log\NullLogger;
 #[CoversClass(DetachListener::class)]
 final class DetachListenerTest extends TestCase
 {
-    /** @param iterable<object> $subscribers */
+    /** @param list<object> $subscribers */
     private function createListener(DummySubscriptionStore $store, array $subscribers = []): DetachListener
     {
         return new DetachListener(

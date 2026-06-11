@@ -35,8 +35,9 @@ use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
+use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -55,7 +56,6 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfilePr
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjectionWithCleanup;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
-use Psl\Collection\Set;
 use RuntimeException;
 
 use function gc_collect_cycles;
@@ -137,7 +137,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Boot());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -159,7 +159,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -263,7 +263,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Boot());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -285,7 +285,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -382,7 +382,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals([], $result->errors);
 
         $result = $engine->execute(new Boot());
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -402,7 +402,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -421,7 +421,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -436,7 +436,7 @@ final class SubscriptionTest extends TestCase
         $clock->sleep(5);
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -456,7 +456,7 @@ final class SubscriptionTest extends TestCase
         $clock->sleep(10);
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -476,7 +476,7 @@ final class SubscriptionTest extends TestCase
         $clock->sleep(20);
         $result = $engine->execute(new Run());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -502,7 +502,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -524,7 +524,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -595,7 +595,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -619,7 +619,7 @@ final class SubscriptionTest extends TestCase
         $subscriber->onFailedError = true;
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -704,7 +704,7 @@ final class SubscriptionTest extends TestCase
         self::assertEquals([], $result->errors);
 
         $result = $engine->execute(new Boot());
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -722,7 +722,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -1424,7 +1424,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Boot());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $profileId = ProfileId::generate();
@@ -1433,7 +1433,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertEquals([], $result->errors);
 
         $result = $this->projectionConnection->fetchAssociative(
@@ -1449,7 +1449,7 @@ final class SubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
 
-        self::assertEquals(2, $result->processedMessages);
+        self::assertProcessedMessages(2, $result);
         self::assertEquals([], $result->errors);
 
         $result = $this->projectionConnection->fetchAssociative(
@@ -1527,6 +1527,13 @@ final class SubscriptionTest extends TestCase
         self::assertEquals('test', $subscriptions[0]->id());
         self::assertEquals('new-group', $subscriptions[0]->group());
         self::assertEquals(RunMode::FromNow, $subscriptions[0]->runMode());
+    }
+
+    /** @phpstan-assert ProcessedResult $result */
+    private static function assertProcessedMessages(int $expected, Result $result): void
+    {
+        self::assertInstanceOf(ProcessedResult::class, $result);
+        self::assertSame($expected, $result->processedMessages);
     }
 
     /** @param list<Subscription> $subscriptions */

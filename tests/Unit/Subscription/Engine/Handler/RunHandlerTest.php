@@ -40,7 +40,11 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 #[CoversClass(RunHandler::class)]
 final class RunHandlerTest extends TestCase
 {
-    /** @param iterable<object> $subscribers */
+    /**
+     * @param list<object> $subscribers
+     *
+     * @return array{RunHandler, EventDispatcher, RunCommand}
+     */
     private function createHandler(
         MessageLoader $messageLoader,
         DummySubscriptionStore $store,

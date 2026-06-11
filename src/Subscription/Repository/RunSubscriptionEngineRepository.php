@@ -18,7 +18,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 final class RunSubscriptionEngineRepository implements Repository
 {
     /**
-     * @param Repository<T> $repository
+     * @param Repository<T>     $repository
      * @param list<string>|null $ids
      * @param list<string>|null $groups
      * @param positive-int|null $limit

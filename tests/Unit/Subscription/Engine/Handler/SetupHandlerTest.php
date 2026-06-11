@@ -30,7 +30,7 @@ use RuntimeException;
 #[CoversClass(SetupHandler::class)]
 final class SetupHandlerTest extends TestCase
 {
-    /** @param iterable<object> $subscribers */
+    /** @param list<object> $subscribers */
     private function createHandler(
         MessageLoader $messageLoader,
         DummySubscriptionStore $store,

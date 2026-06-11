@@ -31,7 +31,7 @@ use Psr\Log\NullLogger;
 #[CoversClass(DiscoverSubscriber::class)]
 final class DiscoverSubscriberTest extends TestCase
 {
-    /** @param iterable<object> $subscribers */
+    /** @param list<object> $subscribers */
     private function createListener(DummySubscriptionStore $store, array $subscribers = []): DiscoverSubscriber
     {
         return new DiscoverSubscriber(

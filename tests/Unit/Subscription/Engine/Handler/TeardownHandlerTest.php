@@ -28,7 +28,7 @@ use RuntimeException;
 #[CoversClass(TeardownHandler::class)]
 final class TeardownHandlerTest extends TestCase
 {
-    /** @param iterable<object> $subscribers */
+    /** @param list<object> $subscribers */
     private function createHandler(
         DummySubscriptionStore $store,
         array $subscribers = [],

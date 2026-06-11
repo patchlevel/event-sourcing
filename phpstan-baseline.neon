@@ -106,7 +106,7 @@ parameters:
 			message: '#^Parameter \#1 \$command of callable Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\BootHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\PauseHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\ReactivateHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\RefreshHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\RemoveHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\RunHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\SetupHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\TeardownHandler expects Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Boot\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Pause\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Reactivate\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Refresh\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Remove\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Run\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Setup\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Teardown, Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Command given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/Subscription/Engine/NextSubscriptionEngine.php
+			path: src/Subscription/Engine/DefaultSubscriptionEngine.php
 
 		-
 			message: '#^Parameter \#1 \$eventClass of method Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry\:\:eventName\(\) expects class\-string, string given\.$#'
@@ -401,18 +401,6 @@ parameters:
 			identifier: method.nonObject
 			count: 2
 			path: tests/Unit/QueryBus/ServiceHandlerProviderTest.php
-
-		-
-			message: '#^Match expression does not handle remaining value\: string$#'
-			identifier: match.unhandled
-			count: 1
-			path: tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php
-
-		-
-			message: '#^Parameter \#1 \$error of static method Patchlevel\\EventSourcing\\Subscription\\ThrowableToErrorContextTransformer\:\:transform\(\) expects Throwable, Throwable\|null given\.$#'
-			identifier: argument.type
-			count: 8
-			path: tests/Unit/Subscription/Engine/DefaultSubscriptionEngineTest.php
 
 		-
 			message: '#^Offset ''args'' on array\{file\: literal\-string&non\-falsy\-string, line\: int, function\: ''createException'', class\: ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Unit\\\\Subscription\\\\ErrorContextTest'', type\: ''\-\>'', args\: array\<mixed\>\} on left side of \?\? always exists and is not nullable\.$#'

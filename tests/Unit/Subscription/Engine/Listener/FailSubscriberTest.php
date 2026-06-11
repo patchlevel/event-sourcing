@@ -31,7 +31,7 @@ use RuntimeException;
 final class FailSubscriberTest extends TestCase
 {
     /**
-     * @param iterable<object> $subscribers
+     * @param list<object> $subscribers
      *
      * @return array{FailSubscriber, SubscriptionManager}
      */

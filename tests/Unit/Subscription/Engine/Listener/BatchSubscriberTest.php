@@ -40,6 +40,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 #[CoversClass(BatchSubscriber::class)]
 final class BatchSubscriberTest extends TestCase
 {
+    /** @param list<object> $subscribers */
     private function createBootHandler(
         MessageLoader $messageLoader,
         DummySubscriptionStore $store,
@@ -63,6 +64,11 @@ final class BatchSubscriberTest extends TestCase
         return new BootHandler($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
     }
 
+    /**
+     * @param list<object> $subscribers
+     *
+     * @return array{RunHandler, EventDispatcher, RunCommand}
+     */
     private function createRunHandler(
         MessageLoader $messageLoader,
         DummySubscriptionStore $store,
@@ -181,8 +187,10 @@ final class BatchSubscriberTest extends TestCase
 
     public function testBootBatchingWithHandleError(): void
     {
+        $exception = new RuntimeException('ERROR');
+
         $subscriber = new BatchingSubscriber(
-            throwForMessage: new RuntimeException('ERROR'),
+            throwForMessage: $exception,
         );
 
         $store = new DummySubscriptionStore([
@@ -220,7 +228,7 @@ final class BatchSubscriberTest extends TestCase
                 new SubscriptionError(
                     'ERROR',
                     Status::Booting,
-                    ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
+                    ThrowableToErrorContextTransformer::transform($exception),
                 ),
             ),
         );
@@ -233,8 +241,10 @@ final class BatchSubscriberTest extends TestCase
 
     public function testBootBatchingWithBeginBatchError(): void
     {
+        $exception = new RuntimeException('ERROR');
+
         $subscriber = new BatchingSubscriber(
-            throwForBeginBatch: new RuntimeException('ERROR'),
+            throwForBeginBatch: $exception,
         );
 
         $store = new DummySubscriptionStore([
@@ -272,7 +282,7 @@ final class BatchSubscriberTest extends TestCase
                 new SubscriptionError(
                     'ERROR',
                     Status::Booting,
-                    ThrowableToErrorContextTransformer::transform($subscriber->throwForBeginBatch),
+                    ThrowableToErrorContextTransformer::transform($exception),
                 ),
             ),
         );
@@ -285,8 +295,10 @@ final class BatchSubscriberTest extends TestCase
 
     public function testBootBatchingWithCommitBatchError(): void
     {
+        $exception = new RuntimeException('ERROR');
+
         $subscriber = new BatchingSubscriber(
-            throwForCommitBatch: new RuntimeException('ERROR'),
+            throwForCommitBatch: $exception,
         );
 
         $store = new DummySubscriptionStore([
@@ -324,7 +336,7 @@ final class BatchSubscriberTest extends TestCase
                 new SubscriptionError(
                     'ERROR',
                     Status::Booting,
-                    ThrowableToErrorContextTransformer::transform($subscriber->throwForCommitBatch),
+                    ThrowableToErrorContextTransformer::transform($exception),
                 ),
             ),
         );
@@ -337,8 +349,10 @@ final class BatchSubscriberTest extends TestCase
 
     public function testBootBatchingWithRollbackBatchError(): void
     {
+        $exception = new RuntimeException('ERROR');
+
         $subscriber = new BatchingSubscriber(
-            throwForMessage: new RuntimeException('ERROR'),
+            throwForMessage: $exception,
             throwForRollbackBatch: new RuntimeException('ERROR'),
         );
 
@@ -377,7 +391,7 @@ final class BatchSubscriberTest extends TestCase
                 new SubscriptionError(
                     'ERROR',
                     Status::Booting,
-                    ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
+                    ThrowableToErrorContextTransformer::transform($exception),
                 ),
             ),
         );
@@ -482,8 +496,10 @@ final class BatchSubscriberTest extends TestCase
 
     public function testRunningBatchingWithHandleError(): void
     {
+        $exception = new RuntimeException('ERROR');
+
         $subscriber = new BatchingSubscriber(
-            throwForMessage: new RuntimeException('ERROR'),
+            throwForMessage: $exception,
         );
 
         $store = new DummySubscriptionStore([
@@ -522,7 +538,7 @@ final class BatchSubscriberTest extends TestCase
                 new SubscriptionError(
                     'ERROR',
                     Status::Active,
-                    ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
+                    ThrowableToErrorContextTransformer::transform($exception),
                 ),
             ),
         );
@@ -535,8 +551,10 @@ final class BatchSubscriberTest extends TestCase
 
     public function testRunningBatchingWithBeginBatchError(): void
     {
+        $exception = new RuntimeException('ERROR');
+
         $subscriber = new BatchingSubscriber(
-            throwForBeginBatch: new RuntimeException('ERROR'),
+            throwForBeginBatch: $exception,
         );
 
         $store = new DummySubscriptionStore([
@@ -575,7 +593,7 @@ final class BatchSubscriberTest extends TestCase
                 new SubscriptionError(
                     'ERROR',
                     Status::Active,
-                    ThrowableToErrorContextTransformer::transform($subscriber->throwForBeginBatch),
+                    ThrowableToErrorContextTransformer::transform($exception),
                 ),
             ),
         );
@@ -588,8 +606,10 @@ final class BatchSubscriberTest extends TestCase
 
     public function testRunningBatchingWithCommitBatchError(): void
     {
+        $exception = new RuntimeException('ERROR');
+
         $subscriber = new BatchingSubscriber(
-            throwForCommitBatch: new RuntimeException('ERROR'),
+            throwForCommitBatch: $exception,
         );
 
         $store = new DummySubscriptionStore([
@@ -628,7 +648,7 @@ final class BatchSubscriberTest extends TestCase
                 new SubscriptionError(
                     'ERROR',
                     Status::Active,
-                    ThrowableToErrorContextTransformer::transform($subscriber->throwForCommitBatch),
+                    ThrowableToErrorContextTransformer::transform($exception),
                 ),
             ),
         );
@@ -641,8 +661,10 @@ final class BatchSubscriberTest extends TestCase
 
     public function testRunningBatchingWithRollbackBatchError(): void
     {
+        $exception = new RuntimeException('ERROR');
+
         $subscriber = new BatchingSubscriber(
-            throwForMessage: new RuntimeException('ERROR'),
+            throwForMessage: $exception,
             throwForRollbackBatch: new RuntimeException('ERROR'),
         );
 
@@ -682,7 +704,7 @@ final class BatchSubscriberTest extends TestCase
                 new SubscriptionError(
                     'ERROR',
                     Status::Active,
-                    ThrowableToErrorContextTransformer::transform($subscriber->throwForMessage),
+                    ThrowableToErrorContextTransformer::transform($exception),
                 ),
             ),
         );

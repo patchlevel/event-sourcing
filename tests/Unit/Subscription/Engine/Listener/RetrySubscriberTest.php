@@ -28,7 +28,7 @@ use Psr\Log\NullLogger;
 #[CoversClass(RetrySubscriber::class)]
 final class RetrySubscriberTest extends TestCase
 {
-    /** @param iterable<object> $subscribers */
+    /** @param list<object> $subscribers */
     private function createListener(
         DummySubscriptionStore $store,
         array $subscribers,
@@ -75,6 +75,7 @@ final class RetrySubscriberTest extends TestCase
         self::assertNull($updated->subscriptionError());
     }
 
+    /** @param 'setup'|'boot'|'run' $method */
     #[DataProvider('statusProvider')]
     public function testShouldNotRetryOtherStatus(string $method, string $status): void
     {
