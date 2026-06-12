@@ -40,14 +40,15 @@ $repositoryManager = new DefaultRepositoryManager(
     new SplitStreamDecorator($eventMetadataFactory),
 );
 ```
-!!! note
 
-    You can find out more about decorator [here](./message_decorator.md).
-    
-!!! tip
+:::note
+You can find out more about decorator [here](message-decorator.md).
+:::
 
-    You can use multiple decorators with the `ChainMessageDecorator`.
-    
+:::tip
+You can use multiple decorators with the `ChainMessageDecorator`.
+:::
+
 ## Usage
 
 To use this feature you need to mark the event which should split the stream.
@@ -69,22 +70,23 @@ final class BalanceReported
     }
 }
 ```
-!!! warning
 
-    The event needs all data which is relevant the aggregate to be used since all past event will not be loaded! 
-    Keep this in mind if you want to use this feature.
-    
-!!! note
+:::warning
+The event needs all data which is relevant the aggregate to be used since all past event will not be loaded! 
+Keep this in mind if you want to use this feature.
+:::
 
-    This impacts only the aggregate loaded by the repository. Subscriptions will still receive all events.
-    
-!!! tip
+:::note
+This impacts only the aggregate loaded by the repository. Subscriptions will still receive all events.
+:::
 
-    You can combine this feature with the snapshot feature to increase the performance even more.
-    
+:::tip
+You can combine this feature with the snapshot feature to increase the performance even more.
+:::
+
 ## Learn more
 
-* [How to use message decorator](message_decorator.md)
+* [How to use message decorator](message-decorator.md)
 * [How to define events](events.md)
 * [How to define aggregates](aggregate.md)
 * [How to store and load aggregates](repository.md)

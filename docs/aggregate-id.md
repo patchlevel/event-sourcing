@@ -7,12 +7,12 @@ since only an aggregate-wide unique string is expected in the store.
 
 This library provides you with a few options for generating the id.
 
-!!! warning
+:::warning
+Performance reasons, the default configuration of the store require an uuid string for `aggregate id`.
+But technically, for the library, it can be any string.
+If you want to use a custom id, you have to change the `aggregate_id_type` in the [store](store.md) configuration.
+:::
 
-    Performance reasons, the default configuration of the store require an uuid string for `aggregate id`.
-    But technically, for the library, it can be any string.
-    If you want to use a custom id, you have to change the `aggregate_id_type` in the [store](store.md) configuration.
-    
 ## Uuid
 
 The easiest way is to use an `uuid` as an aggregate ID.
@@ -41,11 +41,12 @@ use Patchlevel\EventSourcing\Aggregate\Uuid;
 $uuid = Uuid::generate();
 $uuid = Uuid::fromString('d6e8d7a0-4b0b-4e6a-8a9a-3a0b2d9d0e4e');
 ```
-!!! Note
 
-    We implemented the version 7 of the uuid, because it is most suitable for event sourcing.
-    More information about uuid versions can be found [here](https://uuid.ramsey.dev/en/stable/rfc4122.html).
-    
+:::note
+We implemented the version 7 of the uuid, because it is most suitable for event sourcing.
+More information about uuid versions can be found [here](https://uuid.ramsey.dev/en/stable/rfc4122.html).
+:::
+
 ## Custom ID
 
 If you don't want to use an uuid, you can also use the custom ID implementation.
@@ -64,12 +65,13 @@ final class Profile extends BasicAggregateRoot
     private CustomId $id;
 }
 ```
-!!! warning
 
-    If you want to use a custom id that is not an uuid, 
-    you need to change the `aggregate_id_type` to `string` in the store configuration.
-    More information can be found [here](store.md).
-    
+:::warning
+If you want to use a custom id that is not an uuid, 
+you need to change the `aggregate_id_type` to `string` in the store configuration.
+More information can be found [here](store.md).
+:::
+
 So you can use any string as an id:
 
 ```php

@@ -34,10 +34,11 @@ final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
     }
 }
 ```
-!!! warning
 
-    You need to consider that other events are passed to the Upcaster. So and early out is here endorsed.
-    
+:::warning
+You need to consider that other events are passed to the Upcaster. So and early out is here endorsed.
+:::
+
 ## Adjust event name
 
 Sometimes your event name was not the best choice and you want to change it.
@@ -65,10 +66,11 @@ final class EventNameRenameUpcaster implements Upcaster
     }
 }
 ```
-!!! tip
 
-    Events can also have [aliases](./events.md#alias). This is usually sufficient.
-    
+:::tip
+Events can also have [aliases](events.md#alias). This is usually sufficient.
+:::
+
 ## Configure
 
 After we have defined the upcasting rules, we also have to pass the whole thing to the serializer.

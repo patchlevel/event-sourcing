@@ -23,7 +23,7 @@ if (file_exists($targetDir)) {
 mkdir($targetDir);
 
 $finder = new Symfony\Component\Finder\Finder();
-$finder->files()->in(__DIR__ . '/../docs/pages')->name('*.md');
+$finder->files()->in(__DIR__ . '/../docs')->name('*.md');
 
 foreach ($finder as $file) {
     $fileName = pathinfo($file->getBasename(), PATHINFO_FILENAME);

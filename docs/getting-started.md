@@ -55,10 +55,11 @@ final class GuestIsCheckedOut
     }
 }
 ```
-!!! note
 
-    You can find out more about events [here](events.md).    
-    
+:::note
+You can find out more about events [here](events.md).    
+:::
+
 ## Define aggregates
 
 Next we need to define the hotel aggregate.
@@ -147,10 +148,11 @@ final class Hotel extends BasicAggregateRoot
     }
 }
 ```
-!!! note
 
-    You can find out more about aggregates [here](aggregate.md).
-    
+:::note
+You can find out more about aggregates [here](aggregate.md).
+:::
+
 ## Define projections
 
 So that we can see all the hotels on our website and also see how many guests are currently visiting the hotels,
@@ -225,10 +227,11 @@ final class HotelProjector
     }
 }
 ```
-!!! note
 
-    You can find out more about projector [here](subscription.md).
-    
+:::note
+You can find out more about projector [here](subscription.md).
+:::
+
 ## Processor
 
 In our example we also want to email the head office as soon as a guest is checked in.
@@ -256,18 +259,19 @@ final class SendCheckInEmailProcessor
     }
 }
 ```
-!!! note
 
-    You can find out more about processor [here](subscription.md).
-    
+:::note
+You can find out more about processor [here](subscription.md).
+:::
+
 ## Configuration
 
 After we have defined everything, we still have to plug the whole thing together:
 
-!!! tip
+:::tip
+If you use symfony, you can use our [symfony bundle](/docs/event-sourcing-bundle/latest/installation) to skip this step.
+:::
 
-    If you use symfony, you can use our [symfony bundle](https://event-sourcing-bundle.patchlevel.io/latest/installation/) to skip this step.
-    
 ```php
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
@@ -324,18 +328,19 @@ $repositoryManager = new RunSubscriptionEngineRepositoryManager(
 
 $hotelRepository = $repositoryManager->get(Hotel::class);
 ```
-!!! note
 
-    You can find out more about stores [here](store.md).
+:::note
+You can find out more about stores [here](store.md).
+:::
 
-!!! note
+:::note
+The `RunSubscriptionEngineRepositoryManager` is a decorator that triggers the 
+Subscription Engine when an Aggregate is saved. Normally, you'd use the 
+`DefaultRepositoryManager` and a worker to run the Subscription Engine.
 
-    The `RunSubscriptionEngineRepositoryManager` is a decorator that triggers the 
-    Subscription Engine when an Aggregate is saved. Normally, you'd use the 
-    `DefaultRepositoryManager` and a worker to run the Subscription Engine.
-    
-    Learn more [here](subscription.md).
-    
+Learn more [here](subscription.md).
+:::
+
 ## Database setup
 
 So that we can actually write the data to a database,
@@ -367,10 +372,11 @@ $schemaDirector->create();
 /** @var SubscriptionEngine $engine */
 $engine->setup(skipBooting: true);
 ```
-!!! note
 
-    you can use the predefined [cli commands](cli.md) for this.
-    
+:::note
+you can use the predefined [cli commands](cli.md) for this.
+:::
+
 ## Usage
 
 We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
@@ -393,20 +399,21 @@ $hotelRepository->save($hotel2);
 
 $hotels = $hotelProjection->getHotels();
 ```
-!!! note
 
-    You can also use other forms of IDs such as uuid version 6 or a custom format. 
-    You can find more about this [here](aggregate_id.md).
-    
+:::note
+You can also use other forms of IDs such as uuid version 6 or a custom format. 
+You can find more about this [here](aggregate-id.md).
+:::
+
 ## Result
 
-!!! success
+:::success
+We have successfully implemented and used event sourcing.
 
-    We have successfully implemented and used event sourcing.
-    
-    Feel free to browse further in the documentation for more detailed information. 
-    If there are still open questions, create a ticket on Github and we will try to help you.
-    
+Feel free to browse further in the documentation for more detailed information. 
+If there are still open questions, create a ticket on Github and we will try to help you.
+:::
+
 ## Learn more
 
 * [How to create an aggregate](aggregate.md)

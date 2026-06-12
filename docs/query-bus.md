@@ -35,18 +35,19 @@ final class QueryProfileHandler
     }
 }
 ```
-!!! warning
 
-    A query can only be answered by one method.
-    
-!!! note
+:::warning
+A query can only be answered by one method.
+:::
 
-    To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
-    
-!!! tip
+:::note
+To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
+:::
 
-    A class can have multiple methods which answers different queries.
-    
+:::tip
+A class can have multiple methods which answers different queries.
+:::
+
 ### Projector
 
 Another way to handle queries is to answer them directly in the corresponding projectors. The configuration is the same
@@ -67,11 +68,12 @@ final class ProfileProjector
     // projector related methods to maintain the state of profiles
 }
 ```
-!!! tip
 
-    Using small dedicated projections for each usecase is best practice. Using them directly as query handlers are 
-    endoresed and can reduce fragmentation of the system.
-    
+:::tip
+Using small dedicated projections for each usecase is best practice. Using them directly as query handlers are 
+endoresed and can reduce fragmentation of the system.
+:::
+
 ## Setup
 
 We provide a `SyncQueryBus` that you can use to dispatch queries.
@@ -122,4 +124,4 @@ $provider = new ChainHandlerProvider([
 * [How to use aggregates](aggregate.md)
 * [How to use events](events.md)
 * [How to use subscriptions](subscription.md)
-* [How to use command bus](command_bus.md)
+* [How to use command bus](command-bus.md)
