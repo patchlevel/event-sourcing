@@ -178,7 +178,7 @@ final class Factory
         $container->alias(ClockInterface::class, SystemClock::class);
 
         if ($configuration->clockService !== null) {
-            $container->alias(ClockInterface::class, 'event_sourcing.clock');
+            $container->alias(ClockInterface::class, $configuration->clockService);
 
             return;
         }
@@ -194,11 +194,17 @@ final class Factory
     private static function configureHydrator(Configuration $configuration, Container $container): void
     {
         if ($configuration->hydratorStackCryptographyEnabled) {
-            $container->bind(
-                ExtensionDoctrineCipherKeyStore::class,
-                new ExtensionDoctrineCipherKeyStore($container->get(self::CONNECTION_ID)),
-            );
-            $container->alias(CipherKeyStore::class, ExtensionDoctrineCipherKeyStore::class);
+            if ($configuration->hydratorStackCryptographyCipherKeyStoreService !== null) {
+                $container->alias(CipherKeyStore::class, $configuration->hydratorStackCryptographyCipherKeyStoreService);
+            } else {
+                $container->bind(
+                    ExtensionDoctrineCipherKeyStore::class,
+                    static function (Container $container): ExtensionDoctrineCipherKeyStore {
+                        return new ExtensionDoctrineCipherKeyStore($container->get(self::CONNECTION_ID));
+                    },
+                );
+                $container->alias(CipherKeyStore::class, ExtensionDoctrineCipherKeyStore::class);
+            }
 
             $container->bind(
                 BaseCryptographer::class,
@@ -227,6 +233,10 @@ final class Factory
 
                 foreach ($configuration->hydratorExtensions as $extension) {
                     $builder->useExtension($extension);
+                }
+
+                foreach ($configuration->guesser as $guesser) {
+                    $builder->addGuesser($guesser);
                 }
 
                 $builder->useExtension(new CoreExtension());
@@ -418,12 +428,6 @@ final class Factory
                 throw new InvalidArgumentException('Custom event bus type requires an event bus service id.');
             }
 
-            $container->bind(
-                $configuration->eventBusService,
-                static function (Container $container) use ($configuration): EventBus {
-                    return $container->get($configuration->eventBusService);
-                },
-            );
             $container->alias(EventBus::class, $configuration->eventBusService);
 
             return;
@@ -869,48 +873,54 @@ final class Factory
         $container->bind(AttributeSubscriberMetadataFactory::class, new AttributeSubscriberMetadataFactory());
         $container->alias(SubscriberMetadataFactory::class, AttributeSubscriberMetadataFactory::class);
 
-        /** @var array<string, RetryStrategy> $strategies */
-        $strategies = [];
-        foreach ($configuration->subscriptionRetryStrategyDefinitions as $name => $retryStrategyDefinition) {
-            if ($retryStrategyDefinition['type'] === Configuration::SUBSCRIPTION_RETRY_CLOCK_BASED) {
-                if (!array_key_exists('options', $retryStrategyDefinition)) {
-                    throw new InvalidArgumentException(sprintf(
-                        'Missing options for subscription retry strategy "%s".',
-                        $name,
-                    ));
-                }
-
-                $strategies[$name] = new ClockBasedRetryStrategy(
-                    $container->get(ClockInterface::class),
-                    $retryStrategyDefinition['options']['base_delay'],
-                    $retryStrategyDefinition['options']['delay_factor'],
-                    $retryStrategyDefinition['options']['max_attempts'],
-                );
-
-                continue;
-            }
-
-            if ($retryStrategyDefinition['type'] === Configuration::SUBSCRIPTION_RETRY_NO_RETRY) {
-                $strategies[$name] = new NoRetryStrategy();
-                continue;
-            }
-
-            if ($retryStrategyDefinition['type'] !== Configuration::SUBSCRIPTION_RETRY_CUSTOM) {
-                continue;
-            }
-
-            $service = $retryStrategyDefinition['service'] ?? null;
-            if ($service === null) {
-                throw new InvalidArgumentException(sprintf('Custom retry strategy "%s" requires a service id.', $name));
-            }
-
-            $strategies[$name] = $container->get($service);
-        }
-
-        if ($strategies !== []) {
+        if ($configuration->subscriptionRetryStrategyDefinitions !== []) {
             $container->bind(
                 RetryStrategyRepository::class,
-                new RetryStrategyRepository($strategies, $configuration->subscriptionDefaultRetryStrategy),
+                static function (Container $container) use ($configuration): RetryStrategyRepository {
+                    /** @var array<string, RetryStrategy> $strategies */
+                    $strategies = [];
+                    foreach ($configuration->subscriptionRetryStrategyDefinitions as $name => $retryStrategyDefinition) {
+                        if ($retryStrategyDefinition['type'] === Configuration::SUBSCRIPTION_RETRY_CLOCK_BASED) {
+                            if (!array_key_exists('options', $retryStrategyDefinition)) {
+                                throw new InvalidArgumentException(sprintf(
+                                    'Missing options for subscription retry strategy "%s".',
+                                    $name,
+                                ));
+                            }
+
+                            $strategies[$name] = new ClockBasedRetryStrategy(
+                                $container->get(ClockInterface::class),
+                                $retryStrategyDefinition['options']['base_delay'],
+                                $retryStrategyDefinition['options']['delay_factor'],
+                                $retryStrategyDefinition['options']['max_attempts'],
+                            );
+
+                            continue;
+                        }
+
+                        if ($retryStrategyDefinition['type'] === Configuration::SUBSCRIPTION_RETRY_NO_RETRY) {
+                            $strategies[$name] = new NoRetryStrategy();
+                            continue;
+                        }
+
+                        if ($retryStrategyDefinition['type'] !== Configuration::SUBSCRIPTION_RETRY_CUSTOM) {
+                            throw new InvalidArgumentException(sprintf(
+                                'Unknown retry strategy type "%s" for "%s".',
+                                $retryStrategyDefinition['type'],
+                                $name,
+                            ));
+                        }
+
+                        $service = $retryStrategyDefinition['service'] ?? null;
+                        if ($service === null) {
+                            throw new InvalidArgumentException(sprintf('Custom retry strategy "%s" requires a service id.', $name));
+                        }
+
+                        $strategies[$name] = $container->get($service);
+                    }
+
+                    return new RetryStrategyRepository($strategies, $configuration->subscriptionDefaultRetryStrategy);
+                },
             );
         }
 
@@ -1105,6 +1115,8 @@ final class Factory
                     );
                 },
             );
+
+            return;
         }
 
         if ($configuration->storeMigrationType === Configuration::STORE_CUSTOM) {
@@ -1116,6 +1128,8 @@ final class Factory
                 self::NEW_STORE_ID,
                 static fn (Container $container): Store => $container->get($configuration->storeMigrationService),
             );
+
+            return;
         }
 
         throw new InvalidArgumentException(sprintf('Unknown store type "%s"', $configuration->storeMigrationType));

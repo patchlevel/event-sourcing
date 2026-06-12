@@ -375,6 +375,24 @@ final class Configuration
         return $newConfiguration;
     }
 
+    /** @param list<Guesser> $guessers */
+    public function withHydratorGuessers(array $guessers): self
+    {
+        $newConfiguration = clone $this;
+        $newConfiguration->guesser = $guessers;
+
+        return $newConfiguration;
+    }
+
+    /** @param list<object> $listeners */
+    public function withListeners(array $listeners): self
+    {
+        $newConfiguration = clone $this;
+        $newConfiguration->listeners = $listeners;
+
+        return $newConfiguration;
+    }
+
     /** @param SnapshotAdapterMap $snapshotAdapters */
     public function withSnapshotAdapters(array $snapshotAdapters): self
     {

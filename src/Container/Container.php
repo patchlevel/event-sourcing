@@ -103,18 +103,18 @@ final class Container implements ContainerInterface
         $this->services[$id] = $service;
     }
 
-    public function alias(string $id, string $alias): void
+    public function alias(string $alias, string $id): void
     {
-        $this->aliases[$id] = $alias;
+        $this->aliases[$alias] = $id;
     }
 
-    public function decorate(string $id, string $alias, callable $service): void
+    public function decorate(string $id, string $decoratorId, callable $factory): void
     {
-        $innerAlias = $this->resolveAlias($id);
+        $innerId = $this->resolveAlias($id);
         $this->bind(
-            $alias,
-            static fn (ContainerInterface $container) => $service($container, $container->get($innerAlias)),
+            $decoratorId,
+            static fn (ContainerInterface $container) => $factory($container, $container->get($innerId)),
         );
-        $this->alias($id, $alias);
+        $this->alias($id, $decoratorId);
     }
 }
