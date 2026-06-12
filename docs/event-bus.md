@@ -2,15 +2,15 @@
 
 Optionally you can use an event bus to dispatch events to listeners.
 
-For all events that are persisted (when the `save` method has been executed on the [repository](./repository.md)),
+For all events that are persisted (when the `save` method has been executed on the [repository](repository.md)),
 the event wrapped in a message will be dispatched to the `event bus`.
 All listeners are then called for each message.
 
-!!! tip
+:::tip
+It is recommended to use the [subscription engine](subscription.md) to process the messages.
+It is more powerful and flexible than the event bus.
+:::
 
-    It is recommended to use the [subscription engine](subscription.md) to process the messages.
-    It is more powerful and flexible than the event bus.
-    
 ## Event Bus
 
 The library delivers a light-weight event bus for which you can register listeners and dispatch events.
@@ -20,10 +20,11 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 
 $eventBus = DefaultEventBus::create([$mailListener]);
 ```
-!!! note
 
-    The order in which the listeners are executed is determined by the order in which they are passed to the factory.
-    
+:::note
+The order in which the listeners are executed is determined by the order in which they are passed to the factory.
+:::
+
 Internally, the event bus uses the `Consumer` to consume the messages and call the listeners.
 
 ## Consumer
@@ -55,10 +56,11 @@ $eventBus = new DefaultEventBus(
     new DefaultConsumer($listenerProvider),
 );
 ```
-!!! tip
 
-    The `DefaultEventBus::create` method uses the `DefaultConsumer` and `AttributeListenerProvider` by default.
-    
+:::tip
+The `DefaultEventBus::create` method uses the `DefaultConsumer` and `AttributeListenerProvider` by default.
+:::
+
 ### Custom listener provider
 
 You can also use your own listener provider.
@@ -78,10 +80,11 @@ $listenerProvider = new class implements ListenerProvider {
     }
 };
 ```
-!!! tip
 
-    You can use `$listenerDiscriptor->name()` to get the name of the listener.
-    
+:::tip
+You can use `$listenerDiscriptor->name()` to get the name of the listener.
+:::
+
 ## Listener
 
 You can listen for specific events with the attribute `Subscribe`.
@@ -100,10 +103,11 @@ final class WelcomeSubscriber
     }
 }
 ```
-!!! tip
 
-    If you use psalm, you can use the [event sourcing plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) for better type support.
-    
+:::tip
+If you use psalm, you can use the [event sourcing plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) for better type support.
+:::
+
 ### Listen on all events
 
 If you want to listen on all events, you can pass `*` or `Subscribe::ALL` instead of the event class.
@@ -132,14 +136,15 @@ use Patchlevel\EventSourcing\EventBus\Psr14EventBus;
 
 $eventBus = new Psr14EventBus($psr14EventDispatcher);
 ```
-!!! warning
 
-    You can't use the `Subscribe` attribute with the psr-14 event bus.
-    
+:::warning
+You can't use the `Subscribe` attribute with the psr-14 event bus.
+:::
+
 ## Learn more
 
 * [How to use messages](message.md)
 * [How to use events](events.md)
 * [How to use the subscription engine](subscription.md)
 * [How to use repositories](repository.md)
-* [How to use decorate messages](message_decorator.md)
+* [How to use decorate messages](message-decorator.md)

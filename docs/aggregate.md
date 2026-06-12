@@ -4,11 +4,11 @@ The linchpin of event-sourcing is the aggregate. These aggregates can be imagine
 One main difference is that we don't save the current state, but only the individual events that led to the state.
 This means it is always possible to build the current state again from the events.
 
-!!! note
+:::note
+The term aggregate itself comes from DDD and has nothing to do with event sourcing and can be used independently as a pattern. 
+You can find out more about Aggregates [here](https://martinfowler.com/bliki/DDD_Aggregate.html).
+:::
 
-    The term aggregate itself comes from DDD and has nothing to do with event sourcing and can be used independently as a pattern. 
-    You can find out more about Aggregates [here](https://martinfowler.com/bliki/DDD_Aggregate.html).
-    
 An aggregate must fulfill a few points so that we can use it in event-sourcing:
 
 * It must implement the `AggregateRoot` interface.
@@ -44,14 +44,15 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! warning
 
-    The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
-    
-!!! tip
+:::warning
+The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
+:::
 
-    Find out more about aggregate IDs [here](./aggregate_id.md).
-    
+:::tip
+Find out more about aggregate IDs [here](aggregate-id.md).
+:::
+
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
 But it is possible to define different named constructors for different use-cases like `import`.
@@ -76,17 +77,18 @@ final class CreateProfileHandler
     }
 }
 ```
-!!! warning
 
-    If you look in the database now, you would see that nothing has been saved.
-    This is because only events are stored in the database and as long as no events exist,
-    nothing happens.
-    
-!!! tip
+:::warning
+If you look in the database now, you would see that nothing has been saved.
+This is because only events are stored in the database and as long as no events exist,
+nothing happens.
+:::
 
-    A **command bus** system is not necessary, only recommended.
-    The interaction can also easily take place in a controller or service.
-    
+:::tip
+A **command bus** system is not necessary, only recommended.
+The interaction can also easily take place in a controller or service.
+:::
+
 ## Create a new aggregate
 
 In order that an aggregate is actually saved, at least one event must exist in the DB.
@@ -107,10 +109,11 @@ final class ProfileRegistered
     }
 }
 ```
-!!! note
 
-    You can find out more about events [here](./events.md).
-    
+:::note
+You can find out more about events [here](events.md).
+:::
+
 After we have defined the event, we have to adapt the profile aggregate:
 
 ```php
@@ -148,10 +151,11 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! tip
 
-    Prefixing the apply methods with "apply" improves readability.
-    
+:::tip
+Prefixing the apply methods with "apply" improves readability.
+:::
+
 In our named constructor `register` we have now created the event and recorded it with the method `recordThat`.
 The aggregate remembers all new recorded events in order to save them later.
 At the same time, a defined `apply` method is executed directly so that we can change our state.
@@ -160,10 +164,10 @@ So that the AggregateRoot also knows which method it should call,
 we have to mark it with the `Apply` attribute. We did that in the `applyProfileRegistered` method.
 In there we then change the state of the aggregate by filling the properties with the values from the event.
 
-!!! success
+:::success
+The aggregate is now ready to be saved!
+:::
 
-    The aggregate is now ready to be saved!
-    
 ### Modify an aggregate
 
 In order to change the state of the aggregates afterwards, only further events have to be defined.
@@ -181,10 +185,11 @@ final class NameChanged
     }
 }
 ```
-!!! note
 
-    Events should best be written in the past, as they describe a state that has happened.
-    
+:::note
+Events should best be written in the past, as they describe a state that has happened.
+:::
+
 After we have defined the event, we can define a new public method called `changeName` to change the profile name.
 This method then creates the event `NameChanged` and records it:
 
@@ -257,14 +262,15 @@ final class ChangeNameHandler
     }
 }
 ```
-!!! success
 
-    Our aggregate can now be changed and saved.
-    
-!!! note
+:::success
+Our aggregate can now be changed and saved.
+:::
 
-    You can read more about Repository [here](./repository.md).
-    
+:::note
+You can read more about Repository [here](repository.md).
+:::
+
 Here the aggregate is loaded from the `repository` by fetching all events from the database.
 These events are then executed again with the `apply` methods in order to rebuild the current state.
 All of this happens automatically in the `load` method.
@@ -303,11 +309,12 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! tip
 
-    You don't necessarily need to define multiple `Apply` attributes with the event class 
-    if you define the event types in the method using a union type.
-    
+:::tip
+You don't necessarily need to define multiple `Apply` attributes with the event class 
+if you define the event types in the method using a union type.
+:::
+
 ## Suppress missing apply methods
 
 Sometimes you have events that do not change the state of the aggregate itself,
@@ -359,13 +366,14 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! warning
 
-    When all events are suppressed, debugging becomes more difficult if you forget an apply method.
-    
+:::warning
+When all events are suppressed, debugging becomes more difficult if you forget an apply method.
+:::
+
 ## Shared apply context
 
-When working with [micro-aggregates](./aggregate.md#micro-aggregates),
+When working with [micro-aggregates](aggregate.md#micro-aggregates),
 it’s common that events are applied by different aggregates.
 As a result, an aggregate may receive events it does not handle, which can lead to multiple “missing apply” warnings.
 
@@ -391,16 +399,17 @@ final class PersonalInformation extends BasicAggregateRoot
 {
 }
 ```
-!!! warning
 
-    You need to define the `SharedApplyContext` attribute on all aggregates that share the apply context.
-    
+:::warning
+You need to define the `SharedApplyContext` attribute on all aggregates that share the apply context.
+:::
+
 ## Stream Name
 
-!!! warning
+:::warning
+The `stream name` works only with the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore).
+:::
 
-    The `stream name` works only with the [StreamDoctrineDbalStore](./store.md#streamdoctrinedbalstore).
-    
 The stream name is the name of the stream in the event store.
 By default, the stream name has the format `aggregateName-aggregateId`.
 But you can also define your own stream name with the `Stream` attribute.
@@ -434,10 +443,11 @@ final class GuestList extends BasicAggregateRoot
     // ...
 }
 ```
-!!! tip
 
-    You can find more about splitting aggregates [here](./aggregate.md#splitting-aggregates).
-    
+:::tip
+You can find more about splitting aggregates [here](aggregate.md#splitting-aggregates).
+:::
+
 ## Business rules
 
 Usually, aggregates have business rules that must be observed. Like there may not be more than 10 people in a group.
@@ -476,11 +486,12 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! danger
 
-    Validations during "apply" should not happen, they will break the rebuilding of the aggregate!
-    Instead validate the data *before* the event will be recorded.
-    
+:::danger
+Validations during "apply" should not happen, they will break the rebuilding of the aggregate!
+Instead validate the data *before* the event will be recorded.
+:::
+
 We have now ensured that this rule takes effect when a name is changed with the method `changeName`.
 But when we create a new profile this rule does not currently apply.
 
@@ -562,23 +573,24 @@ final class NameChanged
     }
 }
 ```
-!!! warning
 
-    You need to create a normalizer for the `Name` value object.
-    So the payload must be serializable and unserializable as json.
-    
-!!! note
+:::warning
+You need to create a normalizer for the `Name` value object.
+So the payload must be serializable and unserializable as json.
+:::
 
-    You can find out more about normalizer [here](./normalizer.md).
-    
+:::note
+You can find out more about normalizer [here](normalizer.md).
+:::
+
 There are also cases where business rules have to be defined depending on the aggregate state.
 Sometimes also from states, which were changed in the same method.
 This is not a problem, as the `apply` methods are always executed immediately.
 
 In the next case we throw an exception if the hotel is already overbooked.
 Besides that, we record another event `FullyBooked`, if the hotel is fully booked with the last booking.
-With this event we could [notify](./subscription.md) external systems
-or fill a [projection](./subscription.md) with fully booked hotels.
+With this event we could [notify](subscription.md) external systems
+or fill a [projection](subscription.md) with fully booked hotels.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -682,10 +694,10 @@ final class Profile extends BasicAggregateRoot
 Now you can pass the `SystemClock` to determine the current time.
 Or for test purposes the `FrozenClock`, which always returns the same time.
 
-!!! note
+:::note
+You can find out more about clock [here](clock.md).
+:::
 
-    You can find out more about clock [here](./clock.md).
-    
 ## Splitting Aggregates
 
 In some cases, it makes sense to split an aggregate into several smaller aggregates.
@@ -694,10 +706,10 @@ We currently support two patterns for this: Micro Aggregates and Child Aggregate
 
 ### Micro Aggregates
 
-!!! warning
+:::warning
+This feature works only with the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore).
+:::
 
-    This feature works only with the [StreamDoctrineDbalStore](./store.md#streamdoctrinedbalstore).
-    
 Micro Aggregates are a pattern to split an aggregate into several smaller aggregates.
 Each of these aggregates is saved in the same stream.
 This gives the Micro Aggregates the ability to independently manage their state and trigger their events,
@@ -781,18 +793,19 @@ final class Shipping extends BasicAggregateRoot
     }
 }
 ```
-!!! tip
 
-    With the [SharedApplyContext](./aggregate.md#shared-apply-context) attribute,
-    you can suppress missing applies for events that are handled by other aggregates.
-    
+:::tip
+With the [SharedApplyContext](aggregate.md#shared-apply-context) attribute,
+you can suppress missing applies for events that are handled by other aggregates.
+:::
+
 ### Child Aggregates
 
-??? example "Experimental"
+:::experimental
+This feature is still experimental and may change in the future.
+Use it with caution.
+:::
 
-    This feature is still experimental and may change in the future.
-    Use it with caution.
-    
 Another way to split an aggregate is to use child aggregates.
 The difference to Micro Aggregates, child aggregates can only be accessed by the root aggregate
 and are not separate aggregates.
@@ -829,14 +842,15 @@ final class Shipping extends BasicChildAggregate
     }
 }
 ```
-!!! warning
 
-    The apply method must be public, otherwise the root aggregate cannot call it.
-    
-!!! note
+:::warning
+The apply method must be public, otherwise the root aggregate cannot call it.
+:::
 
-    Supress missing apply methods need to be defined in the root aggregate.
-    
+:::note
+Supress missing apply methods need to be defined in the root aggregate.
+:::
+
 And the `Order` aggregate root looks like this:
 
 ```php
@@ -879,10 +893,10 @@ final class Order extends BasicAggregateRoot
 
 ## Auto Initialize
 
-??? example "Experimental"
-
-    This feature is still experimental and may change in the future.
-    Use it with caution.
+:::experimental
+This feature is still experimental and may change in the future.
+Use it with caution.
+:::
 
 Sometimes you want to be able to access an aggregate even if it has not yet been created in the system. 
 In this case, the aggregate should be automatically initialized if it cannot be found in the store. 
@@ -919,9 +933,10 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-!!! note
 
-    Recording events in the `initialize` method is optional but recommended.
+:::note
+Recording events in the `initialize` method is optional but recommended.
+:::
 
 ## Aggregate Root Registry
 
@@ -947,8 +962,8 @@ $aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create([/* p
 ```
 ## Learn more
 
-* [How to create own aggregate id](aggregate_id.md)
+* [How to create own aggregate id](aggregate-id.md)
 * [How to store and load aggregates](repository.md)
 * [How to snapshot aggregates](snapshots.md)
 * [How to create Projections](subscription.md)
-* [How to split streams](split_stream.md)
+* [How to split streams](split-stream.md)

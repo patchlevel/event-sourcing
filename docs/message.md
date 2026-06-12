@@ -11,11 +11,12 @@ use Patchlevel\EventSourcing\Message\Message;
 
 $message = Message::create(new NameChanged('foo'));
 ```
-!!! note
 
-    You don't have to create the message yourself, it is automatically created, saved and dispatched in
-    the [repository](repository.md).
-    
+:::note
+You don't have to create the message yourself, it is automatically created, saved and dispatched in
+the [repository](repository.md).
+:::
+
 You can add a header using `withHeader`:
 
 ```php
@@ -32,10 +33,11 @@ $message = Message::create(new NameChanged('foo'))
         recordedOn: $clock->now(),
     ));
 ```
-!!! note
 
-    The message object is immutable. It creates a new instance with the new data.
-    
+:::note
+The message object is immutable. It creates a new instance with the new data.
+:::
+
 You can also access the headers:
 
 ```php
@@ -80,15 +82,16 @@ use Patchlevel\EventSourcing\Message\Message;
 $message = Message::create(new NameChanged('foo'))
     ->withHeader(new ApplicationHeader('app'));
 ```
-!!! warning
 
-    The header needs to be serializable. The library uses the hydrator to serialize and deserialize the headers.
-    So you can add normalize attributes to the properties if needed.
-    
-!!! note
+:::warning
+The header needs to be serializable. The library uses the hydrator to serialize and deserialize the headers.
+So you can add normalize attributes to the properties if needed.
+:::
 
-    You can read about how to pass additional headers to the message object in the [message decorator](message_decorator.md) docs.
-    
+:::note
+You can read about how to pass additional headers to the message object in the [message decorator](message-decorator.md) docs.
+:::
+
 You can also access your custom headers:
 
 ```php
@@ -211,15 +214,16 @@ use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 
 $translator = new RecalculatePlayheadTranslator();
 ```
-!!! warning
 
-    The `RecalculatePlayheadTranslator` is and need to be stateful.
-    You can't reuse the translator for multiple streams.
-    
-!!! tip
+:::warning
+The `RecalculatePlayheadTranslator` is and need to be stateful.
+You can't reuse the translator for multiple streams.
+:::
 
-    If you migrate your event stream, you can use the `RecalculatePlayheadTranslator` to fix the playhead.
-    
+:::tip
+If you migrate your event stream, you can use the `RecalculatePlayheadTranslator` to fix the playhead.
+:::
+
 ### Chain
 
 If you want to group your translator, you can use one or more `ChainTranslator`.
@@ -277,15 +281,16 @@ final class SplitProfileCreatedTranslator implements Translator
     }
 }
 ```
-!!! warning
 
-    Since we changed the number of messages, we have to recalculate the playhead.
-    
-!!! tip
+:::warning
+Since we changed the number of messages, we have to recalculate the playhead.
+:::
 
-    You don't have to migrate the store directly for every change, 
-    but you can also use the [upcasting](upcasting.md) feature.
-    
+:::tip
+You don't have to migrate the store directly for every change, 
+but you can also use the [upcasting](upcasting.md) feature.
+:::
+
 ## Reducer
 
 The `Reducer` is a construct that allows you to reduce messages to a state.
@@ -375,8 +380,8 @@ $state = (new Reducer())
 ```
 ## Learn more
 
-* [How to decorate messages](message_decorator.md)
+* [How to decorate messages](message-decorator.md)
 * [How to load aggregates](repository.md)
 * [How to store messages](store.md)
 * [How to use subscriptions](subscription.md)
-* [How to use the event bus](event_bus.md)
+* [How to use the event bus](event-bus.md)

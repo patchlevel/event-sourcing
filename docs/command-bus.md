@@ -38,13 +38,14 @@ final class CreateProfileHandler
     }
 }
 ```
-!!! note
 
-    To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
-    
-!!! tip
+:::note
+To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
+:::
 
-    A class can have multiple handle methods.
+:::tip
+A class can have multiple handle methods.
+:::
 
 ### Multiple Handle Attributes
 
@@ -104,12 +105,12 @@ final class CreateProfileHandler
 Another way to handle commands is to use the aggregates themselves.
 To do this, you need to mark the method that handles the command with the `#[Handle]` attribute.
 
-!!! note
+:::note
+The aggregates themselves are of course not a service. 
+The AggregateHandlerProvider uses the aggregates to create the handlers for you. 
+You can find out more about this in the [providers](command-bus.md#provider) section.
+:::
 
-    The aggregates themselves are of course not a service. 
-    The AggregateHandlerProvider uses the aggregates to create the handlers for you. 
-    You can find out more about this in the [providers](./command_bus.md#provider) section.
-    
 #### Create Aggregate
 
 If you want to create a new aggregate, you need to create a static method that returns a new instance of the aggregate.
@@ -139,10 +140,11 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-!!! tip
 
-    You can find more information about aggregates [here](aggregate.md).
-    
+:::tip
+You can find more information about aggregates [here](aggregate.md).
+:::
+
 #### Update Aggregate
 
 If you want to update an existing aggregate,
@@ -191,10 +193,11 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-!!! tip
 
-    If you want to automatically initialize an aggregate if it cannot be found in the store, 
-    you can use the [Auto Initialize](aggregate.md#auto-initialize) feature.
+:::tip
+If you want to automatically initialize an aggregate if it cannot be found in the store, 
+you can use the [Auto Initialize](aggregate.md#auto-initialize) feature.
+:::
 
 #### Inject Service
 
@@ -230,14 +233,15 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-!!! note
 
-    The service must be registered in the service locator.
-    
-!!! tip
+:::note
+The service must be registered in the service locator.
+:::
 
-    You can inject multiple services into the handler method.
-    
+:::tip
+You can inject multiple services into the handler method.
+:::
+
 Or you can inject the service manually using the `#[Inject]` attribute.
 There you can specify the service name that should be injected.
 
@@ -270,10 +274,11 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-!!! note
 
-    Injection in handler methods is only possible with the `AggregateHandlerProvider`.
-    
+:::note
+Injection in handler methods is only possible with the `AggregateHandlerProvider`.
+:::
+
 ## Setup
 
 We provide a `SyncCommandBus` that you can use to dispatch commands.
@@ -322,20 +327,21 @@ final class CreateProfile
     }
 }
 ```
-!!! tip
 
-    You can override the default values for the maximum number of retries and the conditions
-    by passing them to the `InstantRetry` attribute.
-    
-    ```php
-    use Patchlevel\EventSourcing\Attribute\InstantRetry;
-    
-    #[InstantRetry(3, [AggregateOutdated::class])]
-    final class CreateProfile
-    {
-    }
-    ```
-    
+:::tip
+You can override the default values for the maximum number of retries and the conditions
+by passing them to the `InstantRetry` attribute.
+
+```php
+use Patchlevel\EventSourcing\Attribute\InstantRetry;
+
+#[InstantRetry(3, [AggregateOutdated::class])]
+final class CreateProfile
+{
+}
+```
+:::
+
 ## Provider
 
 There are different types of providers that you can use to register handlers.
@@ -399,10 +405,11 @@ $provider = new AggregateHandlerProvider(
     ]), // or other psr-11 compatible container
 );
 ```
-!!! tip
 
-    You can find suitable implementations of psr-11 containers on [packagist](https://packagist.org/search/?tags=PSR-11).
-    
+:::tip
+You can find suitable implementations of psr-11 containers on [packagist](https://packagist.org/search/?tags=PSR-11).
+:::
+
 ### Chain Handler Provider
 
 The `ChainHandlerProvider` allows you to combine multiple handler providers.
@@ -420,5 +427,5 @@ $provider = new ChainHandlerProvider([
 * [How to use aggregates](aggregate.md)
 * [How to use events](events.md)
 * [How to use clock](clock.md)
-* [How to use aggregate id](aggregate_id.md)
-* [How to use query bus](query_bus.md)
+* [How to use aggregate id](aggregate-id.md)
+* [How to use query bus](query-bus.md)

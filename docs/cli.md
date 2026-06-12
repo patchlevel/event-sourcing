@@ -23,10 +23,10 @@ The database schema can also be created, updated and dropped.
 * SchemaUpdateCommand: `event-sourcing:schema:update`
 * SchemaDropCommand: `event-sourcing:schema:drop`
 
-!!! note
+:::note
+You can also register doctrine migration commands.
+:::
 
-    You can also register doctrine migration commands.
-    
 ## Subscription commands
 
 To manage your subscriptions there are the following cli commands.
@@ -40,10 +40,10 @@ To manage your subscriptions there are the following cli commands.
 * SubscriptionStatusCommand: `event-sourcing:subscription:status`
 * SubscriptionTeardownCommand: `event-sourcing:subscription:teardown`
 
-!!! note
+:::note
+You can find out more about subscriptions [here](subscription.md).
+:::
 
-    You can find out more about subscriptions [here](subscription.md).
-    
 ## Inspector commands
 
 The inspector is a tool to inspect the event streams.
@@ -141,11 +141,12 @@ $cli->addCommands([
     new Command\VersionCommand($dependencyFactory, 'event-sourcing:migrations:version'),
 ]);
 ```
-!!! note
 
-    Here you can find more information on how to 
-    [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
-    
+:::note
+Here you can find more information on how to 
+[configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
+:::
+
 ## Learn more
 
 * [How to configure store](store.md)

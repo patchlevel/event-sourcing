@@ -26,17 +26,18 @@ final class DoStuffSubscriber
 {
 }
 ```
-!!! note
 
-    For each subsciber ID, the engine will create a subscription.
-    If the subscriber ID changes, a new subscription will be created.
-    In some cases like projections, you want to change the subscriber ID to rebuild the projection.
-    
-!!! tip
+:::note
+For each subsciber ID, the engine will create a subscription.
+If the subscriber ID changes, a new subscription will be created.
+In some cases like projections, you want to change the subscriber ID to rebuild the projection.
+:::
 
-    You can use specific attributes for specific subscribers like `Projector` or `Processor`.
-    So you don't have to define the group and run mode every time.
-    
+:::tip
+You can use specific attributes for specific subscribers like `Projector` or `Processor`.
+So you don't have to define the group and run mode every time.
+:::
+
 ### Projector
 
 You can create projections and read models with a subscriber.
@@ -73,17 +74,18 @@ final class ProfileProjector
     }
 }
 ```
-!!! warning
 
-    PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
-    So you must use a different database connection for your subscriptions.
-    
-!!! tip
+:::warning
+PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
+So you must use a different database connection for your subscriptions.
+:::
 
-    Add a version as suffix to the subscriber id
-    so you can increment it when the subscription changes.
-    Like `profile_1` to `profile_2`.
-    
+:::tip
+Add a version as suffix to the subscriber id
+so you can increment it when the subscription changes.
+Like `profile_1` to `profile_2`.
+:::
+
 ### Processor
 
 The other way to react to events is to take actions like sending an email, dispatch commands or change other aggregates.
@@ -147,11 +149,12 @@ final class DoStuffSubscriber
     }
 }
 ```
-!!! tip
 
-    If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
-    to make the event method return the correct type.
-    
+:::tip
+If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
+to make the event method return the correct type.
+:::
+
 ### Subscribe all events
 
 If you want to subscribe on all events, you can pass `*` or `Subscribe::ALL` instead of the event class.
@@ -269,10 +272,11 @@ final class PublicProfileProjection
     // ... setup, teardown, ...
 }
 ```
-!!! note
 
-    More about reducers you can find [here](./message.md#reducer)
-    
+:::note
+More about reducers you can find [here](message.md#reducer)
+:::
+
 ##### Recorded On Resolver
 
 The recorded on resolver resolves the recorded on date.
@@ -325,23 +329,24 @@ final class ProfileProjector
     }
 }
 ```
-!!! danger
 
-    PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
-    So you must use a different database connection in your projectors, 
-    otherwise you will get an error when the subscription tries to create the table.
-    
-!!! warning
+:::danger
+PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
+So you must use a different database connection in your projectors, 
+otherwise you will get an error when the subscription tries to create the table.
+:::
 
-    If you change the subscriber id, you must also change the table/collection name.
-    The subscription engine will create a new subscription with the new subscriber id.
-    That means the setup method will be called again and the table/collection will conflict with the old existing projection.
-    
-!!! note
+:::warning
+If you change the subscriber id, you must also change the table/collection name.
+The subscription engine will create a new subscription with the new subscriber id.
+That means the setup method will be called again and the table/collection will conflict with the old existing projection.
+:::
 
-    Most databases have a limit on the length of the table/collection name.
-    The limit is usually 64 characters.
-    
+:::note
+Most databases have a limit on the length of the table/collection name.
+The limit is usually 64 characters.
+:::
+
 ### Teardown
 
 Subscribers can have one `teardown` method that is executed when the subscription is removed.
@@ -366,21 +371,22 @@ final class ProfileProjector
     }
 }
 ```
-!!! danger
 
-    PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
-    So you must use a different database connection in your projectors, 
-    otherwise you will get an error when the subscription tries to create the table.
-    
-!!! warning
+:::danger
+PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
+So you must use a different database connection in your projectors, 
+otherwise you will get an error when the subscription tries to create the table.
+:::
 
-    A teardown can only be performed for a subscription if the code for the subscriber with that subscriber ID still exists.
-    A another option is to use the `Cleanup` option.
-    
-!!! note
+:::warning
+A teardown can only be performed for a subscription if the code for the subscriber with that subscriber ID still exists.
+A another option is to use the `Cleanup` option.
+:::
 
-    You can not mix the `cleanup` method with the `teardown` method.
-    
+:::note
+You can not mix the `cleanup` method with the `teardown` method.
+:::
+
 ### Cleanup
 
 Alternativ, you can use a `cleanup` method for cleanup tasks.
@@ -409,10 +415,11 @@ final class ProfileProjector
     }
 }
 ```
-!!! note
 
-    You can not mix the `cleanup` method with the `teardown` method.
-    
+:::note
+You can not mix the `cleanup` method with the `teardown` method.
+:::
+
 #### Dbal Cleanup Tasks
 
 Default, we provide the following cleanup tasks for `doctrine/dbal`:
@@ -422,16 +429,16 @@ Default, we provide the following cleanup tasks for `doctrine/dbal`:
 | `DropIndexTask` | Drops an index from a table. |
 | `DropTableTask` | Drops a table.               |
 
-!!! note
+:::note
+If you are passing connection registry, you can use the connection name as parameter.
+The `connectionName` parameter is optional and defaults to the default connection.
+:::
 
-    If you are passing connection registry, you can use the connection name as parameter.
-    The `connectionName` parameter is optional and defaults to the default connection.
-    
-!!! tip
+:::tip
+You can create your own cleanup tasks and handler.
+For more information, see [Cleanup Handler](#cleanup-handler).
+:::
 
-    You can create your own cleanup tasks and handler.
-    For more information, see [Cleanup Handler](#cleanup-handler).
-    
 ### On Failed
 
 The subscription engine has a [retry strategy](#retry-strategy) to retry subscriptions that have an error.
@@ -463,14 +470,15 @@ final class InvoiceProcessor
     }
 }
 ```
-!!! warning
 
-    Currently, the `OnFailed` method is only available for non-batchable subscribers.
-    
-!!! note
+:::warning
+Currently, the `OnFailed` method is only available for non-batchable subscribers.
+:::
 
-    The `OnFailed` method is called after the retry strategy has decided that the subscription should be set to failed.
-    
+:::note
+The `OnFailed` method is called after the retry strategy has decided that the subscription should be set to failed.
+:::
+
 ### Versioning
 
 As soon as the structure of a projection changes, or you need other events from the past,
@@ -486,17 +494,18 @@ final class ProfileSubscriber
    // ...
 }
 ```
-!!! warning
 
-    If you change the `subscriberID`, you must also change the table/collection name.
-    Otherwise the table/collection will conflict with the old subscription.
-    
-!!! tip
+:::warning
+If you change the `subscriberID`, you must also change the table/collection name.
+Otherwise the table/collection will conflict with the old subscription.
+:::
 
-    Add a version as suffix to the subscriber id
-    so you can increment it when the subscription changes.
-    Like `profile_1` to `profile_2`.
-    
+:::tip
+Add a version as suffix to the subscriber id
+so you can increment it when the subscription changes.
+Like `profile_1` to `profile_2`.
+:::
+
 ### Grouping
 
 You can also group subscribers together and filter them in the subscription engine.
@@ -512,14 +521,15 @@ final class ProfileSubscriber
    // ...
 }
 ```
-!!! note
 
-    The different attributes has different default group.
-    
-    * `Subscriber` - `default`
-    * `Projector` - `projector`
-    * `Processor` - `processor`
-    
+:::note
+The different attributes has different default group.
+
+* `Subscriber` - `default`
+* `Projector` - `projector`
+* `Processor` - `processor`
+:::
+
 ### Run Mode
 
 The run mode determines how the subscriber should behave.
@@ -540,10 +550,11 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
-!!! tip
 
-    If you want create projections and run from the beginning, you can use the `Projector` attribute.
-    
+:::tip
+If you want create projections and run from the beginning, you can use the `Projector` attribute.
+:::
+
 #### From Now
 
 Certain subscribers operate exclusively on post-release events, disregarding historical data.
@@ -560,10 +571,11 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
-!!! tip
 
-    If you want process events from now, you can use the `Processor` attribute.
-    
+:::tip
+If you want process events from now, you can use the `Processor` attribute.
+:::
+
 #### Once
 
 This mode is useful for subscribers that only need to run once.
@@ -682,21 +694,21 @@ The method `forceCommit` is called after each handled event,
 and you can decide whether the batch commit process should start now.
 This helps to determine the batch size and thus avoid memory overflow.
 
-!!! danger
+:::danger
+Make sure to fully process the data in `commitBatch` and close any open transactions.
+Otherwise, it may lead to inconsistent data.
+:::
 
-    Make sure to fully process the data in `commitBatch` and close any open transactions.
-    Otherwise, it may lead to inconsistent data.
-    
-!!! note
+:::note
+The position of the subscriber is only updated after a successful commit.
+In case of an error, the position remains at the state before the batch started.
+:::
 
-    The position of the subscriber is only updated after a successful commit.
-    In case of an error, the position remains at the state before the batch started.
-    
-!!! tip
+:::tip
+Use `forceCommit` to prevent memory leaks.
+This allows you to decide when it's suitable to process the data and then release the memory.
+:::
 
-    Use `forceCommit` to prevent memory leaks.
-    This allows you to decide when it's suitable to process the data and then release the memory.
-    
 ## Subscription Engine
 
 The subscription engine manages individual subscribers and keeps the subscriptions running.
@@ -706,13 +718,13 @@ and keeping all subscriptions up to date.
 He also takes care that new subscribers are booted and old ones are removed again.
 If something breaks, the subscription engine marks the individual subscriptions as faulty and retries them.
 
-!!! tip
+:::tip
+The Subscription Engine was inspired by the following two blog posts:
 
-    The Subscription Engine was inspired by the following two blog posts:
-    
-    * [Projection Building Blocks: What you'll need to build projections](https://barryosull.com/blog/projection-building-blocks-what-you-ll-need-to-build-projections/)
-    * [Managing projectors is harder than you think](https://barryosull.com/blog/managing-projectors-is-harder-than-you-think/)
-    
+* [Projection Building Blocks: What you'll need to build projections](https://barryosull.com/blog/projection-building-blocks-what-you-ll-need-to-build-projections/)
+* [Managing projectors is harder than you think](https://barryosull.com/blog/managing-projectors-is-harder-than-you-think/)
+:::
+
 ## Subscription ID
 
 The subscription ID is taken from the associated subscriber and corresponds to the subscriber ID.
@@ -841,10 +853,10 @@ The subscription engine needs a message loader to load the messages.
 We provide two implementations by default.
 Which one has a better performance depends on the use case.
 
-!!! tip
+:::tip
+We recommend the `GapResolverStoreMessageLoader` as it handles gaps in the stream.
+:::
 
-    We recommend the `GapResolverStoreMessageLoader` as it handles gaps in the stream.
-    
 #### Store Message Loader
 
 The store message loader loads all the messages from the event store.
@@ -941,10 +953,11 @@ $schemaDirector = new DoctrineSchemaDirector(
     ]),
 );
 ```
-!!! note
 
-    You can find more about schema configurator [here](./store.md) 
-    
+:::note
+You can find more about schema configurator [here](store.md) 
+:::
+
 ### Retry Strategy
 
 The subscription engine uses a retry strategy to retry subscriptions that have an error.
@@ -999,14 +1012,15 @@ $retryStrategyRepository = new RetryStrategyRepository([
     'no_retry' => new NoRetryStrategy(),
 ]);
 ```
-!!! note
 
-    This is what our default configuration looks like if you do not define the retry strategy.
-    
-!!! tip
+:::note
+This is what our default configuration looks like if you do not define the retry strategy.
+:::
 
-    You can change the default retry strategy by define the name in the constructor as second parameter.
-    
+:::tip
+You can change the default retry strategy by define the name in the constructor as second parameter.
+:::
+
 ### Cleanup Handler
 
 You can also create your own cleanup tasks with associated handlers.
@@ -1022,10 +1036,11 @@ final class DropCollection
     }
 }
 ```
-!!! warning
 
-    The task class must be serializable. It will be stored in the subscription store.
-    
+:::warning
+The task class must be serializable. It will be stored in the subscription store.
+:::
+
 The next step is to create a handler for the task.
 The handler must implement the `CleanupHandler` interface.
 
@@ -1065,10 +1080,11 @@ $cleaner = new DefaultCleaner([
     new MongodbCleanupTaskHandler($mongodbDatabase),
 ]);
 ```
-!!! warning
 
-    You need to pass the Cleaner to the Subscription Engine.
-    
+:::warning
+You need to pass the Cleaner to the Subscription Engine.
+:::
+
 #### Dbal Cleanup Task Handler
 
 We provide a Dbal cleanup task handler by default.
@@ -1166,10 +1182,11 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $catchupSubscriptionEngine = new CatchUpSubscriptionEngine($subscriptionEngine);
 ```
-!!! tip
 
-    You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
-    
+:::tip
+You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
+:::
+
 ### Throw on error Subscription Engine
 
 This is another decorator for the subscription engine. It throws an exception if a subscription is in error state.
@@ -1182,11 +1199,12 @@ use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $throwOnErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscriptionEngine);
 ```
-!!! warning
 
-    This is only for testing or development. Don't use it in production.
-    The subscription engine has an build in retry strategy to retry subscriptions that have failed.
-    
+:::warning
+This is only for testing or development. Don't use it in production.
+The subscription engine has an build in retry strategy to retry subscriptions that have failed.
+:::
+
 ### Run Subscription Engine after save
 
 You can trigger the subscription engine after calling the `save` method on the repository.
@@ -1209,21 +1227,22 @@ $eventBus = new RunSubscriptionEngineRepositoryManager(
     100, // limit the number of messages
 );
 ```
-!!! danger
 
-    By using this, you can't wrap the repository in a transaction.
-    A rollback is not supported and can break the subscription engine.
-    Internally, the events are saved in a transaction to ensure data consistency.
-    
-!!! note
+:::danger
+By using this, you can't wrap the repository in a transaction.
+A rollback is not supported and can break the subscription engine.
+Internally, the events are saved in a transaction to ensure data consistency.
+:::
 
-    More about repository manager and repository can be found [here](./repository.md).
-    
-!!! tip
+:::note
+More about repository manager and repository can be found [here](repository.md).
+:::
 
-    You can perfectly use it in development or testing.
-    Especially in combination with the `CatchUpSubscriptionEngine` and `ThrowOnErrorSubscriptionEngine` decorators.
-    
+:::tip
+You can perfectly use it in development or testing.
+Especially in combination with the `CatchUpSubscriptionEngine` and `ThrowOnErrorSubscriptionEngine` decorators.
+:::
+
 ## Usage
 
 The Subscription Engine has a few methods needed to use it effectively.
@@ -1237,10 +1256,11 @@ $criteria = new SubscriptionEngineCriteria(
     groups: ['default'],
 );
 ```
-!!! note
 
-    An `OR` check is made for the respective criteria and all criteria are checked with an `AND`.
-    
+:::note
+An `OR` check is made for the respective criteria and all criteria are checked with an `AND`.
+:::
+
 ### Setup
 
 New subscriptions need to be set up before they can be used.
@@ -1254,10 +1274,11 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 /** @var SubscriptionEngine $subscriptionEngine */
 $subscriptionEngine->setup(new SubscriptionEngineCriteria());
 ```
-!!! tip
 
-    You can skip the booting step with the second boolean parameter named `skipBooting`.
-    
+:::tip
+You can skip the booting step with the second boolean parameter named `skipBooting`.
+:::
+
 ### Boot
 
 You can boot the subscriptions with the `boot` method.
@@ -1361,6 +1382,6 @@ $subscriptionEngine->refresh(new SubscriptionEngineCriteria());
 ```
 ## Learn more
 
-* [How to use CLI commands](./cli.md)
-* [How to create Messages](./message.md)
-* [How to Test](./testing.md)
+* [How to use CLI commands](cli.md)
+* [How to create Messages](message.md)
+* [How to Test](testing.md)
