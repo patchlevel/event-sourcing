@@ -1,14 +1,14 @@
 # Split Stream
 
-In some cases the business has rules which implies a restart of the event stream for an aggregate
+In some cases the business has rules which imply a restart of the event stream for an aggregate
 since the past events are not relevant for the current state.
 A bank is often used as an example. A bank account has hundreds of transactions,
 but every bank makes a balance report at the end of the year.
 In this step the current account balance is persisted.
 This event is perfect to split the stream and start aggregating from this point.
 
-Not only that some businesses requires such an action
-it also increases the performance for aggregate which would have a really long event stream.
+Not only do some businesses require such an action,
+it also increases the performance for aggregates which would have a really long event stream.
 
 In the background the library will mark all past events as archived
 and will not load them anymore for building the aggregate.
@@ -41,7 +41,7 @@ $repositoryManager = new DefaultRepositoryManager(
 );
 ```
 :::note
-You can find out more about decorator [here](message-decorator.md).
+You can find out more about the [message decorator](message-decorator.md).
 :::
 
 :::tip
@@ -70,7 +70,7 @@ final class BalanceReported
 }
 ```
 :::warning
-The event needs all data which is relevant the aggregate to be used since all past event will not be loaded!
+The event needs all data which is relevant for the aggregate, since all past events will not be loaded!
 Keep this in mind if you want to use this feature.
 :::
 

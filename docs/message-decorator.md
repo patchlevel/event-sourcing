@@ -67,13 +67,13 @@ $repositoryManager = new DefaultRepositoryManager(
 $repository = $repositoryManager->get(Profile::class);
 ```
 :::note
-You can find out more about repository [here](repository.md).
+You can find out more about the [repository](repository.md).
 :::
 
 ## Create own decorator
 
-You can also use this feature to add your own metadata to your events. For this the have an extra methods on `Message`
-to add data `withHeader` and to read this data later on `header`.
+You can also use this feature to add your own metadata to your events. For this, the `Message` has extra methods:
+`withHeader` to add data and `header` to read this data later on.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Header;
@@ -98,11 +98,11 @@ final class OnSystemRecordedDecorator implements MessageDecorator
 }
 ```
 :::note
-The Message is immutable, for more information look up [here](message.md).
+The message is immutable, more information can be found in the [message](message.md) documentation.
 :::
 
 :::tip
-You can also set multiple headers with `withHeaders` which expects an hashmap.
+You can also set multiple headers with `withHeaders` which expects a list of headers.
 :::
 
 ## Learn more

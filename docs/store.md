@@ -4,7 +4,7 @@ In the end, the messages have to be saved somewhere.
 Each message contains an event and the associated headers.
 
 :::note
-More information about the message can be found [here](message.md).
+More information can be found in the [message](message.md) documentation.
 :::
 
 The store is optimized to efficiently store and load events for aggregates.
@@ -37,8 +37,8 @@ $store = new DoctrineDbalStore(
 );
 ```
 :::note
-You can find out more about how to create a connection
-[here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
+You can find out more about [how to create a connection](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
+in the doctrine dbal documentation.
 :::
 
 Following options are available in `DoctrineDbalStore`:
@@ -68,14 +68,14 @@ The table structure of the `DoctrineDbalStore` looks like this:
 
 :::note
 The default type of the `aggregate_id` column is `uuid` if the database supports it and `string` if not.
-You can change the type with the `aggregate_id_type` to `string` if you want use custom id.
+You can change the type with the `aggregate_id_type` option to `string` if you want to use a custom id.
 :::
 
 ### StreamDoctrineDbalStore
 
 We offer a new store called `StreamDoctrineDbalStore`.
 This store is decoupled from the aggregate and can be used to store events from other sources.
-The difference to the `DoctrineDbalStore` is that the `StreamDoctrineDbalStore` merge the aggregate id
+The difference to the `DoctrineDbalStore` is that the `StreamDoctrineDbalStore` merges the aggregate id
 and the aggregate name into one column named `stream`. Additionally, the column `playhead` is nullable.
 This store introduces two new methods `streams` and `remove`.
 
@@ -97,8 +97,8 @@ $store = new StreamDoctrineDbalStore(
 );
 ```
 :::note
-You can find out more about how to create a connection
-[here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
+You can find out more about [how to create a connection](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
+in the doctrine dbal documentation.
 :::
 
 Following options are available in `StreamDoctrineDbalStore`:
@@ -109,7 +109,7 @@ Following options are available in `StreamDoctrineDbalStore`:
 | locking      | bool   | true        | If the store should use locking for writing   |
 | lock_id      | int    | 133742      | The id of the lock                            |
 | lock_timeout | int    | -1          | The timeout of the lock. -1 means no timeout  |
-| keep_index   | bool   | false       | By message save the index header will be kept |
+| keep_index   | bool   | false       | If enabled, the index header is kept on save  |
 
 The table structure of the `StreamDoctrineDbalStore` looks like this:
 
@@ -143,7 +143,7 @@ You can pass messages to the constructor to initialize the store with some event
 
 Last but not least, we offer two read-only stores.
 One for the `DoctrineDbalStore` and one for the `StreamDoctrineDbalStore`.
-It passes all methods to the underlying store, but throws an `StoreIsReadOnly` exception when trying to execute write
+It passes all methods to the underlying store, but throws a `StoreIsReadOnly` exception when trying to execute write
 operations.
 
 ```php
@@ -187,7 +187,7 @@ $schemaDirector = new DoctrineSchemaDirector(
 );
 ```
 :::note
-How to setup cli commands for schema director can be found [here](cli.md).
+How to setup [cli commands](cli.md) for the schema director can be found in the cli documentation.
 :::
 
 #### Create schema
@@ -296,7 +296,7 @@ Here you can find more information on how to
 :::
 
 :::note
-How to setup cli commands for doctrine migration can be found [here](cli.md).
+How to setup [cli commands](cli.md) for doctrine migration can be found in the cli documentation.
 :::
 
 ## Usage
@@ -339,6 +339,7 @@ use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 
 $criteria = new Criteria(
     new AggregateNameCriterion('profile'),
@@ -349,7 +350,7 @@ $criteria = new Criteria(
     new EventsCriterion(['profile.created', 'profile.name_changed']),
 );
 ```
-Or you can the criteria builder to create the criteria.
+Or you can use the criteria builder to create the criteria.
 
 ```php
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
@@ -383,7 +384,7 @@ foreach ($stream as $message) {
 }
 ```
 :::note
-You can find more information about the `Message` object [here](message.md).
+You can find more information about the [message](message.md) object in the message documentation.
 :::
 
 :::warning
@@ -434,11 +435,11 @@ $store->save(...$messages);
 ```
 :::note
 The saving happens in a transaction, so all messages are saved or none.
-The store lock the table for writing during each save by default.
+The store locks the table for writing during each save by default.
 :::
 
 :::tip
-Use transactional method if you want call multiple save methods in a transaction.
+Use the transactional method if you want to call multiple save methods in one transaction.
 :::
 
 ### Update
@@ -495,19 +496,19 @@ $store->transactional(static function () use ($command, $bankAccountRepository):
 });
 ```
 :::note
-The store lock the table for writing during the transaction by default.
+The store locks the table for writing during the transaction by default.
 :::
 
 :::tip
-If you want save only one aggregate, so you don't have to use the transactional method.
-The save method in store/repository is already transactional.
+If you only want to save one aggregate, you don't have to use the transactional method.
+The save method in store and repository is already transactional.
 :::
 
 ## Learn more
 
 * [How to create events](events.md)
 * [How to use repositories](repository.md)
-* [How to create message](message.md)
+* [How to create messages](message.md)
 * [How to create projections](subscription.md)
 * [How to upcast events](upcasting.md)
-* [How configure cli commands](cli.md)
+* [How to configure cli commands](cli.md)

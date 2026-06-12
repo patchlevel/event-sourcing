@@ -1,13 +1,13 @@
 # Query Bus
 
 The Query Bus is another optional component in the Event Sourcing library that coordinates the data flow in the system.
-Unlike the command bus, the query bus intention is not to perform actions on the system but instead retrieve information
-from the system. It allows to fully utilize the read write split and the usage of small, independent and tailored
+Unlike the command bus, the query bus's intention is not to perform actions on the system but instead retrieve information
+from the system. It allows you to fully utilize the read write split and the usage of small, independent and tailored
 projections.
 
 ## Query
 
-First, you need to create a simple data transfer object which will be our query. It represent our intention to retrieve
+First, you need to create a simple data transfer object which will be our query. It represents our intention to retrieve
 data from the system.
 
 ```php
@@ -26,6 +26,8 @@ The next step is to create a handler which has a method which can handle the que
 data.
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Answer;
+
 final class QueryProfileHandler
 {
     #[Answer]
@@ -44,7 +46,7 @@ To use Service Handler you need to register the handler in the `ServiceHandlerPr
 :::
 
 :::tip
-A class can have multiple methods which answers different queries.
+A class can have multiple methods which answer different queries.
 :::
 
 ### Projector
@@ -53,6 +55,7 @@ Another way to handle queries is to answer them directly in the corresponding pr
 as when using a dedicated class. The method which should handle the query will be marked with the `#[Answer]` attribute.
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Answer;
 use Patchlevel\EventSourcing\Attribute\Projector;
 
 #[Projector('profiles')]
@@ -68,8 +71,8 @@ final class ProfileProjector
 }
 ```
 :::tip
-Using small dedicated projections for each usecase is best practice. Using them directly as query handlers are
-endoresed and can reduce fragmentation of the system.
+Using small dedicated projections for each usecase is best practice. Using them directly as query handlers is
+endorsed and can reduce fragmentation of the system.
 :::
 
 ## Setup

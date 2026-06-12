@@ -8,7 +8,7 @@ since only an aggregate-wide unique string is expected in the store.
 This library provides you with a few options for generating the id.
 
 :::warning
-Performance reasons, the default configuration of the store require an uuid string for `aggregate id`.
+For performance reasons, the default configuration of the store requires an uuid string for the `aggregate id`.
 But technically, for the library, it can be any string.
 If you want to use a custom id, you have to change the `aggregate_id_type` in the [store](store.md) configuration.
 :::
@@ -43,7 +43,7 @@ $uuid = Uuid::fromString('d6e8d7a0-4b0b-4e6a-8a9a-3a0b2d9d0e4e');
 ```
 :::note
 We implemented the version 7 of the uuid, because it is most suitable for event sourcing.
-More information about uuid versions can be found [here](https://uuid.ramsey.dev/en/stable/rfc4122.html).
+More information about [uuid versions](https://uuid.ramsey.dev/en/stable/rfc4122.html) can be found in the ramsey/uuid documentation.
 :::
 
 ## Custom ID
@@ -66,8 +66,7 @@ final class Profile extends BasicAggregateRoot
 ```
 :::warning
 If you want to use a custom id that is not an uuid,
-you need to change the `aggregate_id_type` to `string` in the store configuration.
-More information can be found [here](store.md).
+you need to change the `aggregate_id_type` to `string` in the [store](store.md) configuration.
 :::
 
 So you can use any string as an id:
@@ -141,7 +140,7 @@ class ProfileId implements AggregateRootId
     use CustomIdBehaviour;
 }
 ```
-### Learn more
+## Learn more
 
 * [How to create an aggregate](aggregate.md)
 * [How to create an event](events.md)

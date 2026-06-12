@@ -137,7 +137,7 @@ final class Profile extends BasicAggregateRoot
 }
 ```
 :::tip
-You can find more information about aggregates [here](aggregate.md).
+You can find more information about [aggregates](aggregate.md).
 :::
 
 #### Update Aggregate
@@ -178,10 +178,6 @@ final class Profile extends BasicAggregateRoot
     #[Handle]
     public function changeName(ChangeProfileName $command): void
     {
-        if (!$nameValidator($command->name)) {
-            throw new InvalidArgument();
-        }
-
         $this->recordThat(new NameChanged($command->name));
     }
 
@@ -197,7 +193,7 @@ you can use the [Auto Initialize](aggregate.md#auto-initialize) feature.
 
 You can inject services into aggregate handler methods.
 Starting with the second parameter, it automatically tries to inject the service using a service locator.
-Standard, it uses the fully qualified class name from the parameter type hint to find the service.
+By default, it uses the fully qualified class name from the parameter type hint to find the service.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -296,7 +292,7 @@ use Patchlevel\EventSourcing\CommandBus\CommandBus;
 use Patchlevel\EventSourcing\CommandBus\InstantRetryCommandBus;
 use Patchlevel\EventSourcing\Repository\AggregateOutdated;
 
-/** @var CommandBus $store */
+/** @var CommandBus $commandBus */
 $commandBus = new InstantRetryCommandBus(
     $commandBus,
     3, // maximum number of retries, default is 3
@@ -339,7 +335,7 @@ There are different types of providers that you can use to register handlers.
 
 ### Service Handler Provider
 
-The classically way to handle commands is to use services.
+The classic way to handle commands is to use services.
 The `ServiceHandlerProvider` is used to handle commands by invoking methods on services.
 
 ```php

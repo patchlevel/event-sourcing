@@ -160,7 +160,7 @@ $translator = new FilterEventTranslator(static function (object $event) {
 ```
 ### Exclude Events with Header
 
-With this translator you can exclude event with specific header.
+With this translator you can exclude events with a specific header.
 
 ```php
 use Patchlevel\EventSourcing\Message\Translator\ExcludeEventWithHeaderTranslator;
@@ -174,6 +174,7 @@ With this translator you can only allow events with a specific header.
 
 ```php
 use Patchlevel\EventSourcing\Message\Translator\IncludeEventWithHeaderTranslator;
+use Patchlevel\EventSourcing\Store\ArchivedHeader;
 
 $translator = new IncludeEventWithHeaderTranslator(ArchivedHeader::class);
 ```
@@ -204,7 +205,7 @@ $translator = new UntilEventTranslator(new DateTimeImmutable('2020-01-01 12:00:0
 
 This translator can be used to recalculate the playhead.
 The playhead must always be in ascending order so that the data is valid.
-Some translator can break this order and the translator `RecalculatePlayheadTranslator` can fix this problem.
+Some translators can break this order and the `RecalculatePlayheadTranslator` can fix this problem.
 
 ```php
 use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
@@ -212,7 +213,7 @@ use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 $translator = new RecalculatePlayheadTranslator();
 ```
 :::warning
-The `RecalculatePlayheadTranslator` is and need to be stateful.
+The `RecalculatePlayheadTranslator` is stateful and needs to be.
 You can't reuse the translator for multiple streams.
 :::
 
@@ -239,7 +240,7 @@ $translator = new ChainTranslator([
 You can also write a custom translator. The translator gets a message and can return `n` messages.
 There are the following possibilities:
 
-* Return only the message to an array to leave it unchanged.
+* Return only the message in an array to leave it unchanged.
 * Put another message in the array to swap the message.
 * Return an empty array to remove the message.
 * Or return multiple messages to enrich the stream.
@@ -299,7 +300,7 @@ The initial state is the state that is used at the beginning of the reduction.
 use Patchlevel\EventSourcing\Message\Reducer;
 
 $state = (new Reducer())
-    ->initialState(['count' => 0])
+    ->initState(['count' => 0])
     ->reduce($messages); // state is ['count' => 0]
 ```
 ### When
@@ -312,7 +313,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Reducer;
 
 $state = (new Reducer())
-    ->initialState([
+    ->initState([
         'names' => [],
     ])
     ->when(

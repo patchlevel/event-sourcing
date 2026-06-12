@@ -6,7 +6,7 @@ This means it is always possible to build the current state again from the event
 
 :::note
 The term aggregate itself comes from DDD and has nothing to do with event sourcing and can be used independently as a pattern.
-You can find out more about Aggregates [here](https://martinfowler.com/bliki/DDD_Aggregate.html).
+You can find out more about aggregates in [Martin Fowler's article about the DDD Aggregate pattern](https://martinfowler.com/bliki/DDD_Aggregate.html).
 :::
 
 An aggregate must fulfill a few points so that we can use it in event-sourcing:
@@ -14,7 +14,7 @@ An aggregate must fulfill a few points so that we can use it in event-sourcing:
 * It must implement the `AggregateRoot` interface.
 * It needs a unique identifier.
 * It needs to provide the current playhead.
-* It must make changes to his state available as events.
+* It must make changes to its state available as events.
 * And rebuild/catchup its state from the events.
 
 We can implement this ourselves, or use the `BasicAggregateRoot` implementation that already brings everything with it.
@@ -49,7 +49,7 @@ The aggregate is not yet finished and has only been built to the point that you 
 :::
 
 :::tip
-Find out more about aggregate IDs [here](aggregate-id.md).
+Find out more about [aggregate IDs](aggregate-id.md).
 :::
 
 We use a so-called named constructor here to create an object of the AggregateRoot.
@@ -108,7 +108,7 @@ final class ProfileRegistered
 }
 ```
 :::note
-You can find out more about events [here](events.md).
+You can find out more about [events](events.md).
 :::
 
 After we have defined the event, we have to adapt the profile aggregate:
@@ -262,7 +262,7 @@ Our aggregate can now be changed and saved.
 :::
 
 :::note
-You can read more about Repository [here](repository.md).
+You can read more about the [repository](repository.md).
 :::
 
 Here the aggregate is loaded from the `repository` by fetching all events from the database.
@@ -313,7 +313,7 @@ if you define the event types in the method using a union type.
 Sometimes you have events that do not change the state of the aggregate itself,
 but are still recorded for the future or to subscribe for processor and projection.
 So that you are not forced to write an apply method for it,
-you can suppress the missing apply exceptions these events with the `SuppressMissingApply` attribute.
+you can suppress the missing apply exceptions for these events with the `SuppressMissingApply` attribute.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -366,8 +366,8 @@ When all events are suppressed, debugging becomes more difficult if you forget a
 ## Shared apply context
 
 When working with [micro-aggregates](aggregate.md#micro-aggregates),
-it’s common that events are applied by different aggregates.
-As a result, an aggregate may receive events it does not handle, which can lead to multiple “missing apply” warnings.
+it's common that events are applied by different aggregates.
+As a result, an aggregate may receive events it does not handle, which can lead to multiple "missing apply" warnings.
 
 The `SharedApplyContext` attribute allows you to declare that several aggregates share the same apply context.
 With this configuration, a missing apply is only reported if none of the shared aggregates handle the event.
@@ -435,7 +435,7 @@ final class GuestList extends BasicAggregateRoot
 }
 ```
 :::tip
-You can find more about splitting aggregates [here](aggregate.md#splitting-aggregates).
+You can find more about [splitting aggregates](aggregate.md#splitting-aggregates).
 :::
 
 ## Business rules
@@ -463,7 +463,7 @@ final class Profile extends BasicAggregateRoot
     public function changeName(string $name): void
     {
         if (strlen($name) < 3) {
-            throw new NameIsToShortException($name);
+            throw new NameIsTooShortException($name);
         }
 
         $this->recordThat(new NameChanged($name));
@@ -493,7 +493,7 @@ final class Name
     public function __construct(private string $value)
     {
         if (strlen($value) < 3) {
-            throw new NameIsToShortException($value);
+            throw new NameIsTooShortException($value);
         }
     }
 
@@ -568,7 +568,7 @@ So the payload must be serializable and unserializable as json.
 :::
 
 :::note
-You can find out more about normalizer [here](normalizer.md).
+You can find out more about [normalizer](normalizer.md).
 :::
 
 There are also cases where business rules have to be defined depending on the aggregate state.
@@ -623,7 +623,7 @@ final class Hotel extends BasicAggregateRoot
 An aggregate should always be deterministic. In other words, whenever I execute methods on the aggregate,
 I always get the same result. This also makes testing much easier.
 
-But that often doesn't seem to be possible, e.g. if you want to save a createAt date.
+But that often doesn't seem to be possible, e.g. if you want to save a createdAt date.
 But you can pass this information by yourself.
 
 ```php
@@ -683,7 +683,7 @@ Now you can pass the `SystemClock` to determine the current time.
 Or for test purposes the `FrozenClock`, which always returns the same time.
 
 :::note
-You can find out more about clock [here](clock.md).
+You can find out more about the [clock](clock.md).
 :::
 
 ## Splitting Aggregates
@@ -834,7 +834,7 @@ The apply method must be public, otherwise the root aggregate cannot call it.
 :::
 
 :::note
-Supress missing apply methods need to be defined in the root aggregate.
+Suppressing missing apply methods needs to be defined in the root aggregate.
 :::
 
 And the `Order` aggregate root looks like this:

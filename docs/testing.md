@@ -1,4 +1,4 @@
-# Tests
+# Testing
 
 The library's design promotes easily testable code, and we offer several helpers to simplify the testing process even
 further. If you need additional support, we also provide
@@ -141,11 +141,10 @@ These methods automatically invoke the appropriate functions defined via attribu
 
 ```php
 use Patchlevel\EventSourcing\PhpUnit\Test\SubscriberUtilities;
+use PHPUnit\Framework\TestCase;
 
 final class ProfileSubscriberTest extends TestCase
 {
-    use SubscriberUtilities;
-
     public function testProfileCreated(): void
     {
         $subscriber = new ProfileSubscriber(/* inject deps or mock tests as needed */);
@@ -210,11 +209,11 @@ final class ProfileTest extends AggregateRootTestCase
 }
 ```
 :::note
-You can find out more about the clock [here](clock.md).
+You can find out more about the [clock](clock.md).
 :::
 
 :::tip
-You can use the FreezeClock in you integration tests to test the time-based behavior of your application.
+You can use the `FrozenClock` in your integration tests to test the time-based behavior of your application.
 :::
 
 ## Tests with UUID
@@ -243,5 +242,12 @@ final class ProfileTest extends TestCase
 ```
 :::warning
 The `IncrementalRamseyUuidFactory` is only for testing purposes
-and supports only the version 7 what is used by the library.
+and supports only uuid version 7, which is used by the library.
 :::
+
+## Learn more
+
+* [How to create an aggregate](aggregate.md)
+* [How to use the clock](clock.md)
+* [How to use subscriptions](subscription.md)
+* [How to use the command bus](command-bus.md)

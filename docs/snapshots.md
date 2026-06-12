@@ -6,7 +6,7 @@ But if the number gets bigger at some point, then loading and rebuilding can bec
 The `snapshot` system can be used to control this.
 
 :::tip
-Use snapshots only if you have a performance problems,
+Use snapshots only if you have a performance problem,
 because it introduces additional complexity.
 
 In our benchmarks we can load 10 000 events for one aggregate in 50ms.
@@ -56,7 +56,7 @@ $repositoryManager = new DefaultRepositoryManager(
 );
 ```
 :::note
-You can read more about Repository [here](repository.md).
+You can read more about the [repository](repository.md).
 :::
 
 Next we need to tell the Aggregate to take a snapshot of it. We do this using the snapshot attribute.
@@ -105,12 +105,12 @@ Or the snapshot version needs to be changed so that the previous snapshot is inv
 :::
 
 :::warning
-In the end it the complete aggregate must be serializeable as json, also the aggregate Id.
+In the end the complete aggregate must be serializable as json, including the aggregate id.
 :::
 
 :::note
 The [hydrator](https://github.com/patchlevel/hydrator) is used internally and you can use all of its features.
-You can find more about normalizer also [here](normalizer.md).
+You can find more about this in the [normalizer](normalizer.md) documentation.
 :::
 
 ### Snapshot batching
@@ -118,7 +118,7 @@ You can find more about normalizer also [here](normalizer.md).
 Since the loading of events in itself is quite fast and only becomes noticeably slower with thousands of events,
 we do not need to create a snapshot after each event. That would also have a negative impact on performance.
 Instead, we can also create a snapshot after `n` events.
-The remaining events that are not in the snapshot are then loaded from store.
+The remaining events that are not in the snapshot are then loaded from the store.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -161,7 +161,7 @@ You should update the snapshot version only when necessary.
 
 :::tip
 If you have aggregates with a lot of events,
-you should consider using [split streams](split-stream.md) if it make sense in your domain.
+you should consider using [split streams](split-stream.md) if it makes sense in your domain.
 Then the load peak is not so high anymore,
 because only the events from new stream start are loaded to rebuild the aggregate.
 :::
@@ -181,7 +181,7 @@ Here are a few listed:
 
 ### psr-6
 
-A `Psr6SnapshotAdapter`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-6/).
+A `Psr6SnapshotAdapter`, based on the [PSR-6 caching standard](https://www.php-fig.org/psr/psr-6/).
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
@@ -192,7 +192,7 @@ $adapter = new Psr6SnapshotAdapter($cache);
 ```
 ### psr-16
 
-A `Psr16SnapshotAdapter`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-16/).
+A `Psr16SnapshotAdapter`, based on the [PSR-16 caching standard](https://www.php-fig.org/psr/psr-16/).
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
@@ -203,7 +203,7 @@ $adapter = new Psr16SnapshotAdapter($cache);
 ```
 ### in memory
 
-A `InMemorySnapshotAdapter` that can be used for test purposes.
+An `InMemorySnapshotAdapter` that can be used for test purposes.
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
