@@ -55,9 +55,8 @@ final class GuestIsCheckedOut
     }
 }
 ```
-
 :::note
-You can find out more about events [here](events.md).    
+You can find out more about events [here](events.md).
 :::
 
 ## Define aggregates
@@ -148,7 +147,6 @@ final class Hotel extends BasicAggregateRoot
     }
 }
 ```
-
 :::note
 You can find out more about aggregates [here](aggregate.md).
 :::
@@ -227,7 +225,6 @@ final class HotelProjector
     }
 }
 ```
-
 :::note
 You can find out more about projector [here](subscription.md).
 :::
@@ -259,7 +256,6 @@ final class SendCheckInEmailProcessor
     }
 }
 ```
-
 :::note
 You can find out more about processor [here](subscription.md).
 :::
@@ -280,6 +276,7 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -313,7 +310,7 @@ $subscriberRepository = new MetadataSubscriberAccessorRepository([
 $subscriptionStore = new DoctrineSubscriptionStore($connection);
 
 $engine = new DefaultSubscriptionEngine(
-    $eventStore,
+    new StoreMessageLoader($eventStore),
     $subscriptionStore,
     $subscriberRepository,
 );
@@ -328,14 +325,13 @@ $repositoryManager = new RunSubscriptionEngineRepositoryManager(
 
 $hotelRepository = $repositoryManager->get(Hotel::class);
 ```
-
 :::note
 You can find out more about stores [here](store.md).
 :::
 
 :::note
-The `RunSubscriptionEngineRepositoryManager` is a decorator that triggers the 
-Subscription Engine when an Aggregate is saved. Normally, you'd use the 
+The `RunSubscriptionEngineRepositoryManager` is a decorator that triggers the
+Subscription Engine when an Aggregate is saved. Normally, you'd use the
 `DefaultRepositoryManager` and a worker to run the Subscription Engine.
 
 Learn more [here](subscription.md).
@@ -372,7 +368,6 @@ $schemaDirector->create();
 /** @var SubscriptionEngine $engine */
 $engine->setup(skipBooting: true);
 ```
-
 :::note
 you can use the predefined [cli commands](cli.md) for this.
 :::
@@ -399,9 +394,8 @@ $hotelRepository->save($hotel2);
 
 $hotels = $hotelProjection->getHotels();
 ```
-
 :::note
-You can also use other forms of IDs such as uuid version 6 or a custom format. 
+You can also use other forms of IDs such as uuid version 6 or a custom format.
 You can find more about this [here](aggregate-id.md).
 :::
 
@@ -410,7 +404,7 @@ You can find more about this [here](aggregate-id.md).
 :::success
 We have successfully implemented and used event sourcing.
 
-Feel free to browse further in the documentation for more detailed information. 
+Feel free to browse further in the documentation for more detailed information.
 If there are still open questions, create a ticket on Github and we will try to help you.
 :::
 

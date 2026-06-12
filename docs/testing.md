@@ -209,7 +209,6 @@ final class ProfileTest extends AggregateRootTestCase
     }
 }
 ```
-
 :::note
 You can find out more about the clock [here](clock.md).
 :::
@@ -242,7 +241,6 @@ final class ProfileTest extends TestCase
     }
 }
 ```
-
 :::warning
 The `IncrementalRamseyUuidFactory` is only for testing purposes
 and supports only the version 7 what is used by the library.

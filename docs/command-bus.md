@@ -38,7 +38,6 @@ final class CreateProfileHandler
     }
 }
 ```
-
 :::note
 To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
 :::
@@ -65,7 +64,6 @@ final class CreateProfileHandler
     }
 }
 ```
-
 ### Union Types
 
 You can also use union types to handle multiple commands and the library will automatically detect the commands.
@@ -82,7 +80,6 @@ final class CreateProfileHandler
     }
 }
 ```
-
 ### Inheritance
 
 The handler will also be invoked if the command implements an interface or extends a class that the handler expects.
@@ -99,15 +96,14 @@ final class CreateProfileHandler
     }
 }
 ```
-    
 ### Aggregate Handler
 
 Another way to handle commands is to use the aggregates themselves.
 To do this, you need to mark the method that handles the command with the `#[Handle]` attribute.
 
 :::note
-The aggregates themselves are of course not a service. 
-The AggregateHandlerProvider uses the aggregates to create the handlers for you. 
+The aggregates themselves are of course not a service.
+The AggregateHandlerProvider uses the aggregates to create the handlers for you.
 You can find out more about this in the [providers](command-bus.md#provider) section.
 :::
 
@@ -140,7 +136,6 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 :::tip
 You can find more information about aggregates [here](aggregate.md).
 :::
@@ -193,9 +188,8 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 :::tip
-If you want to automatically initialize an aggregate if it cannot be found in the store, 
+If you want to automatically initialize an aggregate if it cannot be found in the store,
 you can use the [Auto Initialize](aggregate.md#auto-initialize) feature.
 :::
 
@@ -233,7 +227,6 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 :::note
 The service must be registered in the service locator.
 :::
@@ -274,7 +267,6 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 :::note
 Injection in handler methods is only possible with the `AggregateHandlerProvider`.
 :::
@@ -327,7 +319,6 @@ final class CreateProfile
     }
 }
 ```
-
 :::tip
 You can override the default values for the maximum number of retries and the conditions
 by passing them to the `InstantRetry` attribute.
@@ -405,7 +396,6 @@ $provider = new AggregateHandlerProvider(
     ]), // or other psr-11 compatible container
 );
 ```
-
 :::tip
 You can find suitable implementations of psr-11 containers on [packagist](https://packagist.org/search/?tags=PSR-11).
 :::

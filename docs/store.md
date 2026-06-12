@@ -36,9 +36,8 @@ $store = new DoctrineDbalStore(
     DefaultEventSerializer::createFromPaths(['src/Event']),
 );
 ```
-
 :::note
-You can find out more about how to create a connection 
+You can find out more about how to create a connection
 [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
 :::
 
@@ -97,9 +96,8 @@ $store = new StreamDoctrineDbalStore(
     DefaultEventSerializer::createFromPaths(['src/Event']),
 );
 ```
-
 :::note
-You can find out more about how to create a connection 
+You can find out more about how to create a connection
 [here](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
 :::
 
@@ -137,7 +135,6 @@ use Patchlevel\EventSourcing\Store\InMemoryStore;
 
 $store = new InMemoryStore();
 ```
-
 :::tip
 You can pass messages to the constructor to initialize the store with some events.
 :::
@@ -189,7 +186,6 @@ $schemaDirector = new DoctrineSchemaDirector(
     $store,
 );
 ```
-
 :::note
 How to setup cli commands for schema director can be found [here](cli.md).
 :::
@@ -294,9 +290,8 @@ $dependencyFactory->setService(
     $schemaProvider,
 );
 ```
-
 :::note
-Here you can find more information on how to 
+Here you can find more information on how to
 [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
 :::
 
@@ -387,7 +382,6 @@ foreach ($stream as $message) {
     $message->event(); // get the event
 }
 ```
-
 :::note
 You can find more information about the `Message` object [here](message.md).
 :::
@@ -438,9 +432,8 @@ $store->save($message);
 $store->save($message1, $message2, $message3);
 $store->save(...$messages);
 ```
-
 :::note
-The saving happens in a transaction, so all messages are saved or none.    
+The saving happens in a transaction, so all messages are saved or none.
 The store lock the table for writing during each save by default.
 :::
 
@@ -463,7 +456,6 @@ use Patchlevel\EventSourcing\Store\StreamStore;
 /** @var StreamStore $store */
 $store->remove('profile-*');
 ```
-
 :::note
 The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
 :::
@@ -478,7 +470,6 @@ use Patchlevel\EventSourcing\Store\StreamStore;
 /** @var StreamStore $store */
 $streams = $store->streams(); // ['profile-1', 'profile-2', 'profile-3']
 ```
-
 :::note
 The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
 :::
@@ -503,7 +494,6 @@ $store->transactional(static function () use ($command, $bankAccountRepository):
     $bankAccountRepository->save($accountTo);
 });
 ```
-
 :::note
 The store lock the table for writing during the transaction by default.
 :::

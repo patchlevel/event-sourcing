@@ -5,7 +5,7 @@ One main difference is that we don't save the current state, but only the indivi
 This means it is always possible to build the current state again from the events.
 
 :::note
-The term aggregate itself comes from DDD and has nothing to do with event sourcing and can be used independently as a pattern. 
+The term aggregate itself comes from DDD and has nothing to do with event sourcing and can be used independently as a pattern.
 You can find out more about Aggregates [here](https://martinfowler.com/bliki/DDD_Aggregate.html).
 :::
 
@@ -44,7 +44,6 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-
 :::warning
 The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
 :::
@@ -77,7 +76,6 @@ final class CreateProfileHandler
     }
 }
 ```
-
 :::warning
 If you look in the database now, you would see that nothing has been saved.
 This is because only events are stored in the database and as long as no events exist,
@@ -109,7 +107,6 @@ final class ProfileRegistered
     }
 }
 ```
-
 :::note
 You can find out more about events [here](events.md).
 :::
@@ -151,7 +148,6 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-
 :::tip
 Prefixing the apply methods with "apply" improves readability.
 :::
@@ -185,7 +181,6 @@ final class NameChanged
     }
 }
 ```
-
 :::note
 Events should best be written in the past, as they describe a state that has happened.
 :::
@@ -262,7 +257,6 @@ final class ChangeNameHandler
     }
 }
 ```
-
 :::success
 Our aggregate can now be changed and saved.
 :::
@@ -309,9 +303,8 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-
 :::tip
-You don't necessarily need to define multiple `Apply` attributes with the event class 
+You don't necessarily need to define multiple `Apply` attributes with the event class
 if you define the event types in the method using a union type.
 :::
 
@@ -366,7 +359,6 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-
 :::warning
 When all events are suppressed, debugging becomes more difficult if you forget an apply method.
 :::
@@ -399,7 +391,6 @@ final class PersonalInformation extends BasicAggregateRoot
 {
 }
 ```
-
 :::warning
 You need to define the `SharedApplyContext` attribute on all aggregates that share the apply context.
 :::
@@ -443,7 +434,6 @@ final class GuestList extends BasicAggregateRoot
     // ...
 }
 ```
-
 :::tip
 You can find more about splitting aggregates [here](aggregate.md#splitting-aggregates).
 :::
@@ -486,7 +476,6 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-
 :::danger
 Validations during "apply" should not happen, they will break the rebuilding of the aggregate!
 Instead validate the data *before* the event will be recorded.
@@ -573,7 +562,6 @@ final class NameChanged
     }
 }
 ```
-
 :::warning
 You need to create a normalizer for the `Name` value object.
 So the payload must be serializable and unserializable as json.
@@ -793,7 +781,6 @@ final class Shipping extends BasicAggregateRoot
     }
 }
 ```
-
 :::tip
 With the [SharedApplyContext](aggregate.md#shared-apply-context) attribute,
 you can suppress missing applies for events that are handled by other aggregates.
@@ -842,7 +829,6 @@ final class Shipping extends BasicChildAggregate
     }
 }
 ```
-
 :::warning
 The apply method must be public, otherwise the root aggregate cannot call it.
 :::
@@ -890,7 +876,6 @@ final class Order extends BasicAggregateRoot
     }
 }
 ```
-
 ## Auto Initialize
 
 :::experimental
@@ -898,8 +883,8 @@ This feature is still experimental and may change in the future.
 Use it with caution.
 :::
 
-Sometimes you want to be able to access an aggregate even if it has not yet been created in the system. 
-In this case, the aggregate should be automatically initialized if it cannot be found in the store. 
+Sometimes you want to be able to access an aggregate even if it has not yet been created in the system.
+In this case, the aggregate should be automatically initialized if it cannot be found in the store.
 To achieve this, the aggregate must mark the initialization method with the `AutoInitialize` attribute.
 The method must be static, receives the aggregate ID as an argument and must return an instance of the aggregate.
 
@@ -933,7 +918,6 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-
 :::note
 Recording events in the `initialize` method is optional but recommended.
 :::

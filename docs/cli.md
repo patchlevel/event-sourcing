@@ -141,9 +141,8 @@ $cli->addCommands([
     new Command\VersionCommand($dependencyFactory, 'event-sourcing:migrations:version'),
 ]);
 ```
-
 :::note
-Here you can find more information on how to 
+Here you can find more information on how to
 [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
 :::
 

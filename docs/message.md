@@ -11,7 +11,6 @@ use Patchlevel\EventSourcing\Message\Message;
 
 $message = Message::create(new NameChanged('foo'));
 ```
-
 :::note
 You don't have to create the message yourself, it is automatically created, saved and dispatched in
 the [repository](repository.md).
@@ -33,7 +32,6 @@ $message = Message::create(new NameChanged('foo'))
         recordedOn: $clock->now(),
     ));
 ```
-
 :::note
 The message object is immutable. It creates a new instance with the new data.
 :::
@@ -82,7 +80,6 @@ use Patchlevel\EventSourcing\Message\Message;
 $message = Message::create(new NameChanged('foo'))
     ->withHeader(new ApplicationHeader('app'));
 ```
-
 :::warning
 The header needs to be serializable. The library uses the hydrator to serialize and deserialize the headers.
 So you can add normalize attributes to the properties if needed.
@@ -214,7 +211,6 @@ use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 
 $translator = new RecalculatePlayheadTranslator();
 ```
-
 :::warning
 The `RecalculatePlayheadTranslator` is and need to be stateful.
 You can't reuse the translator for multiple streams.
@@ -281,13 +277,12 @@ final class SplitProfileCreatedTranslator implements Translator
     }
 }
 ```
-
 :::warning
 Since we changed the number of messages, we have to recalculate the playhead.
 :::
 
 :::tip
-You don't have to migrate the store directly for every change, 
+You don't have to migrate the store directly for every change,
 but you can also use the [upcasting](upcasting.md) feature.
 :::
 

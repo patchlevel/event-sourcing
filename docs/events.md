@@ -27,7 +27,6 @@ final class ProfileCreated
     }
 }
 ```
-
 :::warning
 The payload must be serializable and unserializable as json.
 :::
@@ -41,7 +40,7 @@ Here are some examples:
 * `profile.created`
 * `profile.name_changed`
 * `hotel.guest_checked_out`
-:::
+  :::
 
 ## Alias
 
@@ -109,14 +108,13 @@ final class ProfileCreated
     }
 }
 ```
-
 :::tip
-Built-in normalizers like `IdNormalizer` and `DateTimeImmutableNormalizer` can be inferred from the type hint 
+Built-in normalizers like `IdNormalizer` and `DateTimeImmutableNormalizer` can be inferred from the type hint
 and so you don't have to specify them. If you want to configure the Normalizer, you still have to do it.
 :::
 
 :::note
-You can find out more about normalizer [here](normalizer.md).    
+You can find out more about normalizer [here](normalizer.md).
 :::
 
 ## Event Registry
