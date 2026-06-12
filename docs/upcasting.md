@@ -34,7 +34,6 @@ final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
     }
 }
 ```
-
 :::warning
 You need to consider that other events are passed to the Upcaster. So and early out is here endorsed.
 :::
@@ -66,7 +65,6 @@ final class EventNameRenameUpcaster implements Upcaster
     }
 }
 ```
-
 :::tip
 Events can also have [aliases](events.md#alias). This is usually sufficient.
 :::

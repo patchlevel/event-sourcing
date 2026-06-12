@@ -66,7 +66,6 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-
 :::note
 You can find out more about repository [here](repository.md).
 :::
@@ -98,7 +97,6 @@ final class OnSystemRecordedDecorator implements MessageDecorator
     }
 }
 ```
-
 :::note
 The Message is immutable, for more information look up [here](message.md).
 :::

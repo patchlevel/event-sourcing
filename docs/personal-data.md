@@ -39,7 +39,6 @@ final class EmailChanged
     }
 }
 ```
-
 :::tip
 You can use the `DataSubjectId` in aggregates for snapshots too.
 :::
@@ -64,7 +63,6 @@ final class EmailChanged
     }
 }
 ```
-
 :::tip
 You can use the `PersonalData` in aggregates for snapshots too.
 :::
@@ -94,7 +92,6 @@ final class ProfileChanged
     }
 }
 ```
-
 :::danger
 You have to deal with this case in your business logic such as aggregates and subscriptions.
 :::
@@ -152,7 +149,6 @@ use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
 /** @var CipherKeyStore $cipherKeyStore */
 $cryptographer = PersonalDataPayloadCryptographer::createWithDefaultSettings($cipherKeyStore);
 ```
-
 :::tip
 You can specify the cipher method with the second parameter.
 :::
@@ -171,7 +167,6 @@ DefaultEventSerializer::createFromPaths(
     cryptographer: $cryptographer,
 );
 ```
-
 :::note
 More information about the events can be found [here](events.md).
 :::
@@ -192,7 +187,6 @@ $snapshotStore = DefaultSnapshotStore::createDefault(
     $cryptographer,
 );
 ```
-
 :::note
 More information about the snapshot store can be found [here](snapshots.md).
 :::

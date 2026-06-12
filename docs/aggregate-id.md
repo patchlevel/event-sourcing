@@ -41,7 +41,6 @@ use Patchlevel\EventSourcing\Aggregate\Uuid;
 $uuid = Uuid::generate();
 $uuid = Uuid::fromString('d6e8d7a0-4b0b-4e6a-8a9a-3a0b2d9d0e4e');
 ```
-
 :::note
 We implemented the version 7 of the uuid, because it is most suitable for event sourcing.
 More information about uuid versions can be found [here](https://uuid.ramsey.dev/en/stable/rfc4122.html).
@@ -65,9 +64,8 @@ final class Profile extends BasicAggregateRoot
     private CustomId $id;
 }
 ```
-
 :::warning
-If you want to use a custom id that is not an uuid, 
+If you want to use a custom id that is not an uuid,
 you need to change the `aggregate_id_type` to `string` in the store configuration.
 More information can be found [here](store.md).
 :::

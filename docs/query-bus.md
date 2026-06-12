@@ -35,7 +35,6 @@ final class QueryProfileHandler
     }
 }
 ```
-
 :::warning
 A query can only be answered by one method.
 :::
@@ -68,9 +67,8 @@ final class ProfileProjector
     // projector related methods to maintain the state of profiles
 }
 ```
-
 :::tip
-Using small dedicated projections for each usecase is best practice. Using them directly as query handlers are 
+Using small dedicated projections for each usecase is best practice. Using them directly as query handlers are
 endoresed and can reduce fragmentation of the system.
 :::
 

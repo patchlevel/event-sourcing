@@ -26,7 +26,6 @@ final class DoStuffSubscriber
 {
 }
 ```
-
 :::note
 For each subsciber ID, the engine will create a subscription.
 If the subscriber ID changes, a new subscription will be created.
@@ -74,7 +73,6 @@ final class ProfileProjector
     }
 }
 ```
-
 :::warning
 PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
 So you must use a different database connection for your subscriptions.
@@ -149,9 +147,8 @@ final class DoStuffSubscriber
     }
 }
 ```
-
 :::tip
-If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) 
+If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin)
 to make the event method return the correct type.
 :::
 
@@ -272,7 +269,6 @@ final class PublicProfileProjection
     // ... setup, teardown, ...
 }
 ```
-
 :::note
 More about reducers you can find [here](message.md#reducer)
 :::
@@ -329,10 +325,9 @@ final class ProfileProjector
     }
 }
 ```
-
 :::danger
 PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
-So you must use a different database connection in your projectors, 
+So you must use a different database connection in your projectors,
 otherwise you will get an error when the subscription tries to create the table.
 :::
 
@@ -371,10 +366,9 @@ final class ProfileProjector
     }
 }
 ```
-
 :::danger
 PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
-So you must use a different database connection in your projectors, 
+So you must use a different database connection in your projectors,
 otherwise you will get an error when the subscription tries to create the table.
 :::
 
@@ -415,7 +409,6 @@ final class ProfileProjector
     }
 }
 ```
-
 :::note
 You can not mix the `cleanup` method with the `teardown` method.
 :::
@@ -470,7 +463,6 @@ final class InvoiceProcessor
     }
 }
 ```
-
 :::warning
 Currently, the `OnFailed` method is only available for non-batchable subscribers.
 :::
@@ -494,7 +486,6 @@ final class ProfileSubscriber
    // ...
 }
 ```
-
 :::warning
 If you change the `subscriberID`, you must also change the table/collection name.
 Otherwise the table/collection will conflict with the old subscription.
@@ -521,14 +512,13 @@ final class ProfileSubscriber
    // ...
 }
 ```
-
 :::note
 The different attributes has different default group.
 
 * `Subscriber` - `default`
 * `Projector` - `projector`
 * `Processor` - `processor`
-:::
+  :::
 
 ### Run Mode
 
@@ -550,7 +540,6 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
-
 :::tip
 If you want create projections and run from the beginning, you can use the `Projector` attribute.
 :::
@@ -571,7 +560,6 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
-
 :::tip
 If you want process events from now, you can use the `Processor` attribute.
 :::
@@ -723,7 +711,7 @@ The Subscription Engine was inspired by the following two blog posts:
 
 * [Projection Building Blocks: What you'll need to build projections](https://barryosull.com/blog/projection-building-blocks-what-you-ll-need-to-build-projections/)
 * [Managing projectors is harder than you think](https://barryosull.com/blog/managing-projectors-is-harder-than-you-think/)
-:::
+  :::
 
 ## Subscription ID
 
@@ -850,7 +838,7 @@ In order for the subscription engine to be able to do its work, you have to asse
 ### Message Loader
 
 The subscription engine needs a message loader to load the messages.
-We provide two implementations by default.
+We provide three implementations by default.
 Which one has a better performance depends on the use case.
 
 :::tip
@@ -953,9 +941,8 @@ $schemaDirector = new DoctrineSchemaDirector(
     ]),
 );
 ```
-
 :::note
-You can find more about schema configurator [here](store.md) 
+You can find more about schema configurator [here](store.md)
 :::
 
 ### Retry Strategy
@@ -1012,7 +999,6 @@ $retryStrategyRepository = new RetryStrategyRepository([
     'no_retry' => new NoRetryStrategy(),
 ]);
 ```
-
 :::note
 This is what our default configuration looks like if you do not define the retry strategy.
 :::
@@ -1036,7 +1022,6 @@ final class DropCollection
     }
 }
 ```
-
 :::warning
 The task class must be serializable. It will be stored in the subscription store.
 :::
@@ -1080,7 +1065,6 @@ $cleaner = new DefaultCleaner([
     new MongodbCleanupTaskHandler($mongodbDatabase),
 ]);
 ```
-
 :::warning
 You need to pass the Cleaner to the Subscription Engine.
 :::
@@ -1182,9 +1166,12 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $catchupSubscriptionEngine = new CatchUpSubscriptionEngine($subscriptionEngine);
 ```
-
 :::tip
 You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
+:::
+
+:::note
+Learn more about the worker [here](./cli#subscription-commands).
 :::
 
 ### Throw on error Subscription Engine
@@ -1199,7 +1186,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $throwOnErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscriptionEngine);
 ```
-
 :::warning
 This is only for testing or development. Don't use it in production.
 The subscription engine has an build in retry strategy to retry subscriptions that have failed.
@@ -1227,7 +1213,6 @@ $eventBus = new RunSubscriptionEngineRepositoryManager(
     100, // limit the number of messages
 );
 ```
-
 :::danger
 By using this, you can't wrap the repository in a transaction.
 A rollback is not supported and can break the subscription engine.
@@ -1256,7 +1241,6 @@ $criteria = new SubscriptionEngineCriteria(
     groups: ['default'],
 );
 ```
-
 :::note
 An `OR` check is made for the respective criteria and all criteria are checked with an `AND`.
 :::
@@ -1274,7 +1258,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 /** @var SubscriptionEngine $subscriptionEngine */
 $subscriptionEngine->setup(new SubscriptionEngineCriteria());
 ```
-
 :::tip
 You can skip the booting step with the second boolean parameter named `skipBooting`.
 :::
@@ -1380,6 +1363,14 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 /** @var SubscriptionEngine $subscriptionEngine */
 $subscriptionEngine->refresh(new SubscriptionEngineCriteria());
 ```
+## Basic workflow for the worker
+
+Use `event-sourcing:subscription:boot --setup` to first run the setup of any new subscriptions and immediately boot
+them.
+
+The `event-sourcing:subscription:run` command will continue to run and process new events until the process is killed.
+After adding a new subscriber and booting it, you should restart the `run` command.
+
 ## Learn more
 
 * [How to use CLI commands](cli.md)

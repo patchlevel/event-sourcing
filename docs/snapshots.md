@@ -55,7 +55,6 @@ $repositoryManager = new DefaultRepositoryManager(
     $snapshotStore,
 );
 ```
-
 :::note
 You can read more about Repository [here](repository.md).
 :::
@@ -100,7 +99,6 @@ final class Profile extends BasicAggregateRoot
     // ...
 }
 ```
-
 :::danger
 If anything changes in the properties of the aggregate, then the cache must be cleared.
 Or the snapshot version needs to be changed so that the previous snapshot is invalid.
@@ -156,16 +154,15 @@ final class Profile extends BasicAggregateRoot
     // ...
 }
 ```
-
 :::warning
 If the snapshots are discarded, a load peak can occur since the aggregates have to be rebuilt.
 You should update the snapshot version only when necessary.
 :::
 
 :::tip
-If you have aggregates with a lot of events, 
+If you have aggregates with a lot of events,
 you should consider using [split streams](split-stream.md) if it make sense in your domain.
-Then the load peak is not so high anymore, 
+Then the load peak is not so high anymore,
 because only the events from new stream start are loaded to rebuild the aggregate.
 :::
 
@@ -232,9 +229,8 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
  */
 $snapshotStore->save($aggregate);
 ```
-
 :::danger
-If the state of an aggregate is saved as a snapshot without being saved to the event store (database), 
+If the state of an aggregate is saved as a snapshot without being saved to the event store (database),
 it can lead to data loss or broken aggregates!
 :::
 
@@ -256,7 +252,7 @@ If the aggregate was not found, then a `SnapshotNotFound` is thrown.
 And if the version is no longer correct and the snapshot is therefore invalid, then a `SnapshotVersionInvalid` is thrown.
 
 :::warning
-The aggregate may be in an old state as the snapshot may lag behind. 
+The aggregate may be in an old state as the snapshot may lag behind.
 You still have to bring the aggregate up to date by loading the missing events from the event store.
 :::
 

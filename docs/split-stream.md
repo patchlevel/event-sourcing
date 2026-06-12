@@ -40,7 +40,6 @@ $repositoryManager = new DefaultRepositoryManager(
     new SplitStreamDecorator($eventMetadataFactory),
 );
 ```
-
 :::note
 You can find out more about decorator [here](message-decorator.md).
 :::
@@ -70,9 +69,8 @@ final class BalanceReported
     }
 }
 ```
-
 :::warning
-The event needs all data which is relevant the aggregate to be used since all past event will not be loaded! 
+The event needs all data which is relevant the aggregate to be used since all past event will not be loaded!
 Keep this in mind if you want to use this feature.
 :::
 

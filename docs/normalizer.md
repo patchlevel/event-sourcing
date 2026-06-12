@@ -5,7 +5,7 @@ For example DateTime, enums or value objects.
 Here you can use the normalizer to define how the data should be saved and loaded.
 
 :::note
-The underlying system called hydrator exists as a library. 
+The underlying system called hydrator exists as a library.
 You can find out more details [here](https://github.com/patchlevel/hydrator).
 :::
 
@@ -75,7 +75,6 @@ final class Item
     }
 }
 ```
-
 :::note
 With the `ObjectNormalizer`, you can seraialize and deserialize recursively.
 :::
@@ -100,7 +99,6 @@ final class CreateHotel
     }
 }
 ```
-
 :::note
 If you have personal data, you can use [crypto-shredding](personal-data.md).
 :::
@@ -127,7 +125,6 @@ final class Hotel extends BasicAggregateRoot
     // ...
 }
 ```
-
 :::note
 You can learn more about snapshots [here](snapshots.md).
 :::
@@ -153,7 +150,6 @@ final class DTO
     public array $dates;
 }
 ```
-
 :::note
 The keys from the arrays are taken over here.
 :::
@@ -172,7 +168,6 @@ final class DTO
     public DateTimeImmutable $date;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
@@ -189,7 +184,6 @@ final class DTO
     public DateTimeImmutable $date;
 }
 ```
-
 :::note
 You can read about how the format is structured in the [php docs](https://www.php.net/manual/de/datetime.format.php).
 :::
@@ -207,7 +201,6 @@ final class DTO
     public DateTime $date;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
@@ -223,9 +216,8 @@ final class DTO
     public DateTime $date;
 }
 ```
-
 :::warning
-It is highly recommended to only ever use DateTimeImmutable objects and the DateTimeImmutableNormalizer. 
+It is highly recommended to only ever use DateTimeImmutable objects and the DateTimeImmutableNormalizer.
 This prevents you from accidentally changing the state of the DateTime and thereby causing bugs.
 :::
 
@@ -246,7 +238,6 @@ final class DTO
     public DateTimeZone $timeZone;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
@@ -264,7 +255,6 @@ final class DTO
     public Status $status;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
@@ -294,7 +284,6 @@ final class DTO
     public Uuid $id;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
@@ -394,7 +383,6 @@ class NameNormalizer implements Normalizer
     }
 }
 ```
-
 :::warning
 The important thing is that the result of Normalize is serializable!
 :::
@@ -408,7 +396,6 @@ final class DTO
     public Name $name;
 }
 ```
-
 :::tip
 Every normalizer, including the custom normalizer, can be used both for the events and for the snapshots.
 :::
@@ -443,14 +430,13 @@ The whole thing looks like this
   "profile_name": "David"
 }
 ```
-
 :::tip
 You can also rename properties to events without having a backwards compatibility break by keeping the serialized name.
 :::
 
 :::note
-NormalizedName also works for snapshots. 
-But since a snapshot is just a cache, you can also just invalidate it, 
+NormalizedName also works for snapshots.
+But since a snapshot is just a cache, you can also just invalidate it,
 if you have backwards compatibility break in the property name
 :::
 

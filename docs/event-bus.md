@@ -20,7 +20,6 @@ use Patchlevel\EventSourcing\EventBus\DefaultEventBus;
 
 $eventBus = DefaultEventBus::create([$mailListener]);
 ```
-
 :::note
 The order in which the listeners are executed is determined by the order in which they are passed to the factory.
 :::
@@ -56,7 +55,6 @@ $eventBus = new DefaultEventBus(
     new DefaultConsumer($listenerProvider),
 );
 ```
-
 :::tip
 The `DefaultEventBus::create` method uses the `DefaultConsumer` and `AttributeListenerProvider` by default.
 :::
@@ -80,7 +78,6 @@ $listenerProvider = new class implements ListenerProvider {
     }
 };
 ```
-
 :::tip
 You can use `$listenerDiscriptor->name()` to get the name of the listener.
 :::
@@ -103,7 +100,6 @@ final class WelcomeSubscriber
     }
 }
 ```
-
 :::tip
 If you use psalm, you can use the [event sourcing plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin) for better type support.
 :::
@@ -136,7 +132,6 @@ use Patchlevel\EventSourcing\EventBus\Psr14EventBus;
 
 $eventBus = new Psr14EventBus($psr14EventDispatcher);
 ```
-
 :::warning
 You can't use the `Subscribe` attribute with the psr-14 event bus.
 :::
