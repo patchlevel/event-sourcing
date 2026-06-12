@@ -114,7 +114,7 @@ and so you don't have to specify them. If you want to configure the Normalizer, 
 :::
 
 :::note
-You can find out more about normalizer [here](normalizer.md).
+You can find out more about [normalizer](normalizer.md).
 :::
 
 ## Event Registry

@@ -7,7 +7,7 @@ We keep the example small, so we can only create hotels and let guests check in 
 
 First we define the events that happen in our system.
 
-A hotel can be created with a `name` and a `id`:
+A hotel can be created with a `name` and an `id`:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
@@ -56,7 +56,7 @@ final class GuestIsCheckedOut
 }
 ```
 :::note
-You can find out more about events [here](events.md).
+You can find out more about [events](events.md).
 :::
 
 ## Define aggregates
@@ -148,7 +148,7 @@ final class Hotel extends BasicAggregateRoot
 }
 ```
 :::note
-You can find out more about aggregates [here](aggregate.md).
+You can find out more about [aggregates](aggregate.md).
 :::
 
 ## Define projections
@@ -178,7 +178,7 @@ final class HotelProjector
     /** @return list<array{id: string, name: string, guests: int}> */
     public function getHotels(): array
     {
-        return $this->db->fetchAllAssociative(sprintf('SELECT id, name, guests FROM %s;'), self::TABLE);
+        return $this->db->fetchAllAssociative(sprintf('SELECT id, name, guests FROM %s;', self::TABLE));
     }
 
     #[Subscribe(HotelCreated::class)]
@@ -226,7 +226,7 @@ final class HotelProjector
 }
 ```
 :::note
-You can find out more about projector [here](subscription.md).
+You can find out more about [projectors](subscription.md).
 :::
 
 ## Processor
@@ -257,7 +257,7 @@ final class SendCheckInEmailProcessor
 }
 ```
 :::note
-You can find out more about processor [here](subscription.md).
+You can find out more about [processors](subscription.md).
 :::
 
 ## Configuration
@@ -326,7 +326,7 @@ $repositoryManager = new RunSubscriptionEngineRepositoryManager(
 $hotelRepository = $repositoryManager->get(Hotel::class);
 ```
 :::note
-You can find out more about stores [here](store.md).
+You can find out more about [stores](store.md).
 :::
 
 :::note
@@ -334,7 +334,7 @@ The `RunSubscriptionEngineRepositoryManager` is a decorator that triggers the
 Subscription Engine when an Aggregate is saved. Normally, you'd use the
 `DefaultRepositoryManager` and a worker to run the Subscription Engine.
 
-Learn more [here](subscription.md).
+Learn more about the [subscription engine](subscription.md).
 :::
 
 ## Database setup
@@ -369,7 +369,7 @@ $schemaDirector->create();
 $engine->setup(skipBooting: true);
 ```
 :::note
-you can use the predefined [cli commands](cli.md) for this.
+You can use the predefined [cli commands](cli.md) for this.
 :::
 
 ## Usage
@@ -392,11 +392,11 @@ $hotel2 = $hotelRepository->load(Uuid::fromString('d0d0d0d0-d0d0-d0d0-d0d0-d0d0d
 $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 
-$hotels = $hotelProjection->getHotels();
+$hotels = $hotelProjector->getHotels();
 ```
 :::note
 You can also use other forms of IDs such as uuid version 6 or a custom format.
-You can find more about this [here](aggregate-id.md).
+You can find more about this in the [aggregate id](aggregate-id.md) documentation.
 :::
 
 ## Result

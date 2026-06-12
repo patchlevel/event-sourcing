@@ -1,7 +1,7 @@
 # Repository
 
 A `repository` takes care of storing and loading the `aggregates`.
-He is also responsible for building [messages](message.md) from the events
+It is also responsible for building [messages](message.md) from the events
 and optionally dispatching them to the event bus.
 
 ## Create a repository
@@ -66,13 +66,12 @@ You may encounter [at least once](https://softwaremill.com/message-delivery-and-
 :::
 
 :::note
-You can find out more about event bus [here](event-bus.md).
+You can find out more about the [event bus](event-bus.md).
 :::
 
 :::tip
 In most cases it is better to react to events asynchronously,
-that's why we recommend the subscription engine.
-More information can be found [here](subscription.md).
+that's why we recommend the [subscription engine](subscription.md).
 :::
 
 ### Snapshots
@@ -106,7 +105,7 @@ $repositoryManager = new DefaultRepositoryManager(
 $repository = $repositoryManager->get(Profile::class);
 ```
 :::note
-You can find out more about snapshots [here](snapshots.md).
+You can find out more about [snapshots](snapshots.md).
 :::
 
 ### Decorator
@@ -135,7 +134,7 @@ $repositoryManager = new DefaultRepositoryManager(
 $repository = $repositoryManager->get(Profile::class);
 ```
 :::note
-You can find out more about message decorator [here](message-decorator.md).
+You can find out more about the [message decorator](message-decorator.md).
 :::
 
 :::tip
@@ -151,7 +150,7 @@ saving it or checking whether it exists.
 
 An `aggregate` can be `saved`.
 All new events that have not yet been written to the database are fetched from the aggregate.
-These events are then also append to the database.
+These events are then appended to the database.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
@@ -227,7 +226,7 @@ if ($repository->has($id)) {
 ```
 :::note
 The query is fast and does not load any event.
-This means that the state of the aggregate is not rebuild either.
+This means that the state of the aggregate is not rebuilt either.
 :::
 
 ## Custom Repository

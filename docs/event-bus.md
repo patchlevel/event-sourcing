@@ -79,7 +79,7 @@ $listenerProvider = new class implements ListenerProvider {
 };
 ```
 :::tip
-You can use `$listenerDiscriptor->name()` to get the name of the listener.
+You can use `$listenerDescriptor->name()` to get the name of the listener.
 :::
 
 ## Listener
@@ -142,4 +142,4 @@ You can't use the `Subscribe` attribute with the psr-14 event bus.
 * [How to use events](events.md)
 * [How to use the subscription engine](subscription.md)
 * [How to use repositories](repository.md)
-* [How to use decorate messages](message-decorator.md)
+* [How to decorate messages](message-decorator.md)

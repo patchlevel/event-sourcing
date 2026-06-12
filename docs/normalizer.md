@@ -5,14 +5,14 @@ For example DateTime, enums or value objects.
 Here you can use the normalizer to define how the data should be saved and loaded.
 
 :::note
-The underlying system called hydrator exists as a library.
-You can find out more details [here](https://github.com/patchlevel/hydrator).
+The underlying system exists as a separate library.
+You can find out more details in the [hydrator](https://github.com/patchlevel/hydrator) documentation.
 :::
 
 ## Usage
 
 You have a lot of options to use the normalizer.
-First of all and simplest, you can let guess the normalizer from the type hint.
+First of all and simplest, you can let the hydrator guess the normalizer from the type hint.
 
 ```php
 final class DTO
@@ -76,7 +76,7 @@ final class Item
 }
 ```
 :::note
-With the `ObjectNormalizer`, you can seraialize and deserialize recursively.
+With the `ObjectNormalizer`, you can serialize and deserialize recursively.
 :::
 
 ### Event
@@ -88,13 +88,13 @@ The whole thing is then loaded again from the DB and denormalized in the propert
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
-#[Event('hotel.create')]
-final class CreateHotel
+#[Event('hotel.created')]
+final class HotelCreated
 {
     public function __construct(
         public readonly string $name,
         #[DateTimeImmutableNormalizer]
-        public readonly DateTimeImmutable $createAt,
+        public readonly DateTimeImmutable $createdAt,
     ) {
     }
 }
@@ -120,24 +120,24 @@ final class Hotel extends BasicAggregateRoot
 {
     private string $name;
     #[DateTimeImmutableNormalizer]
-    private DateTimeImmutable $createAt;
+    private DateTimeImmutable $createdAt;
 
     // ...
 }
 ```
 :::note
-You can learn more about snapshots [here](snapshots.md).
+You can learn more about [snapshots](snapshots.md).
 :::
 
 ## Built-in Normalizer
 
-For some the standard cases we already offer built-in normalizers.
+For some standard cases we already offer built-in normalizers.
 
 ### Array
 
 If you have a list of objects that you want to normalize, then you must normalize each object individually.
 That's what the `ArrayNormalizer` does for you.
-In order to use the `ArrayNormaliser`, you still have to specify which normaliser should be applied to the individual
+In order to use the `ArrayNormalizer`, you still have to specify which normalizer should be applied to the individual
 objects. Internally, it basically does an `array_map` and then runs the specified normalizer on each element.
 
 ```php
@@ -190,7 +190,7 @@ You can read about how the format is structured in the [php docs](https://www.ph
 
 ### DateTime
 
-The `DateTime` Normalizer works exactly like the DateTimeNormalizer. Only for DateTime objects.
+The `DateTimeNormalizer` works exactly like the `DateTimeImmutableNormalizer`. Only for DateTime objects.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeNormalizer;
@@ -288,7 +288,7 @@ final class DTO
 You can let the hydrator guess the normalizer from the type hint.
 :::
 
-Optional you can also define the type of the id.
+Optionally you can also define the type of the id.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\Uuid;
@@ -314,7 +314,7 @@ final class DTO
     public ComplexObject $object;
 }
 ```
-Optional you can also define the type of the object.
+Optionally you can also define the type of the object.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\ObjectNormalizer;
@@ -338,7 +338,7 @@ final class Name
     public function __construct(private string $value)
     {
         if (strlen($value) < 3) {
-            throw new NameIsToShortException($value);
+            throw new NameIsTooShortException($value);
         }
     }
 
@@ -431,13 +431,13 @@ The whole thing looks like this
 }
 ```
 :::tip
-You can also rename properties to events without having a backwards compatibility break by keeping the serialized name.
+You can also rename properties in events without having a backwards compatibility break by keeping the serialized name.
 :::
 
 :::note
 NormalizedName also works for snapshots.
 But since a snapshot is just a cache, you can also just invalidate it,
-if you have backwards compatibility break in the property name
+if you have a backwards compatibility break in the property name.
 :::
 
 ## Ignore

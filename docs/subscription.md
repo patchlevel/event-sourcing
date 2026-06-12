@@ -3,7 +3,7 @@
 One core concept of event sourcing is the ability to react and process events in a different way.
 This is where subscriptions and the subscription engine come into play.
 
-There are different types of subscriptions. In most cases, we are talking about projector and processor.
+There are different types of subscriptions. In most cases, we are talking about projectors and processors.
 But you can use it for anything like migration, report or something else.
 
 For this, we use the event store to get the events and process them.
@@ -15,7 +15,7 @@ Internally, the subscription engine does this by tracking where each subscriber 
 ## Subscriber
 
 If you want to react to events, you have to create a subscriber.
-Each subscriber need a unique ID and a run mode.
+Each subscriber needs a unique ID and a run mode.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -27,7 +27,7 @@ final class DoStuffSubscriber
 }
 ```
 :::note
-For each subsciber ID, the engine will create a subscription.
+For each subscriber ID, the engine will create a subscription.
 If the subscriber ID changes, a new subscription will be created.
 In some cases like projections, you want to change the subscriber ID to rebuild the projection.
 :::
@@ -56,7 +56,7 @@ final class ProfileProjector
     }
 }
 ```
-Mostly you want process the events from the beginning.
+Mostly you want to process the events from the beginning.
 For this reason, it is also possible to use the `Projector` attribute.
 It extends the `Subscriber` attribute with a default group and run mode.
 
@@ -102,8 +102,8 @@ final class WelcomeEmailProcessor
     }
 }
 ```
-Mostly you want process the events from now,
-because you don't want to email users who already have an account since a long time.
+Mostly you want to process the events from now,
+because you don't want to email users who already have an account for a long time.
 
 For this reason, it is also possible to use the `Processor` attribute.
 It extends the `Subscriber` attribute with a default group and run mode.
@@ -158,7 +158,9 @@ If you want to subscribe on all events, you can pass `*` or `Subscribe::ALL` ins
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 
 #[Subscriber('welcome_email', RunMode::FromNow)]
 final class WelcomeSubscriber
@@ -224,9 +226,11 @@ This service only has access to the messages before the current message.
 Here is an example how you can use it in a projector.
 
 ```php
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Reducer;
-use Patchlevel\EventSourcing\Subscription\Lookup;
+use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
 
 #[Projector('public_profile')]
 final class PublicProfileProjection
@@ -270,13 +274,13 @@ final class PublicProfileProjection
 }
 ```
 :::note
-More about reducers you can find [here](message.md#reducer)
+More information can be found in the [reducer](message.md#reducer) documentation.
 :::
 
 ##### Recorded On Resolver
 
 The recorded on resolver resolves the recorded on date.
-It looks for a parameter with the instance of the `DateTimeImmutable`.
+It looks for a parameter with the type `DateTimeImmutable`.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -301,7 +305,7 @@ This can be useful for providing direct access to custom headers or other data.
 ### Setup
 
 Subscribers can have one `setup` method that is executed when the subscription is created.
-For this there is the attributes `Setup`. The method name itself doesn't matter.
+For this there is the attribute `Setup`. The method name itself doesn't matter.
 This is especially helpful for projectors, as they can create the necessary structures for the projection here.
 
 ```php
@@ -345,7 +349,7 @@ The limit is usually 64 characters.
 ### Teardown
 
 Subscribers can have one `teardown` method that is executed when the subscription is removed.
-For this there is the attributes `Teardown`.
+For this there is the attribute `Teardown`.
 
 ```php
 use Doctrine\DBAL\Connection;
@@ -374,7 +378,7 @@ otherwise you will get an error when the subscription tries to create the table.
 
 :::warning
 A teardown can only be performed for a subscription if the code for the subscriber with that subscriber ID still exists.
-A another option is to use the `Cleanup` option.
+Another option is to use the `Cleanup` method.
 :::
 
 :::note
@@ -383,7 +387,7 @@ You can not mix the `cleanup` method with the `teardown` method.
 
 ### Cleanup
 
-Alternativ, you can use a `cleanup` method for cleanup tasks.
+Alternatively, you can use a `cleanup` method for cleanup tasks.
 Unlike Teardown, this method is called when the subscription is created.
 The tasks are then saved in the Subscription Store.
 When removing the subscription, the subscriber is not necessary anymore,
@@ -415,7 +419,7 @@ You can not mix the `cleanup` method with the `teardown` method.
 
 #### Dbal Cleanup Tasks
 
-Default, we provide the following cleanup tasks for `doctrine/dbal`:
+By default, we provide the following cleanup tasks for `doctrine/dbal`:
 
 | Task            | Description                  |
 |-----------------|------------------------------|
@@ -513,7 +517,7 @@ final class ProfileSubscriber
 }
 ```
 :::note
-The different attributes has different default group.
+The different attributes have different default groups.
 
 * `Subscriber` - `default`
 * `Projector` - `projector`
@@ -541,7 +545,7 @@ final class WelcomeEmailSubscriber
 }
 ```
 :::tip
-If you want create projections and run from the beginning, you can use the `Projector` attribute.
+If you want to create projections and run from the beginning, you can use the `Projector` attribute.
 :::
 
 #### From Now
@@ -561,7 +565,7 @@ final class WelcomeEmailSubscriber
 }
 ```
 :::tip
-If you want process events from now, you can use the `Processor` attribute.
+If you want to process events from now, you can use the `Processor` attribute.
 :::
 
 #### Once
@@ -590,7 +594,9 @@ We preconfigured two strategies for you: `default` and `no_retry`.
 ```php
 use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 
 #[Subscriber('welcome_email', RunMode::FromNow)]
 #[RetryStrategy('default')]
@@ -615,6 +621,7 @@ To achieve this, you can implement the `BatchableSubscriber` interface.
 ```php
 use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 
 #[Projector('profile_1')]
@@ -703,7 +710,7 @@ The subscription engine manages individual subscribers and keeps the subscriptio
 Internally, the subscription engine does this by tracking where each subscriber is in the event stream
 and keeping all subscriptions up to date.
 
-He also takes care that new subscribers are booted and old ones are removed again.
+It also takes care that new subscribers are booted and old ones are removed again.
 If something breaks, the subscription engine marks the individual subscriptions as faulty and retries them.
 
 :::tip
@@ -814,7 +821,7 @@ There are two options to reactivate the subscription:
 
 If an error occurs in a subscriber, then the subscription is set to Error.
 This can happen in the create process, in the boot process or in the run process.
-This subscription will then no longer boot/run until the subscription is reactivate or retried.
+This subscription will then no longer boot/run until the subscription is reactivated or retried.
 
 The subscription engine has a retry strategy to retry subscriptions that have an error.
 It tries to reactivate the subscription after a certain time and a certain number of attempts.
@@ -864,12 +871,14 @@ Then it loads with a filter only the relevant messages.
 
 ```php
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
+use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 
 /**
  * @var Store $store
  * @var EventMetadataFactory $eventMetadataFactory
- * @var SubscriberRepository $subscriberRepository
+ * @var SubscriberAccessorRepository $subscriberRepository
  */
 $messageLoader = new EventFilteredStoreMessageLoader(
     $store,
@@ -942,7 +951,7 @@ $schemaDirector = new DoctrineSchemaDirector(
 );
 ```
 :::note
-You can find more about schema configurator [here](store.md)
+You can find more about the schema configurator in the [store](store.md) documentation.
 :::
 
 ### Retry Strategy
@@ -1004,7 +1013,7 @@ This is what our default configuration looks like if you do not define the retry
 :::
 
 :::tip
-You can change the default retry strategy by define the name in the constructor as second parameter.
+You can change the default retry strategy by defining the name in the constructor as second parameter.
 :::
 
 ### Cleanup Handler
@@ -1133,6 +1142,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+use Psr\Log\LoggerInterface;
 
 /**
  * @var MessageLoader $messageLoader
@@ -1171,7 +1181,7 @@ You can use the `CatchUpSubscriptionEngine` in your tests to process the events 
 :::
 
 :::note
-Learn more about the worker [here](./cli#subscription-commands).
+Learn more about the worker in the [subscription commands](cli.md#subscription-commands) documentation.
 :::
 
 ### Throw on error Subscription Engine
@@ -1188,13 +1198,13 @@ $throwOnErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscripti
 ```
 :::warning
 This is only for testing or development. Don't use it in production.
-The subscription engine has an build in retry strategy to retry subscriptions that have failed.
+The subscription engine has a built-in retry strategy to retry subscriptions that have failed.
 :::
 
 ### Run Subscription Engine after save
 
 You can trigger the subscription engine after calling the `save` method on the repository.
-This means that a worker to run the subscriptions are not needed.
+This means that a worker to run the subscriptions is not needed.
 
 ```php
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
@@ -1205,7 +1215,7 @@ use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineReposi
  * @var SubscriptionEngine $subscriptionEngine
  * @var RepositoryManager $defaultRepositoryManager
  */
-$eventBus = new RunSubscriptionEngineRepositoryManager(
+$repositoryManager = new RunSubscriptionEngineRepositoryManager(
     $defaultRepositoryManager,
     $subscriptionEngine,
     ['id1', 'id2'], // filter subscribers by id
@@ -1220,7 +1230,7 @@ Internally, the events are saved in a transaction to ensure data consistency.
 :::
 
 :::note
-More about repository manager and repository can be found [here](repository.md).
+More about the repository manager can be found in the [repository](repository.md) documentation.
 :::
 
 :::tip

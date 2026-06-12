@@ -33,7 +33,8 @@ To manage your subscriptions there are the following cli commands.
 
 * SubscriptionBootCommand: `event-sourcing:subscription:boot`
 * SubscriptionPauseCommand: `event-sourcing:subscription:pause`
-* SubscriptionReactiveCommand: `event-sourcing:subscription:reactive`
+* SubscriptionReactivateCommand: `event-sourcing:subscription:reactivate`
+* SubscriptionRefreshCommand: `event-sourcing:subscription:refresh`
 * SubscriptionRemoveCommand: `event-sourcing:subscription:remove`
 * SubscriptionRunCommand: `event-sourcing:subscription:run`
 * SubscriptionSetupCommand: `event-sourcing:subscription:setup`
@@ -41,7 +42,7 @@ To manage your subscriptions there are the following cli commands.
 * SubscriptionTeardownCommand: `event-sourcing:subscription:teardown`
 
 :::note
-You can find out more about subscriptions [here](subscription.md).
+You can find out more about [subscriptions](subscription.md).
 :::
 
 ## Inspector commands

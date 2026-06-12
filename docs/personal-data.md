@@ -72,6 +72,8 @@ The default fallback value is `null`.
 You can change this by setting the `fallback` parameter or using the `fallbackCallable` parameter.
 
 ```php
+use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\Hydrator\Attribute\DataSubjectId;
 use Patchlevel\Hydrator\Attribute\PersonalData;
 
 final class ProfileChanged
@@ -143,8 +145,8 @@ $schemaDirector = new DoctrineSchemaDirector(
 Now we have to put the whole thing together in a Personal Data Payload Cryptographer.
 
 ```php
-use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyStore;
 use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
+use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
 
 /** @var CipherKeyStore $cipherKeyStore */
 $cryptographer = PersonalDataPayloadCryptographer::createWithDefaultSettings($cipherKeyStore);
@@ -168,7 +170,7 @@ DefaultEventSerializer::createFromPaths(
 );
 ```
 :::note
-More information about the events can be found [here](events.md).
+More information can be found in the [events](events.md) documentation.
 :::
 
 ### Snapshot Store Integration
@@ -188,7 +190,7 @@ $snapshotStore = DefaultSnapshotStore::createDefault(
 );
 ```
 :::note
-More information about the snapshot store can be found [here](snapshots.md).
+More information can be found in the [snapshots](snapshots.md) documentation.
 :::
 
 :::success
