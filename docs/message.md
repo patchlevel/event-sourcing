@@ -97,27 +97,33 @@ use Patchlevel\EventSourcing\Message\Message;
 /** @var Message $message */
 $message->header(ApplicationHeader::class);
 ```
-## Pipe
+## Stream
 
-The `Pipe` is a construct that allows you to chain multiple translators.
+A `Stream` wraps an iterable of messages and allows you to chain multiple translators with `transform`.
 This can be used to manipulate, filter or expand messages or events.
 This can be used for anti-corruption layers, data migration, or to fix errors in the event stream.
 
 ```php
-use Patchlevel\EventSourcing\Message\Pipe;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Message\Translator\ExcludeEventTranslator;
 use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 
-$messages = new Pipe(
-    $messages,
+$stream = (new Stream($messages))->transform(
     new ExcludeEventTranslator([ProfileCreated::class]),
     new RecalculatePlayheadTranslator(),
 );
 
-foreach ($messages as $message) {
+foreach ($stream as $message) {
     // do something with the message
 }
 ```
+
+:::tip
+A `Stream` is also what every store returns from its `load` method, so you can apply the same
+transformations to the messages you read from the store. Besides iterating, a `Stream` offers
+`toList()`, `toArray()` and `chunk()` to consume the messages.
+:::
+
 ## Translator
 
 Translator can be used to manipulate, filter or expand messages or events.
