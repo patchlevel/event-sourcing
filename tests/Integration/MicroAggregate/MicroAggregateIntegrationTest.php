@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
@@ -76,7 +77,7 @@ final class MicroAggregateIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
@@ -142,7 +143,7 @@ final class MicroAggregateIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');

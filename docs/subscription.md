@@ -1142,7 +1142,8 @@ $subscriberAccessorRepository = new MetadataSubscriberAccessorRepository([
 Now we can create the subscription engine and plug together the necessary services.
 The message loader is needed to load the messages, the Subscription Store to store the subscription state
 and we need the subscriber accessor repository. Optionally, we can also pass a retry strategy.
-Finally, if we want to use the cleanup feature, we need to pass the cleanup handlers.
+If we want to use the cleanup feature, we need to pass the cleanup handlers.
+Finally, we can pass an event dispatcher to hook into the engine with own listeners.
 
 ```php
 use Doctrine\DBAL\Connection;
@@ -1153,6 +1154,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * @var MessageLoader $messageLoader
@@ -1169,6 +1171,34 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
     $retryStrategyRepository, // optional, if not set the default retry strategy is used
     $logger, // optional
     new DefaultCleaner([new DbalCleanupTaskHandler($projectionConnection)]), // optional but required if you want to use the cleanup feature
+    new EventDispatcher(), // optional, to hook into the engine with own listeners
+);
+```
+### Engine Events
+
+The `DefaultSubscriptionEngine` dispatches events during processing on the passed event dispatcher.
+You can register your own listeners to hook into the engine, for example for logging, metrics or batching.
+
+| Event                    | Description                                                          |
+|--------------------------|----------------------------------------------------------------------|
+| `OnCommand`              | A command was passed to the engine for execution                     |
+| `OnSubscriptions`        | The engine determined the subscriptions for the current command      |
+| `OnHandleMessage`        | A message is about to be passed to a subscriber                      |
+| `OnHandleMessageSuccess` | A message was successfully handled by a subscriber                   |
+| `OnHandleMessageError`   | An error occurred while a subscriber was handling a message          |
+| `OnProcessingFinished`   | The engine finished processing the stream (ended or limit reached)   |
+| `OnResult`               | The engine finished the command and returns the result               |
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+
+$eventDispatcher = new EventDispatcher();
+$eventDispatcher->addListener(
+    OnHandleMessageError::class,
+    static function (OnHandleMessageError $event): void {
+        // own error handling like logging or metrics
+    },
 );
 ```
 ### Catch up Subscription Engine
@@ -1249,15 +1279,20 @@ Especially in combination with the `CatchUpSubscriptionEngine` and `ThrowOnError
     
 ## Usage
 
-The Subscription Engine has a few methods needed to use it effectively.
-A `SubscriptionEngineCriteria` can be passed to all of these methods to filter the respective subscriptions.
+The Subscription Engine is controlled with command objects.
+Each command is passed to the `execute` method, which returns a `Result` with the errors that occurred.
+Every command accepts `ids` and `groups` parameters to filter the subscriptions the command should be applied to.
 
 ```php
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 
-$criteria = new SubscriptionEngineCriteria(
-    ids: ['profile_1', 'welcome_email'],
-    groups: ['default'],
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(
+    new Run(
+        ids: ['profile_1', 'welcome_email'],
+        groups: ['default'],
+    ),
 );
 ```
 
@@ -1272,52 +1307,62 @@ In this step, the subscription engine also tries to call the `setup` method if a
 After the setup process, the subscription is set to booting or active.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->setup(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Setup());
 ```
 
 :::tip
-You can skip the booting step with the second boolean parameter named `skipBooting`.
+You can skip the booting step with the `skipBooting` parameter: `new Setup(skipBooting: true)`.
 :::
     
 ### Boot
 
-You can boot the subscriptions with the `boot` method.
+You can boot the subscriptions with the `Boot` command.
 All booting subscriptions will catch up to the current event stream.
 After the boot process, the subscription is set to active or finished.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->boot(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Boot());
 ```
+
+:::tip
+You can limit the number of processed messages with the `limit` parameter: `new Boot(limit: 100)`.
+:::
+    
 ### Run
 
 All active subscriptions are continued and updated here.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->run(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Run());
 ```
+
+:::tip
+You can limit the number of processed messages with the `limit` parameter: `new Run(limit: 100)`.
+:::
+    
 ### Teardown
 
 If subscriptions are detached, they can be cleaned up here.
 The subscription engine also tries to call the `teardown` method if available.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->teardown(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Teardown());
 ```
 ### Remove
 
@@ -1326,11 +1371,11 @@ An attempt is made to call the `teardown` method if available.
 But the entry will still be removed if it doesn't work.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->remove(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Remove());
 ```
 ### Reactivate
 
@@ -1338,11 +1383,11 @@ If a subscription had an error or is outdated, you can reactivate it.
 As a result, the subscription gets in the last status again.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Reactivate;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->reactivate(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Reactivate());
 ```
 ### Pause
 
@@ -1351,15 +1396,28 @@ The subscription will then no longer be managed by the subscription engine.
 You can reactivate the subscription if you want so that it continues.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Pause;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->pause(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Pause());
+```
+### Refresh
+
+If you change the metadata of a subscriber in the code (e.g. `runMode`, `group` or `cleanupTasks`),
+you can use the `Refresh` command to update the existing subscriptions in the store.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Refresh;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(new Refresh());
 ```
 ### Status
 
 To get the current status of all subscriptions, you can get them using the `subscriptions` method.
+A `SubscriptionEngineCriteria` can be passed to filter the subscriptions.
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
@@ -1371,18 +1429,6 @@ $subscriptions = $subscriptionEngine->subscriptions(new SubscriptionEngineCriter
 foreach ($subscriptions as $subscription) {
     echo $subscription->status()->value;
 }
-```
-### Refresh
-
-If you change the metadata of a subscriber in the code (e.g. `runMode`, `group` or `cleanupTasks`),
-you can use the `refresh` method to update the existing subscriptions in the store.
-
-```php
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
-
-/** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->refresh(new SubscriptionEngineCriteria());
 ```
 ## Learn more
 

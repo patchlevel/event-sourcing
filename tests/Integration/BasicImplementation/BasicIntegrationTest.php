@@ -24,6 +24,7 @@ use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
@@ -100,7 +101,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
@@ -166,7 +167,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
@@ -300,7 +301,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
 
@@ -380,7 +381,7 @@ final class BasicIntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
 

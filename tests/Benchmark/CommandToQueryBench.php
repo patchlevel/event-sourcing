@@ -18,6 +18,7 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
@@ -89,7 +90,7 @@ final class CommandToQueryBench
         $schemaDirector = new DoctrineSchemaDirector($connection, $store);
 
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $this->updateId = ProfileId::generate();
         $this->commandBus->dispatch(new CreateProfile($this->updateId, 'Peter'));

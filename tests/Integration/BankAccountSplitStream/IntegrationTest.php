@@ -13,6 +13,9 @@ use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
@@ -74,8 +77,8 @@ final class IntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->setup();
-        $engine->boot();
+        $engine->execute(new Setup());
+        $engine->execute(new Boot());
 
         $bankAccountId = AccountId::generate();
         $bankAccount = BankAccount::create($bankAccountId, 'John');
@@ -83,7 +86,7 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(500);
         $repository->save($bankAccount);
 
-        $engine->run();
+        $engine->execute(new Run());
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_bank_account WHERE id = ?',
@@ -122,7 +125,7 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(200);
         $repository->save($bankAccount);
 
-        $engine->run();
+        $engine->execute(new Run());
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_bank_account WHERE id = ?',
@@ -189,8 +192,8 @@ final class IntegrationTest extends TestCase
         );
 
         $schemaDirector->create();
-        $engine->setup();
-        $engine->boot();
+        $engine->execute(new Setup());
+        $engine->execute(new Boot());
 
         $bankAccountId = AccountId::generate();
         $bankAccount = BankAccount::create($bankAccountId, 'John');
@@ -198,7 +201,7 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(500);
         $repository->save($bankAccount);
 
-        $engine->run();
+        $engine->execute(new Run());
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_bank_account WHERE id = ?',
@@ -237,7 +240,7 @@ final class IntegrationTest extends TestCase
         $bankAccount->addBalance(200);
         $repository->save($bankAccount);
 
-        $engine->run();
+        $engine->execute(new Run());
 
         $result = $this->connection->fetchAssociative(
             'SELECT * FROM projection_bank_account WHERE id = ?',

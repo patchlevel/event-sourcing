@@ -339,6 +339,7 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 
@@ -358,7 +359,7 @@ $schemaDirector = new DoctrineSchemaDirector(
 $schemaDirector->create();
 
 /** @var SubscriptionEngine $engine */
-$engine->setup(skipBooting: true);
+$engine->execute(new Setup(skipBooting: true));
 ```
 
 :::note
