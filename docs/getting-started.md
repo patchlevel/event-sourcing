@@ -178,7 +178,7 @@ final class HotelProjector
     /** @return list<array{id: string, name: string, guests: int}> */
     public function getHotels(): array
     {
-        return $this->db->fetchAllAssociative(sprintf('SELECT id, name, guests FROM %s;'), self::TABLE);
+        return $this->db->fetchAllAssociative(sprintf('SELECT id, name, guests FROM %s;', self::TABLE));
     }
 
     #[Subscribe(HotelCreated::class)]
