@@ -13,7 +13,7 @@ powered by the reliable Doctrine ecosystem and focused on developer experience.
 * Versioned and managed lifecycle of [subscriptions](subscription.md) like projections and processors
 * Safe usage of [Personal Data](personal-data.md) with crypto-shredding
 * Smooth [upcasting](upcasting.md) of old events
-* Simple setup with [scheme management](store.md) and [doctrine migration](store.md)
+* Simple setup with [schema management](store.md) and [doctrine migration](store.md)
 * Built in [cli commands](cli.md) with [symfony](https://symfony.com/)
 * and much more...
 
@@ -28,5 +28,5 @@ composer require patchlevel/event-sourcing
 * [Psalm](https://github.com/patchlevel/event-sourcing-psalm-plugin)
 
 :::tip
-Start with the [quickstart](./getting-started.md) to get a feeling for the library.
-:::    
+Start with the [quickstart](getting-started.md) to get a feeling for the library.
+:::

@@ -1,7 +1,7 @@
 # Repository
 
 A `repository` takes care of storing and loading the `aggregates`.
-He is also responsible for building [messages](message.md) from the events
+It is also responsible for building [messages](message.md) from the events
 and optionally dispatching them to the event bus.
 
 ## Create a repository
@@ -31,11 +31,10 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-
 :::note
 The same repository instance is always returned for a specific aggregate.
 :::
-    
+
 ### Event Bus
 
 You can pass an event bus to the `DefaultRepositoryManager` to dispatch events synchronously.
@@ -61,22 +60,20 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-
 :::warning
 If you use the event bus, you should be aware that the events are dispatched synchronously.
 You may encounter [at least once](https://softwaremill.com/message-delivery-and-deduplication-strategies/) problems.
 :::
-    
+
 :::note
-You can find out more about event bus [here](event-bus.md).
+You can find out more about the [event bus](event-bus.md).
 :::
 
 :::tip
-In most cases it is better to react to events asynchronously, 
-that's why we recommend the subscription engine.
-More information can be found [here](subscription.md).
+In most cases it is better to react to events asynchronously,
+that's why we recommend the [subscription engine](subscription.md).
 :::
-    
+
 ### Snapshots
 
 Loading events for an aggregate is superfast.
@@ -108,9 +105,9 @@ $repositoryManager = new DefaultRepositoryManager(
 $repository = $repositoryManager->get(Profile::class);
 ```
 :::note
-You can find out more about snapshots [here](snapshots.md).
+You can find out more about [snapshots](snapshots.md).
 :::
-    
+
 ### Decorator
 
 If you want to add more metadata to the message, like e.g. an application id, then you can use decorators.
@@ -136,15 +133,14 @@ $repositoryManager = new DefaultRepositoryManager(
 
 $repository = $repositoryManager->get(Profile::class);
 ```
-
 :::note
-You can find out more about message decorator [here](message-decorator.md).
+You can find out more about the [message decorator](message-decorator.md).
 :::
-    
+
 :::tip
 If you have multiple decorators, you can use the `ChainMessageDecorator` to chain them.
 :::
-    
+
 ## Use the repository
 
 Each `repository` has three methods that are responsible for loading an `aggregate`,
@@ -154,7 +150,7 @@ saving it or checking whether it exists.
 
 An `aggregate` can be `saved`.
 All new events that have not yet been written to the database are fetched from the aggregate.
-These events are then also append to the database.
+These events are then appended to the database.
 
 ```php
 use Patchlevel\EventSourcing\Identifier\Uuid;
@@ -166,16 +162,15 @@ $profile = Profile::create($id, 'david.badura@patchlevel.de');
 /** @var Repository $repository */
 $repository->save($profile);
 ```
-
 :::warning
 All events are written to the database with one transaction in order to ensure data consistency.
-If an exception occurs during the save process, 
+If an exception occurs during the save process,
 the transaction is rolled back and the aggregate is not valid anymore.
 You can not save the aggregate again and you need to load it again.
 :::
-    
+
 :::note
-Due to the nature of the aggregate having a playhead, 
+Due to the nature of the aggregate having a playhead,
 we have a unique constraint that ensures that no race condition happens here.
 An `AggregateOutdated` exception is thrown if a conflict occurs.
 :::
@@ -199,13 +194,12 @@ $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
 /** @var Repository $repository */
 $profile = $repository->load($id);
 ```
-
 :::warning
 When the method is called, the aggregate is always reloaded and rebuilt from the database.
 :::
-    
+
 :::note
-You can only fetch one aggregate at a time and don't do any complex queries either. 
+You can only fetch one aggregate at a time and don't do any complex queries either.
 Projections are used for this purpose.
 :::
 
@@ -230,12 +224,11 @@ if ($repository->has($id)) {
     // ...
 }
 ```
-
 :::note
-The query is fast and does not load any event. 
-This means that the state of the aggregate is not rebuild either.
+The query is fast and does not load any event.
+This means that the state of the aggregate is not rebuilt either.
 :::
-    
+
 ## Custom Repository
 
 In clean code you want to have explicit type hints for the repositories

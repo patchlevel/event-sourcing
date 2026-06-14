@@ -14,7 +14,7 @@ jobs:
     services:
       postgres:
         # Docker Hub image
-        image: "postgres:18.3"
+        image: "postgres:18.4"
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: "Install PHP"
-        uses: "shivammathur/setup-php@2.37.0"
+        uses: "shivammathur/setup-php@2.37.2"
         with:
           coverage: none
           php-version: "${{ matrix.php-version }}"
@@ -78,7 +78,7 @@ jobs:
           cat bench.txt >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
 
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         if: ${{ success() || (failure() && steps.bench.conclusion == 'failure') }}
         with:
           script: |

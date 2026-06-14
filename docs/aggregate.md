@@ -5,16 +5,16 @@ One main difference is that we don't save the current state, but only the indivi
 This means it is always possible to build the current state again from the events.
 
 :::note
-The term aggregate itself comes from DDD and has nothing to do with event sourcing and can be used independently as a pattern. 
-You can find out more about Aggregates [here](https://martinfowler.com/bliki/DDD_Aggregate.html).
+The term aggregate itself comes from DDD and has nothing to do with event sourcing and can be used independently as a pattern.
+You can find out more about aggregates in [Martin Fowler's article about the DDD Aggregate pattern](https://martinfowler.com/bliki/DDD_Aggregate.html).
 :::
- 
+
 An aggregate must fulfill a few points so that we can use it in event-sourcing:
 
 * It must implement the `AggregateRoot` interface.
 * It needs a unique identifier.
 * It needs to provide the current playhead.
-* It must make changes to his state available as events.
+* It must make changes to its state available as events.
 * And rebuild/catchup its state from the events.
 
 We can implement this ourselves, or use the `BasicAggregateRoot` implementation that already brings everything with it.
@@ -46,12 +46,12 @@ final class Profile extends BasicAggregateRoot
 ```
 :::warning
 The aggregate is not yet finished and has only been built to the point that you can instantiate the object.
-:::    
+:::
 
 :::tip
-Find out more about aggregate IDs [here](./identifier.md).
-:::   
- 
+Find out more about [aggregate IDs](identifier.md).
+:::
+
 We use a so-called named constructor here to create an object of the AggregateRoot.
 The constructor itself is protected and cannot be called from outside.
 But it is possible to define different named constructors for different use-cases like `import`.
@@ -80,7 +80,7 @@ final class CreateProfileHandler
 If you look in the database now, you would see that nothing has been saved.
 This is because only events are stored in the database and as long as no events exist,
 nothing happens.
-:::    
+:::
 
 :::tip
 A **command bus** system is not necessary, only recommended.
@@ -109,7 +109,7 @@ final class ProfileRegistered
 ```
 
 :::note
-You can find out more about events [here](./events.md).
+You can find out more about [events](events.md).
 :::
 
 After we have defined the event, we have to adapt the profile aggregate:
@@ -152,7 +152,7 @@ final class Profile extends BasicAggregateRoot
 :::tip
 Prefixing the apply methods with "apply" improves readability.
 :::
-    
+
 In our named constructor `register` we have now created the event and recorded it with the method `recordThat`.
 The aggregate remembers all new recorded events in order to save them later.
 At the same time, a defined `apply` method is executed directly so that we can change our state.
@@ -164,7 +164,7 @@ In there we then change the state of the aggregate by filling the properties wit
 :::success
 The aggregate is now ready to be saved!
 :::
-    
+
 ### Modify an aggregate
 
 In order to change the state of the aggregates afterwards, only further events have to be defined.
@@ -186,7 +186,7 @@ final class NameChanged
 :::note
 Events should best be written in the past, as they describe a state that has happened.
 :::
-    
+
 After we have defined the event, we can define a new public method called `changeName` to change the profile name.
 This method then creates the event `NameChanged` and records it:
 
@@ -262,12 +262,12 @@ final class ChangeNameHandler
 
 :::success
 Our aggregate can now be changed and saved.
-:::  
-  
-:::note
-You can read more about Repository [here](./repository.md).
 :::
-    
+
+:::note
+You can read more about the [repository](repository.md).
+:::
+
 Here the aggregate is loaded from the `repository` by fetching all events from the database.
 These events are then executed again with the `apply` methods in order to rebuild the current state.
 All of this happens automatically in the `load` method.
@@ -311,14 +311,14 @@ final class Profile extends BasicAggregateRoot
 You don't necessarily need to define multiple `Apply` attributes with the event class
 if you define the event types in the method using a union type.
 :::
-    
-    
+
+
 ## Suppress missing apply methods
 
 Sometimes you have events that do not change the state of the aggregate itself,
 but are still recorded for the future or to subscribe for processor and projection.
 So that you are not forced to write an apply method for it,
-you can suppress the missing apply exceptions these events with the `SuppressMissingApply` attribute.
+you can suppress the missing apply exceptions for these events with the `SuppressMissingApply` attribute.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -367,12 +367,12 @@ final class Profile extends BasicAggregateRoot
 :::warning
 When all events are suppressed, debugging becomes more difficult if you forget an apply method.
 :::
-    
+
 ## Shared apply context
 
-When working with [micro-aggregates](./aggregate.md#micro-aggregates),
-it’s common that events are applied by different aggregates.
-As a result, an aggregate may receive events it does not handle, which can lead to multiple “missing apply” warnings.
+When working with [micro-aggregates](aggregate.md#micro-aggregates),
+it's common that events are applied by different aggregates.
+As a result, an aggregate may receive events it does not handle, which can lead to multiple "missing apply" warnings.
 
 The `SharedApplyContext` attribute allows you to declare that several aggregates share the same apply context.
 With this configuration, a missing apply is only reported if none of the shared aggregates handle the event.
@@ -399,8 +399,8 @@ final class PersonalInformation extends BasicAggregateRoot
 :::warning
 You need to define the `SharedApplyContext` attribute on all aggregates that share the apply context.
 :::
-    
-    
+
+
 ## Stream Name
 
 The stream name is the name of the stream in the event store.
@@ -438,9 +438,9 @@ final class GuestList extends BasicAggregateRoot
 ```
 
 :::tip
-You can find more about splitting aggregates [here](./aggregate.md#splitting-aggregates).
+You can find more about [splitting aggregates](aggregate.md#splitting-aggregates).
 :::
-    
+
 ## Business rules
 
 Usually, aggregates have business rules that must be observed. Like there may not be more than 10 people in a group.
@@ -466,7 +466,7 @@ final class Profile extends BasicAggregateRoot
     public function changeName(string $name): void
     {
         if (strlen($name) < 3) {
-            throw new NameIsToShortException($name);
+            throw new NameIsTooShortException($name);
         }
 
         $this->recordThat(new NameChanged($name));
@@ -483,8 +483,8 @@ final class Profile extends BasicAggregateRoot
 :::danger
 Validations during "apply" should not happen, they will break the rebuilding of the aggregate!
 Instead validate the data *before* the event will be recorded.
-::: 
-   
+:::
+
 We have now ensured that this rule takes effect when a name is changed with the method `changeName`.
 But when we create a new profile this rule does not currently apply.
 
@@ -497,7 +497,7 @@ final class Name
     public function __construct(private string $value)
     {
         if (strlen($value) < 3) {
-            throw new NameIsToShortException($value);
+            throw new NameIsTooShortException($value);
         }
     }
 
@@ -571,19 +571,19 @@ final class NameChanged
 You need to create a normalizer for the `Name` value object.
 So the payload must be serializable and unserializable as json.
 :::
-    
+
 :::note
-You can find out more about normalizer [here](./normalizer.md).
+You can find out more about [normalizer](normalizer.md).
 :::
-    
+
 There are also cases where business rules have to be defined depending on the aggregate state.
 Sometimes also from states, which were changed in the same method.
 This is not a problem, as the `apply` methods are always executed immediately.
 
 In the next case we throw an exception if the hotel is already overbooked.
 Besides that, we record another event `FullyBooked`, if the hotel is fully booked with the last booking.
-With this event we could [notify](./subscription.md) external systems
-or fill a [projection](./subscription.md) with fully booked hotels.
+With this event we could [notify](subscription.md) external systems
+or fill a [projection](subscription.md) with fully booked hotels.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -628,7 +628,7 @@ final class Hotel extends BasicAggregateRoot
 An aggregate should always be deterministic. In other words, whenever I execute methods on the aggregate,
 I always get the same result. This also makes testing much easier.
 
-But that often doesn't seem to be possible, e.g. if you want to save a createAt date.
+But that often doesn't seem to be possible, e.g. if you want to save a createdAt date.
 But you can pass this information by yourself.
 
 ```php
@@ -688,9 +688,9 @@ Now you can pass the `SystemClock` to determine the current time.
 Or for test purposes the `FrozenClock`, which always returns the same time.
 
 :::note
-You can find out more about clock [here](./clock.md).
+You can find out more about the [clock](clock.md).
 :::
-    
+
 ## Splitting Aggregates
 
 In some cases, it makes sense to split an aggregate into several smaller aggregates.
@@ -796,14 +796,14 @@ This feature is still experimental and may change in the future.
 Use it with caution.
 :::
 
-Sometimes you want to be able to access an aggregate even if it has not yet been created in the system. 
-In this case, the aggregate should be automatically initialized if it cannot be found in the store. 
+Sometimes you want to be able to access an aggregate even if it has not yet been created in the system.
+In this case, the aggregate should be automatically initialized if it cannot be found in the store.
 To achieve this, the aggregate must mark the initialization method with the `AutoInitialize` attribute.
 The method must be static, receives the aggregate ID as an argument and must return an instance of the aggregate.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\AutoInitialize;

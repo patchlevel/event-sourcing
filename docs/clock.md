@@ -2,8 +2,8 @@
 
 We are using the clock to get the current datetime. This is needed to create the `recorded_on` datetime for the event stream.
 We have two implementations of the clock, one for the production and one for the tests.
-But you can also create your own implementation that is PSR-20 compatible.
-For more information see [here](https://github.com/php-fig/fig-standards/blob/master/proposed/clock.md).
+But you can also create your own implementation that is compatible with the
+[PSR-20 clock specification](https://www.php-fig.org/psr/psr-20/).
 
 ## SystemClock
 
@@ -61,11 +61,10 @@ $clock = new FrozenClock($firstDate);
 
 $clock->sleep(10); // sleep 10 seconds
 ```
-
 :::note
-The instance of the frozen datetime will be cloned internally, so the it's not the same instance but equals.
+The instance of the frozen datetime will be cloned internally, so it's not the same instance but equal.
 :::
-    
+
 ## Learn more
 
 * [How to test with datetime](testing.md)

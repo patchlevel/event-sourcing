@@ -15,7 +15,7 @@ $message = Message::create(new NameChanged('foo'));
 You don't have to create the message yourself, it is automatically created, saved and dispatched in
 the [repository](repository.md).
 :::
-    
+
 You can add a header using `withHeader`:
 
 ```php
@@ -35,7 +35,7 @@ $message = Message::create(new NameChanged('foo'))
 :::note
 The message object is immutable. It creates a new instance with the new data.
 :::
-    
+
 You can also access the headers:
 
 ```php
@@ -84,11 +84,11 @@ $message = Message::create(new NameChanged('foo'))
 The header needs to be serializable. The library uses the hydrator to serialize and deserialize the headers.
 So you can add normalize attributes to the properties if needed.
 :::
-    
+
 :::note
 You can read about how to pass additional headers to the message object in the [message decorator](message-decorator.md) docs.
 :::
-    
+
 You can also access your custom headers:
 
 ```php
@@ -166,7 +166,7 @@ $translator = new FilterEventTranslator(static function (object $event) {
 ```
 ### Exclude Events with Header
 
-With this translator you can exclude event with specific header.
+With this translator you can exclude events with a specific header.
 
 ```php
 use Patchlevel\EventSourcing\Message\Translator\ExcludeEventWithHeaderTranslator;
@@ -180,6 +180,7 @@ With this translator you can only allow events with a specific header.
 
 ```php
 use Patchlevel\EventSourcing\Message\Translator\IncludeEventWithHeaderTranslator;
+use Patchlevel\EventSourcing\Store\ArchivedHeader;
 
 $translator = new IncludeEventWithHeaderTranslator(ArchivedHeader::class);
 ```
@@ -210,23 +211,22 @@ $translator = new UntilEventTranslator(new DateTimeImmutable('2020-01-01 12:00:0
 
 This translator can be used to recalculate the playhead.
 The playhead must always be in ascending order so that the data is valid.
-Some translator can break this order and the translator `RecalculatePlayheadTranslator` can fix this problem.
+Some translators can break this order and the `RecalculatePlayheadTranslator` can fix this problem.
 
 ```php
 use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 
 $translator = new RecalculatePlayheadTranslator();
 ```
-
 :::warning
-The `RecalculatePlayheadTranslator` is and need to be stateful.
+The `RecalculatePlayheadTranslator` is stateful and needs to be.
 You can't reuse the translator for multiple streams.
 :::
-    
+
 :::tip
 If you migrate your event stream, you can use the `RecalculatePlayheadTranslator` to fix the playhead.
 :::
-    
+
 ### Chain
 
 If you want to group your translator, you can use one or more `ChainTranslator`.
@@ -246,7 +246,7 @@ $translator = new ChainTranslator([
 You can also write a custom translator. The translator gets a message and can return `n` messages.
 There are the following possibilities:
 
-* Return only the message to an array to leave it unchanged.
+* Return only the message in an array to leave it unchanged.
 * Put another message in the array to swap the message.
 * Return an empty array to remove the message.
 * Or return multiple messages to enrich the stream.
@@ -287,12 +287,12 @@ final class SplitProfileCreatedTranslator implements Translator
 :::warning
 Since we changed the number of messages, we have to recalculate the playhead.
 :::
-    
+
 :::tip
-You don't have to migrate the store directly for every change, 
+You don't have to migrate the store directly for every change,
 but you can also use the [upcasting](upcasting.md) feature.
 :::
-    
+
 ## Reducer
 
 The `Reducer` is a construct that allows you to reduce messages to a state.
@@ -306,7 +306,7 @@ The initial state is the state that is used at the beginning of the reduction.
 use Patchlevel\EventSourcing\Message\Reducer;
 
 $state = (new Reducer())
-    ->initialState(['count' => 0])
+    ->initState(['count' => 0])
     ->reduce($messages); // state is ['count' => 0]
 ```
 ### When
@@ -319,7 +319,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Reducer;
 
 $state = (new Reducer())
-    ->initialState([
+    ->initState([
         'names' => [],
     ])
     ->when(

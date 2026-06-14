@@ -30,7 +30,7 @@ final class ProfileCreated
 :::warning
 The payload must be serializable and unserializable as json.
 :::
-    
+
 :::tip
 An event should be named in the past because it has already happened.
 
@@ -40,7 +40,7 @@ Here are some examples:
 * `profile.created`
 * `profile.name_changed`
 * `hotel.guest_checked_out`
-:::
+  :::
 
 ## Alias
 
@@ -60,13 +60,13 @@ When saving, the name will always be used. However, when loading, aliases will a
 :::note
 In the database, the name of the event is always stored,
 allowing the class to be renamed without encountering any issues.
-:::    
+:::
 
 :::tip
 If you want to make significant changes to an event,
 you can take a look at the [Upcaster](upcasting.md).
 :::
-    
+
 ## Serializer
 
 So that the events can be saved in the database, they must be serialized and deserialized.
@@ -108,16 +108,15 @@ final class ProfileCreated
     }
 }
 ```
-
 :::tip
-Built-in normalizers like `IdNormalizer` and `DateTimeImmutableNormalizer` can be inferred from the type hint 
+Built-in normalizers like `IdNormalizer` and `DateTimeImmutableNormalizer` can be inferred from the type hint
 and so you don't have to specify them. If you want to configure the Normalizer, you still have to do it.
 :::
-    
+
 :::note
-You can find out more about normalizer [here](normalizer.md).    
+You can find out more about [normalizer](normalizer.md).
 :::
-    
+
 ## Event Registry
 
 The library needs to know about all events

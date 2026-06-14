@@ -5,14 +5,14 @@ For example DateTime, enums or value objects.
 Here you can use the normalizer to define how the data should be saved and loaded.
 
 :::note
-The underlying system called hydrator exists as a library. 
-You can find out more details [here](https://github.com/patchlevel/hydrator).
+The underlying system exists as a separate library.
+You can find out more details in the [hydrator](https://github.com/patchlevel/hydrator) documentation.
 :::
-    
+
 ## Usage
 
 You have a lot of options to use the normalizer.
-First of all and simplest, you can let guess the normalizer from the type hint.
+First of all and simplest, you can let the hydrator guess the normalizer from the type hint.
 
 ```php
 final class DTO
@@ -32,7 +32,7 @@ Most built-in normalizers can be inferred from the type hint:
 `ObjectNormalizer` will not be inferred. You have to specify it yourself.
 This should prevent you from accidentally serializing objects that you don't want to serialize.
 :::
-    
+
 The other way is to specify the normalizer to the properties directly.
 This example is equivalent to the previous one.
 
@@ -76,9 +76,9 @@ final class Item
 }
 ```
 :::note
-With the `ObjectNormalizer`, you can seraialize and deserialize recursively.
+With the `ObjectNormalizer`, you can serialize and deserialize recursively.
 :::
-    
+
 ### Event
 
 For the event, the properties are normalized to a payload and saved in the DB at the end.
@@ -88,22 +88,21 @@ The whole thing is then loaded again from the DB and denormalized in the propert
 use Patchlevel\EventSourcing\Attribute\Event;
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 
-#[Event('hotel.create')]
-final class CreateHotel
+#[Event('hotel.created')]
+final class HotelCreated
 {
     public function __construct(
         public readonly string $name,
         #[DateTimeImmutableNormalizer]
-        public readonly DateTimeImmutable $createAt,
+        public readonly DateTimeImmutable $createdAt,
     ) {
     }
 }
 ```
-
 :::note
 If you have personal data, you can use [crypto-shredding](personal-data.md).
 :::
-    
+
 ### Aggregate
 
 For the aggregates it is very similar to the events. However, the normalizer is only used for the snapshots.
@@ -121,25 +120,24 @@ final class Hotel extends BasicAggregateRoot
 {
     private string $name;
     #[DateTimeImmutableNormalizer]
-    private DateTimeImmutable $createAt;
+    private DateTimeImmutable $createdAt;
 
     // ...
 }
 ```
-
 :::note
-You can learn more about snapshots [here](snapshots.md).
+You can learn more about [snapshots](snapshots.md).
 :::
-    
+
 ## Built-in Normalizer
 
-For some the standard cases we already offer built-in normalizers.
+For some standard cases we already offer built-in normalizers.
 
 ### Array
 
 If you have a list of objects that you want to normalize, then you must normalize each object individually.
 That's what the `ArrayNormalizer` does for you.
-In order to use the `ArrayNormaliser`, you still have to specify which normaliser should be applied to the individual
+In order to use the `ArrayNormalizer`, you still have to specify which normalizer should be applied to the individual
 objects. Internally, it basically does an `array_map` and then runs the specified normalizer on each element.
 
 ```php
@@ -152,11 +150,10 @@ final class DTO
     public array $dates;
 }
 ```
-
 :::note
 The keys from the arrays are taken over here.
 :::
-    
+
 ### DateTimeImmutable
 
 With the `DateTimeImmutable` Normalizer, as the name suggests,
@@ -171,11 +168,10 @@ final class DTO
     public DateTimeImmutable $date;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
-    
+
 You can also define the format. Either describe it yourself as a string or use one of the existing constants.
 The default is `DateTimeImmutable::ATOM`.
 
@@ -188,14 +184,13 @@ final class DTO
     public DateTimeImmutable $date;
 }
 ```
-
 :::note
 You can read about how the format is structured in the [php docs](https://www.php.net/manual/de/datetime.format.php).
 :::
-    
+
 ### DateTime
 
-The `DateTime` Normalizer works exactly like the DateTimeNormalizer. Only for DateTime objects.
+The `DateTimeNormalizer` works exactly like the `DateTimeImmutableNormalizer`. Only for DateTime objects.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\DateTimeNormalizer;
@@ -206,11 +201,10 @@ final class DTO
     public DateTime $date;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
-    
+
 You can also specify the format here. The default is `DateTime::ATOM`.
 
 ```php
@@ -222,12 +216,11 @@ final class DTO
     public DateTime $date;
 }
 ```
-
 :::warning
-It is highly recommended to only ever use DateTimeImmutable objects and the DateTimeImmutableNormalizer. 
+It is highly recommended to only ever use DateTimeImmutable objects and the DateTimeImmutableNormalizer.
 This prevents you from accidentally changing the state of the DateTime and thereby causing bugs.
 :::
-    
+
 :::note
 You can read about how the format is structured in the [php docs](https://www.php.net/manual/de/datetime.format.php).
 :::
@@ -245,11 +238,10 @@ final class DTO
     public DateTimeZone $timeZone;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
-    
+
 ### Enum
 
 Backed enums can also be normalized.
@@ -263,11 +255,10 @@ final class DTO
     public Status $status;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
-    
+
 You can also specify the enum class.
 
 ```php
@@ -293,12 +284,11 @@ final class DTO
     public Uuid $id;
 }
 ```
-
 :::tip
 You can let the hydrator guess the normalizer from the type hint.
 :::
-    
-Optional you can also define the type of the id.
+
+Optionally you can also define the type of the id.
 
 ```php
 use Patchlevel\EventSourcing\Identifier\Uuid;
@@ -324,7 +314,7 @@ final class DTO
     public ComplexObject $object;
 }
 ```
-Optional you can also define the type of the object.
+Optionally you can also define the type of the object.
 
 ```php
 use Patchlevel\Hydrator\Normalizer\ObjectNormalizer;
@@ -348,7 +338,7 @@ final class Name
     public function __construct(private string $value)
     {
         if (strlen($value) < 3) {
-            throw new NameIsToShortException($value);
+            throw new NameIsTooShortException($value);
         }
     }
 
@@ -393,11 +383,10 @@ class NameNormalizer implements Normalizer
     }
 }
 ```
-
 :::warning
 The important thing is that the result of Normalize is serializable!
 :::
-    
+
 Now we can also use the normalizer directly.
 
 ```php
@@ -407,11 +396,10 @@ final class DTO
     public Name $name;
 }
 ```
-
 :::tip
 Every normalizer, including the custom normalizer, can be used both for the events and for the snapshots.
 :::
-    
+
 Or define it on class level, so you don't have to specify it for each property.
 
 ```php
@@ -442,17 +430,16 @@ The whole thing looks like this
   "profile_name": "David"
 }
 ```
-
 :::tip
-You can also rename properties to events without having a backwards compatibility break by keeping the serialized name.
+You can also rename properties in events without having a backwards compatibility break by keeping the serialized name.
 :::
-    
+
 :::note
-NormalizedName also works for snapshots. 
-But since a snapshot is just a cache, you can also just invalidate it, 
-if you have backwards compatibility break in the property name
+NormalizedName also works for snapshots.
+But since a snapshot is just a cache, you can also just invalidate it,
+if you have a backwards compatibility break in the property name.
 :::
-    
+
 ## Ignore
 
 You can also ignore properties with the `Ignore` attribute.

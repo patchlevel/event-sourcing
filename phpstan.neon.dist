@@ -19,3 +19,8 @@ services:
 		class: Patchlevel\EventSourcing\Tests\Architecture\FinalClassesTest
 		tags:
 			- phpat.test
+
+	-
+		class: Patchlevel\EventSourcing\Tests\Architecture\LayerDependenciesTest
+		tags:
+			- phpat.test

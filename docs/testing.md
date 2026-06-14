@@ -211,17 +211,17 @@ final class ProfileTest extends AggregateRootTestCase
 ```
 
 :::note
-You can find out more about the clock [here](clock.md).
+You can find out more about the [clock](clock.md).
 :::
-    
+
 :::tip
-You can use the FreezeClock in you integration tests to test the time-based behavior of your application.
+You can use the `FrozenClock` in your integration tests to test the time-based behavior of your application.
 :::
-    
+
 ## Tests with UUID
 
 Uuids are randomly generated and can be a problem in tests.
-If you want deterministic tests, you can use the `IncrementalRamseyUuidFactory` from the library.
+If you want deterministic tests, you can use the `FakeRamseyUuidFactory` from the library.
 
 ```php
 use Patchlevel\EventSourcing\Identifier\FakeRamseyUuidFactory;
@@ -244,6 +244,6 @@ final class ProfileTest extends TestCase
 ```
 
 :::warning
-The `IncrementalRamseyUuidFactory` is only for testing purposes
+The `FakeRamseyUuidFactory` is only for testing purposes
 and supports only the version 7 what is used by the library.
-:::    
+:::

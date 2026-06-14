@@ -6,13 +6,13 @@ But if the number gets bigger at some point, then loading and rebuilding can bec
 The `snapshot` system can be used to control this.
 
 :::tip
-Use snapshots only if you have a performance problems,
+Use snapshots only if you have a performance problem,
 because it introduces additional complexity.
-    
+
 In our benchmarks we can load 10 000 events for one aggregate in 50ms.
 Of course, this can vary from system to system.
 :::
-    
+
 Normally, the events are all applied again on the aggregate in order to rebuild the current state.
 With a `snapshot`, we can shorten the way in which we temporarily save the current state of the aggregate.
 When loading it is checked whether the snapshot exists.
@@ -55,11 +55,10 @@ $repositoryManager = new DefaultRepositoryManager(
     $snapshotStore,
 );
 ```
-
 :::note
-You can read more about Repository [here](./repository.md).
+You can read more about the [repository](repository.md).
 :::
-    
+
 Next we need to tell the Aggregate to take a snapshot of it. We do this using the snapshot attribute.
 There we also specify where it should be saved.
 
@@ -100,27 +99,26 @@ final class Profile extends BasicAggregateRoot
     // ...
 }
 ```
-
 :::danger
 If anything changes in the properties of the aggregate, then the cache must be cleared.
 Or the snapshot version needs to be changed so that the previous snapshot is invalid.
 :::
-    
+
 :::warning
-In the end it the complete aggregate must be serializeable as json, also the aggregate Id.
+In the end the complete aggregate must be serializable as json, including the aggregate id.
 :::
-    
+
 :::note
 The [hydrator](https://github.com/patchlevel/hydrator) is used internally and you can use all of its features.
-You can find more about normalizer also [here](normalizer.md).
+You can find more about this in the [normalizer](normalizer.md) documentation.
 :::
-    
+
 ### Snapshot batching
 
 Since the loading of events in itself is quite fast and only becomes noticeably slower with thousands of events,
 we do not need to create a snapshot after each event. That would also have a negative impact on performance.
 Instead, we can also create a snapshot after `n` events.
-The remaining events that are not in the snapshot are then loaded from store.
+The remaining events that are not in the snapshot are then loaded from the store.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -156,19 +154,18 @@ final class Profile extends BasicAggregateRoot
     // ...
 }
 ```
-
 :::warning
 If the snapshots are discarded, a load peak can occur since the aggregates have to be rebuilt.
 You should update the snapshot version only when necessary.
 :::
-    
+
 :::tip
-If you have aggregates with a lot of events, 
-you should consider using [split streams](split-stream.md) if it make sense in your domain.
-Then the load peak is not so high anymore, 
+If you have aggregates with a lot of events,
+you should consider using [split streams](split-stream.md) if it makes sense in your domain.
+Then the load peak is not so high anymore,
 because only the events from new stream start are loaded to rebuild the aggregate.
 :::
-    
+
 ## Adapter
 
 We offer a few `SnapshotAdapter` implementations that you can use.
@@ -184,7 +181,7 @@ Here are a few listed:
 
 ### psr-6
 
-A `Psr6SnapshotAdapter`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-6/).
+A `Psr6SnapshotAdapter`, based on the [PSR-6 caching standard](https://www.php-fig.org/psr/psr-6/).
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr6SnapshotAdapter;
@@ -195,7 +192,7 @@ $adapter = new Psr6SnapshotAdapter($cache);
 ```
 ### psr-16
 
-A `Psr16SnapshotAdapter`, the associated documentation can be found [here](https://www.php-fig.org/psr/psr-16/).
+A `Psr16SnapshotAdapter`, based on the [PSR-16 caching standard](https://www.php-fig.org/psr/psr-16/).
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\Psr16SnapshotAdapter;
@@ -206,7 +203,7 @@ $adapter = new Psr16SnapshotAdapter($cache);
 ```
 ### in memory
 
-A `InMemorySnapshotAdapter` that can be used for test purposes.
+An `InMemorySnapshotAdapter` that can be used for test purposes.
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
@@ -232,9 +229,8 @@ use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
  */
 $snapshotStore->save($aggregate);
 ```
-
 :::danger
-If the state of an aggregate is saved as a snapshot without being saved to the event store (database), 
+If the state of an aggregate is saved as a snapshot without being saved to the event store (database),
 it can lead to data loss or broken aggregates!
 :::
 
@@ -256,10 +252,10 @@ If the aggregate was not found, then a `SnapshotNotFound` is thrown.
 And if the version is no longer correct and the snapshot is therefore invalid, then a `SnapshotVersionInvalid` is thrown.
 
 :::warning
-The aggregate may be in an old state as the snapshot may lag behind. 
+The aggregate may be in an old state as the snapshot may lag behind.
 You still have to bring the aggregate up to date by loading the missing events from the event store.
 :::
-    
+
 ## Learn more
 
 * [How to define aggregates](aggregate.md)

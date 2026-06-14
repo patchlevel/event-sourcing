@@ -68,7 +68,7 @@ final class EmailChanged
 :::tip
 You can use the `PersonalData` in aggregates for snapshots too.
 :::
-    
+
 If the information could not be decrypted, then a fallback value will be used.
 The default fallback value is `null`.
 You can change this by setting the `fallback` parameter or using the `fallbackCallable` parameter.
@@ -98,11 +98,11 @@ final class ProfileChanged
 :::danger
 You have to deal with this case in your business logic such as aggregates and subscriptions.
 :::
-    
+
 :::note
 The normalized data is encrypted. This means that this happens after the `extract` or before the `hydrate`.
 :::
-    
+
 ## Setup
 
 In order for the system to work, a few things have to be done.
@@ -146,7 +146,7 @@ $schemaDirector = new DoctrineSchemaDirector(
 Now we have to put the whole thing together in a Personal Data Payload Cryptographer.
 
 ```php
-use Patchlevel\EventSourcing\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
 use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
 
 /** @var CipherKeyStore $cipherKeyStore */
@@ -156,7 +156,7 @@ $cryptographer = PersonalDataPayloadCryptographer::createWithDefaultSettings($ci
 :::tip
 You can specify the cipher method with the second parameter.
 :::
-    
+
 ### Event Serializer Integration
 
 The last step is to integrate the cryptographer into the event store.
@@ -173,9 +173,9 @@ DefaultEventSerializer::createFromPaths(
 ```
 
 :::note
-More information about the events can be found [here](./events.md).
+More information can be found in the [events](events.md) documentation.
 :::
-    
+
 ### Snapshot Store Integration
 
 And for the snapshot store.
@@ -194,13 +194,13 @@ $snapshotStore = DefaultSnapshotStore::createDefault(
 ```
 
 :::note
-More information about the snapshot store can be found [here](./snapshots.md).
+More information can be found in the [snapshots](snapshots.md) documentation.
 :::
-    
+
 :::success
 Now you can save and read events with personal data.
 :::
-    
+
 ## Remove personal data
 
 To remove personal data, you can either remove the key manually or do it with a processor.

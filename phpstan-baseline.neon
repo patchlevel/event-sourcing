@@ -1,6 +1,42 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Patchlevel\\EventSourcing\\Attribute\\Processor should not depend on Patchlevel\\EventSourcing\\Subscription\\RunMode$#'
+			identifier: phpat.testAttributeCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Attribute/Processor.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Attribute\\Projector should not depend on Patchlevel\\EventSourcing\\Subscription\\RunMode$#'
+			identifier: phpat.testAttributeCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Attribute/Projector.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Attribute\\SharedApplyContext should not depend on Patchlevel\\EventSourcing\\Aggregate\\AggregateRoot$#'
+			identifier: phpat.testAttributeCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Attribute/SharedApplyContext.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Attribute\\Subscriber should not depend on Patchlevel\\EventSourcing\\Subscription\\RunMode$#'
+			identifier: phpat.testAttributeCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Attribute/Subscriber.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\CommandBus\\Handler\\UpdateAggregateHandler should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testCommandBusCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/CommandBus/Handler/UpdateAggregateHandler.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\CommandBus\\InstantRetryCommandBus should not depend on Patchlevel\\EventSourcing\\Store\\AppendConditionNotMet$#'
+			identifier: phpat.testCommandBusCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/CommandBus/InstantRetryCommandBus.php
+
+		-
 			message: '#^Cannot unset offset ''url'' on array\{application_name\?\: string, charset\?\: string, defaultTableOptions\?\: array\<string, mixed\>, driver\?\: ''ibm_db2''\|''mysqli''\|''oci8''\|''pdo_mysql''\|''pdo_oci''\|''pdo_pgsql''\|''pdo_sqlite''\|''pdo_sqlsrv''\|''pgsql''\|''sqlite3''\|''sqlsrv'', driverClass\?\: class\-string\<Doctrine\\DBAL\\Driver\>, driverOptions\?\: array\<mixed\>, host\?\: string, keepReplica\?\: bool, \.\.\.\}\.$#'
 			identifier: unset.offset
 			count: 1
@@ -61,6 +97,90 @@ parameters:
 			path: src/Message/Stream.php
 
 		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\AggregateAlreadyExists should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Repository/AggregateAlreadyExists.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\AggregateDetached should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Repository/AggregateDetached.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\AggregateNotFound should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Repository/AggregateNotFound.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\AggregateOutdated should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Repository/AggregateOutdated.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\AggregateUnknown should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Repository/AggregateUnknown.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\DefaultRepository should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 3
+			path: src/Repository/DefaultRepository.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\MessageDecorator\\EventTagDecorator should not depend on Patchlevel\\EventSourcing\\Serializer\\AttributeEventTagExtractor$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Repository/MessageDecorator/EventTagDecorator.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\MessageDecorator\\EventTagDecorator should not depend on Patchlevel\\EventSourcing\\Serializer\\EventTagExtractor$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Repository/MessageDecorator/EventTagDecorator.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\PlayheadMismatch should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Repository/PlayheadMismatch.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\Repository should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Repository/Repository.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Repository\\SnapshotRebuildFailed should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testRepositoryCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Repository/SnapshotRebuildFailed.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Serializer\\AttributeEventTagExtractor should not depend on Patchlevel\\EventSourcing\\Attribute\\EventTag$#'
+			identifier: phpat.testSerializerCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Serializer/AttributeEventTagExtractor.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Serializer\\AttributeEventTagExtractor should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testSerializerCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Serializer/AttributeEventTagExtractor.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Serializer\\Normalizer\\IdNormalizer should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testSerializerCanOnlyDependOnAllowedLayers
+			count: 3
+			path: src/Serializer/Normalizer/IdNormalizer.php
+
+		-
 			message: '#^Property Patchlevel\\EventSourcing\\Serializer\\Normalizer\\IdNormalizer\:\:\$identifierClass \(class\-string\<Patchlevel\\EventSourcing\\Identifier\\Identifier\>\|null\) does not accept string\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -73,16 +193,46 @@ parameters:
 			path: src/Snapshot/DefaultSnapshotStore.php
 
 		-
+			message: '#^Patchlevel\\EventSourcing\\Snapshot\\DefaultSnapshotStore should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testSnapshotCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Snapshot/DefaultSnapshotStore.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Snapshot\\SnapshotNotFound should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testSnapshotCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Snapshot/SnapshotNotFound.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Snapshot\\SnapshotStore should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testSnapshotCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Snapshot/SnapshotStore.php
+
+		-
 			message: '#^Method Patchlevel\\EventSourcing\\Store\\Criteria\\Criteria\:\:get\(\) should return T of object but returns object\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Store/Criteria/Criteria.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Store\\Criteria\\StreamCriterion\:\:\$streamName \(list\<string\>\) does not accept array\<int\|string, string\>\.$#'
+			message: '#^Property Patchlevel\\EventSourcing\\Store\\Criteria\\StreamCriterion\:\:\$streamName \(list\<string\>\) does not accept array\<int\<0, max\>\|string, string\>\.$#'
 			identifier: assign.propertyType
 			count: 1
 			path: src/Store/Criteria/StreamCriterion.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Store\\InMemoryStore should not depend on Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry$#'
+			identifier: phpat.testStoreCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Store/InMemoryStore.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Store\\MissingEventRegistry should not depend on Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry$#'
+			identifier: phpat.testStoreCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Store/MissingEventRegistry.php
 
 		-
 			message: '#^Parameter \#1 \$playhead of class Patchlevel\\EventSourcing\\Store\\Header\\PlayheadHeader constructor expects int\<1, max\>, int given\.$#'
@@ -103,6 +253,12 @@ parameters:
 			path: src/Store/TaggableDoctrineDbalStore.php
 
 		-
+			message: '#^Patchlevel\\EventSourcing\\Store\\TaggableDoctrineDbalStore should not depend on Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry$#'
+			identifier: phpat.testStoreCanOnlyDependOnAllowedLayers
+			count: 1
+			path: src/Store/TaggableDoctrineDbalStore.php
+
+		-
 			message: '#^Parameter \#1 \$command of callable Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\BootHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\PauseHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\ReactivateHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\RefreshHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\RemoveHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\RunHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\SetupHandler\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Handler\\TeardownHandler expects Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Boot\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Pause\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Reactivate\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Refresh\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Remove\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Run\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Setup\|Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Teardown, Patchlevel\\EventSourcing\\Subscription\\Engine\\Command\\Command given\.$#'
 			identifier: argument.type
 			count: 1
@@ -113,6 +269,12 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Subscription/Lookup/Lookup.php
+
+		-
+			message: '#^Patchlevel\\EventSourcing\\Subscription\\Repository\\RunSubscriptionEngineRepository should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
+			identifier: phpat.testSubscriptionCanOnlyDependOnAllowedLayers
+			count: 2
+			path: src/Subscription/Repository/RunSubscriptionEngineRepository.php
 
 		-
 			message: '#^Strict comparison using \=\=\= between DateTimeImmutable and false will always evaluate to false\.$#'
@@ -149,6 +311,54 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: tests/Benchmark/BasicImplementation/Projection/ProfileProjector.php
+
+		-
+			message: '#^Call to an undefined method Patchlevel\\EventSourcing\\Subscription\\Engine\\SubscriptionEngine\:\:boot\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Benchmark/NoopSubscriptionEngineBench.php
+
+		-
+			message: '#^Call to an undefined method Patchlevel\\EventSourcing\\Subscription\\Engine\\SubscriptionEngine\:\:remove\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Benchmark/NoopSubscriptionEngineBench.php
+
+		-
+			message: '#^Call to an undefined method Patchlevel\\EventSourcing\\Subscription\\Engine\\SubscriptionEngine\:\:setup\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Benchmark/NoopSubscriptionEngineBench.php
+
+		-
+			message: '#^Instantiated class Patchlevel\\EventSourcing\\Store\\DoctrineDbalStore not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/Benchmark/NoopSubscriptionEngineBench.php
+
+		-
+			message: '#^Parameter \#1 \$schemaConfigurator of class Patchlevel\\EventSourcing\\Schema\\ChainDoctrineSchemaConfigurator constructor expects iterable\<Patchlevel\\EventSourcing\\Schema\\DoctrineSchemaConfigurator\>, array\<int, \(Patchlevel\\EventSourcing\\Store\\DoctrineDbalStore&Patchlevel\\EventSourcing\\Store\\Store\)\|Patchlevel\\EventSourcing\\Subscription\\Store\\DoctrineSubscriptionStore\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Benchmark/NoopSubscriptionEngineBench.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\NoopSubscriptionEngineBench\:\:\$id \(Patchlevel\\EventSourcing\\Aggregate\\AggregateRootId\) does not accept Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileId\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Benchmark/NoopSubscriptionEngineBench.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\NoopSubscriptionEngineBench\:\:\$id has unknown class Patchlevel\\EventSourcing\\Aggregate\\AggregateRootId as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/Benchmark/NoopSubscriptionEngineBench.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\NoopSubscriptionEngineBench\:\:\$store \(Patchlevel\\EventSourcing\\Store\\Store\) does not accept Patchlevel\\EventSourcing\\Store\\DoctrineDbalStore\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Benchmark/NoopSubscriptionEngineBench.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BankAccountSplitStream\\\\BankAccount'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BankAccountSplitStream\\BankAccount will always evaluate to true\.$#'

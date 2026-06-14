@@ -1,7 +1,6 @@
 {
     "require": {
         "php": "~8.5.0",
-        "roave/backward-compatibility-check": "^8.16.0",
-        "deptrac/deptrac": "^4.2.1"
+        "roave/backward-compatibility-check": "^8.20.0"
     }
 }

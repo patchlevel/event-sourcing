@@ -51,14 +51,6 @@ infection: vendor                                                               
 infection-diff: vendor                                                          ## run infection on differences
 	php -d memory_limit=312M vendor/bin/infection --threads=max --git-diff-lines --git-diff-base=origin/HEAD --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=95
 
-.PHONY: deptrac
-deptrac: vendor-tools                                                           ## run deptrac
-	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml
-
-.PHONY: deptrac-baseline
-deptrac-baseline: vendor-tools                                                 ## run deptrac and update baseline
-	cd tools && ./vendor/bin/deptrac -c ../deptrac.yaml --formatter=baseline --output=../deptrac-baseline.yaml
-
 .PHONY: static
 static: phpstan cs                                              			 ## run static analyser
 
@@ -81,14 +73,6 @@ benchmark-diff-test: benchmark-base benchmark-diff                              
 
 .PHONY: dev
 dev: static test                                                                ## run dev tools
-
-.PHONY: docs
-docs: mkdocs                                                                          ## run mkdocs
-	cd docs && python3 -m mkdocs serve
-
-.PHONY: mkdocs
-mkdocs:                                                                         ## install mkdocs
-	cd docs && pip3 install -r requirements.txt
 
 .PHONY: docs-extract-php
 docs-extract-php:

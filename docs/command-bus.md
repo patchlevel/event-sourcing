@@ -95,16 +95,16 @@ final class CreateProfileHandler
     }
 }
 ```
-    
+
 ### Aggregate Handler
 
 Another way to handle commands is to use the aggregates themselves.
 To do this, you need to mark the method that handles the command with the `#[Handle]` attribute.
 
 :::note
-The aggregates themselves are of course not a service. 
-The AggregateHandlerProvider uses the aggregates to create the handlers for you. 
-You can find out more about this in the [providers](./command-bus.md#provider) section.
+The aggregates themselves are of course not a service.
+The AggregateHandlerProvider uses the aggregates to create the handlers for you.
+You can find out more about this in the [providers](command-bus.md#provider) section.
 :::
 
 #### Create Aggregate
@@ -138,9 +138,9 @@ final class Profile extends BasicAggregateRoot
 ```
 
 :::tip
-You can find more information about aggregates [here](aggregate.md).
+You can find more information about [aggregates](aggregate.md).
 :::
-    
+
 #### Update Aggregate
 
 If you want to update an existing aggregate,
@@ -194,13 +194,13 @@ final class Profile extends BasicAggregateRoot
 If you want to automatically initialize an aggregate if it cannot be found in the store,
 you can use the [Auto Initialize](aggregate.md#auto-initialize) feature.
 :::
-    
+
 
 #### Inject Service
 
 You can inject services into aggregate handler methods.
 Starting with the second parameter, it automatically tries to inject the service using a service locator.
-Standard, it uses the fully qualified class name from the parameter type hint to find the service.
+By default, it uses the fully qualified class name from the parameter type hint to find the service.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
@@ -234,11 +234,11 @@ final class Profile extends BasicAggregateRoot
 :::note
 The service must be registered in the service locator.
 :::
-    
+
 :::tip
 You can inject multiple services into the handler method.
 :::
-    
+
 Or you can inject the service manually using the `#[Inject]` attribute.
 There you can specify the service name that should be injected.
 
@@ -275,7 +275,7 @@ final class Profile extends BasicAggregateRoot
 :::note
 Injection in handler methods is only possible with the `AggregateHandlerProvider`.
 :::
-    
+
 ## Setup
 
 We provide a `SyncCommandBus` that you can use to dispatch commands.
@@ -301,7 +301,7 @@ use Patchlevel\EventSourcing\CommandBus\CommandBus;
 use Patchlevel\EventSourcing\CommandBus\InstantRetryCommandBus;
 use Patchlevel\EventSourcing\Repository\AggregateOutdated;
 
-/** @var CommandBus $store */
+/** @var CommandBus $commandBus */
 $commandBus = new InstantRetryCommandBus(
     $commandBus,
     3, // maximum number of retries, default is 3
@@ -338,14 +338,14 @@ final class CreateProfile
 }
 ```
 :::
-    
+
 ## Provider
 
 There are different types of providers that you can use to register handlers.
 
 ### Service Handler Provider
 
-The classically way to handle commands is to use services.
+The classic way to handle commands is to use services.
 The `ServiceHandlerProvider` is used to handle commands by invoking methods on services.
 
 ```php
@@ -405,7 +405,7 @@ $provider = new AggregateHandlerProvider(
 :::tip
 You can find suitable implementations of psr-11 containers on [packagist](https://packagist.org/search/?tags=PSR-11).
 :::
-    
+
 ### Chain Handler Provider
 
 The `ChainHandlerProvider` allows you to combine multiple handler providers.
