@@ -145,7 +145,35 @@ Further changes:
 The deprecated `Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberHelper`
 and the `Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil` trait have been removed.
 
-If you need the subscriber id, read it from the metadata instead:
+If you used them inside a projector to keep the projector id and the table name in sync,
+use a constant instead:
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Projector;
+
+#[Projector(self::TABLE)]
+final class HotelProjector
+{
+    // use a const for easier access in the projector & to keep projector id and table name in sync
+    private const TABLE = 'hotel';
+
+    public function __construct(
+        private readonly Connection $db,
+    ) {
+    }
+
+    /** @return list<array{id: string, name: string, guests: int}> */
+    public function getHotels(): array
+    {
+        return $this->db->fetchAllAssociative(sprintf('SELECT id, name, guests FROM %s;', self::TABLE));
+    }
+
+    // ...
+}
+```
+
+If you still need the subscriber id elsewhere, read it from the metadata instead:
 
 ```php
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
