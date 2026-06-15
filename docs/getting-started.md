@@ -265,7 +265,7 @@ You can find out more about [processors](subscription.md).
 After we have defined everything, we still have to plug the whole thing together:
 
 :::tip
-If you use symfony, you can use our [symfony bundle](https://event-sourcing-bundle.patchlevel.io/latest/installation/) to skip this step.
+If you use symfony, you can use our [symfony bundle](https://patchlevel.dev/docs/event-sourcing-bundle/latest) to skip this step.
 :::
 
 ```php
@@ -326,7 +326,7 @@ $hotelRepository = $repositoryManager->get(Hotel::class);
 ```
 
 :::note
-You can find out more about stores [here](store.md).
+You can find out more about the [store](store.md).
 :::
 
 ## Database setup
@@ -386,12 +386,12 @@ $hotel2 = $hotelRepository->load(Uuid::fromString('d0d0d0d0-d0d0-d0d0-d0d0-d0d0d
 $hotel2->checkIn('David');
 $hotelRepository->save($hotel2);
 
-$hotels = $hotelProjection->getHotels();
+$hotels = $hotelProjector->getHotels();
 ```
 
 :::note
 You can also use other forms of IDs such as uuid version 6 or a custom format.
-You can find more about this [here](identifier.md).
+You can find more about [identifiers](identifier.md).
 :::
 
 ## Result

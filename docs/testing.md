@@ -6,6 +6,12 @@ a [PHPUnit testing library](https://github.com/patchlevel/event-sourcing-phpunit
 
 ## Testing with patchlevel/event-sourcing-phpunit
 
+The helpers in this section live in a separate package that you install as a dev dependency:
+
+```bash
+composer require --dev patchlevel/event-sourcing-phpunit
+```
+
 ### Aggregate Unit Tests
 
 There is a special `TestCase` for aggregate tests that you can extend. By extending `AggregateRootTestCase`, you can use
@@ -245,5 +251,11 @@ final class ProfileTest extends TestCase
 
 :::warning
 The `FakeRamseyUuidFactory` is only for testing purposes
-and supports only the version 7 what is used by the library.
+and supports only the version 7 which is used by the library.
 :::
+
+## Learn more
+
+* [How to define aggregates](aggregate.md)
+* [How to control time with the clock](clock.md)
+* [How to work with identifiers](identifier.md)

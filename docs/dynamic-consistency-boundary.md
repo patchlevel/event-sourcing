@@ -87,7 +87,7 @@ final class GuestIsCheckedOut
 ```
 
 :::note
-You can find out more about events [here](events.md).    
+You can find out more about [events](events.md).
 :::    
 
 ## Define Commands
@@ -456,6 +456,6 @@ You can find this [Getting Started](./getting-started.md) section.
 
 ## Learn more
 
-* [Events](./events.md)
-* [Command Bus](./command-bus.md)
-* [Store](./store.md)
+* [How to define events](events.md)
+* [How to dispatch commands](command-bus.md)
+* [How to store events](store.md)

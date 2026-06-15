@@ -42,7 +42,7 @@ $repositoryManager = new DefaultRepositoryManager(
 ```
 
 :::note
-You can find out more about decorator [here](./message-decorator.md).
+You can find out more about the [message decorator](message-decorator.md).
 :::
     
 :::tip

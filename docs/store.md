@@ -78,17 +78,17 @@ $store = new InMemoryStore();
 You can pass messages to the constructor to initialize the store with some events.
 :::
 
-### StreamReadOnlyStore
+### ReadOnlyStore
 
-Last but not least, we offer a read-only store named `StreamReadOnlyStore`.
-It passes all methods to the underlying store, but throws an `StoreIsReadOnly` exception when trying to execute write
+Last but not least, we offer a read-only store named `ReadOnlyStore`.
+It passes all methods to the underlying store, but throws a `StoreIsReadOnly` exception when trying to execute write
 operations.
 
 ```php
 use Patchlevel\EventSourcing\Store\ReadOnlyStore;
-use Patchlevel\EventSourcing\Store\StreamStore;
+use Patchlevel\EventSourcing\Store\Store;
 
-/** @var StreamStore $store */
+/** @var Store $store */
 $readOnlyStore = new ReadOnlyStore($store);
 ```
 ## Schema
@@ -121,7 +121,7 @@ $schemaDirector = new DoctrineSchemaDirector(
 ```
 
 :::note
-How to setup cli commands for schema director can be found [here](cli.md).
+How to setup [cli commands](cli.md) for the schema director is described in the CLI documentation.
 :::
 
 #### Create schema
@@ -231,7 +231,7 @@ Here you can find more information on how to
 :::
 
 :::note
-How to setup cli commands for doctrine migration can be found [here](cli.md).
+How to setup [cli commands](cli.md) for doctrine migrations is described in the CLI documentation.
 :::
 
 ## Usage
@@ -268,16 +268,15 @@ $stream = $store->load(
 The `Criteria` object is used to filter the events.
 
 ```php
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 
 $criteria = new Criteria(
-    new AggregateNameCriterion('profile'),
-    new AggregateIdCriterion('e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
+    new StreamCriterion('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
     new FromPlayheadCriterion(2),
     new FromIndexCriterion(100),
     new ArchivedCriterion(true),
@@ -290,21 +289,24 @@ Or you can the criteria builder to create the criteria.
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 
 $criteria = (new CriteriaBuilder())
-    ->aggregateName('profile')
-    ->aggregateId('e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e')
+    ->streamName('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e')
     ->fromPlayhead(2)
     ->fromIndex(100)
     ->archived(true)
     ->events(['profile.created', 'profile.name_changed'])
     ->build();
 ```
+:::tip
+A stream name has the format `[aggregateName]-[aggregateId]`. To match every stream of an aggregate,
+use a wildcard with `StreamCriterion::startWith('profile-')`.
+:::
 #### Stream
 
 The load method returns a `Stream` object and is a generator.
 This means that the messages are only loaded when they are needed.
 
 ```php
-use Patchlevel\EventSourcing\Store\Stream;
+use Patchlevel\EventSourcing\Message\Stream;
 
 /** @var Stream $stream */
 $stream->index(); // get the index of the stream
@@ -319,7 +321,7 @@ foreach ($stream as $message) {
 ```
 
 :::note
-You can find more information about the `Message` object [here](message.md).
+You can find more information about the [`Message` object](message.md).
 :::
 
 :::warning
@@ -385,22 +387,24 @@ In event sourcing, the events are immutable.
 
 ### Remove
 
-You can remove a stream with the `remove` method.
+You can remove streams with the `remove` method by passing a criteria.
 
 ```php
-use Patchlevel\EventSourcing\Store\StreamStore;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Store;
 
-/** @var StreamStore $store */
-$store->remove('profile-*');
+/** @var Store $store */
+$store->remove(new Criteria(StreamCriterion::startWith('profile-')));
 ```
 ### List Streams
 
 You can list all streams with the `streams` method.
 
 ```php
-use Patchlevel\EventSourcing\Store\StreamStore;
+use Patchlevel\EventSourcing\Store\Store;
 
-/** @var StreamStore $store */
+/** @var Store $store */
 $streams = $store->streams(); // ['profile-1', 'profile-2', 'profile-3']
 ```
 ### Transaction
