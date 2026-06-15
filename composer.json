@@ -19,7 +19,7 @@
     "dynamic consistency boundary",
     "patchlevel"
   ],
-  "homepage": "https://event-sourcing.patchlevel.io",
+  "homepage": "https://patchlevel.dev/docs/event-sourcing/latest",
   "authors": [
     {
       "name": "Daniel Badura",

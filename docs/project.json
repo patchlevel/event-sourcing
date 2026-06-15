@@ -2,7 +2,7 @@
   "navigation": [
     {
       "title": "Introduction",
-      "file": "index.md"
+      "file": "introduction.md"
     },
     {
       "title": "Getting Started",
@@ -79,6 +79,10 @@
         {
           "title": "Split Stream",
           "file": "split-stream.md"
+        },
+        {
+          "title": "Dynamic Consistency Boundary",
+          "file": "dynamic-consistency-boundary.md"
         },
         {
           "title": "Time / Clock",

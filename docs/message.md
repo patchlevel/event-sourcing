@@ -19,18 +19,17 @@ the [repository](repository.md).
 You can add a header using `withHeader`:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 
 $clock = new SystemClock();
 $message = Message::create(new NameChanged('foo'))
-    ->withHeader(new AggregateHeader(
-        aggregateName: 'profile',
-        aggregateId: 'bca7576c-536f-4428-b694-7b1f00c714b7',
-        playhead: 2,
-        recordedOn: $clock->now(),
-    ));
+    ->withHeader(new StreamNameHeader('profile-bca7576c-536f-4428-b694-7b1f00c714b7'))
+    ->withHeader(new PlayheadHeader(2))
+    ->withHeader(new RecordedOnHeader($clock->now()));
 ```
 :::note
 The message object is immutable. It creates a new instance with the new data.
@@ -39,19 +38,24 @@ The message object is immutable. It creates a new instance with the new data.
 You can also access the headers:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 
 /** @var Message $message */
-$message->header(AggregateHeader::class); // AggregateHeader object
-$message->hasHeader(AggregateHeader::class); // true
-$message->headers(); // [AggregateHeader object]
+$message->header(PlayheadHeader::class); // PlayheadHeader object
+$message->hasHeader(PlayheadHeader::class); // true
+$message->headers(); // [StreamNameHeader object, PlayheadHeader object, ...]
 ```
 ## Built-in headers
 
 The message object has some built-in headers which are used internally.
 
-* `AggregateHeader` - Contains the aggregate name, aggregate id, playhead and recorded on.
+* `StreamNameHeader` - The name of the stream the message belongs to, in the format `[aggregateName]-[aggregateId]`.
+* `PlayheadHeader` - The position of the message within its stream.
+* `RecordedOnHeader` - The date and time when the message was recorded.
+* `EventIdHeader` - The unique id of the event.
+* `IndexHeader` - The global position of the message in the store.
+* `TagsHeader` - The tags attached to the message (experimental).
 * `ArchivedHeader` - Flag if the message is archived.
 * `StreamStartHeader` - Flag if the message is the first message in a new stream.
 

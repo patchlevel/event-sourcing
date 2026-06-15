@@ -425,3 +425,4 @@ $provider = new ChainHandlerProvider([
 * [How to use clock](clock.md)
 * [How to use aggregate id](identifier.md)
 * [How to use query bus](query-bus.md)
+* [How to decide across streams with a dynamic consistency boundary](dynamic-consistency-boundary.md)
