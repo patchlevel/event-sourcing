@@ -44,6 +44,7 @@ final class LayerDependenciesTest
                 $this->layer('Attribute'),
                 $this->layer('Metadata\AggregateRoot'),
                 $this->layer('Repository'),
+                $this->layer('Identifier'),
             ],
         );
     }
