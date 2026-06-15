@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "040555186133771a1ea827cd0aade8d4",
+    "content-hash": "de07850fd4be235512b8fed37881ab5d",
     "packages": [
         {
             "name": "brick/math",
@@ -416,16 +416,16 @@
         },
         {
             "name": "patchlevel/hydrator",
-            "version": "1.23.1",
+            "version": "2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/patchlevel/hydrator.git",
-                "reference": "7c15b9bdab2bb4f5be631cc0602d558955c8051c"
+                "reference": "1c37e647aa36e058ab27358a7ce798f0f87b0413"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/7c15b9bdab2bb4f5be631cc0602d558955c8051c",
-                "reference": "7c15b9bdab2bb4f5be631cc0602d558955c8051c",
+                "url": "https://api.github.com/repos/patchlevel/hydrator/zipball/1c37e647aa36e058ab27358a7ce798f0f87b0413",
+                "reference": "1c37e647aa36e058ab27358a7ce798f0f87b0413",
                 "shasum": ""
             },
             "require": {
@@ -433,7 +433,6 @@
                 "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
                 "psr/cache": "^2.0.0 || ^3.0.0",
                 "psr/simple-cache": "^2.0.0 || ^3.0.0",
-                "symfony/event-dispatcher": "^5.4.29 || ^6.4.0 || ^7.0.0 || ^8.0.0",
                 "symfony/type-info": "^7.3.0 || ^8.0.0"
             },
             "require-dev": {
@@ -466,17 +465,21 @@
                     "email": "david.badura@patchlevel.de"
                 }
             ],
-            "description": "Hydrator",
-            "homepage": "https://github.com/patchlevel/hydrator",
+            "description": "A library for seamless hydration of objects to arrays - and back again, optimized for developer experience and performance",
+            "homepage": "https://patchlevel.dev/docs/hydrator/latest",
             "keywords": [
+                "denormalizer",
                 "hydrator",
+                "normalizer",
+                "object mapping",
+                "patchlevel",
                 "serializer"
             ],
             "support": {
                 "issues": "https://github.com/patchlevel/hydrator/issues",
-                "source": "https://github.com/patchlevel/hydrator/tree/1.23.1"
+                "source": "https://github.com/patchlevel/hydrator/tree/2.0.0"
             },
-            "time": "2026-04-28T09:27:47+00:00"
+            "time": "2026-06-15T11:53:43+00:00"
         },
         {
             "name": "patchlevel/worker",
