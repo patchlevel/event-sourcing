@@ -11,16 +11,16 @@ powered by the reliable Doctrine ecosystem and focused on developer experience.
 ## Features
 
 * Everything is included in the package for event sourcing
-* Based on doctrine dbal and their ecosystem
+* Based on [doctrine dbal](https://github.com/doctrine/dbal) and their ecosystem
 * Developer experience oriented and fully typed
-* Automatic snapshot-system to boost your performance
-* Split big aggregates into multiple streams
-* Versioned and managed lifecycle of subscriptions like projections and processors
-* Safe usage of personal data with crypto-shredding
-* Smooth upcasting of old events
-* Simple setup with schema management and doctrine migration
-* Built in cli commands with symfony
-* Dynamic consistency boundary for decisions across streams
+* Automatic [snapshot](https://patchlevel.dev/docs/event-sourcing/latest/snapshots)-system to boost your performance
+* [Split](https://patchlevel.dev/docs/event-sourcing/latest/split-stream) big aggregates into multiple streams
+* Versioned and managed lifecycle of [subscriptions](https://patchlevel.dev/docs/event-sourcing/latest/subscription) like projections and processors
+* Safe usage of [personal data](https://patchlevel.dev/docs/event-sourcing/latest/personal-data) with crypto-shredding
+* Smooth [upcasting](https://patchlevel.dev/docs/event-sourcing/latest/upcasting) of old events
+* Simple setup with [schema management](https://patchlevel.dev/docs/event-sourcing/latest/store) and [doctrine migration](https://patchlevel.dev/docs/event-sourcing/latest/store)
+* Built in [cli commands](https://patchlevel.dev/docs/event-sourcing/latest/cli) with [symfony](https://symfony.com/)
+* Decisions across streams with a [dynamic consistency boundary](https://patchlevel.dev/docs/event-sourcing/latest/dynamic-consistency-boundary)
 * and much more...
 
 ## Installation
