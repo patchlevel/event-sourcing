@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\InMemoryStore;
+use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\StoreEventEmitter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -42,13 +43,13 @@ final class StoreEventEmitterTest extends TestCase
         self::assertSame('other_stream', $message->header(StreamNameHeader::class)->streamName);
     }
 
-    public function testEmitWithoutEventsDoesNothing(): void
+    public function testEmitWithoutEventsDoesNotTouchTheStore(): void
     {
-        $store = new InMemoryStore();
+        $store = $this->createMock(Store::class);
+        $store->expects($this->never())->method('save');
+
         $emitter = new StoreEventEmitter($store, 'subscription_foo');
 
         $emitter->emit([]);
-
-        self::assertSame([], $store->streams());
     }
 }

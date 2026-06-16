@@ -294,4 +294,40 @@ final class TeardownHandlerTest extends TestCase
         $store->assertNoChanges();
         self::assertSame([], $this->removedSubscriptions);
     }
+
+    public function testTeardownContinuesWithNextSubscriptionAfterCleanupError(): void
+    {
+        $failingTask = new DropTableTask('failing');
+        $passingTask = new DropTableTask('passing');
+
+        $failing = new Subscription('failing', Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Detached, cleanupTasks: [$failingTask]);
+        $passing = new Subscription('passing', Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Detached, cleanupTasks: [$passingTask]);
+        $store = new DummySubscriptionStore([$failing, $passing]);
+
+        $cleanupHandler = $this->createMock(CleanupTaskHandler::class);
+        $cleanupHandler->method('supports')->willReturn(true);
+        $cleanupHandler->method('__invoke')->willReturnCallback(
+            static function (object $task) use ($failingTask): void {
+                if ($task === $failingTask) {
+                    throw new RuntimeException('ERROR');
+                }
+            },
+        );
+
+        $subscriptionManager = new SubscriptionManager($store);
+        $handler = new TeardownHandler(
+            $subscriptionManager,
+            new MetadataSubscriberAccessorRepository([]),
+            new CleanupRunner($subscriptionManager, new DefaultCleaner([$cleanupHandler]), new NullLogger()),
+            $this->recordingDispatcher(),
+            new NullLogger(),
+        );
+
+        $result = $handler(new TeardownCommand());
+
+        self::assertCount(1, $result->errors);
+        // the second subscription is still processed after the first one failed
+        $store->assertRemoved($passing);
+        self::assertSame([$passing], $this->removedSubscriptions);
+    }
 }
