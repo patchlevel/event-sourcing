@@ -8,18 +8,18 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\InMemoryStore;
-use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\DefaultEventEmitter;
+use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\StoreEventEmitter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-#[CoversClass(DefaultEventEmitter::class)]
-final class DefaultEventEmitterTest extends TestCase
+#[CoversClass(StoreEventEmitter::class)]
+final class StoreEventEmitterTest extends TestCase
 {
     public function testEmitWritesToSubscriptionStream(): void
     {
         $store = new InMemoryStore();
-        $emitter = new DefaultEventEmitter($store, 'subscription_foo');
+        $emitter = new StoreEventEmitter($store, 'subscription_foo');
 
         $emitter->emit([new stdClass(), new stdClass()]);
 
@@ -30,7 +30,7 @@ final class DefaultEventEmitterTest extends TestCase
     public function testLinkToWritesToGivenStream(): void
     {
         $store = new InMemoryStore();
-        $emitter = new DefaultEventEmitter($store, 'subscription_foo');
+        $emitter = new StoreEventEmitter($store, 'subscription_foo');
 
         $emitter->linkTo('other_stream', [new stdClass()]);
 
@@ -45,7 +45,7 @@ final class DefaultEventEmitterTest extends TestCase
     public function testEmitWithoutEventsDoesNothing(): void
     {
         $store = new InMemoryStore();
-        $emitter = new DefaultEventEmitter($store, 'subscription_foo');
+        $emitter = new StoreEventEmitter($store, 'subscription_foo');
 
         $emitter->emit([]);
 

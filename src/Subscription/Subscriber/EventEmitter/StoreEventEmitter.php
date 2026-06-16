@@ -8,7 +8,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 
-final class DefaultEventEmitter implements EventEmitter
+final class StoreEventEmitter implements EventEmitter
 {
     public function __construct(
         private readonly Store $store,

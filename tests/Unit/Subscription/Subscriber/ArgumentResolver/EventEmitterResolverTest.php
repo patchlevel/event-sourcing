@@ -11,9 +11,9 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventEmitterResolver;
-use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\DefaultEventEmitter;
 use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\EventEmitter;
 use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\NoopEventEmitter;
+use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\StoreEventEmitter;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -52,7 +52,7 @@ final class EventEmitterResolverTest extends TestCase
             $this->context(Status::Active),
         );
 
-        self::assertInstanceOf(DefaultEventEmitter::class, $emitter);
+        self::assertInstanceOf(StoreEventEmitter::class, $emitter);
     }
 
     public function testResolveDuringBootReturnsNoopByDefault(): void
@@ -76,7 +76,7 @@ final class EventEmitterResolverTest extends TestCase
             $this->context(Status::Booting, enableEventEmittingDuringBoot: true),
         );
 
-        self::assertInstanceOf(DefaultEventEmitter::class, $emitter);
+        self::assertInstanceOf(StoreEventEmitter::class, $emitter);
     }
 
     public function testDisableEventEmitting(): void
