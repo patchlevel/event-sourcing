@@ -24,6 +24,7 @@ use ReflectionMethod;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
 use function array_key_exists;
+use function array_map;
 use function count;
 
 final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFactory
@@ -269,7 +270,10 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $arguments[] = new ArgumentMetadata(
                 $parameter->getName(),
                 $this->typeResolver->resolve($type),
-                $parameter->getAttributes(BatchState::class) !== [],
+                array_map(
+                    static fn (ReflectionAttribute $attribute): object => $attribute->newInstance(),
+                    $parameter->getAttributes(),
+                ),
             );
         }
 
@@ -284,7 +288,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
     {
         foreach ($subscribeMethods as $subscribeMethod) {
             foreach ($subscribeMethod->arguments as $argument) {
-                if ($argument->batch) {
+                if ($argument->attribute(BatchState::class) !== null) {
                     return true;
                 }
             }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver;
 
+use Patchlevel\EventSourcing\Attribute\BatchState;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchManager;
 
@@ -21,6 +22,6 @@ final class BatchArgumentResolver implements ArgumentResolver
 
     public function support(ArgumentMetadata $argument, string $eventClass): bool
     {
-        return $argument->batch;
+        return $argument->attribute(BatchState::class) !== null;
     }
 }

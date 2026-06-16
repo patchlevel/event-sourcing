@@ -46,7 +46,7 @@ final class BatchSubscriber implements EventSubscriberInterface
         }
 
         $subscriber = $this->subscriberRepository->get($subscriberId);
-        $batchMetadata = $subscriber->metadata()?->batch;
+        $batchMetadata = $subscriber?->metadata()->batch;
 
         if ($subscriber === null || $batchMetadata === null) {
             return;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentResolver;
 
+use Patchlevel\EventSourcing\Attribute\BatchState;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
@@ -32,7 +33,7 @@ final class BatchArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', Type::object(stdClass::class), true),
+                new ArgumentMetadata('foo', Type::object(stdClass::class), [new BatchState()]),
                 ProfileVisited::class,
             ),
         );
@@ -71,7 +72,7 @@ final class BatchArgumentResolverTest extends TestCase
         self::assertSame(
             $state,
             $resolver->resolve(
-                new ArgumentMetadata('foo', Type::object(stdClass::class), true),
+                new ArgumentMetadata('foo', Type::object(stdClass::class), [new BatchState()]),
                 new ArgumentResolverContext($message, new Subscription('foo'), new SubscriberMetadata('foo')),
             ),
         );
