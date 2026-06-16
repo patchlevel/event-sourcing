@@ -9,9 +9,9 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 
 final class MessageArgumentResolver implements ArgumentResolver
 {
-    public function resolve(ArgumentMetadata $argument, Message $message): Message
+    public function resolve(ArgumentMetadata $argument, ArgumentResolverContext $context): Message
     {
-        return $message;
+        return $context->message;
     }
 
     public function support(ArgumentMetadata $argument, string $eventClass): bool

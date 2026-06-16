@@ -302,10 +302,135 @@ final class DoStuffSubscriber
     }
 }
 ```
+##### Event Emitter Resolver
+
+A subscriber can not only build a projection or trigger a side effect, it can also emit new events
+back into the store. This is useful when one subscription should kick off another one: for example a
+projection that, after it has been updated, wants a notification subscription to send a mail.
+
+If you type-hint an `EventEmitter` argument in a subscribe method, it is injected automatically.
+By default the emitted events are written into a dedicated stream named `subscription_<subscription-id>`.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\EventEmitter;
+
+#[Subscriber('order_projection', RunMode::FromBeginning)]
+final class OrderProjection
+{
+    #[Subscribe(OrderPlaced::class)]
+    public function onOrderPlaced(OrderPlaced $event, EventEmitter $eventEmitter): void
+    {
+        // update the projection ...
+
+        $eventEmitter->emit([new NotificationRequired($event->orderId)]);
+    }
+}
+```
+
+The `emit` method writes the events into the subscriber's own `subscription_<subscription-id>` stream.
+If you want to target a different stream, use `linkTo`:
+
+```php
+$eventEmitter->linkTo('notifications', [new NotificationRequired($event->orderId)]);
+```
+
+:::info
+The emitted events must be registered like any other event so the store can (de)serialize them.
+:::
+
+To configure the resolver, pass an `EventEmitterResolver` to the subscriber accessor repository,
+the same way as the [lookup resolver](#lookup-resolver). It needs the event store to append to:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventEmitterResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+
+$subscriberAccessorRepository = new MetadataSubscriberAccessorRepository(
+    $subscribers,
+    argumentResolvers: [
+        new EventEmitterResolver($store),
+    ],
+);
+```
+
+To also clean up the subscription stream when a subscription is removed, register the
+`RemoveSubscriptionStreamListener` on the event dispatcher and pass it to the engine:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\RemoveSubscriptionStreamListener;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+
+$eventDispatcher = new EventDispatcher();
+$eventDispatcher->addListener(
+    OnSubscriptionRemoved::class,
+    new RemoveSubscriptionStreamListener($store),
+);
+
+$engine = new DefaultSubscriptionEngine(
+    $messageLoader,
+    $subscriptionStore,
+    $subscriberAccessorRepository,
+    eventDispatcher: $eventDispatcher,
+);
+```
+
+###### When are events emitted
+
+Emitting events while a subscription is *booting* would create duplicates on every replay, so by
+default events are only emitted during `run` and the emitter is a noop during `boot`. You can change
+this per subscriber with the `OverrideEventEmitting` attribute:
+
+```php
+use Patchlevel\EventSourcing\Attribute\OverrideEventEmitting;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+
+#[Subscriber('order_projection', RunMode::FromBeginning)]
+#[OverrideEventEmitting(true)] // also emit during boot
+final class OrderProjection
+{
+    // ...
+}
+```
+
+* `OverrideEventEmitting(true)` — events are also emitted during `boot`.
+* `OverrideEventEmitting(false)` — events are never emitted, not even during `run`.
+
+:::info
+When a subscription is removed, its `subscription_<subscription-id>` stream is removed from the store as
+well (as long as the `RemoveSubscriptionStreamListener` is registered).
+:::
+
 ##### Custom Resolvers
 
 You can provide your own argument resolvers by implementing the `ArgumentResolver` interface.
 This can be useful for providing direct access to custom headers or other data.
+The `resolve` method receives an `ArgumentResolverContext` that gives you access to the current
+`message`, the `subscription` and the `subscriber` metadata.
+
+```php
+use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
+
+final class CustomResolver implements ArgumentResolver
+{
+    public function resolve(ArgumentMetadata $argument, ArgumentResolverContext $context): mixed
+    {
+        return $context->message->header(CustomHeader::class);
+    }
+
+    public function support(ArgumentMetadata $argument, string $eventClass): bool
+    {
+        return $argument->type->isIdentifiedBy(CustomHeader::class);
+    }
+}
+```
 
 ### Setup
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Subscriber;
 
+use Patchlevel\EventSourcing\Attribute\OverrideEventEmitting;
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
@@ -53,6 +54,20 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         self::assertNull($metadata->setupMethod);
         self::assertNull($metadata->teardownMethod);
         self::assertSame('foo', $metadata->id);
+        self::assertNull($metadata->overrideEventEmitting);
+    }
+
+    public function testOverrideEventEmitting(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        #[OverrideEventEmitting(true)]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertTrue($metadata->overrideEventEmitting);
     }
 
     public function testProjector(): void

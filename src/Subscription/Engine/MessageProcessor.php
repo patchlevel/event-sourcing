@@ -92,7 +92,7 @@ final class MessageProcessor
 
         try {
             foreach ($subscribeMethods as $subscribeMethod) {
-                $subscribeMethod($message);
+                $subscribeMethod($message, $subscription);
             }
         } catch (Throwable $e) {
             $this->logger?->error(

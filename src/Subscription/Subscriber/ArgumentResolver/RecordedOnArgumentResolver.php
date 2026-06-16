@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 
 final class RecordedOnArgumentResolver implements ArgumentResolver
 {
-    public function resolve(ArgumentMetadata $argument, Message $message): DateTimeImmutable
+    public function resolve(ArgumentMetadata $argument, ArgumentResolverContext $context): DateTimeImmutable
     {
-        return $message->header(RecordedOnHeader::class)->recordedOn;
+        return $context->message->header(RecordedOnHeader::class)->recordedOn;
     }
 
     public function support(ArgumentMetadata $argument, string $eventClass): bool

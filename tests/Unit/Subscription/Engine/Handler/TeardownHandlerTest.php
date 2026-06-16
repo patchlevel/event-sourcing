@@ -24,6 +24,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[CoversClass(TeardownHandler::class)]
 final class TeardownHandlerTest extends TestCase
@@ -40,6 +41,7 @@ final class TeardownHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository($subscribers),
             $cleanupRunner ?? new CleanupRunner($subscriptionManager, null, new NullLogger()),
+            new EventDispatcher(),
             new NullLogger(),
         );
     }
@@ -180,6 +182,7 @@ final class TeardownHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository([$subscriber]),
             new CleanupRunner($subscriptionManager, new DefaultCleaner([$cleanupHandler]), new NullLogger()),
+            new EventDispatcher(),
             new NullLogger(),
         );
 
@@ -213,6 +216,7 @@ final class TeardownHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository([]),
             new CleanupRunner($subscriptionManager, new DefaultCleaner([$cleanupHandler]), new NullLogger()),
+            new EventDispatcher(),
             new NullLogger(),
         );
 
@@ -247,6 +251,7 @@ final class TeardownHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository([]),
             new CleanupRunner($subscriptionManager, new DefaultCleaner([$cleanupHandler]), new NullLogger()),
+            new EventDispatcher(),
             new NullLogger(),
         );
 

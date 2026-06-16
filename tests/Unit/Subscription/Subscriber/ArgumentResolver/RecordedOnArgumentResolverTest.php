@@ -7,8 +7,11 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentRe
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\RecordedOnArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -49,7 +52,7 @@ final class RecordedOnArgumentResolverTest extends TestCase
             $date,
             $resolver->resolve(
                 new ArgumentMetadata('foo', Type::object(DateTimeImmutable::class)),
-                $message,
+                new ArgumentResolverContext($message, new Subscription('foo'), new SubscriberMetadata('foo')),
             ),
         );
     }
@@ -65,7 +68,7 @@ final class RecordedOnArgumentResolverTest extends TestCase
             $date,
             $resolver->resolve(
                 new ArgumentMetadata('foo', Type::object(DateTimeImmutable::class)),
-                $message,
+                new ArgumentResolverContext($message, new Subscription('foo'), new SubscriberMetadata('foo')),
             ),
         );
     }

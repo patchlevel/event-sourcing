@@ -19,6 +19,8 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
@@ -32,8 +34,10 @@ use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup as SetupCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown as TeardownCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\RemoveSubscriptionStreamListener;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
@@ -43,6 +47,7 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventEmitterResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -50,6 +55,8 @@ use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerWithSelfRecoverySubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\LookupSubscriber;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\NotificationCollector;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\NotificationEmittingProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNewProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
@@ -57,6 +64,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfilePr
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use function gc_collect_cycles;
 use function iterator_to_array;
@@ -1461,6 +1469,89 @@ final class SubscriptionTest extends TestCase
         self::assertArrayHasKey('id', $result);
         self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('Hans', $result['name']);
+    }
+
+    public function testEventEmitter(): void
+    {
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $collector = new NotificationCollector();
+
+        $subscriberRepository = new MetadataSubscriberAccessorRepository(
+            [
+                new NotificationEmittingProjection(),
+                $collector,
+            ],
+            argumentResolvers: [
+                new EventEmitterResolver($store),
+            ],
+        );
+
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(
+            OnSubscriptionRemoved::class,
+            new RemoveSubscriptionStreamListener($store),
+        );
+
+        $engine = new DefaultSubscriptionEngine(
+            new StoreMessageLoader($store),
+            $subscriptionStore,
+            $subscriberRepository,
+            eventDispatcher: $eventDispatcher,
+        );
+
+        $engine->execute(new SetupCommand());
+        $engine->execute(new Boot());
+
+        $profileId = ProfileId::generate();
+        $repository->save(Profile::create($profileId, 'John'));
+
+        // the emitting projection reacts to ProfileCreated and emits a NotificationSent event
+        // into its projection stream, which the notification subscriber then consumes. Depending
+        // on the database driver this can happen in one or two runs, so we drain the engine.
+        do {
+            $result = $engine->execute(new Run());
+
+            self::assertInstanceOf(ProcessedResult::class, $result);
+            self::assertEquals([], $result->errors);
+        } while ($result->processedMessages > 0);
+
+        self::assertSame(1, $store->count(new Criteria(new StreamCriterion('subscription_emitting'))));
+        self::assertCount(1, $collector->notifications);
+        self::assertEquals($profileId, $collector->notifications[0]->profileId);
+
+        // removing the subscriptions also removes the projection stream
+        $engine->execute(new Remove());
+
+        self::assertNotContains('subscription_emitting', $store->streams());
+        self::assertSame(0, $store->count(new Criteria(new StreamCriterion('subscription_emitting'))));
     }
 
     public function testRefreshSubscriptions(): void

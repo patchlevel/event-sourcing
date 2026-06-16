@@ -209,6 +209,40 @@ and a `bool $allowsNull` property. Instead it now has a single `Symfony\Componen
 
 If you implemented a custom `ArgumentResolver`, adjust it to read the type from the new `Type` object.
 
+### ArgumentResolver
+
+The `resolve` method of `Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver`
+no longer receives the `Message` directly. It now receives an `ArgumentResolverContext` that bundles the
+current `message`, `subscription` and `subscriber` metadata.
+
+Before:
+
+```php
+final class CustomResolver implements ArgumentResolver
+{
+    public function resolve(ArgumentMetadata $argument, Message $message): mixed
+    {
+        return $message->header(CustomHeader::class);
+    }
+
+    // ... support()
+}
+```
+
+After:
+
+```php
+final class CustomResolver implements ArgumentResolver
+{
+    public function resolve(ArgumentMetadata $argument, ArgumentResolverContext $context): mixed
+    {
+        return $context->message->header(CustomHeader::class);
+    }
+
+    // ... support()
+}
+```
+
 ## Store
 
 ### StreamStore
