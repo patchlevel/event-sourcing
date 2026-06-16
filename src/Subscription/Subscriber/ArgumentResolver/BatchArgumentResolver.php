@@ -22,6 +22,6 @@ final class BatchArgumentResolver implements ArgumentResolver
 
     public function support(ArgumentMetadata $argument, string $eventClass): bool
     {
-        return $argument->attribute(BatchState::class) !== null;
+        return $argument->hasAttribute(BatchState::class);
     }
 }

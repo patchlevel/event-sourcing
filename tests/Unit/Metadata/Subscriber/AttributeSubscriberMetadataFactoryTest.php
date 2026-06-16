@@ -414,8 +414,8 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
             $metadata->batch,
         );
 
-        self::assertInstanceOf(BatchState::class, $metadata->subscribeMethods[ProfileVisited::class]->arguments[1]->attribute(BatchState::class));
-        self::assertNull($metadata->subscribeMethods[ProfileVisited::class]->arguments[0]->attribute(BatchState::class));
+        self::assertTrue($metadata->subscribeMethods[ProfileVisited::class]->arguments[1]->hasAttribute(BatchState::class));
+        self::assertFalse($metadata->subscribeMethods[ProfileVisited::class]->arguments[0]->hasAttribute(BatchState::class));
     }
 
     public function testBatchMinimalMetadata(): void

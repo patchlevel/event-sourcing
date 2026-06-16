@@ -288,7 +288,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
     {
         foreach ($subscribeMethods as $subscribeMethod) {
             foreach ($subscribeMethod->arguments as $argument) {
-                if ($argument->attribute(BatchState::class) !== null) {
+                if ($argument->hasAttribute(BatchState::class)) {
                     return true;
                 }
             }

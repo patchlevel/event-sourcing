@@ -16,21 +16,15 @@ final class ArgumentMetadata
     ) {
     }
 
-    /**
-     * @param class-string<T> $attributeClass
-     *
-     * @return T|null
-     *
-     * @template T of object
-     */
-    public function attribute(string $attributeClass): object|null
+    /** @param class-string $attributeClass */
+    public function hasAttribute(string $attributeClass): bool
     {
         foreach ($this->attributes as $attribute) {
             if ($attribute instanceof $attributeClass) {
-                return $attribute;
+                return true;
             }
         }
 
-        return null;
+        return false;
     }
 }
