@@ -23,18 +23,23 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\BatchArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchManager;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\BatchingSubscriber;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\DefaultStateBatchingSubscriber;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\VoidBeginBatchingSubscriber;
 use Patchlevel\EventSourcing\Tests\Unit\Subscription\DummySubscriptionStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use stdClass;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[CoversClass(BatchSubscriber::class)]
@@ -54,12 +59,13 @@ final class BatchSubscriberTest extends TestCase
         $subscriberRepository = new MetadataSubscriberAccessorRepository($subscribers);
         $subscriptionManager = new SubscriptionManager($store);
         $eventDispatcher = new EventDispatcher();
+        $batchManager = new BatchManager();
 
-        $eventDispatcher->addSubscriber(new BatchSubscriber($subscriberRepository, new NullLogger()));
+        $eventDispatcher->addSubscriber(new BatchSubscriber($batchManager, $subscriberRepository, new NullLogger()));
         $eventDispatcher->addSubscriber(new RetrySubscriber($subscriptionManager, $subscriberRepository, $retryStrategyRepository, new NullLogger()));
         $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
 
-        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, new NullLogger());
+        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());
 
         return new BootHandler($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
     }
@@ -82,13 +88,14 @@ final class BatchSubscriberTest extends TestCase
         $subscriberRepository = new MetadataSubscriberAccessorRepository($subscribers);
         $subscriptionManager = new SubscriptionManager($store);
         $eventDispatcher = new EventDispatcher();
+        $batchManager = new BatchManager();
 
-        $eventDispatcher->addSubscriber(new BatchSubscriber($subscriberRepository, new NullLogger()));
+        $eventDispatcher->addSubscriber(new BatchSubscriber($batchManager, $subscriberRepository, new NullLogger()));
         $eventDispatcher->addSubscriber(new RetrySubscriber($subscriptionManager, $subscriberRepository, $retryStrategyRepository, new NullLogger()));
         $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
         $eventDispatcher->addListener(OnCommand::class, new DetachListener($subscriptionManager, $subscriberRepository, new NullLogger()), 32);
 
-        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, new NullLogger());
+        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());
 
         $handler = new RunHandler($messageLoader, $subscriptionManager, $messageProcessor, $eventDispatcher, new NullLogger());
 
@@ -133,14 +140,68 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(1, $subscriber->commitBatchCalled);
-        self::assertSame(0, $subscriber->rollbackBatchCalled);
+        self::assertSame(1, $subscriber->flushCalled);
+        self::assertSame(0, $subscriber->rollbackCalled);
+    }
+
+    public function testBootBatchingWithDefaultState(): void
+    {
+        $subscriber = new DefaultStateBatchingSubscriber();
+
+        $store = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $messageLoader = $this->createMock(MessageLoader::class);
+        $messageLoader->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
+
+        $handler = $this->createBootHandler($messageLoader, $store, [$subscriber]);
+        $result = $handler(new BootCommand());
+
+        self::assertEquals([], $result->errors);
+
+        self::assertInstanceOf(stdClass::class, $subscriber->receivedState);
+        self::assertSame($subscriber->receivedState, $subscriber->flushedState);
+    }
+
+    public function testBootBatchingWithVoidBeginUsesDefaultState(): void
+    {
+        $subscriber = new VoidBeginBatchingSubscriber();
+
+        $store = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $messageLoader = $this->createMock(MessageLoader::class);
+        $messageLoader->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
+
+        $handler = $this->createBootHandler($messageLoader, $store, [$subscriber]);
+        $result = $handler(new BootCommand());
+
+        self::assertEquals([], $result->errors);
+
+        self::assertTrue($subscriber->beginCalled);
+        self::assertInstanceOf(stdClass::class, $subscriber->receivedState);
     }
 
     public function testBootBatchingSuccessForceCommit(): void
     {
         $subscriber = new BatchingSubscriber(
-            forceCommitAfterMessages: 1,
+            flushAfterMessages: 1,
         );
 
         $store = new DummySubscriptionStore([
@@ -181,8 +242,8 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message1, $message2], $subscriber->receivedMessages);
         self::assertSame(2, $subscriber->beginBatchCalled);
-        self::assertSame(2, $subscriber->commitBatchCalled);
-        self::assertSame(0, $subscriber->rollbackBatchCalled);
+        self::assertSame(2, $subscriber->flushCalled);
+        self::assertSame(0, $subscriber->rollbackCalled);
     }
 
     public function testBootBatchingWithHandleError(): void
@@ -235,8 +296,8 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(0, $subscriber->commitBatchCalled);
-        self::assertSame(1, $subscriber->rollbackBatchCalled);
+        self::assertSame(0, $subscriber->flushCalled);
+        self::assertSame(1, $subscriber->rollbackCalled);
     }
 
     public function testBootBatchingWithBeginBatchError(): void
@@ -289,8 +350,8 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(0, $subscriber->commitBatchCalled);
-        self::assertSame(1, $subscriber->rollbackBatchCalled);
+        self::assertSame(0, $subscriber->flushCalled);
+        self::assertSame(0, $subscriber->rollbackCalled);
     }
 
     public function testBootBatchingWithCommitBatchError(): void
@@ -298,7 +359,7 @@ final class BatchSubscriberTest extends TestCase
         $exception = new RuntimeException('ERROR');
 
         $subscriber = new BatchingSubscriber(
-            throwForCommitBatch: $exception,
+            throwForFlush: $exception,
         );
 
         $store = new DummySubscriptionStore([
@@ -343,8 +404,8 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(1, $subscriber->commitBatchCalled);
-        self::assertSame(0, $subscriber->rollbackBatchCalled);
+        self::assertSame(1, $subscriber->flushCalled);
+        self::assertSame(0, $subscriber->rollbackCalled);
     }
 
     public function testBootBatchingWithRollbackBatchError(): void
@@ -353,7 +414,7 @@ final class BatchSubscriberTest extends TestCase
 
         $subscriber = new BatchingSubscriber(
             throwForMessage: $exception,
-            throwForRollbackBatch: new RuntimeException('ERROR'),
+            throwForRollback: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -398,8 +459,8 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(0, $subscriber->commitBatchCalled);
-        self::assertSame(1, $subscriber->rollbackBatchCalled);
+        self::assertSame(0, $subscriber->flushCalled);
+        self::assertSame(1, $subscriber->rollbackCalled);
     }
 
     public function testRunningBatchingSuccess(): void
@@ -441,14 +502,14 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(1, $subscriber->commitBatchCalled);
-        self::assertSame(0, $subscriber->rollbackBatchCalled);
+        self::assertSame(1, $subscriber->flushCalled);
+        self::assertSame(0, $subscriber->rollbackCalled);
     }
 
     public function testRunningBatchingSuccessForceCommit(): void
     {
         $subscriber = new BatchingSubscriber(
-            forceCommitAfterMessages: 1,
+            flushAfterMessages: 1,
         );
 
         $store = new DummySubscriptionStore([
@@ -490,8 +551,8 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message1, $message2], $subscriber->receivedMessages);
         self::assertSame(2, $subscriber->beginBatchCalled);
-        self::assertSame(2, $subscriber->commitBatchCalled);
-        self::assertSame(0, $subscriber->rollbackBatchCalled);
+        self::assertSame(2, $subscriber->flushCalled);
+        self::assertSame(0, $subscriber->rollbackCalled);
     }
 
     public function testRunningBatchingWithHandleError(): void
@@ -545,8 +606,8 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(0, $subscriber->commitBatchCalled);
-        self::assertSame(1, $subscriber->rollbackBatchCalled);
+        self::assertSame(0, $subscriber->flushCalled);
+        self::assertSame(1, $subscriber->rollbackCalled);
     }
 
     public function testRunningBatchingWithBeginBatchError(): void
@@ -600,8 +661,8 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(0, $subscriber->commitBatchCalled);
-        self::assertSame(1, $subscriber->rollbackBatchCalled);
+        self::assertSame(0, $subscriber->flushCalled);
+        self::assertSame(0, $subscriber->rollbackCalled);
     }
 
     public function testRunningBatchingWithCommitBatchError(): void
@@ -609,7 +670,7 @@ final class BatchSubscriberTest extends TestCase
         $exception = new RuntimeException('ERROR');
 
         $subscriber = new BatchingSubscriber(
-            throwForCommitBatch: $exception,
+            throwForFlush: $exception,
         );
 
         $store = new DummySubscriptionStore([
@@ -655,8 +716,8 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(1, $subscriber->commitBatchCalled);
-        self::assertSame(0, $subscriber->rollbackBatchCalled);
+        self::assertSame(1, $subscriber->flushCalled);
+        self::assertSame(0, $subscriber->rollbackCalled);
     }
 
     public function testRunningBatchingWithRollbackBatchError(): void
@@ -665,7 +726,7 @@ final class BatchSubscriberTest extends TestCase
 
         $subscriber = new BatchingSubscriber(
             throwForMessage: $exception,
-            throwForRollbackBatch: new RuntimeException('ERROR'),
+            throwForRollback: new RuntimeException('ERROR'),
         );
 
         $store = new DummySubscriptionStore([
@@ -711,7 +772,7 @@ final class BatchSubscriberTest extends TestCase
 
         self::assertSame([$message], $subscriber->receivedMessages);
         self::assertSame(1, $subscriber->beginBatchCalled);
-        self::assertSame(0, $subscriber->commitBatchCalled);
-        self::assertSame(1, $subscriber->rollbackBatchCalled);
+        self::assertSame(0, $subscriber->flushCalled);
+        self::assertSame(1, $subscriber->rollbackCalled);
     }
 }

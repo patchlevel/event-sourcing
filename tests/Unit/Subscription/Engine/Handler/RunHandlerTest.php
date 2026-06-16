@@ -64,7 +64,7 @@ final class RunHandlerTest extends TestCase
         $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
         $eventDispatcher->addListener(OnCommand::class, new DetachListener($subscriptionManager, $subscriberRepository, new NullLogger()), 32);
 
-        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, new NullLogger());
+        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [], new NullLogger());
 
         $handler = new RunHandler($messageLoader, $subscriptionManager, $messageProcessor, $eventDispatcher, new NullLogger());
 

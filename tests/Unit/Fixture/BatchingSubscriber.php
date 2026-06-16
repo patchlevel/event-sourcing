@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
+use Patchlevel\EventSourcing\Attribute\BatchShouldFlush;
+use Patchlevel\EventSourcing\Attribute\BatchState;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\RunMode;
-use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Throwable;
 
 use function count;
 
 #[Subscriber(BatchingSubscriber::ID, RunMode::FromBeginning)]
-final class BatchingSubscriber implements BatchableSubscriber
+final class BatchingSubscriber
 {
     public const ID = 'test';
 
@@ -22,21 +26,37 @@ final class BatchingSubscriber implements BatchableSubscriber
     public array $receivedMessages = [];
 
     public int $beginBatchCalled = 0;
-    public int $commitBatchCalled = 0;
-    public int $rollbackBatchCalled = 0;
+    public int $flushCalled = 0;
+    public int $rollbackCalled = 0;
 
     public function __construct(
         public readonly Throwable|null $throwForMessage = null,
         public readonly Throwable|null $throwForBeginBatch = null,
-        public readonly Throwable|null $throwForCommitBatch = null,
-        public readonly Throwable|null $throwForRollbackBatch = null,
-        public readonly int $forceCommitAfterMessages = 1_000,
+        public readonly Throwable|null $throwForFlush = null,
+        public readonly Throwable|null $throwForRollback = null,
+        public readonly int $flushAfterMessages = 1_000,
     ) {
     }
 
-    #[Subscribe(ProfileVisited::class)]
-    public function handle(Message $message): void
+    #[BatchBegin]
+    public function begin(): BatchingState
     {
+        $this->beginBatchCalled++;
+
+        if ($this->throwForBeginBatch !== null) {
+            throw $this->throwForBeginBatch;
+        }
+
+        return new BatchingState();
+    }
+
+    #[Subscribe(ProfileVisited::class)]
+    public function handle(
+        Message $message,
+        #[BatchState]
+        BatchingState $state,
+    ): void {
+        $state->messages[] = $message;
         $this->receivedMessages[] = $message;
 
         if ($this->throwForMessage !== null) {
@@ -44,35 +64,29 @@ final class BatchingSubscriber implements BatchableSubscriber
         }
     }
 
-    public function beginBatch(): void
+    #[BatchFlush]
+    public function flush(BatchingState $state): void
     {
-        $this->beginBatchCalled++;
+        $this->flushCalled++;
 
-        if ($this->throwForBeginBatch !== null) {
-            throw $this->throwForBeginBatch;
+        if ($this->throwForFlush !== null) {
+            throw $this->throwForFlush;
         }
     }
 
-    public function commitBatch(): void
+    #[BatchShouldFlush]
+    public function shouldFlush(BatchingState $state): bool
     {
-        $this->commitBatchCalled++;
-
-        if ($this->throwForCommitBatch !== null) {
-            throw $this->throwForCommitBatch;
-        }
+        return $this->flushAfterMessages <= count($state->messages);
     }
 
-    public function rollbackBatch(): void
+    #[BatchRollback]
+    public function rollback(BatchingState $state): void
     {
-        $this->rollbackBatchCalled++;
+        $this->rollbackCalled++;
 
-        if ($this->throwForRollbackBatch !== null) {
-            throw $this->throwForRollbackBatch;
+        if ($this->throwForRollback !== null) {
+            throw $this->throwForRollback;
         }
-    }
-
-    public function forceCommit(): bool
-    {
-        return $this->forceCommitAfterMessages <= count($this->receivedMessages);
     }
 }

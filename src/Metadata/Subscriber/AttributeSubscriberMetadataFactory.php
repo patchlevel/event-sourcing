@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
+use Patchlevel\EventSourcing\Attribute\BatchShouldFlush;
+use Patchlevel\EventSourcing\Attribute\BatchState;
 use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
 use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
@@ -57,6 +62,11 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $teardownMethod = null;
         $cleanupMethod = null;
         $failedMethod = null;
+        $beginBatchMethod = null;
+        $flushMethod = null;
+        $flushAfterMessages = null;
+        $shouldFlushMethod = null;
+        $rollbackBatchMethod = null;
 
         foreach ($methods as $method) {
             $attributes = $method->getAttributes(Subscribe::class);
@@ -75,6 +85,57 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 }
 
                 $subscribeMethods[$eventClass] = $this->subscribeMethod($method);
+            }
+
+            if ($method->getAttributes(BatchBegin::class)) {
+                if ($beginBatchMethod !== null) {
+                    throw new DuplicateBeginBatchMethod(
+                        $subscriber,
+                        $beginBatchMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $beginBatchMethod = $method->getName();
+            }
+
+            $flushAttributes = $method->getAttributes(BatchFlush::class);
+
+            if ($flushAttributes !== []) {
+                if ($flushMethod !== null) {
+                    throw new DuplicateFlushMethod(
+                        $subscriber,
+                        $flushMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $flushMethod = $method->getName();
+                $flushAfterMessages = $flushAttributes[0]->newInstance()->afterMessages;
+            }
+
+            if ($method->getAttributes(BatchShouldFlush::class)) {
+                if ($shouldFlushMethod !== null) {
+                    throw new DuplicateShouldFlushMethod(
+                        $subscriber,
+                        $shouldFlushMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $shouldFlushMethod = $method->getName();
+            }
+
+            if ($method->getAttributes(BatchRollback::class)) {
+                if ($rollbackBatchMethod !== null) {
+                    throw new DuplicateRollbackBatchMethod(
+                        $subscriber,
+                        $rollbackBatchMethod,
+                        $method->getName(),
+                    );
+                }
+
+                $rollbackBatchMethod = $method->getName();
             }
 
             if ($method->getAttributes(OnFailed::class)) {
@@ -148,6 +209,28 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             throw DuplicateSubscribeMethod::mixedWithAll($subscriber);
         }
 
+        $usesBatching = $beginBatchMethod !== null
+            || $flushMethod !== null
+            || $shouldFlushMethod !== null
+            || $rollbackBatchMethod !== null
+            || $this->hasBatchArgument($subscribeMethods);
+
+        $batch = null;
+
+        if ($usesBatching) {
+            if ($flushMethod === null) {
+                throw IncompleteBatchMethods::missingFlushMethod($subscriber);
+            }
+
+            $batch = new BatchMetadata(
+                $flushMethod,
+                $beginBatchMethod,
+                $shouldFlushMethod,
+                $rollbackBatchMethod,
+                $flushAfterMessages,
+            );
+        }
+
         $metadata = new SubscriberMetadata(
             $subscriberInfo->id,
             $subscriberInfo->group,
@@ -160,6 +243,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $cleanupMethod,
             $reflector->getAttributes(EnableEventEmittingDuringBoot::class) !== [],
             $reflector->getAttributes(DisableEventEmitting::class) !== [],
+            $batch,
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;
@@ -185,6 +269,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $arguments[] = new ArgumentMetadata(
                 $parameter->getName(),
                 $this->typeResolver->resolve($type),
+                $parameter->getAttributes(BatchState::class) !== [],
             );
         }
 
@@ -192,6 +277,20 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $method->getName(),
             $arguments,
         );
+    }
+
+    /** @param array<class-string|"*", SubscribeMethodMetadata> $subscribeMethods */
+    private function hasBatchArgument(array $subscribeMethods): bool
+    {
+        foreach ($subscribeMethods as $subscribeMethod) {
+            foreach ($subscribeMethod->arguments as $argument) {
+                if ($argument->batch) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function retryStrategy(ReflectionClass $reflector): string|null

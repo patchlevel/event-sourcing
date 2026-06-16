@@ -52,6 +52,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupReso
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\BatchProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerWithSelfRecoverySubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\LookupSubscriber;
@@ -1412,18 +1413,18 @@ final class SubscriptionTest extends TestCase
             [
                 new LookupSubscriber($this->projectionConnection),
             ],
-            argumentResolvers: [
-                new LookupResolver(
-                    $store,
-                    $eventRegistry,
-                ),
-            ],
         );
 
         $engine = new DefaultSubscriptionEngine(
             new StoreMessageLoader($store),
             $subscriptionStore,
             $subscriberRepository,
+            argumentResolvers: [
+                new LookupResolver(
+                    $store,
+                    $eventRegistry,
+                ),
+            ],
         );
 
         $result = $engine->execute(new SetupCommand());
@@ -1509,9 +1510,6 @@ final class SubscriptionTest extends TestCase
                 new NotificationEmittingProjection(),
                 $collector,
             ],
-            argumentResolvers: [
-                new EventEmitterResolver($store),
-            ],
         );
 
         $eventDispatcher = new EventDispatcher();
@@ -1525,6 +1523,9 @@ final class SubscriptionTest extends TestCase
             $subscriptionStore,
             $subscriberRepository,
             eventDispatcher: $eventDispatcher,
+            argumentResolvers: [
+                new EventEmitterResolver($store),
+            ],
         );
 
         $engine->execute(new SetupCommand());
@@ -1618,6 +1619,199 @@ final class SubscriptionTest extends TestCase
         self::assertEquals('test', $subscriptions[0]->id());
         self::assertEquals('new-group', $subscriptions[0]->group());
         self::assertEquals(RunMode::FromNow, $subscriptions[0]->runMode());
+    }
+
+    public function testBatch(): void
+    {
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $projection = new BatchProfileProjection($this->projectionConnection);
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([$projection]);
+
+        $engine = new DefaultSubscriptionEngine(
+            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        $result = $engine->execute(new SetupCommand());
+        self::assertEquals([], $result->errors);
+
+        $result = $engine->execute(new Boot());
+        self::assertProcessedMessages(0, $result);
+        self::assertEquals([], $result->errors);
+
+        $aliceId = ProfileId::generate();
+        $bobId = ProfileId::generate();
+        $charlieId = ProfileId::generate();
+
+        $repository->save(Profile::create($aliceId, 'Alice'));
+        $repository->save(Profile::create($bobId, 'Bob'));
+        $repository->save(Profile::create($charlieId, 'Charlie'));
+
+        $result = $engine->execute(new Run());
+
+        self::assertProcessedMessages(3, $result);
+        self::assertEquals([], $result->errors);
+
+        // all three events were processed in a single batch: one begin, one flush, no rollback
+        self::assertSame(1, $projection->beginCount);
+        self::assertSame(1, $projection->flushCount);
+        self::assertSame(0, $projection->rollbackCount);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'batch_profile',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    3,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $engine->subscriptions(),
+        );
+
+        $aliceRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$aliceId->toString()],
+        );
+
+        self::assertIsArray($aliceRow);
+        self::assertSame('Alice', $aliceRow['name']);
+
+        $bobRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$bobId->toString()],
+        );
+
+        self::assertIsArray($bobRow);
+        self::assertSame('Bob', $bobRow['name']);
+
+        $charlieRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$charlieId->toString()],
+        );
+
+        self::assertIsArray($charlieRow);
+        self::assertSame('Charlie', $charlieRow['name']);
+    }
+
+    public function testBatchRollback(): void
+    {
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $projection = new BatchProfileProjection($this->projectionConnection);
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([$projection]);
+
+        $engine = new DefaultSubscriptionEngine(
+            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        $engine->execute(new SetupCommand());
+        $engine->execute(new Boot());
+
+        // first batch commits successfully
+        $aliceId = ProfileId::generate();
+        $repository->save(Profile::create($aliceId, 'Alice'));
+
+        $result = $engine->execute(new Run());
+
+        self::assertProcessedMessages(1, $result);
+        self::assertEquals([], $result->errors);
+        self::assertSame(1, $projection->flushCount);
+
+        // second batch inserts Bob and then hits a poisoned event, which rolls the batch back
+        $bobId = ProfileId::generate();
+        $bob = Profile::create($bobId, 'Bob');
+        $bob->changeName(BatchProfileProjection::POISON);
+        $repository->save($bob);
+
+        $result = $engine->execute(new Run());
+
+        self::assertCount(1, $result->errors);
+        self::assertSame(2, $projection->beginCount);
+        self::assertSame(1, $projection->flushCount);
+        self::assertSame(1, $projection->rollbackCount);
+
+        $subscription = self::findSubscription($engine->subscriptions(), 'batch_profile');
+
+        // the position stays at the last successfully committed event
+        self::assertEquals(Status::Error, $subscription->status());
+        self::assertEquals(1, $subscription->position());
+
+        // Alice (committed in the first batch) survives, Bob's insert was rolled back
+        $aliceRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$aliceId->toString()],
+        );
+
+        self::assertIsArray($aliceRow);
+        self::assertSame('Alice', $aliceRow['name']);
+
+        $bobRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$bobId->toString()],
+        );
+
+        self::assertFalse($bobRow);
     }
 
     /** @phpstan-assert ProcessedResult $result */

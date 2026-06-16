@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Subscriber;
 
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
+use Patchlevel\EventSourcing\Attribute\BatchShouldFlush;
+use Patchlevel\EventSourcing\Attribute\BatchState;
 use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
 use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
 use Patchlevel\EventSourcing\Attribute\Processor;
@@ -16,16 +21,23 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentTypeNotSupported;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\Subscriber\BatchMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ClassIsNotASubscriber;
+use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateBeginBatchMethod;
+use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateFlushMethod;
+use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateRollbackBatchMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSetupMethod;
+use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateShouldFlushMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSubscribeMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateTeardownMethod;
+use Patchlevel\EventSourcing\Metadata\Subscriber\IncompleteBatchMethods;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Symfony\Component\TypeInfo\Type;
 
 #[CoversClass(AttributeSubscriberMetadataFactory::class)]
@@ -353,6 +365,229 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
             #[Teardown]
             public function drop2(): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testBatchMetadata(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function profileVisited(ProfileVisited $event, #[BatchState]
+            object $state,): void
+            {
+            }
+
+            #[BatchBegin]
+            public function begin(): object
+            {
+                return new stdClass();
+            }
+
+            #[BatchFlush(afterMessages: 100)]
+            public function flush(object $state): void
+            {
+            }
+
+            #[BatchShouldFlush]
+            public function shouldFlush(object $state): bool
+            {
+                return false;
+            }
+
+            #[BatchRollback]
+            public function rollback(object $state): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertEquals(
+            new BatchMetadata('flush', 'begin', 'shouldFlush', 'rollback', 100),
+            $metadata->batch,
+        );
+
+        self::assertTrue($metadata->subscribeMethods[ProfileVisited::class]->arguments[1]->batch);
+        self::assertFalse($metadata->subscribeMethods[ProfileVisited::class]->arguments[0]->batch);
+    }
+
+    public function testBatchMinimalMetadata(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[BatchBegin]
+            public function begin(): object
+            {
+                return new stdClass();
+            }
+
+            #[BatchFlush]
+            public function flush(object $state): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertEquals(new BatchMetadata('flush', 'begin'), $metadata->batch);
+    }
+
+    public function testBatchWithoutBeginMethod(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function profileVisited(ProfileVisited $event, #[BatchState]
+            object $state,): void
+            {
+            }
+
+            #[BatchFlush]
+            public function flush(object $state): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertEquals(new BatchMetadata('flush'), $metadata->batch);
+        self::assertNull($metadata->batch?->beginMethod);
+    }
+
+    public function testNoBatchMetadata(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+
+        self::assertNull($metadataFactory->metadata($subscriber::class)->batch);
+    }
+
+    public function testBatchArgumentWithoutLifecycleMethods(): void
+    {
+        $this->expectException(IncompleteBatchMethods::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function profileVisited(ProfileVisited $event, #[BatchState]
+            object $state,): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testBatchWithoutFlushMethod(): void
+    {
+        $this->expectException(IncompleteBatchMethods::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[BatchBegin]
+            public function begin(): object
+            {
+                return new stdClass();
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testDuplicateBeginBatchException(): void
+    {
+        $this->expectException(DuplicateBeginBatchMethod::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[BatchBegin]
+            public function begin1(): object
+            {
+                return new stdClass();
+            }
+
+            #[BatchBegin]
+            public function begin2(): object
+            {
+                return new stdClass();
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testDuplicateFlushException(): void
+    {
+        $this->expectException(DuplicateFlushMethod::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[BatchFlush]
+            public function flush1(object $state): void
+            {
+            }
+
+            #[BatchFlush]
+            public function flush2(object $state): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testDuplicateShouldFlushException(): void
+    {
+        $this->expectException(DuplicateShouldFlushMethod::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[BatchShouldFlush]
+            public function shouldFlush1(object $state): bool
+            {
+                return false;
+            }
+
+            #[BatchShouldFlush]
+            public function shouldFlush2(object $state): bool
+            {
+                return false;
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testDuplicateRollbackBatchException(): void
+    {
+        $this->expectException(DuplicateRollbackBatchMethod::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[BatchRollback]
+            public function rollback1(object $state): void
+            {
+            }
+
+            #[BatchRollback]
+            public function rollback2(object $state): void
             {
             }
         };

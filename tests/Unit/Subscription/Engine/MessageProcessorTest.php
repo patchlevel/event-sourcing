@@ -38,6 +38,7 @@ final class MessageProcessorTest extends TestCase
         $processor = new MessageProcessor(
             new MetadataSubscriberAccessorRepository([$subscriber]),
             new EventDispatcher(),
+            [],
             new NullLogger(),
         );
 

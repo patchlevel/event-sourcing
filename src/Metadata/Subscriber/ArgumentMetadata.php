@@ -11,6 +11,7 @@ final class ArgumentMetadata
     public function __construct(
         public readonly string $name,
         public readonly Type $type,
+        public readonly bool $batch = false,
     ) {
     }
 }

@@ -4,28 +4,29 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine\Listener;
 
+use InvalidArgumentException;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnProcessingFinished;
-use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+use Patchlevel\EventSourcing\Subscription\Subscriber\Batch;
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchManager;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
-use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
+use stdClass;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Throwable;
 
+use function is_object;
 use function sprintf;
 
 /** @internal */
 final class BatchSubscriber implements EventSubscriberInterface
 {
-    /** @var array<string, array{subscriber: BatchableSubscriber, subscription: Subscription}> */
-    private array $batching = [];
-
     public function __construct(
+        private readonly BatchManager $batchManager,
         private readonly SubscriberAccessorRepository $subscriberRepository,
         private readonly LoggerInterface|null $logger = null,
     ) {
@@ -33,41 +34,35 @@ final class BatchSubscriber implements EventSubscriberInterface
 
     public function onCommand(OnCommand $event): void
     {
-        $this->batching = [];
+        $this->batchManager->clear();
     }
 
     public function onHandleMessage(OnHandleMessage $event): void
     {
         $subscriberId = $event->subscription->id();
 
-        if (isset($this->batching[$subscriberId])) {
+        if ($this->batchManager->has($subscriberId)) {
             return;
         }
 
         $subscriber = $this->subscriberRepository->get($subscriberId);
+        $batchMetadata = $subscriber->metadata()?->batch;
 
-        if (!$subscriber) {
+        if ($subscriber === null || $batchMetadata === null) {
             return;
         }
 
         $realSubscriber = $subscriber->subscriber();
-
-        if (!$realSubscriber instanceof BatchableSubscriber) {
-            return;
-        }
-
-        $this->batching[$subscriberId] = [
-            'subscriber' => $realSubscriber,
-            'subscription' => $event->subscription,
-        ];
 
         $this->logger?->debug(sprintf(
             'Subscription Engine: Subscriber "%s" starts a new batch.',
             $subscriberId,
         ));
 
+        $beginMethod = $batchMetadata->beginMethod;
+
         try {
-            $realSubscriber->beginBatch();
+            $state = $beginMethod !== null ? $realSubscriber->$beginMethod() : null;
         } catch (Throwable $e) {
             $this->logger?->error(sprintf(
                 'Subscription Engine: Subscriber "%s" has an error in the begin batch method: %s',
@@ -77,36 +72,59 @@ final class BatchSubscriber implements EventSubscriberInterface
 
             throw $e;
         }
+
+        if ($state !== null && !is_object($state)) {
+            throw new InvalidArgumentException(sprintf(
+                'Subscription Engine: Subscriber "%s" begin batch method must return an object or null.',
+                $subscriberId,
+            ));
+        }
+
+        $this->batchManager->add(new Batch(
+            $event->subscription,
+            $subscriber,
+            $state ?? new stdClass(),
+        ));
     }
 
     public function onHandleMessageSuccess(OnHandleMessageSuccess $event): void
     {
         $subscriberId = $event->subscription->id();
 
-        if (!isset($this->batching[$subscriberId])) {
+        if (!$this->batchManager->has($subscriberId)) {
             return;
         }
 
-        if (!$this->shouldCommitBatch($event->subscription)) {
+        $batch = $this->batchManager->get($subscriberId);
+        $batch->count++;
+
+        if (!$this->shouldFlush($batch)) {
             $event->shouldChangePosition = false;
 
             return;
         }
 
-        $subscriber = $this->batching[$subscriberId]['subscriber'];
-        unset($this->batching[$subscriberId]);
+        $this->batchManager->remove($subscriberId);
 
         $this->logger?->debug(sprintf(
-            'Subscription Engine: Subscriber "%s" commits the batch.',
+            'Subscription Engine: Subscriber "%s" flushes the batch.',
             $subscriberId,
         ));
 
+        $flushMethod = $batch->accessor->metadata()->batch?->flushMethod;
+
+        if ($flushMethod === null) {
+            $event->shouldChangePosition = true;
+
+            return;
+        }
+
         try {
-            $subscriber->commitBatch();
+            $batch->accessor->subscriber()->$flushMethod($batch->state);
             $event->shouldChangePosition = true;
         } catch (Throwable $e) {
             $this->logger?->error(sprintf(
-                'Subscription Engine: Subscriber "%s" has an error in the commit batch method: %s',
+                'Subscription Engine: Subscriber "%s" has an error in the flush method: %s',
                 $subscriberId,
                 $e->getMessage(),
             ));
@@ -123,46 +141,55 @@ final class BatchSubscriber implements EventSubscriberInterface
             return;
         }
 
-        foreach ($this->batching as $subscriberId => ['subscriber' => $subscriber, 'subscription' => $subscription]) {
-            unset($this->batching[$subscriberId]);
+        foreach ($this->batchManager->all() as $batch) {
+            $subscriberId = $batch->subscription->id();
+            $this->batchManager->remove($subscriberId);
+
+            $flushMethod = $batch->accessor->metadata()->batch?->flushMethod;
+
+            if ($flushMethod === null) {
+                $batch->subscription->changePosition($lastIndex);
+
+                continue;
+            }
 
             $this->logger?->debug(sprintf(
-                'Subscription Engine: Subscriber "%s" commits the batch.',
+                'Subscription Engine: Subscriber "%s" flushes the batch.',
                 $subscriberId,
             ));
 
             try {
-                $subscriber->commitBatch();
-                $subscription->changePosition($lastIndex);
+                $batch->accessor->subscriber()->$flushMethod($batch->state);
+                $batch->subscription->changePosition($lastIndex);
             } catch (Throwable $e) {
                 $this->logger?->error(sprintf(
-                    'Subscription Engine: Subscriber "%s" has an error in the commit batch method: %s',
+                    'Subscription Engine: Subscriber "%s" has an error in the flush method: %s',
                     $subscriberId,
                     $e->getMessage(),
                 ));
 
-                $subscription->error($e);
+                $batch->subscription->error($e);
                 $event->errors[] = new Error($subscriberId, $e->getMessage(), $e);
             }
         }
-    }
-
-    private function shouldCommitBatch(Subscription $subscription): bool
-    {
-        return $this->batching[$subscription->id()]['subscriber']->forceCommit();
     }
 
     public function onError(OnHandleMessageError $event): void
     {
         $subscriptionId = $event->subscription->id();
 
-        if (!isset($this->batching[$subscriptionId])) {
+        if (!$this->batchManager->has($subscriptionId)) {
             return;
         }
 
-        $subscriber = $this->batching[$subscriptionId]['subscriber'];
+        $batch = $this->batchManager->get($subscriptionId);
+        $this->batchManager->remove($subscriptionId);
 
-        unset($this->batching[$subscriptionId]);
+        $rollbackMethod = $batch->accessor->metadata()->batch?->rollbackMethod;
+
+        if ($rollbackMethod === null) {
+            return;
+        }
 
         $this->logger?->debug(sprintf(
             'Subscription Engine: Subscriber "%s" rollback the batch.',
@@ -170,7 +197,7 @@ final class BatchSubscriber implements EventSubscriberInterface
         ));
 
         try {
-            $subscriber->rollbackBatch();
+            $batch->accessor->subscriber()->$rollbackMethod($batch->state);
         } catch (Throwable $e) {
             $this->logger?->error(sprintf(
                 'Subscription Engine: Subscriber "%s" has an error in the rollback batch method: %s',
@@ -178,6 +205,23 @@ final class BatchSubscriber implements EventSubscriberInterface
                 $e->getMessage(),
             ));
         }
+    }
+
+    private function shouldFlush(Batch $batch): bool
+    {
+        $metadata = $batch->accessor->metadata()->batch;
+
+        if ($metadata?->afterMessages !== null && $batch->count >= $metadata->afterMessages) {
+            return true;
+        }
+
+        $shouldFlushMethod = $metadata?->shouldFlushMethod;
+
+        if ($shouldFlushMethod === null) {
+            return false;
+        }
+
+        return $batch->accessor->subscriber()->$shouldFlushMethod($batch->state) === true;
     }
 
     /** @return array<class-string, string|array{string, int}> */
