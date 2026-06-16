@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 use Patchlevel\EventSourcing\Subscription\Engine\CleanerNotConfigured;
 use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown as TeardownCommand;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\TeardownHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -29,6 +30,27 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 #[CoversClass(TeardownHandler::class)]
 final class TeardownHandlerTest extends TestCase
 {
+    /** @var list<Subscription> */
+    private array $removedSubscriptions = [];
+
+    protected function setUp(): void
+    {
+        $this->removedSubscriptions = [];
+    }
+
+    private function recordingDispatcher(): EventDispatcher
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(
+            OnSubscriptionRemoved::class,
+            function (OnSubscriptionRemoved $event): void {
+                $this->removedSubscriptions[] = $event->subscription;
+            },
+        );
+
+        return $dispatcher;
+    }
+
     /** @param list<object> $subscribers */
     private function createHandler(
         DummySubscriptionStore $store,
@@ -41,7 +63,7 @@ final class TeardownHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository($subscribers),
             $cleanupRunner ?? new CleanupRunner($subscriptionManager, null, new NullLogger()),
-            new EventDispatcher(),
+            $this->recordingDispatcher(),
             new NullLogger(),
         );
     }
@@ -62,6 +84,7 @@ final class TeardownHandlerTest extends TestCase
         self::assertEquals([], $result->errors);
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testTeardownWithSubscriber(): void
@@ -88,6 +111,7 @@ final class TeardownHandlerTest extends TestCase
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
         self::assertTrue($subscriber->dropped);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testTeardownWithSubscriberAndError(): void
@@ -117,6 +141,7 @@ final class TeardownHandlerTest extends TestCase
         self::assertInstanceOf(RuntimeException::class, $error->throwable);
 
         $store->assertNoChanges();
+        self::assertSame([], $this->removedSubscriptions);
     }
 
     public function testTeardownWithoutSubscriber(): void
@@ -132,6 +157,7 @@ final class TeardownHandlerTest extends TestCase
 
         self::assertEquals([], $result->errors);
         $store->assertNoChanges();
+        self::assertSame([], $this->removedSubscriptions);
     }
 
     public function testTeardownWithCleanupAndWithoutCleaner(): void
@@ -182,7 +208,7 @@ final class TeardownHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository([$subscriber]),
             new CleanupRunner($subscriptionManager, new DefaultCleaner([$cleanupHandler]), new NullLogger()),
-            new EventDispatcher(),
+            $this->recordingDispatcher(),
             new NullLogger(),
         );
 
@@ -191,6 +217,7 @@ final class TeardownHandlerTest extends TestCase
         self::assertEquals([], $result->errors);
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testTeardownWithCleanupAndWithoutSubscriber(): void
@@ -216,7 +243,7 @@ final class TeardownHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository([]),
             new CleanupRunner($subscriptionManager, new DefaultCleaner([$cleanupHandler]), new NullLogger()),
-            new EventDispatcher(),
+            $this->recordingDispatcher(),
             new NullLogger(),
         );
 
@@ -225,6 +252,7 @@ final class TeardownHandlerTest extends TestCase
         self::assertEquals([], $result->errors);
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testTeardownWithCleanupHandlerError(): void
@@ -251,7 +279,7 @@ final class TeardownHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository([]),
             new CleanupRunner($subscriptionManager, new DefaultCleaner([$cleanupHandler]), new NullLogger()),
-            new EventDispatcher(),
+            $this->recordingDispatcher(),
             new NullLogger(),
         );
 
@@ -264,5 +292,6 @@ final class TeardownHandlerTest extends TestCase
         self::assertInstanceOf(CleanupFailed::class, $error->throwable);
 
         $store->assertNoChanges();
+        self::assertSame([], $this->removedSubscriptions);
     }
 }

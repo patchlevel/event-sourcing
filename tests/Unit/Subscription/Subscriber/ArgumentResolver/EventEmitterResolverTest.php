@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentRe
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
+use Patchlevel\EventSourcing\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
@@ -53,6 +54,21 @@ final class EventEmitterResolverTest extends TestCase
         );
 
         self::assertInstanceOf(StoreEventEmitter::class, $emitter);
+    }
+
+    public function testResolvedEmitterEmitsToSubscriptionStream(): void
+    {
+        $store = new InMemoryStore();
+        $resolver = new EventEmitterResolver($store);
+
+        $emitter = $resolver->resolve(
+            new ArgumentMetadata('emitter', Type::object(EventEmitter::class)),
+            $this->context(Status::Active),
+        );
+
+        $emitter->emit([new stdClass()]);
+
+        self::assertSame(['subscription_foo'], $store->streams());
     }
 
     public function testResolveDuringBootReturnsNoopByDefault(): void

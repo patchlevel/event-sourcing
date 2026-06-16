@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 use Patchlevel\EventSourcing\Subscription\Engine\CleanerNotConfigured;
 use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove as RemoveCommand;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\RemoveHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -29,6 +30,27 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 #[CoversClass(RemoveHandler::class)]
 final class RemoveHandlerTest extends TestCase
 {
+    /** @var list<Subscription> */
+    private array $removedSubscriptions = [];
+
+    protected function setUp(): void
+    {
+        $this->removedSubscriptions = [];
+    }
+
+    private function recordingDispatcher(): EventDispatcher
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(
+            OnSubscriptionRemoved::class,
+            function (OnSubscriptionRemoved $event): void {
+                $this->removedSubscriptions[] = $event->subscription;
+            },
+        );
+
+        return $dispatcher;
+    }
+
     /** @param list<object> $subscribers */
     private function createHandler(
         DummySubscriptionStore $store,
@@ -41,7 +63,7 @@ final class RemoveHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository($subscribers),
             $cleanupRunner ?? new CleanupRunner($subscriptionManager, null, new NullLogger()),
-            new EventDispatcher(),
+            $this->recordingDispatcher(),
             new NullLogger(),
         );
     }
@@ -70,6 +92,7 @@ final class RemoveHandlerTest extends TestCase
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
         self::assertTrue($subscriber->dropped);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testRemoveWithoutDropMethod(): void
@@ -88,6 +111,7 @@ final class RemoveHandlerTest extends TestCase
         self::assertEquals([], $result->errors);
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testRemoveWithSubscriberAndError(): void
@@ -117,6 +141,7 @@ final class RemoveHandlerTest extends TestCase
 
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testRemoveNewSubscriber(): void
@@ -143,6 +168,7 @@ final class RemoveHandlerTest extends TestCase
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
         self::assertFalse($subscriber->dropped);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testRemoveWithoutSubscriber(): void
@@ -158,6 +184,7 @@ final class RemoveHandlerTest extends TestCase
         self::assertEquals([], $result->errors);
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testRemoveWithCleanupAndWithoutCleaner(): void
@@ -208,7 +235,7 @@ final class RemoveHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository([$subscriber]),
             new CleanupRunner($subscriptionManager, new DefaultCleaner([$cleanupHandler]), new NullLogger()),
-            new EventDispatcher(),
+            $this->recordingDispatcher(),
             new NullLogger(),
         );
 
@@ -217,6 +244,7 @@ final class RemoveHandlerTest extends TestCase
         self::assertEquals([], $result->errors);
         $store->assertNoUpdated();
         $store->assertRemoved($subscription);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 
     public function testRemoveWithCleanupHandlerError(): void
@@ -242,7 +270,7 @@ final class RemoveHandlerTest extends TestCase
             $subscriptionManager,
             new MetadataSubscriberAccessorRepository([]),
             new CleanupRunner($subscriptionManager, new DefaultCleaner([$cleanupHandler]), new NullLogger()),
-            new EventDispatcher(),
+            $this->recordingDispatcher(),
             new NullLogger(),
         );
 
@@ -255,5 +283,6 @@ final class RemoveHandlerTest extends TestCase
         self::assertInstanceOf(CleanupFailed::class, $error->throwable);
 
         $store->assertRemoved($subscription);
+        self::assertSame([$subscription], $this->removedSubscriptions);
     }
 }
