@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
-use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\SubscriptionStream;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;
@@ -24,7 +23,7 @@ final class RemoveSubscriptionStreamListener
 
     public function __invoke(OnSubscriptionRemoved $event): void
     {
-        $streamName = SubscriptionStream::name($event->subscription->id());
+        $streamName = 'subscription_' . $event->subscription->id();
 
         $this->store->remove(
             new Criteria(

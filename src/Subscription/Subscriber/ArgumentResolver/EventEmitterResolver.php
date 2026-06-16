@@ -9,7 +9,6 @@ use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\DefaultEventEmitter;
 use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\EventEmitter;
 use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\NoopEventEmitter;
-use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\SubscriptionStream;
 
 final class EventEmitterResolver implements ArgumentResolver
 {
@@ -35,7 +34,7 @@ final class EventEmitterResolver implements ArgumentResolver
 
         return new DefaultEventEmitter(
             $this->store,
-            SubscriptionStream::name($context->subscription->id()),
+            'subscription_' . $context->subscription->id(),
         );
     }
 

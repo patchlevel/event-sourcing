@@ -12,14 +12,14 @@ final class DefaultEventEmitter implements EventEmitter
 {
     public function __construct(
         private readonly Store $store,
-        private readonly string $subscriptionStream,
+        private readonly string $defaultStream,
     ) {
     }
 
     /** @param list<object> $events */
     public function emit(array $events): void
     {
-        $this->linkTo($this->subscriptionStream, $events);
+        $this->linkTo($this->defaultStream, $events);
     }
 
     /** @param list<object> $events */
