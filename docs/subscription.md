@@ -282,6 +282,23 @@ final class PublicProfileProjection
 More information can be found in the [reducer](message.md#reducer) documentation.
 :::
 
+The lookup resolver is not registered by default. Pass a `LookupResolver` to the subscription engine
+via the `argumentResolvers` argument; it needs the event store to read the previous messages from:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupResolver;
+
+$engine = new DefaultSubscriptionEngine(
+    $messageLoader,
+    $subscriptionStore,
+    $subscriberAccessorRepository,
+    argumentResolvers: [
+        new LookupResolver($store),
+    ],
+);
+```
+
 ##### Recorded On Resolver
 
 The recorded on resolver resolves the recorded on date.
