@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
 use Patchlevel\EventSourcing\Attribute\Cleanup;
+use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
+use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
-use Patchlevel\EventSourcing\Attribute\OverrideEventEmitting;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -157,7 +158,8 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $failedMethod,
             $this->retryStrategy($reflector),
             $cleanupMethod,
-            $this->overrideEventEmitting($reflector),
+            $reflector->getAttributes(EnableEventEmittingDuringBoot::class) !== [],
+            $reflector->getAttributes(DisableEventEmitting::class) !== [],
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;
@@ -203,16 +205,5 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $instance = $attributes[0]->newInstance();
 
         return $instance->name;
-    }
-
-    private function overrideEventEmitting(ReflectionClass $reflector): bool|null
-    {
-        $attributes = $reflector->getAttributes(OverrideEventEmitting::class);
-
-        if ($attributes === []) {
-            return null;
-        }
-
-        return $attributes[0]->newInstance()->enabled;
     }
 }

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Subscriber;
 
-use Patchlevel\EventSourcing\Attribute\OverrideEventEmitting;
+use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
+use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
@@ -54,20 +55,36 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         self::assertNull($metadata->setupMethod);
         self::assertNull($metadata->teardownMethod);
         self::assertSame('foo', $metadata->id);
-        self::assertNull($metadata->overrideEventEmitting);
+        self::assertFalse($metadata->enableEventEmittingDuringBoot);
+        self::assertFalse($metadata->disableEventEmitting);
     }
 
-    public function testOverrideEventEmitting(): void
+    public function testEnableEventEmittingDuringBoot(): void
     {
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
-        #[OverrideEventEmitting(true)]
+        #[EnableEventEmittingDuringBoot]
         class {
         };
 
         $metadataFactory = new AttributeSubscriberMetadataFactory();
         $metadata = $metadataFactory->metadata($subscriber::class);
 
-        self::assertTrue($metadata->overrideEventEmitting);
+        self::assertTrue($metadata->enableEventEmittingDuringBoot);
+        self::assertFalse($metadata->disableEventEmitting);
+    }
+
+    public function testDisableEventEmitting(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        #[DisableEventEmitting]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertTrue($metadata->disableEventEmitting);
+        self::assertFalse($metadata->enableEventEmittingDuringBoot);
     }
 
     public function testProjector(): void

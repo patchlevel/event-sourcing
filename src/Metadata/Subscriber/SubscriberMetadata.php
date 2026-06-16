@@ -20,7 +20,8 @@ final class SubscriberMetadata
         public readonly string|null $failedMethod = null,
         public readonly string|null $retryStrategy = null,
         public readonly string|null $cleanupMethod = null,
-        public readonly bool|null $overrideEventEmitting = null,
+        public readonly bool $enableEventEmittingDuringBoot = false,
+        public readonly bool $disableEventEmitting = false,
     ) {
     }
 }

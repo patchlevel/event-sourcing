@@ -19,11 +19,11 @@ final class EventEmitterResolver implements ArgumentResolver
 
     public function resolve(ArgumentMetadata $argument, ArgumentResolverContext $context): EventEmitter
     {
-        $override = $context->subscriber->overrideEventEmitting;
+        $subscriber = $context->subscriber;
 
         $enabled = match (true) {
-            $override === false => false,
-            $override === true => true,
+            $subscriber->disableEventEmitting => false,
+            $subscriber->enableEventEmittingDuringBoot => true,
             // by default events are only emitted during run, not while booting
             default => $context->subscription->isActive(),
         };

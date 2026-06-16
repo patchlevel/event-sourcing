@@ -7,10 +7,6 @@ namespace Patchlevel\EventSourcing\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-final class OverrideEventEmitting
+final class DisableEventEmitting
 {
-    public function __construct(
-        public readonly bool $enabled,
-    ) {
-    }
 }

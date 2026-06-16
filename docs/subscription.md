@@ -383,23 +383,23 @@ $engine = new DefaultSubscriptionEngine(
 
 Emitting events while a subscription is *booting* would create duplicates on every replay, so by
 default events are only emitted during `run` and the emitter is a noop during `boot`. You can change
-this per subscriber with the `OverrideEventEmitting` attribute:
+this per subscriber with two attributes:
 
 ```php
-use Patchlevel\EventSourcing\Attribute\OverrideEventEmitting;
+use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 
 #[Subscriber('order_projection', RunMode::FromBeginning)]
-#[OverrideEventEmitting(true)] // also emit during boot
+#[EnableEventEmittingDuringBoot]
 final class OrderProjection
 {
     // ...
 }
 ```
 
-* `OverrideEventEmitting(true)` — events are also emitted during `boot`.
-* `OverrideEventEmitting(false)` — events are never emitted, not even during `run`.
+* `EnableEventEmittingDuringBoot` — events are also emitted during `boot`.
+* `DisableEventEmitting` — events are never emitted, not even during `run`.
 
 :::info
 When a subscription is removed, its `subscription_<subscription-id>` stream is removed from the store as
