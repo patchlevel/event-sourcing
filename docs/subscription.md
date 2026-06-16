@@ -341,28 +341,16 @@ $eventEmitter->linkTo('notifications', [new NotificationRequired($event->orderId
 The emitted events must be registered like any other event so the store can (de)serialize them.
 :::
 
-To configure the resolver, pass an `EventEmitterResolver` to the subscriber accessor repository,
-the same way as the [lookup resolver](#lookup-resolver). It needs the event store to append to:
-
-```php
-use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventEmitterResolver;
-use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
-
-$subscriberAccessorRepository = new MetadataSubscriberAccessorRepository(
-    $subscribers,
-    argumentResolvers: [
-        new EventEmitterResolver($store),
-    ],
-);
-```
-
-To also clean up the subscription stream when a subscription is removed, register the
-`RemoveSubscriptionStreamListener` on the event dispatcher and pass it to the engine:
+To configure the resolver, pass an `EventEmitterResolver` to the subscription engine via the
+`argumentResolvers` argument; it needs the event store to append to. To also clean up the
+subscription stream when a subscription is removed, register the `RemoveSubscriptionStreamListener`
+on an event dispatcher and pass that to the engine as well:
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RemoveSubscriptionStreamListener;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventEmitterResolver;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 $eventDispatcher = new EventDispatcher();
@@ -376,6 +364,9 @@ $engine = new DefaultSubscriptionEngine(
     $subscriptionStore,
     $subscriberAccessorRepository,
     eventDispatcher: $eventDispatcher,
+    argumentResolvers: [
+        new EventEmitterResolver($store),
+    ],
 );
 ```
 
