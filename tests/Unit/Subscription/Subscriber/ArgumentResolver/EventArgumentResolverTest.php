@@ -6,7 +6,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentRe
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -66,7 +69,7 @@ final class EventArgumentResolverTest extends TestCase
             $event,
             $resolver->resolve(
                 new ArgumentMetadata('foo', Type::object(ProfileVisited::class)),
-                $message,
+                new ArgumentResolverContext($message, new Subscription('foo'), new SubscriberMetadata('foo')),
             ),
         );
     }

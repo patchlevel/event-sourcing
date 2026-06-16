@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
 use Patchlevel\EventSourcing\Attribute\Cleanup;
+use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
+use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Setup;
@@ -156,6 +158,8 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $failedMethod,
             $this->retryStrategy($reflector),
             $cleanupMethod,
+            $reflector->getAttributes(EnableEventEmittingDuringBoot::class) !== [],
+            $reflector->getAttributes(DisableEventEmitting::class) !== [],
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;

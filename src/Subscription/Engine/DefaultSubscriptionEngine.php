@@ -113,6 +113,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $this->subscriptionManager,
                 $this->subscriberRepository,
                 $cleanupRunner,
+                $this->eventDispatcher,
                 $this->logger,
             ),
             Run::class => new RunHandler(
@@ -133,6 +134,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $this->subscriptionManager,
                 $this->subscriberRepository,
                 $cleanupRunner,
+                $this->eventDispatcher,
                 $this->logger,
             ),
         ];

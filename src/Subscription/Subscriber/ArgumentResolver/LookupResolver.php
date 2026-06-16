@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver;
 
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Store\Store;
@@ -18,11 +17,11 @@ final class LookupResolver implements ArgumentResolver
     ) {
     }
 
-    public function resolve(ArgumentMetadata $argument, Message $message): Lookup
+    public function resolve(ArgumentMetadata $argument, ArgumentResolverContext $context): Lookup
     {
         return new Lookup(
             $this->store,
-            $message,
+            $context->message,
             $this->eventRegistry,
         );
     }

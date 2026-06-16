@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgum
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\NoSuitableResolver;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -50,7 +51,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
         $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
 
-        $result[0]($message);
+        $result[0]($message, new Subscription('profile'));
 
         self::assertSame($message, $subscriber->message);
     }
@@ -82,7 +83,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
         $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
 
-        $result[0]($message);
+        $result[0]($message, new Subscription('profile'));
 
         self::assertSame($message, $subscriber->message);
     }
@@ -136,7 +137,7 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
         $message = new Message(new ProfileVisited(ProfileId::fromString('1')));
 
-        $result[0]($message);
+        $result[0]($message, new Subscription('profile'));
 
         self::assertSame($message, $subscriber->message);
     }

@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber;
 
 use ArrayIterator;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -38,7 +37,7 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
         $metadataFactory = new AttributeSubscriberMetadataFactory();
 
         $customResolver = new class implements ArgumentResolver\ArgumentResolver {
-            public function resolve(ArgumentMetadata $argument, Message $message): mixed
+            public function resolve(ArgumentMetadata $argument, ArgumentResolver\ArgumentResolverContext $context): mixed
             {
                 return null;
             }
@@ -73,7 +72,7 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
     public function testArgumentResolversCanBeArraysAndIterators(): void
     {
         $customResolver = new class implements ArgumentResolver\ArgumentResolver {
-            public function resolve(ArgumentMetadata $argument, Message $message): mixed
+            public function resolve(ArgumentMetadata $argument, ArgumentResolver\ArgumentResolverContext $context): mixed
             {
                 return null;
             }

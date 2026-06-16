@@ -8,13 +8,16 @@ use Patchlevel\EventSourcing\Subscription\Engine\CleanupRunner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionCollection;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
 use function sprintf;
@@ -30,6 +33,7 @@ final class TeardownHandler implements Handler
         private readonly SubscriptionManager $subscriptionManager,
         private readonly SubscriberAccessorRepository $subscriberRepository,
         private readonly CleanupRunner $cleanupRunner,
+        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -52,7 +56,12 @@ final class TeardownHandler implements Handler
 
                         if ($error) {
                             $errors[] = $error;
+
+                            continue;
                         }
+
+                        // the cleanup runner removed the subscription
+                        $this->eventDispatcher->dispatch(new OnSubscriptionRemoved($subscription));
 
                         continue;
                     }
@@ -73,7 +82,7 @@ final class TeardownHandler implements Handler
                     $teardownMethod = $subscriber->teardownMethod();
 
                     if (!$teardownMethod) {
-                        $this->subscriptionManager->remove($subscription);
+                        $this->remove($subscription);
 
                         $this->logger?->info(
                             sprintf(
@@ -113,7 +122,7 @@ final class TeardownHandler implements Handler
                         continue;
                     }
 
-                    $this->subscriptionManager->remove($subscription);
+                    $this->remove($subscription);
 
                     $this->logger?->info(
                         sprintf(
@@ -126,5 +135,11 @@ final class TeardownHandler implements Handler
                 return new Result($errors);
             },
         );
+    }
+
+    private function remove(Subscription $subscription): void
+    {
+        $this->subscriptionManager->remove($subscription);
+        $this->eventDispatcher->dispatch(new OnSubscriptionRemoved($subscription));
     }
 }
