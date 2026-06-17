@@ -22,7 +22,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
-use function array_key_exists;
 use function array_merge;
 use function array_values;
 use function is_array;
@@ -35,7 +34,7 @@ final class MessageProcessor
     /** @var list<ArgumentResolver> */
     private readonly array $argumentResolvers;
 
-    /** @var array<string, list<ArgumentResolver>> */
+    /** @var array<string, array<class-string, array<string, list<ArgumentResolver>>>> */
     private array $resolverCache = [];
 
     /** @param iterable<ArgumentResolver>|list<ArgumentResolver> $argumentResolvers */
@@ -221,10 +220,8 @@ final class MessageProcessor
         string $subscriberClass,
         SubscribeMethodMetadata $method,
     ): array {
-        $key = $subscriptionId . '::' . $eventClass . '::' . $method->name;
-
-        if (array_key_exists($key, $this->resolverCache)) {
-            return $this->resolverCache[$key];
+        if (isset($this->resolverCache[$subscriptionId][$eventClass][$method->name])) {
+            return $this->resolverCache[$subscriptionId][$eventClass][$method->name];
         }
 
         $resolvers = [];
@@ -233,7 +230,7 @@ final class MessageProcessor
             $resolvers[] = $this->resolverFor($argument, $eventClass, $subscriberClass, $method);
         }
 
-        return $this->resolverCache[$key] = $resolvers;
+        return $this->resolverCache[$subscriptionId][$eventClass][$method->name] = $resolvers;
     }
 
     /**
