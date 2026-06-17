@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine\Listener;
 
+use InvalidArgumentException;
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchState;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot as BootCommand;
@@ -29,6 +35,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorR
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\AfterMessagesBatchingSubscriber;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\BatchingSubscriber;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\DefaultStateBatchingSubscriber;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -461,6 +468,92 @@ final class BatchSubscriberTest extends TestCase
         self::assertSame(1, $subscriber->beginBatchCalled);
         self::assertSame(0, $subscriber->flushCalled);
         self::assertSame(1, $subscriber->rollbackCalled);
+    }
+
+    public function testBootBatchingFlushesAfterMessageThreshold(): void
+    {
+        $subscriber = new AfterMessagesBatchingSubscriber();
+
+        $store = new DummySubscriptionStore([
+            new Subscription(
+                $subscriber::ID,
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message1 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+        $message2 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+        $message3 = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $messageLoader = $this->createMock(MessageLoader::class);
+        $messageLoader->expects($this->once())->method('load')->with(null)->willReturn(new Stream([
+            1 => $message1,
+            2 => $message2,
+            3 => $message3,
+        ]));
+
+        $handler = $this->createBootHandler($messageLoader, $store, [$subscriber]);
+        $result = $handler(new BootCommand());
+
+        self::assertEquals(3, $result->processedMessages);
+        self::assertEquals(true, $result->finished);
+        self::assertEquals([], $result->errors);
+
+        // first batch flushes once the threshold of 2 is reached, the third
+        // message opens a new batch that is flushed when processing finishes
+        self::assertSame([$message1, $message2, $message3], $subscriber->receivedMessages);
+        self::assertSame(2, $subscriber->beginBatchCalled);
+        self::assertSame(2, $subscriber->flushCalled);
+        self::assertSame([2, 1], $subscriber->flushedBatchSizes);
+    }
+
+    public function testBootBatchingWithNonObjectBeginStateFails(): void
+    {
+        $subscriber = new #[Subscriber('non-object', RunMode::FromBeginning)]
+        class {
+            #[BatchBegin]
+            public function begin(): string
+            {
+                return 'not-an-object';
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(
+                Message $message,
+                #[BatchState]
+                object $state,
+            ): void {
+            }
+
+            #[BatchFlush]
+            public function flush(object $state): void
+            {
+            }
+        };
+
+        $store = new DummySubscriptionStore([
+            new Subscription(
+                'non-object',
+                Subscription::DEFAULT_GROUP,
+                RunMode::FromBeginning,
+                Status::Booting,
+            ),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $messageLoader = $this->createMock(MessageLoader::class);
+        $messageLoader->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
+
+        $handler = $this->createBootHandler($messageLoader, $store, [$subscriber]);
+        $result = $handler(new BootCommand());
+
+        $error = $result->errors[0];
+        self::assertEquals('non-object', $error->subscriptionId);
+        self::assertStringContainsString('begin batch method must return an object or null', $error->message);
+        self::assertInstanceOf(InvalidArgumentException::class, $error->throwable);
     }
 
     public function testRunningBatchingSuccess(): void

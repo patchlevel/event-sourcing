@@ -440,6 +440,55 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         self::assertEquals(new BatchMetadata('flush', 'begin'), $metadata->batch);
     }
 
+    public function testBatchOnlyFlushMethod(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[BatchFlush]
+            public function flush(object $state): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertEquals(new BatchMetadata('flush'), $metadata->batch);
+    }
+
+    public function testBatchOnlyShouldFlushMethodWithoutFlush(): void
+    {
+        $this->expectException(IncompleteBatchMethods::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[BatchShouldFlush]
+            public function shouldFlush(object $state): bool
+            {
+                return false;
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testBatchOnlyRollbackMethodWithoutFlush(): void
+    {
+        $this->expectException(IncompleteBatchMethods::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[BatchRollback]
+            public function rollback(object $state): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
     public function testBatchWithoutBeginMethod(): void
     {
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
@@ -494,6 +543,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
     public function testBatchWithoutFlushMethod(): void
     {
         $this->expectException(IncompleteBatchMethods::class);
+        $this->expectExceptionMessage('uses batching but does not define a method marked with the #[BatchFlush] attribute');
 
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {
@@ -511,6 +561,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
     public function testDuplicateBeginBatchException(): void
     {
         $this->expectException(DuplicateBeginBatchMethod::class);
+        $this->expectExceptionMessage('have been marked as "begin batch" methods');
 
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {
@@ -534,6 +585,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
     public function testDuplicateFlushException(): void
     {
         $this->expectException(DuplicateFlushMethod::class);
+        $this->expectExceptionMessage('have been marked as "flush" methods');
 
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {
@@ -555,6 +607,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
     public function testDuplicateShouldFlushException(): void
     {
         $this->expectException(DuplicateShouldFlushMethod::class);
+        $this->expectExceptionMessage('have been marked as "should flush" methods');
 
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {
@@ -578,6 +631,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
     public function testDuplicateRollbackBatchException(): void
     {
         $this->expectException(DuplicateRollbackBatchMethod::class);
+        $this->expectExceptionMessage('have been marked as "rollback batch" methods');
 
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {

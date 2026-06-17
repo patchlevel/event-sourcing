@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Subscription\Subscriber\NoSuitableResolver;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -51,5 +52,93 @@ final class MessageProcessorTest extends TestCase
         self::assertNull($error);
         self::assertSame($event, $subscriber->event);
         self::assertSame(1, $subscription->position());
+    }
+
+    public function testProcessResolvesMessageArgument(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $processor = new MessageProcessor(
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new EventDispatcher(),
+            [],
+            new NullLogger(),
+        );
+
+        $message = Message::create(new ProfileVisited(ProfileId::fromString('1')));
+        $subscription = new Subscription('test', status: Status::Active);
+
+        $error = $processor->process(1, $message, $subscription);
+
+        self::assertNull($error);
+        self::assertSame($message, $subscriber->message);
+    }
+
+    public function testProcessResolvesMultipleArguments(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public ProfileVisited|null $event = null;
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(ProfileVisited $event, Message $message): void
+            {
+                $this->event = $event;
+                $this->message = $message;
+            }
+        };
+
+        $processor = new MessageProcessor(
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new EventDispatcher(),
+            [],
+            new NullLogger(),
+        );
+
+        $event = new ProfileVisited(ProfileId::fromString('1'));
+        $message = Message::create($event);
+        $subscription = new Subscription('test', status: Status::Active);
+
+        $error = $processor->process(1, $message, $subscription);
+
+        self::assertNull($error);
+        self::assertSame($event, $subscriber->event);
+        self::assertSame($message, $subscriber->message);
+    }
+
+    public function testProcessReturnsErrorWhenArgumentCannotBeResolved(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(ProfileVisited $event, int $unresolved): void
+            {
+            }
+        };
+
+        $processor = new MessageProcessor(
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new EventDispatcher(),
+            [],
+            new NullLogger(),
+        );
+
+        $message = Message::create(new ProfileVisited(ProfileId::fromString('1')));
+        $subscription = new Subscription('test', status: Status::Active);
+
+        $error = $processor->process(1, $message, $subscription);
+
+        self::assertNotNull($error);
+        self::assertInstanceOf(NoSuitableResolver::class, $error->throwable);
     }
 }

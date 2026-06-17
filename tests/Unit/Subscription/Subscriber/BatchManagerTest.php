@@ -56,6 +56,7 @@ final class BatchManagerTest extends TestCase
     public function testGetMissing(): void
     {
         $this->expectException(BatchNotFound::class);
+        $this->expectExceptionMessage('No batch found for subscription "foo".');
 
         (new BatchManager())->get('foo');
     }
