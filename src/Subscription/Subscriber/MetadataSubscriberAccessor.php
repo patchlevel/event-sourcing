@@ -9,29 +9,21 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
-use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
-use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
-use Patchlevel\EventSourcing\Subscription\Subscription;
 use Throwable;
 
 use function array_key_exists;
 use function array_keys;
-use function array_map;
 
-/** @template T of object */
+/** @template-covariant T of object */
 final class MetadataSubscriberAccessor
 {
-    /** @var array<class-string, list<Closure(Message, Subscription):void>> */
+    /** @var array<class-string, list<SubscribeMethodMetadata>> */
     private array $subscribeCache = [];
 
-    /**
-     * @param T                      $subscriber
-     * @param list<ArgumentResolver> $argumentResolvers
-     */
+    /** @param T $subscriber */
     public function __construct(
         private readonly object $subscriber,
         private readonly SubscriberMetadata $metadata,
-        private readonly array $argumentResolvers,
     ) {
     }
 
@@ -101,7 +93,7 @@ final class MetadataSubscriberAccessor
     /**
      * @param class-string $eventClass
      *
-     * @return list<Closure(Message, Subscription):void>
+     * @return list<SubscribeMethodMetadata>
      */
     public function subscribeMethods(string $eventClass): array
     {
@@ -119,61 +111,6 @@ final class MetadataSubscriberAccessor
             $methods[] = $this->metadata->subscribeMethods[Subscribe::ALL];
         }
 
-        $this->subscribeCache[$eventClass] = array_map(
-            fn (SubscribeMethodMetadata $method): Closure => $this->createClosure($eventClass, $method),
-            $methods,
-        );
-
-        return $this->subscribeCache[$eventClass];
-    }
-
-    /**
-     * @param class-string $eventClass
-     *
-     * @return Closure(Message, Subscription):void
-     */
-    private function createClosure(string $eventClass, SubscribeMethodMetadata $method): Closure
-    {
-        $resolvers = $this->resolvers($eventClass, $method);
-        $methodName = $method->name;
-
-        return function (Message $message, Subscription $subscription) use ($methodName, $resolvers): void {
-            $arguments = [];
-
-            foreach ($resolvers as $resolver) {
-                $arguments[] = $resolver($message, $subscription);
-            }
-
-            $this->subscriber->$methodName(...$arguments);
-        };
-    }
-
-    /**
-     * @param class-string $eventClass
-     *
-     * @return list<Closure(Message, Subscription):mixed>
-     */
-    private function resolvers(string $eventClass, SubscribeMethodMetadata $method): array
-    {
-        $resolvers = [];
-        $metadata = $this->metadata;
-
-        foreach ($method->arguments as $argument) {
-            foreach ($this->argumentResolvers as $resolver) {
-                if (!$resolver->support($argument, $eventClass)) {
-                    continue;
-                }
-
-                $resolvers[] = static function (Message $message, Subscription $subscription) use ($resolver, $argument, $metadata): mixed {
-                    return $resolver->resolve($argument, new ArgumentResolverContext($message, $subscription, $metadata));
-                };
-
-                continue 2;
-            }
-
-            throw new NoSuitableResolver($this->subscriber::class, $method->name, $argument->name);
-        }
-
-        return $resolvers;
+        return $this->subscribeCache[$eventClass] = $methods;
     }
 }

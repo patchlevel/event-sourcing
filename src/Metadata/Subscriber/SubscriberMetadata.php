@@ -22,6 +22,7 @@ final class SubscriberMetadata
         public readonly string|null $cleanupMethod = null,
         public readonly bool $enableEventEmittingDuringBoot = false,
         public readonly bool $disableEventEmitting = false,
+        public readonly BatchMetadata|null $batch = null,
     ) {
     }
 }

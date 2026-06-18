@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projection;
 
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
+use Patchlevel\EventSourcing\Attribute\BatchState;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 
 #[Projector(self::SUBSCRIBER_ID)]
-final class BatchProfileProjector implements BatchableSubscriber
+final class BatchProfileProjector
 {
     private const SUBSCRIBER_ID = 'profile';
-
-    /** @var array<string, string> */
-    private array $nameChanged = [];
 
     public function __construct(
         private Connection $connection,
@@ -51,9 +51,12 @@ final class BatchProfileProjector implements BatchableSubscriber
     }
 
     #[Subscribe(NameChanged::class)]
-    public function onNameChanged(NameChanged $nameChanged): void
-    {
-        $this->nameChanged[$nameChanged->profileId->toString()] = $nameChanged->name;
+    public function onNameChanged(
+        NameChanged $nameChanged,
+        #[BatchState]
+        BatchProfileState $state,
+    ): void {
+        $state->nameChanged[$nameChanged->profileId->toString()] = $nameChanged->name;
     }
 
     public function table(): string
@@ -61,35 +64,29 @@ final class BatchProfileProjector implements BatchableSubscriber
         return 'projection_' . self::SUBSCRIBER_ID;
     }
 
-    public function beginBatch(): void
+    #[BatchBegin]
+    public function beginBatch(): BatchProfileState
     {
-        $this->nameChanged = [];
+        return new BatchProfileState();
     }
 
-    public function commitBatch(): void
+    #[BatchFlush]
+    public function flush(BatchProfileState $state): void
     {
-        try {
-            $this->connection->transactional(function (): void {
-                foreach ($this->nameChanged as $profileId => $name) {
-                    $this->connection->update(
-                        $this->table(),
-                        ['name' => $name],
-                        ['id' => $profileId],
-                    );
-                }
-            });
-        } finally {
-            $this->nameChanged = [];
-        }
+        $this->connection->transactional(function () use ($state): void {
+            foreach ($state->nameChanged as $profileId => $name) {
+                $this->connection->update(
+                    $this->table(),
+                    ['name' => $name],
+                    ['id' => $profileId],
+                );
+            }
+        });
     }
 
-    public function rollbackBatch(): void
+    #[BatchRollback]
+    public function rollbackBatch(BatchProfileState $state): void
     {
-        $this->nameChanged = [];
-    }
-
-    public function forceCommit(): bool
-    {
-        return false;
+        $state->nameChanged = [];
     }
 }

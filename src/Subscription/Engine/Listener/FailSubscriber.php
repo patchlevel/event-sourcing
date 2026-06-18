@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Subscription\Engine\Listener;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
-use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
@@ -48,7 +47,7 @@ final class FailSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if ($subscriber->subscriber() instanceof BatchableSubscriber) {
+        if ($subscriber->metadata()->batch !== null) {
             $subscription->failed($throwable);
             $this->subscriptionManager->update($subscription);
 

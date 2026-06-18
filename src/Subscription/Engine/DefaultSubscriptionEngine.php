@@ -37,6 +37,9 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\BatchArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchManager;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
@@ -54,6 +57,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     /** @var array<class-string<Command>, Handler> */
     private readonly array $handlers;
 
+    /** @param iterable<ArgumentResolver> $argumentResolvers */
     public function __construct(
         private readonly MessageLoader $messageLoader,
         SubscriptionStore $subscriptionStore,
@@ -62,6 +66,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         private readonly LoggerInterface|null $logger = null,
         private readonly Cleaner|null $cleaner = null,
         private readonly EventDispatcherInterface $eventDispatcher = new EventDispatcher(),
+        iterable $argumentResolvers = [],
     ) {
         $this->subscriptionManager = new SubscriptionManager($subscriptionStore);
 
@@ -80,9 +85,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             $this->logger,
         );
 
+        $batchManager = new BatchManager();
+
         $messageProcessor = new MessageProcessor(
             $this->subscriberRepository,
             $this->eventDispatcher,
+            [new BatchArgumentResolver($batchManager), ...$argumentResolvers],
             $this->logger,
         );
 
@@ -159,6 +167,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $this->eventDispatcher->addSubscriber(
             new BatchSubscriber(
+                $batchManager,
                 $this->subscriberRepository,
                 $this->logger,
             ),

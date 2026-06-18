@@ -243,6 +243,136 @@ final class CustomResolver implements ArgumentResolver
 }
 ```
 
+### Custom ArgumentResolver registration
+
+Custom argument resolvers are no longer passed to the `MetadataSubscriberAccessorRepository`.
+They are now passed to the `DefaultSubscriptionEngine`, which forwards them to the message processor.
+
+Before:
+
+```php
+$subscriberRepository = new MetadataSubscriberAccessorRepository(
+    [new MySubscriber()],
+    argumentResolvers: [new MyResolver()],
+);
+
+$engine = new DefaultSubscriptionEngine(
+    $messageLoader,
+    $subscriptionStore,
+    $subscriberRepository,
+);
+```
+
+After:
+
+```php
+$subscriberRepository = new MetadataSubscriberAccessorRepository(
+    [new MySubscriber()],
+);
+
+$engine = new DefaultSubscriptionEngine(
+    $messageLoader,
+    $subscriptionStore,
+    $subscriberRepository,
+    argumentResolvers: [new MyResolver()],
+);
+```
+
+### Batchable Subscriber
+
+The `Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber` interface has been removed.
+Batching is now configured with attributes and the subscriber stays stateless: the data you collect
+during a batch lives in a state object that the engine creates, keeps and hands back to your methods.
+
+* `beginBatch()` becomes a `#[BatchBegin]` method that returns the state object.
+* `commitBatch()` becomes a `#[BatchFlush]` method that receives the state object. The batch size is now
+  configured on the attribute (`#[BatchFlush(afterMessages: 1000)]`).
+* `rollbackBatch()` becomes a `#[BatchRollback]` method that receives the state object (optional).
+* `forceCommit()` becomes a `#[BatchShouldFlush]` method that receives the state object (optional).
+* The handler receives the state object through a parameter marked with `#[BatchState]`.
+
+Before:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+
+#[Projector('profile_1')]
+final class MigrationSubscriber implements BatchableSubscriber
+{
+    /** @var array<string, string> */
+    private array $nameChanged = [];
+
+    #[Subscribe(NameChanged::class)]
+    public function handleNameChanged(NameChanged $event): void
+    {
+        $this->nameChanged[$event->userId] = $event->name;
+    }
+
+    public function beginBatch(): void
+    {
+        $this->nameChanged = [];
+    }
+
+    public function commitBatch(): void
+    {
+        // ... persist $this->nameChanged
+        $this->nameChanged = [];
+    }
+
+    public function rollbackBatch(): void
+    {
+    }
+
+    public function forceCommit(): bool
+    {
+        return count($this->nameChanged) > 1000;
+    }
+}
+```
+
+After:
+
+```php
+use Patchlevel\EventSourcing\Attribute\BatchState;
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
+use Patchlevel\EventSourcing\Attribute\BatchShouldFlush;
+
+final class MigrationBatch
+{
+    /** @var array<string, string> */
+    public array $nameChanged = [];
+}
+
+#[Projector('profile_1')]
+final class MigrationSubscriber
+{
+    #[BatchBegin]
+    public function beginBatch(): MigrationBatch
+    {
+        return new MigrationBatch();
+    }
+
+    #[Subscribe(NameChanged::class)]
+    public function handleNameChanged(NameChanged $event, #[BatchState] MigrationBatch $batch): void
+    {
+        $batch->nameChanged[$event->userId] = $event->name;
+    }
+
+    #[BatchFlush(afterMessages: 1000)]
+    public function flush(MigrationBatch $batch): void
+    {
+        // ... persist $batch->nameChanged
+    }
+
+    #[BatchRollback]
+    public function rollback(MigrationBatch $batch): void
+    {
+    }
+}
+```
+
 ## Store
 
 ### StreamStore

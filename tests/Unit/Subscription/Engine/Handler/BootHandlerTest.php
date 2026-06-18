@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine\Handler;
 
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy as RetryStrategyName;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -22,7 +25,6 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
-use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
@@ -34,6 +36,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use stdClass;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[CoversClass(BootHandler::class)]
@@ -58,7 +61,7 @@ final class BootHandlerTest extends TestCase
         $eventDispatcher->addSubscriber(new RetrySubscriber($subscriptionManager, $subscriberRepository, $retryStrategyRepository, new NullLogger()));
         $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
 
-        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, new NullLogger());
+        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [], new NullLogger());
 
         return new BootHandler($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
     }
@@ -330,7 +333,7 @@ final class BootHandlerTest extends TestCase
         $subscriptionId = 'test';
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         #[RetryStrategyName('no_retry')]
-        class implements BatchableSubscriber {
+        class {
             public function __construct(
                 public readonly RuntimeException $exception = new RuntimeException('ERROR'),
             ) {
@@ -347,21 +350,20 @@ final class BootHandlerTest extends TestCase
             {
             }
 
-            public function beginBatch(): void
+            #[BatchBegin]
+            public function beginBatch(): object
+            {
+                return new stdClass();
+            }
+
+            #[BatchFlush]
+            public function flush(object $state): void
             {
             }
 
-            public function commitBatch(): void
+            #[BatchRollback]
+            public function rollbackBatch(object $state): void
             {
-            }
-
-            public function rollbackBatch(): void
-            {
-            }
-
-            public function forceCommit(): bool
-            {
-                return false;
             }
         };
 
