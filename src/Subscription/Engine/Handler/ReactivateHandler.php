@@ -6,13 +6,15 @@ namespace Patchlevel\EventSourcing\Subscription\Engine\Handler;
 
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Reactivate;
+use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionCollection;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 use function sprintf;
 
@@ -32,7 +34,7 @@ final class ReactivateHandler implements Handler
 
     public function __invoke(Command $command): Result
     {
-        return $this->subscriptionManager->findForUpdate(
+        $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
@@ -44,50 +46,44 @@ final class ReactivateHandler implements Handler
                     Status::Finished,
                 ],
             ),
-            function (SubscriptionCollection $subscriptions): Result {
-                foreach ($subscriptions as $subscription) {
-                    $subscriber = $this->subscriberRepository->get($subscription->id());
+            function (Subscription $subscription): Result {
+                $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
 
-                    if (!$subscriber) {
-                        $this->logger?->debug(
-                            sprintf(
-                                'Subscription Engine: Subscriber for "%s" not found, skipped.',
-                                $subscription->id(),
-                            ),
-                        );
-
-                        continue;
-                    }
-
-                    $error = $subscription->subscriptionError();
-
-                    if ($error) {
-                        $subscription->doRetry();
-                        $subscription->resetRetry();
-
-                        $this->subscriptionManager->update($subscription);
-
-                        $this->logger?->info(sprintf(
-                            'Subscription Engine: Subscriber "%s" for "%s" is reactivated.',
-                            $subscriber::class,
+                if (!$subscriber) {
+                    $this->logger?->debug(
+                        sprintf(
+                            'Subscription Engine: Subscriber for "%s" not found, skipped.',
                             $subscription->id(),
-                        ));
+                        ),
+                    );
 
-                        continue;
-                    }
-
-                    $subscription->active();
-                    $this->subscriptionManager->update($subscription);
-
-                    $this->logger?->info(sprintf(
-                        'Subscription Engine: Subscriber "%s" for "%s" is reactivated.',
-                        $subscriber::class,
-                        $subscription->id(),
-                    ));
+                    return new Result();
                 }
+
+                $error = $subscription->subscriptionError();
+
+                if ($error) {
+                    $subscription->doRetry();
+                    $subscription->resetRetry();
+                } else {
+                    $subscription->active();
+                }
+
+                $this->subscriptionManager->update($subscription);
+
+                $this->logger?->info(sprintf(
+                    'Subscription Engine: Subscriber "%s" for "%s" is reactivated.',
+                    $subscriber::class,
+                    $subscription->id(),
+                ));
 
                 return new Result();
             },
+            static fn (Subscription $subscription, Throwable $e): Result => new Result(
+                [new Error($subscription->id(), $e->getMessage(), $e)],
+            ),
         );
+
+        return Result::merge($results);
     }
 }

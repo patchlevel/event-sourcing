@@ -873,6 +873,14 @@ and keeping all subscriptions up to date.
 It also takes care that new subscribers are booted and old ones are removed again.
 If something breaks, the subscription engine marks the individual subscriptions as faulty and retries them.
 
+Each subscription is processed independently: the engine claims one subscription at a time with a
+row lock, reads its own substream from its own position, processes it and
+commits in a short transaction before moving on to the next one. This has two consequences:
+
+* An error in one subscription no aborts the whole run, the other subscriptions keep going.
+* Multiple workers can run the engine in parallel and share the work automatically (see
+  [Parallel processing](#parallel-processing)).
+
 :::tip
 The Subscription Engine was inspired by the following two blog posts:
 
@@ -1336,7 +1344,7 @@ You can register your own listeners to hook into the engine, for example for log
 | `OnHandleMessage`        | A message is about to be passed to a subscriber                      |
 | `OnHandleMessageSuccess` | A message was successfully handled by a subscriber                   |
 | `OnHandleMessageError`   | An error occurred while a subscriber was handling a message          |
-| `OnProcessingFinished`   | The engine finished processing the stream (ended or limit reached)   |
+| `OnSubscriptionProcessed`| A subscription finished its stream (ended or limit reached)          |
 | `OnResult`               | The engine finished the command and returns the result               |
 
 ```php
@@ -1484,6 +1492,8 @@ $subscriptionEngine->execute(new Boot());
 
 :::tip
 You can limit the number of processed messages with the `limit` parameter: `new Boot(limit: 100)`.
+The limit applies **per subscription**, so one call processes at most `limit` messages for each
+booting subscription.
 :::
 
 ### Run
@@ -1500,6 +1510,34 @@ $subscriptionEngine->execute(new Run());
 
 :::tip
 You can limit the number of processed messages with the `limit` parameter: `new Run(limit: 100)`.
+The limit applies **per subscription**: one `Run` call processes at most `limit` messages for each
+active subscription, so up to `limit × number of subscriptions` messages in total. It also defines
+the checkpoint and lock-hold granularity, a unit of at most `limit` messages commits atomically and
+the lock is released afterwards.
+:::
+
+### Parallel processing
+
+Because every subscription is claimed independently by a worker, 
+you can start the same command in several worker processes at once. 
+Each worker takes the next available subscription while avoiding subscriptions that are already being processed, 
+so the workload is distributed across workers without any static configuration.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+// run this in as many worker processes as you like, they balance themselves
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(new Run(limit: 100));
+```
+
+The per-subscription order is always preserved. There is no global ordering across different
+subscriptions, but since subscriptions are independent of each other this does not matter.
+
+:::note
+This requires a database that supports `SKIP LOCKED` (PostgreSQL and MySQL do). SQLite serializes
+writes anyway and simply ignores the clause, so a single worker is used there.
 :::
 
 ### Teardown

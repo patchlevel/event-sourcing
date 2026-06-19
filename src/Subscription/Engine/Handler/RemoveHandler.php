@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionCollection;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
@@ -39,69 +38,55 @@ final class RemoveHandler implements Handler
 
     public function __invoke(Command $command): Result
     {
-        return $this->subscriptionManager->findForUpdate(
+        $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
             ),
-            function (SubscriptionCollection $subscriptions): Result {
+            function (Subscription $subscription): Result {
+                if ($subscription->isNew()) {
+                    $this->remove($subscription);
+
+                    $this->logger?->info(
+                        sprintf(
+                            'Subscription Engine: Subscription "%s" removed.',
+                            $subscription->id(),
+                        ),
+                    );
+
+                    return new Result();
+                }
+
+                if ($subscription->hasCleanupTasks()) {
+                    $error = $this->cleanupRunner->cleanup($subscription, true);
+
+                    // the cleanup runner removes the subscription (forced, even on error)
+                    $this->eventDispatcher->dispatch(new OnSubscriptionRemoved($subscription));
+
+                    return new Result($error ? [$error] : []);
+                }
+
+                $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
+
+                if (!$subscriber) {
+                    $this->remove($subscription);
+
+                    $this->logger?->info(
+                        sprintf(
+                            'Subscription Engine: Subscription "%s" removed without a suitable subscriber.',
+                            $subscription->id(),
+                        ),
+                    );
+
+                    return new Result();
+                }
+
                 /** @var list<Error> $errors */
                 $errors = [];
 
-                foreach ($subscriptions as $subscription) {
-                    if ($subscription->isNew()) {
-                        $this->remove($subscription);
+                $teardownMethod = $subscriber->teardownMethod();
 
-                        $this->logger?->info(
-                            sprintf(
-                                'Subscription Engine: Subscription "%s" removed.',
-                                $subscription->id(),
-                            ),
-                        );
-
-                        continue;
-                    }
-
-                    if ($subscription->hasCleanupTasks()) {
-                        $error = $this->cleanupRunner->cleanup($subscription, true);
-
-                        if ($error) {
-                            $errors[] = $error;
-                        }
-
-                        // the cleanup runner removes the subscription (forced, even on error)
-                        $this->eventDispatcher->dispatch(new OnSubscriptionRemoved($subscription));
-
-                        continue;
-                    }
-
-                    $subscriber = $this->subscriberRepository->get($subscription->id());
-
-                    if (!$subscriber) {
-                        $this->remove($subscription);
-
-                        $this->logger?->info(
-                            sprintf(
-                                'Subscription Engine: Subscription "%s" removed without a suitable subscriber.',
-                                $subscription->id(),
-                            ),
-                        );
-
-                        continue;
-                    }
-
-                    $teardownMethod = $subscriber->teardownMethod();
-
-                    if (!$teardownMethod) {
-                        $this->remove($subscription);
-
-                        $this->logger?->info(
-                            sprintf('Subscription Engine: Subscription "%s" removed.', $subscription->id()),
-                        );
-
-                        continue;
-                    }
-
+                if ($teardownMethod) {
                     try {
                         $teardownMethod();
                     } catch (Throwable $e) {
@@ -113,23 +98,24 @@ final class RemoveHandler implements Handler
                             ),
                         );
 
-                        $errors[] = new Error(
-                            $subscription->id(),
-                            $e->getMessage(),
-                            $e,
-                        );
+                        $errors[] = new Error($subscription->id(), $e->getMessage(), $e);
                     }
-
-                    $this->remove($subscription);
-
-                    $this->logger?->info(
-                        sprintf('Subscription Engine: Subscription "%s" removed.', $subscription->id()),
-                    );
                 }
+
+                $this->remove($subscription);
+
+                $this->logger?->info(
+                    sprintf('Subscription Engine: Subscription "%s" removed.', $subscription->id()),
+                );
 
                 return new Result($errors);
             },
+            static fn (Subscription $subscription, Throwable $e): Result => new Result(
+                [new Error($subscription->id(), $e->getMessage(), $e)],
+            ),
         );
+
+        return Result::merge($results);
     }
 
     private function remove(Subscription $subscription): void

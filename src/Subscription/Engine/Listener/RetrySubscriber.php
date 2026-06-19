@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionCollection;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
@@ -51,41 +50,38 @@ final class RetrySubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->subscriptionManager->findForUpdate(
+        $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Error],
             ),
-            function (SubscriptionCollection $subscriptions) use ($status): void {
-                /** @var Subscription $subscription */
-                foreach ($subscriptions as $subscription) {
-                    $error = $subscription->subscriptionError();
+            function (Subscription $subscription) use ($status): void {
+                $error = $subscription->subscriptionError();
 
-                    if ($error === null) {
-                        continue;
-                    }
-
-                    if ($error->previousStatus !== $status) {
-                        continue;
-                    }
-
-                    if (!$this->retryStrategy($subscription)->shouldRetry($subscription)) {
-                        continue;
-                    }
-
-                    $subscription->doRetry();
-                    $this->subscriptionManager->update($subscription);
-
-                    $this->logger?->info(
-                        sprintf(
-                            'Subscription Engine: Retry subscription "%s" (%d) and set back to %s.',
-                            $subscription->id(),
-                            $subscription->retryAttempt(),
-                            $subscription->status()->value,
-                        ),
-                    );
+                if ($error === null) {
+                    return;
                 }
+
+                if ($error->previousStatus !== $status) {
+                    return;
+                }
+
+                if (!$this->retryStrategy($subscription)->shouldRetry($subscription)) {
+                    return;
+                }
+
+                $subscription->doRetry();
+                $this->subscriptionManager->update($subscription);
+
+                $this->logger?->info(
+                    sprintf(
+                        'Subscription Engine: Retry subscription "%s" (%d) and set back to %s.',
+                        $subscription->id(),
+                        $subscription->retryAttempt(),
+                        $subscription->status()->value,
+                    ),
+                );
             },
         );
     }
@@ -111,7 +107,7 @@ final class RetrySubscriber implements EventSubscriberInterface
 
     private function retryStrategy(Subscription $subscription): RetryStrategy
     {
-        $subscriber = $this->subscriberRepository->get($subscription->id());
+        $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
 
         if (!$subscriber instanceof MetadataSubscriberAccessor) {
             return $this->retryStrategyRepository->getDefaultRetryStrategy();

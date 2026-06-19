@@ -19,6 +19,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionRunner;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
@@ -66,7 +67,9 @@ final class RunHandlerTest extends TestCase
 
         $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [], new NullLogger());
 
-        $handler = new RunHandler($messageLoader, $subscriptionManager, $messageProcessor, $eventDispatcher, new NullLogger());
+        $runner = new SubscriptionRunner($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
+
+        $handler = new RunHandler($subscriptionManager, $runner);
 
         return [$handler, $eventDispatcher, new RunCommand()];
     }
@@ -184,7 +187,11 @@ final class RunHandlerTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $messageLoader = $this->createMock(MessageLoader::class);
-        $messageLoader->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
+        $messageLoader->expects($this->exactly(2))->method('load')->willReturnCallback(
+            static fn (int|null $startIndex): Stream => $startIndex === null
+                ? new Stream([1 => $message])
+                : new Stream([]),
+        );
 
         [$handler, $eventDispatcher, $command] = $this->createHandler($messageLoader, $store, [$subscriber1, $subscriber2]);
         $eventDispatcher->dispatch(new OnCommand($command));
@@ -196,7 +203,6 @@ final class RunHandlerTest extends TestCase
 
         $store->assertUpdated(
             new Subscription($subscriptionId1, Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Active, 1),
-            new Subscription($subscriptionId2, Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Active, 1),
         );
 
         self::assertSame($message, $subscriber1->message);
@@ -252,6 +258,52 @@ final class RunHandlerTest extends TestCase
                 new SubscriptionError('ERROR', Status::Active, ThrowableToErrorContextTransformer::transform($subscriber->exception)),
             ),
         );
+    }
+
+    public function testErrorInOneSubscriptionDoesNotBlockOthers(): void
+    {
+        $faulty = new #[Subscriber('faulty', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                throw new RuntimeException('boom');
+            }
+        };
+
+        $healthy = new #[Subscriber('healthy', RunMode::FromBeginning)]
+        class {
+            public Message|null $message = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(Message $message): void
+            {
+                $this->message = $message;
+            }
+        };
+
+        $store = new DummySubscriptionStore([
+            new Subscription('faulty', Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Active),
+            new Subscription('healthy', Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Active),
+        ]);
+
+        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
+
+        $messageLoader = $this->createMock(MessageLoader::class);
+        $messageLoader->expects($this->exactly(2))->method('load')
+            ->willReturnCallback(static fn (): Stream => new Stream([1 => $message]));
+
+        [$handler, $eventDispatcher, $command] = $this->createHandler($messageLoader, $store, [$faulty, $healthy]);
+        $eventDispatcher->dispatch(new OnCommand($command));
+        $result = $handler($command);
+
+        self::assertCount(1, $result->errors);
+        self::assertSame('faulty', $result->errors[0]->subscriptionId);
+
+        self::assertSame($message, $healthy->message);
+        self::assertTrue($store->get('faulty')->isError());
+        self::assertTrue($store->get('healthy')->isActive());
+        self::assertSame(1, $store->get('healthy')->position());
     }
 
     public function testRunningWithErrorNoRetry(): void

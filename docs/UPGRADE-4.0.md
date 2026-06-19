@@ -373,6 +373,75 @@ final class MigrationSubscriber
 }
 ```
 
+### Parallel subscription processing
+
+The subscription engine now processes one subscription at a time instead of driving a single shared
+stream across all matching subscriptions. Each subscription is claimed individually with
+`FOR UPDATE SKIP LOCKED`, read from its own position with its own event filter, processed and
+committed in its own short transaction. Several `subscription:run` workers can now process different
+subscriptions in true parallel: a worker that finds a subscription locked by another worker simply
+skips to the next one.
+
+This is mostly transparent, but a few contracts changed.
+
+#### SubscriptionStore
+
+`claim()` and `inLock()` are now mandatory parts of the `SubscriptionStore` interface, and the
+separate `LockableSubscriptionStore` interface has been removed. Every custom store has to implement
+both:
+
+```php
+use Closure;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Subscription;
+
+interface SubscriptionStore
+{
+    // ... get/find/add/update/remove ...
+
+    /**
+     * Claim exactly one subscription via a row lock (SKIP LOCKED). Return null if the row is held
+     * by another worker or no longer matches the criteria.
+     */
+    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null;
+
+    /**
+     * @param Closure():T $closure
+     *
+     * @return T
+     *
+     * @template T
+     */
+    public function inLock(Closure $closure): mixed;
+}
+```
+
+`find()` no longer locks the matched rows: it is now a plain, unlocked snapshot read. The locking
+happens per subscription inside `claim()`.
+
+#### Message limit is now per subscription
+
+For `Run` and `Boot`, the `limit` used to cap the total number of messages across the shared stream.
+Because there is no shared stream anymore, `limit` now caps the messages **per subscription**. One
+`subscription:run` pass therefore processes up to `limit × number of subscriptions` messages. The
+CLI default of `message-limit=100` now means "100 per subscription". It also defines the
+checkpoint/lock-hold granularity: a unit of at most `limit` messages commits atomically and releases
+the lock afterwards.
+
+#### Error isolation
+
+An error in one subscription no longer aborts the whole run. Transient errors
+(`Doctrine\DBAL\Exception\RetryableException`, which now includes `TransactionCommitNotPossible`)
+are logged and retried on the next pass without landing in `result.errors`. Any other error locks
+that single subscription into status `Error` and surfaces in `result.errors`, while the remaining
+subscriptions keep processing.
+
+#### No global ordering across subscriptions
+
+Subscriptions are processed independently, so there is no global ordering of messages across
+different subscriptions anymore (the per-subscription order is of course preserved). This was never
+guaranteed before either.
+
 ## Store
 
 ### StreamStore

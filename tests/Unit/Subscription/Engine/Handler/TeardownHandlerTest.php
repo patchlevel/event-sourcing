@@ -178,8 +178,11 @@ final class TeardownHandlerTest extends TestCase
 
         $handler = $this->createHandler($store, [$subscriber]);
 
-        $this->expectException(CleanerNotConfigured::class);
-        $handler(new TeardownCommand());
+        $result = $handler(new TeardownCommand());
+
+        self::assertCount(1, $result->errors);
+        self::assertSame($subscriptionId, $result->errors[0]->subscriptionId);
+        self::assertInstanceOf(CleanerNotConfigured::class, $result->errors[0]->throwable);
     }
 
     public function testTeardownWithCleanupAndSubscriber(): void

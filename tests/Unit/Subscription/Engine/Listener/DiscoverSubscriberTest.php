@@ -19,8 +19,8 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
-use Patchlevel\EventSourcing\Subscription\Store\LockableSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\Unit\Subscription\DummySubscriptionStore;
@@ -202,7 +202,7 @@ final class DiscoverSubscriberTest extends TestCase
         class {
         };
 
-        $subscriptionStore = $this->createMock(LockableSubscriptionStore::class);
+        $subscriptionStore = $this->createMock(SubscriptionStore::class);
         $subscriptionStore
             ->expects($this->never())
             ->method('inLock');

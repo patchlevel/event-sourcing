@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
-use Patchlevel\EventSourcing\Subscription\Engine\Event\OnProcessingFinished;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionProcessed;
 use Patchlevel\EventSourcing\Subscription\Subscriber\Batch;
 use Patchlevel\EventSourcing\Subscription\Subscriber\BatchManager;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
@@ -133,7 +133,7 @@ final class BatchSubscriber implements EventSubscriberInterface
         }
     }
 
-    public function onProcessingFinished(OnProcessingFinished $event): void
+    public function onSubscriptionProcessed(OnSubscriptionProcessed $event): void
     {
         $lastIndex = $event->lastIndex;
 
@@ -141,36 +141,41 @@ final class BatchSubscriber implements EventSubscriberInterface
             return;
         }
 
-        foreach ($this->batchManager->all() as $batch) {
-            $subscriberId = $batch->subscription->id();
-            $this->batchManager->remove($subscriberId);
+        $subscription = $event->subscription;
+        $subscriberId = $subscription->id();
 
-            $flushMethod = $batch->accessor->metadata()->batch?->flushMethod;
+        if (!$this->batchManager->has($subscriberId)) {
+            return;
+        }
 
-            if ($flushMethod === null) {
-                $batch->subscription->changePosition($lastIndex);
+        $batch = $this->batchManager->get($subscriberId);
+        $this->batchManager->remove($subscriberId);
 
-                continue;
-            }
+        $flushMethod = $batch->accessor->metadata()->batch?->flushMethod;
 
-            $this->logger?->debug(sprintf(
-                'Subscription Engine: Subscriber "%s" flushes the batch.',
+        if ($flushMethod === null) {
+            $subscription->changePosition($lastIndex);
+
+            return;
+        }
+
+        $this->logger?->debug(sprintf(
+            'Subscription Engine: Subscriber "%s" flushes the batch.',
+            $subscriberId,
+        ));
+
+        try {
+            $batch->accessor->subscriber()->$flushMethod($batch->state);
+            $subscription->changePosition($lastIndex);
+        } catch (Throwable $e) {
+            $this->logger?->error(sprintf(
+                'Subscription Engine: Subscriber "%s" has an error in the flush method: %s',
                 $subscriberId,
+                $e->getMessage(),
             ));
 
-            try {
-                $batch->accessor->subscriber()->$flushMethod($batch->state);
-                $batch->subscription->changePosition($lastIndex);
-            } catch (Throwable $e) {
-                $this->logger?->error(sprintf(
-                    'Subscription Engine: Subscriber "%s" has an error in the flush method: %s',
-                    $subscriberId,
-                    $e->getMessage(),
-                ));
-
-                $batch->subscription->error($e);
-                $event->errors[] = new Error($subscriberId, $e->getMessage(), $e);
-            }
+            $subscription->error($e);
+            $event->errors[] = new Error($subscriberId, $e->getMessage(), $e);
         }
     }
 
@@ -232,7 +237,7 @@ final class BatchSubscriber implements EventSubscriberInterface
             OnHandleMessage::class => 'onHandleMessage',
             OnHandleMessageSuccess::class => 'onHandleMessageSuccess',
             OnHandleMessageError::class => 'onError',
-            OnProcessingFinished::class => 'onProcessingFinished',
+            OnSubscriptionProcessed::class => 'onSubscriptionProcessed',
         ];
     }
 }

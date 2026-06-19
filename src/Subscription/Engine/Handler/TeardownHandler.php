@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionCollection;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
@@ -40,101 +39,93 @@ final class TeardownHandler implements Handler
 
     public function __invoke(Command $command): Result
     {
-        return $this->subscriptionManager->findForUpdate(
+        $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Detached],
             ),
-            function (SubscriptionCollection $subscriptions): Result {
-                /** @var list<Error> $errors */
-                $errors = [];
+            function (Subscription $subscription): Result {
+                if ($subscription->hasCleanupTasks()) {
+                    $error = $this->cleanupRunner->cleanup($subscription);
 
-                foreach ($subscriptions as $subscription) {
-                    if ($subscription->hasCleanupTasks()) {
-                        $error = $this->cleanupRunner->cleanup($subscription);
-
-                        if ($error) {
-                            $errors[] = $error;
-
-                            continue;
-                        }
-
-                        // the cleanup runner removed the subscription
-                        $this->eventDispatcher->dispatch(new OnSubscriptionRemoved($subscription));
-
-                        continue;
+                    if ($error) {
+                        return new Result([$error]);
                     }
 
-                    $subscriber = $this->subscriberRepository->get($subscription->id());
+                    // the cleanup runner removed the subscription
+                    $this->eventDispatcher->dispatch(new OnSubscriptionRemoved($subscription));
 
-                    if (!$subscriber) {
-                        $this->logger?->warning(
-                            sprintf(
-                                'Subscription Engine: Subscriber for "%s" to teardown or cleanup not found, skipped.',
-                                $subscription->id(),
-                            ),
-                        );
+                    return new Result();
+                }
 
-                        continue;
-                    }
+                $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
 
-                    $teardownMethod = $subscriber->teardownMethod();
-
-                    if (!$teardownMethod) {
-                        $this->remove($subscription);
-
-                        $this->logger?->info(
-                            sprintf(
-                                'Subscription Engine: Subscriber "%s" for "%s" has no teardown method and was immediately removed.',
-                                $subscriber::class,
-                                $subscription->id(),
-                            ),
-                        );
-
-                        continue;
-                    }
-
-                    try {
-                        $teardownMethod();
-
-                        $this->logger?->debug(sprintf(
-                            'Subscription Engine: For Subscriber "%s" for "%s" the teardown method has been executed and is now prepared to be removed.',
-                            $subscriber::class,
+                if (!$subscriber) {
+                    $this->logger?->warning(
+                        sprintf(
+                            'Subscription Engine: Subscriber for "%s" to teardown or cleanup not found, skipped.',
                             $subscription->id(),
-                        ));
-                    } catch (Throwable $e) {
-                        $this->logger?->error(
-                            sprintf(
-                                'Subscription Engine: Subscription "%s" for "%s" has an error in the teardown method, skipped: %s',
-                                $subscriber::class,
-                                $subscription->id(),
-                                $e->getMessage(),
-                            ),
-                        );
+                        ),
+                    );
 
-                        $errors[] = new Error(
-                            $subscription->id(),
-                            $e->getMessage(),
-                            $e,
-                        );
+                    return new Result();
+                }
 
-                        continue;
-                    }
+                $teardownMethod = $subscriber->teardownMethod();
 
+                if (!$teardownMethod) {
                     $this->remove($subscription);
 
                     $this->logger?->info(
                         sprintf(
-                            'Subscription Engine: Subscription "%s" removed.',
+                            'Subscription Engine: Subscriber "%s" for "%s" has no teardown method and was immediately removed.',
+                            $subscriber::class,
                             $subscription->id(),
                         ),
                     );
+
+                    return new Result();
                 }
 
-                return new Result($errors);
+                try {
+                    $teardownMethod();
+
+                    $this->logger?->debug(sprintf(
+                        'Subscription Engine: For Subscriber "%s" for "%s" the teardown method has been executed and is now prepared to be removed.',
+                        $subscriber::class,
+                        $subscription->id(),
+                    ));
+                } catch (Throwable $e) {
+                    $this->logger?->error(
+                        sprintf(
+                            'Subscription Engine: Subscription "%s" for "%s" has an error in the teardown method, skipped: %s',
+                            $subscriber::class,
+                            $subscription->id(),
+                            $e->getMessage(),
+                        ),
+                    );
+
+                    return new Result([new Error($subscription->id(), $e->getMessage(), $e)]);
+                }
+
+                $this->remove($subscription);
+
+                $this->logger?->info(
+                    sprintf(
+                        'Subscription Engine: Subscription "%s" removed.',
+                        $subscription->id(),
+                    ),
+                );
+
+                return new Result();
             },
+            static fn (Subscription $subscription, Throwable $e): Result => new Result(
+                [new Error($subscription->id(), $e->getMessage(), $e)],
+            ),
         );
+
+        return Result::merge($results);
     }
 
     private function remove(Subscription $subscription): void
