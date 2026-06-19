@@ -80,6 +80,18 @@ final class Configuration
     /** @var list<object> */
     public array $listeners = [];
 
+    /** @var list<string> */
+    public array $listenerServices = [];
+
+    /** @var list<string> */
+    public array $subscriberServices = [];
+
+    /** @var list<string> */
+    public array $upcasterServices = [];
+
+    /** @var list<string> */
+    public array $messageDecoratorServices = [];
+
     /** @var ServiceMap */
     public array $services = [];
     /** @var array<string, mixed> */
@@ -389,6 +401,38 @@ final class Configuration
     {
         $newConfiguration = clone $this;
         $newConfiguration->listeners = $listeners;
+
+        return $newConfiguration;
+    }
+
+    public function withListenerServices(string ...$listenerServices): self
+    {
+        $newConfiguration = clone $this;
+        $newConfiguration->listenerServices = array_values($listenerServices);
+
+        return $newConfiguration;
+    }
+
+    public function withSubscriberServices(string ...$subscriberServices): self
+    {
+        $newConfiguration = clone $this;
+        $newConfiguration->subscriberServices = array_values($subscriberServices);
+
+        return $newConfiguration;
+    }
+
+    public function withUpcasterServices(string ...$upcasterServices): self
+    {
+        $newConfiguration = clone $this;
+        $newConfiguration->upcasterServices = array_values($upcasterServices);
+
+        return $newConfiguration;
+    }
+
+    public function withMessageDecoratorServices(string ...$messageDecoratorServices): self
+    {
+        $newConfiguration = clone $this;
+        $newConfiguration->messageDecoratorServices = array_values($messageDecoratorServices);
 
         return $newConfiguration;
     }

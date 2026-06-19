@@ -119,10 +119,13 @@ use Patchlevel\Hydrator\StackHydratorBuilder;
 use Psr\Clock\ClockInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use function array_filter;
 use function array_key_exists;
+use function array_map;
+use function get_debug_type;
 use function sprintf;
 
 /**
@@ -137,9 +140,43 @@ final class Factory
 
     public const NEW_STORE_ID = 'event_sourcing.store.new_store';
 
-    public static function create(Configuration $configuration): Container
-    {
-        $container = new Container();
+    public const PUBLIC_SERVICE_IDS = [
+        RepositoryManager::class,
+        CommandBus::class,
+        QueryBus::class,
+        EventBus::class,
+        Store::class,
+        SnapshotStore::class,
+        SubscriptionEngine::class,
+        SchemaDirector::class,
+    ];
+
+    public const COMMAND_SERVICE_IDS = [
+        ShowCommand::class,
+        ShowAggregateCommand::class,
+        WatchCommand::class,
+        DebugCommand::class,
+        DatabaseCreateCommand::class,
+        DatabaseDropCommand::class,
+        SchemaCreateCommand::class,
+        SchemaUpdateCommand::class,
+        SchemaDropCommand::class,
+        SubscriptionSetupCommand::class,
+        SubscriptionBootCommand::class,
+        SubscriptionRunCommand::class,
+        SubscriptionTeardownCommand::class,
+        SubscriptionRemoveCommand::class,
+        SubscriptionStatusCommand::class,
+        SubscriptionPauseCommand::class,
+        SubscriptionReactivateCommand::class,
+        StoreMigrateCommand::class,
+    ];
+
+    public static function create(
+        Configuration $configuration,
+        ContainerInterface|null $externalContainer = null,
+    ): Container {
+        $container = new Container(externalContainer: $externalContainer);
 
         foreach ($configuration->services as $id => $service) {
             $container->bind($id, $service);
@@ -170,6 +207,42 @@ final class Factory
         self::configureStoreMigration($configuration, $container);
 
         return $container;
+    }
+
+    /**
+     * Registers the public event sourcing services into an application container.
+     *
+     * The given callable is invoked once per available public service with the
+     * service id and a lazy factory, so any PSR-11 implementation can map them
+     * to its own definition format.
+     *
+     * @param callable(string, callable(): object): void $register
+     */
+    public static function registerBridges(Container $container, callable $register): void
+    {
+        foreach (self::PUBLIC_SERVICE_IDS as $id) {
+            if (!$container->has($id)) {
+                continue;
+            }
+
+            $register($id, static fn (): object => $container->get($id));
+        }
+    }
+
+    /** @return list<Command> */
+    public static function commands(Container $container): array
+    {
+        $commands = [];
+
+        foreach (self::COMMAND_SERVICE_IDS as $id) {
+            if (!$container->has($id)) {
+                continue;
+            }
+
+            $commands[] = $container->get($id);
+        }
+
+        return $commands;
     }
 
     private static function configureClock(Configuration $configuration, Container $container): void
@@ -257,7 +330,10 @@ final class Factory
     {
         $container->bind(
             UpcasterChain::class,
-            static fn (): UpcasterChain => new UpcasterChain($configuration->upcasters),
+            static fn (Container $container): UpcasterChain => new UpcasterChain([
+                ...$configuration->upcasters,
+                ...self::resolveServices($container, $configuration->upcasterServices, Upcaster::class),
+            ]),
         );
         $container->alias(Upcaster::class, UpcasterChain::class);
     }
@@ -266,7 +342,7 @@ final class Factory
     {
         $container->bind(
             EventRegistry::class,
-            (new AttributeEventRegistryFactory())->create($configuration->events),
+            static fn (): EventRegistry => (new AttributeEventRegistryFactory())->create($configuration->events),
         );
 
         $container->bind(AttributeEventMetadataFactory::class, new AttributeEventMetadataFactory());
@@ -324,6 +400,7 @@ final class Factory
                 return new ChainMessageDecorator([
                     $container->get(SplitStreamDecorator::class),
                     ...$configuration->messageDecorators,
+                    ...self::resolveServices($container, $configuration->messageDecoratorServices, MessageDecorator::class),
                 ]);
             },
         );
@@ -382,7 +459,13 @@ final class Factory
         if ($configuration->eventBusType === Configuration::EVENT_BUS_DEFAULT) {
             $container->bind(
                 AttributeListenerProvider::class,
-                new AttributeListenerProvider($configuration->listeners),
+                static fn (Container $container): AttributeListenerProvider => new AttributeListenerProvider([
+                    ...$configuration->listeners,
+                    ...array_map(
+                        static fn (string $id): object => $container->get($id),
+                        $configuration->listenerServices,
+                    ),
+                ]),
             );
             $container->alias(ListenerProvider::class, AttributeListenerProvider::class);
 
@@ -442,7 +525,7 @@ final class Factory
             \Patchlevel\EventSourcing\QueryBus\ChainHandlerProvider::class,
             static function (Container $container) use ($configuration,
             ): \Patchlevel\EventSourcing\QueryBus\ChainHandlerProvider {
-                $serviceHandlerProvider = new ServiceHandlerProvider($configuration->subscribers);
+                $serviceHandlerProvider = new ServiceHandlerProvider(self::subscribers($container, $configuration));
 
                 return new \Patchlevel\EventSourcing\QueryBus\ChainHandlerProvider([
                     $serviceHandlerProvider,
@@ -629,7 +712,9 @@ final class Factory
 
         $container->bind(
             AggregateRootRegistry::class,
-            (new AttributeAggregateRootRegistryFactory())->create($configuration->aggregates),
+            static fn (): AggregateRootRegistry => (new AttributeAggregateRootRegistryFactory())->create(
+                $configuration->aggregates,
+            ),
         );
 
         $container->bind(
@@ -991,7 +1076,7 @@ final class Factory
             MetadataSubscriberAccessorRepository::class,
             static function (Container $container) use ($configuration): MetadataSubscriberAccessorRepository {
                 return new MetadataSubscriberAccessorRepository(
-                    $configuration->subscribers,
+                    self::subscribers($container, $configuration),
                     $container->get(SubscriberMetadataFactory::class),
                     [
                         $container->get(LookupResolver::class),
@@ -1133,5 +1218,47 @@ final class Factory
         }
 
         throw new InvalidArgumentException(sprintf('Unknown store type "%s"', $configuration->storeMigrationType));
+    }
+
+    /** @return list<object> */
+    private static function subscribers(Container $container, Configuration $configuration): array
+    {
+        return [
+            ...$configuration->subscribers,
+            ...array_map(
+                static fn (string $id): object => $container->get($id),
+                $configuration->subscriberServices,
+            ),
+        ];
+    }
+
+    /**
+     * @param list<string>    $ids
+     * @param class-string<T> $class
+     *
+     * @return list<T>
+     *
+     * @template T of object
+     */
+    private static function resolveServices(Container $container, array $ids, string $class): array
+    {
+        $services = [];
+
+        foreach ($ids as $id) {
+            $service = $container->get($id);
+
+            if (!$service instanceof $class) {
+                throw new ServiceCreationFailed(sprintf(
+                    'Service "%s" must be an instance of "%s", got "%s".',
+                    $id,
+                    $class,
+                    get_debug_type($service),
+                ));
+            }
+
+            $services[] = $service;
+        }
+
+        return $services;
     }
 }

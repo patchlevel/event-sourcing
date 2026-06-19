@@ -8,7 +8,9 @@ use Psr\Container\ContainerInterface;
 use Throwable;
 
 use function array_key_exists;
+use function get_debug_type;
 use function is_callable;
+use function is_object;
 use function sprintf;
 
 /**
@@ -30,6 +32,7 @@ final class Container implements ContainerInterface
         private array $services = [],
         private array $factories = [],
         private array $aliases = [],
+        private ContainerInterface|null $externalContainer = null,
     ) {
     }
 
@@ -49,6 +52,10 @@ final class Container implements ContainerInterface
         }
 
         if (!array_key_exists($id, $this->factories)) {
+            if ($this->externalContainer?->has($id) === true) {
+                return $this->externalService($id);
+            }
+
             throw new ServiceNotFound($id);
         }
 
@@ -78,7 +85,24 @@ final class Container implements ContainerInterface
     {
         $id = $this->resolveAlias($id);
 
-        return array_key_exists($id, $this->services) || array_key_exists($id, $this->factories);
+        return array_key_exists($id, $this->services)
+            || array_key_exists($id, $this->factories)
+            || $this->externalContainer?->has($id) === true;
+    }
+
+    private function externalService(string $id): object
+    {
+        $service = $this->externalContainer?->get($id);
+
+        if (!is_object($service)) {
+            throw new ServiceCreationFailed(sprintf(
+                'External service "%s" must be an object, got "%s".',
+                $id,
+                get_debug_type($service),
+            ));
+        }
+
+        return $service;
     }
 
     private function resolveAlias(string $id): string
