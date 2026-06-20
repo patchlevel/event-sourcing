@@ -67,7 +67,7 @@ after:
 ```php
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
@@ -80,7 +80,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorR
  * @var RetryStrategy $retryStrategy
  */
 $subscriptionEngine = new DefaultSubscriptionEngine(
-    new StoreMessageLoader($store),
+    new GapResolverStoreMessageLoader($store),
     $subscriptionStore,
     $subscriberAccessorRepository,
     RetryStrategyRepository::withDefault($retryStrategy),
