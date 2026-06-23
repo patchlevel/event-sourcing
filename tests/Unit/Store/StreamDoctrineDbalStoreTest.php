@@ -55,9 +55,6 @@ use RuntimeException;
 
 use function iterator_to_array;
 use function method_exists;
-use function sprintf;
-
-use const PHP_INT_MAX;
 
 #[CoversClass(StreamDoctrineDbalStore::class)]
 final class StreamDoctrineDbalStoreTest extends TestCase
@@ -711,7 +708,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->expects($this->exactly(2))
             ->method('fetchOne')
             ->willReturnMap([
-                [sprintf('SELECT GET_LOCK("133742", %d)', PHP_INT_MAX), 1],
+                ['SELECT GET_LOCK("133742", 2147482647)', 1],
                 ['SELECT RELEASE_LOCK("133742")', 1],
             ]);
 
@@ -878,7 +875,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->expects($this->exactly(2))
             ->method('fetchOne')
             ->willReturnMap([
-                [sprintf('SELECT GET_LOCK("133742", %d)', PHP_INT_MAX), 1],
+                ['SELECT GET_LOCK("133742", 2147482647)', 1],
                 ['SELECT RELEASE_LOCK("133742")', 1],
             ]);
 

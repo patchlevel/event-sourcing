@@ -50,7 +50,6 @@ use function is_int;
 use function is_string;
 use function sprintf;
 
-use const PHP_INT_MAX;
 use const PHP_VERSION_ID;
 
 final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchemaConfigurator
@@ -64,6 +63,14 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
      * Default lock id for advisory lock.
      */
     private const DEFAULT_LOCK_ID = 133742;
+
+    /**
+     * MariaDB does not support an infinite (negative) lock timeout. Very large values such as
+     * PHP_INT_MAX overflow its internal timeout arithmetic and make GET_LOCK return NULL. We
+     * therefore use a large but safe value (INT32_MAX minus a small buffer) as "effectively
+     * infinite" wait.
+     */
+    private const INFINITE_MARIADB_LOCK_TIMEOUT = 2_147_482_647;
 
     private readonly HeadersSerializer $headersSerializer;
 
@@ -497,7 +504,7 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
             $lockTimeout = $this->config['lock_timeout'];
 
             if ($platform instanceof MariaDBPlatform && $lockTimeout < 0) {
-                $lockTimeout = PHP_INT_MAX;
+                $lockTimeout = self::INFINITE_MARIADB_LOCK_TIMEOUT;
             }
 
             $result = $this->connection->fetchOne(
