@@ -59,6 +59,7 @@ use function sprintf;
 use function str_contains;
 use function str_replace;
 
+use const PHP_INT_MAX;
 use const PHP_VERSION_ID;
 
 final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
@@ -572,13 +573,27 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         }
 
         if ($platform instanceof MariaDBPlatform || $platform instanceof MySQLPlatform) {
-            $this->connection->fetchAllAssociative(
+            $lockTimeout = $this->config['lock_timeout'];
+
+            if ($platform instanceof MariaDBPlatform && $lockTimeout < 0) {
+                $lockTimeout = PHP_INT_MAX;
+            }
+
+            $result = $this->connection->fetchOne(
                 sprintf(
                     'SELECT GET_LOCK("%s", %d)',
                     $this->config['lock_id'],
-                    $this->config['lock_timeout'],
+                    $lockTimeout,
                 ),
             );
+
+            if ($result === 0) {
+                throw LockCouldNotBeAcquired::byTimeout($this->config['lock_id'], $this->config['lock_timeout']);
+            }
+
+            if ($result !== 1) {
+                throw LockCouldNotBeAcquired::byError($this->config['lock_id']);
+            }
 
             return;
         }
@@ -601,12 +616,20 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         }
 
         if ($platform instanceof MariaDBPlatform || $platform instanceof MySQLPlatform) {
-            $this->connection->fetchAllAssociative(
+            $result = $this->connection->fetchOne(
                 sprintf(
                     'SELECT RELEASE_LOCK("%s")',
                     $this->config['lock_id'],
                 ),
             );
+
+            if ($result === 0) {
+                throw LockCouldNotBeFreed::notOurs($this->config['lock_id']);
+            }
+
+            if ($result !== 1) {
+                throw LockCouldNotBeFreed::notExist($this->config['lock_id']);
+            }
 
             return;
         }
