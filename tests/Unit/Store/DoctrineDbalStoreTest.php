@@ -29,6 +29,8 @@ use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\LockCouldNotBeAcquired;
+use Patchlevel\EventSourcing\Store\LockCouldNotBeFreed;
 use Patchlevel\EventSourcing\Store\MissingDataForStorage;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
@@ -557,10 +559,10 @@ final class DoctrineDbalStoreTest extends TestCase
             ->willReturn(new MySQLPlatform());
         $connection
             ->expects($this->exactly(2))
-            ->method('fetchAllAssociative')
+            ->method('fetchOne')
             ->willReturnMap([
-                ['SELECT GET_LOCK("133742", -1)', []],
-                ['SELECT RELEASE_LOCK("133742")', []],
+                ['SELECT GET_LOCK("133742", -1)', 1],
+                ['SELECT RELEASE_LOCK("133742")', 1],
             ]);
 
         $connection
@@ -599,10 +601,10 @@ final class DoctrineDbalStoreTest extends TestCase
         $connection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new MariaDBPlatform());
         $connection
             ->expects($this->exactly(2))
-            ->method('fetchAllAssociative')
+            ->method('fetchOne')
             ->willReturnMap([
-                ['SELECT GET_LOCK("133742", -1)', []],
-                ['SELECT RELEASE_LOCK("133742")', []],
+                ['SELECT GET_LOCK("133742", 2147482647)', 1],
+                ['SELECT RELEASE_LOCK("133742")', 1],
             ]);
 
         $connection->expects($this->atLeastOnce())->method('transactional')->willReturnCallback(
@@ -737,10 +739,10 @@ final class DoctrineDbalStoreTest extends TestCase
         $connection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new MariaDBPlatform());
         $connection
             ->expects($this->exactly(2))
-            ->method('fetchAllAssociative')
+            ->method('fetchOne')
             ->willReturnMap([
-                ['SELECT GET_LOCK("133742", -1)', []],
-                ['SELECT RELEASE_LOCK("133742")', []],
+                ['SELECT GET_LOCK("133742", 2147482647)', 1],
+                ['SELECT RELEASE_LOCK("133742")', 1],
             ]);
 
         $connection->expects($this->once())->method('transactional')->willReturnCallback(
@@ -757,6 +759,273 @@ final class DoctrineDbalStoreTest extends TestCase
         );
 
         $this->expectException(RuntimeException::class);
+
+        $store->transactional($callback(...));
+    }
+
+    public function testTransactionalWithMariaDBCustomLockTimeout(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new MariaDBPlatform());
+
+        $connection
+            ->expects($this->exactly(2))
+            ->method('fetchOne')
+            ->willReturnMap([
+                ['SELECT GET_LOCK("133742", 5)', 1],
+                ['SELECT RELEASE_LOCK("133742")', 1],
+            ]);
+
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
+            config: ['lock_timeout' => 5],
+        );
+
+        $store->transactional($callback(...));
+
+        self::assertTrue($callback->called);
+    }
+
+    public function testTransactionalWithMariaDBZeroLockTimeout(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new MariaDBPlatform());
+
+        $connection
+            ->expects($this->exactly(2))
+            ->method('fetchOne')
+            ->willReturnMap([
+                ['SELECT GET_LOCK("133742", 0)', 1],
+                ['SELECT RELEASE_LOCK("133742")', 1],
+            ]);
+
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
+            config: ['lock_timeout' => 0],
+        );
+
+        $store->transactional($callback(...));
+
+        self::assertTrue($callback->called);
+    }
+
+    public function testTransactionalLockCouldNotBeAcquiredByTimeout(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->once())
+            ->method('getDatabasePlatform')
+            ->willReturn(new MySQLPlatform());
+
+        $connection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with('SELECT GET_LOCK("133742", 5)')
+            ->willReturn(0);
+
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
+            config: ['lock_timeout' => 5],
+        );
+
+        $this->expectException(LockCouldNotBeAcquired::class);
+        $this->expectExceptionMessage('The lock with id [133742] could not be acquired with a timeout of 5');
+
+        $store->transactional($callback(...));
+    }
+
+    public function testTransactionalLockCouldNotBeAcquiredByError(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->once())
+            ->method('getDatabasePlatform')
+            ->willReturn(new MySQLPlatform());
+
+        $connection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with('SELECT GET_LOCK("133742", -1)')
+            ->willReturn(null);
+
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
+        );
+
+        $this->expectException(LockCouldNotBeAcquired::class);
+        $this->expectExceptionMessage('There was an error when tried to get the lock with id [133742]');
+
+        $store->transactional($callback(...));
+    }
+
+    public function testTransactionalLockCouldNotBeFreedNotOurs(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new MySQLPlatform());
+
+        $connection
+            ->expects($this->exactly(2))
+            ->method('fetchOne')
+            ->willReturnMap([
+                ['SELECT GET_LOCK("133742", -1)', 1],
+                ['SELECT RELEASE_LOCK("133742")', 0],
+            ]);
+
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
+        );
+
+        $this->expectException(LockCouldNotBeFreed::class);
+        $this->expectExceptionMessage('The lock with id [133742] could not be freed as it is not ours');
+
+        $store->transactional($callback(...));
+    }
+
+    public function testTransactionalLockCouldNotBeFreedNotExist(): void
+    {
+        $callback = new class () {
+            public bool $called = false;
+
+            public function __invoke(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getDatabasePlatform')
+            ->willReturn(new MySQLPlatform());
+
+        $connection
+            ->expects($this->exactly(2))
+            ->method('fetchOne')
+            ->willReturnMap([
+                ['SELECT GET_LOCK("133742", -1)', 1],
+                ['SELECT RELEASE_LOCK("133742")', null],
+            ]);
+
+        $connection
+            ->expects($this->once())
+            ->method('transactional')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $store = new DoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
+        );
+
+        $this->expectException(LockCouldNotBeFreed::class);
+        $this->expectExceptionMessage('The lock with id [133742] could not be freed as it does not exist');
 
         $store->transactional($callback(...));
     }
