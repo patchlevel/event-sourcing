@@ -272,7 +272,9 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ) : null,
             $row['retry_attempt'],
             self::normalizeDateTime($row['last_saved_at'], $this->connection->getDatabasePlatform()),
-            $row['cleanup_tasks'] !== null ? unserialize($row['cleanup_tasks']) : null,
+            $row['cleanup_tasks'] !== null ? unserialize($row['cleanup_tasks'], [
+                'allowed_classes' => true,
+            ]) : null,
         );
     }
 
