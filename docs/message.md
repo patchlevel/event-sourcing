@@ -97,6 +97,53 @@ use Patchlevel\EventSourcing\Message\Message;
 /** @var Message $message */
 $message->header(ApplicationHeader::class);
 ```
+
+## Missing headers
+
+When a message is deserialized, every header name is resolved to its registered header class.
+If a header name cannot be resolved, for example because the header class was removed or renamed,
+the `DefaultHeadersSerializer` throws a `HeaderNameNotRegistered` exception by default.
+
+In some cases you want to keep reading old messages that still contain such headers without losing
+their data. For this you can configure which header names should be handled gracefully. Those headers
+are collected into a single `MissingHeaders` object instead of crashing. The raw names and payloads are
+preserved, so you could still access them.
+
+```php
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+
+$serializer = DefaultHeadersSerializer::createFromPaths(
+    ['src/Header'],
+    ['legacyApplication', 'legacyTenant'],
+);
+```
+
+You can access the collected headers via the `MissingHeaders` object:
+
+```php
+use Patchlevel\EventSourcing\Message\MissingHeaders;
+
+/** @var Message $message */
+$missingHeaders = $message->header(MissingHeaders::class);
+$missingHeaders->headers; // ['legacyApplication' => [...], 'legacyTenant' => [...]]
+```
+
+:::warning
+Only the header names you list are handled gracefully. If a message contains an unregistered header
+whose name is **not** in the list, deserialization still throws `HeaderNameNotRegistered`.
+:::
+
+If you want to handle every unregistered header gracefully, you can use the `*` wildcard:
+
+```php
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+
+$serializer = DefaultHeadersSerializer::createFromPaths(
+    ['src/Header'],
+    ['*'],
+);
+```
+
 ## Pipe
 
 The `Pipe` is a construct that allows you to chain multiple translators.
