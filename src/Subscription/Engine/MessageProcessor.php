@@ -57,7 +57,7 @@ final class MessageProcessor
 
     public function process(int $index, Message $message, Subscription $subscription): Error|null
     {
-        $subscriber = $this->subscriberRepository->get($subscription->id());
+        $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
 
         if (!$subscriber) {
             throw SubscriberNotFound::forSubscriptionId($subscription->id());

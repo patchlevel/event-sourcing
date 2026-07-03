@@ -53,7 +53,7 @@ final class EventFilteredStoreMessageLoader implements MessageLoader
         $eventNames = [];
 
         foreach ($subscriptions as $subscription) {
-            $subscriber =  $this->subscriberRepository->get($subscription->id());
+            $subscriber =  $this->subscriberRepository->get($subscription->subscriberId());
 
             if (!$subscriber instanceof MetadataSubscriberAccessor) {
                 return [];

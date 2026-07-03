@@ -20,6 +20,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionRunner;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
@@ -63,7 +64,9 @@ final class BootHandlerTest extends TestCase
 
         $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [], new NullLogger());
 
-        return new BootHandler($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
+        $runner = new SubscriptionRunner($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
+
+        return new BootHandler($subscriptionManager, $runner);
     }
 
     public function testNothingToBoot(): void
@@ -472,7 +475,11 @@ final class BootHandlerTest extends TestCase
         $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
 
         $messageLoader = $this->createMock(MessageLoader::class);
-        $messageLoader->expects($this->once())->method('load')->with(null)->willReturn(new Stream([1 => $message]));
+        $messageLoader->expects($this->exactly(2))->method('load')->willReturnCallback(
+            static fn (int|null $startIndex): Stream => $startIndex === null
+                ? new Stream([1 => $message])
+                : new Stream([]),
+        );
 
         $handler = $this->createHandler($messageLoader, $store, [$subscriber1, $subscriber2]);
         $result = $handler(new BootCommand());
@@ -577,15 +584,13 @@ final class BootHandlerTest extends TestCase
             new Subscription($subscriptionId, Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Booting),
         ]);
 
-        $message = new Message(new ProfileVisited(ProfileId::fromString('test')));
-
         $messageLoader = $this->createMock(MessageLoader::class);
-        $messageLoader->expects($this->once())->method('load')->willReturn(new Stream([1 => $message]));
+        $messageLoader->expects($this->never())->method('load');
 
         $handler = $this->createHandler($messageLoader, $store);
         $result = $handler(new BootCommand());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertEquals(0, $result->processedMessages);
         self::assertEquals(true, $result->finished);
         self::assertEquals([], $result->errors);
 

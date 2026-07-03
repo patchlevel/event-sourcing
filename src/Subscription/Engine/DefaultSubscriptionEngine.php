@@ -68,7 +68,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         private readonly EventDispatcherInterface $eventDispatcher = new EventDispatcher(),
         iterable $argumentResolvers = [],
     ) {
-        $this->subscriptionManager = new SubscriptionManager($subscriptionStore);
+        $this->subscriptionManager = new SubscriptionManager($subscriptionStore, $this->logger);
 
         if ($retryStrategyRepository instanceof RetryStrategyRepository) {
             $this->retryStrategyRepository = $retryStrategyRepository;
@@ -94,14 +94,19 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             $this->logger,
         );
 
+        $runner = new SubscriptionRunner(
+            $this->messageLoader,
+            $this->subscriptionManager,
+            $this->subscriberRepository,
+            $messageProcessor,
+            $this->eventDispatcher,
+            $this->logger,
+        );
+
         $this->handlers = [
             Boot::class => new BootHandler(
-                $this->messageLoader,
                 $this->subscriptionManager,
-                $this->subscriberRepository,
-                $messageProcessor,
-                $this->eventDispatcher,
-                $this->logger,
+                $runner,
             ),
             Pause::class => new PauseHandler(
                 $this->subscriptionManager,
@@ -125,11 +130,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $this->logger,
             ),
             Run::class => new RunHandler(
-                $this->messageLoader,
                 $this->subscriptionManager,
-                $messageProcessor,
-                $this->eventDispatcher,
-                $this->logger,
+                $runner,
             ),
             Setup::class => new SetupHandler(
                 $this->messageLoader,

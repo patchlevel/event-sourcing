@@ -30,6 +30,11 @@ final class Subscription
         return $this->id;
     }
 
+    public function subscriberId(): string
+    {
+        return $this->id;
+    }
+
     public function group(): string
     {
         return $this->group;

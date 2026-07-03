@@ -24,6 +24,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionRunner;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
@@ -74,7 +75,9 @@ final class BatchSubscriberTest extends TestCase
 
         $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());
 
-        return new BootHandler($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
+        $runner = new SubscriptionRunner($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
+
+        return new BootHandler($subscriptionManager, $runner);
     }
 
     /**
@@ -104,7 +107,9 @@ final class BatchSubscriberTest extends TestCase
 
         $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());
 
-        $handler = new RunHandler($messageLoader, $subscriptionManager, $messageProcessor, $eventDispatcher, new NullLogger());
+        $runner = new SubscriptionRunner($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
+
+        $handler = new RunHandler($subscriptionManager, $runner);
 
         return [$handler, $eventDispatcher, new RunCommand()];
     }

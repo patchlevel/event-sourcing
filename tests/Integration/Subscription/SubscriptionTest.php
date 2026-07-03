@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -47,6 +48,7 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventEmitterResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -1812,6 +1814,43 @@ final class SubscriptionTest extends TestCase
         );
 
         self::assertFalse($bobRow);
+    }
+
+    public function testSkipLockedClaim(): void
+    {
+        if ($this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            self::markTestSkipped('SQLite serializes writes and does not support SKIP LOCKED.');
+        }
+
+        $storeWorkerA = new DoctrineSubscriptionStore($this->connection);
+        $storeWorkerB = new DoctrineSubscriptionStore($this->projectionConnection);
+
+        $schemaDirector = new DoctrineSchemaDirector($this->connection, $storeWorkerA);
+        $schemaDirector->create();
+
+        $storeWorkerA->add(new Subscription('a', 'default', RunMode::FromBeginning, Status::Active));
+        $storeWorkerA->add(new Subscription('b', 'default', RunMode::FromBeginning, Status::Active));
+
+        $criteria = new SubscriptionCriteria(status: [Status::Active]);
+
+        $this->connection->beginTransaction();
+        $claimedByA = $storeWorkerA->claim('a', $criteria);
+
+        self::assertNotNull($claimedByA);
+        self::assertSame('a', $claimedByA->id());
+
+        $lockedClaim = $storeWorkerB->claim('a', $criteria);
+        self::assertNull($lockedClaim);
+
+        $claimedByB = $storeWorkerB->claim('b', $criteria);
+        self::assertNotNull($claimedByB);
+        self::assertSame('b', $claimedByB->id());
+
+        $this->connection->commit();
+
+        $reclaimed = $storeWorkerB->claim('a', $criteria);
+        self::assertNotNull($reclaimed);
+        self::assertSame('a', $reclaimed->id());
     }
 
     /** @phpstan-assert ProcessedResult $result */

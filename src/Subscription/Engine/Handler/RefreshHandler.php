@@ -38,7 +38,7 @@ final class RefreshHandler implements Handler
         ));
 
         foreach ($subscriptions as $subscription) {
-            $subscriber = $this->subscriberRepository->get($subscription->id());
+            $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
 
             if (!$subscriber) {
                 continue;

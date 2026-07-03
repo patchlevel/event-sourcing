@@ -38,7 +38,7 @@ final class FailSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $subscriber = $this->subscriberRepository->get($subscription->id());
+        $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
 
         if (!$subscriber) {
             $subscription->failed($throwable);

@@ -10,7 +10,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriberNotFound;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionCollection;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
@@ -23,7 +22,6 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-use function count;
 use function sprintf;
 
 /**
@@ -44,71 +42,28 @@ final class SetupHandler implements Handler
 
     public function __invoke(Command $command): Result
     {
-        return $this->subscriptionManager->findForUpdate(
+        $latestIndex = null;
+
+        $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::New],
             ),
-            function (SubscriptionCollection $subscriptions) use ($command): Result {
-                if (count($subscriptions) === 0) {
-                    $this->logger?->info('Subscription Engine: No subscriptions to setup, finish setup.');
+            function (Subscription $subscription) use ($command, &$latestIndex): Result {
+                $latestIndex ??= $this->messageLoader->lastIndex();
 
-                    return new Result();
+                $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
+
+                if (!$subscriber) {
+                    throw SubscriberNotFound::forSubscriptionId($subscription->id());
                 }
 
-                /** @var list<Error> $errors */
-                $errors = [];
+                $setupMethod = $subscriber->setupMethod();
 
-                $latestIndex = $this->messageLoader->lastIndex();
-
-                foreach ($subscriptions as $subscription) {
-                    $subscriber = $this->subscriberRepository->get($subscription->id());
-
-                    if (!$subscriber) {
-                        throw SubscriberNotFound::forSubscriptionId($subscription->id());
-                    }
-
-                    $setupMethod = $subscriber->setupMethod();
-
-                    if (!$setupMethod) {
-                        if ($subscription->runMode() === RunMode::FromNow) {
-                            $subscription->changePosition($latestIndex);
-                            $subscription->active();
-                        } else {
-                            $command->skipBooting ? $subscription->active() : $subscription->booting();
-                        }
-
-                        $this->subscriptionManager->update($subscription);
-
-                        $this->logger?->debug(sprintf(
-                            'Subscription Engine: Subscriber "%s" for "%s" has no setup method, set to %s.',
-                            $subscriber::class,
-                            $subscription->id(),
-                            $subscription->runMode() === RunMode::FromNow || $command->skipBooting ? 'active' : 'booting',
-                        ));
-
-                        continue;
-                    }
-
+                if ($setupMethod) {
                     try {
                         $setupMethod();
-
-                        if ($subscription->runMode() === RunMode::FromNow) {
-                            $subscription->changePosition($latestIndex);
-                            $subscription->active();
-                        } else {
-                            $command->skipBooting ? $subscription->active() : $subscription->booting();
-                        }
-
-                        $this->subscriptionManager->update($subscription);
-
-                        $this->logger?->debug(sprintf(
-                            'Subscription Engine: For Subscriber "%s" for "%s" the setup method has been executed, set to %s.',
-                            $subscriber::class,
-                            $subscription->id(),
-                            $subscription->runMode() === RunMode::FromNow || $command->skipBooting ? 'active' : 'booting',
-                        ));
                     } catch (Throwable $e) {
                         $this->logger?->error(sprintf(
                             'Subscription Engine: Subscriber "%s" for "%s" has an error in the setup method: %s',
@@ -119,22 +74,39 @@ final class SetupHandler implements Handler
 
                         $this->handleError($subscription, $e);
 
-                        $errors[] = new Error(
-                            $subscription->id(),
-                            $e->getMessage(),
-                            $e,
-                        );
+                        return new Result([new Error($subscription->id(), $e->getMessage(), $e)]);
                     }
                 }
 
-                return new Result($errors);
+                if ($subscription->runMode() === RunMode::FromNow) {
+                    $subscription->changePosition($latestIndex);
+                    $subscription->active();
+                } else {
+                    $command->skipBooting ? $subscription->active() : $subscription->booting();
+                }
+
+                $this->subscriptionManager->update($subscription);
+
+                $this->logger?->debug(sprintf(
+                    'Subscription Engine: Subscriber "%s" for "%s" has been set up, set to %s.',
+                    $subscriber::class,
+                    $subscription->id(),
+                    $subscription->runMode() === RunMode::FromNow || $command->skipBooting ? 'active' : 'booting',
+                ));
+
+                return new Result();
             },
+            static fn (Subscription $subscription, Throwable $e): Result => new Result(
+                [new Error($subscription->id(), $e->getMessage(), $e)],
+            ),
         );
+
+        return Result::merge($results);
     }
 
     private function handleError(Subscription $subscription, Throwable $throwable): void
     {
-        $subscriber = $this->subscriberRepository->get($subscription->id());
+        $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
         $retryStrategy = $subscriber instanceof MetadataSubscriberAccessor && $subscriber->metadata()->retryStrategy !== null
             ? $this->retryStrategyRepository->get($subscriber->metadata()->retryStrategy)
             : $this->retryStrategyRepository->getDefaultRetryStrategy();
