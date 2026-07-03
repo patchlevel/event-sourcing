@@ -99,10 +99,6 @@
       "file": "supported-versions.md"
     },
     {
-      "title": "Our BC Promise",
-      "file": "our-backward-compatibility-promise.md"
-    },
-    {
       "title": "Upgrade from 2.x",
       "file": "UPGRADE-3.0.md"
     }

@@ -1,3 +1,6 @@
+---
+searchable: false
+---
 # Event-Sourcing
 
 An event sourcing library, complete with all the essential features,

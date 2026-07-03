@@ -1,3 +1,6 @@
+---
+searchable: false
+---
 # Upgrade from v2 to v3
 
 We are only providing here the most important changes in detail. For the full BC-Break list go to
