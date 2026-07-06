@@ -271,19 +271,9 @@ If you use symfony, you can use our [symfony bundle](/docs/event-sourcing-bundle
 ```php
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
-use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
-use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
-use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
-use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
-
-$connection = DriverManager::getConnection(
-    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
-);
+use Patchlevel\EventSourcing\Container\Configuration;
+use Patchlevel\EventSourcing\Container\Factory;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
 
 $projectionConnection = DriverManager::getConnection(
     (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/projection'),
@@ -292,38 +282,18 @@ $projectionConnection = DriverManager::getConnection(
 /* your own mailer */
 $mailer;
 
-$serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
-$aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create(['src/Domain/Hotel']);
+$configuration = Configuration::createWithConnectionUrl('pdo-pgsql://user:secret@localhost/app')
+    ->withDefaultSettings(
+        ['src/Domain/Hotel'],
+        ['src/Domain/Hotel/Event'],
+    )
+    ->withSubscribers([
+        new HotelProjector($projectionConnection),
+        new SendCheckInEmailProcessor($mailer)
+    ]);
+$container = Factory::create($configuration);
 
-$eventStore = new DoctrineDbalStore(
-    $connection,
-    $serializer,
-);
-
-$hotelProjector = new HotelProjector($projectionConnection);
-
-$subscriberRepository = new MetadataSubscriberAccessorRepository([
-    $hotelProjector,
-    new SendCheckInEmailProcessor($mailer),
-]);
-
-$subscriptionStore = new DoctrineSubscriptionStore($connection);
-
-$engine = new DefaultSubscriptionEngine(
-    new StoreMessageLoader($eventStore),
-    $subscriptionStore,
-    $subscriberRepository,
-);
-
-$repositoryManager = new RunSubscriptionEngineRepositoryManager(
-    new DefaultRepositoryManager(
-        $aggregateRegistry,
-        $eventStore,
-    ),
-    $engine,
-);
-
-$hotelRepository = $repositoryManager->get(Hotel::class);
+$hotelRepository = $container->get(RepositoryManager::class)->get(Hotel::class);
 ```
 :::note
 You can find out more about [stores](store.md).
