@@ -17,4 +17,4 @@ not be used anymore.
 ## Versioning
 
 For more information about our versioning you should
-read [our backward compatibility promise](our-backward-compatibility-promise.md).
+read [our backward compatibility promise](./backward-compatibility.md).

@@ -26,7 +26,7 @@ In order for the correct key to be used, a subject ID must be defined.
 Without Subject Id, no personal data can be encrypted or decrypted.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\Hydrator\Attribute\DataSubjectId;
 
 final class EmailChanged
@@ -39,6 +39,7 @@ final class EmailChanged
     }
 }
 ```
+
 :::tip
 You can use the `DataSubjectId` in aggregates for snapshots too.
 :::
@@ -48,7 +49,7 @@ You can use the `DataSubjectId` in aggregates for snapshots too.
 Next, you have to mark the properties that should be encrypted with the `#[PersonalData]` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\Hydrator\Attribute\DataSubjectId;
 use Patchlevel\Hydrator\Attribute\PersonalData;
 
@@ -63,6 +64,7 @@ final class EmailChanged
     }
 }
 ```
+
 :::tip
 You can use the `PersonalData` in aggregates for snapshots too.
 :::
@@ -72,8 +74,6 @@ The default fallback value is `null`.
 You can change this by setting the `fallback` parameter or using the `fallbackCallable` parameter.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
-use Patchlevel\Hydrator\Attribute\DataSubjectId;
 use Patchlevel\Hydrator\Attribute\PersonalData;
 
 final class ProfileChanged
@@ -94,6 +94,7 @@ final class ProfileChanged
     }
 }
 ```
+
 :::danger
 You have to deal with this case in your business logic such as aggregates and subscriptions.
 :::
@@ -145,12 +146,13 @@ $schemaDirector = new DoctrineSchemaDirector(
 Now we have to put the whole thing together in a Personal Data Payload Cryptographer.
 
 ```php
-use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
 use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
 
 /** @var CipherKeyStore $cipherKeyStore */
 $cryptographer = PersonalDataPayloadCryptographer::createWithDefaultSettings($cipherKeyStore);
 ```
+
 :::tip
 You can specify the cipher method with the second parameter.
 :::
@@ -169,6 +171,7 @@ DefaultEventSerializer::createFromPaths(
     cryptographer: $cryptographer,
 );
 ```
+
 :::note
 More information can be found in the [events](events.md) documentation.
 :::
@@ -189,6 +192,7 @@ $snapshotStore = DefaultSnapshotStore::createDefault(
     $cryptographer,
 );
 ```
+
 :::note
 More information can be found in the [snapshots](snapshots.md) documentation.
 :::

@@ -23,8 +23,8 @@ use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\LockCouldNotBeAcquired;
+use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
-use Patchlevel\EventSourcing\Store\StreamStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ExternEvent;
@@ -41,7 +41,7 @@ use function sprintf;
 final class StreamDoctrineDbalStoreTest extends TestCase
 {
     private Connection $connection;
-    private StreamStore $store;
+    private Store $store;
 
     private ClockInterface $clock;
 
@@ -512,6 +512,8 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         } finally {
             $stream?->close();
         }
+
+        $stream = null;
 
         try {
             $stream = $this->store->load(new Criteria(new StreamCriterion('*-*')));

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
@@ -53,7 +52,6 @@ final class OutputStyle extends SymfonyStyle
             static fn ($header) => !$header instanceof StreamNameHeader
                 && !$header instanceof PlayheadHeader
                 && !$header instanceof RecordedOnHeader
-                && !$header instanceof AggregateHeader
                 && !$header instanceof ArchivedHeader
                 && !$header instanceof StreamStartHeader,
         );
@@ -61,14 +59,6 @@ final class OutputStyle extends SymfonyStyle
         $streamName = null;
         $playhead = null;
         $recordedOn = null;
-
-        if ($message->hasHeader(AggregateHeader::class)) {
-            $header = $message->header(AggregateHeader::class);
-
-            $streamName = $header->streamName();
-            $playhead = $header->playhead;
-            $recordedOn = $header->recordedOn;
-        }
 
         if ($message->hasHeader(StreamNameHeader::class)) {
             $streamName = $message->header(StreamNameHeader::class)->streamName;

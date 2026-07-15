@@ -74,14 +74,6 @@ benchmark-diff-test: benchmark-base benchmark-diff                              
 .PHONY: dev
 dev: static test                                                                ## run dev tools
 
-.PHONY: docs
-docs: mkdocs                                                                          ## run mkdocs
-	cd docs && python3 -m mkdocs serve
-
-.PHONY: mkdocs
-mkdocs:                                                                         ## install mkdocs
-	cd docs && pip3 install -r requirements.txt
-
 .PHONY: docs-extract-php
 docs-extract-php:
 	bin/docs-extract-php-code

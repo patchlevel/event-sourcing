@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -31,13 +35,13 @@ final class SubscriptionEngineBatchBench
 
     private SubscriptionEngine $subscriptionEngine;
 
-    private AggregateRootId $id;
+    private Identifier $id;
 
     public function setUp(): void
     {
         $connection = DbalManager::createConnection();
 
-        $this->store = new DoctrineDbalStore(
+        $this->store = new StreamDoctrineDbalStore(
             $connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
         );
@@ -69,7 +73,7 @@ final class SubscriptionEngineBatchBench
         $this->repository->save($profile);
 
         $this->subscriptionEngine = new DefaultSubscriptionEngine(
-            $this->store,
+            new StoreMessageLoader($this->store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository(
                 [
@@ -83,8 +87,8 @@ final class SubscriptionEngineBatchBench
     #[Bench\Revs(10)]
     public function benchHandle10000Events(): void
     {
-        $this->subscriptionEngine->setup();
-        $this->subscriptionEngine->boot();
-        $this->subscriptionEngine->remove();
+        $this->subscriptionEngine->execute(new Setup());
+        $this->subscriptionEngine->execute(new Boot());
+        $this->subscriptionEngine->execute(new Remove());
     }
 }

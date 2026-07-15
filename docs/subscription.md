@@ -26,6 +26,7 @@ final class DoStuffSubscriber
 {
 }
 ```
+
 :::note
 For each subscriber ID, the engine will create a subscription.
 If the subscriber ID changes, a new subscription will be created.
@@ -73,8 +74,9 @@ final class ProfileProjector
     }
 }
 ```
+
 :::warning
-PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
+MySQL and MariaDB don't support transactions for DDL statements.
 So you must use a different database connection for your subscriptions.
 :::
 
@@ -147,6 +149,7 @@ final class DoStuffSubscriber
     }
 }
 ```
+
 :::tip
 If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin)
 to make the event method return the correct type.
@@ -158,9 +161,7 @@ If you want to subscribe on all events, you can pass `*` or `Subscribe::ALL` ins
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Subscription\RunMode;
 
 #[Subscriber('welcome_email', RunMode::FromNow)]
 final class WelcomeSubscriber
@@ -218,6 +219,11 @@ final class DoStuffSubscriber
     }
 }
 ```
+
+:::tip
+You can also subscribe to multiple events and specify your argument using union type.
+:::
+
 ##### Lookup Resolver
 
 Sometimes you need to query previous events to build a projection.
@@ -226,9 +232,7 @@ This service only has access to the messages before the current message.
 Here is an example how you can use it in a projector.
 
 ```php
-use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Reducer;
 use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
 
@@ -273,9 +277,27 @@ final class PublicProfileProjection
     // ... setup, teardown, ...
 }
 ```
+
 :::note
 More information can be found in the [reducer](message.md#reducer) documentation.
 :::
+
+The lookup resolver is not registered by default. Pass a `LookupResolver` to the subscription engine
+via the `argumentResolvers` argument; it needs the event store to read the previous messages from:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupResolver;
+
+$engine = new DefaultSubscriptionEngine(
+    $messageLoader,
+    $subscriptionStore,
+    $subscriberAccessorRepository,
+    argumentResolvers: [
+        new LookupResolver($store),
+    ],
+);
+```
 
 ##### Recorded On Resolver
 
@@ -297,10 +319,126 @@ final class DoStuffSubscriber
     }
 }
 ```
+##### Event Emitter Resolver
+
+A subscriber can not only build a projection or trigger a side effect, it can also emit new events
+back into the store. This is useful when one subscription should kick off another one: for example a
+projection that, after it has been updated, wants a notification subscription to send a mail.
+
+If you type-hint an `EventEmitter` argument in a subscribe method, it is injected automatically.
+By default the emitted events are written into a dedicated stream named `subscription_<subscription-id>`.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\EventEmitter;
+
+#[Subscriber('order_projection', RunMode::FromBeginning)]
+final class OrderProjection
+{
+    #[Subscribe(OrderPlaced::class)]
+    public function onOrderPlaced(OrderPlaced $event, EventEmitter $eventEmitter): void
+    {
+        // update the projection ...
+
+        $eventEmitter->emit([new NotificationRequired($event->orderId)]);
+    }
+}
+```
+
+The `emit` method writes the events into the subscriber's own `subscription_<subscription-id>` stream.
+If you want to target a different stream, use `linkTo`:
+
+```php
+$eventEmitter->linkTo('notifications', [new NotificationRequired($event->orderId)]);
+```
+
+:::info
+The emitted events must be registered like any other event so the store can (de)serialize them.
+:::
+
+To configure the resolver, pass an `EventEmitterResolver` to the subscription engine via the
+`argumentResolvers` argument; it needs the event store to append to. To also clean up the
+subscription stream when a subscription is removed, register the `RemoveSubscriptionStreamListener`
+on an event dispatcher and pass that to the engine as well:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\RemoveSubscriptionStreamListener;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventEmitterResolver;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+
+$eventDispatcher = new EventDispatcher();
+$eventDispatcher->addListener(
+    OnSubscriptionRemoved::class,
+    new RemoveSubscriptionStreamListener($store),
+);
+
+$engine = new DefaultSubscriptionEngine(
+    $messageLoader,
+    $subscriptionStore,
+    $subscriberAccessorRepository,
+    eventDispatcher: $eventDispatcher,
+    argumentResolvers: [
+        new EventEmitterResolver($store),
+    ],
+);
+```
+
+###### When are events emitted
+
+Emitting events while a subscription is *booting* would create duplicates on every replay, so by
+default events are only emitted during `run` and the emitter is a noop during `boot`. You can change
+this per subscriber with two attributes:
+
+```php
+use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
+use Patchlevel\EventSourcing\Attribute\Subscriber;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+
+#[Subscriber('order_projection', RunMode::FromBeginning)]
+#[EnableEventEmittingDuringBoot]
+final class OrderProjection
+{
+    // ...
+}
+```
+
+* `EnableEventEmittingDuringBoot` — events are also emitted during `boot`.
+* `DisableEventEmitting` — events are never emitted, not even during `run`.
+
+:::info
+When a subscription is removed, its `subscription_<subscription-id>` stream is removed from the store as
+well (as long as the `RemoveSubscriptionStreamListener` is registered).
+:::
+
 ##### Custom Resolvers
 
 You can provide your own argument resolvers by implementing the `ArgumentResolver` interface.
 This can be useful for providing direct access to custom headers or other data.
+The `resolve` method receives an `ArgumentResolverContext` that gives you access to the current
+`message`, the `subscription` and the `subscriber` metadata.
+
+```php
+use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
+
+final class CustomResolver implements ArgumentResolver
+{
+    public function resolve(ArgumentMetadata $argument, ArgumentResolverContext $context): mixed
+    {
+        return $context->message->header(CustomHeader::class);
+    }
+
+    public function support(ArgumentMetadata $argument, string $eventClass): bool
+    {
+        return $argument->type->isIdentifiedBy(CustomHeader::class);
+    }
+}
+```
 
 ### Setup
 
@@ -329,8 +467,9 @@ final class ProfileProjector
     }
 }
 ```
+
 :::danger
-PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
+MySQL and MariaDB don't support transactions for DDL statements.
 So you must use a different database connection in your projectors,
 otherwise you will get an error when the subscription tries to create the table.
 :::
@@ -371,7 +510,7 @@ final class ProfileProjector
 }
 ```
 :::danger
-PostgreSQL, MySQL and MariaDB don't support transactions for DDL statements.
+MySQL and MariaDB don't support transactions for DDL statements.
 So you must use a different database connection in your projectors,
 otherwise you will get an error when the subscription tries to create the table.
 :::
@@ -426,6 +565,7 @@ By default, we provide the following cleanup tasks for `doctrine/dbal`:
 | `DropIndexTask` | Drops an index from a table. |
 | `DropTableTask` | Drops a table.               |
 
+
 :::note
 If you are passing connection registry, you can use the connection name as parameter.
 The `connectionName` parameter is optional and defaults to the default connection.
@@ -435,6 +575,7 @@ The `connectionName` parameter is optional and defaults to the default connectio
 You can create your own cleanup tasks and handler.
 For more information, see [Cleanup Handler](#cleanup-handler).
 :::
+
 
 ### On Failed
 
@@ -467,6 +608,7 @@ final class InvoiceProcessor
     }
 }
 ```
+
 :::warning
 Currently, the `OnFailed` method is only available for non-batchable subscribers.
 :::
@@ -490,6 +632,7 @@ final class ProfileSubscriber
    // ...
 }
 ```
+
 :::warning
 If you change the `subscriberID`, you must also change the table/collection name.
 Otherwise the table/collection will conflict with the old subscription.
@@ -516,13 +659,14 @@ final class ProfileSubscriber
    // ...
 }
 ```
+
 :::note
 The different attributes have different default groups.
 
 * `Subscriber` - `default`
 * `Projector` - `projector`
 * `Processor` - `processor`
-  :::
+:::
 
 ### Run Mode
 
@@ -544,6 +688,7 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
+
 :::tip
 If you want to create projections and run from the beginning, you can use the `Projector` attribute.
 :::
@@ -564,6 +709,7 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
+
 :::tip
 If you want to process events from now, you can use the `Processor` attribute.
 :::
@@ -594,9 +740,7 @@ We preconfigured two strategies for you: `default` and `no_retry`.
 ```php
 use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Subscription\RunMode;
 
 #[Subscriber('welcome_email', RunMode::FromNow)]
 #[RetryStrategy('default')]
@@ -616,40 +760,53 @@ For more information, see the [retry strategy](#retry-strategy) documentation.
 
 You can also optimize the performance of your subscribers by processing a number of events in a batch.
 This is particularly useful when projections need to be rebuilt.
-To achieve this, you can implement the `BatchableSubscriber` interface.
+To achieve this, you mark the relevant methods with the batch attributes.
+The subscriber itself stays stateless: the `#[BatchBegin]` method returns a state object that the
+engine keeps for you and hands back to the handler (via a `#[BatchState]` parameter) and to the
+flush and rollback methods.
 
 ```php
 use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\BatchState;
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
 use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
+use Patchlevel\EventSourcing\Attribute\BatchShouldFlush;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+
+final class MigrationBatch
+{
+    /** @var array<string, string> */
+    public array $nameChanged = [];
+}
 
 #[Projector('profile_1')]
-final class MigrationSubscriber implements BatchableSubscriber
+final class MigrationSubscriber
 {
     public function __construct(
         private readonly Connection $connection,
     ) {
     }
 
-    /** @var array<string, int> */
-    private array $nameChanged = [];
+    #[BatchBegin]
+    public function beginBatch(): MigrationBatch
+    {
+        $this->connection->beginTransaction();
+
+        return new MigrationBatch();
+    }
 
     #[Subscribe(NameChanged::class)]
-    public function handleNameChanged(NameChanged $event): void
+    public function handleNameChanged(NameChanged $event, #[BatchState] MigrationBatch $batch): void
     {
-        $this->nameChanged[$event->userId] = $event->name;
+        $batch->nameChanged[$event->userId] = $event->name;
     }
 
-    public function beginBatch(): void
+    #[BatchFlush(afterMessages: 1000)]
+    public function flush(MigrationBatch $batch): void
     {
-        $this->nameChanged = [];
-        $this->connection->beginTransaction();
-    }
-
-    public function commitBatch(): void
-    {
-        foreach ($this->nameChanged as $userId => $name) {
+        foreach ($batch->nameChanged as $userId => $name) {
             $this->connection->executeStatement(
                 'UPDATE user SET name = :name WHERE id = :id',
                 ['name' => $name, 'id' => $userId],
@@ -657,50 +814,53 @@ final class MigrationSubscriber implements BatchableSubscriber
         }
 
         $this->connection->commit();
-        $this->nameChanged = [];
     }
 
-    public function rollbackBatch(): void
+    #[BatchShouldFlush]
+    public function shouldFlush(MigrationBatch $batch): bool
+    {
+        return count($batch->nameChanged) > 1000;
+    }
+
+    #[BatchRollback]
+    public function rollback(MigrationBatch $batch): void
     {
         $this->connection->rollBack();
     }
-
-    public function forceCommit(): bool
-    {
-        return count($this->nameChanged) > 1000;
-    }
 }
 ```
-This interface provides you with all the options you need to process your data collectively.
 
-The `beginBatch` method is called as soon as a subscriber wants to process an event.
+The `#[BatchBegin]` method is optional and called as soon as a subscriber wants to process an event.
 If no suitable event is found in the stream, batching will not start, and this method will not be called.
-Here, you can make all necessary preparations, such as opening a transaction or preparing variables.
+Here, you can make all necessary preparations, such as opening a transaction, and optionally return the
+state object that holds the data you collect during the batch.
+If you do not define a `#[BatchBegin]` method, or it returns nothing, an empty `stdClass` object is used as the state.
 
-The `commitBatch` method is called when batching was previously started, and one of the following conditions is met:
+The `#[BatchFlush]` method is called when batching was previously started, and one of the following conditions is met:
 Either the Subscription Engine reaches its limit, or the stream is finished.
-Alternatively, if the subscriber explicitly indicates using the `forceCommit` method that they want to process the data now.
+You can also pass `afterMessages` to the attribute (`#[BatchFlush(afterMessages: 1000)]`) to flush automatically
+after that many messages, or implement a `#[BatchShouldFlush]` method for custom logic.
 At this step, you must process all the data.
 
-The `rollbackBatch` method is called when an error occurs and the batching needs to be aborted.
+The `#[BatchRollback]` method is optional and called when an error occurs and the batching needs to be aborted.
 Here, you can respond to the error and potentially perform a database rollback.
 
-The method `forceCommit` is called after each handled event,
-and you can decide whether the batch commit process should start now.
+The `#[BatchShouldFlush]` method is optional and called after each handled event,
+and you can decide whether the flush process should start now.
 This helps to determine the batch size and thus avoid memory overflow.
 
 :::danger
-Make sure to fully process the data in `commitBatch` and close any open transactions.
+Make sure to fully process the data in the `#[BatchFlush]` method and close any open transactions.
 Otherwise, it may lead to inconsistent data.
 :::
 
 :::note
-The position of the subscriber is only updated after a successful commit.
+The position of the subscriber is only updated after a successful flush.
 In case of an error, the position remains at the state before the batch started.
 :::
 
 :::tip
-Use `forceCommit` to prevent memory leaks.
+Use `#[BatchFlush(afterMessages: ...)]` or a `#[BatchShouldFlush]` method to prevent memory leaks.
 This allows you to decide when it's suitable to process the data and then release the memory.
 :::
 
@@ -713,12 +873,20 @@ and keeping all subscriptions up to date.
 It also takes care that new subscribers are booted and old ones are removed again.
 If something breaks, the subscription engine marks the individual subscriptions as faulty and retries them.
 
+Each subscription is processed independently: the engine claims one subscription at a time with a
+row lock, reads its own substream from its own position, processes it and
+commits in a short transaction before moving on to the next one. This has two consequences:
+
+* An error in one subscription no aborts the whole run, the other subscriptions keep going.
+* Multiple workers can run the engine in parallel and share the work automatically (see
+  [Parallel processing](#parallel-processing)).
+
 :::tip
 The Subscription Engine was inspired by the following two blog posts:
 
 * [Projection Building Blocks: What you'll need to build projections](https://barryosull.com/blog/projection-building-blocks-what-you-ll-need-to-build-projections/)
 * [Managing projectors is harder than you think](https://barryosull.com/blog/managing-projectors-is-harder-than-you-think/)
-  :::
+:::
 
 ## Subscription ID
 
@@ -845,7 +1013,7 @@ In order for the subscription engine to be able to do its work, you have to asse
 ### Message Loader
 
 The subscription engine needs a message loader to load the messages.
-We provide three implementations by default.
+We provide two implementations by default.
 Which one has a better performance depends on the use case.
 
 :::tip
@@ -871,9 +1039,7 @@ Then it loads with a filter only the relevant messages.
 
 ```php
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
-use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 
 /**
  * @var Store $store
@@ -950,6 +1116,7 @@ $schemaDirector = new DoctrineSchemaDirector(
     ]),
 );
 ```
+
 :::note
 You can find more about the schema configurator in the [store](store.md) documentation.
 :::
@@ -1008,6 +1175,7 @@ $retryStrategyRepository = new RetryStrategyRepository([
     'no_retry' => new NoRetryStrategy(),
 ]);
 ```
+
 :::note
 This is what our default configuration looks like if you do not define the retry strategy.
 :::
@@ -1031,6 +1199,7 @@ final class DropCollection
     }
 }
 ```
+
 :::warning
 The task class must be serializable. It will be stored in the subscription store.
 :::
@@ -1131,7 +1300,8 @@ $subscriberAccessorRepository = new MetadataSubscriberAccessorRepository([
 Now we can create the subscription engine and plug together the necessary services.
 The message loader is needed to load the messages, the Subscription Store to store the subscription state
 and we need the subscriber accessor repository. Optionally, we can also pass a retry strategy.
-Finally, if we want to use the cleanup feature, we need to pass the cleanup handlers.
+If we want to use the cleanup feature, we need to pass the cleanup handlers.
+Finally, we can pass an event dispatcher to hook into the engine with own listeners.
 
 ```php
 use Doctrine\DBAL\Connection;
@@ -1142,7 +1312,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
-use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * @var MessageLoader $messageLoader
@@ -1159,6 +1329,34 @@ $subscriptionEngine = new DefaultSubscriptionEngine(
     $retryStrategyRepository, // optional, if not set the default retry strategy is used
     $logger, // optional
     new DefaultCleaner([new DbalCleanupTaskHandler($projectionConnection)]), // optional but required if you want to use the cleanup feature
+    new EventDispatcher(), // optional, to hook into the engine with own listeners
+);
+```
+### Engine Events
+
+The `DefaultSubscriptionEngine` dispatches events during processing on the passed event dispatcher.
+You can register your own listeners to hook into the engine, for example for logging, metrics or batching.
+
+| Event                    | Description                                                          |
+|--------------------------|----------------------------------------------------------------------|
+| `OnCommand`              | A command was passed to the engine for execution                     |
+| `OnSubscriptions`        | The engine determined the subscriptions for the current command      |
+| `OnHandleMessage`        | A message is about to be passed to a subscriber                      |
+| `OnHandleMessageSuccess` | A message was successfully handled by a subscriber                   |
+| `OnHandleMessageError`   | An error occurred while a subscriber was handling a message          |
+| `OnSubscriptionProcessed`| A subscription finished its stream (ended or limit reached)          |
+| `OnResult`               | The engine finished the command and returns the result               |
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+
+$eventDispatcher = new EventDispatcher();
+$eventDispatcher->addListener(
+    OnHandleMessageError::class,
+    static function (OnHandleMessageError $event): void {
+        // own error handling like logging or metrics
+    },
 );
 ```
 ### Catch up Subscription Engine
@@ -1176,12 +1374,9 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $catchupSubscriptionEngine = new CatchUpSubscriptionEngine($subscriptionEngine);
 ```
+
 :::tip
 You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
-:::
-
-:::note
-Learn more about the worker in the [subscription commands](cli.md#subscription-commands) documentation.
 :::
 
 ### Throw on error Subscription Engine
@@ -1196,6 +1391,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $throwOnErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscriptionEngine);
 ```
+
 :::warning
 This is only for testing or development. Don't use it in production.
 The subscription engine has a built-in retry strategy to retry subscriptions that have failed.
@@ -1215,7 +1411,7 @@ use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineReposi
  * @var SubscriptionEngine $subscriptionEngine
  * @var RepositoryManager $defaultRepositoryManager
  */
-$repositoryManager = new RunSubscriptionEngineRepositoryManager(
+$eventBus = new RunSubscriptionEngineRepositoryManager(
     $defaultRepositoryManager,
     $subscriptionEngine,
     ['id1', 'id2'], // filter subscribers by id
@@ -1223,6 +1419,7 @@ $repositoryManager = new RunSubscriptionEngineRepositoryManager(
     100, // limit the number of messages
 );
 ```
+
 :::danger
 By using this, you can't wrap the repository in a transaction.
 A rollback is not supported and can break the subscription engine.
@@ -1240,17 +1437,23 @@ Especially in combination with the `CatchUpSubscriptionEngine` and `ThrowOnError
 
 ## Usage
 
-The Subscription Engine has a few methods needed to use it effectively.
-A `SubscriptionEngineCriteria` can be passed to all of these methods to filter the respective subscriptions.
+The Subscription Engine is controlled with command objects.
+Each command is passed to the `execute` method, which returns a `Result` with the errors that occurred.
+Every command accepts `ids` and `groups` parameters to filter the subscriptions the command should be applied to.
 
 ```php
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 
-$criteria = new SubscriptionEngineCriteria(
-    ids: ['profile_1', 'welcome_email'],
-    groups: ['default'],
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(
+    new Run(
+        ids: ['profile_1', 'welcome_email'],
+        groups: ['default'],
+    ),
 );
 ```
+
 :::note
 An `OR` check is made for the respective criteria and all criteria are checked with an `AND`.
 :::
@@ -1262,51 +1465,92 @@ In this step, the subscription engine also tries to call the `setup` method if a
 After the setup process, the subscription is set to booting or active.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->setup(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Setup());
 ```
+
 :::tip
-You can skip the booting step with the second boolean parameter named `skipBooting`.
+You can skip the booting step with the `skipBooting` parameter: `new Setup(skipBooting: true)`.
 :::
 
 ### Boot
 
-You can boot the subscriptions with the `boot` method.
+You can boot the subscriptions with the `Boot` command.
 All booting subscriptions will catch up to the current event stream.
 After the boot process, the subscription is set to active or finished.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->boot(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Boot());
 ```
+
+:::tip
+You can limit the number of processed messages with the `limit` parameter: `new Boot(limit: 100)`.
+The limit applies **per subscription**, so one call processes at most `limit` messages for each
+booting subscription.
+:::
+
 ### Run
 
 All active subscriptions are continued and updated here.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->run(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Run());
 ```
+
+:::tip
+You can limit the number of processed messages with the `limit` parameter: `new Run(limit: 100)`.
+The limit applies **per subscription**: one `Run` call processes at most `limit` messages for each
+active subscription, so up to `limit × number of subscriptions` messages in total. It also defines
+the checkpoint and lock-hold granularity, a unit of at most `limit` messages commits atomically and
+the lock is released afterwards.
+:::
+
+### Parallel processing
+
+Because every subscription is claimed independently by a worker, 
+you can start the same command in several worker processes at once. 
+Each worker takes the next available subscription while avoiding subscriptions that are already being processed, 
+so the workload is distributed across workers without any static configuration.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+// run this in as many worker processes as you like, they balance themselves
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(new Run(limit: 100));
+```
+
+The per-subscription order is always preserved. There is no global ordering across different
+subscriptions, but since subscriptions are independent of each other this does not matter.
+
+:::note
+This requires a database that supports `SKIP LOCKED` (PostgreSQL and MySQL do). SQLite serializes
+writes anyway and simply ignores the clause, so a single worker is used there.
+:::
+
 ### Teardown
 
 If subscriptions are detached, they can be cleaned up here.
 The subscription engine also tries to call the `teardown` method if available.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->teardown(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Teardown());
 ```
 ### Remove
 
@@ -1315,11 +1559,11 @@ An attempt is made to call the `teardown` method if available.
 But the entry will still be removed if it doesn't work.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->remove(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Remove());
 ```
 ### Reactivate
 
@@ -1327,11 +1571,11 @@ If a subscription had an error or is outdated, you can reactivate it.
 As a result, the subscription gets in the last status again.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Reactivate;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->reactivate(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Reactivate());
 ```
 ### Pause
 
@@ -1340,15 +1584,28 @@ The subscription will then no longer be managed by the subscription engine.
 You can reactivate the subscription if you want so that it continues.
 
 ```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Pause;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->pause(new SubscriptionEngineCriteria());
+$subscriptionEngine->execute(new Pause());
+```
+### Refresh
+
+If you change the metadata of a subscriber in the code (e.g. `runMode`, `group` or `cleanupTasks`),
+you can use the `Refresh` command to update the existing subscriptions in the store.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Refresh;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(new Refresh());
 ```
 ### Status
 
 To get the current status of all subscriptions, you can get them using the `subscriptions` method.
+A `SubscriptionEngineCriteria` can be passed to filter the subscriptions.
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
@@ -1361,26 +1618,6 @@ foreach ($subscriptions as $subscription) {
     echo $subscription->status()->value;
 }
 ```
-### Refresh
-
-If you change the metadata of a subscriber in the code (e.g. `runMode`, `group` or `cleanupTasks`),
-you can use the `refresh` method to update the existing subscriptions in the store.
-
-```php
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
-
-/** @var SubscriptionEngine $subscriptionEngine */
-$subscriptionEngine->refresh(new SubscriptionEngineCriteria());
-```
-## Basic workflow for the worker
-
-Use `event-sourcing:subscription:boot --setup` to first run the setup of any new subscriptions and immediately boot
-them.
-
-The `event-sourcing:subscription:run` command will continue to run and process new events until the process is killed.
-After adding a new subscriber and booting it, you should restart the `run` command.
-
 ## Learn more
 
 * [How to use CLI commands](cli.md)

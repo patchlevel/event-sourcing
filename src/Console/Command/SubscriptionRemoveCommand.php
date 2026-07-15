@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -36,7 +37,7 @@ final class SubscriptionRemoveCommand extends SubscriptionCommand
             }
         }
 
-        $this->engine->remove($criteria);
+        $this->engine->execute(new Remove($criteria->ids, $criteria->groups));
 
         return 0;
     }

@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Lookup;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
@@ -16,7 +14,6 @@ use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\Stream;
 
 use function array_map;
 use function array_values;
@@ -87,44 +84,6 @@ final class Lookup
 
         $stream = $self->currentMessage->header(StreamNameHeader::class)->streamName;
         $self->criteria = $self->criteria->add(new StreamCriterion($stream));
-
-        return $self;
-    }
-
-    public function aggregateName(string|null $aggregateName = null): self
-    {
-        $self = clone $this;
-
-        if ($aggregateName === null) {
-            $self->criteria = $self->criteria->remove(AggregateNameCriterion::class);
-        } else {
-            $self->criteria = $self->criteria->add(new AggregateNameCriterion($aggregateName));
-        }
-
-        return $self;
-    }
-
-    public function aggregateId(string|null $aggregateId = null): self
-    {
-        $self = clone $this;
-
-        if ($aggregateId === null) {
-            $self->criteria = $self->criteria->remove(AggregateIdCriterion::class);
-        } else {
-            $self->criteria = $self->criteria->add(new AggregateIdCriterion($aggregateId));
-        }
-
-        return $self;
-    }
-
-    public function currentAggregate(): self
-    {
-        $self = clone $this;
-
-        $aggregateHeader = $self->currentMessage->header(AggregateHeader::class);
-        $self->criteria = $self->criteria
-            ->add(new AggregateNameCriterion($aggregateHeader->aggregateName))
-            ->add(new AggregateIdCriterion($aggregateHeader->aggregateId));
 
         return $self;
     }

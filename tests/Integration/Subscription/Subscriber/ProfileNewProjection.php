@@ -10,13 +10,12 @@ use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
-#[Projector('profile_2')]
+#[Projector(self::SUBSCRIBER_ID)]
 final class ProfileNewProjection
 {
-    use SubscriberUtil;
+    private const SUBSCRIBER_ID = 'profile_2';
 
     public function __construct(
         private Connection $connection,
@@ -54,6 +53,6 @@ final class ProfileNewProjection
 
     private function tableName(): string
     {
-        return 'projection_' . $this->subscriberId();
+        return 'projection_' . self::SUBSCRIBER_ID;
     }
 }

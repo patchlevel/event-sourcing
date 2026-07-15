@@ -153,7 +153,7 @@ All new events that have not yet been written to the database are fetched from t
 These events are then appended to the database.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Repository\Repository;
 
 $id = Uuid::generate();
@@ -176,8 +176,8 @@ An `AggregateOutdated` exception is thrown if a conflict occurs.
 :::
 
 :::tip
-If you use the Command Bus, you can use the [RetryOutdatedAggregateCommandBus](command-bus.md#retry-outdated-aggregate-command-bus)
-to retry the command when an `AggregateOutdated` exception occurs automatically.
+If you use the Command Bus, you can use the [instant retry](command-bus.md#instant-retry) decorator
+to retry the command automatically when an `AggregateOutdated` exception occurs.
 :::
 
 ### Load an aggregate
@@ -186,7 +186,7 @@ An `aggregate` can be loaded using the `load` method.
 All events for the aggregate are loaded from the database and the current state is rebuilt.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Repository\Repository;
 
 $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
@@ -214,7 +214,7 @@ You can also check whether an `aggregate` with a certain id exists.
 It is checked whether any event with this id exists in the database.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Repository\Repository;
 
 $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');

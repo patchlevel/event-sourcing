@@ -12,73 +12,10 @@ The store is optimized to efficiently store and load events for aggregates.
 ## Configure Store
 
 We offer different stores to store the messages.
-Two stores based on [doctrine dbal](https://www.doctrine-project.org/projects/dbal.html)
-and one in-memory store for testing purposes.
-
-### DoctrineDbalStore
-
-This is the current default store for event sourcing.
-You can create a store with the `DoctrineDbalStore` class.
-The store needs a dbal connection, an event serializer and has some optional parameters like options.
-
-```php
-use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Tools\DsnParser;
-use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
-
-$connection = DriverManager::getConnection(
-    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
-);
-
-$store = new DoctrineDbalStore(
-    $connection,
-    DefaultEventSerializer::createFromPaths(['src/Event']),
-);
-```
-:::note
-You can find out more about [how to create a connection](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
-in the doctrine dbal documentation.
-:::
-
-Following options are available in `DoctrineDbalStore`:
-
-| Option            | Type            | Default    | Description                                  |
-|-------------------|-----------------|------------|----------------------------------------------|
-| table_name        | string          | eventstore | The name of the table in the database        |
-| aggregate_id_type | "uuid"/"string" | uuid       | The type of the `aggregate_id` column        |
-| locking           | bool            | true       | If the store should use locking for writing  |
-| lock_id           | int             | 133742     | The id of the lock                           |
-| lock_timeout      | int             | -1         | The timeout of the lock. -1 means no timeout |
-
-The table structure of the `DoctrineDbalStore` looks like this:
-
-| Column           | Type        | Description                                      |
-|------------------|-------------|--------------------------------------------------|
-| id               | bigint      | The index of the whole stream (autoincrement)    |
-| aggregate        | string      | The name of the aggregate                        |
-| aggregate_id     | uuid/string | The id of the aggregate                          |
-| playhead         | int         | The current playhead of the aggregate            |
-| event            | string      | The name of the event                            |
-| payload          | json        | The payload of the event                         |
-| recorded_on      | datetime    | The date when the event was recorded             |
-| new_stream_start | bool        | If the event is the first event of the aggregate |
-| archived         | bool        | If the event is archived                         |
-| custom_headers   | json        | Custom headers for the event                     |
-
-:::note
-The default type of the `aggregate_id` column is `uuid` if the database supports it and `string` if not.
-You can change the type with the `aggregate_id_type` option to `string` if you want to use a custom id.
-:::
 
 ### StreamDoctrineDbalStore
 
-We offer a new store called `StreamDoctrineDbalStore`.
-This store is decoupled from the aggregate and can be used to store events from other sources.
-The difference to the `DoctrineDbalStore` is that the `StreamDoctrineDbalStore` merges the aggregate id
-and the aggregate name into one column named `stream`. Additionally, the column `playhead` is nullable.
-This store introduces two new methods `streams` and `remove`.
-
+We offer a store called `StreamDoctrineDbalStore`.
 The store needs a dbal connection, an event serializer and has some optional parameters like options.
 
 ```php
@@ -96,6 +33,7 @@ $store = new StreamDoctrineDbalStore(
     DefaultEventSerializer::createFromPaths(['src/Event']),
 );
 ```
+
 :::note
 You can find out more about [how to create a connection](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
 in the doctrine dbal documentation.
@@ -135,28 +73,23 @@ use Patchlevel\EventSourcing\Store\InMemoryStore;
 
 $store = new InMemoryStore();
 ```
+
 :::tip
 You can pass messages to the constructor to initialize the store with some events.
 :::
 
-### ReadOnlyStore & StreamReadOnlyStore
+### ReadOnlyStore
 
-Last but not least, we offer two read-only stores.
-One for the `DoctrineDbalStore` and one for the `StreamDoctrineDbalStore`.
+Last but not least, we offer a read-only store named `ReadOnlyStore`.
 It passes all methods to the underlying store, but throws a `StoreIsReadOnly` exception when trying to execute write
 operations.
 
 ```php
 use Patchlevel\EventSourcing\Store\ReadOnlyStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\StreamReadOnlyStore;
-use Patchlevel\EventSourcing\Store\StreamStore;
 
 /** @var Store $store */
 $readOnlyStore = new ReadOnlyStore($store);
-
-/** @var StreamStore $store */
-$readOnlyStore = new StreamReadOnlyStore($store);
 ```
 ## Schema
 
@@ -186,8 +119,9 @@ $schemaDirector = new DoctrineSchemaDirector(
     $store,
 );
 ```
+
 :::note
-How to setup [cli commands](cli.md) for the schema director can be found in the cli documentation.
+How to setup [cli commands](cli.md) for the schema director is described in the CLI documentation.
 :::
 
 #### Create schema
@@ -290,13 +224,14 @@ $dependencyFactory->setService(
     $schemaProvider,
 );
 ```
+
 :::note
 Here you can find more information on how to
 [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
 :::
 
 :::note
-How to setup [cli commands](cli.md) for doctrine migration can be found in the cli documentation.
+How to setup [cli commands](cli.md) for doctrine migrations is described in the CLI documentation.
 :::
 
 ## Usage
@@ -333,44 +268,45 @@ $stream = $store->load(
 The `Criteria` object is used to filter the events.
 
 ```php
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 
 $criteria = new Criteria(
-    new AggregateNameCriterion('profile'),
-    new AggregateIdCriterion('e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
+    new StreamCriterion('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
     new FromPlayheadCriterion(2),
     new FromIndexCriterion(100),
     new ArchivedCriterion(true),
     new EventsCriterion(['profile.created', 'profile.name_changed']),
 );
 ```
-Or you can use the criteria builder to create the criteria.
+Or you can the criteria builder to create the criteria.
 
 ```php
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 
 $criteria = (new CriteriaBuilder())
-    ->aggregateName('profile')
-    ->aggregateId('e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e')
+    ->streamName('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e')
     ->fromPlayhead(2)
     ->fromIndex(100)
     ->archived(true)
     ->events(['profile.created', 'profile.name_changed'])
     ->build();
 ```
+:::tip
+A stream name has the format `[aggregateName]-[aggregateId]`. To match every stream of an aggregate,
+use a wildcard with `StreamCriterion::startWith('profile-')`.
+:::
 #### Stream
 
 The load method returns a `Stream` object and is a generator.
 This means that the messages are only loaded when they are needed.
 
 ```php
-use Patchlevel\EventSourcing\Store\Stream;
+use Patchlevel\EventSourcing\Message\Stream;
 
 /** @var Stream $stream */
 $stream->index(); // get the index of the stream
@@ -383,8 +319,9 @@ foreach ($stream as $message) {
     $message->event(); // get the event
 }
 ```
+
 :::note
-You can find more information about the [message](message.md) object in the message documentation.
+You can find more information about the [`Message` object](message.md).
 :::
 
 :::warning
@@ -433,6 +370,7 @@ $store->save($message);
 $store->save($message1, $message2, $message3);
 $store->save(...$messages);
 ```
+
 :::note
 The saving happens in a transaction, so all messages are saved or none.
 The store locks the table for writing during each save by default.
@@ -449,32 +387,26 @@ In event sourcing, the events are immutable.
 
 ### Remove
 
-You can remove a stream with the `remove` method.
+You can remove streams with the `remove` method by passing a criteria.
 
 ```php
-use Patchlevel\EventSourcing\Store\StreamStore;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Store;
 
-/** @var StreamStore $store */
-$store->remove('profile-*');
+/** @var Store $store */
+$store->remove(new Criteria(StreamCriterion::startWith('profile-')));
 ```
-:::note
-The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
-:::
-
 ### List Streams
 
 You can list all streams with the `streams` method.
 
 ```php
-use Patchlevel\EventSourcing\Store\StreamStore;
+use Patchlevel\EventSourcing\Store\Store;
 
-/** @var StreamStore $store */
+/** @var Store $store */
 $streams = $store->streams(); // ['profile-1', 'profile-2', 'profile-3']
 ```
-:::note
-The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
-:::
-
 ### Transaction
 
 There is also the possibility of executing a function in a transaction.
@@ -495,6 +427,7 @@ $store->transactional(static function () use ($command, $bankAccountRepository):
     $bankAccountRepository->save($accountTo);
 });
 ```
+
 :::note
 The store locks the table for writing during the transaction by default.
 :::

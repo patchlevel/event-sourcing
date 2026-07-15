@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
-use LogicException;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
 use function array_merge;
-use function sprintf;
 
 use const PHP_INT_MAX;
 
-final class CatchUpSubscriptionEngine implements SubscriptionEngine, CanRefreshSubscriptions
+final class CatchUpSubscriptionEngine implements SubscriptionEngine
 {
     public function __construct(
         private readonly SubscriptionEngine $parent,
@@ -20,38 +19,19 @@ final class CatchUpSubscriptionEngine implements SubscriptionEngine, CanRefreshS
     ) {
     }
 
-    public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): Result
-    {
-        return $this->parent->setup($criteria, $skipBooting);
-    }
-
-    public function boot(SubscriptionEngineCriteria|null $criteria = null, int|null $limit = null): ProcessedResult
-    {
-        $results = [];
-
-        $catchupLimit = $this->limit ?? PHP_INT_MAX;
-
-        for ($i = 0; $i < $catchupLimit; $i++) {
-            $lastResult = $this->parent->boot($criteria, $limit);
-
-            $results[] = $lastResult;
-
-            if ($lastResult->processedMessages === 0) {
-                break;
-            }
-        }
-
-        return $this->mergeResult(...$results);
-    }
-
-    public function run(SubscriptionEngineCriteria|null $criteria = null, int|null $limit = null): ProcessedResult
+    public function execute(Command $command): Result
     {
         $mergedResult = new ProcessedResult(0);
 
         $catchupLimit = $this->limit ?? PHP_INT_MAX;
 
         for ($i = 0; $i < $catchupLimit; $i++) {
-            $result = $this->parent->run($criteria, $limit);
+            $result = $this->parent->execute($command);
+
+            if (!$result instanceof ProcessedResult) {
+                return $result;
+            }
+
             $mergedResult = $this->mergeResult($mergedResult, $result);
 
             if ($result->processedMessages === 0) {
@@ -62,43 +42,10 @@ final class CatchUpSubscriptionEngine implements SubscriptionEngine, CanRefreshS
         return $mergedResult;
     }
 
-    public function teardown(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        return $this->parent->teardown($criteria);
-    }
-
-    public function remove(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        return $this->parent->remove($criteria);
-    }
-
-    public function reactivate(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        return $this->parent->reactivate($criteria);
-    }
-
-    public function pause(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        return $this->parent->pause($criteria);
-    }
-
     /** @return list<Subscription> */
     public function subscriptions(SubscriptionEngineCriteria|null $criteria = null): array
     {
         return $this->parent->subscriptions($criteria);
-    }
-
-    public function refresh(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        if (!$this->parent instanceof CanRefreshSubscriptions) {
-            throw new LogicException(sprintf(
-                '"%s" does not implement "%s" and cannot call refresh.',
-                $this->parent::class,
-                CanRefreshSubscriptions::class,
-            ));
-        }
-
-        return $this->parent->refresh($criteria);
     }
 
     private function mergeResult(ProcessedResult ...$results): ProcessedResult

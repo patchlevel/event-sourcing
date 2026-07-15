@@ -461,7 +461,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         iterator_to_array($stream);
 
-        self::assertSame(1, $stream->index());
+        self::assertSame(null, $stream->index());
         self::assertSame(0, $stream->position());
     }
 

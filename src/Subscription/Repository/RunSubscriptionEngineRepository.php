@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Subscription\Engine\AlreadyProcessing;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 
 /**
  * @template T of AggregateRoot
@@ -33,12 +33,12 @@ final class RunSubscriptionEngineRepository implements Repository
     }
 
     /** @return T */
-    public function load(AggregateRootId $id): AggregateRoot
+    public function load(Identifier $id): AggregateRoot
     {
         return $this->repository->load($id);
     }
 
-    public function has(AggregateRootId $id): bool
+    public function has(Identifier $id): bool
     {
         return $this->repository->has($id);
     }
@@ -49,12 +49,12 @@ final class RunSubscriptionEngineRepository implements Repository
         $this->repository->save($aggregate);
 
         try {
-            $this->engine->run(
-                new SubscriptionEngineCriteria(
+            $this->engine->execute(
+                new Run(
                     $this->ids,
                     $this->groups,
+                    $this->limit,
                 ),
-                $this->limit,
             );
         } catch (AlreadyProcessing) {
             // do nothing

@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentResolver;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\RecordedOnArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Symfony\Component\TypeInfo\Type;
 
 #[CoversClass(RecordedOnArgumentResolver::class)]
 final class RecordedOnArgumentResolverTest extends TestCase
@@ -23,14 +26,14 @@ final class RecordedOnArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', DateTimeImmutable::class, false),
+                new ArgumentMetadata('foo', Type::object(DateTimeImmutable::class)),
                 'qux',
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', 'bar', false),
+                new ArgumentMetadata('foo', Type::string()),
                 'qux',
             ),
         );
@@ -42,19 +45,14 @@ final class RecordedOnArgumentResolverTest extends TestCase
 
         $resolver = new RecordedOnArgumentResolver();
         $message = (new Message(new stdClass()))->withHeader(
-            new AggregateHeader(
-                'foo',
-                'bar',
-                1,
-                $date,
-            ),
+            new RecordedOnHeader($date),
         );
 
         self::assertSame(
             $date,
             $resolver->resolve(
-                new ArgumentMetadata('foo', DateTimeImmutable::class, false),
-                $message,
+                new ArgumentMetadata('foo', Type::object(DateTimeImmutable::class)),
+                new ArgumentResolverContext($message, new Subscription('foo'), new SubscriberMetadata('foo')),
             ),
         );
     }
@@ -69,8 +67,8 @@ final class RecordedOnArgumentResolverTest extends TestCase
         self::assertSame(
             $date,
             $resolver->resolve(
-                new ArgumentMetadata('foo', DateTimeImmutable::class, false),
-                $message,
+                new ArgumentMetadata('foo', Type::object(DateTimeImmutable::class)),
+                new ArgumentResolverContext($message, new Subscription('foo'), new SubscriberMetadata('foo')),
             ),
         );
     }

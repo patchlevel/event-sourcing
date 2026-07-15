@@ -87,6 +87,7 @@ $cli->addCommands([
     new Command\SubscriptionTeardownCommand($subscriptionEngine),
     new Command\SubscriptionRemoveCommand($subscriptionEngine),
     new Command\SubscriptionReactivateCommand($subscriptionEngine),
+    new Command\SubscriptionRefreshCommand($subscriptionEngine),
     new Command\SubscriptionSetupCommand($subscriptionEngine),
     new Command\SubscriptionStatusCommand($subscriptionEngine),
     new Command\SchemaCreateCommand($schemaDirector),
