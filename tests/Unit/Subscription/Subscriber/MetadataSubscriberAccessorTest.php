@@ -239,5 +239,4 @@ final class MetadataSubscriberAccessorTest extends TestCase
             $accessor->subscribeMethods(ProfileVisited::class),
         );
     }
-
 }

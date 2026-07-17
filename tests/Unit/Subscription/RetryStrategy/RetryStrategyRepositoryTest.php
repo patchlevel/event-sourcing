@@ -60,5 +60,4 @@ final class RetryStrategyRepositoryTest extends TestCase
 
         self::assertSame($strategy, $repository->getDefaultRetryStrategy());
     }
-
 }

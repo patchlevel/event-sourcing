@@ -101,5 +101,4 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
         self::assertSame($expectedResult, $engine->execute($command));
     }
-
 }

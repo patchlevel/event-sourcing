@@ -264,5 +264,4 @@ final class SubscriptionTest extends TestCase
         self::assertSame([$task], $subscription->cleanupTasks());
         self::assertTrue($subscription->hasCleanupTasks());
     }
-
 }

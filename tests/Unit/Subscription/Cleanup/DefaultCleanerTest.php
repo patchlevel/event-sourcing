@@ -132,5 +132,4 @@ final class DefaultCleanerTest extends TestCase
         self::assertFalse($unsupportedHandler->called);
         self::assertTrue($supportedHandler->called);
     }
-
 }

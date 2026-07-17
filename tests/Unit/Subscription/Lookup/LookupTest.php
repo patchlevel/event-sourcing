@@ -375,5 +375,4 @@ final class LookupTest extends TestCase
 
         $lookup->fetchLast();
     }
-
 }

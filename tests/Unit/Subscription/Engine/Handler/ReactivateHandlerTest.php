@@ -139,5 +139,4 @@ final class ReactivateHandlerTest extends TestCase
         self::assertEquals([], $result->errors);
         self::assertSame([], $store->updatedSubscriptions);
     }
-
 }

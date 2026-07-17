@@ -29,5 +29,4 @@ final class NoRetryStrategyTest extends TestCase
             new Subscription('test'),
         ));
     }
-
 }

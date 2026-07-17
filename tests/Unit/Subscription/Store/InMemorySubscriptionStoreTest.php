@@ -210,5 +210,4 @@ final class InMemorySubscriptionStoreTest extends TestCase
 
         self::assertSame($subscription, $store->inLock(static fn (): Subscription => $subscription));
     }
-
 }

@@ -65,5 +65,4 @@ final class SubscriptionCollectionTest extends TestCase
 
         self::assertSame([$subscription1, $subscription2], $collection->toArray());
     }
-
 }

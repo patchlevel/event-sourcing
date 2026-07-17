@@ -108,5 +108,4 @@ final class ClockBasedRetryStrategyTest extends TestCase
 
         self::assertFalse($strategy->shouldRetry($subscription));
     }
-
 }

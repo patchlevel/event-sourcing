@@ -370,5 +370,4 @@ final class SetupHandlerTest extends TestCase
         self::assertCount(1, $store->updatedSubscriptions);
         self::assertTrue($store->updatedSubscriptions[0]->isError());
     }
-
 }
