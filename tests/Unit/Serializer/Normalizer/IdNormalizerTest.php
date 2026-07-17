@@ -94,4 +94,22 @@ final class IdNormalizerTest extends TestCase
 
         $normalizer->identifierClass();
     }
+
+    public function testAutoDetectNullableType(): void
+    {
+        $normalizer = new IdNormalizer();
+        $normalizer->handleType(Type::nullable(Type::object(ProfileId::class)));
+
+        self::assertEquals(ProfileId::class, $normalizer->identifierClass());
+    }
+
+    public function testAutoDetectNotObjectType(): void
+    {
+        $this->expectException(InvalidType::class);
+
+        $normalizer = new IdNormalizer();
+        $normalizer->handleType(Type::string());
+
+        $normalizer->identifierClass();
+    }
 }

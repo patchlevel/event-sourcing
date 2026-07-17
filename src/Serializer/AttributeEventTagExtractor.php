@@ -10,9 +10,11 @@ use ReflectionClass;
 use Stringable;
 
 use function array_keys;
+use function array_map;
 use function hash;
 use function is_int;
 use function is_string;
+use function strval;
 
 /** @experimental */
 final class AttributeEventTagExtractor implements EventTagExtractor
@@ -63,6 +65,6 @@ final class AttributeEventTagExtractor implements EventTagExtractor
             $tags[$value] = true;
         }
 
-        return array_keys($tags);
+        return array_map(strval(...), array_keys($tags));
     }
 }
