@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Message;
 
 use DateTimeImmutable;
+use IteratorAggregate;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Message\StreamClosed;
@@ -20,6 +21,7 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Traversable;
 
 #[CoversClass(Stream::class)]
 final class StreamTest extends TestCase
@@ -150,6 +152,73 @@ final class StreamTest extends TestCase
         self::assertInstanceOf(ProfileVisited::class, $resultMessages[2]->event());
         self::assertSame('profile-2', $resultMessages[2]->header(StreamNameHeader::class)->streamName);
         self::assertSame(1, $resultMessages[2]->header(PlayheadHeader::class)->playhead);
+    }
+
+    public function testTraversable(): void
+    {
+        $message = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('foo'),
+                Email::fromString('info@patchlevel.de'),
+            ),
+        );
+
+        $messages = new class ([$message]) implements IteratorAggregate {
+            /** @param list<Message> $messages */
+            public function __construct(
+                private readonly array $messages,
+            ) {
+            }
+
+            public function getIterator(): Traversable
+            {
+                yield from $this->messages;
+            }
+        };
+
+        $stream = new Stream($messages);
+
+        self::assertSame([$message], $stream->toList());
+    }
+
+    public function testToArray(): void
+    {
+        $message = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('foo'),
+                Email::fromString('info@patchlevel.de'),
+            ),
+        );
+
+        $stream = new Stream([5 => $message]);
+
+        self::assertSame([5 => $message], $stream->toArray());
+    }
+
+    public function testChunk(): void
+    {
+        $messages = $this->messages();
+
+        $stream = new Stream($messages);
+
+        $chunks = [...$stream->chunk(2)];
+
+        self::assertCount(3, $chunks);
+        self::assertCount(2, $chunks[0]->toList());
+        self::assertCount(2, $chunks[1]->toList());
+        self::assertCount(1, $chunks[2]->toList());
+    }
+
+    public function testChunkWithExactMultiple(): void
+    {
+        $messages = $this->messages();
+
+        $stream = new Stream([$messages[0], $messages[1]]);
+
+        $chunks = [...$stream->chunk(2)];
+
+        self::assertCount(1, $chunks);
+        self::assertCount(2, $chunks[0]->toList());
     }
 
     public function testTransformIsSinglePass(): void

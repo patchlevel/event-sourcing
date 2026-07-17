@@ -52,4 +52,20 @@ final class UntilEventTranslatorTest extends TestCase
 
         self::assertSame([], $result);
     }
+
+    public function testPassthroughWithoutRecordedOnHeader(): void
+    {
+        $translator = new UntilEventTranslator(new DateTimeImmutable('2020-01-01 00:00:00'));
+
+        $message = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de'),
+            ),
+        );
+
+        $result = $translator($message);
+
+        self::assertSame([$message], $result);
+    }
 }
