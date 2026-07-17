@@ -97,7 +97,6 @@ use Patchlevel\EventSourcing\Message\Message;
 /** @var Message $message */
 $message->header(ApplicationHeader::class);
 ```
-
 ## Missing headers
 
 When a message is deserialized, every header name is resolved to its registered header class.
@@ -117,7 +116,6 @@ $serializer = DefaultHeadersSerializer::createFromPaths(
     ['legacyApplication', 'legacyTenant'],
 );
 ```
-
 You can access the collected headers via the `MissingHeaders` object:
 
 ```php
@@ -127,7 +125,6 @@ use Patchlevel\EventSourcing\Message\MissingHeaders;
 $missingHeaders = $message->header(MissingHeaders::class);
 $missingHeaders->headers; // ['legacyApplication' => [...], 'legacyTenant' => [...]]
 ```
-
 :::warning
 Only the header names you list are handled gracefully. If a message contains an unregistered header
 whose name is **not** in the list, deserialization still throws `HeaderNameNotRegistered`.
@@ -143,7 +140,6 @@ $serializer = DefaultHeadersSerializer::createFromPaths(
     ['*'],
 );
 ```
-
 ## Pipe
 
 The `Pipe` is a construct that allows you to chain multiple translators.

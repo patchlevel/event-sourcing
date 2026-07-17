@@ -3,6 +3,9 @@
 
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\Node\Block\FencedCode;
+use League\CommonMark\Extension\FrontMatter\Data\FrontMatterDataParserInterface;
+use League\CommonMark\Extension\FrontMatter\FrontMatterExtension;
+use League\CommonMark\Extension\FrontMatter\Output\RenderedContentWithFrontMatter;
 use League\CommonMark\Node\Query;
 use League\CommonMark\Parser\MarkdownParser;
 use Wnx\CommonmarkMarkdownRenderer\MarkdownRendererExtension;
@@ -14,6 +17,15 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $environment = new Environment([]);
 $environment->addExtension(new MarkdownRendererExtension());
+$environment->addExtension(new FrontMatterExtension(
+    // keep the raw YAML string so it round-trips byte-identically
+    new class implements FrontMatterDataParserInterface {
+        public function parse(string $frontMatter): string
+        {
+            return $frontMatter;
+        }
+    },
+));
 
 $parser = new MarkdownParser($environment);
 $markdownRenderer = new MarkdownRenderer($environment);
@@ -62,7 +74,14 @@ foreach ($finder as $file) {
         $node->setLiteral(trim($code));
     }
 
-    file_put_contents($file->getPathname(), $markdownRenderer->renderDocument($document));
+    $rendered = $markdownRenderer->renderDocument($document);
+    $output = $rendered->getContent();
+
+    if ($rendered instanceof RenderedContentWithFrontMatter) {
+        $output = $rendered->getFrontMatter() . "---\n" . $output;
+    }
+
+    file_put_contents($file->getPathname(), $output);
 }
 
 if (file_exists($targetDir)) {
