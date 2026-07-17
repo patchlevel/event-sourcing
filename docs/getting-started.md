@@ -26,8 +26,8 @@ final class HotelCreated
 A guest can check in by `name`:
 
 ```php
-use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Event('hotel.guest_checked_in')]
 final class GuestIsCheckedIn
@@ -42,8 +42,8 @@ final class GuestIsCheckedIn
 And also check out again:
 
 ```php
-use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Event('hotel.guest_checked_out')]
 final class GuestIsCheckedOut
@@ -324,7 +324,6 @@ $repositoryManager = new RunSubscriptionEngineRepositoryManager(
 
 $hotelRepository = $repositoryManager->get(Hotel::class);
 ```
-
 :::note
 You can find out more about the [store](store.md).
 :::
@@ -361,7 +360,6 @@ $schemaDirector->create();
 /** @var SubscriptionEngine $engine */
 $engine->execute(new Setup(skipBooting: true));
 ```
-
 :::note
 You can use the predefined [cli commands](cli.md) for this.
 :::
@@ -388,7 +386,6 @@ $hotelRepository->save($hotel2);
 
 $hotels = $hotelProjector->getHotels();
 ```
-
 :::note
 You can also use other forms of IDs such as uuid version 6 or a custom format.
 You can find more about [identifiers](identifier.md).

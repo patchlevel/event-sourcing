@@ -25,3 +25,11 @@ services:
       - MYSQL_DATABASE=eventstore
     ports:
       - 3306:3306
+
+  mariadb:
+    image: mariadb:12
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD="yes"
+      - MYSQL_DATABASE=eventstore
+    ports:
+      - 3307:3306

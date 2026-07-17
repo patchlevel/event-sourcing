@@ -3,6 +3,8 @@
 
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\Node\Block\FencedCode;
+use League\CommonMark\Extension\FrontMatter\Data\FrontMatterDataParserInterface;
+use League\CommonMark\Extension\FrontMatter\FrontMatterExtension;
 use League\CommonMark\Node\Query;
 use League\CommonMark\Parser\MarkdownParser;
 use Wnx\CommonmarkMarkdownRenderer\MarkdownRendererExtension;
@@ -11,6 +13,15 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $environment = new Environment([]);
 $environment->addExtension(new MarkdownRendererExtension());
+$environment->addExtension(new FrontMatterExtension(
+    // keep the raw YAML string so it round-trips byte-identically
+    new class implements FrontMatterDataParserInterface {
+        public function parse(string $frontMatter): string
+        {
+            return $frontMatter;
+        }
+    },
+));
 
 $parser = new MarkdownParser($environment);
 

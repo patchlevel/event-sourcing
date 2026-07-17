@@ -48,6 +48,7 @@ use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use PDO;
+use Pdo\Pgsql;
 use Psr\Clock\ClockInterface;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
@@ -72,6 +73,7 @@ use function str_contains;
 use function str_replace;
 
 use const JSON_THROW_ON_ERROR;
+use const PHP_VERSION_ID;
 
 /** @experimental */
 final class TaggableDoctrineDbalStore implements Store, AppendStore, SubscriptionStore, DoctrineSchemaConfigurator
@@ -85,6 +87,14 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
      * Default lock id for advisory lock.
      */
     private const DEFAULT_LOCK_ID = 133742;
+
+    /**
+     * MariaDB does not support an infinite (negative) lock timeout. Very large values such as
+     * PHP_INT_MAX overflow its internal timeout arithmetic and make GET_LOCK return NULL. We
+     * therefore use a large but safe value (INT32_MAX minus a small buffer) as "effectively
+     * infinite" wait.
+     */
+    private const INFINITE_MARIADB_LOCK_TIMEOUT = 2_147_482_647;
 
     private readonly HeadersSerializer $headersSerializer;
 
@@ -660,10 +670,15 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
 
         $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->config['table_name']));
 
-        /** @var PDO $nativeConnection */
-        $nativeConnection = $this->connection->getNativeConnection();
-
-        $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        if (PHP_VERSION_ID >= 80400) {
+            /** @var Pgsql $nativeConnection */
+            $nativeConnection = $this->connection->getNativeConnection();
+            $nativeConnection->getNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        } else {
+            /** @var PDO $nativeConnection */
+            $nativeConnection = $this->connection->getNativeConnection();
+            $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        }
     }
 
     public function setupSubscription(): void
@@ -757,13 +772,27 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
         }
 
         if ($this->isMariaDb || $this->isMysql) {
-            $this->connection->fetchAllAssociative(
+            $lockTimeout = $this->config['lock_timeout'];
+
+            if ($this->isMariaDb && $lockTimeout < 0) {
+                $lockTimeout = self::INFINITE_MARIADB_LOCK_TIMEOUT;
+            }
+
+            $result = $this->connection->fetchOne(
                 sprintf(
                     'SELECT GET_LOCK("%s", %d)',
                     $this->config['lock_id'],
-                    $this->config['lock_timeout'],
+                    $lockTimeout,
                 ),
             );
+
+            if ($result === 0) {
+                throw LockCouldNotBeAcquired::byTimeout($this->config['lock_id'], $this->config['lock_timeout']);
+            }
+
+            if ($result !== 1) {
+                throw LockCouldNotBeAcquired::byError($this->config['lock_id']);
+            }
 
             return;
         }
@@ -772,9 +801,7 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
             return; // sql locking is not needed because of file locking
         }
 
-        throw new LockingNotImplemented(
-            $this->connection->getDatabasePlatform()::class,
-        );
+        throw new LockingNotImplemented($this->connection->getDatabasePlatform()::class);
     }
 
     private function unlock(): void
@@ -786,12 +813,20 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
         }
 
         if ($this->isMariaDb || $this->isMysql) {
-            $this->connection->fetchAllAssociative(
+            $result = $this->connection->fetchOne(
                 sprintf(
                     'SELECT RELEASE_LOCK("%s")',
                     $this->config['lock_id'],
                 ),
             );
+
+            if ($result === 0) {
+                throw LockCouldNotBeFreed::notOurs($this->config['lock_id']);
+            }
+
+            if ($result !== 1) {
+                throw LockCouldNotBeFreed::notExist($this->config['lock_id']);
+            }
 
             return;
         }
@@ -800,9 +835,7 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
             return; // sql locking is not needed because of file locking
         }
 
-        throw new LockingNotImplemented(
-            $this->connection->getDatabasePlatform()::class,
-        );
+        throw new LockingNotImplemented($this->connection->getDatabasePlatform()::class);
     }
 
     /** @return Closure(): string */

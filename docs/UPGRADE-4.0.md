@@ -172,7 +172,6 @@ final class HotelProjector
     // ...
 }
 ```
-
 If you still need the subscriber id elsewhere, read it from the metadata instead:
 
 ```php
@@ -181,7 +180,6 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFact
 $metadata = (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class);
 $subscriberId = $metadata->id;
 ```
-
 ### SubscriberAccessor and RealSubscriberAccessor
 
 The `Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor` and
@@ -228,7 +226,6 @@ final class CustomResolver implements ArgumentResolver
     // ... support()
 }
 ```
-
 After:
 
 ```php
@@ -242,7 +239,6 @@ final class CustomResolver implements ArgumentResolver
     // ... support()
 }
 ```
-
 ### Custom ArgumentResolver registration
 
 Custom argument resolvers are no longer passed to the `MetadataSubscriberAccessorRepository`.
@@ -262,7 +258,6 @@ $engine = new DefaultSubscriptionEngine(
     $subscriberRepository,
 );
 ```
-
 After:
 
 ```php
@@ -277,7 +272,6 @@ $engine = new DefaultSubscriptionEngine(
     argumentResolvers: [new MyResolver()],
 );
 ```
-
 ### Batchable Subscriber
 
 The `Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber` interface has been removed.
@@ -329,15 +323,13 @@ final class MigrationSubscriber implements BatchableSubscriber
     }
 }
 ```
-
 After:
 
 ```php
-use Patchlevel\EventSourcing\Attribute\BatchState;
 use Patchlevel\EventSourcing\Attribute\BatchBegin;
 use Patchlevel\EventSourcing\Attribute\BatchFlush;
 use Patchlevel\EventSourcing\Attribute\BatchRollback;
-use Patchlevel\EventSourcing\Attribute\BatchShouldFlush;
+use Patchlevel\EventSourcing\Attribute\BatchState;
 
 final class MigrationBatch
 {
@@ -355,8 +347,11 @@ final class MigrationSubscriber
     }
 
     #[Subscribe(NameChanged::class)]
-    public function handleNameChanged(NameChanged $event, #[BatchState] MigrationBatch $batch): void
-    {
+    public function handleNameChanged(
+        NameChanged $event,
+        #[BatchState]
+        MigrationBatch $batch,
+    ): void {
         $batch->nameChanged[$event->userId] = $event->name;
     }
 
@@ -372,7 +367,6 @@ final class MigrationSubscriber
     }
 }
 ```
-
 ### Parallel subscription processing
 
 The subscription engine now processes one subscription at a time instead of driving a single shared
@@ -391,7 +385,6 @@ separate `LockableSubscriptionStore` interface has been removed. Every custom st
 both:
 
 ```php
-use Closure;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
@@ -415,7 +408,6 @@ interface SubscriptionStore
     public function inLock(Closure $closure): mixed;
 }
 ```
-
 `find()` no longer locks the matched rows: it is now a plain, unlocked snapshot read. The locking
 happens per subscription inside `claim()`.
 
@@ -496,7 +488,6 @@ use Patchlevel\EventSourcing\Message\Pipe;
 
 $messages = (new Pipe($messages, $translator))->toArray();
 ```
-
 after:
 
 ```php
@@ -504,7 +495,6 @@ use Patchlevel\EventSourcing\Message\Stream;
 
 $messages = (new Stream($messages))->transform($translator)->toList();
 ```
-
 ## Message
 
 ### AggregateHeader

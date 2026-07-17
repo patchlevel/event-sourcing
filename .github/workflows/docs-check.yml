@@ -1,17 +1,16 @@
 # https://help.github.com/en/categories/automating-your-workflow-with-github-actions
 
-name: "Check Coding Standard"
+name: "Check Docs"
 
 on:
     pull_request:
     push:
         branches:
             - "[0-9]+.[0-9]+.x"
-            - "renovate/*"
 
 jobs:
-    static-analysis-coding-standard:
-        name: "Static Analysis by patchlevel/coding-standard"
+    checkdocs:
+        name: "Check Docs"
 
         runs-on: ${{ matrix.operating-system }}
 
@@ -20,7 +19,7 @@ jobs:
                 dependencies:
                     - "locked"
                 php-version:
-                    - "8.5"
+                    - "8.4"
                 operating-system:
                     - "ubuntu-latest"
 
@@ -39,5 +38,11 @@ jobs:
               with:
                 dependency-versions: ${{ matrix.dependencies }}
 
-            - name: "Coding Standard"
-              run: "vendor/bin/phpcs"
+            - name: "extract php code"
+              run: "bin/docs-extract-php-code"
+
+            - name: "lint php"
+              run: "php -l docs_php/*.php"
+
+            - name: "docs code style"
+              run: "vendor/bin/phpcbf docs_php --exclude=SlevomatCodingStandard.TypeHints.DeclareStrictTypes"

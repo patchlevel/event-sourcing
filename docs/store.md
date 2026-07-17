@@ -33,7 +33,6 @@ $store = new StreamDoctrineDbalStore(
     DefaultEventSerializer::createFromPaths(['src/Event']),
 );
 ```
-
 :::note
 You can find out more about [how to create a connection](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html)
 in the doctrine dbal documentation.
@@ -73,7 +72,6 @@ use Patchlevel\EventSourcing\Store\InMemoryStore;
 
 $store = new InMemoryStore();
 ```
-
 :::tip
 You can pass messages to the constructor to initialize the store with some events.
 :::
@@ -119,7 +117,6 @@ $schemaDirector = new DoctrineSchemaDirector(
     $store,
 );
 ```
-
 :::note
 How to setup [cli commands](cli.md) for the schema director is described in the CLI documentation.
 :::
@@ -224,7 +221,6 @@ $dependencyFactory->setService(
     $schemaProvider,
 );
 ```
-
 :::note
 Here you can find more information on how to
 [configure doctrine migration](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.3/reference/custom-configuration.html).
@@ -300,6 +296,7 @@ $criteria = (new CriteriaBuilder())
 A stream name has the format `[aggregateName]-[aggregateId]`. To match every stream of an aggregate,
 use a wildcard with `StreamCriterion::startWith('profile-')`.
 :::
+
 #### Stream
 
 The load method returns a `Stream` object and is a generator.
@@ -319,7 +316,6 @@ foreach ($stream as $message) {
     $message->event(); // get the event
 }
 ```
-
 :::note
 You can find more information about the [`Message` object](message.md).
 :::
@@ -370,7 +366,6 @@ $store->save($message);
 $store->save($message1, $message2, $message3);
 $store->save(...$messages);
 ```
-
 :::note
 The saving happens in a transaction, so all messages are saved or none.
 The store locks the table for writing during each save by default.
@@ -427,7 +422,6 @@ $store->transactional(static function () use ($command, $bankAccountRepository):
     $bankAccountRepository->save($accountTo);
 });
 ```
-
 :::note
 The store locks the table for writing during the transaction by default.
 :::

@@ -30,11 +30,10 @@ use Patchlevel\EventSourcing\Identifier\Uuid;
 $uuid = Uuid::generate();
 $uuid = Uuid::fromString('d6e8d7a0-4b0b-4e6a-8a9a-3a0b2d9d0e4e');
 ```
-
 :::note
 UUID v7 provides k‑sortable identifiers that work well with append‑only streams and database indexes. See the ramsey docs for details.
 :::
-    
+
 ### `CustomId`
 
 `CustomId` is a minimal string‑backed identifier. Use it if you want full control over the string format or if your IDs are provided by an external system.

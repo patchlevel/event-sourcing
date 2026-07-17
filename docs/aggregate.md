@@ -107,7 +107,6 @@ final class ProfileRegistered
     }
 }
 ```
-
 :::note
 You can find out more about [events](events.md).
 :::
@@ -182,7 +181,6 @@ final class NameChanged
     }
 }
 ```
-
 :::note
 Events should best be written in the past, as they describe a state that has happened.
 :::
@@ -259,7 +257,6 @@ final class ChangeNameHandler
     }
 }
 ```
-
 :::success
 Our aggregate can now be changed and saved.
 :::
@@ -306,12 +303,10 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-
 :::tip
 You don't necessarily need to define multiple `Apply` attributes with the event class
 if you define the event types in the method using a union type.
 :::
-
 
 ## Suppress missing apply methods
 
@@ -400,7 +395,6 @@ final class PersonalInformation extends BasicAggregateRoot
 You need to define the `SharedApplyContext` attribute on all aggregates that share the apply context.
 :::
 
-
 ## Stream Name
 
 The stream name is the name of the stream in the event store.
@@ -436,7 +430,6 @@ final class GuestList extends BasicAggregateRoot
     // ...
 }
 ```
-
 :::tip
 You can find more about [splitting aggregates](aggregate.md#splitting-aggregates).
 :::
@@ -479,7 +472,6 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-
 :::danger
 Validations during "apply" should not happen, they will break the rebuilding of the aggregate!
 Instead validate the data *before* the event will be recorded.
@@ -566,7 +558,6 @@ final class NameChanged
     }
 }
 ```
-
 :::warning
 You need to create a normalizer for the `Name` value object.
 So the payload must be serializable and unserializable as json.
@@ -782,12 +773,10 @@ final class Shipping extends BasicAggregateRoot
     }
 }
 ```
-
 :::tip
 With the [SharedApplyContext](./aggregate.md#shared-apply-context) attribute,
 you can suppress missing applies for events that are handled by other aggregates
 :::
-
 
 ## Auto Initialize
 
@@ -803,11 +792,11 @@ The method must be static, receives the aggregate ID as an argument and must ret
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\AutoInitialize;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -831,11 +820,9 @@ final class Profile extends BasicAggregateRoot
     }
 }
 ```
-
 :::note
 Recording events in the `initialize` method is optional but recommended.
 :::
-
 
 ## Aggregate Root Registry
 

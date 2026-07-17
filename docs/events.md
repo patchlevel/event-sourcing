@@ -40,7 +40,8 @@ Here are some examples:
 * `profile.created`
 * `profile.name_changed`
 * `hotel.guest_checked_out`
-  :::
+  
+:::
 
 ## Alias
 

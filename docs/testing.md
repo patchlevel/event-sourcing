@@ -11,7 +11,6 @@ The helpers in this section live in a separate package that you install as a dev
 ```bash
 composer require --dev patchlevel/event-sourcing-phpunit
 ```
-
 ### Aggregate Unit Tests
 
 There is a special `TestCase` for aggregate tests that you can extend. By extending `AggregateRootTestCase`, you can use
@@ -215,7 +214,6 @@ final class ProfileTest extends AggregateRootTestCase
     }
 }
 ```
-
 :::note
 You can find out more about the [clock](clock.md).
 :::
@@ -248,7 +246,6 @@ final class ProfileTest extends TestCase
     }
 }
 ```
-
 :::warning
 The `FakeRamseyUuidFactory` is only for testing purposes
 and supports only the version 7 which is used by the library.

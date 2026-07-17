@@ -6,6 +6,9 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Message\Message;
@@ -19,6 +22,7 @@ use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Store\LockCouldNotBeAcquired;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
@@ -51,6 +55,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             clock: $this->clock,
+            config: ['lock_timeout' => 1],
         );
 
         $schemaDirector = new DoctrineSchemaDirector(
@@ -394,6 +399,45 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         $result = $this->connection->fetchFirstColumn('SELECT COUNT(*) FROM event_store')[0];
 
         self::assertEquals(10000, $result);
+    }
+
+    public function testSaveLockTimeout(): void
+    {
+        if ($this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            $this->markTestSkipped('SQLite does not support locks');
+        }
+
+        if ($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+            $this->markTestSkipped('PostgreSQL does lock indefinitely');
+        }
+
+        $profileId = ProfileId::generate();
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
+                ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00'))),
+        ];
+
+        $connection = DriverManager::getConnection($this->connection->getParams());
+
+        $lock = $connection->fetchOne(
+            sprintf(
+                'SELECT GET_LOCK("%s", %d)',
+                133742,
+                1,
+            ),
+        );
+        self::assertSame(1, $lock);
+
+        $this->expectException(LockCouldNotBeAcquired::class);
+        $this->expectExceptionMessage('The lock with id [133742] could not be acquired with a timeout of 1');
+        try {
+            $this->store->save(...$messages);
+        } finally {
+            $connection->close();
+        }
     }
 
     public function testLoad(): void
