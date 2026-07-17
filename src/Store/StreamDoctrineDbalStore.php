@@ -523,11 +523,6 @@ final class StreamDoctrineDbalStore implements Store, SubscriptionStore, Doctrin
         ));
     }
 
-    public function connection(): Connection
-    {
-        return $this->connection;
-    }
-
     private function createTriggerFunctionName(): string
     {
         $tableConfig = explode('.', $this->config['table_name']);

@@ -4312,28 +4312,6 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         $doctrineDbalStore->wait(100);
     }
 
-    public function testConnection(): void
-    {
-        $connection = $this->createMock(Connection::class);
-        $connection
-            ->expects($this->once())
-            ->method('getDatabasePlatform')
-            ->willReturn(new SQLitePlatform());
-
-        $eventSerializer = $this->createMock(EventSerializer::class);
-        $eventRegistry = new EventRegistry([]);
-        $headersSerializer = $this->createMock(HeadersSerializer::class);
-
-        $doctrineDbalStore = new TaggableDoctrineDbalStore(
-            $connection,
-            $eventSerializer,
-            $eventRegistry,
-            $headersSerializer,
-        );
-
-        self::assertSame($connection, $doctrineDbalStore->connection());
-    }
-
     public function testTransactionalLockingNotImplemented(): void
     {
         $callback = new class () {

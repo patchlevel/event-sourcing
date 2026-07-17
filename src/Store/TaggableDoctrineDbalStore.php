@@ -713,11 +713,6 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
         ));
     }
 
-    public function connection(): Connection
-    {
-        return $this->connection;
-    }
-
     private function createTriggerFunctionName(): string
     {
         $tableConfig = explode('.', $this->config['table_name']);
