@@ -554,6 +554,35 @@ final class InMemoryStoreTest extends TestCase
         self::assertSame([$message1, $message4], $stream->toList());
     }
 
+    public function testArchive(): void
+    {
+        $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new EventIdHeader('019aa600-56ef-7ca3-b92a-37c53851e2c2'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
+            ->withHeader(new IndexHeader(1));
+        $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
+            ->withHeader(new StreamNameHeader('bar'))
+            ->withHeader(new EventIdHeader('019aa600-8834-752a-ae2e-d8650e84f403'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
+            ->withHeader(new IndexHeader(2));
+
+        $store = new InMemoryStore([$message1, $message2]);
+
+        $store->archive(new Criteria(new StreamCriterion('bar')));
+
+        $messages = $store->load()->toList();
+
+        self::assertCount(2, $messages);
+        self::assertFalse($messages[0]->hasHeader(ArchivedHeader::class));
+        self::assertTrue($messages[1]->hasHeader(ArchivedHeader::class));
+
+        $archivedMessages = $store->load(new Criteria(new ArchivedCriterion(true)))->toList();
+
+        self::assertCount(1, $archivedMessages);
+        self::assertSame('bar', $archivedMessages[0]->header(StreamNameHeader::class)->streamName);
+    }
+
     public function testTransactional(): void
     {
         $called = false;
