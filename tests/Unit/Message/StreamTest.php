@@ -170,6 +170,7 @@ final class StreamTest extends TestCase
             ) {
             }
 
+            /** @return Traversable<int, Message> */
             public function getIterator(): Traversable
             {
                 yield from $this->messages;
