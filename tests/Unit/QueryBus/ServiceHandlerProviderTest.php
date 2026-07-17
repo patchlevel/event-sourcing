@@ -7,9 +7,10 @@ namespace Patchlevel\EventSourcing\Tests\Unit\QueryBus;
 use Patchlevel\EventSourcing\Attribute\Answer;
 use Patchlevel\EventSourcing\QueryBus\ServiceHandlerProvider;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\QueryProfile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\QueryBus\ServiceHandlerProvider */
+#[CoversClass(ServiceHandlerProvider::class)]
 final class ServiceHandlerProviderTest extends TestCase
 {
     public function testEmpty(): void
