@@ -475,6 +475,12 @@ parameters:
 			path: tests/Unit/Fixture/ProfileInvalid.php
 
 		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\BrokenAutoInitializableProfile\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/BrokenAutoInitializableProfile.php
+
+		-
 			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithAggregateStream\:\:\$id is unused\.$#'
 			identifier: property.unused
 			count: 1
