@@ -64,6 +64,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
             (new AttributeEventRegistryFactory())->create([__DIR__ . '/Events']),
             clock: $this->clock,
+            config: ['lock_timeout' => 1],
         );
 
         $schemaDirector = new DoctrineSchemaDirector(
