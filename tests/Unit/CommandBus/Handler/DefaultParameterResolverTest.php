@@ -113,6 +113,35 @@ final class DefaultParameterResolverTest extends TestCase
         self::assertSame([$command], $result);
     }
 
+    public function testMissingTypeOnParameter(): void
+    {
+        $this->expectException(ServiceNotResolvable::class);
+
+        $class = new class () {
+            // phpcs:disable
+            /** @phpstan-ignore-next-line */
+            public function handle(stdClass $command, $foo): void
+            {
+            }
+            // phpcs:enable
+        };
+
+        $container = $this->createMock(ContainerInterface::class);
+
+        $resolver = new DefaultParameterResolver($container);
+
+        $command = new stdClass();
+
+        $result = [
+            ...$resolver->resolve(
+                new ReflectionMethod($class, 'handle'),
+                $command,
+            ),
+        ];
+
+        self::assertSame([$command], $result);
+    }
+
     public function testNoClass(): void
     {
         $this->expectException(ServiceNotResolvable::class);

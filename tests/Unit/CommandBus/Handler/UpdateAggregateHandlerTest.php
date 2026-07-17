@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\CommandBus\Handler;
 
+use InvalidArgumentException;
+use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\CommandBus\Handler\AggregateIdNotFound;
 use Patchlevel\EventSourcing\CommandBus\Handler\DefaultParameterResolver;
 use Patchlevel\EventSourcing\CommandBus\Handler\UpdateAggregateHandler;
@@ -67,6 +69,31 @@ final class UpdateAggregateHandlerTest extends TestCase
         );
 
         $this->expectException(AggregateIdNotFound::class);
+
+        $handler->__invoke($command);
+    }
+
+    public function testIdPropertyNotIdentifier(): void
+    {
+        $repositoryManager = $this->createMock(RepositoryManager::class);
+
+        $handler = new UpdateAggregateHandler(
+            $repositoryManager,
+            ProfileWithHandler::class,
+            'changeName',
+            new DefaultParameterResolver(),
+        );
+
+        $command = new class ('123') {
+            public function __construct(
+                #[Id]
+                public readonly string $profileId,
+            ) {
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Id property must be an instance of AggregateRootId');
 
         $handler->__invoke($command);
     }
