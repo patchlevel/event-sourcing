@@ -101,7 +101,6 @@ use Patchlevel\EventSourcing\Message\Message;
 /** @var Message $message */
 $message->header(ApplicationHeader::class);
 ```
-
 ## Missing headers
 
 When a message is deserialized, every header name is resolved to its registered header class.
@@ -121,7 +120,6 @@ $serializer = DefaultHeadersSerializer::createFromPaths(
     ['legacyApplication', 'legacyTenant'],
 );
 ```
-
 You can access the collected headers via the `MissingHeaders` object:
 
 ```php
@@ -131,7 +129,6 @@ use Patchlevel\EventSourcing\Message\MissingHeaders;
 $missingHeaders = $message->header(MissingHeaders::class);
 $missingHeaders->headers; // ['legacyApplication' => [...], 'legacyTenant' => [...]]
 ```
-
 :::warning
 Only the header names you list are handled gracefully. If a message contains an unregistered header
 whose name is **not** in the list, deserialization still throws `HeaderNameNotRegistered`.
@@ -147,7 +144,6 @@ $serializer = DefaultHeadersSerializer::createFromPaths(
     ['*'],
 );
 ```
-
 ## Stream
 
 A `Stream` wraps an iterable of messages and allows you to chain multiple translators with `transform`.
@@ -168,7 +164,6 @@ foreach ($stream as $message) {
     // do something with the message
 }
 ```
-
 :::tip
 A `Stream` is also what every store returns from its `load` method, so you can apply the same
 transformations to the messages you read from the store. Besides iterating, a `Stream` offers

@@ -42,7 +42,6 @@ final class CreateProfileHandler
 To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
 :::
 
-
 ### Multiple Handle Attributes
 
 A method can also have multiple `#[Handle]` attributes.
@@ -61,7 +60,6 @@ final class CreateProfileHandler
     }
 }
 ```
-
 ### Union Types
 
 You can also use union types to handle multiple commands and the library will automatically detect the commands.
@@ -78,7 +76,6 @@ final class CreateProfileHandler
     }
 }
 ```
-
 ### Inheritance
 
 The handler will also be invoked if the command implements an interface or extends a class that the handler expects.
@@ -95,7 +92,6 @@ final class CreateProfileHandler
     }
 }
 ```
-
 ### Aggregate Handler
 
 Another way to handle commands is to use the aggregates themselves.
@@ -136,7 +132,6 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 :::tip
 You can find more information about [aggregates](aggregate.md).
 :::
@@ -189,12 +184,10 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 :::tip
 If you want to automatically initialize an aggregate if it cannot be found in the store,
 you can use the [Auto Initialize](aggregate.md#auto-initialize) feature.
 :::
-
 
 #### Inject Service
 
@@ -230,7 +223,6 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 :::note
 The service must be registered in the service locator.
 :::
@@ -271,7 +263,6 @@ final class Profile extends BasicAggregateRoot
     // ... apply methods
 }
 ```
-
 :::note
 Injection in handler methods is only possible with the `AggregateHandlerProvider`.
 :::
@@ -324,7 +315,6 @@ final class CreateProfile
     }
 }
 ```
-
 :::tip
 You can override the default values for the maximum number of retries and the conditions
 by passing them to the `InstantRetry` attribute.

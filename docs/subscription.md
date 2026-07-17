@@ -26,7 +26,6 @@ final class DoStuffSubscriber
 {
 }
 ```
-
 :::note
 For each subscriber ID, the engine will create a subscription.
 If the subscriber ID changes, a new subscription will be created.
@@ -74,7 +73,6 @@ final class ProfileProjector
     }
 }
 ```
-
 :::warning
 MySQL and MariaDB don't support transactions for DDL statements.
 So you must use a different database connection for your subscriptions.
@@ -149,7 +147,6 @@ final class DoStuffSubscriber
     }
 }
 ```
-
 :::tip
 If you are using psalm then you can install the event sourcing [plugin](https://github.com/patchlevel/event-sourcing-psalm-plugin)
 to make the event method return the correct type.
@@ -219,7 +216,6 @@ final class DoStuffSubscriber
     }
 }
 ```
-
 :::tip
 You can also subscribe to multiple events and specify your argument using union type.
 :::
@@ -277,7 +273,6 @@ final class PublicProfileProjection
     // ... setup, teardown, ...
 }
 ```
-
 :::note
 More information can be found in the [reducer](message.md#reducer) documentation.
 :::
@@ -298,7 +293,6 @@ $engine = new DefaultSubscriptionEngine(
     ],
 );
 ```
-
 ##### Recorded On Resolver
 
 The recorded on resolver resolves the recorded on date.
@@ -346,14 +340,12 @@ final class OrderProjection
     }
 }
 ```
-
 The `emit` method writes the events into the subscriber's own `subscription_<subscription-id>` stream.
 If you want to target a different stream, use `linkTo`:
 
 ```php
 $eventEmitter->linkTo('notifications', [new NotificationRequired($event->orderId)]);
 ```
-
 :::info
 The emitted events must be registered like any other event so the store can (de)serialize them.
 :::
@@ -386,7 +378,6 @@ $engine = new DefaultSubscriptionEngine(
     ],
 );
 ```
-
 ###### When are events emitted
 
 Emitting events while a subscription is *booting* would create duplicates on every replay, so by
@@ -405,7 +396,6 @@ final class OrderProjection
     // ...
 }
 ```
-
 * `EnableEventEmittingDuringBoot` — events are also emitted during `boot`.
 * `DisableEventEmitting` — events are never emitted, not even during `run`.
 
@@ -439,7 +429,6 @@ final class CustomResolver implements ArgumentResolver
     }
 }
 ```
-
 ### Setup
 
 Subscribers can have one `setup` method that is executed when the subscription is created.
@@ -467,7 +456,6 @@ final class ProfileProjector
     }
 }
 ```
-
 :::danger
 MySQL and MariaDB don't support transactions for DDL statements.
 So you must use a different database connection in your projectors,
@@ -565,7 +553,6 @@ By default, we provide the following cleanup tasks for `doctrine/dbal`:
 | `DropIndexTask` | Drops an index from a table. |
 | `DropTableTask` | Drops a table.               |
 
-
 :::note
 If you are passing connection registry, you can use the connection name as parameter.
 The `connectionName` parameter is optional and defaults to the default connection.
@@ -575,7 +562,6 @@ The `connectionName` parameter is optional and defaults to the default connectio
 You can create your own cleanup tasks and handler.
 For more information, see [Cleanup Handler](#cleanup-handler).
 :::
-
 
 ### On Failed
 
@@ -608,7 +594,6 @@ final class InvoiceProcessor
     }
 }
 ```
-
 :::warning
 Currently, the `OnFailed` method is only available for non-batchable subscribers.
 :::
@@ -632,7 +617,6 @@ final class ProfileSubscriber
    // ...
 }
 ```
-
 :::warning
 If you change the `subscriberID`, you must also change the table/collection name.
 Otherwise the table/collection will conflict with the old subscription.
@@ -659,7 +643,6 @@ final class ProfileSubscriber
    // ...
 }
 ```
-
 :::note
 The different attributes have different default groups.
 
@@ -688,7 +671,6 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
-
 :::tip
 If you want to create projections and run from the beginning, you can use the `Projector` attribute.
 :::
@@ -709,7 +691,6 @@ final class WelcomeEmailSubscriber
    // ...
 }
 ```
-
 :::tip
 If you want to process events from now, you can use the `Processor` attribute.
 :::
@@ -767,12 +748,12 @@ flush and rollback methods.
 
 ```php
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Attribute\BatchState;
 use Patchlevel\EventSourcing\Attribute\BatchBegin;
 use Patchlevel\EventSourcing\Attribute\BatchFlush;
-use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\BatchRollback;
 use Patchlevel\EventSourcing\Attribute\BatchShouldFlush;
+use Patchlevel\EventSourcing\Attribute\BatchState;
+use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 
 final class MigrationBatch
@@ -798,7 +779,11 @@ final class MigrationSubscriber
     }
 
     #[Subscribe(NameChanged::class)]
-    public function handleNameChanged(NameChanged $event, #[BatchState] MigrationBatch $batch): void
+    public function handleNameChanged(
+        NameChanged $event, 
+        #[BatchState]
+        MigrationBatch $batch,
+    ): void
     {
         $batch->nameChanged[$event->userId] = $event->name;
     }
@@ -829,7 +814,6 @@ final class MigrationSubscriber
     }
 }
 ```
-
 The `#[BatchBegin]` method is optional and called as soon as a subscriber wants to process an event.
 If no suitable event is found in the stream, batching will not start, and this method will not be called.
 Here, you can make all necessary preparations, such as opening a transaction, and optionally return the
@@ -1116,7 +1100,6 @@ $schemaDirector = new DoctrineSchemaDirector(
     ]),
 );
 ```
-
 :::note
 You can find more about the schema configurator in the [store](store.md) documentation.
 :::
@@ -1175,7 +1158,6 @@ $retryStrategyRepository = new RetryStrategyRepository([
     'no_retry' => new NoRetryStrategy(),
 ]);
 ```
-
 :::note
 This is what our default configuration looks like if you do not define the retry strategy.
 :::
@@ -1199,7 +1181,6 @@ final class DropCollection
     }
 }
 ```
-
 :::warning
 The task class must be serializable. It will be stored in the subscription store.
 :::
@@ -1374,7 +1355,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $catchupSubscriptionEngine = new CatchUpSubscriptionEngine($subscriptionEngine);
 ```
-
 :::tip
 You can use the `CatchUpSubscriptionEngine` in your tests to process the events immediately.
 :::
@@ -1391,7 +1371,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $throwOnErrorSubscriptionEngine = new ThrowOnErrorSubscriptionEngine($subscriptionEngine);
 ```
-
 :::warning
 This is only for testing or development. Don't use it in production.
 The subscription engine has a built-in retry strategy to retry subscriptions that have failed.
@@ -1419,7 +1398,6 @@ $eventBus = new RunSubscriptionEngineRepositoryManager(
     100, // limit the number of messages
 );
 ```
-
 :::danger
 By using this, you can't wrap the repository in a transaction.
 A rollback is not supported and can break the subscription engine.
@@ -1453,7 +1431,6 @@ $subscriptionEngine->execute(
     ),
 );
 ```
-
 :::note
 An `OR` check is made for the respective criteria and all criteria are checked with an `AND`.
 :::
@@ -1471,7 +1448,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $subscriptionEngine->execute(new Setup());
 ```
-
 :::tip
 You can skip the booting step with the `skipBooting` parameter: `new Setup(skipBooting: true)`.
 :::
@@ -1489,7 +1465,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $subscriptionEngine->execute(new Boot());
 ```
-
 :::tip
 You can limit the number of processed messages with the `limit` parameter: `new Boot(limit: 100)`.
 The limit applies **per subscription**, so one call processes at most `limit` messages for each
@@ -1507,7 +1482,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $subscriptionEngine->execute(new Run());
 ```
-
 :::tip
 You can limit the number of processed messages with the `limit` parameter: `new Run(limit: 100)`.
 The limit applies **per subscription**: one `Run` call processes at most `limit` messages for each
@@ -1518,9 +1492,9 @@ the lock is released afterwards.
 
 ### Parallel processing
 
-Because every subscription is claimed independently by a worker, 
-you can start the same command in several worker processes at once. 
-Each worker takes the next available subscription while avoiding subscriptions that are already being processed, 
+Because every subscription is claimed independently by a worker,
+you can start the same command in several worker processes at once.
+Each worker takes the next available subscription while avoiding subscriptions that are already being processed,
 so the workload is distributed across workers without any static configuration.
 
 ```php
@@ -1531,7 +1505,6 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 /** @var SubscriptionEngine $subscriptionEngine */
 $subscriptionEngine->execute(new Run(limit: 100));
 ```
-
 The per-subscription order is always preserved. There is no global ordering across different
 subscriptions, but since subscriptions are independent of each other this does not matter.
 

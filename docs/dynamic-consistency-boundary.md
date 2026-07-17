@@ -4,7 +4,7 @@
 This feature is still experimental and may change in the future.
 Use it with caution.
 :::
-    
+
 Dynamic Consistency Boundary (DCB) is an event‑sourcing approach for making consistent,
 cross‑stream decisions without loading full aggregates.
 For each decision, it builds a minimal, purpose‑built state from a targeted subset of events selected via tags.
@@ -17,7 +17,7 @@ DCB is a great fit when business rules span multiple streams.
 :::note
 You can read more about Dynamic Consistency Boundary on page [dcb.events](https://dcb.events/).
 :::
-    
+
 Since this approach differs slightly from the standard "aggregate" event sourcing principle,
 we will use the [Getting Started](./getting-started.md) example and build it as a DCB variant.
 
@@ -85,10 +85,9 @@ final class GuestIsCheckedOut
     }
 }
 ```
-
 :::note
 You can find out more about [events](events.md).
-:::    
+:::
 
 ## Define Commands
 
@@ -298,12 +297,11 @@ final class CreateHotelHandler
     }
 }
 ```
-
 :::note
-Handlers build a Decision Model from the projections and then append events with an optimistic AppendCondition. 
+Handlers build a Decision Model from the projections and then append events with an optimistic AppendCondition.
 If any relevant event arrives between read and write, the append fails and you can retry.
 :::
-    
+
 :::tip
 To get type security, you can use our [phpstan extension](https://github.com/patchlevel/event-sourcing-phpstan-extension).
 :::

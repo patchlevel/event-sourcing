@@ -39,7 +39,6 @@ final class EmailChanged
     }
 }
 ```
-
 :::tip
 You can use the `DataSubjectId` in aggregates for snapshots too.
 :::
@@ -64,7 +63,6 @@ final class EmailChanged
     }
 }
 ```
-
 :::tip
 You can use the `PersonalData` in aggregates for snapshots too.
 :::
@@ -94,7 +92,6 @@ final class ProfileChanged
     }
 }
 ```
-
 :::danger
 You have to deal with this case in your business logic such as aggregates and subscriptions.
 :::
@@ -146,13 +143,12 @@ $schemaDirector = new DoctrineSchemaDirector(
 Now we have to put the whole thing together in a Personal Data Payload Cryptographer.
 
 ```php
-use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
 use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
+use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
 
 /** @var CipherKeyStore $cipherKeyStore */
 $cryptographer = PersonalDataPayloadCryptographer::createWithDefaultSettings($cipherKeyStore);
 ```
-
 :::tip
 You can specify the cipher method with the second parameter.
 :::
@@ -171,7 +167,6 @@ DefaultEventSerializer::createFromPaths(
     cryptographer: $cryptographer,
 );
 ```
-
 :::note
 More information can be found in the [events](events.md) documentation.
 :::
@@ -192,7 +187,6 @@ $snapshotStore = DefaultSnapshotStore::createDefault(
     $cryptographer,
 );
 ```
-
 :::note
 More information can be found in the [snapshots](snapshots.md) documentation.
 :::
