@@ -11,7 +11,7 @@ powered by the reliable Doctrine ecosystem and focused on developer experience.
 * Automatic [snapshot](snapshots.md)-system to boost your performance
 * [Split](split-stream.md) big aggregates into multiple streams
 * Versioned and managed lifecycle of [subscriptions](subscription.md) like projections and processors
-* Safe usage of [Personal Data](personal-data.md) with crypto-shredding
+* Safe usage of [Personal Data](sensitive-data.md) with crypto-shredding
 * Smooth [upcasting](upcasting.md) of old events
 * Simple setup with [schema management](store.md) and [doctrine migration](store.md)
 * Built in [cli commands](cli.md) with [symfony](https://symfony.com/)

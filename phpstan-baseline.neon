@@ -37,28 +37,16 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: '#^Parameter \#1 \$key of class Patchlevel\\Hydrator\\Cryptography\\Cipher\\CipherKey constructor expects non\-empty\-string, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cryptography/DoctrineCipherKeyStore.php
-
-		-
-			message: '#^Parameter \#3 \$iv of class Patchlevel\\Hydrator\\Cryptography\\Cipher\\CipherKey constructor expects non\-empty\-string, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cryptography/DoctrineCipherKeyStore.php
-
-		-
 			message: '#^Parameter \#3 \$key of class Patchlevel\\Hydrator\\Extension\\Cryptography\\Cipher\\CipherKey constructor expects non\-empty\-string, string given\.$#'
 			identifier: argument.type
 			count: 2
-			path: src/Cryptography/ExtensionDoctrineCipherKeyStore.php
+			path: src/Cryptography/DoctrineCipherKeyStore.php
 
 		-
 			message: '#^Parameter \#5 \$createdAt of class Patchlevel\\Hydrator\\Extension\\Cryptography\\Cipher\\CipherKey constructor expects DateTimeImmutable, mixed given\.$#'
 			identifier: argument.type
 			count: 2
-			path: src/Cryptography/ExtensionDoctrineCipherKeyStore.php
+			path: src/Cryptography/DoctrineCipherKeyStore.php
 
 		-
 			message: '#^Call to function method_exists\(\) with ReflectionFunction and ''isAnonymous'' will always evaluate to true\.$#'
@@ -431,24 +419,6 @@ parameters:
 			identifier: property.onlyWritten
 			count: 1
 			path: tests/Integration/MicroAggregate/Profile.php
-
-		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 0 and array\{array\<string, mixed\>\} will always evaluate to true\.$#'
-			identifier: staticMethod.alreadyNarrowedType
-			count: 4
-			path: tests/Integration/PersonalData/PersonalDataTest.php
-
-		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\PersonalData\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\PersonalData\\Profile will always evaluate to true\.$#'
-			identifier: staticMethod.alreadyNarrowedType
-			count: 8
-			path: tests/Integration/PersonalData/PersonalDataTest.php
-
-		-
-			message: '#^Parameter \#2 \$haystack of static method PHPUnit\\Framework\\Assert\:\:assertStringNotContainsString\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Integration/PersonalData/PersonalDataTest.php
 
 		-
 			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\Store\\Profile\:\:\$id is never read, only written\.$#'

@@ -29,7 +29,7 @@ final class DefaultSnapshotStoreTest extends TestCase
             'payload' => ['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2],
         ]);
 
-        $store = new DefaultSnapshotStore(['memory' => $adapter]);
+        $store = DefaultSnapshotStore::createDefault(['memory' => $adapter]);
 
         $aggregate = ProfileWithSnapshot::createProfile(
             ProfileId::fromString('1'),
@@ -51,7 +51,7 @@ final class DefaultSnapshotStoreTest extends TestCase
             ],
         );
 
-        $store = new DefaultSnapshotStore(['memory' => $adapter]);
+        $store = DefaultSnapshotStore::createDefault(['memory' => $adapter]);
 
         $aggregate = $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
 
@@ -69,7 +69,7 @@ final class DefaultSnapshotStoreTest extends TestCase
             ->with('profile_with_snapshot-1')
             ->willThrowException(new RuntimeException());
 
-        $store = new DefaultSnapshotStore(['memory' => $adapter]);
+        $store = DefaultSnapshotStore::createDefault(['memory' => $adapter]);
 
         $this->expectException(SnapshotNotFound::class);
         $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
@@ -82,7 +82,7 @@ final class DefaultSnapshotStoreTest extends TestCase
         $adapter = $this->createMock(SnapshotAdapter::class);
         $adapter->method('load')->with('profile_with_snapshot-1')->willReturn(['id' => '1', 'email' => 'info@patchlevel.de', 'messages' => [], '_playhead' => 2]);
 
-        $store = new DefaultSnapshotStore(['memory' => $adapter]);
+        $store = DefaultSnapshotStore::createDefault(['memory' => $adapter]);
 
         $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
     }
@@ -99,7 +99,7 @@ final class DefaultSnapshotStoreTest extends TestCase
             ],
         );
 
-        $store = new DefaultSnapshotStore(['memory' => $adapter]);
+        $store = DefaultSnapshotStore::createDefault(['memory' => $adapter]);
 
         $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
     }
@@ -108,7 +108,7 @@ final class DefaultSnapshotStoreTest extends TestCase
     {
         $this->expectException(AdapterNotFound::class);
 
-        $store = new DefaultSnapshotStore([]);
+        $store = DefaultSnapshotStore::createDefault([]);
         $store->load(ProfileWithSnapshot::class, ProfileId::fromString('1'));
     }
 
@@ -116,14 +116,14 @@ final class DefaultSnapshotStoreTest extends TestCase
     {
         $this->expectException(SnapshotNotConfigured::class);
 
-        $store = new DefaultSnapshotStore([], null);
+        $store = DefaultSnapshotStore::createDefault(['memory' => $this->createMock(SnapshotAdapter::class)]);
         $store->load(Profile::class, ProfileId::fromString('1'));
     }
 
     public function testGetAdapter(): void
     {
         $adapter = $this->createMock(SnapshotAdapter::class);
-        $store = new DefaultSnapshotStore(['memory' => $adapter]);
+        $store = DefaultSnapshotStore::createDefault(['memory' => $adapter]);
 
         self::assertSame($adapter, $store->adapter(ProfileWithSnapshot::class));
     }

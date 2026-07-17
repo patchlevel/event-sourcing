@@ -12,9 +12,14 @@ use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
-use Patchlevel\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Extension\Upcast\CallbackUpcaster;
+use Patchlevel\Hydrator\Extension\Upcast\UpcastExtension;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+
+use function is_string;
 
 #[CoversClass(DefaultHeadersSerializer::class)]
 final class DefaultHeadersSerializerTest extends TestCase
@@ -44,7 +49,7 @@ final class DefaultHeadersSerializerTest extends TestCase
             (new AttributeMessageHeaderRegistryFactory())->create([
                 __DIR__ . '/../../Fixture',
             ]),
-            new MetadataHydrator(),
+            null,
             new JsonEncoder(),
         );
 
@@ -59,5 +64,40 @@ final class DefaultHeadersSerializerTest extends TestCase
             ],
             $deserializedMessage,
         );
+    }
+
+    public function testDeserializeWithUpcaster(): void
+    {
+        $hydrator = (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->useExtension(new UpcastExtension(
+                beforeEncoding: [
+                    CallbackUpcaster::forClass(
+                        StreamNameHeader::class,
+                        static function (array $data): array {
+                            $streamName = $data['streamName'];
+
+                            if (is_string($streamName)) {
+                                $data['streamName'] = 'profile-' . $streamName;
+                            }
+
+                            return $data;
+                        },
+                    ),
+                ],
+            ))
+            ->build();
+
+        $serializer = new DefaultHeadersSerializer(
+            (new AttributeMessageHeaderRegistryFactory())->create([
+                __DIR__ . '/../../Fixture',
+            ]),
+            $hydrator,
+            new JsonEncoder(),
+        );
+
+        $deserializedMessage = $serializer->deserialize('{"streamName":{"streamName":"1"}}');
+
+        self::assertEquals([new StreamNameHeader('profile-1')], $deserializedMessage);
     }
 }

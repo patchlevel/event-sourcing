@@ -13,8 +13,12 @@ use function is_array;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class MessageNormalizer implements Normalizer
 {
-    /** @return array<array-key, mixed>|null */
-    public function normalize(mixed $value): array|null
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<array-key, mixed>|null
+     */
+    public function normalize(mixed $value, array $context): array|null
     {
         if ($value === null) {
             return null;
@@ -27,7 +31,8 @@ final class MessageNormalizer implements Normalizer
         return $value->toArray();
     }
 
-    public function denormalize(mixed $value): Message|null
+    /** @param array<string, mixed> $context */
+    public function denormalize(mixed $value, array $context): Message|null
     {
         if ($value === null) {
             return null;

@@ -23,13 +23,13 @@ final class IdNormalizerTest extends TestCase
     public function testNormalizeWithNull(): void
     {
         $normalizer = new IdNormalizer(CustomId::class);
-        $this->assertEquals(null, $normalizer->normalize(null));
+        $this->assertEquals(null, $normalizer->normalize(null, []));
     }
 
     public function testDenormalizeWithNull(): void
     {
         $normalizer = new IdNormalizer(CustomId::class);
-        $this->assertEquals(null, $normalizer->denormalize(null));
+        $this->assertEquals(null, $normalizer->denormalize(null, []));
     }
 
     public function testNormalizeWithInvalidArgument(): void
@@ -38,7 +38,7 @@ final class IdNormalizerTest extends TestCase
         $this->expectExceptionMessage('type "Patchlevel\EventSourcing\Identifier\CustomId" was expected but "string" was passed.');
 
         $normalizer = new IdNormalizer(CustomId::class);
-        $normalizer->normalize('foo');
+        $normalizer->normalize('foo', []);
     }
 
     public function testDenormalizeWithInvalidArgument(): void
@@ -46,19 +46,19 @@ final class IdNormalizerTest extends TestCase
         $this->expectException(InvalidUuidStringException::class);
 
         $normalizer = new IdNormalizer(Uuid::class);
-        $normalizer->denormalize('foo');
+        $normalizer->denormalize('foo', []);
     }
 
     public function testNormalizeWithValue(): void
     {
         $normalizer = new IdNormalizer(CustomId::class);
-        $this->assertEquals('foo', $normalizer->normalize(new CustomId('foo')));
+        $this->assertEquals('foo', $normalizer->normalize(new CustomId('foo'), []));
     }
 
     public function testDenormalizeWithValue(): void
     {
         $normalizer = new IdNormalizer(CustomId::class);
-        $this->assertEquals(new CustomId('foo'), $normalizer->denormalize('foo'));
+        $this->assertEquals(new CustomId('foo'), $normalizer->denormalize('foo', []));
     }
 
     public function testDenormalizeWithWrongValue(): void
@@ -66,7 +66,7 @@ final class IdNormalizerTest extends TestCase
         $normalizer = new IdNormalizer(CustomId::class);
 
         $this->expectException(InvalidArgument::class);
-        $normalizer->denormalize(123);
+        $normalizer->denormalize(123, []);
     }
 
     public function testAutoDetect(): void

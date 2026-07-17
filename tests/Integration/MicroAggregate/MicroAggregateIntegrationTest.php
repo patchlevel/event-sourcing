@@ -129,7 +129,7 @@ final class MicroAggregateIntegrationTest extends TestCase
                 ]),
                 $store,
                 null,
-                new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
+                DefaultSnapshotStore::createDefault(['default' => new InMemorySnapshotAdapter()]),
             ),
             $engine,
         );

@@ -8,18 +8,22 @@ use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFact
 use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
+use Patchlevel\Hydrator\CoreExtension;
 use Patchlevel\Hydrator\Hydrator;
-use Patchlevel\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 
 use function is_array;
 
 final class DefaultHeadersSerializer implements HeadersSerializer
 {
+    private readonly Hydrator $hydrator;
+
     public function __construct(
         private readonly MessageHeaderRegistry $messageHeaderRegistry,
-        private readonly Hydrator $hydrator,
-        private readonly Encoder $encoder,
+        Hydrator|null $hydrator = null,
+        private readonly Encoder $encoder = new JsonEncoder(),
     ) {
+        $this->hydrator = $hydrator ?? self::defaultHydrator();
     }
 
     /**
@@ -61,21 +65,30 @@ final class DefaultHeadersSerializer implements HeadersSerializer
     }
 
     /** @param list<string> $paths */
-    public static function createFromPaths(array $paths): static
-    {
+    public static function createFromPaths(
+        array $paths,
+        Hydrator|null $hydrator = null,
+    ): static {
         return new self(
             (new AttributeMessageHeaderRegistryFactory())->create($paths),
-            new MetadataHydrator(),
+            $hydrator,
             new JsonEncoder(),
         );
     }
 
-    public static function createDefault(): static
+    public static function createDefault(Hydrator|null $hydrator = null): static
     {
         return new self(
             MessageHeaderRegistry::createWithInternalHeaders(),
-            new MetadataHydrator(),
+            $hydrator,
             new JsonEncoder(),
         );
+    }
+
+    private static function defaultHydrator(): Hydrator
+    {
+        return (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->build();
     }
 }

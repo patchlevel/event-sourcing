@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData\Processor;
+namespace Patchlevel\EventSourcing\Tests\Integration\SensitiveData\Processor;
 
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\PersonalDataRemoved;
-use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
+use Patchlevel\EventSourcing\Tests\Integration\SensitiveData\Events\PersonalDataRemoved;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
 
 #[Processor('delete_personal_data')]
 final class DeletePersonalDataProcessor
@@ -20,6 +20,6 @@ final class DeletePersonalDataProcessor
     #[Subscribe(PersonalDataRemoved::class)]
     public function handleProfileCreated(PersonalDataRemoved $event): void
     {
-        $this->cipherKeyStore->remove($event->profileId->toString());
+        $this->cipherKeyStore->removeWithSubjectId($event->profileId->toString());
     }
 }

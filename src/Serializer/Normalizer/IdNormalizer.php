@@ -25,7 +25,8 @@ final class IdNormalizer implements Normalizer, TypeAwareNormalizer
     ) {
     }
 
-    public function normalize(mixed $value): string|null
+    /** @param array<string, mixed> $context */
+    public function normalize(mixed $value, array $context): string|null
     {
         if ($value === null) {
             return null;
@@ -40,7 +41,8 @@ final class IdNormalizer implements Normalizer, TypeAwareNormalizer
         return $value->toString();
     }
 
-    public function denormalize(mixed $value): Identifier|null
+    /** @param array<string, mixed> $context */
+    public function denormalize(mixed $value, array $context): Identifier|null
     {
         if ($value === null) {
             return null;
