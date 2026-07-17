@@ -351,4 +351,24 @@ final class SetupHandlerTest extends TestCase
             new Subscription($subscriptionId, Subscription::DEFAULT_GROUP, RunMode::FromNow, Status::Active, 0),
         );
     }
+
+    public function testSetupWithMissingSubscriber(): void
+    {
+        $subscriptionId = 'test';
+
+        $messageLoader = $this->createMock(MessageLoader::class);
+        $messageLoader->expects($this->once())->method('lastIndex')->willReturn(0);
+
+        $store = new DummySubscriptionStore([new Subscription($subscriptionId)]);
+        $handler = $this->createHandler($messageLoader, $store);
+
+        $result = $handler(new SetupCommand());
+
+        self::assertCount(1, $result->errors);
+        self::assertSame($subscriptionId, $result->errors[0]->subscriptionId);
+        self::assertSame('Subscriber with the subscription id "test" not found.', $result->errors[0]->message);
+        self::assertCount(1, $store->updatedSubscriptions);
+        self::assertTrue($store->updatedSubscriptions[0]->isError());
+    }
+
 }

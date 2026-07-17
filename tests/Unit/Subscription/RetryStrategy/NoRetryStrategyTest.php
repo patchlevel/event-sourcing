@@ -20,4 +20,14 @@ final class NoRetryStrategyTest extends TestCase
             new Subscription('test'),
         ));
     }
+
+    public function testCanRetry(): void
+    {
+        $strategy = new NoRetryStrategy();
+
+        self::assertFalse($strategy->canRetry(
+            new Subscription('test'),
+        ));
+    }
+
 }

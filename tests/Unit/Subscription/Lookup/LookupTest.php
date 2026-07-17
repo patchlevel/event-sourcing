@@ -16,6 +16,7 @@ use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
+use Patchlevel\EventSourcing\Subscription\Lookup\MessageNotFound;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -280,4 +281,99 @@ final class LookupTest extends TestCase
 
         self::assertSame($message2, $result);
     }
+
+    public function testResetStream(): void
+    {
+        $expectedResult = new Stream([]);
+        $expectedCriteria = new Criteria(new ToIndexCriterion(1));
+
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
+
+        $event = new class () {
+        };
+
+        $message = (new Message($event))
+            ->withHeader(new IndexHeader(1));
+
+        $lookup = new Lookup(
+            $store,
+            $message,
+        );
+
+        $result = $lookup->stream('foo')->stream(null)->fetchAll();
+
+        self::assertSame($expectedResult, $result);
+    }
+
+    public function testForward(): void
+    {
+        $expectedResult = new Stream([]);
+        $expectedCriteria = new Criteria(new ToIndexCriterion(1));
+
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with($expectedCriteria, null, null, false)
+            ->willReturn($expectedResult);
+
+        $event = new class () {
+        };
+
+        $message = (new Message($event))
+            ->withHeader(new IndexHeader(1));
+
+        $lookup = new Lookup(
+            $store,
+            $message,
+        );
+
+        $result = $lookup->backwards()->forward()->fetchAll();
+
+        self::assertSame($expectedResult, $result);
+    }
+
+    public function testFetchFirstNotFound(): void
+    {
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with(new Criteria(new ToIndexCriterion(1)), 1, null, false)
+            ->willReturn(new Stream([]));
+
+        $event = new class () {
+        };
+
+        $message = (new Message($event))
+            ->withHeader(new IndexHeader(1));
+
+        $lookup = new Lookup(
+            $store,
+            $message,
+        );
+
+        $this->expectException(MessageNotFound::class);
+
+        $lookup->fetchFirst();
+    }
+
+    public function testFetchLastNotFound(): void
+    {
+        $store = $this->createMock(Store::class);
+        $store->expects($this->once())->method('load')->with(new Criteria(new ToIndexCriterion(1)), 1, null, true)
+            ->willReturn(new Stream([]));
+
+        $event = new class () {
+        };
+
+        $message = (new Message($event))
+            ->withHeader(new IndexHeader(1));
+
+        $lookup = new Lookup(
+            $store,
+            $message,
+        );
+
+        $this->expectException(MessageNotFound::class);
+
+        $lookup->fetchLast();
+    }
+
 }

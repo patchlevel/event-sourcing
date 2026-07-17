@@ -121,4 +121,23 @@ final class ReactivateHandlerTest extends TestCase
             new Subscription($subscriptionId, Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Active),
         );
     }
+
+    public function testReactivateWithMissingSubscriber(): void
+    {
+        $subscriptionId = 'test';
+
+        $store = new DummySubscriptionStore([
+            new Subscription(
+                $subscriptionId,
+                status: Status::Paused,
+            ),
+        ]);
+
+        $handler = $this->createHandler($store);
+        $result = $handler(new ReactivateCommand());
+
+        self::assertEquals([], $result->errors);
+        self::assertSame([], $store->updatedSubscriptions);
+    }
+
 }

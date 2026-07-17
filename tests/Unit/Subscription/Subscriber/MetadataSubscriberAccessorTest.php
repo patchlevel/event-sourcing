@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber;
 
+use Patchlevel\EventSourcing\Attribute\Cleanup;
+use Patchlevel\EventSourcing\Attribute\OnFailed;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -15,6 +17,9 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use stdClass;
+use Throwable;
 
 #[CoversClass(MetadataSubscriberAccessor::class)]
 final class MetadataSubscriberAccessorTest extends TestCase
@@ -121,4 +126,118 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
         self::assertEquals($subscriber, $this->accessor($subscriber)->subscriber());
     }
+
+    public function testMetadata(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+        };
+
+        $accessor = $this->accessor($subscriber);
+
+        self::assertSame('profile', $accessor->metadata()->id);
+        self::assertSame($subscriber, $accessor->subscriber());
+    }
+
+    public function testCleanupMethod(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+            public bool $called = false;
+
+            #[Cleanup]
+            public function cleanup(): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $cleanupMethod = $this->accessor($subscriber)->cleanupMethod();
+
+        self::assertNotNull($cleanupMethod);
+
+        $cleanupMethod();
+
+        self::assertTrue($subscriber->called);
+    }
+
+    public function testNoCleanupMethod(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+        };
+
+        self::assertNull($this->accessor($subscriber)->cleanupMethod());
+    }
+
+    public function testFailedMethod(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+            public bool $called = false;
+            public Message|null $message = null;
+            public Throwable|null $throwable = null;
+
+            #[OnFailed]
+            public function onFailed(Message $message, Throwable $throwable): void
+            {
+                $this->called = true;
+                $this->message = $message;
+                $this->throwable = $throwable;
+            }
+        };
+
+        $failedMethod = $this->accessor($subscriber)->failedMethod();
+        $message = new Message(new stdClass());
+        $throwable = new RuntimeException();
+
+        self::assertNotNull($failedMethod);
+
+        $failedMethod($message, $throwable);
+
+        self::assertTrue($subscriber->called);
+        self::assertSame($message, $subscriber->message);
+        self::assertSame($throwable, $subscriber->throwable);
+    }
+
+    public function testNoFailedMethod(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+        };
+
+        self::assertNull($this->accessor($subscriber)->failedMethod());
+    }
+
+    public function testEvents(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(Message $message): void
+            {
+            }
+        };
+
+        self::assertSame([ProfileVisited::class], $this->accessor($subscriber)->events());
+    }
+
+    public function testSubscribeMethodsCache(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(Message $message): void
+            {
+            }
+        };
+
+        $accessor = $this->accessor($subscriber);
+
+        self::assertSame(
+            $accessor->subscribeMethods(ProfileVisited::class),
+            $accessor->subscribeMethods(ProfileVisited::class),
+        );
+    }
+
 }

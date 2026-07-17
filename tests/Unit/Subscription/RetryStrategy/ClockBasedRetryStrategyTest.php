@@ -98,4 +98,15 @@ final class ClockBasedRetryStrategyTest extends TestCase
         yield [0, 0, false];
         yield [1, 0, true];
     }
+
+    public function testShouldNotRetryWithoutLastSavedAt(): void
+    {
+        $clock = new FrozenClock(new DateTimeImmutable('2024-01-01 10:00:00'));
+        $strategy = new ClockBasedRetryStrategy($clock);
+
+        $subscription = new Subscription('test', retryAttempt: 1);
+
+        self::assertFalse($strategy->shouldRetry($subscription));
+    }
+
 }

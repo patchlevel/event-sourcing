@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
+use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -86,4 +87,19 @@ final class CatchUpSubscriptionEngineTest extends TestCase
 
         self::assertEquals($expectedSubscriptions, $subscriptions);
     }
+
+    public function testPassthroughUnexpectedResult(): void
+    {
+        $parent = $this->createMock(SubscriptionEngine::class);
+
+        $engine = new CatchUpSubscriptionEngine($parent);
+
+        $expectedResult = new Result();
+        $command = new Run();
+
+        $parent->expects($this->once())->method('execute')->with($command)->willReturn($expectedResult);
+
+        self::assertSame($expectedResult, $engine->execute($command));
+    }
+
 }
