@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Projection\CompositeProjection;
+use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\Query;
@@ -97,5 +98,17 @@ final class CompositeProjectionTest extends TestCase
         // 'm' matches and increments; 'n' does not match and stays the same
         self::assertSame(3, $newState['m']);
         self::assertSame(3, $newState['n']);
+    }
+
+    public function testQueryWithoutSubQueryProvider(): void
+    {
+        $projection = $this->createMock(Projection::class);
+
+        $composite = new CompositeProjection([
+            'a' => $projection,
+            'b' => new IncrementProjection(0, ['tag:b']),
+        ]);
+
+        self::assertEquals(new Query(), $composite->query());
     }
 }
