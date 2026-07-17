@@ -348,11 +348,10 @@ final class MigrationSubscriber
 
     #[Subscribe(NameChanged::class)]
     public function handleNameChanged(
-        NameChanged $event, 
+        NameChanged $event,
         #[BatchState]
         MigrationBatch $batch,
-    ): void
-    {
+    ): void {
         $batch->nameChanged[$event->userId] = $event->name;
     }
 

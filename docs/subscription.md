@@ -649,6 +649,7 @@ The different attributes have different default groups.
 * `Subscriber` - `default`
 * `Projector` - `projector`
 * `Processor` - `processor`
+
 :::
 
 ### Run Mode
@@ -780,11 +781,10 @@ final class MigrationSubscriber
 
     #[Subscribe(NameChanged::class)]
     public function handleNameChanged(
-        NameChanged $event, 
+        NameChanged $event,
         #[BatchState]
         MigrationBatch $batch,
-    ): void
-    {
+    ): void {
         $batch->nameChanged[$event->userId] = $event->name;
     }
 
@@ -870,6 +870,7 @@ The Subscription Engine was inspired by the following two blog posts:
 
 * [Projection Building Blocks: What you'll need to build projections](https://barryosull.com/blog/projection-building-blocks-what-you-ll-need-to-build-projections/)
 * [Managing projectors is harder than you think](https://barryosull.com/blog/managing-projectors-is-harder-than-you-think/)
+
 :::
 
 ## Subscription ID
