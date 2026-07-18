@@ -3005,4 +3005,19 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
         $doctrineDbalStore->wait(100);
     }
+
+    public function testConnection(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $headersSerializer,
+        );
+
+        self::assertSame($connection, $doctrineDbalStore->connection());
+    }
 }
