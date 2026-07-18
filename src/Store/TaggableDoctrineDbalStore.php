@@ -41,6 +41,7 @@ use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\TagCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Dbal\ProvideDbalConnection;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
@@ -76,7 +77,7 @@ use const JSON_THROW_ON_ERROR;
 use const PHP_VERSION_ID;
 
 /** @experimental */
-final class TaggableDoctrineDbalStore implements Store, AppendStore, SubscriptionStore, DoctrineSchemaConfigurator
+final class TaggableDoctrineDbalStore implements Store, AppendStore, SubscriptionStore, DoctrineSchemaConfigurator, ProvideDbalConnection
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.

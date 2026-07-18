@@ -38,6 +38,7 @@ use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Dbal\ProvideDbalConnection;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
@@ -66,7 +67,7 @@ use function str_replace;
 
 use const PHP_VERSION_ID;
 
-final class StreamDoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchemaConfigurator
+final class StreamDoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchemaConfigurator, ProvideDbalConnection
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.
