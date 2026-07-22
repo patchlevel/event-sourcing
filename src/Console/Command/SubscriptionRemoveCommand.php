@@ -19,6 +19,8 @@ final class SubscriptionRemoveCommand extends SubscriptionCommand
 {
     protected function configure(): void
     {
+        parent::configure();
+
         $this
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Set this parameter to execute this action without prompting');
     }
