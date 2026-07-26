@@ -50,10 +50,52 @@ $message->headers(); // [AggregateHeader object]
 ## Built-in headers
 
 The message object has some built-in headers which are used internally.
+Which of them you get depends on the [store](store.md) you use.
+
+These headers are set by every store:
+
+* `IndexHeader` - The global position of the message in the store.
+* `ArchivedHeader` - Flag if the message is archived.
+
+The `DoctrineDbalStore` is aggregate based and adds:
 
 * `AggregateHeader` - Contains the aggregate name, aggregate id, playhead and recorded on.
-* `ArchivedHeader` - Flag if the message is archived.
 * `StreamStartHeader` - Flag if the message is the first message in a new stream.
+
+The `StreamDoctrineDbalStore` is stream based and splits the same information into single headers:
+
+* `StreamNameHeader` - The name of the stream, for example `profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e`.
+* `PlayheadHeader` - The position of the message inside its stream.
+* `RecordedOnHeader` - The point in time when the message was saved.
+* `EventIdHeader` - The unique id of the event.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+
+/** @var Message $message */
+$message->header(IndexHeader::class)->index; // 42
+$message->header(StreamNameHeader::class)->streamName; // 'profile-e3e3e3e3-...'
+$message->header(PlayheadHeader::class)->playhead; // 2
+$message->header(RecordedOnHeader::class)->recordedOn; // DateTimeImmutable
+$message->header(EventIdHeader::class)->eventId; // 'a4a4a4a4-4a4a-...'
+```
+:::warning
+The `PlayheadHeader` is only added if the stream is playhead based.
+Streams that are written without a playhead, for example custom streams,
+do not have this header. Use `hasHeader` before you access it.
+:::
+
+:::note
+The `AggregateHeader` and the stream based headers never appear on the same message.
+If you migrate from the `DoctrineDbalStore` to the `StreamDoctrineDbalStore`, you can convert
+them with the `AggregateToStreamHeaderTranslator`, see the
+[store migration command](cli.md#store-migration-command).
+:::
 
 ## Custom headers
 

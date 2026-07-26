@@ -340,12 +340,14 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 
 $criteria = new Criteria(
     new AggregateNameCriterion('profile'),
     new AggregateIdCriterion('e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
     new FromPlayheadCriterion(2),
     new FromIndexCriterion(100),
+    new ToIndexCriterion(200),
     new ArchivedCriterion(true),
     new EventsCriterion(['profile.created', 'profile.name_changed']),
 );
@@ -364,6 +366,56 @@ $criteria = (new CriteriaBuilder())
     ->events(['profile.created', 'profile.name_changed'])
     ->build();
 ```
+#### Criteria for Stream Stores
+
+The `StreamDoctrineDbalStore` does not know about aggregates, it works with stream names.
+Instead of the aggregate criteria you use the `StreamCriterion`, which also supports a `*` wildcard.
+On top of that it offers the `ToPlayheadCriterion` and the `EventIdCriterion`.
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\EventIdCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
+
+$criteria = new Criteria(
+    new StreamCriterion('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
+    new FromPlayheadCriterion(2),
+    new ToPlayheadCriterion(10),
+);
+
+$criteria = new Criteria(
+    new EventIdCriterion('a4a4a4a4-4a4a-4a4a-4a4a-4a4a4a4a4a4a'),
+);
+```
+The `StreamCriterion` is variadic, so you can pass multiple stream names.
+There is also a `startWith` named constructor that appends the wildcard for you.
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+
+$criterion = new StreamCriterion('profile-*', 'hotel-*');
+$criterion = StreamCriterion::startWith('profile-');
+```
+The criteria builder covers this as well:
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+
+$criteria = (new CriteriaBuilder())
+    ->streamName('profile-*')
+    ->fromPlayhead(2)
+    ->toPlayhead(10)
+    ->build();
+```
+:::warning
+Not every store supports every criterion. If a store gets a criterion it cannot handle,
+it throws an `UnsupportedCriterion` exception. `StreamCriterion`, `ToPlayheadCriterion` and
+`EventIdCriterion` only work with the `StreamDoctrineDbalStore`,
+`AggregateNameCriterion` and `AggregateIdCriterion` only with the `DoctrineDbalStore`.
+:::
+
 #### Stream
 
 The load method returns a `Stream` object and is a generator.
@@ -449,16 +501,64 @@ In event sourcing, the events are immutable.
 
 ### Remove
 
-You can remove a stream with the `remove` method.
+You can remove events with the `remove` method. It takes the same criteria as the `load` method.
 
 ```php
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\StreamStore;
 
 /** @var StreamStore $store */
-$store->remove('profile-*');
+$store->remove(new Criteria(StreamCriterion::startWith('profile-')));
+```
+:::danger
+Without criteria the method removes every event in the store.
+Deleted events cannot be restored, all subscriptions built from them become inconsistent.
+:::
+
+:::note
+The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
+:::
+
+### Archive
+
+You can archive events with the `archive` method.
+Archived events are still in the store, but they are skipped when an aggregate is loaded,
+which keeps the loading of long living aggregates fast.
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\StreamStore;
+
+/** @var StreamStore $store */
+$store->archive(
+    new Criteria(
+        new StreamCriterion('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
+        new ToPlayheadCriterion(100),
+    ),
+);
+```
+Archived events get the `ArchivedHeader` when they are loaded again.
+You can include or exclude them explicitly with the `ArchivedCriterion`.
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Store;
+
+/** @var Store $store */
+$stream = $store->load(new Criteria(new ArchivedCriterion(false)));
 ```
 :::note
 The method is only available in the `StreamStore` like `StreamDoctrineDbalStore`.
+The `DoctrineDbalStore` archives events automatically when a [split stream](split-stream.md) event is saved.
+:::
+
+:::tip
+Archiving is the non destructive alternative to `remove`. The events stay readable,
+so you can still replay them by passing an `ArchivedCriterion(true)`.
 :::
 
 ### List Streams

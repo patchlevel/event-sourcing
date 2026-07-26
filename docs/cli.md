@@ -7,6 +7,8 @@ You can:
 * Create and delete `databases`
 * Create, update and delete `schemas`
 * Manage `subscriptions`
+* Inspect your `aggregates`, `events` and `subscribers`
+* Migrate events from one `store` to another
 
 ## Database commands
 
@@ -52,6 +54,86 @@ The inspector is a tool to inspect the event streams.
 * ShowCommand: `event-sourcing:show`
 * ShowAggregateCommand: `event-sourcing:show-aggregate`
 * WatchCommand: `event-sourcing:watch`
+
+## Debug command
+
+The debug command prints everything the library knows about your application:
+all registered aggregates, all registered events and all subscribers with their subscribe methods.
+It is the fastest way to check if a class was picked up by the attribute scanning.
+
+* DebugCommand: `event-sourcing:debug` (alias `debug:event-sourcing`)
+
+```php
+use Patchlevel\EventSourcing\Console\Command\DebugCommand;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
+use Symfony\Component\Console\Application;
+
+/**
+ * @var Application $cli
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var EventRegistry $eventRegistry
+ * @var SubscriberAccessorRepository $subscriberAccessorRepository
+ */
+$cli->add(
+    new DebugCommand(
+        $aggregateRootRegistry,
+        $eventRegistry,
+        $subscriberAccessorRepository,
+    ),
+);
+```
+:::note
+The subscriber repository is optional. If you don't pass it, the subscriber section is skipped.
+:::
+
+## Store migration command
+
+The store migration command copies all events from one store into another one.
+You need it when you switch the store implementation,
+for example from the `DoctrineDbalStore` to the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore).
+
+* StoreMigrateCommand: `event-sourcing:store:migrate`
+
+```php
+use Patchlevel\EventSourcing\Console\Command\StoreMigrateCommand;
+use Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator;
+use Patchlevel\EventSourcing\Store\Store;
+use Symfony\Component\Console\Application;
+
+/**
+ * @var Application $cli
+ * @var Store $oldStore
+ * @var Store $newStore
+ */
+$cli->add(
+    new StoreMigrateCommand(
+        $oldStore,
+        $newStore,
+        [new AggregateToStreamHeaderTranslator()],
+    ),
+);
+```
+The third constructor argument is a list of [translators](message.md#translator)
+that are applied to every message before it is written into the new store.
+The `AggregateToStreamHeaderTranslator` converts the `AggregateHeader` into the stream based headers
+and is what you need for a migration to the `StreamDoctrineDbalStore`.
+
+Events are written in batches. You can control the batch size with the `buffer` option:
+
+```bash
+bin/console event-sourcing:store:migrate --buffer=5000
+```
+:::danger
+The command writes into the target store, it does not clean it up first.
+Make sure the target store is empty and create a backup before you run the migration.
+:::
+
+:::note
+The schema of the new store has to exist before you run the command.
+You can create it with the [schema commands](#schema-commands).
+:::
 
 ## CLI example
 
