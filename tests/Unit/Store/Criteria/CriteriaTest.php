@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Patchlevel\EventSourcing\Tests\Unit\Store\Crtieria;
+namespace Patchlevel\EventSourcing\Tests\Unit\Store\Criteria;
 
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\CriterionNotFound;

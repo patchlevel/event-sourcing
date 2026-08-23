@@ -10,9 +10,10 @@ use Patchlevel\EventSourcing\QueryBus\HandlerReference;
 use Patchlevel\EventSourcing\QueryBus\InvalidHandleMethod;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\OtherQueryProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\QueryProfile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\QueryBus\HandlerFinder */
+#[CoversClass(HandlerFinder::class)]
 final class HandlerFinderTest extends TestCase
 {
     public function testNoParameters(): void
@@ -38,6 +39,38 @@ final class HandlerFinderTest extends TestCase
             // phpcs:disable
             #[Answer]
             public function handle(mixed $query): void
+            {
+            }
+            // phpcs:enable
+        };
+
+        $result = [...HandlerFinder::findInClass($class::class)];
+
+        self::assertSame([], $result);
+    }
+
+    public function testSkipMethodWithoutAnswerAttribute(): void
+    {
+        $class = new class () {
+            public function handle(QueryProfile $query): void
+            {
+            }
+        };
+
+        $result = [...HandlerFinder::findInClass($class::class)];
+
+        self::assertSame([], $result);
+    }
+
+    public function testMissingType(): void
+    {
+        $this->expectException(InvalidHandleMethod::class);
+
+        $class = new class () {
+            // phpcs:disable
+            /** @phpstan-ignore-next-line */
+            #[Answer]
+            public function handle($query): void
             {
             }
             // phpcs:enable

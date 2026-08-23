@@ -126,4 +126,17 @@ final class RefreshHandlerTest extends TestCase
             new Subscription('test', 'new-group', RunMode::FromNow, Status::Active, cleanupTasks: [new DropTableTask('test')]),
         );
     }
+
+    public function testRefreshWithMissingSubscriber(): void
+    {
+        $subscriptionId = 'test';
+
+        $store = new DummySubscriptionStore([new Subscription($subscriptionId)]);
+
+        $handler = $this->createHandler($store);
+        $result = $handler(new RefreshCommand());
+
+        self::assertEquals([], $result->errors);
+        self::assertSame([], $store->updatedSubscriptions);
+    }
 }

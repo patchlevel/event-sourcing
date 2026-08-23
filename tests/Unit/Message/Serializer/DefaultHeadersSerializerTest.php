@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Message\Serializer;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Message\MissingHeaders;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Message\Serializer\InvalidArgument;
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Message\HeaderNameNotRegistered;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
@@ -151,5 +152,31 @@ final class DefaultHeadersSerializerTest extends TestCase
             '{"streamName":{"streamName":"profile-1"},"removed":{"foo":"bar"},"alsoRemoved":{"baz":1}}',
             $content,
         );
+    }
+
+    public function testDeserializeWithInvalidHeaderPayload(): void
+    {
+        $serializer = new DefaultHeadersSerializer(
+            (new AttributeMessageHeaderRegistryFactory())->create([
+                __DIR__ . '/../../Fixture',
+            ]),
+            new MetadataHydrator(),
+            new JsonEncoder(),
+        );
+
+        $this->expectException(InvalidArgument::class);
+        $this->expectExceptionMessage('header payload must be an array');
+
+        $serializer->deserialize('{"streamName":"profile-1"}');
+    }
+
+    public function testCreateDefault(): void
+    {
+        $serializer = DefaultHeadersSerializer::createDefault();
+
+        $content = $serializer->serialize([new StreamNameHeader('profile-1')]);
+
+        self::assertEquals('{"streamName":{"streamName":"profile-1"}}', $content);
+        self::assertEquals([new StreamNameHeader('profile-1')], $serializer->deserialize($content));
     }
 }

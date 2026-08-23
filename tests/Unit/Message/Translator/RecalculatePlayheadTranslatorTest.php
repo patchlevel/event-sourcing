@@ -115,4 +115,20 @@ final class RecalculatePlayheadTranslatorTest extends TestCase
         self::assertSame('profile', $result[0]->header(StreamNameHeader::class)->streamName);
         self::assertSame(1, $result[0]->header(PlayheadHeader::class)->playhead);
     }
+
+    public function testPassthroughWithoutHeaders(): void
+    {
+        $translator = new RecalculatePlayheadTranslator();
+
+        $message = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('hallo@patchlevel.de'),
+            ),
+        );
+
+        $result = $translator($message);
+
+        self::assertSame([$message], $result);
+    }
 }

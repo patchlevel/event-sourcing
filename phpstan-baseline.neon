@@ -307,54 +307,6 @@ parameters:
 			path: tests/Benchmark/BasicImplementation/Projection/ProfileProjector.php
 
 		-
-			message: '#^Call to an undefined method Patchlevel\\EventSourcing\\Subscription\\Engine\\SubscriptionEngine\:\:boot\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: tests/Benchmark/NoopSubscriptionEngineBench.php
-
-		-
-			message: '#^Call to an undefined method Patchlevel\\EventSourcing\\Subscription\\Engine\\SubscriptionEngine\:\:remove\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: tests/Benchmark/NoopSubscriptionEngineBench.php
-
-		-
-			message: '#^Call to an undefined method Patchlevel\\EventSourcing\\Subscription\\Engine\\SubscriptionEngine\:\:setup\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: tests/Benchmark/NoopSubscriptionEngineBench.php
-
-		-
-			message: '#^Instantiated class Patchlevel\\EventSourcing\\Store\\DoctrineDbalStore not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: tests/Benchmark/NoopSubscriptionEngineBench.php
-
-		-
-			message: '#^Parameter \#1 \$schemaConfigurator of class Patchlevel\\EventSourcing\\Schema\\ChainDoctrineSchemaConfigurator constructor expects iterable\<Patchlevel\\EventSourcing\\Schema\\DoctrineSchemaConfigurator\>, array\<int, \(Patchlevel\\EventSourcing\\Store\\DoctrineDbalStore&Patchlevel\\EventSourcing\\Store\\Store\)\|Patchlevel\\EventSourcing\\Subscription\\Store\\DoctrineSubscriptionStore\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Benchmark/NoopSubscriptionEngineBench.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\NoopSubscriptionEngineBench\:\:\$id \(Patchlevel\\EventSourcing\\Aggregate\\AggregateRootId\) does not accept Patchlevel\\EventSourcing\\Tests\\Benchmark\\BasicImplementation\\ProfileId\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Benchmark/NoopSubscriptionEngineBench.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\NoopSubscriptionEngineBench\:\:\$id has unknown class Patchlevel\\EventSourcing\\Aggregate\\AggregateRootId as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: tests/Benchmark/NoopSubscriptionEngineBench.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Benchmark\\NoopSubscriptionEngineBench\:\:\$store \(Patchlevel\\EventSourcing\\Store\\Store\) does not accept Patchlevel\\EventSourcing\\Store\\DoctrineDbalStore\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Benchmark/NoopSubscriptionEngineBench.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\BankAccountSplitStream\\\\BankAccount'' and Patchlevel\\EventSourcing\\Tests\\Integration\\BankAccountSplitStream\\BankAccount will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 4
@@ -523,6 +475,18 @@ parameters:
 			path: tests/Unit/Fixture/ProfileInvalid.php
 
 		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\BrokenAutoInitializableProfile\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/BrokenAutoInitializableProfile.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithAggregateStream\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithAggregateStream.php
+
+		-
 			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyBothUsage\:\:\$id is unused\.$#'
 			identifier: property.unused
 			count: 1
@@ -553,10 +517,28 @@ parameters:
 			path: tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php
 
 		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyStringType\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithBrokenApplyStringType.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyUnionIntersection\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithBrokenApplyUnionIntersection.php
+
+		-
 			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenId\:\:\$id is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithBrokenId.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithDuplicateApply\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithDuplicateApply.php
 
 		-
 			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithEmptyApply\:\:\$id is unused\.$#'
@@ -583,13 +565,19 @@ parameters:
 			path: tests/Unit/Fixture/ProfileWithSuppressAll.php
 
 		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithoutAggregateAttribute\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/ProfileWithoutAggregateAttribute.php
+
+		-
 			message: '#^Parameter \#2 \$callable of class Patchlevel\\EventSourcing\\Message\\Translator\\ReplaceEventTranslator constructor expects callable\(Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\MessagePublished\)\: object, Closure\(Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileCreated\)\: Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileVisited given\.$#'
 			identifier: argument.type
 			count: 1
 			path: tests/Unit/Message/Translator/ReplaceEventTranslatorTest.php
 
 		-
-			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:278\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
+			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:284\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
 			identifier: missingType.parameter
 			count: 1
 			path: tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php

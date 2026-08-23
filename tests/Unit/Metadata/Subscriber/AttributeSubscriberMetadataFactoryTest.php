@@ -9,10 +9,13 @@ use Patchlevel\EventSourcing\Attribute\BatchFlush;
 use Patchlevel\EventSourcing\Attribute\BatchRollback;
 use Patchlevel\EventSourcing\Attribute\BatchShouldFlush;
 use Patchlevel\EventSourcing\Attribute\BatchState;
+use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
 use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
+use Patchlevel\EventSourcing\Attribute\OnFailed;
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -24,6 +27,8 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFact
 use Patchlevel\EventSourcing\Metadata\Subscriber\BatchMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ClassIsNotASubscriber;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateBeginBatchMethod;
+use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateCleanupMethod;
+use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateFailedMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateFlushMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateRollbackBatchMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSetupMethod;
@@ -31,6 +36,7 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateShouldFlushMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSubscribeMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateTeardownMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\IncompleteBatchMethods;
+use Patchlevel\EventSourcing\Metadata\Subscriber\MixedTeardownAndCleanupMethods;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -648,5 +654,151 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         $metadataFactory = new AttributeSubscriberMetadataFactory();
         $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testMetadataCache(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+
+        self::assertSame(
+            $metadataFactory->metadata($subscriber::class),
+            $metadataFactory->metadata($subscriber::class),
+        );
+    }
+
+    public function testOnFailedMethod(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[OnFailed]
+            public function onFailed(): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertSame('onFailed', $metadata->failedMethod);
+    }
+
+    public function testDuplicateFailedException(): void
+    {
+        $this->expectException(DuplicateFailedMethod::class);
+        $this->expectExceptionMessage('have been marked as "OnFailed" methods');
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[OnFailed]
+            public function onFailed1(): void
+            {
+            }
+
+            #[OnFailed]
+            public function onFailed2(): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testCleanupMethod(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Cleanup]
+            public function cleanup(): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertSame('cleanup', $metadata->cleanupMethod);
+        self::assertNull($metadata->teardownMethod);
+    }
+
+    public function testDuplicateCleanupException(): void
+    {
+        $this->expectException(DuplicateCleanupMethod::class);
+        $this->expectExceptionMessage('have been marked as "cleanup" methods');
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Cleanup]
+            public function cleanup1(): void
+            {
+            }
+
+            #[Cleanup]
+            public function cleanup2(): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testCleanupAfterTeardownException(): void
+    {
+        $this->expectException(MixedTeardownAndCleanupMethods::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Teardown]
+            public function teardown(): void
+            {
+            }
+
+            #[Cleanup]
+            public function cleanup(): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testTeardownAfterCleanupException(): void
+    {
+        $this->expectException(MixedTeardownAndCleanupMethods::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Cleanup]
+            public function cleanup(): void
+            {
+            }
+
+            #[Teardown]
+            public function teardown(): void
+            {
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testRetryStrategy(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        #[RetryStrategy('custom_strategy')]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertSame('custom_strategy', $metadata->retryStrategy);
     }
 }

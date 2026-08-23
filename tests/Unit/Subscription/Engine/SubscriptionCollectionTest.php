@@ -55,4 +55,14 @@ final class SubscriptionCollectionTest extends TestCase
 
         self::assertSame(null, $collection->lowestPosition());
     }
+
+    public function testToArray(): void
+    {
+        $subscription1 = new Subscription('foo', position: 5);
+        $subscription2 = new Subscription('bar', position: 10);
+
+        $collection = new SubscriptionCollection([$subscription1, $subscription2]);
+
+        self::assertSame([$subscription1, $subscription2], $collection->toArray());
+    }
 }

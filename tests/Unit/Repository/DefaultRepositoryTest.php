@@ -15,11 +15,14 @@ use Patchlevel\EventSourcing\Repository\AggregateNotFound;
 use Patchlevel\EventSourcing\Repository\AggregateOutdated;
 use Patchlevel\EventSourcing\Repository\AggregateUnknown;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
+use Patchlevel\EventSourcing\Repository\InvalidAggregate;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
+use Patchlevel\EventSourcing\Repository\PlayheadMismatch;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
+use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
@@ -30,12 +33,16 @@ use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
+use Patchlevel\EventSourcing\Tests\ReturnCallback;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\AutoInitializableProfile;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\BrokenAutoInitializableProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\NameChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenPlayhead;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithStream;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -763,5 +770,204 @@ final class DefaultRepositoryTest extends TestCase
         self::assertInstanceOf(AutoInitializableProfile::class, $aggregate);
         self::assertSame(1, $aggregate->playhead());
         self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
+    }
+
+    public function testLoadInitializableAggregateWithInvalidReturn(): void
+    {
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->willReturn(new Stream([]));
+
+        $repository = new DefaultRepository($store, BrokenAutoInitializableProfile::metadata());
+
+        $this->expectException(InvalidAggregate::class);
+
+        $repository->load(ProfileId::fromString('1'));
+    }
+
+    public function testLoadAggregateWithSnapshotRebuildFailed(): void
+    {
+        $id = ProfileId::fromString('1');
+
+        $profile = ProfileWithSnapshot::createProfile(
+            $id,
+            Email::fromString('hallo@patchlevel.de'),
+        );
+
+        $badMessage = Message::create(new NameChanged('foo'))
+            ->withHeader(new StreamNameHeader('profile_with_snapshot-1'))
+            ->withHeader(new PlayheadHeader(2))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()));
+
+        $goodMessage = Message::create(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('hallo@patchlevel.de'),
+            ),
+        )
+            ->withHeader(new StreamNameHeader('profile_with_snapshot-1'))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()));
+
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->exactly(2))
+            ->method('load')
+            ->willReturnCallback(new ReturnCallback([
+                [
+                    [
+                        new Criteria(
+                            new StreamCriterion('profile_with_snapshot-1'),
+                            new FromPlayheadCriterion(1),
+                        ),
+                        null,
+                        null,
+                        false,
+                    ],
+                    new Stream([$badMessage]),
+                ],
+                [
+                    [
+                        new Criteria(
+                            new StreamCriterion('profile_with_snapshot-1'),
+                            new ArchivedCriterion(false),
+                        ),
+                        null,
+                        null,
+                        false,
+                    ],
+                    new Stream([$goodMessage]),
+                ],
+            ]));
+
+        $snapshotStore = $this->createMock(SnapshotStore::class);
+        $snapshotStore
+            ->expects($this->once())
+            ->method('load')
+            ->with(ProfileWithSnapshot::class, $id)
+            ->willReturn($profile);
+        $snapshotStore
+            ->expects($this->never())
+            ->method('save');
+
+        $repository = new DefaultRepository(
+            $store,
+            ProfileWithSnapshot::metadata(),
+            null,
+            $snapshotStore,
+        );
+
+        $aggregate = $repository->load($id);
+
+        self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
+        self::assertSame(1, $aggregate->playhead());
+        self::assertEquals(Email::fromString('hallo@patchlevel.de'), $aggregate->email());
+    }
+
+    public function testLoadAggregateWithSnapshotVersionInvalid(): void
+    {
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(
+                new StreamCriterion('profile_with_snapshot-1'),
+                new ArchivedCriterion(false),
+            ))
+            ->willReturn(
+                new Stream([
+                    Message::create(
+                        new ProfileCreated(
+                            ProfileId::fromString('1'),
+                            Email::fromString('hallo@patchlevel.de'),
+                        ),
+                    )
+                        ->withHeader(new StreamNameHeader('profile_with_snapshot-1'))
+                        ->withHeader(new PlayheadHeader(1))
+                        ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
+                    Message::create(
+                        new ProfileVisited(
+                            ProfileId::fromString('1'),
+                        ),
+                    )
+                        ->withHeader(new StreamNameHeader('profile_with_snapshot-1'))
+                        ->withHeader(new PlayheadHeader(2))
+                        ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
+                    Message::create(
+                        new ProfileVisited(
+                            ProfileId::fromString('1'),
+                        ),
+                    )
+                        ->withHeader(new StreamNameHeader('profile_with_snapshot-1'))
+                        ->withHeader(new PlayheadHeader(3))
+                        ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
+                ]),
+            );
+
+        $snapshotStore = $this->createMock(SnapshotStore::class);
+        $snapshotStore
+            ->expects($this->once())
+            ->method('load')
+            ->with(
+                ProfileWithSnapshot::class,
+                ProfileId::fromString('1'),
+            )
+            ->willThrowException(new SnapshotVersionInvalid('profile_with_snapshot-1'));
+
+        $snapshotStore
+            ->expects($this->once())
+            ->method('save')
+            ->with($this->isInstanceOf(ProfileWithSnapshot::class));
+
+        $repository = new DefaultRepository(
+            $store,
+            ProfileWithSnapshot::metadata(),
+            null,
+            $snapshotStore,
+        );
+
+        $aggregate = $repository->load(ProfileId::fromString('1'));
+
+        self::assertInstanceOf(ProfileWithSnapshot::class, $aggregate);
+        self::assertSame(3, $aggregate->playhead());
+        self::assertEquals(ProfileId::fromString('1'), $aggregate->id());
+    }
+
+    public function testSavePlayheadMismatch(): void
+    {
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->willReturn(
+                new Stream([
+                    Message::create(
+                        new ProfileCreated(
+                            ProfileId::fromString('1'),
+                            Email::fromString('hallo@patchlevel.de'),
+                        ),
+                    )
+                        ->withHeader(new StreamNameHeader('profile_with_broken_playhead-1'))
+                        ->withHeader(new PlayheadHeader(1))
+                        ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
+                ]),
+            );
+        $store
+            ->expects($this->never())
+            ->method('save');
+
+        $repository = new DefaultRepository($store, ProfileWithBrokenPlayhead::metadata());
+
+        $aggregate = $repository->load(ProfileId::fromString('1'));
+
+        self::assertInstanceOf(ProfileWithBrokenPlayhead::class, $aggregate);
+
+        $aggregate->visit();
+
+        $this->expectException(PlayheadMismatch::class);
+
+        $repository->save($aggregate);
     }
 }
