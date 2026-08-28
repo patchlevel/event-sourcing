@@ -63,6 +63,67 @@ The table structure of the `StreamDoctrineDbalStore` looks like this:
 | archived         | bool     | If the event is archived                         |
 | custom_headers   | json     | Custom headers for the event                     |
 
+### TaggableDoctrineDbalStore
+
+The `TaggableDoctrineDbalStore` works like the `StreamDoctrineDbalStore`, but additionally stores the
+event tags in a dedicated `tags` column and can query events by tag and append events with an
+optimistic condition. This is the store used by the
+[dynamic consistency boundary](dynamic-consistency-boundary.md).
+
+Besides the dbal connection and the event serializer, it also needs the event registry so it can
+resolve tags and event names.
+
+```php
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
+
+$connection = DriverManager::getConnection(
+    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
+);
+
+$eventRegistry = (new AttributeEventRegistryFactory())->create(['src/Event']);
+$serializer = new DefaultEventSerializer($eventRegistry);
+
+$store = new TaggableDoctrineDbalStore(
+    $connection,
+    $serializer,
+    $eventRegistry,
+);
+```
+:::experimental
+This feature is still experimental and may change in the future.
+Use it with caution.
+:::
+
+Following options are available in `TaggableDoctrineDbalStore`:
+
+| Option              | Type   | Default     | Description                                          |
+|---------------------|--------|-------------|-----------------------------------------------------|
+| table_name          | string | event_store | The name of the table in the database               |
+| locking             | bool   | true        | If the store should use locking for writing         |
+| lock_id             | int    | 133742      | The id of the lock                                  |
+| lock_timeout        | int    | -1          | The timeout of the lock. -1 means no timeout        |
+| keep_index          | bool   | false       | If enabled, the index header is kept on save        |
+| default_stream_name | string | main        | Stream name used when a message has no stream header |
+
+The table structure of the `TaggableDoctrineDbalStore` looks like this:
+
+| Column         | Type     | Description                                   |
+|----------------|----------|----------------------------------------------|
+| id             | bigint   | The index of the whole stream (autoincrement) |
+| stream         | string   | The name of the stream                        |
+| playhead       | ?int     | The current playhead of the aggregate         |
+| event_id       | string   | The id of the event                           |
+| event_name     | string   | The name of the event                         |
+| event_payload  | json     | The payload of the event                      |
+| recorded_on    | datetime | The date when the event was recorded          |
+| archived       | bool     | If the event is archived                      |
+| tags           | ?json    | The tags attached to the event                |
+| custom_headers | json     | Custom headers for the event                  |
+
 ### InMemoryStore
 
 We also offer an in-memory store for testing purposes.
@@ -75,6 +136,10 @@ $store = new InMemoryStore();
 :::tip
 You can pass messages to the constructor to initialize the store with some events.
 :::
+
+The `InMemoryStore` also implements the tag-based query and conditional append API, so it can
+back a [dynamic consistency boundary](dynamic-consistency-boundary.md) decision model in tests
+without a real database.
 
 ### ReadOnlyStore
 
