@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
+use InvalidArgumentException;
 use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\Query;
 use Patchlevel\EventSourcing\Store\SubQuery;
@@ -29,5 +30,22 @@ final class AppendConditionTest extends TestCase
 
         self::assertEquals(new Query(), $condition->query);
         self::assertNull($condition->highestSequenceNumber);
+    }
+
+    public function testInstantiateWithZeroSequenceAndQuery(): void
+    {
+        $query = new Query(new SubQuery(['foo']));
+
+        $condition = new AppendCondition($query, 0);
+
+        self::assertSame($query, $condition->query);
+        self::assertSame(0, $condition->highestSequenceNumber);
+    }
+
+    public function testNonEmptyQueryWithoutSequenceNumberIsRejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new AppendCondition(new Query(new SubQuery(['foo'])));
     }
 }
