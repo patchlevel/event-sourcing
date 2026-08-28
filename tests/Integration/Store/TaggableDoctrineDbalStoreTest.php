@@ -832,6 +832,69 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         );
     }
 
+    public function testAppendConditionRejectsEntireBatch(): void
+    {
+        $profileId1 = ProfileId::generate();
+        $profileId2 = ProfileId::generate();
+
+        $this->store->append([
+            Message::create(new ProfileCreated($profileId1, 'test'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+                ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()])),
+        ]);
+
+        $batch = [
+            Message::create(new ExternEvent('first'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()])),
+            Message::create(new ExternEvent('second'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()])),
+        ];
+
+        try {
+            $this->store->append(
+                $batch,
+                new AppendCondition(
+                    new Query(new SubQuery(['profile:' . $profileId1->toString()])),
+                    0,
+                ),
+            );
+
+            self::fail('Expected AppendConditionNotMet to be thrown');
+        } catch (AppendConditionNotMet) {
+        }
+
+        // not even the first event of the rejected batch may have landed
+        self::assertCount(1, iterator_to_array($this->store->load()));
+    }
+
+    public function testAppendConditionAppliesEntireBatch(): void
+    {
+        $profileId = ProfileId::generate();
+
+        $first = Message::create(new ProfileCreated($profileId, 'test'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId->toString()]));
+
+        $second = Message::create(new ExternEvent('second'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId->toString()]));
+
+        $this->store->append(
+            [$first, $second],
+            new AppendCondition(
+                new Query(new SubQuery(['profile:' . $profileId->toString()])),
+                0,
+            ),
+        );
+
+        self::assertStreamEquals([$first, $second], $this->store->load());
+    }
+
     public function testAppendRaceConditionEmptyQuery(): void
     {
         $profileId1 = ProfileId::generate();

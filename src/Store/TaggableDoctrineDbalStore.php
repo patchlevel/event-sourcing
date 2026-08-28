@@ -416,15 +416,15 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
             $position = 0;
 
             foreach ($messages as $message) {
-                $selects[] = 'SELECT :stream' . $position
-                    . ', :playhead' . $position . ($this->isPostgres ? '::int' : '')
-                    . ', :event_id' . $position
-                    . ', :event_name' . $position
-                    . ', :event_payload' . $position . ($this->isPostgres ? '::jsonb' : '')
-                    . ', :tags' . $position . ($this->isPostgres ? '::jsonb' : '')
-                    . ', :recorded_on' . $position . ($this->isPostgres ? '::timestamptz' : '')
-                    . ', :archived' . $position . ($this->isPostgres ? '::boolean' : '')
-                    . ', :custom_headers' . $position . ($this->isPostgres ? '::jsonb' : '');
+                $selects[] = 'SELECT :stream' . $position . ' AS stream'
+                    . ', :playhead' . $position . ($this->isPostgres ? '::int' : '') . ' AS playhead'
+                    . ', :event_id' . $position . ' AS event_id'
+                    . ', :event_name' . $position . ' AS event_name'
+                    . ', :event_payload' . $position . ($this->isPostgres ? '::jsonb' : '') . ' AS event_payload'
+                    . ', :tags' . $position . ($this->isPostgres ? '::jsonb' : '') . ' AS tags'
+                    . ', :recorded_on' . $position . ($this->isPostgres ? '::timestamptz' : '') . ' AS recorded_on'
+                    . ', :archived' . $position . ($this->isPostgres ? '::boolean' : '') . ' AS archived'
+                    . ', :custom_headers' . $position . ($this->isPostgres ? '::jsonb' : '') . ' AS custom_headers';
 
                 $data = $this->eventSerializer->serialize($message->event());
 
@@ -464,14 +464,21 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
                 $position++;
             }
 
+            // The rows are wrapped in a derived table so that the append condition
+            // below applies to the whole batch. Appending it straight after a
+            // `UNION ALL` chain would bind it to the last SELECT only, letting every
+            // earlier event bypass the check.
+            $columnList = implode(', ', $columns);
+
             $query = sprintf(
-                'INSERT INTO %s (%s) %s',
+                'INSERT INTO %s (%s) SELECT %s FROM (%s) AS data',
                 $this->config['table_name'],
-                implode(', ', $columns),
+                $columnList,
+                $columnList,
                 implode(' UNION ALL ', $selects),
             );
 
-            if ($appendCondition instanceof AppendCondition) {
+            if ($appendCondition instanceof AppendCondition && $appendCondition->highestSequenceNumber !== null) {
                 $queryBuilder = $this->connection->createQueryBuilder()
                     ->select('events.id')
                     ->from($this->config['table_name'], 'events')
