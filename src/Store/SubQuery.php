@@ -62,7 +62,10 @@ final class SubQuery
             return false;
         }
 
-        if (!self::isSubset($this->events, $other->events)) {
+        // events is an allow list: an empty list matches everything, so it is the
+        // broadest filter. Otherwise this query only covers the other one when
+        // every event the other query allows is also allowed here.
+        if ($this->events !== [] && ($other->events === [] || !self::isSubset($other->events, $this->events))) {
             return false;
         }
 
