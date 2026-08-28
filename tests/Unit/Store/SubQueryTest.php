@@ -159,15 +159,39 @@ final class SubQueryTest extends TestCase
             false,
         ];
 
-        yield 'subset includes' => [
-            new SubQuery(['tag1'], [ProfileCreated::class]),
-            new SubQuery(['tag1', 'tag2'], [ProfileCreated::class, ProfileVisited::class]),
+        yield 'fewer tags and more events includes' => [
+            new SubQuery(['tag1'], [ProfileCreated::class, ProfileVisited::class]),
+            new SubQuery(['tag1', 'tag2'], [ProfileCreated::class]),
             true,
         ];
 
-        yield 'non-subset not includes' => [
-            new SubQuery(['tag1', 'tag2'], [ProfileCreated::class, ProfileVisited::class]),
+        yield 'more tags does not include' => [
+            new SubQuery(['tag1', 'tag2'], [ProfileCreated::class]),
             new SubQuery(['tag1'], [ProfileCreated::class]),
+            false,
+        ];
+
+        yield 'more events includes fewer events' => [
+            new SubQuery(['tag1'], [ProfileCreated::class, ProfileVisited::class]),
+            new SubQuery(['tag1'], [ProfileCreated::class]),
+            true,
+        ];
+
+        yield 'fewer events does not include more events' => [
+            new SubQuery(['tag1'], [ProfileCreated::class]),
+            new SubQuery(['tag1'], [ProfileCreated::class, ProfileVisited::class]),
+            false,
+        ];
+
+        yield 'all events includes specific events' => [
+            new SubQuery(['tag1']),
+            new SubQuery(['tag1'], [ProfileCreated::class]),
+            true,
+        ];
+
+        yield 'specific events does not include all events' => [
+            new SubQuery(['tag1'], [ProfileCreated::class]),
+            new SubQuery(['tag1']),
             false,
         ];
 

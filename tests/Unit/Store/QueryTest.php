@@ -123,6 +123,25 @@ final class QueryTest extends TestCase
             ),
         ];
 
+        yield 'broader event set absorbs narrower one' => [
+            new Query(
+                new SubQuery(
+                    ['a'],
+                    [ProfileCreated::class],
+                ),
+                new SubQuery(
+                    ['a'],
+                    [ProfileCreated::class, ProfileVisited::class],
+                ),
+            ),
+            new Query(
+                new SubQuery(
+                    ['a'],
+                    [ProfileCreated::class, ProfileVisited::class],
+                ),
+            ),
+        ];
+
         yield 'empty sub query includes all' => [
             new Query(
                 new SubQuery(
