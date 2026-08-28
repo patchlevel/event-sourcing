@@ -139,6 +139,42 @@ final class AttributeEventTagExtractorTest extends TestCase
         self::assertSame(['foo'], $tags);
     }
 
+    public function testExtractNullIsSkipped(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class (null) {
+            public function __construct(
+                #[EventTag]
+                public string|null $id,
+            ) {
+            }
+        };
+
+        $tags = $extractor->extract($event);
+
+        self::assertSame([], $tags);
+    }
+
+    public function testExtractNullIsSkippedButOtherTagsRemain(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class ('foo', null) {
+            public function __construct(
+                #[EventTag]
+                public string $id,
+                #[EventTag(prefix: 'guest')]
+                public string|null $guestName,
+            ) {
+            }
+        };
+
+        $tags = $extractor->extract($event);
+
+        self::assertSame(['foo'], $tags);
+    }
+
     public function testExtractInvalidValueType(): void
     {
         $extractor = new AttributeEventTagExtractor();

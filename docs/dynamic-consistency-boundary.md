@@ -46,6 +46,11 @@ final class HotelCreated
     }
 }
 ```
+
+:::note
+A tagged property that is `null` is skipped, so no tag is generated for it. This lets you tag optional properties without having to guard against missing values.
+:::
+
 A guest can check in.
 We tag the hotelId and the guest name so projections can filter by this combination.
 
