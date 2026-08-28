@@ -38,6 +38,10 @@ final class AttributeEventTagExtractor implements EventTagExtractor
 
             $value = $property->getValue($event);
 
+            if ($value === null) {
+                continue;
+            }
+
             if ($value instanceof Stringable || is_int($value)) {
                 $value = (string)$value;
             }
