@@ -423,6 +423,13 @@ $provider = new ServiceHandlerProvider([
 
 $commandBus = new SyncCommandBus($provider);
 ```
+
+:::tip
+For tests you can replace the `TaggableDoctrineDbalStore` with an `InMemoryStore`. It implements the
+same tag query and conditional append, so the decision model and the append condition behave the same
+way without a database.
+:::
+
 ## Database setup
 
 The last step is to create the database schema.

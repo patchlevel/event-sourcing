@@ -25,8 +25,10 @@ use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Psr\Clock\ClockInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
+use Traversable;
 
 use function array_filter;
+use function array_key_last;
 use function array_map;
 use function array_reverse;
 use function array_slice;
@@ -34,13 +36,15 @@ use function array_unique;
 use function array_values;
 use function count;
 use function in_array;
+use function iterator_to_array;
+use function ksort;
 use function mb_substr;
 use function str_ends_with;
 use function str_starts_with;
 
 use const ARRAY_FILTER_USE_BOTH;
 
-final class InMemoryStore implements Store
+final class InMemoryStore implements Store, AppendStore
 {
     /** @var array<positive-int, Message> */
     private array $messages = [];
@@ -104,6 +108,32 @@ final class InMemoryStore implements Store
 
                 $this->messages[$count] = $message;
             }
+        });
+    }
+
+    public function query(Query $query): Stream
+    {
+        return new Stream($this->matchQuery($query));
+    }
+
+    /** @param iterable<Message> $messages */
+    public function append(iterable $messages, AppendCondition|null $appendCondition = null): void
+    {
+        $messages = $messages instanceof Traversable
+            ? iterator_to_array($messages, false)
+            : array_values($messages);
+
+        $this->transactional(function () use ($messages, $appendCondition): void {
+            if ($appendCondition instanceof AppendCondition && $appendCondition->highestSequenceNumber !== null) {
+                $matched = $this->matchQuery($appendCondition->query);
+                $highestSequenceNumber = $matched === [] ? 0 : array_key_last($matched);
+
+                if ($highestSequenceNumber !== $appendCondition->highestSequenceNumber) {
+                    throw new AppendConditionNotMet($appendCondition);
+                }
+            }
+
+            $this->save(...$messages);
         });
     }
 
@@ -274,6 +304,39 @@ final class InMemoryStore implements Store
             },
             ARRAY_FILTER_USE_BOTH,
         );
+    }
+
+    /**
+     * Resolves a {@see Query} against the stored messages using {@see SubQuery::match()},
+     * so it mirrors what {@see TaggableDoctrineDbalStore::query()} produces on a real database.
+     *
+     * @return array<positive-int, Message>
+     */
+    private function matchQuery(Query $query): array
+    {
+        if ($query->subQueries === []) {
+            return $this->messages;
+        }
+
+        $matched = [];
+
+        foreach ($query->subQueries as $subQuery) {
+            $subMatched = array_filter(
+                $this->messages,
+                static fn (Message $message): bool => $subQuery->match($message),
+            );
+
+            if ($subQuery->onlyLastEvent && $subMatched !== []) {
+                $lastKey = array_key_last($subMatched);
+                $subMatched = [$lastKey => $subMatched[$lastKey]];
+            }
+
+            $matched += $subMatched;
+        }
+
+        ksort($matched);
+
+        return $matched;
     }
 
     public function clear(): void
