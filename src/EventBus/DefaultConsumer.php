@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\EventBus;
 
+use Patchlevel\EventSourcing\Message\Context\MessageContext;
 use Patchlevel\EventSourcing\Message\Message;
 use Psr\Log\LoggerInterface;
 
@@ -14,6 +15,7 @@ final class DefaultConsumer implements Consumer
     public function __construct(
         private readonly ListenerProvider $listenerProvider,
         private readonly LoggerInterface|null $logger = null,
+        private readonly MessageContext|null $messageContext = null,
     ) {
     }
 
@@ -28,20 +30,26 @@ final class DefaultConsumer implements Consumer
 
         $listeners = $this->listenerProvider->listenersForEvent($eventClass);
 
-        foreach ($listeners as $listener) {
-            $this->logger?->info(sprintf(
-                'EventBus: Listener "%s" consume message with event "%s".',
-                $listener->name(),
-                $eventClass,
-            ));
+        $this->messageContext?->pushMessage($message);
 
-            ($listener->callable())($message);
+        try {
+            foreach ($listeners as $listener) {
+                $this->logger?->info(sprintf(
+                    'EventBus: Listener "%s" consume message with event "%s".',
+                    $listener->name(),
+                    $eventClass,
+                ));
+
+                ($listener->callable())($message);
+            }
+        } finally {
+            $this->messageContext?->pop();
         }
     }
 
     /** @param iterable<object> $listeners */
-    public static function create(iterable $listeners = []): self
+    public static function create(iterable $listeners = [], MessageContext|null $messageContext = null): self
     {
-        return new self(new AttributeListenerProvider($listeners));
+        return new self(new AttributeListenerProvider($listeners), null, $messageContext);
     }
 }

@@ -19,6 +19,33 @@ use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 $eventMetadataFactory = new AttributeEventMetadataFactory();
 $decorator = new SplitStreamDecorator($eventMetadataFactory);
 ```
+### CorrelationCausationDecorator
+
+To track which event caused which other event, the `CorrelationCausationDecorator` adds
+[correlation and causation ids](correlation-causation.md) to every recorded message.
+
+```php
+use Patchlevel\EventSourcing\Message\Context\MessageContext;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\CorrelationCausationDecorator;
+
+$messageContext = new MessageContext();
+$decorator = new CorrelationCausationDecorator($messageContext);
+```
+:::note
+The same `MessageContext` instance also needs to be passed to the subscription engine and the buses, so that the ids
+can be propagated. You can find out more about [correlation and causation](correlation-causation.md).
+:::
+
+### TraceDecorator
+
+To connect asynchronous processing back to the trace which recorded the event, the `TraceDecorator` stores the current
+W3C trace context on the message. More about this on the [OpenTelemetry](opentelemetry.md) page.
+
+```php
+use Patchlevel\EventSourcing\Telemetry\TraceDecorator;
+
+$decorator = new TraceDecorator();
+```
 ### ChainMessageDecorator
 
 To use multiple decorators at the same time, you can use the `ChainMessageDecorator`.
@@ -110,4 +137,6 @@ You can also set multiple headers with `withHeaders` which expects a list of hea
 * [How to create messages](message.md)
 * [How to define events](events.md)
 * [How to configure repositories](repository.md)
+* [How to track correlation and causation](correlation-causation.md)
+* [How to trace with OpenTelemetry](opentelemetry.md)
 * [How to upcast events](upcasting.md)
