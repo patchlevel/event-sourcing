@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Message;
 
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
+use Patchlevel\EventSourcing\Store\Header\CausationIdHeader;
+use Patchlevel\EventSourcing\Store\Header\CorrelationIdHeader;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
+use Patchlevel\EventSourcing\Store\Header\TraceHeader;
 use Patchlevel\EventSourcing\Store\StreamStartHeader;
 
 use function array_flip;
@@ -85,6 +88,9 @@ final class MessageHeaderRegistry
             'eventId' => EventIdHeader::class,
             'index' => IndexHeader::class,
             'tags' => TagsHeader::class,
+            'correlationId' => CorrelationIdHeader::class,
+            'causationId' => CausationIdHeader::class,
+            'trace' => TraceHeader::class,
         ];
 
         return new self($headerNameToClassMap + $internalHeaders);

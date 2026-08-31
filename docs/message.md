@@ -54,6 +54,9 @@ The message object has some built-in headers which are used internally.
 * `PlayheadHeader` - The position of the message within its stream.
 * `RecordedOnHeader` - The date and time when the message was recorded.
 * `EventIdHeader` - The unique id of the event.
+* `CorrelationIdHeader` - The id of the business transaction the message belongs to.
+* `CausationIdHeader` - The id of the event which caused this message.
+* `TraceHeader` - The W3C trace context of the trace in which the message was recorded.
 * `IndexHeader` - The global position of the message in the store.
 * `TagsHeader` - The tags attached to the message (experimental).
 * `ArchivedHeader` - Flag if the message is archived.
@@ -429,6 +432,8 @@ $state = (new Reducer())
 ## Learn more
 
 * [How to decorate messages](message-decorator.md)
+* [How to track correlation and causation](correlation-causation.md)
+* [How to trace with OpenTelemetry](opentelemetry.md)
 * [How to load aggregates](repository.md)
 * [How to store messages](store.md)
 * [How to use subscriptions](subscription.md)
