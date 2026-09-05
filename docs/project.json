@@ -77,6 +77,14 @@
           "file": "message-decorator.md"
         },
         {
+          "title": "Correlation and Causation",
+          "file": "correlation-causation.md"
+        },
+        {
+          "title": "OpenTelemetry",
+          "file": "opentelemetry.md"
+        },
+        {
           "title": "Split Stream",
           "file": "split-stream.md"
         },

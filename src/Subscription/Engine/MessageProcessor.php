@@ -75,14 +75,7 @@ final class MessageProcessor
                 ),
             );
 
-            $event = new OnHandleMessageSuccess($subscription, $message, $index);
-            $this->eventDispatcher->dispatch($event);
-
-            if ($event->shouldChangePosition) {
-                $subscription->changePosition($index);
-            }
-
-            return null;
+            return $this->dispatchSuccess($subscription, $message, $index, $subscriber::class);
         }
 
         try {
@@ -160,16 +153,10 @@ final class MessageProcessor
             );
         }
 
-        $event = new OnHandleMessageSuccess(
-            $subscription,
-            $message,
-            $index,
-        );
+        $error = $this->dispatchSuccess($subscription, $message, $index, $subscriber::class);
 
-        $this->eventDispatcher->dispatch($event);
-
-        if ($event->shouldChangePosition) {
-            $subscription->changePosition($index);
+        if ($error instanceof Error) {
+            return $error;
         }
 
         $this->logger?->debug(
@@ -180,6 +167,63 @@ final class MessageProcessor
                 $message->event()::class,
             ),
         );
+
+        return null;
+    }
+
+    /**
+     * Dispatches the terminal event of a message.
+     *
+     * A listener which fails here must not leave the message unfinished: listeners keep
+     * state between OnHandleMessage and the terminal event, so every OnHandleMessage has
+     * to be followed by exactly one OnHandleMessageSuccess or OnHandleMessageError.
+     *
+     * @param class-string $subscriberClass
+     */
+    private function dispatchSuccess(
+        Subscription $subscription,
+        Message $message,
+        int $index,
+        string $subscriberClass,
+    ): Error|null {
+        try {
+            $event = new OnHandleMessageSuccess(
+                $subscription,
+                $message,
+                $index,
+            );
+
+            $this->eventDispatcher->dispatch($event);
+        } catch (Throwable $e) {
+            $this->logger?->error(
+                sprintf(
+                    'Subscription Engine: Subscriber "%s" for "%s" could not finish the event "%s": %s',
+                    $subscriberClass,
+                    $subscription->id(),
+                    $message->event()::class,
+                    $e->getMessage(),
+                ),
+            );
+
+            $this->eventDispatcher->dispatch(
+                new OnHandleMessageError(
+                    $subscription,
+                    $e,
+                    $message,
+                    $index,
+                ),
+            );
+
+            return new Error(
+                $subscription->id(),
+                $e->getMessage(),
+                $e,
+            );
+        }
+
+        if ($event->shouldChangePosition) {
+            $subscription->changePosition($index);
+        }
 
         return null;
     }

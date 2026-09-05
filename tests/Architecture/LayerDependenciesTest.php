@@ -42,6 +42,7 @@ final class LayerDependenciesTest
             [
                 $this->layer('Aggregate'),
                 $this->layer('Attribute'),
+                $this->layer('Message'),
                 $this->layer('Metadata\AggregateRoot'),
                 $this->layer('Repository'),
                 $this->layer('Identifier'),
@@ -233,6 +234,25 @@ final class LayerDependenciesTest
                 $this->layer('Repository'),
                 $this->layer('Schema'),
                 $this->layer('Store'),
+            ],
+        );
+    }
+
+    public function testTelemetryCanOnlyDependOnAllowedLayers(): Rule
+    {
+        return $this->layerCanOnlyDependOnAllowedLayers(
+            $this->layer('Telemetry'),
+            [
+                $this->layer('Aggregate'),
+                $this->layer('CommandBus'),
+                $this->layer('EventBus'),
+                $this->layer('Identifier'),
+                $this->layer('Message'),
+                $this->layer('Metadata\AggregateRoot'),
+                $this->layer('QueryBus'),
+                $this->layer('Repository'),
+                $this->layer('Store'),
+                $this->layer('Subscription'),
             ],
         );
     }

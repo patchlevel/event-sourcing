@@ -1,6 +1,42 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Aggregate state property "cachedAggregateRootId" should only be written in an \#\[Apply\] method, but is written in "Patchlevel\\EventSourcing\\Aggregate\\BasicAggregateRoot\:\:aggregateRootId\(\)"\.$#'
+			identifier: patchlevel.noStateWriteWhenNotApplying
+			count: 1
+			path: src/Aggregate/BasicAggregateRoot.php
+
+		-
+			message: '#^Aggregate state property "metadataFactory" should only be written in an \#\[Apply\] method, but is written in "Patchlevel\\EventSourcing\\Aggregate\\BasicAggregateRoot\:\:setMetadataFactory\(\)"\.$#'
+			identifier: patchlevel.noStateWriteWhenNotApplying
+			count: 1
+			path: src/Aggregate/BasicAggregateRoot.php
+
+		-
+			message: '#^Aggregate state property "playhead" should only be written in an \#\[Apply\] method, but is written in "Patchlevel\\EventSourcing\\Aggregate\\BasicAggregateRoot\:\:createFromEvents\(\)"\.$#'
+			identifier: patchlevel.noStateWriteWhenNotApplying
+			count: 1
+			path: src/Aggregate/BasicAggregateRoot.php
+
+		-
+			message: '#^Aggregate state property "playhead" should only be written in an \#\[Apply\] method, but is written in "Patchlevel\\EventSourcing\\Aggregate\\BasicAggregateRoot\:\:record\(\)"\.$#'
+			identifier: patchlevel.noStateWriteWhenNotApplying
+			count: 1
+			path: src/Aggregate/BasicAggregateRoot.php
+
+		-
+			message: '#^Aggregate state property "uncommittedEvents" should only be written in an \#\[Apply\] method, but is written in "Patchlevel\\EventSourcing\\Aggregate\\BasicAggregateRoot\:\:recordThat\(\)"\.$#'
+			identifier: patchlevel.noStateWriteWhenNotApplying
+			count: 1
+			path: src/Aggregate/BasicAggregateRoot.php
+
+		-
+			message: '#^Aggregate state property "uncommittedEvents" should only be written in an \#\[Apply\] method, but is written in "Patchlevel\\EventSourcing\\Aggregate\\BasicAggregateRoot\:\:releaseEvents\(\)"\.$#'
+			identifier: patchlevel.noStateWriteWhenNotApplying
+			count: 1
+			path: src/Aggregate/BasicAggregateRoot.php
+
+		-
 			message: '#^Patchlevel\\EventSourcing\\Attribute\\Processor should not depend on Patchlevel\\EventSourcing\\Subscription\\RunMode$#'
 			identifier: phpat.testAttributeCanOnlyDependOnAllowedLayers
 			count: 2
@@ -379,12 +415,6 @@ parameters:
 			path: tests/Integration/MicroAggregate/MicroAggregateIntegrationTest.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\MicroAggregate\\Profile\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Integration/MicroAggregate/Profile.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 0 and array\{array\<string, mixed\>\} will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 4
@@ -401,12 +431,6 @@ parameters:
 			identifier: argument.type
 			count: 3
 			path: tests/Integration/PersonalData/PersonalDataTest.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Integration\\Store\\Profile\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Integration/Store/Profile.php
 
 		-
 			message: '#^Parameter \#1 \$table of class Patchlevel\\EventSourcing\\Subscription\\Cleanup\\Dbal\\DropTableTask constructor expects non\-empty\-string, string given\.$#'
@@ -457,50 +481,44 @@ parameters:
 			path: tests/Unit/CommandBus/InstantRetryCommandBusTest.php
 
 		-
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\BrokenAutoInitializableProfile" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
+			count: 1
+			path: tests/Unit/Fixture/BrokenAutoInitializableProfile.php
+
+		-
 			message: '#^Parameter \#1 \$data of static method Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\Message\:\:fromArray\(\) expects array\{id\: string, text\: string, createdAt\: string\}, array\<mixed, mixed\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: tests/Unit/Fixture/MessageNormalizer.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileInvalid\:\:\$email is never read, only written\.$#'
-			identifier: property.onlyWritten
+			message: '#^Property "email" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileInvalid" is written in an \#\[Apply\] method but never read, so it is not used to check any invariants\.$#'
+			identifier: patchlevel.writeOnlyProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileInvalid.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileInvalid\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Unit/Fixture/ProfileInvalid.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\BrokenAutoInitializableProfile\:\:\$id is unused\.$#'
-			identifier: property.unused
-			count: 1
-			path: tests/Unit/Fixture/BrokenAutoInitializableProfile.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithAggregateStream\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithAggregateStream" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithAggregateStream.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyBothUsage\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyBothUsage" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithBrokenApplyBothUsage.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyIntersection\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyIntersection" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithBrokenApplyIntersection.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyMultipleApply\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyMultipleApply" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithBrokenApplyMultipleApply.php
 
@@ -511,62 +529,56 @@ parameters:
 			path: tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyNoType\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyNoType" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithBrokenApplyNoType.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyStringType\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyStringType" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithBrokenApplyStringType.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyUnionIntersection\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenApplyUnionIntersection" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithBrokenApplyUnionIntersection.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithBrokenId\:\:\$id is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: tests/Unit/Fixture/ProfileWithBrokenId.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithDuplicateApply\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithDuplicateApply" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithDuplicateApply.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithEmptyApply\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithEmptyApply" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithEmptyApply.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithHandler\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithHandler" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithHandler.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithSharedApplyContext\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithSharedApplyContext" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithSharedApplyContext.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithSuppressAll\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithSuppressAll" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithSuppressAll.php
 
 		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithoutAggregateAttribute\:\:\$id is unused\.$#'
-			identifier: property.unused
+			message: '#^Property "id" of aggregate "Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithoutAggregateAttribute" is never written in an \#\[Apply\] method and is therefore unused\.$#'
+			identifier: patchlevel.unusedProperty
 			count: 1
 			path: tests/Unit/Fixture/ProfileWithoutAggregateAttribute.php
 
