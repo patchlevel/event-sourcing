@@ -6,18 +6,19 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
-#[Projector('profile_1')]
-final class ProfileProjection implements BatchableSubscriber
+#[Projector(self::SUBSCRIBER_ID)]
+final class ProfileProjection
 {
-    use SubscriberUtil;
+    private const SUBSCRIBER_ID = 'profile_1';
 
     public function __construct(
         private Connection $connection,
@@ -55,26 +56,24 @@ final class ProfileProjection implements BatchableSubscriber
 
     private function tableName(): string
     {
-        return 'projection_' . $this->subscriberId();
+        return 'projection_' . self::SUBSCRIBER_ID;
     }
 
+    #[BatchBegin]
     public function beginBatch(): void
     {
         $this->connection->beginTransaction();
     }
 
-    public function commitBatch(): void
+    #[BatchFlush]
+    public function flush(): void
     {
         $this->connection->commit();
     }
 
+    #[BatchRollback]
     public function rollbackBatch(): void
     {
         $this->connection->rollBack();
-    }
-
-    public function forceCommit(): bool
-    {
-        return false;
     }
 }

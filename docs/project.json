@@ -53,8 +53,8 @@
       "title": "Advanced",
       "subEntries": [
         {
-          "title": "Aggregate ID",
-          "file": "aggregate-id.md"
+          "title": "Identifier",
+          "file": "identifier.md"
         },
         {
           "title": "Normalizer",
@@ -81,6 +81,10 @@
           "file": "split-stream.md"
         },
         {
+          "title": "Dynamic Consistency Boundary",
+          "file": "dynamic-consistency-boundary.md"
+        },
+        {
           "title": "Time / Clock",
           "file": "clock.md"
         },
@@ -104,11 +108,11 @@
     },
     {
       "title": "Our BC Promise",
-      "file": "our-backward-compatibility-promise.md"
+      "file": "backward-compatibility.md"
     },
     {
-      "title": "Upgrade from 2.x",
-      "file": "UPGRADE-3.0.md"
+      "title": "Upgrade from 3.x",
+      "file": "UPGRADE-4.0.md"
     }
   ]
 }

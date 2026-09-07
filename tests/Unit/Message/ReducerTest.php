@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Message;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Reducer;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
@@ -123,34 +125,25 @@ final class ReducerTest extends TestCase
                     Email::fromString('hallo@patchlevel.de'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '1',
-                    1,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-1'))
+                ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '1',
-                    2,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-1'))
+                ->withHeader(new PlayheadHeader(2))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('1'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '1',
-                    3,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-1'))
+                ->withHeader(new PlayheadHeader(3))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
 
             Message::create(
                 new ProfileCreated(
@@ -158,24 +151,18 @@ final class ReducerTest extends TestCase
                     Email::fromString('hallo@patchlevel.de'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '2',
-                    1,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-2'))
+                ->withHeader(new PlayheadHeader(1))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
 
             Message::create(
                 new ProfileVisited(
                     ProfileId::fromString('2'),
                 ),
             )
-                ->withHeader(new AggregateHeader(
-                    'profile',
-                    '2',
-                    2,
-                    new DateTimeImmutable(),
-                )),
+                ->withHeader(new StreamNameHeader('profile-2'))
+                ->withHeader(new PlayheadHeader(2))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
         ];
     }
 }

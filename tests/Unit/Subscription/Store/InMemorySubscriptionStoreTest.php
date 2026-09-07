@@ -173,4 +173,41 @@ final class InMemorySubscriptionStoreTest extends TestCase
 
         self::assertSame([], $store->find());
     }
+
+    public function testClaim(): void
+    {
+        $subscription = new Subscription('foo', status: Status::Active);
+
+        $store = new InMemorySubscriptionStore([$subscription]);
+
+        self::assertSame(
+            $subscription,
+            $store->claim('foo', new SubscriptionCriteria(status: [Status::Active])),
+        );
+    }
+
+    public function testClaimNotFound(): void
+    {
+        $store = new InMemorySubscriptionStore();
+
+        self::assertNull($store->claim('foo', new SubscriptionCriteria()));
+    }
+
+    public function testClaimCriteriaNotMatched(): void
+    {
+        $subscription = new Subscription('foo', status: Status::New);
+
+        $store = new InMemorySubscriptionStore([$subscription]);
+
+        self::assertNull($store->claim('foo', new SubscriptionCriteria(status: [Status::Active])));
+    }
+
+    public function testInLock(): void
+    {
+        $store = new InMemorySubscriptionStore();
+
+        $subscription = new Subscription('foo');
+
+        self::assertSame($subscription, $store->inLock(static fn (): Subscription => $subscription));
+    }
 }

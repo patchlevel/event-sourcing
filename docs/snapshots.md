@@ -82,10 +82,10 @@ You can define normalizers to bring the properties into the correct format.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
@@ -239,7 +239,7 @@ it can lead to data loss or broken aggregates!
 You can also load an aggregate from the snapshot store:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 
 $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');

@@ -8,7 +8,7 @@ You can also listen on events to react and perform different actions.
 An event has a name and additional information called payload.
 Such an event can be represented as any class.
 It is important that the payload can be serialized as JSON at the end.
-Later it will be explained how to ensure it for all values.
+How to ensure this for complex values is shown in the [normalizer](#normalizer) section below.
 
 To register an event you have to set the `Event` attribute over the class,
 otherwise it will not be recognized as an event.
@@ -40,7 +40,8 @@ Here are some examples:
 * `profile.created`
 * `profile.name_changed`
 * `hotel.guest_checked_out`
-  :::
+  
+:::
 
 ## Alias
 
@@ -80,7 +81,7 @@ $serializer = DefaultEventSerializer::createFromPaths(['src/Domain']);
 ```
 The serializer needs the path information where the event classes are located
 so that it can instantiate the correct classes.
-Internally, an EventRegistry is used, which will be described later.
+Internally, an EventRegistry is used, which is described in the [Event Registry](#event-registry) section below.
 
 ## Encoder
 
@@ -151,8 +152,8 @@ You can do that too. However, you must define a normalizer for this
 so that the library knows how to write this data to the database and load it again.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer;
 use Patchlevel\Hydrator\Normalizer\DateTimeImmutableNormalizer;
 

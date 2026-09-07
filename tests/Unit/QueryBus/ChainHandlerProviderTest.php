@@ -8,9 +8,10 @@ use Patchlevel\EventSourcing\QueryBus\ChainHandlerProvider;
 use Patchlevel\EventSourcing\QueryBus\HandlerDescriptor;
 use Patchlevel\EventSourcing\QueryBus\HandlerProvider;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\QueryProfile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\QueryBus\ChainHandlerProvider */
+#[CoversClass(ChainHandlerProvider::class)]
 final class ChainHandlerProviderTest extends TestCase
 {
     public function testEmpty(): void

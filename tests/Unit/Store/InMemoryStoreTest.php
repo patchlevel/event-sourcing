@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
 use DateTimeImmutable;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
+use Patchlevel\EventSourcing\Store\AppendCondition;
+use Patchlevel\EventSourcing\Store\AppendConditionNotMet;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
@@ -23,8 +22,11 @@ use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Store\MissingEventRegistry;
+use Patchlevel\EventSourcing\Store\Query;
+use Patchlevel\EventSourcing\Store\SubQuery;
 use Patchlevel\EventSourcing\Store\UnsupportedCriterion;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -65,61 +67,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame($expected, $messages);
-    }
-
-    public function testLoadByAggregateId(): void
-    {
-        $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new AggregateHeader('profile', '1', 1, new DateTimeImmutable()))
-            ->withHeader(new EventIdHeader('019aa600-56ef-7ca3-b92a-37c53851e2c2'))
-            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
-            ->withHeader(new IndexHeader(1));
-        $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new AggregateHeader('profile', '2', 1, new DateTimeImmutable()))
-            ->withHeader(new EventIdHeader('019aa600-8834-752a-ae2e-d8650e84f403'))
-            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
-            ->withHeader(new IndexHeader(2));
-        $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
-            ->withHeader(new EventIdHeader('019aa604-94b8-7182-b1dc-f5d4aa9652ca'))
-            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
-            ->withHeader(new IndexHeader(3));
-
-        $store = new InMemoryStore([$message1, $message2, $message3]);
-
-        $stream = $store->load(new Criteria(new AggregateIdCriterion('2')));
-
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2], $messages);
-    }
-
-    public function testLoadByAggregateName(): void
-    {
-        $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new AggregateHeader('foo', '1', 1, new DateTimeImmutable()))
-            ->withHeader(new EventIdHeader('019aa600-56ef-7ca3-b92a-37c53851e2c2'))
-            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
-            ->withHeader(new IndexHeader(1));
-        $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new AggregateHeader('bar', '2', 1, new DateTimeImmutable()))
-            ->withHeader(new EventIdHeader('019aa600-8834-752a-ae2e-d8650e84f403'))
-            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
-            ->withHeader(new IndexHeader(2));
-        $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
-            ->withHeader(new EventIdHeader('019aa604-94b8-7182-b1dc-f5d4aa9652ca'))
-            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
-            ->withHeader(new IndexHeader(3));
-
-        $store = new InMemoryStore([$message1, $message2, $message3]);
-
-        $stream = $store->load(new Criteria(new AggregateNameCriterion('bar')));
-
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2], $messages);
+        self::assertSame($expected, $stream->toList());
     }
 
     public function testLoadByStreamName(): void
@@ -143,9 +91,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new StreamCriterion('bar')));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2], $messages);
+        self::assertSame([$message2], $stream->toList());
     }
 
     public function testLoadByStreamNameWithLike(): void
@@ -170,20 +116,18 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new StreamCriterion('bar-*')));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2, $message3], $messages);
+        self::assertSame([$message2, $message3], $stream->toList());
     }
 
     public function testLoadFromPlayhead(): void
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new AggregateHeader('foo', '1', 1, new DateTimeImmutable()))
+            ->withHeader(new PlayheadHeader(1))
             ->withHeader(new EventIdHeader('019aa600-56ef-7ca3-b92a-37c53851e2c2'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
             ->withHeader(new IndexHeader(1));
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new AggregateHeader('foo', '1', 2, new DateTimeImmutable()))
+            ->withHeader(new PlayheadHeader(2))
             ->withHeader(new EventIdHeader('019aa600-8834-752a-ae2e-d8650e84f403'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
             ->withHeader(new IndexHeader(2));
@@ -202,20 +146,18 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new FromPlayheadCriterion(2)));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2, $message3], $messages);
+        self::assertSame([$message2, $message3], $stream->toList());
     }
 
     public function testLoadFromIndex(): void
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new AggregateHeader('foo', '1', 1, new DateTimeImmutable()))
+            ->withHeader(new PlayheadHeader(1))
             ->withHeader(new EventIdHeader('019aa600-56ef-7ca3-b92a-37c53851e2c2'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
             ->withHeader(new IndexHeader(1));
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new AggregateHeader('foo', '1', 2, new DateTimeImmutable()))
+            ->withHeader(new PlayheadHeader(2))
             ->withHeader(new EventIdHeader('019aa600-8834-752a-ae2e-d8650e84f403'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
             ->withHeader(new IndexHeader(2));
@@ -234,7 +176,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new FromIndexCriterion(2)));
 
-        $messages = iterator_to_array($stream);
+        $messages = $stream->toList();
 
         self::assertCount(2, $messages);
         self::assertSame(
@@ -255,12 +197,14 @@ final class InMemoryStoreTest extends TestCase
     public function testLoadToIndex(): void
     {
         $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
-            ->withHeader(new AggregateHeader('foo', '1', 1, new DateTimeImmutable()))
+            ->withHeader(new StreamNameHeader('foo-1'))
+            ->withHeader(new PlayheadHeader(1))
             ->withHeader(new EventIdHeader('019aa600-56ef-7ca3-b92a-37c53851e2c2'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
             ->withHeader(new IndexHeader(1));
         $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
-            ->withHeader(new AggregateHeader('foo', '1', 2, new DateTimeImmutable()))
+            ->withHeader(new StreamNameHeader('foo-1'))
+            ->withHeader(new PlayheadHeader(2))
             ->withHeader(new EventIdHeader('019aa600-8834-752a-ae2e-d8650e84f403'))
             ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
             ->withHeader(new IndexHeader(2));
@@ -279,20 +223,20 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new ToIndexCriterion(3)));
 
-        $messages = iterator_to_array($stream);
+        $messages = $stream->toList();
 
         self::assertCount(2, $messages);
         self::assertSame(
-            $message1->header(AggregateHeader::class)->playhead,
-            $messages[0]->header(AggregateHeader::class)->playhead,
+            $message1->header(PlayheadHeader::class)->playhead,
+            $messages[0]->header(PlayheadHeader::class)->playhead,
         );
         self::assertSame(
             1,
             $messages[0]->header(IndexHeader::class)->index,
         );
         self::assertSame(
-            $message2->header(AggregateHeader::class)->playhead,
-            $messages[1]->header(AggregateHeader::class)->playhead,
+            $message2->header(PlayheadHeader::class)->playhead,
+            $messages[1]->header(PlayheadHeader::class)->playhead,
         );
         self::assertSame(
             2,
@@ -322,9 +266,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new StreamCriterion('*')));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message1, $message2, $message3], $messages);
+        self::assertSame([$message1, $message2, $message3], $stream->toList());
     }
 
     public function testLoadArchived(): void
@@ -343,9 +285,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(new Criteria(new ArchivedCriterion(true)));
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message1], $messages);
+        self::assertSame([$message1], $stream->toList());
     }
 
     public function testLoadByEventName(): void
@@ -374,15 +314,13 @@ final class InMemoryStoreTest extends TestCase
         );
 
         $stream = $store->load(new Criteria(new EventsCriterion(['profile_created'])));
-        $messages = iterator_to_array($stream);
 
-        self::assertSame([$message1], $messages);
+        self::assertSame([$message1], $stream->toList());
 
         $stream = $store->load(new Criteria(new EventsCriterion(['profile_visited'])));
-        $messages = iterator_to_array($stream);
 
-        self::assertSame([$message2, $message3], $messages);
-        self::assertSame([], iterator_to_array($store->load(new Criteria(new EventsCriterion(['profile_deleted'])))));
+        self::assertSame([$message2, $message3], $stream->toList());
+        self::assertSame([], $store->load(new Criteria(new EventsCriterion(['profile_deleted'])))->toList());
     }
 
     public function testLoadByEventNameWithoutRegistry(): void
@@ -441,9 +379,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(null, 1);
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message1], $messages);
+        self::assertSame([$message1], $stream->toList());
     }
 
     public function testLoadOffset(): void
@@ -461,9 +397,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(null, null, 1);
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2], $messages);
+        self::assertSame([$message2], $stream->toList());
     }
 
     public function testLoadBackwards(): void
@@ -481,9 +415,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load(null, null, null, true);
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([$message2, $message1], $messages);
+        self::assertSame([$message2, $message1], $stream->toList());
     }
 
     public function testCount(): void
@@ -522,9 +454,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame($expected, $messages);
+        self::assertSame($expected, $stream->toList());
     }
 
     public function testSaveWithExistingMessages(): void
@@ -551,9 +481,7 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
-
-        self::assertSame([...$startMessages, $message1], $messages);
+        self::assertSame([...$startMessages, $message1], $stream->toList());
     }
 
     public function testSaveWithoutHeaders(): void
@@ -562,7 +490,7 @@ final class InMemoryStoreTest extends TestCase
         $store->save(new Message(new ProfileVisited(ProfileId::fromString('1'))));
 
         $stream = $store->load();
-        $messages = iterator_to_array($stream);
+        $messages = $stream->toList();
 
         self::assertCount(2, $messages);
 
@@ -628,9 +556,36 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
+        self::assertSame([$message1, $message4], $stream->toList());
+    }
 
-        self::assertSame([$message1, $message4], $messages);
+    public function testArchive(): void
+    {
+        $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new EventIdHeader('019aa600-56ef-7ca3-b92a-37c53851e2c2'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
+            ->withHeader(new IndexHeader(1));
+        $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
+            ->withHeader(new StreamNameHeader('bar'))
+            ->withHeader(new EventIdHeader('019aa600-8834-752a-ae2e-d8650e84f403'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
+            ->withHeader(new IndexHeader(2));
+
+        $store = new InMemoryStore([$message1, $message2]);
+
+        $store->archive(new Criteria(new StreamCriterion('bar')));
+
+        $messages = $store->load()->toList();
+
+        self::assertCount(2, $messages);
+        self::assertFalse($messages[0]->hasHeader(ArchivedHeader::class));
+        self::assertTrue($messages[1]->hasHeader(ArchivedHeader::class));
+
+        $archivedMessages = $store->load(new Criteria(new ArchivedCriterion(true)))->toList();
+
+        self::assertCount(1, $archivedMessages);
+        self::assertSame('bar', $archivedMessages[0]->header(StreamNameHeader::class)->streamName);
     }
 
     public function testTransactional(): void
@@ -711,8 +666,179 @@ final class InMemoryStoreTest extends TestCase
 
         $stream = $store->load();
 
-        $messages = iterator_to_array($stream);
+        self::assertSame([], $stream->toList());
+    }
 
-        self::assertSame([], $messages);
+    public function testQueryByTag(): void
+    {
+        $message1 = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+        $message2 = $this->message(new ProfileVisited(ProfileId::fromString('2')), 2, ['profile-2']);
+
+        $store = new InMemoryStore([$message1, $message2]);
+
+        $stream = $store->query(new Query(new SubQuery(['profile-1'])));
+
+        self::assertSame([$message1], $stream->toList());
+    }
+
+    public function testQueryByEventClass(): void
+    {
+        $message1 = $this->message(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('a')), 1);
+        $message2 = $this->message(new ProfileVisited(ProfileId::fromString('1')), 2);
+
+        $store = new InMemoryStore([$message1, $message2]);
+
+        $stream = $store->query(new Query(new SubQuery(events: [ProfileVisited::class])));
+
+        self::assertSame([$message2], $stream->toList());
+    }
+
+    public function testQueryUnionOfSubQueriesKeepsIndexOrder(): void
+    {
+        $message1 = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+        $message2 = $this->message(new ProfileVisited(ProfileId::fromString('2')), 2, ['profile-2']);
+        $message3 = $this->message(new ProfileVisited(ProfileId::fromString('3')), 3, ['profile-1']);
+
+        $store = new InMemoryStore([$message1, $message2, $message3]);
+
+        $stream = $store->query(new Query(
+            new SubQuery(['profile-2']),
+            new SubQuery(['profile-1']),
+        ));
+
+        self::assertSame([$message1, $message2, $message3], $stream->toList());
+    }
+
+    public function testQueryWithoutSubQueriesReturnsEverything(): void
+    {
+        $message1 = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1);
+        $message2 = $this->message(new ProfileVisited(ProfileId::fromString('2')), 2);
+
+        $store = new InMemoryStore([$message1, $message2]);
+
+        $stream = $store->query(new Query());
+
+        self::assertSame([$message1, $message2], $stream->toList());
+    }
+
+    public function testQueryOnlyLastEvent(): void
+    {
+        $message1 = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+        $message2 = $this->message(new ProfileVisited(ProfileId::fromString('2')), 2, ['profile-1']);
+
+        $store = new InMemoryStore([$message1, $message2]);
+
+        $stream = $store->query(new Query(new SubQuery(['profile-1'], onlyLastEvent: true)));
+
+        self::assertSame([$message2], $stream->toList());
+    }
+
+    public function testAppendAssignsIndex(): void
+    {
+        $store = new InMemoryStore();
+
+        $store->append([
+            (new Message(new ProfileVisited(ProfileId::fromString('1'))))
+                ->withHeader(new StreamNameHeader('foo')),
+        ]);
+
+        $messages = iterator_to_array($store->load());
+
+        self::assertCount(1, $messages);
+        self::assertSame(1, $messages[1]->header(IndexHeader::class)->index);
+    }
+
+    public function testAppendWithConditionMet(): void
+    {
+        $existing = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+
+        $store = new InMemoryStore([$existing]);
+
+        $store->append(
+            [
+                (new Message(new ProfileVisited(ProfileId::fromString('2'))))
+                    ->withHeader(new TagsHeader(['profile-1'])),
+            ],
+            new AppendCondition(new Query(new SubQuery(['profile-1'])), 1),
+        );
+
+        self::assertCount(2, iterator_to_array($store->load()));
+    }
+
+    public function testAppendWithConditionNotMet(): void
+    {
+        $existing = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+
+        $store = new InMemoryStore([$existing]);
+
+        try {
+            $store->append(
+                [
+                    (new Message(new ProfileVisited(ProfileId::fromString('2'))))
+                        ->withHeader(new TagsHeader(['profile-1'])),
+                ],
+                new AppendCondition(new Query(new SubQuery(['profile-1'])), 0),
+            );
+
+            self::fail('Expected AppendConditionNotMet to be thrown');
+        } catch (AppendConditionNotMet) {
+        }
+
+        self::assertCount(1, iterator_to_array($store->load()));
+    }
+
+    public function testAppendWithConditionRejectsEntireBatch(): void
+    {
+        $existing = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+
+        $store = new InMemoryStore([$existing]);
+
+        try {
+            $store->append(
+                [
+                    new Message(new ProfileVisited(ProfileId::fromString('2'))),
+                    new Message(new ProfileVisited(ProfileId::fromString('3'))),
+                ],
+                new AppendCondition(new Query(new SubQuery(['profile-1'])), 0),
+            );
+
+            self::fail('Expected AppendConditionNotMet to be thrown');
+        } catch (AppendConditionNotMet) {
+        }
+
+        self::assertCount(1, iterator_to_array($store->load()));
+    }
+
+    public function testAppendWithZeroSequenceConditionMet(): void
+    {
+        $store = new InMemoryStore();
+
+        $store->append(
+            [
+                (new Message(new ProfileVisited(ProfileId::fromString('1'))))
+                    ->withHeader(new TagsHeader(['profile-9'])),
+            ],
+            new AppendCondition(new Query(new SubQuery(['profile-9'])), 0),
+        );
+
+        self::assertCount(1, iterator_to_array($store->load()));
+    }
+
+    /**
+     * @param positive-int $index
+     * @param list<string> $tags
+     */
+    private function message(object $event, int $index, array $tags = []): Message
+    {
+        $message = (new Message($event))
+            ->withHeader(new EventIdHeader('019aa600-56ef-7ca3-b92a-37c53851e2c2'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new IndexHeader($index));
+
+        if ($tags !== []) {
+            $message = $message->withHeader(new TagsHeader($tags));
+        }
+
+        return $message;
     }
 }

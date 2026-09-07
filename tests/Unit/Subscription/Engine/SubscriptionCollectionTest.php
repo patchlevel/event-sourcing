@@ -18,7 +18,7 @@ final class SubscriptionCollectionTest extends TestCase
 
         self::assertCount(0, $collection);
         self::assertEquals([], iterator_to_array($collection));
-        self::assertEquals(0, $collection->lowestPosition());
+        self::assertSame(null, $collection->lowestPosition());
     }
 
     public function testSomeSubscription(): void
@@ -30,7 +30,7 @@ final class SubscriptionCollectionTest extends TestCase
 
         self::assertCount(2, $collection);
         self::assertEquals([$subscription1, $subscription2], iterator_to_array($collection));
-        self::assertEquals(5, $collection->lowestPosition());
+        self::assertSame(5, $collection->lowestPosition());
     }
 
     public function testRemove(): void
@@ -43,6 +43,26 @@ final class SubscriptionCollectionTest extends TestCase
 
         self::assertCount(1, $collection);
         self::assertEquals([$subscription2], iterator_to_array($collection));
-        self::assertEquals(10, $collection->lowestPosition());
+        self::assertSame(10, $collection->lowestPosition());
+    }
+
+    public function testNullPositionStaysNullAsLowestPosition(): void
+    {
+        $subscription1 = new Subscription('foo', position: null);
+        $subscription2 = new Subscription('bar', position: 10);
+
+        $collection = new SubscriptionCollection([$subscription1, $subscription2]);
+
+        self::assertSame(null, $collection->lowestPosition());
+    }
+
+    public function testToArray(): void
+    {
+        $subscription1 = new Subscription('foo', position: 5);
+        $subscription2 = new Subscription('bar', position: 10);
+
+        $collection = new SubscriptionCollection([$subscription1, $subscription2]);
+
+        self::assertSame([$subscription1, $subscription2], $collection->toArray());
     }
 }

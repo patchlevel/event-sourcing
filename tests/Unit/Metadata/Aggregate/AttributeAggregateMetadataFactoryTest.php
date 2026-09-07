@@ -4,21 +4,34 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Aggregate;
 
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootIdNotFound;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\ArgumentTypeIsMissing;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\ArgumentTypeIsNotAClass;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootMetadataFactory;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\ClassIsNotAnAggregate;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateApplyMethod;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\DuplicateEmptyApplyAttribute;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\MixedApplyAttributeUsage;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\Snapshot;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\AutoInitializableProfile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\MessageDeleted;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\NameChanged;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithAggregateStream;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyBothUsage;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyIntersection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyMultipleApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyNoType;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyStringType;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithBrokenApplyUnionIntersection;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithDuplicateApply;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithEmptyApply;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithoutAggregateAttribute;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithoutId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSharedApplyContext;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSnapshot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithStream;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileWithSuppressAll;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
@@ -69,7 +82,7 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
         self::assertSame([], $metadata->suppressEvents);
     }
 
-    public function streamName(): void
+    public function testStreamName(): void
     {
         $metadataFactory = new AttributeAggregateRootMetadataFactory();
         $metadata = $metadataFactory->metadata(ProfileWithStream::class);
@@ -92,6 +105,14 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
         $this->expectException(ArgumentTypeIsMissing::class);
 
         $metadataFactory->metadata(ProfileWithBrokenApplyIntersection::class);
+    }
+
+    public function testBrokenApplyWithUnionIntersectionType(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+        $this->expectException(ArgumentTypeIsMissing::class);
+
+        $metadataFactory->metadata(ProfileWithBrokenApplyUnionIntersection::class);
     }
 
     public function testBrokenApplyWithMultipleApply(): void
@@ -126,5 +147,83 @@ final class AttributeAggregateMetadataFactoryTest extends TestCase
 
         self::assertFalse($metadata->suppressAll);
         self::assertSame([ProfileCreated::class => true], $metadata->suppressEvents);
+    }
+
+    public function testMetadataCache(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+
+        self::assertSame(
+            $metadataFactory->metadata(Profile::class),
+            $metadataFactory->metadata(Profile::class),
+        );
+    }
+
+    public function testNotAnAggregate(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+
+        $this->expectException(ClassIsNotAnAggregate::class);
+
+        $metadataFactory->metadata(ProfileWithoutAggregateAttribute::class);
+    }
+
+    public function testAggregateRootIdNotFound(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+
+        $this->expectException(AggregateRootIdNotFound::class);
+
+        $metadataFactory->metadata(ProfileWithoutId::class);
+    }
+
+    public function testSnapshot(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+        $metadata = $metadataFactory->metadata(ProfileWithSnapshot::class);
+
+        self::assertEquals(new Snapshot('memory', 2, '1'), $metadata->snapshot);
+    }
+
+    public function testStreamNameFromString(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+        $metadata = $metadataFactory->metadata(ProfileWithStream::class);
+
+        self::assertSame('other-{id}', $metadata->streamName);
+    }
+
+    public function testStreamNameFromAggregateClass(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+        $metadata = $metadataFactory->metadata(ProfileWithAggregateStream::class);
+
+        self::assertSame('profile-{id}', $metadata->streamName);
+    }
+
+    public function testAutoInitializeMethod(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+        $metadata = $metadataFactory->metadata(AutoInitializableProfile::class);
+
+        self::assertSame('initialize', $metadata->autoInitializeMethod);
+    }
+
+    public function testApplyWithNotAClassType(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+
+        $this->expectException(ArgumentTypeIsNotAClass::class);
+
+        $metadataFactory->metadata(ProfileWithBrokenApplyStringType::class);
+    }
+
+    public function testDuplicateApplyMethod(): void
+    {
+        $metadataFactory = new AttributeAggregateRootMetadataFactory();
+
+        $this->expectException(DuplicateApplyMethod::class);
+
+        $metadataFactory->metadata(ProfileWithDuplicateApply::class);
     }
 }

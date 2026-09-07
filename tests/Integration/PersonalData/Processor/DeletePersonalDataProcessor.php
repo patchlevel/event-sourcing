@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData\Processor;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\PersonalDataRemoved;
 use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
 
@@ -20,10 +18,8 @@ final class DeletePersonalDataProcessor
     }
 
     #[Subscribe(PersonalDataRemoved::class)]
-    public function handleProfileCreated(Message $message): void
+    public function handleProfileCreated(PersonalDataRemoved $event): void
     {
-        $aggregateId = $message->header(AggregateHeader::class)->aggregateId;
-
-        $this->cipherKeyStore->remove($aggregateId);
+        $this->cipherKeyStore->remove($event->profileId->toString());
     }
 }

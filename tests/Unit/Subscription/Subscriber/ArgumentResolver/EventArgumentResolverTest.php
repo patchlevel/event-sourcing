@@ -6,12 +6,16 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentRe
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\TypeInfo\Type;
 
 #[CoversClass(EventArgumentResolver::class)]
 final class EventArgumentResolverTest extends TestCase
@@ -22,15 +26,34 @@ final class EventArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileCreated::class, false),
+                new ArgumentMetadata('foo', Type::object(ProfileCreated::class)),
                 ProfileCreated::class,
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', ProfileVisited::class, false),
+                new ArgumentMetadata('foo', Type::object(ProfileVisited::class)),
                 ProfileCreated::class,
+            ),
+        );
+    }
+
+    public function testSupportUnionType(): void
+    {
+        $resolver = new EventArgumentResolver();
+
+        self::assertTrue(
+            $resolver->support(
+                new ArgumentMetadata('foo', Type::union(Type::object(ProfileCreated::class), Type::object(ProfileVisited::class))),
+                ProfileCreated::class,
+            ),
+        );
+
+        self::assertTrue(
+            $resolver->support(
+                new ArgumentMetadata('foo', Type::union(Type::object(ProfileCreated::class), Type::object(ProfileVisited::class))),
+                ProfileVisited::class,
             ),
         );
     }
@@ -45,8 +68,8 @@ final class EventArgumentResolverTest extends TestCase
         self::assertSame(
             $event,
             $resolver->resolve(
-                new ArgumentMetadata('foo', ProfileVisited::class, false),
-                $message,
+                new ArgumentMetadata('foo', Type::object(ProfileVisited::class)),
+                new ArgumentResolverContext($message, new Subscription('foo'), new SubscriberMetadata('foo')),
             ),
         );
     }

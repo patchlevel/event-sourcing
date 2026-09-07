@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription;
 
+use Closure;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
@@ -45,6 +46,23 @@ final class DummySubscriptionStore implements SubscriptionStore
     public function find(SubscriptionCriteria|null $criteria = null): array
     {
         return $this->parentStore->find($criteria);
+    }
+
+    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null
+    {
+        return $this->parentStore->claim($id, $criteria);
+    }
+
+    /**
+     * @param Closure():T $closure
+     *
+     * @return T
+     *
+     * @template T
+     */
+    public function inLock(Closure $closure): mixed
+    {
+        return $this->parentStore->inLock($closure);
     }
 
     public function add(Subscription $subscription): void

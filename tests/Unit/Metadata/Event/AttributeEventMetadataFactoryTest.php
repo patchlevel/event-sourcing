@@ -51,4 +51,18 @@ final class AttributeEventMetadataFactoryTest extends TestCase
         self::assertSame('profile_created', $metadata->name);
         self::assertSame(true, $metadata->splitStream);
     }
+
+    public function testMetadataCache(): void
+    {
+        $event = new #[Event('profile_created')]
+        class {
+        };
+
+        $metadataFactory = new AttributeEventMetadataFactory();
+
+        self::assertSame(
+            $metadataFactory->metadata($event::class),
+            $metadataFactory->metadata($event::class),
+        );
+    }
 }

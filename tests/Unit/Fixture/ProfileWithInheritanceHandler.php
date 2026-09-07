@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Fixture;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Handle;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 
 #[Aggregate('profile-inheritance')]
 final class ProfileWithInheritanceHandler extends BasicAggregateRoot
@@ -26,7 +26,7 @@ final class ProfileWithInheritanceHandler extends BasicAggregateRoot
     {
     }
 
-    public function aggregateRootId(): AggregateRootId
+    public function aggregateRootId(): Identifier
     {
         return ProfileId::fromString($this->id);
     }

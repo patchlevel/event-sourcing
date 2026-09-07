@@ -24,9 +24,9 @@ To make it easy to register with a name, we also add the `Aggregate` attribute. 
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -49,7 +49,7 @@ The aggregate is not yet finished and has only been built to the point that you 
 :::
 
 :::tip
-Find out more about [aggregate IDs](aggregate-id.md).
+Find out more about [aggregate IDs](identifier.md).
 :::
 
 We use a so-called named constructor here to create an object of the AggregateRoot.
@@ -94,8 +94,8 @@ For our aggregate we create the Event `ProfileRegistered` with an ID and a name.
 We also give the event a unique name using the `Event` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Event('profile.registered')]
 final class ProfileRegistered
@@ -115,10 +115,10 @@ After we have defined the event, we have to adapt the profile aggregate:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -190,10 +190,10 @@ This method then creates the event `NameChanged` and records it:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -397,10 +397,6 @@ You need to define the `SharedApplyContext` attribute on all aggregates that sha
 
 ## Stream Name
 
-:::warning
-The `stream name` works only with the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore).
-:::
-
 The stream name is the name of the stream in the event store.
 By default, the stream name has the format `aggregateName-aggregateId`.
 But you can also define your own stream name with the `Stream` attribute.
@@ -507,10 +503,10 @@ We can now use the value object `Name` in our aggregate:
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -628,9 +624,9 @@ But you can pass this information by yourself.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -655,9 +651,9 @@ But if you still want to make sure that the time is "now" and not in the past or
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Psr\Clock\ClockInterface;
 
 #[Aggregate('profile')]
@@ -690,13 +686,9 @@ You can find out more about the [clock](clock.md).
 
 In some cases, it makes sense to split an aggregate into several smaller aggregates.
 This can be the case if the aggregate becomes too large or if the aggregate is used in different contexts.
-We currently support two patterns for this: Micro Aggregates and Child Aggregates (experimental).
+For these cases you can use Micro Aggregates.
 
 ### Micro Aggregates
-
-:::warning
-This feature works only with the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore).
-:::
 
 Micro Aggregates are a pattern to split an aggregate into several smaller aggregates.
 Each of these aggregates is saved in the same stream.
@@ -708,11 +700,11 @@ The order handle the order itself and the shipping handle the shipping of the or
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('order')]
 #[SharedApplyContext([Shipping::class])]
@@ -741,12 +733,12 @@ In this case, the `Shipping` aggregate listens to the `OrderCreated` event to in
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
 use Patchlevel\EventSourcing\Attribute\Stream;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('shipping')]
 #[Stream(Order::class)]
@@ -782,100 +774,10 @@ final class Shipping extends BasicAggregateRoot
 }
 ```
 :::tip
-With the [SharedApplyContext](aggregate.md#shared-apply-context) attribute,
-you can suppress missing applies for events that are handled by other aggregates.
+With the [SharedApplyContext](./aggregate.md#shared-apply-context) attribute,
+you can suppress missing applies for events that are handled by other aggregates
 :::
 
-### Child Aggregates
-
-:::experimental
-This feature is still experimental and may change in the future.
-Use it with caution.
-:::
-
-Another way to split an aggregate is to use child aggregates.
-The difference to Micro Aggregates, child aggregates can only be accessed by the root aggregate
-and are not separate aggregates.
-
-In the following example, we have an `Order` aggregate that has a `Shipping` child aggregate.
-
-```php
-use Patchlevel\EventSourcing\Aggregate\BasicChildAggregate;
-use Patchlevel\EventSourcing\Attribute\Apply;
-
-final class Shipping extends BasicChildAggregate
-{
-    private bool $arrived = false;
-
-    public function __construct(
-        private string $trackingId,
-    ) {
-    }
-
-    public function arrive(): void
-    {
-        $this->recordThat(new Arrived());
-    }
-
-    #[Apply]
-    public function applyArrived(Arrived $event): void
-    {
-        $this->arrived = true;
-    }
-
-    public function isArrived(): bool
-    {
-        return $this->arrived;
-    }
-}
-```
-:::warning
-The apply method must be public, otherwise the root aggregate cannot call it.
-:::
-
-:::note
-Suppressing missing apply methods needs to be defined in the root aggregate.
-:::
-
-And the `Order` aggregate root looks like this:
-
-```php
-use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
-use Patchlevel\EventSourcing\Attribute\Aggregate;
-use Patchlevel\EventSourcing\Attribute\Apply;
-use Patchlevel\EventSourcing\Attribute\ChildAggregate;
-use Patchlevel\EventSourcing\Attribute\Id;
-
-#[Aggregate('order')]
-final class Order extends BasicAggregateRoot
-{
-    #[Id]
-    private Uuid $id;
-
-    #[ChildAggregate]
-    private Shipping $shipping;
-
-    public static function create(Uuid $id, string $trackingId): static
-    {
-        $self = new static();
-        $self->recordThat(new OrderCreated($id, $trackingId));
-
-        return $self;
-    }
-
-    #[Apply]
-    public function applyOrderCreated(OrderCreated $event): void
-    {
-        $this->shipping = new Shipping($event->trackingId);
-    }
-
-    public function arrive(): void
-    {
-        $this->shipping->arrive();
-    }
-}
-```
 ## Auto Initialize
 
 :::experimental
@@ -890,11 +792,11 @@ The method must be static, receives the aggregate ID as an argument and must ret
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\AutoInitialize;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 final class Profile extends BasicAggregateRoot
@@ -951,7 +853,7 @@ in a [metadata cache](metadata-cache.md).
 
 ## Learn more
 
-* [How to create own aggregate id](aggregate-id.md)
+* [How to create own aggregate id](identifier.md)
 * [How to store and load aggregates](repository.md)
 * [How to snapshot aggregates](snapshots.md)
 * [How to create Projections](subscription.md)

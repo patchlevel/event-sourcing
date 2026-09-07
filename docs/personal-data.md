@@ -26,7 +26,7 @@ In order for the correct key to be used, a subject ID must be defined.
 Without Subject Id, no personal data can be encrypted or decrypted.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\Hydrator\Attribute\DataSubjectId;
 
 final class EmailChanged
@@ -48,7 +48,7 @@ You can use the `DataSubjectId` in aggregates for snapshots too.
 Next, you have to mark the properties that should be encrypted with the `#[PersonalData]` attribute.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\Hydrator\Attribute\DataSubjectId;
 use Patchlevel\Hydrator\Attribute\PersonalData;
 
@@ -72,8 +72,6 @@ The default fallback value is `null`.
 You can change this by setting the `fallback` parameter or using the `fallbackCallable` parameter.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
-use Patchlevel\Hydrator\Attribute\DataSubjectId;
 use Patchlevel\Hydrator\Attribute\PersonalData;
 
 final class ProfileChanged

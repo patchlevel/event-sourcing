@@ -8,7 +8,6 @@ use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\AutoInitialize;
-use Patchlevel\EventSourcing\Attribute\ChildAggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\SharedApplyContext;
 use Patchlevel\EventSourcing\Attribute\Snapshot as AttributeSnapshot;
@@ -19,7 +18,6 @@ use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionUnionType;
-use RuntimeException;
 
 use function array_key_exists;
 use function array_map;
@@ -49,9 +47,8 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
 
         $aggregateName = $this->findAggregateName($reflectionClass);
         $idProperty = $this->findIdProperty($reflectionClass);
-        $childAggregates = $this->findChildAggregates($reflectionClass);
         [$suppressEvents, $suppressAll] = $this->findSuppressMissingApply($reflectionClass);
-        $applyMethods = $this->findApplyMethods($reflectionClass, $aggregate, $childAggregates);
+        $applyMethods = $this->findApplyMethods($reflectionClass, $aggregate);
         $snapshot = $this->findSnapshot($reflectionClass);
         $autoInitializeMethod = $this->findAutoInitializeMethod($reflectionClass);
 
@@ -63,7 +60,6 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             $suppressEvents,
             $suppressAll,
             $snapshot,
-            array_map(static fn (array $list) => $list[0], $childAggregates),
             $this->findStreamName($reflectionClass),
             $autoInitializeMethod,
         );
@@ -100,11 +96,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             foreach ($instance->aggregates as $aggregateClass) {
                 $reflectionClass = new ReflectionClass($aggregateClass);
 
-                $applyMethods = $this->findApplyMethods(
-                    $reflectionClass,
-                    $aggregateClass,
-                    $this->findChildAggregates($reflectionClass),
-                );
+                $applyMethods = $this->findApplyMethods($reflectionClass, $aggregateClass);
 
                 foreach ($applyMethods as $eventClass => $method) {
                     $suppressEvents[$eventClass] = true;
@@ -123,9 +115,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             throw new ClassIsNotAnAggregate($reflector->getName());
         }
 
-        $aggregateAttribute = $attributeReflectionList[0]->newInstance();
-
-        return $aggregateAttribute->name;
+        return $attributeReflectionList[0]->newInstance()->name;
     }
 
     private function findIdProperty(ReflectionClass $reflector): string
@@ -192,60 +182,17 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
         return null;
     }
 
-    /** @return list<array{string, ReflectionClass}> */
-    private function findChildAggregates(ReflectionClass $reflector): array
-    {
-        $properties = $reflector->getProperties();
-        $childAggregates = [];
-
-        foreach ($properties as $property) {
-            $attributes = $property->getAttributes(ChildAggregate::class);
-
-            if ($attributes === []) {
-                continue;
-            }
-
-            $reflectionType = $property->getType();
-
-            if (!$reflectionType instanceof ReflectionNamedType) {
-                throw new RuntimeException('no intersection / union supported');
-            }
-
-            if (!is_a($reflectionType->getName(), \Patchlevel\EventSourcing\Aggregate\ChildAggregate::class, true)) {
-                throw new RuntimeException('no child');
-            }
-
-            $childAggregates[] = [$property->getName(), new ReflectionClass($reflectionType->getName())];
-        }
-
-        return $childAggregates;
-    }
-
     /**
-     * @param class-string<AggregateRoot>          $aggregate
-     * @param list<array{string, ReflectionClass}> $childAggregates
+     * @param class-string<AggregateRoot> $aggregate
      *
      * @return array<class-string, string>
      */
-    private function findApplyMethods(ReflectionClass $reflector, string $aggregate, array $childAggregates): array
+    private function findApplyMethods(ReflectionClass $reflector, string $aggregate): array
     {
         $applyMethods = [];
 
-        /** @var list<array{string, ReflectionMethod}> $methodList */
-        $methodList = [];
-
-        foreach ($reflector->getMethods() as $method) {
-            $methodList[] = [$method->getName(), $method];
-        }
-
-        foreach ($childAggregates as [$propertyName, $childReflector]) {
-            foreach ($childReflector->getMethods() as $method) {
-                $methodList[] = [$propertyName . '.' . $method->getName(), $method];
-            }
-        }
-
         // process apply methods
-        foreach ($methodList as [$path, $method]) {
+        foreach ($reflector->getMethods() as $method) {
             $attributes = $method->getAttributes(Apply::class);
 
             if ($attributes === []) {
@@ -268,7 +215,7 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                 }
 
                 if ($hasOneEmptyApply) {
-                    throw new DuplicateEmptyApplyAttribute($path);
+                    throw new DuplicateEmptyApplyAttribute($method->getName());
                 }
 
                 $hasOneEmptyApply = true;
@@ -276,12 +223,12 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
             }
 
             if ($hasOneEmptyApply && $hasOneNonEmptyApply) {
-                throw new MixedApplyAttributeUsage($path);
+                throw new MixedApplyAttributeUsage($method->getName());
             }
 
             foreach ($eventClasses as $eventClass) {
                 if (!class_exists($eventClass)) {
-                    throw new ArgumentTypeIsNotAClass($path, $eventClass);
+                    throw new ArgumentTypeIsNotAClass($method->getName(), $eventClass);
                 }
 
                 if (array_key_exists($eventClass, $applyMethods)) {
@@ -289,11 +236,11 @@ final class AttributeAggregateRootMetadataFactory implements AggregateRootMetada
                         $aggregate,
                         $eventClass,
                         $applyMethods[$eventClass],
-                        $path,
+                        $method->getName(),
                     );
                 }
 
-                $applyMethods[$eventClass] = $path;
+                $applyMethods[$eventClass] = $method->getName();
             }
         }
 

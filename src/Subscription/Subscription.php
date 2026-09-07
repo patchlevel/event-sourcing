@@ -17,7 +17,7 @@ final class Subscription
         private string $group = self::DEFAULT_GROUP,
         private RunMode $runMode = RunMode::FromBeginning,
         private Status $status = Status::New,
-        private int $position = 0,
+        private int|null $position = null,
         private SubscriptionError|null $error = null,
         private int $retryAttempt = 0,
         private DateTimeImmutable|null $lastSavedAt = null,
@@ -26,6 +26,11 @@ final class Subscription
     }
 
     public function id(): string
+    {
+        return $this->id;
+    }
+
+    public function subscriberId(): string
     {
         return $this->id;
     }
@@ -55,7 +60,7 @@ final class Subscription
         return $this->status;
     }
 
-    public function position(): int
+    public function position(): int|null
     {
         return $this->position;
     }

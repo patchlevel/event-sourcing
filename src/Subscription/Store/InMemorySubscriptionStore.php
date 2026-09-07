@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Store;
 
+use Closure;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Clock\ClockInterface;
@@ -49,29 +50,59 @@ final class InMemorySubscriptionStore implements SubscriptionStore
         return array_values(
             array_filter(
                 $subscriptions,
-                static function (Subscription $subscription) use ($criteria): bool {
-                    if ($criteria->ids !== null) {
-                        if (!in_array($subscription->id(), $criteria->ids, true)) {
-                            return false;
-                        }
-                    }
-
-                    if ($criteria->groups !== null) {
-                        if (!in_array($subscription->group(), $criteria->groups, true)) {
-                            return false;
-                        }
-                    }
-
-                    if ($criteria->status !== null) {
-                        if (!in_array($subscription->status(), $criteria->status, true)) {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                },
+                static fn (Subscription $subscription): bool => self::matches($subscription, $criteria),
             ),
         );
+    }
+
+    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null
+    {
+        if (!array_key_exists($id, $this->subscriptions)) {
+            return null;
+        }
+
+        $subscription = $this->subscriptions[$id];
+
+        if (!self::matches($subscription, $criteria)) {
+            return null;
+        }
+
+        return $subscription;
+    }
+
+    /**
+     * @param Closure():T $closure
+     *
+     * @return T
+     *
+     * @template T
+     */
+    public function inLock(Closure $closure): mixed
+    {
+        return $closure();
+    }
+
+    private static function matches(Subscription $subscription, SubscriptionCriteria $criteria): bool
+    {
+        if ($criteria->ids !== null) {
+            if (!in_array($subscription->id(), $criteria->ids, true)) {
+                return false;
+            }
+        }
+
+        if ($criteria->groups !== null) {
+            if (!in_array($subscription->group(), $criteria->groups, true)) {
+                return false;
+            }
+        }
+
+        if ($criteria->status !== null) {
+            if (!in_array($subscription->status(), $criteria->status, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function add(Subscription $subscription): void

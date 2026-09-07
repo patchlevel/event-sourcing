@@ -9,8 +9,11 @@ use DateTimeImmutable;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\DriverException;
+use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
+use Doctrine\DBAL\Query\ForUpdate\ConflictResolutionMode;
+use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
@@ -36,7 +39,7 @@ use const JSON_THROW_ON_ERROR;
  *     id: string,
  *     group_name: string,
  *     run_mode: string,
- *     position: int,
+ *     position: int|null,
  *     status: string,
  *     error_message: string|null,
  *     error_previous_status: string|null,
@@ -46,7 +49,7 @@ use const JSON_THROW_ON_ERROR;
  *     cleanup_tasks: string|null,
  * }
  */
-final class DoctrineSubscriptionStore implements LockableSubscriptionStore, DoctrineSchemaConfigurator
+final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSchemaConfigurator
 {
     public function __construct(
         private readonly Connection $connection,
@@ -81,37 +84,8 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ->from($this->tableName)
             ->orderBy('id');
 
-        if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
-            $qb->forUpdate();
-        }
-
         if ($criteria !== null) {
-            if ($criteria->ids !== null) {
-                $qb->andWhere('id IN (:ids)')
-                    ->setParameter(
-                        'ids',
-                        $criteria->ids,
-                        ArrayParameterType::STRING,
-                    );
-            }
-
-            if ($criteria->groups !== null) {
-                $qb->andWhere('group_name IN (:groups)')
-                    ->setParameter(
-                        'groups',
-                        $criteria->groups,
-                        ArrayParameterType::STRING,
-                    );
-            }
-
-            if ($criteria->status !== null) {
-                $qb->andWhere('status IN (:status)')
-                    ->setParameter(
-                        'status',
-                        array_map(static fn (Status $status) => $status->value, $criteria->status),
-                        ArrayParameterType::STRING,
-                    );
-            }
+            $this->applyCriteria($qb, $criteria);
         }
 
         /** @var list<Data> $result */
@@ -121,6 +95,62 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             fn (array $data) => $this->createSubscription($data),
             $result,
         );
+    }
+
+    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null
+    {
+        $qb = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($this->tableName)
+            ->where('id = :id')
+            ->setParameter('id', $id);
+
+        $this->applyCriteria($qb, $criteria);
+
+        if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            $qb->forUpdate(ConflictResolutionMode::SKIP_LOCKED);
+        }
+
+        /** @var Data|false $result */
+        $result = $qb->fetchAssociative();
+
+        if ($result === false) {
+            return null;
+        }
+
+        return $this->createSubscription($result);
+    }
+
+    private function applyCriteria(QueryBuilder $qb, SubscriptionCriteria $criteria): void
+    {
+        if ($criteria->ids !== null) {
+            $qb->andWhere('id IN (:ids)')
+                ->setParameter(
+                    'ids',
+                    $criteria->ids,
+                    ArrayParameterType::STRING,
+                );
+        }
+
+        if ($criteria->groups !== null) {
+            $qb->andWhere('group_name IN (:groups)')
+                ->setParameter(
+                    'groups',
+                    $criteria->groups,
+                    ArrayParameterType::STRING,
+                );
+        }
+
+        if ($criteria->status === null) {
+            return;
+        }
+
+        $qb->andWhere('status IN (:status)')
+            ->setParameter(
+                'status',
+                array_map(static fn (Status $status) => $status->value, $criteria->status),
+                ArrayParameterType::STRING,
+            );
     }
 
     public function add(Subscription $subscription): void
@@ -203,6 +233,10 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
 
         try {
             return $closure();
+        } catch (TransactionCommitNotPossible $e) {
+            throw $e;
+        } catch (RetryableException $e) {
+            throw new TransactionCommitNotPossible($e);
         } finally {
             try {
                 $this->connection->commit();
@@ -230,7 +264,7 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ->setLength(16)
             ->setNotnull(true);
         $table->addColumn('position', Types::INTEGER)
-            ->setNotnull(true);
+            ->setNotnull(false);
         $table->addColumn('status', Types::STRING)
             ->setLength(32)
             ->setNotnull(true);

@@ -42,10 +42,6 @@ final class CreateProfileHandler
 To use Service Handler you need to register the handler in the `ServiceHandlerProvider`.
 :::
 
-:::tip
-A class can have multiple handle methods.
-:::
-
 ### Multiple Handle Attributes
 
 A method can also have multiple `#[Handle]` attributes.
@@ -178,6 +174,10 @@ final class Profile extends BasicAggregateRoot
     #[Handle]
     public function changeName(ChangeProfileName $command): void
     {
+        if (!$nameValidator($command->name)) {
+            throw new InvalidArgument();
+        }
+
         $this->recordThat(new NameChanged($command->name));
     }
 
@@ -413,5 +413,6 @@ $provider = new ChainHandlerProvider([
 * [How to use aggregates](aggregate.md)
 * [How to use events](events.md)
 * [How to use clock](clock.md)
-* [How to use aggregate id](aggregate-id.md)
+* [How to use aggregate id](identifier.md)
 * [How to use query bus](query-bus.md)
+* [How to decide across streams with a dynamic consistency boundary](dynamic-consistency-boundary.md)
