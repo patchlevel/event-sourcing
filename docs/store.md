@@ -335,14 +335,25 @@ use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 
 $criteria = new Criteria(
     new StreamCriterion('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
     new FromPlayheadCriterion(2),
     new FromIndexCriterion(100),
+    new ToIndexCriterion(200),
     new ArchivedCriterion(true),
     new EventsCriterion(['profile.created', 'profile.name_changed']),
 );
+```
+The `StreamCriterion` is variadic, so you can pass multiple stream names.
+There is also a `startWith` named constructor that appends the wildcard for you.
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+
+$criterion = new StreamCriterion('profile-*', 'hotel-*');
+$criterion = StreamCriterion::startWith('profile-');
 ```
 Or you can the criteria builder to create the criteria.
 
@@ -447,7 +458,7 @@ In event sourcing, the events are immutable.
 
 ### Remove
 
-You can remove streams with the `remove` method by passing a criteria.
+You can remove events with the `remove` method. It takes the same criteria as the `load` method.
 
 ```php
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
@@ -457,6 +468,51 @@ use Patchlevel\EventSourcing\Store\Store;
 /** @var Store $store */
 $store->remove(new Criteria(StreamCriterion::startWith('profile-')));
 ```
+:::danger
+Without criteria the method removes every event in the store.
+Deleted events cannot be restored, all subscriptions built from them become inconsistent.
+:::
+
+### Archive
+
+You can archive events with the `archive` method.
+Archived events are still in the store, but they are skipped when an aggregate is loaded,
+which keeps the loading of long living aggregates fast.
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Store;
+
+/** @var Store $store */
+$store->archive(
+    new Criteria(
+        new StreamCriterion('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
+        new ToPlayheadCriterion(100),
+    ),
+);
+```
+Archived events get the `ArchivedHeader` when they are loaded again.
+You can include or exclude them explicitly with the `ArchivedCriterion`.
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Store;
+
+/** @var Store $store */
+$stream = $store->load(new Criteria(new ArchivedCriterion(false)));
+```
+:::note
+This method is used when a [split stream](split-stream.md) event is saved.
+:::
+
+:::tip
+Archiving is the non destructive alternative to `remove`. The events stay readable,
+so you can still replay them by passing an `ArchivedCriterion(true)`.
+:::
+
 ### List Streams
 
 You can list all streams with the `streams` method.

@@ -846,6 +846,11 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegist
 
 $aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create([/* paths... */]);
 ```
+:::tip
+Scanning the paths on every request costs time. In production you can wrap the factory
+in a [metadata cache](metadata-cache.md).
+:::
+
 ## Learn more
 
 * [How to create own aggregate id](identifier.md)
@@ -853,3 +858,4 @@ $aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create([/* p
 * [How to snapshot aggregates](snapshots.md)
 * [How to create Projections](subscription.md)
 * [How to split streams](split-stream.md)
+* [How to cache metadata](metadata-cache.md)

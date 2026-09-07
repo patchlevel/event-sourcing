@@ -176,7 +176,7 @@ An `AggregateOutdated` exception is thrown if a conflict occurs.
 :::
 
 :::tip
-If you use the Command Bus, you can use the [instant retry](command-bus.md#instant-retry) decorator
+If you use the Command Bus, you can use the [InstantRetryCommandBus](command-bus.md#instant-retry) decorator
 to retry the command automatically when an `AggregateOutdated` exception occurs.
 :::
 

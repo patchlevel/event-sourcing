@@ -89,6 +89,10 @@
           "file": "clock.md"
         },
         {
+          "title": "Metadata Cache",
+          "file": "metadata-cache.md"
+        },
+        {
           "title": "Testing",
           "file": "testing.md"
         },

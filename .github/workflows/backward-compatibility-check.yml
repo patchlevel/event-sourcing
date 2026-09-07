@@ -29,7 +29,6 @@ jobs:
       - name: "Install PHP"
         uses: "shivammathur/setup-php@2.37.2"
         with:
-          coverage: "pcov"
           php-version: "${{ matrix.php-version }}"
           ini-values: memory_limit=-1
           extensions: pdo_sqlite, bcmath, intl, sodium

@@ -40,7 +40,7 @@ Here are some examples:
 * `profile.created`
 * `profile.name_changed`
 * `hotel.guest_checked_out`
-  
+
 :::
 
 ## Alias
@@ -82,6 +82,68 @@ $serializer = DefaultEventSerializer::createFromPaths(['src/Domain']);
 The serializer needs the path information where the event classes are located
 so that it can instantiate the correct classes.
 Internally, an EventRegistry is used, which is described in the [Event Registry](#event-registry) section below.
+
+## Encoder
+
+The serializer turns an event into an array first and then encodes that array into a string.
+The encoding is done by an `Encoder`. By default the `JsonEncoder` is used, which encodes the payload as JSON.
+
+If you want to change how the payload is encoded, you can pass your own encoder to the serializer.
+
+```php
+use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
+
+$serializer = new DefaultEventSerializer(
+    (new AttributeEventRegistryFactory())->create(['src/Domain']),
+    encoder: new JsonEncoder(),
+);
+```
+The `Encoder` interface has two methods:
+
+```php
+use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
+
+final class MyEncoder implements Encoder
+{
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $options
+     */
+    public function encode(array $data, array $options = []): string
+    {
+        // your encoding
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
+    public function decode(string $data, array $options = []): array
+    {
+        // your decoding
+    }
+}
+```
+An `encode` call that fails must throw an `EncodeNotPossible` exception,
+a failing `decode` call a `DecodeNotPossible` exception.
+
+The options are passed through from the serializer. The `JsonEncoder` understands
+`Encoder::OPTION_PRETTY_PRINT`, which is used by the [cli](cli.md) to print readable payloads.
+
+```php
+use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+
+/** @var EventSerializer $serializer */
+$data = $serializer->serialize($event, [Encoder::OPTION_PRETTY_PRINT => true]);
+```
+:::warning
+The encoder decides the format of everything that is already in your store.
+If you change it, old events can no longer be decoded.
+:::
 
 ## Normalizer
 
@@ -141,6 +203,11 @@ use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 
 $eventRegistry = (new AttributeEventRegistryFactory())->create([/* paths... */]);
 ```
+:::tip
+Scanning the paths on every request costs time. In production you can wrap the factory
+in a [metadata cache](metadata-cache.md).
+:::
+
 ## Learn more
 
 * [How to normalize events](normalizer.md)
@@ -148,3 +215,4 @@ $eventRegistry = (new AttributeEventRegistryFactory())->create([/* paths... */])
 * [How to store events](store.md)
 * [How to upcast events](upcasting.md)
 * [How to use messages](message.md)
+* [How to cache metadata](metadata-cache.md)

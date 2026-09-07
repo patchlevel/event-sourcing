@@ -59,6 +59,27 @@ The message object has some built-in headers which are used internally.
 * `ArchivedHeader` - Flag if the message is archived.
 * `StreamStartHeader` - Flag if the message is the first message in a new stream.
 
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+
+/** @var Message $message */
+$message->header(IndexHeader::class)->index; // 42
+$message->header(StreamNameHeader::class)->streamName; // 'profile-e3e3e3e3-...'
+$message->header(PlayheadHeader::class)->playhead; // 2
+$message->header(RecordedOnHeader::class)->recordedOn; // DateTimeImmutable
+$message->header(EventIdHeader::class)->eventId; // 'a4a4a4a4-4a4a-...'
+```
+:::warning
+The `PlayheadHeader` is only added if the stream is playhead based.
+Streams that are written without a playhead, for example custom streams,
+do not have this header. Use `hasHeader` before you access it.
+:::
+
 ## Custom headers
 
 You can also add custom headers to the message object. For example, you can add an application id.

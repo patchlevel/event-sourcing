@@ -46,7 +46,6 @@ final class HotelCreated
     }
 }
 ```
-
 :::note
 A tagged property that is `null` is skipped, so no tag is generated for it. This lets you tag optional properties without having to guard against missing values.
 :::
@@ -423,7 +422,6 @@ $provider = new ServiceHandlerProvider([
 
 $commandBus = new SyncCommandBus($provider);
 ```
-
 :::tip
 For tests you can replace the `TaggableDoctrineDbalStore` with an `InMemoryStore`. It implements the
 same tag query and conditional append, so the decision model and the append condition behave the same

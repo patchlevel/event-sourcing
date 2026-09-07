@@ -241,7 +241,7 @@ final class PublicProfileProjection
     public function onPublished(Lookup $lookup): void
     {
         $messages = $lookup
-            ->currentAggregate() // or ->currentStream() for StreamStore
+            ->currentStream()
             ->events(
                 ProfileCreated::class,
                 ProfileNameChanged::class,
@@ -1139,6 +1139,58 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 
 $retryStrategy = new NoRetryStrategy();
 ```
+#### Custom Retry Strategy
+
+You can write your own strategy by implementing the `RetryStrategy` interface.
+The `shouldRetry` method is asked on every run whether the errored subscription should be picked up again.
+
+```php
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
+use Patchlevel\EventSourcing\Subscription\Subscription;
+
+final class AlwaysRetryStrategy implements RetryStrategy
+{
+    public function shouldRetry(Subscription $subscription): bool
+    {
+        return true;
+    }
+}
+```
+A plain `RetryStrategy` can never mark a subscription as failed.
+The subscription stays in the error status and is offered to `shouldRetry` again on every run.
+To give up at some point, implement `ConditionalRetryStrategy` instead.
+It adds a `canRetry` method that answers whether a retry is possible at all.
+As soon as `canRetry` returns `false`, the subscription is set to failed and is skipped in all future runs.
+
+```php
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\Subscription;
+
+final class TenAttemptsRetryStrategy implements ConditionalRetryStrategy
+{
+    public function canRetry(Subscription $subscription): bool
+    {
+        return $subscription->retryAttempt() < 10;
+    }
+
+    public function shouldRetry(Subscription $subscription): bool
+    {
+        return $this->canRetry($subscription);
+    }
+}
+```
+:::note
+Both built-in strategies implement `ConditionalRetryStrategy`.
+The `ClockBasedRetryStrategy` returns `false` in `canRetry` once `maxAttempts` is reached,
+the `NoRetryStrategy` always returns `false`.
+:::
+
+:::warning
+`shouldRetry` is called on every run of the subscription engine, so keep it cheap.
+Use `canRetry` for the "is there any point in trying again" decision and `shouldRetry`
+for the "is it time to try again" decision.
+:::
+
 #### Retry Strategy Repository
 
 You can define multiple retry strategies and select them by name in the subscriber.
