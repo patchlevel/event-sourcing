@@ -463,9 +463,9 @@ You can remove events with the `remove` method. It takes the same criteria as th
 ```php
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
-use Patchlevel\EventSourcing\Store\StreamStore;
+use Patchlevel\EventSourcing\Store\Store;
 
-/** @var StreamStore $store */
+/** @var Store $store */
 $store->remove(new Criteria(StreamCriterion::startWith('profile-')));
 ```
 :::danger
@@ -483,9 +483,9 @@ which keeps the loading of long living aggregates fast.
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
-use Patchlevel\EventSourcing\Store\StreamStore;
+use Patchlevel\EventSourcing\Store\Store;
 
-/** @var StreamStore $store */
+/** @var Store $store */
 $store->archive(
     new Criteria(
         new StreamCriterion('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),

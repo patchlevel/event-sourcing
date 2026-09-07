@@ -241,7 +241,7 @@ final class PublicProfileProjection
     public function onPublished(Lookup $lookup): void
     {
         $messages = $lookup
-            ->currentAggregate() // or ->currentStream() for StreamStore
+            ->currentStream()
             ->events(
                 ProfileCreated::class,
                 ProfileNameChanged::class,

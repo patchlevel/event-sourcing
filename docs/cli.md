@@ -92,13 +92,14 @@ The subscriber repository is optional. If you don't pass it, the subscriber sect
 
 The store migration command copies all events from one store into another one.
 You need it when you switch the store implementation,
-for example from the `DoctrineDbalStore` to the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore).
+for example from the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore)
+to the [TaggableDoctrineDbalStore](store.md#taggabledoctrinedbalstore).
 
 * StoreMigrateCommand: `event-sourcing:store:migrate`
 
 ```php
 use Patchlevel\EventSourcing\Console\Command\StoreMigrateCommand;
-use Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator;
+use Patchlevel\EventSourcing\Message\Translator\ExtractEventTagTranslator;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Application;
 
@@ -111,14 +112,15 @@ $cli->add(
     new StoreMigrateCommand(
         $oldStore,
         $newStore,
-        [new AggregateToStreamHeaderTranslator()],
+        [new ExtractEventTagTranslator()],
     ),
 );
 ```
 The third constructor argument is a list of [translators](message.md#translator)
 that are applied to every message before it is written into the new store.
-The `AggregateToStreamHeaderTranslator` converts the `AggregateHeader` into the stream based headers
-and is what you need for a migration to the `StreamDoctrineDbalStore`.
+The `ExtractEventTagTranslator` reads the tags from the events and adds them as `TagsHeader`,
+which is what you need for a migration to the `TaggableDoctrineDbalStore`.
+If both stores work with the same headers, you can leave the list empty.
 
 Events are written in batches. You can control the batch size with the `buffer` option:
 
