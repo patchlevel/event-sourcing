@@ -334,8 +334,8 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 
 $criteria = new Criteria(
     new StreamCriterion('profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'),
@@ -346,7 +346,6 @@ $criteria = new Criteria(
     new EventsCriterion(['profile.created', 'profile.name_changed']),
 );
 ```
-
 The `StreamCriterion` is variadic, so you can pass multiple stream names.
 There is also a `startWith` named constructor that appends the wildcard for you.
 
@@ -356,7 +355,6 @@ use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 $criterion = new StreamCriterion('profile-*', 'hotel-*');
 $criterion = StreamCriterion::startWith('profile-');
 ```
-
 Or you can the criteria builder to create the criteria.
 
 ```php
@@ -370,7 +368,6 @@ $criteria = (new CriteriaBuilder())
     ->events(['profile.created', 'profile.name_changed'])
     ->build();
 ```
-
 :::tip
 A stream name has the format `[aggregateName]-[aggregateId]`. To match every stream of an aggregate,
 use a wildcard with `StreamCriterion::startWith('profile-')`.
@@ -462,7 +459,6 @@ In event sourcing, the events are immutable.
 ### Remove
 
 You can remove events with the `remove` method. It takes the same criteria as the `load` method.
-
 
 ```php
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;

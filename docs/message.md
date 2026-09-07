@@ -186,7 +186,6 @@ $serializer = DefaultHeadersSerializer::createFromPaths(
     ['*'],
 );
 ```
-
 ## Stream
 
 A `Stream` wraps an iterable of messages and allows you to chain multiple translators with `transform`.
