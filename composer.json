@@ -87,11 +87,5 @@
     "psr-4": {
       "Patchlevel\\EventSourcing\\Tests\\": "tests/"
     }
-  },
-  "repositories": {
-    "docs-tools": {
-      "type": "vcs",
-      "url": "https://github.com/patchlevel/docs-tools"
-    }
   }
 }
