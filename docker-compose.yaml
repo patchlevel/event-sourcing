@@ -8,7 +8,7 @@ services:
       - 5432:5432
 
   mysql:
-    image: mysql:8
+    image: mysql:26
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD="yes"
       - MYSQL_DATABASE=eventstore
