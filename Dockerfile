@@ -1,4 +1,4 @@
-FROM php:8.3
+FROM php:8.5
 
 ARG EXTENSIONS="pcntl zip intl bcmath"
 
