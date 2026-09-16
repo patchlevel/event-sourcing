@@ -16,7 +16,7 @@ services:
       - 3306:3306
 
   mariadb:
-    image: mariadb:12
+    image: mariadb:13
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD="yes"
       - MYSQL_DATABASE=eventstore
