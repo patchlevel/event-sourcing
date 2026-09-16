@@ -1,4 +1,4 @@
-name: Publish docs
+name: "Publish docs"
 
 on:
   push:
@@ -10,13 +10,5 @@ on:
 
 jobs:
   trigger:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger workflow in other repo
-        run: |
-          curl -L -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.ORGANIZATION_ADMIN_TOKEN }}" \
-            -H "X-GitHub-Api-Version: 2026-03-10" \
-            https://api.github.com/repos/patchlevel/patchlevel.dev/actions/workflows/prod-deployment.yaml/dispatches \
-            -d '{"ref":"main"}'
+    uses: patchlevel/.github/.github/workflows/docs-deploy.yml@main
+    secrets: inherit

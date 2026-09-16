@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0e9502d1c80c844be7148084542ae739",
+    "content-hash": "397e857f1c3275be046c71727df334e0",
     "packages": [
         {
             "name": "brick/math",
@@ -4468,6 +4468,42 @@
                 "source": "https://github.com/patchlevel/coding-standard/tree/1.3.0"
             },
             "time": "2023-06-02T10:05:08+00:00"
+        },
+        {
+            "name": "patchlevel/docs-tools",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/patchlevel/docs-tools.git",
+                "reference": "61b87cf298cf9de069bddb6c61c22b5fab924e97"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/patchlevel/docs-tools/zipball/61b87cf298cf9de069bddb6c61c22b5fab924e97",
+                "reference": "61b87cf298cf9de069bddb6c61c22b5fab924e97",
+                "shasum": ""
+            },
+            "require": {
+                "league/commonmark": "^2.4",
+                "php": "^8.2",
+                "symfony/finder": "^6.4 || ^7.0 || ^8.0",
+                "wnx/commonmark-markdown-renderer": "^1.4"
+            },
+            "bin": [
+                "bin/docs-extract-php-code",
+                "bin/docs-inject-php-code"
+            ],
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Extract and re-inject PHP code samples from/into markdown documentation",
+            "support": {
+                "issues": "https://github.com/patchlevel/docs-tools/issues",
+                "source": "https://github.com/patchlevel/docs-tools/tree/v1.0.0"
+            },
+            "time": "2026-09-16T12:33:28+00:00"
         },
         {
             "name": "patchlevel/event-sourcing-phpstan-extension",
