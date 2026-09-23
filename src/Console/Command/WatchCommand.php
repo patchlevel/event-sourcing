@@ -10,8 +10,8 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\ListenableStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\SubscriptionStore;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -83,10 +83,6 @@ final class WatchCommand extends Command
 
         $index = $this->currentIndex();
 
-        if ($this->store instanceof SubscriptionStore) {
-            $this->store->setupSubscription();
-        }
-
         $criteriaBuilder = new CriteriaBuilder();
         $criteriaBuilder->streamName($stream);
         $criteria = $criteriaBuilder->build();
@@ -109,7 +105,7 @@ final class WatchCommand extends Command
 
                 $stream->close();
 
-                if (!$this->store instanceof SubscriptionStore) {
+                if (!$this->store instanceof ListenableStore) {
                     return;
                 }
 
@@ -123,8 +119,7 @@ final class WatchCommand extends Command
             $logger,
         );
 
-        $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();
-        $worker->run($supportSubscription ? 0 : $sleep);
+        $worker->run($this->store instanceof ListenableStore ? 0 : $sleep);
 
         return Command::SUCCESS;
     }

@@ -454,6 +454,25 @@ And all the associated classes:
 
 `StreamReadOnlyStore` was been merged in `ReadOnlyStore`.
 
+### ListenableStore
+
+`Patchlevel\EventSourcing\Store\SubscriptionStore` has been renamed to `Patchlevel\EventSourcing\Store\ListenableStore`
+to avoid confusion with `Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore`.
+The methods `supportSubscription()` and `setupSubscription()` have been removed, only `wait()` is left.
+
+The doctrine stores no longer install a postgres trigger to notify listeners about new events.
+Instead, `save()` and `append()` send the `NOTIFY` themselves, so no setup is needed anymore.
+If a store does not support notifications, `wait()` simply sleeps for the given timeout.
+The first call of `wait()` only starts listening and returns immediately,
+so events stored before that are not missed.
+
+The trigger and the function created by previous versions are no longer used and can be dropped:
+
+```sql
+DROP TRIGGER IF EXISTS notify_trigger ON event_store;
+DROP FUNCTION IF EXISTS notify_event_store();
+```
+
 ## Stream
 
 The stream handling has been reworked. Previously the `Stream` was an interface that every store had to

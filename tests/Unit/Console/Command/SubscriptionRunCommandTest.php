@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\SubscriptionRunCommand;
+use Patchlevel\EventSourcing\Store\ListenableStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
@@ -69,16 +69,9 @@ final class SubscriptionRunCommandTest extends TestCase
         self::assertSame(0, $commandTester->getStatusCode());
     }
 
-    public function testRunWithSubscriptionStore(): void
+    public function testRunWithListenableStore(): void
     {
-        $store = $this->createMockForIntersectionOfInterfaces([Store::class, SubscriptionStore::class]);
-        $store
-            ->expects($this->once())
-            ->method('setupSubscription');
-        $store
-            ->expects($this->once())
-            ->method('supportSubscription')
-            ->willReturn(true);
+        $store = $this->createMockForIntersectionOfInterfaces([Store::class, ListenableStore::class]);
         $store
             ->expects($this->once())
             ->method('wait')
