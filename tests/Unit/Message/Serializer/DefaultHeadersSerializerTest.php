@@ -15,7 +15,7 @@ use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
-use Patchlevel\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\StackHydrator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -47,7 +47,7 @@ final class DefaultHeadersSerializerTest extends TestCase
             (new AttributeMessageHeaderRegistryFactory())->create([
                 __DIR__ . '/../../Fixture',
             ]),
-            new MetadataHydrator(),
+            new StackHydrator(),
             new JsonEncoder(),
         );
 
@@ -70,7 +70,7 @@ final class DefaultHeadersSerializerTest extends TestCase
             (new AttributeMessageHeaderRegistryFactory())->create([
                 __DIR__ . '/../../Fixture',
             ]),
-            new MetadataHydrator(),
+            new StackHydrator(),
             new JsonEncoder(),
             ['removed', 'alsoRemoved'],
         );
@@ -95,7 +95,7 @@ final class DefaultHeadersSerializerTest extends TestCase
             (new AttributeMessageHeaderRegistryFactory())->create([
                 __DIR__ . '/../../Fixture',
             ]),
-            new MetadataHydrator(),
+            new StackHydrator(),
             new JsonEncoder(),
             ['removed'],
         );
@@ -111,7 +111,7 @@ final class DefaultHeadersSerializerTest extends TestCase
             (new AttributeMessageHeaderRegistryFactory())->create([
                 __DIR__ . '/../../Fixture',
             ]),
-            new MetadataHydrator(),
+            new StackHydrator(),
             new JsonEncoder(),
             ['*'],
         );
@@ -136,7 +136,7 @@ final class DefaultHeadersSerializerTest extends TestCase
             (new AttributeMessageHeaderRegistryFactory())->create([
                 __DIR__ . '/../../Fixture',
             ]),
-            new MetadataHydrator(),
+            new StackHydrator(),
             new JsonEncoder(),
         );
 
@@ -160,7 +160,7 @@ final class DefaultHeadersSerializerTest extends TestCase
             (new AttributeMessageHeaderRegistryFactory())->create([
                 __DIR__ . '/../../Fixture',
             ]),
-            new MetadataHydrator(),
+            new StackHydrator(),
             new JsonEncoder(),
         );
 

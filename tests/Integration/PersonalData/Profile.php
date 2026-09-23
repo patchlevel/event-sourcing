@@ -12,8 +12,8 @@ use Patchlevel\EventSourcing\Attribute\Snapshot;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\PersonalDataRemoved;
 use Patchlevel\EventSourcing\Tests\Integration\PersonalData\Events\ProfileCreated;
-use Patchlevel\Hydrator\Attribute\DataSubjectId;
-use Patchlevel\Hydrator\Attribute\PersonalData;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData;
 
 #[Aggregate('profile')]
 #[Snapshot('default', 2)]
@@ -23,7 +23,7 @@ final class Profile extends BasicAggregateRoot
     #[DataSubjectId]
     private ProfileId $id;
 
-    #[PersonalData(fallback: 'unknown')]
+    #[SensitiveData(fallback: 'unknown')]
     private string $name;
 
     public static function create(ProfileId $id, string $name): self

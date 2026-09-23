@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\Hydrator\Hydrator;
-use Patchlevel\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\StackHydrator;
 
 use function in_array;
 use function is_array;
@@ -98,7 +98,7 @@ final class DefaultHeadersSerializer implements HeadersSerializer
     {
         return new self(
             (new AttributeMessageHeaderRegistryFactory())->create($paths),
-            new MetadataHydrator(),
+            new StackHydrator(),
             new JsonEncoder(),
             $gracefulMissingHeaders,
         );
@@ -108,7 +108,7 @@ final class DefaultHeadersSerializer implements HeadersSerializer
     {
         return new self(
             MessageHeaderRegistry::createWithInternalHeaders(),
-            new MetadataHydrator(),
+            new StackHydrator(),
             new JsonEncoder(),
             [],
         );

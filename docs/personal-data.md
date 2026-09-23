@@ -27,7 +27,7 @@ Without Subject Id, no personal data can be encrypted or decrypted.
 
 ```php
 use Patchlevel\EventSourcing\Identifier\Uuid;
-use Patchlevel\Hydrator\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId;
 
 final class EmailChanged
 {
@@ -43,28 +43,28 @@ final class EmailChanged
 You can use the `DataSubjectId` in aggregates for snapshots too.
 :::
 
-### PersonalData
+### SensitiveData
 
-Next, you have to mark the properties that should be encrypted with the `#[PersonalData]` attribute.
+Next, you have to mark the properties that should be encrypted with the `#[SensitiveData]` attribute.
 
 ```php
 use Patchlevel\EventSourcing\Identifier\Uuid;
-use Patchlevel\Hydrator\Attribute\DataSubjectId;
-use Patchlevel\Hydrator\Attribute\PersonalData;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData;
 
 final class EmailChanged
 {
     public function __construct(
         #[DataSubjectId]
         public readonly Uuid $profileId,
-        #[PersonalData]
+        #[SensitiveData]
         public readonly string|null $email,
     ) {
     }
 }
 ```
 :::tip
-You can use the `PersonalData` in aggregates for snapshots too.
+You can use the `SensitiveData` in aggregates for snapshots too.
 :::
 
 If the information could not be decrypted, then a fallback value will be used.
@@ -72,16 +72,16 @@ The default fallback value is `null`.
 You can change this by setting the `fallback` parameter or using the `fallbackCallable` parameter.
 
 ```php
-use Patchlevel\Hydrator\Attribute\PersonalData;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData;
 
 final class ProfileChanged
 {
     public function __construct(
         #[DataSubjectId]
         public readonly Uuid $profileId,
-        #[PersonalData(fallback: 'unknown')]
+        #[SensitiveData(fallback: 'unknown')]
         public readonly string $name,
-        #[PersonalData(fallbackCallable: [self::class, 'createAnonymousEmail'])]
+        #[SensitiveData(fallbackCallable: [self::class, 'createAnonymousEmail'])]
         public readonly string $email,
     ) {
     }
@@ -138,33 +138,39 @@ $schemaDirector = new DoctrineSchemaDirector(
     ]),
 );
 ```
-### Personal Data Payload Cryptographer
+### Hydrator
 
-Now we have to put the whole thing together in a Personal Data Payload Cryptographer.
+Now we have to put the whole thing together in a hydrator with the `CryptographyExtension`.
 
 ```php
-use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
-use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer;
+use Patchlevel\Hydrator\Extension\Cryptography\CryptographyExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 
 /** @var CipherKeyStore $cipherKeyStore */
-$cryptographer = PersonalDataPayloadCryptographer::createWithDefaultSettings($cipherKeyStore);
+$hydrator = (new StackHydratorBuilder())
+    ->useExtension(new CoreExtension())
+    ->useExtension(new CryptographyExtension(BaseCryptographer::createWithOpenssl($cipherKeyStore)))
+    ->build();
 ```
 :::tip
-You can specify the cipher method with the second parameter.
+You can specify the cipher method with the second parameter of `createWithOpenssl`.
 :::
 
 ### Event Serializer Integration
 
-The last step is to integrate the cryptographer into the event store.
+The last step is to integrate the hydrator into the event store.
 
 ```php
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
+use Patchlevel\Hydrator\Hydrator;
 
-/** @var PersonalDataPayloadCryptographer $cryptographer */
+/** @var Hydrator $hydrator */
 DefaultEventSerializer::createFromPaths(
     [__DIR__ . '/Events'],
-    cryptographer: $cryptographer,
+    $hydrator,
 );
 ```
 :::note
@@ -177,14 +183,14 @@ And for the snapshot store.
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
-use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
+use Patchlevel\Hydrator\Hydrator;
 
-/** @var PersonalDataPayloadCryptographer $cryptographer */
+/** @var Hydrator $hydrator */
 $snapshotStore = DefaultSnapshotStore::createDefault(
     [
         /* adapters... */
     ],
-    $cryptographer,
+    $hydrator,
 );
 ```
 :::note
@@ -203,7 +209,7 @@ To remove personal data, you can either remove the key manually or do it with a 
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
 
 #[Processor('delete_personal_data')]
 final class DeletePersonalDataProcessor
@@ -218,7 +224,7 @@ final class DeletePersonalDataProcessor
     {
         $event = $message->event();
 
-        $this->cipherKeyStore->remove($event->personId);
+        $this->cipherKeyStore->removeWithSubjectId($event->personId);
     }
 }
 ```
