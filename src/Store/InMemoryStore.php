@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
@@ -251,6 +252,18 @@ final class InMemoryStore implements Store, AppendStore
                             }
 
                             if ($playhead < $criterion->fromPlayhead) {
+                                return false;
+                            }
+
+                            break;
+                        case ToPlayheadCriterion::class:
+                            try {
+                                $playhead = $message->header(PlayheadHeader::class)->playhead;
+                            } catch (HeaderNotFound) {
+                                return false;
+                            }
+
+                            if ($playhead >= $criterion->toPlayhead) {
                                 return false;
                             }
 

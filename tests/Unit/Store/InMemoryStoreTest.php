@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
@@ -147,6 +148,35 @@ final class InMemoryStoreTest extends TestCase
         $stream = $store->load(new Criteria(new FromPlayheadCriterion(2)));
 
         self::assertSame([$message2, $message3], $stream->toList());
+    }
+
+    public function testLoadToPlayhead(): void
+    {
+        $message1 = (new Message(new ProfileVisited(ProfileId::fromString('1'))))
+            ->withHeader(new PlayheadHeader(1))
+            ->withHeader(new EventIdHeader('019aa600-56ef-7ca3-b92a-37c53851e2c2'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
+            ->withHeader(new IndexHeader(1));
+        $message2 = (new Message(new ProfileVisited(ProfileId::fromString('2'))))
+            ->withHeader(new PlayheadHeader(2))
+            ->withHeader(new EventIdHeader('019aa600-8834-752a-ae2e-d8650e84f403'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
+            ->withHeader(new IndexHeader(2));
+        $message3 = (new Message(new ProfileVisited(ProfileId::fromString('3'))))
+            ->withHeader(new PlayheadHeader(3))
+            ->withHeader(new EventIdHeader('019aa604-94b8-7182-b1dc-f5d4aa9652ca'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
+            ->withHeader(new IndexHeader(3));
+        $message4 = (new Message(new ProfileVisited(ProfileId::fromString('4'))))
+            ->withHeader(new EventIdHeader('019aa607-3a33-7f47-bb66-4223f2390a30'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable()))
+            ->withHeader(new IndexHeader(4));
+
+        $store = new InMemoryStore([$message1, $message2, $message3, $message4]);
+
+        $stream = $store->load(new Criteria(new ToPlayheadCriterion(3)));
+
+        self::assertSame([$message1, $message2], $stream->toList());
     }
 
     public function testLoadFromIndex(): void
