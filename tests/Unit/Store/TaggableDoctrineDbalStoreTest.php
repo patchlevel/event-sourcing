@@ -40,6 +40,7 @@ use Patchlevel\EventSourcing\Store\Criteria\EventIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\TagCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
+use Patchlevel\EventSourcing\Store\Dbal\PostgreSQLPlatform as GinPostgreSQLPlatform;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
@@ -4898,6 +4899,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         );
         $table->addUniqueIndex(['event_id']);
         $table->addUniqueIndex(['stream', 'playhead']);
+        $table->addIndex(['event_name']);
         $table->addIndex(['stream', 'playhead', 'archived']);
 
         $schema = new Schema();
@@ -4931,5 +4933,36 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
 
         self::assertContains([['stream', 'playhead'], false, '(archived = false)'], $indexes);
         self::assertNotContains([['stream', 'playhead', 'archived'], false, null], $indexes);
+    }
+
+    public function testConfigureSchemaWithGinIndex(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->once())
+            ->method('getDatabasePlatform')
+            ->willReturn(new GinPostgreSQLPlatform());
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventRegistry = new EventRegistry([]);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $doctrineDbalStore = new TaggableDoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $eventRegistry,
+            $headersSerializer,
+        );
+
+        $schema = new Schema();
+        $doctrineDbalStore->configureSchema($schema, $connection);
+
+        $table = $schema->getTable('event_store');
+
+        self::assertTrue($table->hasIndex('event_store_tags_gin_idx'));
+        $columns = $table->getIndex('event_store_tags_gin_idx')->getIndexedColumns();
+
+        self::assertCount(1, $columns);
+        self::assertSame('tags', $columns[0]->getColumnName()->toString());
     }
 }
