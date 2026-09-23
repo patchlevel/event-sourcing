@@ -671,12 +671,12 @@ use Patchlevel\Hydrator\Hydrator;
 /** @var Hydrator $hydrator */
 $snapshotStore = DefaultSnapshotStore::createDefault($adapters, $hydrator);
 ```
-## Personal Data
+## Sensitive Data
 
 The legacy cryptography of the hydrator (`PersonalDataPayloadCryptographer`, `#[PersonalData]`, ...)
 has been removed. Use the `CryptographyExtension` of the hydrator instead,
 see the [hydrator upgrade guide](https://github.com/patchlevel/hydrator/blob/2.0.x/UPGRADE-2.0.md#cryptography)
-and the [personal data](personal-data.md) documentation.
+and the [sensitive data](sensitive-data.md) documentation.
 
 :::danger
 Data encrypted with the legacy `PersonalDataPayloadCryptographer` can no longer be decrypted.
@@ -684,6 +684,50 @@ The new cryptographer does not recognize the legacy format and passes the encryp
 Migrate your store and snapshots to the new format while you are still on 3.x,
 where the `CryptographyExtension` can read legacy data with the legacy cryptographer as fallback.
 :::
+
+### Attributes
+
+The attributes have been moved to the cryptography extension and `PersonalData` has been renamed to `SensitiveData`:
+
+* `Patchlevel\Hydrator\Attribute\DataSubjectId` is now `Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId`
+* `Patchlevel\Hydrator\Attribute\PersonalData` is now `Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData`
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\Hydrator\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Attribute\PersonalData;
+
+final class EmailChanged
+{
+    public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
+        #[PersonalData(fallback: 'unknown')]
+        public readonly string $email,
+    ) {
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData;
+
+final class EmailChanged
+{
+    public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
+        #[SensitiveData(fallback: 'unknown')]
+        public readonly string $email,
+    ) {
+    }
+}
+```
 
 ### DoctrineCipherKeyStore
 

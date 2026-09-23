@@ -1,18 +1,21 @@
-# Personal Data (GDPR)
+# Sensitive and Personal Data (GDPR)
 
-According to GDPR, personal data must be able to be deleted upon request.
+Events are immutable, but some data in them must not stay readable forever.
+The most common case is personal data (PII) like names, email addresses or phone numbers.
+According to the GDPR, personal data must be deleted upon request (the "right to be forgotten").
+The same applies to other sensitive data, like payment details or data that is only allowed to be kept for a certain time.
 But here we have the problem that our events are immutable and we cannot easily manipulate the event store.
 
-The first solution is not to save the personal data in the Event Store at all
+The first solution is not to save the sensitive data in the Event Store at all
 and use something different for this, for example a separate table or an ORM.
 
-The other option the library offers is crypto shredding.
-In this process, the personal data is encrypted with a key that is assigned to a subject (like person).
+The other option the library offers is crypto-shredding.
+In this process, the sensitive or personal data is encrypted with a key that is assigned to a subject (like a person).
 When saving and reading the events, this key is then used to convert the data.
 This key with the subject is saved in a database.
 
-As soon as a request for data deletion comes,
-you can simply delete the key and the personal data can no longer be decrypted.
+As soon as the data has to be deleted,
+you can simply delete the key and the sensitive or personal data can no longer be decrypted.
 
 ## Configuration
 
@@ -23,7 +26,7 @@ And if you use snapshots, you have to configure your aggregates too.
 ### DataSubjectId
 
 In order for the correct key to be used, a subject ID must be defined.
-Without Subject Id, no personal data can be encrypted or decrypted.
+Without Subject Id, no sensitive data can be encrypted or decrypted.
 
 ```php
 use Patchlevel\EventSourcing\Identifier\Uuid;
@@ -198,12 +201,12 @@ More information can be found in the [snapshots](snapshots.md) documentation.
 :::
 
 :::success
-Now you can save and read events with personal data.
+Now you can save and read events with sensitive data.
 :::
 
 ## Remove personal data
 
-To remove personal data, you can either remove the key manually or do it with a processor.
+To remove personal or other sensitive data, you can either remove the key manually or do it with a processor.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Processor;

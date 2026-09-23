@@ -15,6 +15,9 @@ use function is_array;
 
 final class DefaultEventSerializer implements EventSerializer
 {
+    public const CONTEXT_EVENT_NAME = 'event_name';
+    public const CONTEXT_EVENT_CLASS = 'event_class';
+
     public function __construct(
         private EventRegistry $eventRegistry,
         private Hydrator $hydrator = new StackHydrator(),
@@ -26,7 +29,10 @@ final class DefaultEventSerializer implements EventSerializer
     public function serialize(object $event, array $options = []): SerializedEvent
     {
         $name = $this->eventRegistry->eventName($event::class);
-        $data = $this->hydrator->extract($event);
+        $data = $this->hydrator->extract($event, [
+            self::CONTEXT_EVENT_NAME => $name,
+            self::CONTEXT_EVENT_CLASS => $event::class,
+        ]);
 
         if (!is_array($data)) {
             throw new EventPayloadNotAnArray($event::class, $data);
@@ -47,7 +53,10 @@ final class DefaultEventSerializer implements EventSerializer
         $payload = $this->encoder->decode($data->payload, $options);
         $class = $this->eventRegistry->eventClass($data->name);
 
-        return $this->hydrator->hydrate($class, $payload);
+        return $this->hydrator->hydrate($class, $payload, [
+            self::CONTEXT_EVENT_NAME => $data->name,
+            self::CONTEXT_EVENT_CLASS => $class,
+        ]);
     }
 
     /** @param list<string> $paths */

@@ -23,8 +23,8 @@ final class DefaultHeadersSerializer implements HeadersSerializer
     /** @param list<string> $gracefulMissingHeaders */
     public function __construct(
         private readonly MessageHeaderRegistry $messageHeaderRegistry,
-        private readonly Hydrator $hydrator,
-        private readonly Encoder $encoder,
+        private readonly Hydrator $hydrator = new StackHydrator(),
+        private readonly Encoder $encoder = new JsonEncoder(),
         private readonly array $gracefulMissingHeaders = [],
     ) {
         $this->handleAllHeadersGraceful = in_array('*', $this->gracefulMissingHeaders, true);
@@ -94,21 +94,24 @@ final class DefaultHeadersSerializer implements HeadersSerializer
      * @param list<string> $paths
      * @param list<string> $gracefulMissingHeaders
      */
-    public static function createFromPaths(array $paths, array $gracefulMissingHeaders = []): static
-    {
+    public static function createFromPaths(
+        array $paths,
+        array $gracefulMissingHeaders = [],
+        Hydrator $hydrator = new StackHydrator(),
+    ): static {
         return new self(
             (new AttributeMessageHeaderRegistryFactory())->create($paths),
-            new StackHydrator(),
+            $hydrator,
             new JsonEncoder(),
             $gracefulMissingHeaders,
         );
     }
 
-    public static function createDefault(): static
+    public static function createDefault(Hydrator $hydrator = new StackHydrator()): static
     {
         return new self(
             MessageHeaderRegistry::createWithInternalHeaders(),
-            new StackHydrator(),
+            $hydrator,
             new JsonEncoder(),
             [],
         );

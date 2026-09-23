@@ -104,4 +104,64 @@ final class DefaultEventSerializerTest extends TestCase
 
         self::assertEquals($expected, $event);
     }
+
+    public function testSerializePassesEventContextToHydrator(): void
+    {
+        $event = new ProfileCreated(
+            ProfileId::fromString('1'),
+            Email::fromString('info@patchlevel.de'),
+        );
+
+        $hydrator = $this->createMock(Hydrator::class);
+        $hydrator
+            ->expects($this->once())
+            ->method('extract')
+            ->with($event, [
+                DefaultEventSerializer::CONTEXT_EVENT_NAME => 'profile_created',
+                DefaultEventSerializer::CONTEXT_EVENT_CLASS => ProfileCreated::class,
+            ])
+            ->willReturn(['profileId' => '1', 'email' => 'info@patchlevel.de']);
+
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/../Fixture'], $hydrator);
+
+        self::assertEquals(
+            new SerializedEvent('profile_created', '{"profileId":"1","email":"info@patchlevel.de"}'),
+            $serializer->serialize($event),
+        );
+    }
+
+    public function testDeserializePassesEventContextToUpcaster(): void
+    {
+        $hydrator = (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->useExtension(new UpcastExtension([
+                CallbackUpcaster::forClass(
+                    ProfileCreated::class,
+                    static function (array $data, array $context): array {
+                        self::assertSame('profile_created', $context[DefaultEventSerializer::CONTEXT_EVENT_NAME]);
+                        self::assertSame(ProfileCreated::class, $context[DefaultEventSerializer::CONTEXT_EVENT_CLASS]);
+
+                        return $data;
+                    },
+                ),
+            ]))
+            ->build();
+
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/../Fixture'], $hydrator);
+
+        $event = $serializer->deserialize(
+            new SerializedEvent(
+                'profile_created',
+                '{"profileId":"1","email":"info@patchlevel.de"}',
+            ),
+        );
+
+        self::assertEquals(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de'),
+            ),
+            $event,
+        );
+    }
 }

@@ -74,6 +74,28 @@ final class ProfileRegistered
 {
 }
 ```
+If the payload changed together with the name, the upcaster needs to know under which name the event was stored.
+The serializer passes it in the context as `DefaultEventSerializer::CONTEXT_EVENT_NAME`,
+the resolved class is available as `DefaultEventSerializer::CONTEXT_EVENT_CLASS`.
+
+```php
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\Hydrator\Extension\Upcast\CallbackUpcaster;
+
+$upcaster = CallbackUpcaster::forClass(
+    ProfileRegistered::class,
+    static function (array $data, array $context): array {
+        if ($context[DefaultEventSerializer::CONTEXT_EVENT_NAME] !== 'profile.created') {
+            return $data;
+        }
+
+        $data['registeredAt'] = $data['createdAt'];
+        unset($data['createdAt']);
+
+        return $data;
+    },
+);
+```
 ## Configure
 
 After we have defined the upcasting rules, we have to register them in the hydrator with the `UpcastExtension`
@@ -101,7 +123,7 @@ $serializer = DefaultEventSerializer::createFromPaths(
 ```
 The `UpcastExtension` has two stages where upcasters can be registered.
 Upcasters in `beforeEncoding` get the raw stored payload, before any values are decoded,
-for example before [personal data](personal-data.md) is decrypted.
+for example before [personal data](sensitive-data.md) is decrypted.
 This is the right place to rename or move fields.
 Upcasters in `beforeTransform` run right before the object is built and see the decoded values.
 Use this stage if you want to change the value of an encrypted field.

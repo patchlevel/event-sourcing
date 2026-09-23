@@ -15,7 +15,11 @@ use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Extension\Upcast\CallbackUpcaster;
+use Patchlevel\Hydrator\Extension\Upcast\UpcastExtension;
 use Patchlevel\Hydrator\StackHydrator;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -178,5 +182,52 @@ final class DefaultHeadersSerializerTest extends TestCase
 
         self::assertEquals('{"streamName":{"streamName":"profile-1"}}', $content);
         self::assertEquals([new StreamNameHeader('profile-1')], $serializer->deserialize($content));
+    }
+
+    public function testDeserializeWithCustomHydrator(): void
+    {
+        $hydrator = (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->useExtension(new UpcastExtension([
+                CallbackUpcaster::forClass(
+                    StreamNameHeader::class,
+                    static function (array $data): array {
+                        self::assertIsString($data['id']);
+
+                        return ['streamName' => 'profile-' . $data['id']];
+                    },
+                ),
+            ]))
+            ->build();
+
+        $serializer = DefaultHeadersSerializer::createFromPaths(
+            [__DIR__ . '/../../Fixture'],
+            hydrator: $hydrator,
+        );
+
+        self::assertEquals(
+            [new StreamNameHeader('profile-1')],
+            $serializer->deserialize('{"streamName":{"id":"1"}}'),
+        );
+    }
+
+    public function testCreateDefaultWithCustomHydrator(): void
+    {
+        $hydrator = (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->useExtension(new UpcastExtension([
+                CallbackUpcaster::forClass(
+                    PlayheadHeader::class,
+                    static fn (array $data): array => ['playhead' => 42],
+                ),
+            ]))
+            ->build();
+
+        $serializer = DefaultHeadersSerializer::createDefault($hydrator);
+
+        self::assertEquals(
+            [new PlayheadHeader(42)],
+            $serializer->deserialize('{"playhead":{"playhead":1}}'),
+        );
     }
 }
