@@ -445,6 +445,14 @@ final class StreamDoctrineDbalStore implements Store, SubscriptionStore, Doctrin
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['event_id']);
         $table->addUniqueIndex(['stream', 'playhead']);
+
+        if ($connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+            // the predicate is written the way postgres returns it, otherwise the schema diff never settles
+            $table->addIndex(['stream', 'playhead'], options: ['where' => '(archived = false)']);
+
+            return;
+        }
+
         $table->addIndex(['stream', 'playhead', 'archived']);
     }
 
