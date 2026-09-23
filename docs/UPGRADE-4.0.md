@@ -23,6 +23,12 @@ Following classes have been moved to the `Patchlevel\EventSourcing\Identifier` n
 Return typehint of `fromString` method has been changed from `self` to `static`.
 All typehints of other classes `AggregateRootId` have been changed to `Identifier`.
 
+`Patchlevel\EventSourcing\Test\IncrementalRamseyUuidFactory` has been renamed to
+`Patchlevel\EventSourcing\Identifier\FakeRamseyUuidFactory`.
+
+The `aggregateIdClass()` method of the `Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer`
+has been renamed to `identifierClass()`.
+
 ### Child Aggregate
 
 We removed our experimental feature of child aggregates.
@@ -272,6 +278,42 @@ $engine = new DefaultSubscriptionEngine(
     argumentResolvers: [new MyResolver()],
 );
 ```
+The `$argumentResolvers` constructor argument of `MetadataSubscriberAccessor` has been removed as well.
+
+### MessageLoader
+
+The `$startIndex` argument of `Patchlevel\EventSourcing\Subscription\Engine\MessageLoader::load()`
+is now nullable. If you implemented your own message loader, adjust the signature.
+`null` means that there is no position yet and the loader has to start from the beginning.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Store\Stream;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
+
+final class CustomMessageLoader implements MessageLoader
+{
+    public function load(int $startIndex, array $subscriptions): Stream
+    {
+        // ...
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Message\Stream;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
+
+final class CustomMessageLoader implements MessageLoader
+{
+    public function load(int|null $startIndex, array $subscriptions): Stream
+    {
+        // ...
+    }
+}
+```
 ### Batchable Subscriber
 
 The `Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber` interface has been removed.
@@ -450,6 +492,31 @@ And all the associated classes:
 * `Patchlevel\EventSourcing\Store\DoctrineDbalStore`
 * `Patchlevel\EventSourcing\Store\DoctrineDbalStoreStream`
 
+The methods `aggregateName()` and `aggregateId()` of the `CriteriaBuilder` have been removed too.
+Filter by stream name instead, wildcards are supported.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+
+$criteria = (new CriteriaBuilder())
+    ->aggregateName('profile')
+    ->aggregateId('1')
+    ->build();
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+
+$criteria = (new CriteriaBuilder())
+    ->streamName('profile-1')
+    ->build();
+```
+For the same reason the `--aggregate` and `--aggregate-id` options of the `event-sourcing:watch` command
+have been removed. Use the `--stream` option instead, e.g. `--stream="profile-*"`.
+
 ### StreamReadOnlyStore
 
 `StreamReadOnlyStore` was been merged in `ReadOnlyStore`.
@@ -476,6 +543,9 @@ The following store specific stream implementations have been removed:
 The new `Stream` class implements `Iterator` and accepts any `iterable<Message>` in its constructor.
 The `index()`, `position()`, `end()` and `close()` methods remain available.
 In addition there are now the helper methods `toList()`, `toArray()`, `transform()` and `chunk()`.
+
+The `Patchlevel\EventSourcing\Store\StreamClosed` exception has been moved to
+`Patchlevel\EventSourcing\Message\StreamClosed`.
 
 ### Pipe
 
@@ -508,7 +578,9 @@ and replaced with the following headers:
 
 ### AggregateToStreamHeaderTranslator
 
-`Patchlevel\EventSourcing\Store\AggregateToStreamHeaderTranslator` has been removed.
+`Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator` has been removed.
+It was only needed to migrate from the removed `DoctrineDbalStore` to the `StreamDoctrineDbalStore`,
+so do this migration while you are still on 3.x.
 
 ## Schema
 
