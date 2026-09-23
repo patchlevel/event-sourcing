@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMe
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\StoreAdapter;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Psr\Clock\ClockInterface;
@@ -31,7 +32,7 @@ final class DefaultRepositoryManager implements RepositoryManager
 
     public function __construct(
         private readonly AggregateRootRegistry $aggregateRootRegistry,
-        private readonly Store $store,
+        private readonly Store|StoreAdapter $store,
         private readonly EventBus|null $eventBus = null,
         private readonly SnapshotStore|null $snapshotStore = null,
         private readonly MessageDecorator|null $messageDecorator = null,

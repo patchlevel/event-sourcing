@@ -12,19 +12,15 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\DefaultStoreAdapter;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\StoreAdapter;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
-use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\Criteria;
-use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -46,6 +42,7 @@ use function sprintf;
  */
 final class DefaultRepository implements Repository
 {
+    private StoreAdapter $storeAdapter;
     private ClockInterface $clock;
     private LoggerInterface $logger;
 
@@ -54,7 +51,7 @@ final class DefaultRepository implements Repository
 
     /** @param AggregateRootMetadata<T> $metadata */
     public function __construct(
-        private readonly Store $store,
+        Store|StoreAdapter $store,
         private readonly AggregateRootMetadata $metadata,
         private readonly EventBus|null $eventBus = null,
         private readonly SnapshotStore|null $snapshotStore = null,
@@ -62,6 +59,7 @@ final class DefaultRepository implements Repository
         ClockInterface|null $clock = null,
         LoggerInterface|null $logger = null,
     ) {
+        $this->storeAdapter = $store instanceof Store ? new DefaultStoreAdapter($store) : $store;
         $this->clock = $clock ?? new SystemClock();
         $this->logger = $logger ?? new NullLogger();
         $this->aggregateIsValid = new WeakMap();
@@ -112,15 +110,10 @@ final class DefaultRepository implements Repository
             }
         }
 
-        $criteria = new Criteria(
-            new StreamCriterion($this->metadata->streamName($id->toString())),
-            new ArchivedCriterion(false),
-        );
-
         $stream = null;
 
         try {
-            $stream = $this->store->load($criteria);
+            $stream = $this->storeAdapter->load($this->metadata->streamName($id->toString()));
 
             $firstMessage = $stream->current();
 
@@ -189,11 +182,7 @@ final class DefaultRepository implements Repository
 
     public function has(Identifier $id): bool
     {
-        $criteria = new Criteria(
-            new StreamCriterion($this->metadata->streamName($id->toString())),
-        );
-
-        return $this->store->count($criteria) > 0;
+        return $this->storeAdapter->has($this->metadata->streamName($id->toString()));
     }
 
     /** @param T $aggregate */
@@ -249,12 +238,9 @@ final class DefaultRepository implements Repository
 
             $streamName = $this->metadata->streamName($aggregateId);
 
-            $archiveTo = null;
-
             $messages = array_map(
                 static function (object $event) use (
                     &$playhead,
-                    &$archiveTo,
                     $messageDecorator,
                     $clock,
                     $streamName,
@@ -268,31 +254,13 @@ final class DefaultRepository implements Repository
                         $message = $messageDecorator($message);
                     }
 
-                    if ($message->hasHeader(StreamStartHeader::class)) {
-                        $archiveTo = $playhead;
-                    }
-
                     return $message;
                 },
                 $events,
             );
 
             try {
-                if ($archiveTo !== null) {
-                    $this->store->transactional(
-                        function () use ($messages, $streamName, $archiveTo): void {
-                            $this->store->save(...$messages);
-                            $this->store->archive(
-                                new Criteria(
-                                    new StreamCriterion($streamName),
-                                    new ToPlayheadCriterion($archiveTo),
-                                ),
-                            );
-                        },
-                    );
-                } else {
-                    $this->store->save(...$messages);
-                }
+                $this->storeAdapter->save($streamName, ...$messages);
             } catch (UniqueConstraintViolation) {
                 if ($newAggregate) {
                     $this->logger->error(
@@ -346,15 +314,13 @@ final class DefaultRepository implements Repository
 
         $aggregate = $this->snapshotStore->load($aggregateClass, $id);
 
-        $criteria = new Criteria(
-            new StreamCriterion($this->metadata->streamName($id->toString())),
-            new FromPlayheadCriterion($aggregate->playhead()),
-        );
-
         $stream = null;
 
         try {
-            $stream = $this->store->load($criteria);
+            $stream = $this->storeAdapter->load(
+                $this->metadata->streamName($id->toString()),
+                $aggregate->playhead(),
+            );
 
             if ($stream->current() === null) {
                 $this->aggregateIsValid[$aggregate] = true;
