@@ -49,7 +49,7 @@ infection: vendor                                                               
 
 .PHONY: infection-diff
 infection-diff: vendor                                                          ## run infection on differences
-	php -d memory_limit=312M vendor/bin/infection --threads=max --git-diff-lines --git-diff-base=origin/HEAD --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=95
+	php -d memory_limit=312M vendor/bin/infection --threads=max --git-diff-lines --git-diff-base=origin/HEAD --ignore-msi-with-no-mutations --with-uncovered --min-msi=90 --min-covered-msi=95
 
 .PHONY: static
 static: phpstan cs                                              			 ## run static analyser
