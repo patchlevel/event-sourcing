@@ -114,6 +114,8 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
 
     private readonly bool $isSQLite;
 
+    private readonly bool $supportsGinIndex;
+
     /** @param array{table_name?: string, locking?: bool, lock_id?: int, lock_timeout?: int, keep_index?: bool, default_stream_name?: string} $config */
     public function __construct(
         private readonly Connection $connection,
@@ -141,6 +143,7 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
         $this->isMariaDb = $platform instanceof MariaDBPlatform;
         $this->isPostgres = $platform instanceof PostgreSQLPlatform;
         $this->isSQLite = $platform instanceof SQLitePlatform;
+        $this->supportsGinIndex = $platform instanceof Dbal\PostgreSQLPlatform;
     }
 
     public function load(
@@ -642,6 +645,16 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
         $table->addUniqueIndex(['event_id']);
         $table->addUniqueIndex(['stream', 'playhead']);
         $table->addIndex(['stream', 'playhead', 'archived']);
+        $table->addIndex(['event_name']);
+
+        if (!$this->supportsGinIndex) {
+            return;
+        }
+
+        $table->addIndex(
+            ['tags'],
+            $this->config['table_name'] . '_tags' . Dbal\PostgreSQLPlatform::GIN_INDEX_SUFFIX,
+        );
     }
 
     /** @return list<object> */
