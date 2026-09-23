@@ -141,6 +141,34 @@ $schemaDirector = new DoctrineSchemaDirector(
     ]),
 );
 ```
+### Cache
+
+The `DoctrineCipherKeyStore` does not cache the keys, every encrypted value triggers a query.
+If you load an aggregate with many events of the same subject, this adds up quickly.
+Wrap the store with the `Psr6CacheStoreDecorator` or `Psr16CacheStoreDecorator` of the hydrator.
+
+```php
+use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\Psr6CacheStoreDecorator;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+
+/** @var DoctrineCipherKeyStore $doctrineCipherKeyStore */
+$cipherKeyStore = new Psr6CacheStoreDecorator(
+    $doctrineCipherKeyStore,
+    new ArrayAdapter(defaultLifetime: 60, maxItems: 1000),
+);
+```
+:::warning
+Use a cache with a lifetime and a limit, especially in long running processes like workers.
+Keys that are removed in another process stay in this cache until they expire,
+so the data can still be decrypted there until then.
+:::
+
+:::note
+The decorator removes the cached keys when you remove them through it,
+so removing personal data in the same process takes effect immediately.
+:::
+
 ### Hydrator
 
 Now we have to put the whole thing together in a hydrator with the `CryptographyExtension`.

@@ -19,8 +19,10 @@ use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\Hydrator\CoreExtension;
 use Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer;
 use Patchlevel\Hydrator\Extension\Cryptography\CryptographyExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\Psr6CacheStoreDecorator;
 use Patchlevel\Hydrator\StackHydratorBuilder;
 use PhpBench\Attributes as Bench;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 #[Bench\BeforeMethods('setUp')]
 final class PersonalDataBench
@@ -39,7 +41,12 @@ final class PersonalDataBench
 
         $hydrator = (new StackHydratorBuilder())
             ->useExtension(new CoreExtension())
-            ->useExtension(new CryptographyExtension(BaseCryptographer::createWithOpenssl($cipherKeyStore)))
+            ->useExtension(new CryptographyExtension(BaseCryptographer::createWithOpenssl(
+                new Psr6CacheStoreDecorator(
+                    $cipherKeyStore,
+                    new ArrayAdapter(defaultLifetime: 60, maxItems: 1000),
+                ),
+            )))
             ->build();
 
         $this->store = new StreamDoctrineDbalStore(
