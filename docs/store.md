@@ -124,6 +124,21 @@ The table structure of the `TaggableDoctrineDbalStore` looks like this:
 | tags           | ?json    | The tags attached to the event                |
 | custom_headers | json     | Custom headers for the event                  |
 
+If you query by tags, e.g. with the [dynamic consistency boundary](dynamic-consistency-boundary.md),
+you can add a GIN index on the `tags` column on PostgreSQL by registering the `PostgreSQLPlatformMiddleware`.
+
+```php
+use Doctrine\DBAL\Configuration;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
+use Patchlevel\EventSourcing\Store\Dbal\PostgreSQLPlatformMiddleware;
+
+$connection = DriverManager::getConnection(
+    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
+    (new Configuration())->setMiddlewares([new PostgreSQLPlatformMiddleware()]),
+);
+```
+
 ### InMemoryStore
 
 We also offer an in-memory store for testing purposes.

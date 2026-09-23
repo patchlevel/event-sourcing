@@ -395,6 +395,7 @@ final class CheckOutHandler
 Now we can wire everything together.
 
 ```php
+use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider;
@@ -403,9 +404,13 @@ use Patchlevel\EventSourcing\DecisionModel\StoreDecisionModelBuilder;
 use Patchlevel\EventSourcing\DecisionModel\StoreEventAppender;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\Dbal\PostgreSQLPlatformMiddleware;
 use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
 
-$connection = DriverManager::getConnection((new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'));
+$connection = DriverManager::getConnection(
+    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
+    (new Configuration())->setMiddlewares([new PostgreSQLPlatformMiddleware()]),
+);
 $eventRegistry = (new AttributeEventRegistryFactory())->create(['src/Domain/Hotel/Event']);
 $serializer = new DefaultEventSerializer($eventRegistry);
 
@@ -422,6 +427,14 @@ $provider = new ServiceHandlerProvider([
 
 $commandBus = new SyncCommandBus($provider);
 ```
+
+:::warning
+We strongly recommend using PostgreSQL for the dynamic consistency boundary.
+Every decision queries the event store by tags, and these queries can only use an index on PostgreSQL.
+For that, register the `PostgreSQLPlatformMiddleware` as shown above,
+see [TaggableDoctrineDbalStore](store.md#taggabledoctrinedbalstore).
+:::
+
 :::tip
 For tests you can replace the `TaggableDoctrineDbalStore` with an `InMemoryStore`. It implements the
 same tag query and conditional append, so the decision model and the append condition behave the same

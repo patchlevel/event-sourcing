@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 
 use DateTimeImmutable;
+use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
@@ -20,6 +21,7 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\TagCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Dbal\PostgreSQLPlatformMiddleware;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
@@ -1027,5 +1029,41 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         $streams = $this->store->streams();
 
         self::assertEquals(['foo'], $streams);
+    }
+
+    public function testGinIndexOnTags(): void
+    {
+        if (!$this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+            $this->markTestSkipped('only postgres supports gin indexes');
+        }
+
+        $connection = DriverManager::getConnection(
+            $this->connection->getParams(),
+            (new Configuration())->setMiddlewares([new PostgreSQLPlatformMiddleware()]),
+        );
+
+        $store = new TaggableDoctrineDbalStore(
+            $connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            (new AttributeEventRegistryFactory())->create([__DIR__ . '/Events']),
+        );
+
+        $schemaDirector = new DoctrineSchemaDirector($connection, $store);
+
+        try {
+            $schemaDirector->update();
+
+            $indexDefinition = $connection->fetchOne(
+                "SELECT indexdef FROM pg_indexes WHERE indexname = 'event_store_tags_gin_idx'",
+            );
+
+            self::assertSame(
+                'CREATE INDEX event_store_tags_gin_idx ON public.event_store USING gin (tags jsonb_path_ops)',
+                $indexDefinition,
+            );
+            self::assertSame([], $schemaDirector->dryRunUpdate());
+        } finally {
+            $connection->close();
+        }
     }
 }
