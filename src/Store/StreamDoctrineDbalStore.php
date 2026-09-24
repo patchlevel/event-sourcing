@@ -48,6 +48,7 @@ use PDO;
 use Pdo\Pgsql;
 use Psr\Clock\ClockInterface;
 use Ramsey\Uuid\Uuid;
+use WeakReference;
 
 use function array_fill;
 use function array_filter;
@@ -55,7 +56,6 @@ use function array_merge;
 use function array_values;
 use function class_exists;
 use function count;
-use function explode;
 use function floor;
 use function implode;
 use function in_array;
@@ -64,10 +64,9 @@ use function is_string;
 use function sprintf;
 use function str_contains;
 use function str_replace;
+use function usleep;
 
-use const PHP_VERSION_ID;
-
-final class StreamDoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchemaConfigurator, ProvideDbalConnection
+final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineSchemaConfigurator, ProvideDbalConnection
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.
@@ -95,6 +94,9 @@ final class StreamDoctrineDbalStore implements Store, SubscriptionStore, Doctrin
     private readonly array $config;
 
     private bool $hasLock = false;
+
+    /** @var WeakReference<PDO>|null */
+    private WeakReference|null $listeningConnection = null;
 
     /** @param array{table_name?: string, locking?: bool, lock_id?: int, lock_timeout?: int, keep_index?: bool} $config */
     public function __construct(
@@ -329,11 +331,11 @@ final class StreamDoctrineDbalStore implements Store, SubscriptionStore, Doctrin
                     $position = 0;
                 }
 
-                if ($position === 0) {
-                    return;
+                if ($position !== 0) {
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
                 }
 
-                $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
+                $this->notify();
 
                 if (!$this->config['keep_index'] || !($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform)) {
                     return;
@@ -476,76 +478,61 @@ final class StreamDoctrineDbalStore implements Store, SubscriptionStore, Doctrin
         );
     }
 
-    public function supportSubscription(): bool
-    {
-        return $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform && class_exists(PDO::class);
-    }
-
     public function wait(int $timeoutMilliseconds): void
     {
-        if (!$this->supportSubscription()) {
+        if (!($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform) || !class_exists(PDO::class)) {
+            usleep($timeoutMilliseconds * 1000);
+
             return;
         }
 
-        $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->config['table_name']));
+        /** @var PDO $nativeConnection */
+        $nativeConnection = $this->connection->getNativeConnection();
 
-        if (PHP_VERSION_ID >= 80400) {
-            /** @var Pgsql $nativeConnection */
-            $nativeConnection = $this->connection->getNativeConnection();
-            $nativeConnection->getNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
-        } else {
-            /** @var PDO $nativeConnection */
-            $nativeConnection = $this->connection->getNativeConnection();
-            $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        // LISTEN only receives notifications sent after it was executed. Events committed before
+        // would be missed, so the first call returns immediately and lets the caller load them first.
+        // The native connection is compared to listen again after a reconnect.
+        if ($this->listeningConnection?->get() !== $nativeConnection) {
+            $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->config['table_name']));
+            $this->listeningConnection = WeakReference::create($nativeConnection);
+
+            return;
         }
+
+        if (!$this->receiveNotification($nativeConnection, $timeoutMilliseconds)) {
+            return;
+        }
+
+        // The caller loads all new events anyway, so queued notifications can be discarded.
+        do {
+            $received = $this->receiveNotification($nativeConnection, 0);
+        } while ($received);
     }
 
-    public function setupSubscription(): void
+    private function receiveNotification(PDO $nativeConnection, int $timeoutMilliseconds): bool
     {
-        if (!$this->supportSubscription()) {
+        if ($nativeConnection instanceof Pgsql) {
+            return $nativeConnection->getNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds) !== false;
+        }
+
+        /** @var array<string, mixed>|false $notification the stub is missing the false return type */
+        $notification = $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+
+        return $notification !== false;
+    }
+
+    private function notify(): void
+    {
+        if (!($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform)) {
             return;
         }
 
-        $functionName = $this->createTriggerFunctionName();
-
-        $this->connection->executeStatement(sprintf(
-            <<<'SQL'
-                CREATE OR REPLACE FUNCTION %1$s() RETURNS TRIGGER AS $$
-                    BEGIN
-                        PERFORM pg_notify('%2$s', NEW.stream::text);
-                        RETURN NEW;
-                    END;
-                $$ LANGUAGE plpgsql;
-                SQL,
-            $functionName,
-            $this->config['table_name'],
-        ));
-
-        $this->connection->executeStatement(sprintf(
-            'DROP TRIGGER IF EXISTS notify_trigger ON %s;',
-            $this->config['table_name'],
-        ));
-        $this->connection->executeStatement(sprintf(
-            'CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON %1$s FOR EACH ROW EXECUTE PROCEDURE %2$s();',
-            $this->config['table_name'],
-            $functionName,
-        ));
+        $this->connection->executeStatement(sprintf('NOTIFY "%s"', $this->config['table_name']));
     }
 
     public function connection(): Connection
     {
         return $this->connection;
-    }
-
-    private function createTriggerFunctionName(): string
-    {
-        $tableConfig = explode('.', $this->config['table_name']);
-
-        if (count($tableConfig) === 1) {
-            return sprintf('notify_%1$s', $tableConfig[0]);
-        }
-
-        return sprintf('%1$s.notify_%2$s', $tableConfig[0], $tableConfig[1]);
     }
 
     /**

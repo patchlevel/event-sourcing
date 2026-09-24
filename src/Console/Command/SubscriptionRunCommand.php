@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Store\ListenableStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
@@ -90,17 +90,13 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $criteria = $this->subscriptionEngineCriteria($input);
         $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
-        if ($this->store instanceof SubscriptionStore) {
-            $this->store->setupSubscription();
-        }
-
         $logger = new ConsoleLogger($output);
 
         $worker = DefaultWorker::create(
             function () use ($criteria, $messageLimit, $sleep): void {
                 $this->engine->execute(new Run($criteria->ids, $criteria->groups, $messageLimit));
 
-                if (!$this->store instanceof SubscriptionStore) {
+                if (!$this->store instanceof ListenableStore) {
                     return;
                 }
 
@@ -120,8 +116,7 @@ final class SubscriptionRunCommand extends SubscriptionCommand
             $this->engine->execute(new Boot($criteria->ids, $criteria->groups));
         }
 
-        $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();
-        $worker->run($supportSubscription ? 0 : $sleep);
+        $worker->run($this->store instanceof ListenableStore ? 0 : $sleep);
 
         return 0;
     }

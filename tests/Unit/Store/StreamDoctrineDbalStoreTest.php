@@ -1276,7 +1276,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -1555,98 +1555,31 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
     }
 
-    public function testSetupSubscription(): void
+    #[RequiresPhp('>= 8.4')]
+    public function testWaitListensOnFirstCall(): void
     {
+        $nativeConnection = $this->createMock(Pgsql::class);
+        $nativeConnection->expects($this->never())->method('getNotify');
+
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(3))
+            ->expects($this->exactly(1))
             ->method('executeStatement')
-            ->willReturnMap([
-                [
-                    <<<'SQL'
-                CREATE OR REPLACE FUNCTION notify_event_store() RETURNS TRIGGER AS $$
-                    BEGIN
-                        PERFORM pg_notify('event_store', NEW.stream::text);
-                        RETURN NEW;
-                    END;
-                $$ LANGUAGE plpgsql;
-                SQL,
-                    1,
-                ],
-                ['DROP TRIGGER IF EXISTS notify_trigger ON event_store;', 1],
-                ['CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON event_store FOR EACH ROW EXECUTE PROCEDURE notify_event_store();', 1],
-            ]);
-
-        $abstractPlatform = $this->createMock(PostgreSQLPlatform::class);
-        $connection->expects($this->once())->method('getDatabasePlatform')->willReturn($abstractPlatform);
-
-        $eventSerializer = $this->createMock(EventSerializer::class);
-        $headersSerializer = $this->createMock(HeadersSerializer::class);
-
-        $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection,
-            $eventSerializer,
-            $headersSerializer,
-        );
-        $doctrineDbalStore->setupSubscription();
-    }
-
-    public function testSetupSubscriptionWithOtherStoreTableName(): void
-    {
-        $connection = $this->createMock(Connection::class);
+            ->with('LISTEN "event_store"')
+            ->willReturn(1);
         $connection
-            ->expects($this->exactly(3))
-            ->method('executeStatement')
-            ->willReturnMap([
-                [
-                    <<<'SQL'
-                CREATE OR REPLACE FUNCTION new.notify_event_store() RETURNS TRIGGER AS $$
-                    BEGIN
-                        PERFORM pg_notify('new.event_store', NEW.stream::text);
-                        RETURN NEW;
-                    END;
-                $$ LANGUAGE plpgsql;
-                SQL,
-                    1,
-                ],
-                ['DROP TRIGGER IF EXISTS notify_trigger ON new.event_store;', 1],
-                ['CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON new.event_store FOR EACH ROW EXECUTE PROCEDURE new.notify_event_store();', 1],
-            ]);
-
-        $abstractPlatform = $this->createMock(PostgreSQLPlatform::class);
-        $connection->expects($this->once())->method('getDatabasePlatform')->willReturn($abstractPlatform);
-
-        $eventSerializer = $this->createMock(EventSerializer::class);
-        $headersSerializer = $this->createMock(HeadersSerializer::class);
-        $clock = $this->createMock(ClockInterface::class);
+            ->expects($this->exactly(1))
+            ->method('getNativeConnection')
+            ->willReturn($nativeConnection);
+        $connection->method('getDatabasePlatform')->willReturn($this->createMock(PostgreSQLPlatform::class));
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
             $connection,
-            $eventSerializer,
-            $headersSerializer,
-            $clock,
-            ['table_name' => 'new.event_store'],
+            $this->createMock(EventSerializer::class),
+            $this->createMock(HeadersSerializer::class),
         );
-        $doctrineDbalStore->setupSubscription();
-    }
 
-    public function testSetupSubscriptionNotPostgres(): void
-    {
-        $connection = $this->createMock(Connection::class);
-        $connection->expects($this->never())->method('executeStatement');
-
-        $abstractPlatform = $this->createMock(AbstractPlatform::class);
-        $connection->expects($this->once())->method('getDatabasePlatform')->willReturn($abstractPlatform);
-
-        $eventSerializer = $this->createMock(EventSerializer::class);
-        $headersSerializer = $this->createMock(HeadersSerializer::class);
-
-        $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection,
-            $eventSerializer,
-            $headersSerializer,
-        );
-        $doctrineDbalStore->setupSubscription();
+        $doctrineDbalStore->wait(100);
     }
 
     #[RequiresPhp('>= 8.4')]
@@ -1654,33 +1587,126 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $nativeConnection = $this->createMock(Pgsql::class);
         $nativeConnection
-            ->expects($this->once())
+            ->expects($this->exactly(3))
             ->method('getNotify')
-            ->with(PDO::FETCH_ASSOC, 100)
-            ->willReturn([]);
+            ->willReturnCallback(new ReturnCallback([
+                [[PDO::FETCH_ASSOC, 100], ['message' => 'event_store']],
+                [[PDO::FETCH_ASSOC, 0], ['message' => 'event_store']],
+                [[PDO::FETCH_ASSOC, 0], false],
+            ]));
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->once())
+            ->expects($this->exactly(1))
             ->method('executeStatement')
             ->with('LISTEN "event_store"')
             ->willReturn(1);
         $connection
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('getNativeConnection')
             ->willReturn($nativeConnection);
-
-        $abstractPlatform = $this->createMock(PostgreSQLPlatform::class);
-        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
-
-        $eventSerializer = $this->createMock(EventSerializer::class);
-        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $connection->method('getDatabasePlatform')->willReturn($this->createMock(PostgreSQLPlatform::class));
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
             $connection,
-            $eventSerializer,
-            $headersSerializer,
+            $this->createMock(EventSerializer::class),
+            $this->createMock(HeadersSerializer::class),
         );
+
+        $doctrineDbalStore->wait(100);
+        $doctrineDbalStore->wait(100);
+    }
+
+    #[RequiresPhp('>= 8.4')]
+    public function testWaitTimeout(): void
+    {
+        $nativeConnection = $this->createMock(Pgsql::class);
+        $nativeConnection
+            ->expects($this->once())
+            ->method('getNotify')
+            ->with(PDO::FETCH_ASSOC, 100)
+            ->willReturn(false);
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(1))
+            ->method('executeStatement')
+            ->with('LISTEN "event_store"')
+            ->willReturn(1);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getNativeConnection')
+            ->willReturn($nativeConnection);
+        $connection->method('getDatabasePlatform')->willReturn($this->createMock(PostgreSQLPlatform::class));
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection,
+            $this->createMock(EventSerializer::class),
+            $this->createMock(HeadersSerializer::class),
+        );
+
+        $doctrineDbalStore->wait(100);
+        $doctrineDbalStore->wait(100);
+    }
+
+    #[RequiresPhp('>= 8.4')]
+    public function testWaitListensAgainAfterReconnect(): void
+    {
+        $nativeConnection = $this->createMock(Pgsql::class);
+        $nativeConnection->expects($this->never())->method('getNotify');
+
+        $reconnectedNativeConnection = $this->createMock(Pgsql::class);
+        $reconnectedNativeConnection->expects($this->never())->method('getNotify');
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('executeStatement')
+            ->with('LISTEN "event_store"')
+            ->willReturn(1);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getNativeConnection')
+            ->willReturnOnConsecutiveCalls($nativeConnection, $reconnectedNativeConnection);
+        $connection->method('getDatabasePlatform')->willReturn($this->createMock(PostgreSQLPlatform::class));
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection,
+            $this->createMock(EventSerializer::class),
+            $this->createMock(HeadersSerializer::class),
+        );
+
+        $doctrineDbalStore->wait(100);
+        $doctrineDbalStore->wait(100);
+    }
+
+    #[RequiresPhp('< 8.4')]
+    public function testWaitListensOnFirstCallDeprecatedFunction(): void
+    {
+        $nativeConnection = $this->getMockBuilder(PDO::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['pgsqlGetNotify'])
+            ->getMock();
+        $nativeConnection->expects($this->never())->method('pgsqlGetNotify');
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(1))
+            ->method('executeStatement')
+            ->with('LISTEN "event_store"')
+            ->willReturn(1);
+        $connection
+            ->expects($this->exactly(1))
+            ->method('getNativeConnection')
+            ->willReturn($nativeConnection);
+        $connection->method('getDatabasePlatform')->willReturn($this->createMock(PostgreSQLPlatform::class));
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection,
+            $this->createMock(EventSerializer::class),
+            $this->createMock(HeadersSerializer::class),
+        );
+
         $doctrineDbalStore->wait(100);
     }
 
@@ -1692,33 +1718,105 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->addMethods(['pgsqlGetNotify'])
             ->getMock();
         $nativeConnection
-            ->expects($this->once())
+            ->expects($this->exactly(3))
             ->method('pgsqlGetNotify')
-            ->with(PDO::FETCH_ASSOC, 100)
-            ->willReturn([]);
+            ->willReturnCallback(new ReturnCallback([
+                [[PDO::FETCH_ASSOC, 100], ['message' => 'event_store']],
+                [[PDO::FETCH_ASSOC, 0], ['message' => 'event_store']],
+                [[PDO::FETCH_ASSOC, 0], false],
+            ]));
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->once())
+            ->expects($this->exactly(1))
             ->method('executeStatement')
             ->with('LISTEN "event_store"')
             ->willReturn(1);
         $connection
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('getNativeConnection')
             ->willReturn($nativeConnection);
-
-        $abstractPlatform = $this->createMock(PostgreSQLPlatform::class);
-        $connection->method('getDatabasePlatform')->willReturn($abstractPlatform);
-
-        $eventSerializer = $this->createMock(EventSerializer::class);
-        $headersSerializer = $this->createMock(HeadersSerializer::class);
+        $connection->method('getDatabasePlatform')->willReturn($this->createMock(PostgreSQLPlatform::class));
 
         $doctrineDbalStore = new StreamDoctrineDbalStore(
             $connection,
-            $eventSerializer,
-            $headersSerializer,
+            $this->createMock(EventSerializer::class),
+            $this->createMock(HeadersSerializer::class),
         );
+
+        $doctrineDbalStore->wait(100);
+        $doctrineDbalStore->wait(100);
+    }
+
+    #[RequiresPhp('< 8.4')]
+    public function testWaitTimeoutDeprecatedFunction(): void
+    {
+        $nativeConnection = $this->getMockBuilder(PDO::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['pgsqlGetNotify'])
+            ->getMock();
+        $nativeConnection
+            ->expects($this->once())
+            ->method('pgsqlGetNotify')
+            ->with(PDO::FETCH_ASSOC, 100)
+            ->willReturn(false);
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(1))
+            ->method('executeStatement')
+            ->with('LISTEN "event_store"')
+            ->willReturn(1);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getNativeConnection')
+            ->willReturn($nativeConnection);
+        $connection->method('getDatabasePlatform')->willReturn($this->createMock(PostgreSQLPlatform::class));
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection,
+            $this->createMock(EventSerializer::class),
+            $this->createMock(HeadersSerializer::class),
+        );
+
+        $doctrineDbalStore->wait(100);
+        $doctrineDbalStore->wait(100);
+    }
+
+    #[RequiresPhp('< 8.4')]
+    public function testWaitListensAgainAfterReconnectDeprecatedFunction(): void
+    {
+        $nativeConnection = $this->getMockBuilder(PDO::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['pgsqlGetNotify'])
+            ->getMock();
+        $nativeConnection->expects($this->never())->method('pgsqlGetNotify');
+
+        $reconnectedNativeConnection = $this->getMockBuilder(PDO::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['pgsqlGetNotify'])
+            ->getMock();
+        $reconnectedNativeConnection->expects($this->never())->method('pgsqlGetNotify');
+
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('executeStatement')
+            ->with('LISTEN "event_store"')
+            ->willReturn(1);
+        $connection
+            ->expects($this->exactly(2))
+            ->method('getNativeConnection')
+            ->willReturnOnConsecutiveCalls($nativeConnection, $reconnectedNativeConnection);
+        $connection->method('getDatabasePlatform')->willReturn($this->createMock(PostgreSQLPlatform::class));
+
+        $doctrineDbalStore = new StreamDoctrineDbalStore(
+            $connection,
+            $this->createMock(EventSerializer::class),
+            $this->createMock(HeadersSerializer::class),
+        );
+
+        $doctrineDbalStore->wait(100);
         $doctrineDbalStore->wait(100);
     }
 
@@ -2405,7 +2503,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -2476,7 +2574,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -2531,7 +2629,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -2590,7 +2688,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -2642,7 +2740,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(3))
+            ->expects($this->exactly(4))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -2753,7 +2851,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('getDatabasePlatform')
             ->willReturn(new PostgreSQLPlatform());
         $mockedConnection
@@ -2765,7 +2863,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             );
 
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('executeStatement')
             ->willReturnCallback(new ReturnCallback([
                 [
@@ -2777,6 +2875,10 @@ final class StreamDoctrineDbalStoreTest extends TestCase
                             6 => Type::getType(Types::BOOLEAN),
                         ],
                     ],
+                    1,
+                ],
+                [
+                    ['NOTIFY "event_store"', [], []],
                     1,
                 ],
                 [
@@ -2965,46 +3067,6 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $this->expectException(LockingNotImplemented::class);
         $store->transactional($callback(...));
-    }
-
-    public function testSupportSubscription(): void
-    {
-        $connection = $this->createMock(Connection::class);
-        $connection
-            ->expects($this->once())
-            ->method('getDatabasePlatform')
-            ->willReturn(new PostgreSQLPlatform());
-
-        $eventSerializer = $this->createMock(EventSerializer::class);
-        $headersSerializer = $this->createMock(HeadersSerializer::class);
-
-        $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection,
-            $eventSerializer,
-            $headersSerializer,
-        );
-
-        self::assertTrue($doctrineDbalStore->supportSubscription());
-    }
-
-    public function testSupportSubscriptionNotPostgres(): void
-    {
-        $connection = $this->createMock(Connection::class);
-        $connection
-            ->expects($this->once())
-            ->method('getDatabasePlatform')
-            ->willReturn(new SQLitePlatform());
-
-        $eventSerializer = $this->createMock(EventSerializer::class);
-        $headersSerializer = $this->createMock(HeadersSerializer::class);
-
-        $doctrineDbalStore = new StreamDoctrineDbalStore(
-            $connection,
-            $eventSerializer,
-            $headersSerializer,
-        );
-
-        self::assertFalse($doctrineDbalStore->supportSubscription());
     }
 
     public function testWaitNotPostgres(): void
