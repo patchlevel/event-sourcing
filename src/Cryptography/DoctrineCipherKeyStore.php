@@ -6,77 +6,98 @@ namespace Patchlevel\EventSourcing\Cryptography;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Patchlevel\EventSourcing\Schema\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
-use Patchlevel\Hydrator\Cryptography\Cipher\CipherKey;
-use Patchlevel\Hydrator\Cryptography\Store\CipherKeyNotExists;
-use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\Extension\Cryptography\Cipher\CipherKey;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyNotExists;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
 
-use function array_key_exists;
 use function base64_decode;
 use function base64_encode;
 
 /**
  * @phpstan-type Row = array{
+ *     id: non-empty-string,
  *     subject_id: non-empty-string,
  *     crypto_key: non-empty-string,
  *     crypto_method: non-empty-string,
- *     crypto_iv: non-empty-string
+ *     created_at: non-empty-string
  * }
  */
 final class DoctrineCipherKeyStore implements CipherKeyStore, DoctrineSchemaConfigurator
 {
-    /** @var array<string, CipherKey> */
-    private array $keyCache = [];
+    private Type $dateTimeType;
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly string $tableName = 'crypto_keys',
+        private readonly string $tableName = 'cryptography_keys',
     ) {
+        $this->dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
     }
 
     public function get(string $id): CipherKey
     {
-        if (array_key_exists($id, $this->keyCache)) {
-            return $this->keyCache[$id];
-        }
-
         /** @var Row|false $result */
         $result = $this->connection->fetchAssociative(
-            "SELECT * FROM {$this->tableName} WHERE subject_id = :subject_id",
-            ['subject_id' => $id],
+            "SELECT * FROM {$this->tableName} WHERE id = :id",
+            ['id' => $id],
         );
 
         if ($result === false) {
-            throw new CipherKeyNotExists($id);
+            throw CipherKeyNotExists::forKeyId($id);
         }
 
-        $this->keyCache[$id] = new CipherKey(
+        return new CipherKey(
+            $result['id'],
+            $result['subject_id'],
             base64_decode($result['crypto_key']),
             $result['crypto_method'],
-            base64_decode($result['crypto_iv']),
+            $this->dateTimeType->convertToPHPValue($result['created_at'], $this->connection->getDatabasePlatform()),
         );
-
-        return $this->keyCache[$id];
     }
 
-    public function store(string $id, CipherKey $key): void
+    public function currentKeyFor(string $subjectId): CipherKey
+    {
+        /** @var Row|false $result */
+        $result = $this->connection->fetchAssociative(
+            "SELECT * FROM {$this->tableName} WHERE subject_id = :subject_id",
+            ['subject_id' => $subjectId],
+        );
+
+        if ($result === false) {
+            throw CipherKeyNotExists::forSubjectId($subjectId);
+        }
+
+        return new CipherKey(
+            $result['id'],
+            $result['subject_id'],
+            base64_decode($result['crypto_key']),
+            $result['crypto_method'],
+            $this->dateTimeType->convertToPHPValue($result['created_at'], $this->connection->getDatabasePlatform()),
+        );
+    }
+
+    public function store(CipherKey $key): void
     {
         $this->connection->insert($this->tableName, [
-            'subject_id' => $id,
+            'id' => $key->id,
+            'subject_id' => $key->subjectId,
             'crypto_key' => base64_encode($key->key),
             'crypto_method' => $key->method,
-            'crypto_iv' => base64_encode($key->iv),
+            'created_at' => $this->dateTimeType->convertToDatabaseValue($key->createdAt, $this->connection->getDatabasePlatform()),
         ]);
-
-        $this->keyCache[$id] = $key;
     }
 
     public function remove(string $id): void
     {
-        $this->connection->delete($this->tableName, ['subject_id' => $id]);
+        $this->connection->delete($this->tableName, ['id' => $id]);
+    }
 
-        unset($this->keyCache[$id]);
+    public function removeWithSubjectId(string $subjectId): void
+    {
+        $this->connection->delete($this->tableName, ['subject_id' => $subjectId]);
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void
@@ -86,6 +107,9 @@ final class DoctrineCipherKeyStore implements CipherKeyStore, DoctrineSchemaConf
         }
 
         $table = $schema->createTable($this->tableName);
+        $table->addColumn('id', 'string')
+            ->setNotnull(true)
+            ->setLength(255);
         $table->addColumn('subject_id', 'string')
             ->setNotnull(true)
             ->setLength(255);
@@ -95,14 +119,9 @@ final class DoctrineCipherKeyStore implements CipherKeyStore, DoctrineSchemaConf
         $table->addColumn('crypto_method', 'string')
             ->setNotnull(true)
             ->setLength(255);
-        $table->addColumn('crypto_iv', 'string')
-            ->setNotnull(true)
-            ->setLength(255);
-        $table->setPrimaryKey(['subject_id']);
-    }
-
-    public function clear(): void
-    {
-        $this->keyCache = [];
+        $table->addColumn('created_at', 'datetimetz_immutable')
+            ->setNotnull(true);
+        $table->setPrimaryKey(['id']);
+        $table->addIndex(['subject_id']);
     }
 }

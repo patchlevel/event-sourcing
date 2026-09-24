@@ -65,8 +65,8 @@
           "file": "snapshots.md"
         },
         {
-          "title": "Personal Data",
-          "file": "personal-data.md"
+          "title": "Sensitive Data",
+          "file": "sensitive-data.md"
         },
         {
           "title": "Upcasting",

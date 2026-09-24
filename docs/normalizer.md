@@ -100,7 +100,7 @@ final class HotelCreated
 }
 ```
 :::note
-If you have personal data, you can use [crypto-shredding](personal-data.md).
+If you have personal data, you can use [crypto-shredding](sensitive-data.md).
 :::
 
 ### Aggregate
@@ -351,6 +351,7 @@ final class Name
 For this we now need a custom normalizer.
 This normalizer must implement the `Normalizer` interface.
 You also need to implement a `normalize` and `denormalize` method.
+Both methods receive the hydration context as second parameter.
 Finally, you have to allow the normalizer to be used as an attribute.
 
 ```php
@@ -360,7 +361,8 @@ use Patchlevel\Hydrator\Normalizer\Normalizer;
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_CLASS)]
 class NameNormalizer implements Normalizer
 {
-    public function normalize(mixed $value): string
+    /** @param array<string, mixed> $context */
+    public function normalize(mixed $value, array $context): string
     {
         if (!$value instanceof Name) {
             throw InvalidArgument::withWrongType(Name::class, $value);
@@ -369,7 +371,8 @@ class NameNormalizer implements Normalizer
         return $value->toString();
     }
 
-    public function denormalize(mixed $value): Name|null
+    /** @param array<string, mixed> $context */
+    public function denormalize(mixed $value, array $context): Name|null
     {
         if ($value === null) {
             return null;
@@ -459,4 +462,4 @@ final class DTO
 * [How to define aggregates](aggregate.md)
 * [How to define events](events.md)
 * [How to snapshot aggregates](snapshots.md)
-* [How to work with personal data](personal-data.md)
+* [How to work with sensitive and personal data](sensitive-data.md)

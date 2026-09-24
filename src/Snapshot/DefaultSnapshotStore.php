@@ -9,9 +9,8 @@ use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataAwareMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
-use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
 use Patchlevel\Hydrator\Hydrator;
-use Patchlevel\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\StackHydrator;
 use Throwable;
 
 use function array_key_exists;
@@ -38,7 +37,7 @@ final class DefaultSnapshotStore implements SnapshotStore
             $this->adapterRepository = $adapterRepository;
         }
 
-        $this->hydrator = $hydrator ?? new MetadataHydrator();
+        $this->hydrator = $hydrator ?? new StackHydrator();
         $this->metadataFactory = $metadataFactory ?? new AggregateRootMetadataAwareMetadataFactory();
     }
 
@@ -118,11 +117,11 @@ final class DefaultSnapshotStore implements SnapshotStore
     }
 
     /** @param array<string, SnapshotAdapter> $snapshotAdapters */
-    public static function createDefault(array $snapshotAdapters, PayloadCryptographer|null $cryptographer = null): self
+    public static function createDefault(array $snapshotAdapters, Hydrator $hydrator = new StackHydrator()): self
     {
         return new self(
             new ArrayAdapterRepository($snapshotAdapters),
-            new MetadataHydrator(cryptographer: $cryptographer),
+            $hydrator,
         );
     }
 }

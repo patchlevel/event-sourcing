@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer;
 
-use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
+use Patchlevel\EventSourcing\Serializer\EventPayloadNotAnArray;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
-use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
-use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
-use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
-use Patchlevel\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Extension\Upcast\CallbackUpcaster;
+use Patchlevel\Hydrator\Extension\Upcast\UpcastExtension;
+use Patchlevel\Hydrator\Hydrator;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+
+use function sprintf;
 
 #[CoversClass(DefaultEventSerializer::class)]
 final class DefaultEventSerializerTest extends TestCase
@@ -41,6 +43,22 @@ final class DefaultEventSerializerTest extends TestCase
         );
     }
 
+    public function testSerializeWithNonArrayPayload(): void
+    {
+        $hydrator = $this->createStub(Hydrator::class);
+        $hydrator->method('extract')->willReturn('foo');
+
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/../Fixture'], $hydrator);
+
+        $this->expectException(EventPayloadNotAnArray::class);
+        $this->expectExceptionMessage(sprintf('The event "%s" has to be extracted to an array, "string" given.', ProfileCreated::class));
+
+        $serializer->serialize(new ProfileCreated(
+            ProfileId::fromString('1'),
+            Email::fromString('info@patchlevel.de'),
+        ));
+    }
+
     public function testDeserialize(): void
     {
         $expected = new ProfileCreated(
@@ -58,25 +76,19 @@ final class DefaultEventSerializerTest extends TestCase
         self::assertEquals($expected, $event);
     }
 
-    public function testSerializeWithUpcasting(): void
+    public function testDeserializeWithUpcasting(): void
     {
-        $upcaster = new class implements Upcaster {
-            public function __invoke(Upcast $upcast): Upcast
-            {
-                if ($upcast->eventName !== 'profile_created_old') {
-                    return $upcast;
-                }
+        $hydrator = (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->useExtension(new UpcastExtension([
+                CallbackUpcaster::forClass(
+                    ProfileCreated::class,
+                    static fn (array $data): array => $data + ['email' => 'info@patchlevel.de'],
+                ),
+            ]))
+            ->build();
 
-                return new Upcast('profile_created', $upcast->payload + ['email' => 'info@patchlevel.de']);
-            }
-        };
-
-        $serializer = new DefaultEventSerializer(
-            (new AttributeEventRegistryFactory())->create([__DIR__ . '/../Fixture']),
-            new MetadataHydrator(),
-            new JsonEncoder(),
-            $upcaster,
-        );
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/../Fixture'], $hydrator);
 
         $expected = new ProfileCreated(
             ProfileId::fromString('1'),
@@ -85,7 +97,7 @@ final class DefaultEventSerializerTest extends TestCase
 
         $event = $serializer->deserialize(
             new SerializedEvent(
-                'profile_created_old',
+                'profile_created',
                 '{"profileId":"1"}',
             ),
         );
@@ -93,49 +105,63 @@ final class DefaultEventSerializerTest extends TestCase
         self::assertEquals($expected, $event);
     }
 
-    public function testSerializeWithUpcastingChain(): void
+    public function testSerializePassesEventContextToHydrator(): void
     {
-        $upcasterOne = new class implements Upcaster {
-            public function __invoke(Upcast $upcast): Upcast
-            {
-                if ($upcast->eventName !== 'profile_created_very_old') {
-                    return $upcast;
-                }
-
-                return new Upcast('profile_created_old', ['profileId' => $upcast->payload['id'] ?? 'None']);
-            }
-        };
-
-        $upcasterTwo = new class implements Upcaster {
-            public function __invoke(Upcast $upcast): Upcast
-            {
-                if ($upcast->eventName !== 'profile_created_old') {
-                    return $upcast;
-                }
-
-                return new Upcast('profile_created', $upcast->payload + ['email' => 'info@patchlevel.de']);
-            }
-        };
-
-        $serializer = new DefaultEventSerializer(
-            (new AttributeEventRegistryFactory())->create([__DIR__ . '/../Fixture']),
-            new MetadataHydrator(),
-            new JsonEncoder(),
-            new UpcasterChain([$upcasterOne, $upcasterTwo]),
-        );
-
-        $expected = new ProfileCreated(
+        $event = new ProfileCreated(
             ProfileId::fromString('1'),
             Email::fromString('info@patchlevel.de'),
         );
 
+        $hydrator = $this->createMock(Hydrator::class);
+        $hydrator
+            ->expects($this->once())
+            ->method('extract')
+            ->with($event, [
+                DefaultEventSerializer::CONTEXT_EVENT_NAME => 'profile_created',
+                DefaultEventSerializer::CONTEXT_EVENT_CLASS => ProfileCreated::class,
+            ])
+            ->willReturn(['profileId' => '1', 'email' => 'info@patchlevel.de']);
+
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/../Fixture'], $hydrator);
+
+        self::assertEquals(
+            new SerializedEvent('profile_created', '{"profileId":"1","email":"info@patchlevel.de"}'),
+            $serializer->serialize($event),
+        );
+    }
+
+    public function testDeserializePassesEventContextToUpcaster(): void
+    {
+        $hydrator = (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->useExtension(new UpcastExtension([
+                CallbackUpcaster::forClass(
+                    ProfileCreated::class,
+                    static function (array $data, array $context): array {
+                        self::assertSame('profile_created', $context[DefaultEventSerializer::CONTEXT_EVENT_NAME]);
+                        self::assertSame(ProfileCreated::class, $context[DefaultEventSerializer::CONTEXT_EVENT_CLASS]);
+
+                        return $data;
+                    },
+                ),
+            ]))
+            ->build();
+
+        $serializer = DefaultEventSerializer::createFromPaths([__DIR__ . '/../Fixture'], $hydrator);
+
         $event = $serializer->deserialize(
             new SerializedEvent(
-                'profile_created_very_old',
-                '{"id":"1"}',
+                'profile_created',
+                '{"profileId":"1","email":"info@patchlevel.de"}',
             ),
         );
 
-        self::assertEquals($expected, $event);
+        self::assertEquals(
+            new ProfileCreated(
+                ProfileId::fromString('1'),
+                Email::fromString('info@patchlevel.de'),
+            ),
+            $event,
+        );
     }
 }
