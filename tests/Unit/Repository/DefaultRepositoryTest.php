@@ -19,6 +19,7 @@ use Patchlevel\EventSourcing\Repository\InvalidAggregate;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Repository\PlayheadMismatch;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\StoreAdapter;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
@@ -967,6 +968,51 @@ final class DefaultRepositoryTest extends TestCase
         $aggregate->visit();
 
         $this->expectException(PlayheadMismatch::class);
+
+        $repository->save($aggregate);
+    }
+
+    public function testCustomStoreAdapter(): void
+    {
+        $storeAdapter = $this->createMock(StoreAdapter::class);
+        $storeAdapter
+            ->expects($this->once())
+            ->method('has')
+            ->with('profile-1')
+            ->willReturn(true);
+        $storeAdapter
+            ->expects($this->once())
+            ->method('load')
+            ->with('profile-1', null)
+            ->willReturn(new Stream([
+                Message::create(
+                    new ProfileCreated(
+                        ProfileId::fromString('1'),
+                        Email::fromString('hallo@patchlevel.de'),
+                    ),
+                )
+                    ->withHeader(new StreamNameHeader('profile-1'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
+            ]));
+        $storeAdapter
+            ->expects($this->once())
+            ->method('save')
+            ->willReturnCallback(static function (string $streamName, Message ...$messages): void {
+                self::assertSame('profile-1', $streamName);
+                self::assertCount(1, $messages);
+                self::assertSame('profile-1', $messages[0]->header(StreamNameHeader::class)->streamName);
+                self::assertSame(2, $messages[0]->header(PlayheadHeader::class)->playhead);
+            });
+
+        $repository = new DefaultRepository($storeAdapter, Profile::metadata());
+
+        self::assertTrue($repository->has(ProfileId::fromString('1')));
+
+        $aggregate = $repository->load(ProfileId::fromString('1'));
+        self::assertInstanceOf(Profile::class, $aggregate);
+
+        $aggregate->visitProfile(ProfileId::fromString('2'));
 
         $repository->save($aggregate);
     }

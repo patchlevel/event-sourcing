@@ -141,6 +141,30 @@ You can find out more about the [message decorator](message-decorator.md).
 If you have multiple decorators, you can use the `ChainMessageDecorator` to chain them.
 :::
 
+### Store Adapter
+
+The repository does not talk to the store directly, but through a `StoreAdapter`.
+The adapter knows how the stream of an aggregate is loaded, checked for existence and saved,
+including archiving the old messages when a [stream is split](split-stream.md).
+If you pass a store, the `DefaultStoreAdapter` is used, which works with all stores of this library.
+
+If your store organizes its data differently, you can implement your own `StoreAdapter`
+and pass it instead of the store.
+
+```php
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
+use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\StoreAdapter;
+
+/**
+ * @var AggregateRootRegistry $aggregateRootRegistry
+ * @var StoreAdapter $storeAdapter
+ */
+$repositoryManager = new DefaultRepositoryManager(
+    $aggregateRootRegistry,
+    $storeAdapter,
+);
+```
 ## Use the repository
 
 Each `repository` has three methods that are responsible for loading an `aggregate`,
