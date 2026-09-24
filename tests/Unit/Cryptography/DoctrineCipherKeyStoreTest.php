@@ -10,7 +10,7 @@ use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-use Patchlevel\EventSourcing\Cryptography\ExtensionDoctrineCipherKeyStore;
+use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
 use Patchlevel\Hydrator\Extension\Cryptography\Cipher\CipherKey;
 use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyNotExists;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -18,8 +18,8 @@ use PHPUnit\Framework\TestCase;
 
 use function base64_encode;
 
-#[CoversClass(ExtensionDoctrineCipherKeyStore::class)]
-final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
+#[CoversClass(DoctrineCipherKeyStore::class)]
+final class DoctrineCipherKeyStoreTest extends TestCase
 {
     public function testGet(): void
     {
@@ -40,7 +40,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection);
+        $store = new DoctrineCipherKeyStore($connection);
 
         self::assertEquals(
             new CipherKey(
@@ -63,7 +63,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
             ->with('SELECT * FROM cryptography_keys WHERE id = :id', ['id' => 'foo'])
             ->willReturn(false);
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection);
+        $store = new DoctrineCipherKeyStore($connection);
 
         $this->expectException(CipherKeyNotExists::class);
 
@@ -89,7 +89,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection);
+        $store = new DoctrineCipherKeyStore($connection);
 
         self::assertEquals(
             new CipherKey(
@@ -112,7 +112,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
             ->with('SELECT * FROM cryptography_keys WHERE subject_id = :subject_id', ['subject_id' => 'profile-1'])
             ->willReturn(false);
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection);
+        $store = new DoctrineCipherKeyStore($connection);
 
         $this->expectException(CipherKeyNotExists::class);
 
@@ -141,7 +141,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
                 'created_at' => $expectedDate,
             ]);
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection);
+        $store = new DoctrineCipherKeyStore($connection);
 
         $store->store(new CipherKey(
             'foo',
@@ -160,7 +160,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
             ->method('delete')
             ->with('cryptography_keys', ['id' => 'foo']);
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection);
+        $store = new DoctrineCipherKeyStore($connection);
 
         $store->remove('foo');
     }
@@ -173,7 +173,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
             ->method('delete')
             ->with('cryptography_keys', ['subject_id' => 'profile-1']);
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection);
+        $store = new DoctrineCipherKeyStore($connection);
 
         $store->removeWithSubjectId('profile-1');
     }
@@ -186,7 +186,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
             ->method('delete')
             ->with('my_keys', ['id' => 'foo']);
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection, 'my_keys');
+        $store = new DoctrineCipherKeyStore($connection, 'my_keys');
 
         $store->remove('foo');
     }
@@ -195,7 +195,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
     {
         $connection = $this->createMock(Connection::class);
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection);
+        $store = new DoctrineCipherKeyStore($connection);
 
         $expectedSchema = new Schema();
         $table = $expectedSchema->createTable('cryptography_keys');
@@ -236,7 +236,7 @@ final class ExtensionDoctrineCipherKeyStoreTest extends TestCase
             ->method('getParams')
             ->willReturn(['dbname' => 'db2']);
 
-        $store = new ExtensionDoctrineCipherKeyStore($connection);
+        $store = new DoctrineCipherKeyStore($connection);
 
         $schema = new Schema();
         $store->configureSchema($schema, $differentConnection);

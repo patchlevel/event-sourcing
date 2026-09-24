@@ -37,28 +37,16 @@ parameters:
 			path: src/Console/DoctrineHelper.php
 
 		-
-			message: '#^Parameter \#1 \$key of class Patchlevel\\Hydrator\\Cryptography\\Cipher\\CipherKey constructor expects non\-empty\-string, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cryptography/DoctrineCipherKeyStore.php
-
-		-
-			message: '#^Parameter \#3 \$iv of class Patchlevel\\Hydrator\\Cryptography\\Cipher\\CipherKey constructor expects non\-empty\-string, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cryptography/DoctrineCipherKeyStore.php
-
-		-
 			message: '#^Parameter \#3 \$key of class Patchlevel\\Hydrator\\Extension\\Cryptography\\Cipher\\CipherKey constructor expects non\-empty\-string, string given\.$#'
 			identifier: argument.type
 			count: 2
-			path: src/Cryptography/ExtensionDoctrineCipherKeyStore.php
+			path: src/Cryptography/DoctrineCipherKeyStore.php
 
 		-
 			message: '#^Parameter \#5 \$createdAt of class Patchlevel\\Hydrator\\Extension\\Cryptography\\Cipher\\CipherKey constructor expects DateTimeImmutable, mixed given\.$#'
 			identifier: argument.type
 			count: 2
-			path: src/Cryptography/ExtensionDoctrineCipherKeyStore.php
+			path: src/Cryptography/DoctrineCipherKeyStore.php
 
 		-
 			message: '#^Call to function method_exists\(\) with ReflectionFunction and ''isAnonymous'' will always evaluate to true\.$#'

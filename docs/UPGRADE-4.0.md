@@ -23,6 +23,12 @@ Following classes have been moved to the `Patchlevel\EventSourcing\Identifier` n
 Return typehint of `fromString` method has been changed from `self` to `static`.
 All typehints of other classes `AggregateRootId` have been changed to `Identifier`.
 
+`Patchlevel\EventSourcing\Test\IncrementalRamseyUuidFactory` has been renamed to
+`Patchlevel\EventSourcing\Identifier\FakeRamseyUuidFactory`.
+
+The `aggregateIdClass()` method of the `Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer`
+has been renamed to `identifierClass()`.
+
 ### Child Aggregate
 
 We removed our experimental feature of child aggregates.
@@ -272,6 +278,42 @@ $engine = new DefaultSubscriptionEngine(
     argumentResolvers: [new MyResolver()],
 );
 ```
+The `$argumentResolvers` constructor argument of `MetadataSubscriberAccessor` has been removed as well.
+
+### MessageLoader
+
+The `$startIndex` argument of `Patchlevel\EventSourcing\Subscription\Engine\MessageLoader::load()`
+is now nullable. If you implemented your own message loader, adjust the signature.
+`null` means that there is no position yet and the loader has to start from the beginning.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Store\Stream;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
+
+final class CustomMessageLoader implements MessageLoader
+{
+    public function load(int $startIndex, array $subscriptions): Stream
+    {
+        // ...
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Message\Stream;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
+
+final class CustomMessageLoader implements MessageLoader
+{
+    public function load(int|null $startIndex, array $subscriptions): Stream
+    {
+        // ...
+    }
+}
+```
 ### Batchable Subscriber
 
 The `Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber` interface has been removed.
@@ -450,6 +492,31 @@ And all the associated classes:
 * `Patchlevel\EventSourcing\Store\DoctrineDbalStore`
 * `Patchlevel\EventSourcing\Store\DoctrineDbalStoreStream`
 
+The methods `aggregateName()` and `aggregateId()` of the `CriteriaBuilder` have been removed too.
+Filter by stream name instead, wildcards are supported.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+
+$criteria = (new CriteriaBuilder())
+    ->aggregateName('profile')
+    ->aggregateId('1')
+    ->build();
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+
+$criteria = (new CriteriaBuilder())
+    ->streamName('profile-1')
+    ->build();
+```
+For the same reason the `--aggregate` and `--aggregate-id` options of the `event-sourcing:watch` command
+have been removed. Use the `--stream` option instead, e.g. `--stream="profile-*"`.
+
 ### StreamReadOnlyStore
 
 `StreamReadOnlyStore` was been merged in `ReadOnlyStore`.
@@ -473,6 +540,13 @@ DROP TRIGGER IF EXISTS notify_trigger ON event_store;
 DROP FUNCTION IF EXISTS notify_event_store();
 ```
 
+### Partial index on PostgreSQL
+
+On PostgreSQL, the `StreamDoctrineDbalStore` and `TaggableDoctrineDbalStore` now create a partial index
+on `(stream, playhead) WHERE archived = false` instead of the index on `(stream, playhead, archived)`.
+Loading an aggregate only reads events that are not archived, so the index gets smaller and skips archived events.
+Generate a new migration or run `event-sourcing:schema:update` to apply the change.
+
 ## Stream
 
 The stream handling has been reworked. Previously the `Stream` was an interface that every store had to
@@ -495,6 +569,9 @@ The following store specific stream implementations have been removed:
 The new `Stream` class implements `Iterator` and accepts any `iterable<Message>` in its constructor.
 The `index()`, `position()`, `end()` and `close()` methods remain available.
 In addition there are now the helper methods `toList()`, `toArray()`, `transform()` and `chunk()`.
+
+The `Patchlevel\EventSourcing\Store\StreamClosed` exception has been moved to
+`Patchlevel\EventSourcing\Message\StreamClosed`.
 
 ### Pipe
 
@@ -527,8 +604,269 @@ and replaced with the following headers:
 
 ### AggregateToStreamHeaderTranslator
 
-`Patchlevel\EventSourcing\Store\AggregateToStreamHeaderTranslator` has been removed.
+`Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator` has been removed.
+It was only needed to migrate from the removed `DoctrineDbalStore` to the `StreamDoctrineDbalStore`,
+so do this migration while you are still on 3.x.
 
+## Hydrator
+
+`patchlevel/hydrator` has been updated to version 2.0.
+It was rebuilt on top of a middleware stack and brings its own breaking changes,
+for example the `MetadataHydrator` was replaced by the `StackHydrator`,
+and custom normalizers now receive a `$context` array in `normalize` and `denormalize`.
+Follow the [hydrator upgrade guide](https://github.com/patchlevel/hydrator/blob/2.0.x/UPGRADE-2.0.md) for these.
+
+## Serializer
+
+### Upcasting
+
+The upcaster of this library has been removed in favor of the `UpcastExtension` of the hydrator.
+This affects the following classes:
+
+* `Patchlevel\EventSourcing\Serializer\Upcast\Upcast`
+* `Patchlevel\EventSourcing\Serializer\Upcast\Upcaster`
+* `Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain`
+
+Implement `Patchlevel\Hydrator\Extension\Upcast\Upcaster` instead and register it on the hydrator.
+The upcaster now gets the class metadata of the resolved event instead of the event name.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+
+final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
+{
+    public function __invoke(Upcast $upcast): Upcast
+    {
+        if ($upcast->eventName !== 'profile.created') {
+            return $upcast;
+        }
+
+        return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']));
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\Hydrator\Extension\Upcast\Upcaster;
+use Patchlevel\Hydrator\Metadata\ClassMetadata;
+
+final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
+{
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    public function upcast(ClassMetadata $metadata, array $data, array $context): array
+    {
+        if ($metadata->className !== ProfileCreated::class) {
+            return $data;
+        }
+
+        $data['email'] = strtolower($data['email']);
+
+        return $data;
+    }
+}
+```
+Upcasters can no longer rename events. Use the `aliases` option of the `#[Event]` attribute instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+
+final class EventNameRenameUpcaster implements Upcaster
+{
+    public function __invoke(Upcast $upcast): Upcast
+    {
+        if ($upcast->eventName === 'profile.created') {
+            return $upcast->replaceEventName('profile.registered');
+        }
+
+        return $upcast;
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Attribute\Event;
+
+#[Event(name: 'profile.registered', aliases: ['profile.created'])]
+final class ProfileRegistered
+{
+}
+```
+### DefaultEventSerializer
+
+The `$upcaster` constructor argument of `DefaultEventSerializer` has been removed.
+`DefaultEventSerializer::createFromPaths()` no longer accepts an upcaster and a cryptographer,
+pass a configured hydrator instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
+use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
+
+/** @var PayloadCryptographer $cryptographer */
+$serializer = DefaultEventSerializer::createFromPaths(
+    ['src/Domain'],
+    new UpcasterChain([new ProfileCreatedEmailLowerCastUpcaster()]),
+    $cryptographer,
+);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer;
+use Patchlevel\Hydrator\Extension\Cryptography\CryptographyExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\Extension\Upcast\UpcastExtension;
+use Patchlevel\Hydrator\StackHydratorBuilder;
+
+/** @var CipherKeyStore $cipherKeyStore */
+$hydrator = (new StackHydratorBuilder())
+    ->useExtension(new CoreExtension())
+    ->useExtension(new UpcastExtension(beforeTransform: [new ProfileCreatedEmailLowerCastUpcaster()]))
+    ->useExtension(new CryptographyExtension(BaseCryptographer::createWithOpenssl($cipherKeyStore)))
+    ->build();
+
+$serializer = DefaultEventSerializer::createFromPaths(['src/Domain'], $hydrator);
+```
+## Snapshot
+
+### DefaultSnapshotStore
+
+`DefaultSnapshotStore::createDefault()` no longer accepts a `PayloadCryptographer` as second argument,
+pass a configured hydrator instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
+
+/** @var PayloadCryptographer $cryptographer */
+$snapshotStore = DefaultSnapshotStore::createDefault($adapters, $cryptographer);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\Hydrator\Hydrator;
+
+/** @var Hydrator $hydrator */
+$snapshotStore = DefaultSnapshotStore::createDefault($adapters, $hydrator);
+```
+## Sensitive Data
+
+The legacy cryptography of the hydrator (`PersonalDataPayloadCryptographer`, `#[PersonalData]`, ...)
+has been removed. Use the `CryptographyExtension` of the hydrator instead,
+see the [hydrator upgrade guide](https://github.com/patchlevel/hydrator/blob/2.0.x/UPGRADE-2.0.md#cryptography)
+and the [sensitive data](sensitive-data.md) documentation.
+
+:::danger
+Data encrypted with the legacy `PersonalDataPayloadCryptographer` can no longer be decrypted.
+The new cryptographer does not recognize the legacy format and passes the encrypted value through unchanged.
+Migrate your store and snapshots to the new format while you are still on 3.x,
+where the `CryptographyExtension` can read legacy data with the legacy cryptographer as fallback.
+:::
+
+### Attributes
+
+The attributes have been moved to the cryptography extension and `PersonalData` has been renamed to `SensitiveData`:
+
+* `Patchlevel\Hydrator\Attribute\DataSubjectId` is now `Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId`
+* `Patchlevel\Hydrator\Attribute\PersonalData` is now `Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData`
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\Hydrator\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Attribute\PersonalData;
+
+final class EmailChanged
+{
+    public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
+        #[PersonalData(fallback: 'unknown')]
+        public readonly string $email,
+    ) {
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData;
+
+final class EmailChanged
+{
+    public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
+        #[SensitiveData(fallback: 'unknown')]
+        public readonly string $email,
+    ) {
+    }
+}
+```
+
+### DoctrineCipherKeyStore
+
+The legacy `Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore`, which used the `crypto_keys` table,
+has been removed.
+`Patchlevel\EventSourcing\Cryptography\ExtensionDoctrineCipherKeyStore` has been renamed to
+`Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore`. It still uses the `cryptography_keys` table.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Cryptography\ExtensionDoctrineCipherKeyStore;
+
+$cipherKeyStore = new ExtensionDoctrineCipherKeyStore($connection);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
+
+$cipherKeyStore = new DoctrineCipherKeyStore($connection);
+```
+To delete the personal data of a subject, call `removeWithSubjectId()`.
+`remove()` now expects the id of a single cipher key.
+
+before:
+
+```php
+use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
+
+/** @var CipherKeyStore $cipherKeyStore */
+$cipherKeyStore->remove($profileId);
+```
+after:
+
+```php
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
+
+/** @var CipherKeyStore $cipherKeyStore */
+$cipherKeyStore->removeWithSubjectId($profileId);
+```
 ## Schema
 
 ### DoctrineSchemaSubscriber

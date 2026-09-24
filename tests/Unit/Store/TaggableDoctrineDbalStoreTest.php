@@ -4850,4 +4850,31 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
 
         self::assertEquals($expectedSchema, $schema);
     }
+
+    public function testConfigureSchemaWithPartialIndexOnPostgres(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->method('getDatabasePlatform')
+            ->willReturn(new PostgreSQLPlatform());
+
+        $doctrineDbalStore = new TaggableDoctrineDbalStore(
+            $connection,
+            $this->createMock(EventSerializer::class),
+            new EventRegistry([]),
+            $this->createMock(HeadersSerializer::class),
+        );
+
+        $schema = new Schema();
+        $doctrineDbalStore->configureSchema($schema, $connection);
+
+        $indexes = [];
+
+        foreach ($schema->getTable('event_store')->getIndexes() as $index) {
+            $indexes[] = [$index->getColumns(), $index->isUnique(), $index->getPredicate()];
+        }
+
+        self::assertContains([['stream', 'playhead'], false, '(archived = false)'], $indexes);
+        self::assertNotContains([['stream', 'playhead', 'archived'], false, null], $indexes);
+    }
 }

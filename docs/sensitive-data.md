@@ -1,18 +1,21 @@
-# Personal Data (GDPR)
+# Sensitive and Personal Data (GDPR)
 
-According to GDPR, personal data must be able to be deleted upon request.
+Events are immutable, but some data in them must not stay readable forever.
+The most common case is personal data (PII) like names, email addresses or phone numbers.
+According to the GDPR, personal data must be deleted upon request (the "right to be forgotten").
+The same applies to other sensitive data, like payment details or data that is only allowed to be kept for a certain time.
 But here we have the problem that our events are immutable and we cannot easily manipulate the event store.
 
-The first solution is not to save the personal data in the Event Store at all
+The first solution is not to save the sensitive data in the Event Store at all
 and use something different for this, for example a separate table or an ORM.
 
-The other option the library offers is crypto shredding.
-In this process, the personal data is encrypted with a key that is assigned to a subject (like person).
+The other option the library offers is crypto-shredding.
+In this process, the sensitive or personal data is encrypted with a key that is assigned to a subject (like a person).
 When saving and reading the events, this key is then used to convert the data.
 This key with the subject is saved in a database.
 
-As soon as a request for data deletion comes,
-you can simply delete the key and the personal data can no longer be decrypted.
+As soon as the data has to be deleted,
+you can simply delete the key and the sensitive or personal data can no longer be decrypted.
 
 ## Configuration
 
@@ -23,11 +26,11 @@ And if you use snapshots, you have to configure your aggregates too.
 ### DataSubjectId
 
 In order for the correct key to be used, a subject ID must be defined.
-Without Subject Id, no personal data can be encrypted or decrypted.
+Without Subject Id, no sensitive data can be encrypted or decrypted.
 
 ```php
 use Patchlevel\EventSourcing\Identifier\Uuid;
-use Patchlevel\Hydrator\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId;
 
 final class EmailChanged
 {
@@ -43,28 +46,28 @@ final class EmailChanged
 You can use the `DataSubjectId` in aggregates for snapshots too.
 :::
 
-### PersonalData
+### SensitiveData
 
-Next, you have to mark the properties that should be encrypted with the `#[PersonalData]` attribute.
+Next, you have to mark the properties that should be encrypted with the `#[SensitiveData]` attribute.
 
 ```php
 use Patchlevel\EventSourcing\Identifier\Uuid;
-use Patchlevel\Hydrator\Attribute\DataSubjectId;
-use Patchlevel\Hydrator\Attribute\PersonalData;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData;
 
 final class EmailChanged
 {
     public function __construct(
         #[DataSubjectId]
         public readonly Uuid $profileId,
-        #[PersonalData]
+        #[SensitiveData]
         public readonly string|null $email,
     ) {
     }
 }
 ```
 :::tip
-You can use the `PersonalData` in aggregates for snapshots too.
+You can use the `SensitiveData` in aggregates for snapshots too.
 :::
 
 If the information could not be decrypted, then a fallback value will be used.
@@ -72,16 +75,16 @@ The default fallback value is `null`.
 You can change this by setting the `fallback` parameter or using the `fallbackCallable` parameter.
 
 ```php
-use Patchlevel\Hydrator\Attribute\PersonalData;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData;
 
 final class ProfileChanged
 {
     public function __construct(
         #[DataSubjectId]
         public readonly Uuid $profileId,
-        #[PersonalData(fallback: 'unknown')]
+        #[SensitiveData(fallback: 'unknown')]
         public readonly string $name,
-        #[PersonalData(fallbackCallable: [self::class, 'createAnonymousEmail'])]
+        #[SensitiveData(fallbackCallable: [self::class, 'createAnonymousEmail'])]
         public readonly string $email,
     ) {
     }
@@ -138,33 +141,67 @@ $schemaDirector = new DoctrineSchemaDirector(
     ]),
 );
 ```
-### Personal Data Payload Cryptographer
+### Cache
 
-Now we have to put the whole thing together in a Personal Data Payload Cryptographer.
+The `DoctrineCipherKeyStore` does not cache the keys, every encrypted value triggers a query.
+If you load an aggregate with many events of the same subject, this adds up quickly.
+Wrap the store with the `Psr6CacheStoreDecorator` or `Psr16CacheStoreDecorator` of the hydrator.
 
 ```php
-use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
-use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
+use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\Psr6CacheStoreDecorator;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+
+/** @var DoctrineCipherKeyStore $doctrineCipherKeyStore */
+$cipherKeyStore = new Psr6CacheStoreDecorator(
+    $doctrineCipherKeyStore,
+    new ArrayAdapter(defaultLifetime: 60, maxItems: 1000),
+);
+```
+:::warning
+Use a cache with a lifetime and a limit, especially in long running processes like workers.
+Keys that are removed in another process stay in this cache until they expire,
+so the data can still be decrypted there until then.
+:::
+
+:::note
+The decorator removes the cached keys when you remove them through it,
+so removing personal data in the same process takes effect immediately.
+:::
+
+### Hydrator
+
+Now we have to put the whole thing together in a hydrator with the `CryptographyExtension`.
+
+```php
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer;
+use Patchlevel\Hydrator\Extension\Cryptography\CryptographyExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\StackHydratorBuilder;
 
 /** @var CipherKeyStore $cipherKeyStore */
-$cryptographer = PersonalDataPayloadCryptographer::createWithDefaultSettings($cipherKeyStore);
+$hydrator = (new StackHydratorBuilder())
+    ->useExtension(new CoreExtension())
+    ->useExtension(new CryptographyExtension(BaseCryptographer::createWithOpenssl($cipherKeyStore)))
+    ->build();
 ```
 :::tip
-You can specify the cipher method with the second parameter.
+You can specify the cipher method with the second parameter of `createWithOpenssl`.
 :::
 
 ### Event Serializer Integration
 
-The last step is to integrate the cryptographer into the event store.
+The last step is to integrate the hydrator into the event store.
 
 ```php
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
+use Patchlevel\Hydrator\Hydrator;
 
-/** @var PersonalDataPayloadCryptographer $cryptographer */
+/** @var Hydrator $hydrator */
 DefaultEventSerializer::createFromPaths(
     [__DIR__ . '/Events'],
-    cryptographer: $cryptographer,
+    $hydrator,
 );
 ```
 :::note
@@ -177,14 +214,14 @@ And for the snapshot store.
 
 ```php
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
-use Patchlevel\Hydrator\Cryptography\PersonalDataPayloadCryptographer;
+use Patchlevel\Hydrator\Hydrator;
 
-/** @var PersonalDataPayloadCryptographer $cryptographer */
+/** @var Hydrator $hydrator */
 $snapshotStore = DefaultSnapshotStore::createDefault(
     [
         /* adapters... */
     ],
-    $cryptographer,
+    $hydrator,
 );
 ```
 :::note
@@ -192,18 +229,18 @@ More information can be found in the [snapshots](snapshots.md) documentation.
 :::
 
 :::success
-Now you can save and read events with personal data.
+Now you can save and read events with sensitive data.
 :::
 
 ## Remove personal data
 
-To remove personal data, you can either remove the key manually or do it with a processor.
+To remove personal or other sensitive data, you can either remove the key manually or do it with a processor.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
 
 #[Processor('delete_personal_data')]
 final class DeletePersonalDataProcessor
@@ -218,7 +255,7 @@ final class DeletePersonalDataProcessor
     {
         $event = $message->event();
 
-        $this->cipherKeyStore->remove($event->personId);
+        $this->cipherKeyStore->removeWithSubjectId($event->personId);
     }
 }
 ```
