@@ -454,6 +454,13 @@ And all the associated classes:
 
 `StreamReadOnlyStore` was been merged in `ReadOnlyStore`.
 
+### Partial index on PostgreSQL
+
+On PostgreSQL, the `StreamDoctrineDbalStore` and `TaggableDoctrineDbalStore` now create a partial index
+on `(stream, playhead) WHERE archived = false` instead of the index on `(stream, playhead, archived)`.
+Loading an aggregate only reads events that are not archived, so the index gets smaller and skips archived events.
+Generate a new migration or run `event-sourcing:schema:update` to apply the change.
+
 ## Stream
 
 The stream handling has been reworked. Previously the `Stream` was an interface that every store had to
