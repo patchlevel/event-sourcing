@@ -14,14 +14,13 @@ use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Repository\StoreAdapter\DefaultStoreAdapter;
 use Patchlevel\EventSourcing\Repository\StoreAdapter\StoreAdapter;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\Version;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\VersionConflict;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotVersionInvalid;
-use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -49,6 +48,9 @@ final class DefaultRepository implements Repository
     /** @var WeakMap<T, bool> */
     private WeakMap $aggregateIsValid;
 
+    /** @var WeakMap<T, Version> */
+    private WeakMap $versions;
+
     /** @param AggregateRootMetadata<T> $metadata */
     public function __construct(
         Store|StoreAdapter $store,
@@ -63,6 +65,7 @@ final class DefaultRepository implements Repository
         $this->clock = $clock ?? new SystemClock();
         $this->logger = $logger ?? new NullLogger();
         $this->aggregateIsValid = new WeakMap();
+        $this->versions = new WeakMap();
     }
 
     /** @return T */
@@ -113,7 +116,8 @@ final class DefaultRepository implements Repository
         $stream = null;
 
         try {
-            $stream = $this->storeAdapter->load($this->metadata->streamName($id->toString()));
+            $loadedStream = $this->storeAdapter->load($this->metadata, $id->toString());
+            $stream = $loadedStream->stream;
 
             $firstMessage = $stream->current();
 
@@ -138,6 +142,7 @@ final class DefaultRepository implements Repository
                     );
 
                     $this->aggregateIsValid[$aggregate] = true;
+                    $this->versions[$aggregate] = $loadedStream->version();
 
                     return $aggregate;
                 }
@@ -153,12 +158,12 @@ final class DefaultRepository implements Repository
                 throw new AggregateNotFound($this->metadata->className, $id);
             }
 
-            $playhead = $firstMessage->header(PlayheadHeader::class)->playhead;
-
             $aggregate = $this->metadata->className::createFromEvents(
                 $this->unpack($stream),
-                $playhead - 1,
+                $loadedStream->playhead,
             );
+
+            $this->versions[$aggregate] = $loadedStream->version();
 
             if ($this->snapshotStore && $this->metadata->snapshot) {
                 $this->saveSnapshot($aggregate, $stream->position());
@@ -182,7 +187,7 @@ final class DefaultRepository implements Repository
 
     public function has(Identifier $id): bool
     {
-        return $this->storeAdapter->has($this->metadata->streamName($id->toString()));
+        return $this->storeAdapter->has($this->metadata, $id->toString());
     }
 
     /** @param T $aggregate */
@@ -236,18 +241,9 @@ final class DefaultRepository implements Repository
             $messageDecorator = $this->messageDecorator;
             $clock = $this->clock;
 
-            $streamName = $this->metadata->streamName($aggregateId);
-
             $messages = array_map(
-                static function (object $event) use (
-                    &$playhead,
-                    $messageDecorator,
-                    $clock,
-                    $streamName,
-                ) {
+                static function (object $event) use ($messageDecorator, $clock) {
                     $message = Message::create($event)
-                        ->withHeader(new StreamNameHeader($streamName))
-                        ->withHeader(new PlayheadHeader(++$playhead))
                         ->withHeader(new RecordedOnHeader($clock->now()));
 
                     if ($messageDecorator) {
@@ -260,8 +256,13 @@ final class DefaultRepository implements Repository
             );
 
             try {
-                $this->storeAdapter->save($streamName, ...$messages);
-            } catch (UniqueConstraintViolation) {
+                $result = $this->storeAdapter->save(
+                    $this->metadata,
+                    $aggregateId,
+                    $this->versions[$aggregate] ?? null,
+                    ...$messages,
+                );
+            } catch (VersionConflict) {
                 if ($newAggregate) {
                     $this->logger->error(
                         sprintf(
@@ -286,6 +287,7 @@ final class DefaultRepository implements Repository
             }
 
             $this->aggregateIsValid[$aggregate] = true;
+            $this->versions[$aggregate] = $result->version;
 
             $this->logger->debug(
                 sprintf(
@@ -300,7 +302,7 @@ final class DefaultRepository implements Repository
             throw $exception;
         }
 
-        $this->eventBus?->dispatch(...$messages);
+        $this->eventBus?->dispatch(...$result->messages);
     }
 
     /**
@@ -313,17 +315,22 @@ final class DefaultRepository implements Repository
         assert($this->snapshotStore instanceof SnapshotStore);
 
         $aggregate = $this->snapshotStore->load($aggregateClass, $id);
+        $playhead = $aggregate->playhead();
+        assert($playhead >= 0);
 
         $stream = null;
 
         try {
-            $stream = $this->storeAdapter->load(
-                $this->metadata->streamName($id->toString()),
-                $aggregate->playhead(),
+            $loadedStream = $this->storeAdapter->load(
+                $this->metadata,
+                $id->toString(),
+                $playhead,
             );
+            $stream = $loadedStream->stream;
 
             if ($stream->current() === null) {
                 $this->aggregateIsValid[$aggregate] = true;
+                $this->versions[$aggregate] = $loadedStream->version();
 
                 return $aggregate;
             }
@@ -340,6 +347,7 @@ final class DefaultRepository implements Repository
         }
 
         $this->aggregateIsValid[$aggregate] = true;
+        $this->versions[$aggregate] = $loadedStream->version();
 
         return $aggregate;
     }

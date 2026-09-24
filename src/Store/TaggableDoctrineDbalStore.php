@@ -390,9 +390,11 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
     }
 
     /** @param iterable<Message> $messages */
-    public function append(iterable $messages, AppendCondition|null $appendCondition = null): void
+    public function append(iterable $messages, AppendCondition|null $appendCondition = null): int
     {
-        $this->transactional(function () use ($messages, $appendCondition): void {
+        $lastIndex = 0;
+
+        $this->transactional(function () use ($messages, $appendCondition, &$lastIndex): void {
             $booleanType = Type::getType(Types::BOOLEAN);
             $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
             $jsonType = Type::getType(Types::JSON);
@@ -514,7 +516,19 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, Subscriptio
             if ($affectedRows === 0 && $appendCondition && $appendCondition->highestSequenceNumber !== null) {
                 throw new AppendConditionNotMet($appendCondition);
             }
+
+            // Only reliable with locking, otherwise another append could have happened in between.
+            $result = $this->connection->fetchOne(sprintf('SELECT MAX(id) FROM %s', $this->config['table_name']));
+
+            if (!is_int($result) && !is_string($result)) {
+                throw new WrongQueryResult();
+            }
+
+            $lastIndex = (int)$result;
         });
+
+        /** @var int<0, max> $lastIndex */
+        return $lastIndex;
     }
 
     public function query(Query $query): Stream

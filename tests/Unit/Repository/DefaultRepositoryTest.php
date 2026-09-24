@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\EventBus\EventBus;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\AggregateAlreadyExists;
 use Patchlevel\EventSourcing\Repository\AggregateDetached;
@@ -19,7 +20,10 @@ use Patchlevel\EventSourcing\Repository\InvalidAggregate;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
 use Patchlevel\EventSourcing\Repository\PlayheadMismatch;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\LoadedStream;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\SaveResult;
 use Patchlevel\EventSourcing\Repository\StoreAdapter\StoreAdapter;
+use Patchlevel\EventSourcing\Repository\StoreAdapter\Version;
 use Patchlevel\EventSourcing\Repository\WrongAggregate;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
@@ -50,6 +54,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Throwable;
+
+use function array_values;
 
 #[CoversClass(DefaultRepository::class)]
 final class DefaultRepositoryTest extends TestCase
@@ -974,46 +980,71 @@ final class DefaultRepositoryTest extends TestCase
 
     public function testCustomStoreAdapter(): void
     {
+        $metadata = Profile::metadata();
+
         $storeAdapter = $this->createMock(StoreAdapter::class);
         $storeAdapter
             ->expects($this->once())
             ->method('has')
-            ->with('profile-1')
+            ->with($metadata, '1')
             ->willReturn(true);
         $storeAdapter
             ->expects($this->once())
             ->method('load')
-            ->with('profile-1', null)
-            ->willReturn(new Stream([
-                Message::create(
-                    new ProfileCreated(
-                        ProfileId::fromString('1'),
-                        Email::fromString('hallo@patchlevel.de'),
+            ->with($metadata, '1', null)
+            ->willReturn(new LoadedStream(
+                new Stream([
+                    Message::create(
+                        new ProfileCreated(
+                            ProfileId::fromString('1'),
+                            Email::fromString('hallo@patchlevel.de'),
+                        ),
                     ),
-                )
-                    ->withHeader(new StreamNameHeader('profile-1'))
-                    ->withHeader(new PlayheadHeader(1))
-                    ->withHeader(new RecordedOnHeader(new DateTimeImmutable())),
-            ]));
-        $storeAdapter
-            ->expects($this->once())
-            ->method('save')
-            ->willReturnCallback(static function (string $streamName, Message ...$messages): void {
-                self::assertSame('profile-1', $streamName);
-                self::assertCount(1, $messages);
-                self::assertSame('profile-1', $messages[0]->header(StreamNameHeader::class)->streamName);
-                self::assertSame(2, $messages[0]->header(PlayheadHeader::class)->playhead);
-            });
+                ]),
+                4,
+                static fn () => new Version(42),
+            ));
 
-        $repository = new DefaultRepository($storeAdapter, Profile::metadata());
+        $savedVersions = [];
+
+        $storeAdapter
+            ->expects($this->exactly(2))
+            ->method('save')
+            ->willReturnCallback(
+                static function (
+                    AggregateRootMetadata $metadata,
+                    string $aggregateId,
+                    Version|null $expectedVersion,
+                    Message ...$messages,
+                ) use (&$savedVersions): SaveResult {
+                    self::assertSame('1', $aggregateId);
+                    self::assertCount(1, $messages);
+                    self::assertFalse($messages[0]->hasHeader(StreamNameHeader::class));
+                    self::assertFalse($messages[0]->hasHeader(PlayheadHeader::class));
+
+                    $savedVersions[] = $expectedVersion?->value;
+
+                    return new SaveResult(array_values($messages), new Version(($expectedVersion->value ?? 0) + 10));
+                },
+            );
+
+        $eventBus = $this->createMock(EventBus::class);
+        $eventBus->expects($this->exactly(2))->method('dispatch');
+
+        $repository = new DefaultRepository($storeAdapter, $metadata, $eventBus);
 
         self::assertTrue($repository->has(ProfileId::fromString('1')));
 
         $aggregate = $repository->load(ProfileId::fromString('1'));
         self::assertInstanceOf(Profile::class, $aggregate);
+        self::assertSame(5, $aggregate->playhead());
 
         $aggregate->visitProfile(ProfileId::fromString('2'));
-
         $repository->save($aggregate);
+
+        $aggregate->visitProfile(ProfileId::fromString('3'));
+        $repository->save($aggregate);
+
+        self::assertSame([42, 52], $savedVersions);
     }
 }

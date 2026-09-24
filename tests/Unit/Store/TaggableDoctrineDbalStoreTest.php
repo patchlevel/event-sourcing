@@ -1824,13 +1824,19 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             )
             ->willReturn(1);
 
+        $mockedConnection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with('SELECT MAX(id) FROM event_store')
+            ->willReturn('42');
+
         $store = new TaggableDoctrineDbalStore(
             $mockedConnection,
             $eventSerializer,
             $eventRegistry,
             $headersSerializer,
         );
-        $store->append([$message]);
+        self::assertSame(42, $store->append([$message]));
     }
 
     public function testAppendWithTwoMessages(): void
@@ -1915,13 +1921,19 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             )
             ->willReturn(2);
 
+        $mockedConnection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with('SELECT MAX(id) FROM event_store')
+            ->willReturn('42');
+
         $store = new TaggableDoctrineDbalStore(
             $mockedConnection,
             $eventSerializer,
             $eventRegistry,
             $headersSerializer,
         );
-        $store->append([$message1, $message2]);
+        self::assertSame(42, $store->append([$message1, $message2]));
     }
 
     public function testAppendWithPostgresCasts(): void
@@ -1989,6 +2001,12 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             )
             ->willReturn(1);
 
+        $mockedConnection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with('SELECT MAX(id) FROM event_store')
+            ->willReturn('42');
+
         $store = new TaggableDoctrineDbalStore(
             $mockedConnection,
             $eventSerializer,
@@ -1996,7 +2014,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             $headersSerializer,
             config: ['locking' => false],
         );
-        $store->append([$message]);
+        self::assertSame(42, $store->append([$message]));
     }
 
     public function testAppendWithHeaderFallbacks(): void
@@ -2067,6 +2085,12 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             )
             ->willReturn(1);
 
+        $mockedConnection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with('SELECT MAX(id) FROM event_store')
+            ->willReturn('42');
+
         $store = new TaggableDoctrineDbalStore(
             $mockedConnection,
             $eventSerializer,
@@ -2074,7 +2098,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             $headersSerializer,
             $clock,
         );
-        $store->append([$message]);
+        self::assertSame(42, $store->append([$message]));
     }
 
     public function testAppendWithAppendCondition(): void
@@ -2151,16 +2175,22 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             )
             ->willReturn(1);
 
+        $mockedConnection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with('SELECT MAX(id) FROM event_store')
+            ->willReturn('42');
+
         $store = new TaggableDoctrineDbalStore(
             $mockedConnection,
             $eventSerializer,
             $eventRegistry,
             $headersSerializer,
         );
-        $store->append(
+        self::assertSame(42, $store->append(
             [$message],
             new AppendCondition(new Query(new SubQuery(streamName: 'profile-1')), 5),
-        );
+        ));
     }
 
     public function testAppendWithAppendConditionZeroSequence(): void
@@ -2234,16 +2264,22 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             )
             ->willReturn(1);
 
+        $mockedConnection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with('SELECT MAX(id) FROM event_store')
+            ->willReturn('42');
+
         $store = new TaggableDoctrineDbalStore(
             $mockedConnection,
             $eventSerializer,
             $eventRegistry,
             $headersSerializer,
         );
-        $store->append(
+        self::assertSame(42, $store->append(
             [$message],
             new AppendCondition(new Query(), 0),
-        );
+        ));
     }
 
     public function testAppendConditionNotMet(): void

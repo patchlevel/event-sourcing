@@ -118,7 +118,7 @@ final class InMemoryStore implements Store, AppendStore
     }
 
     /** @param iterable<Message> $messages */
-    public function append(iterable $messages, AppendCondition|null $appendCondition = null): void
+    public function append(iterable $messages, AppendCondition|null $appendCondition = null): int
     {
         $messages = $messages instanceof Traversable
             ? iterator_to_array($messages, false)
@@ -136,6 +136,8 @@ final class InMemoryStore implements Store, AppendStore
 
             $this->save(...$messages);
         });
+
+        return array_key_last($this->messages) ?? 0;
     }
 
     /**
