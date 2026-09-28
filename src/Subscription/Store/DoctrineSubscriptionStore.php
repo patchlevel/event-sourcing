@@ -178,7 +178,22 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
             ],
         );
 
-        if ($effectedRows === 0) {
+        if ($effectedRows !== 0) {
+            return;
+        }
+
+        // mysql and mariadb count the changed rows, not the matched ones.
+        // so an update without any change also affects no rows, even if the subscription exists.
+        $exists = $this->connection->fetchOne(
+            $this->connection->createQueryBuilder()
+                ->select('1')
+                ->from($this->tableName)
+                ->where('id = :id')
+                ->getSQL(),
+            ['id' => $subscription->id()],
+        );
+
+        if ($exists === false) {
             throw new SubscriptionNotFound($subscription->id());
         }
     }
