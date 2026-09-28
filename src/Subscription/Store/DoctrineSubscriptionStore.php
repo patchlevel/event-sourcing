@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\DriverException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Schema;
@@ -129,25 +130,29 @@ final class DoctrineSubscriptionStore implements LockableSubscriptionStore, Doct
 
         $subscription->updateLastSavedAt($this->clock->now());
 
-        $this->connection->insert(
-            $this->tableName,
-            [
-                'id' => $subscription->id(),
-                'group_name' => $subscription->group(),
-                'run_mode' => $subscription->runMode()->value,
-                'status' => $subscription->status()->value,
-                'position' => $subscription->position(),
-                'error_message' => $subscriptionError?->errorMessage,
-                'error_previous_status' => $subscriptionError?->previousStatus?->value,
-                'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
-                'retry_attempt' => $subscription->retryAttempt(),
-                'last_saved_at' => $subscription->lastSavedAt(),
-                'cleanup_tasks' => $subscription->cleanupTasks() !== null ? serialize($subscription->cleanupTasks()) : null,
-            ],
-            [
-                'last_saved_at' => Types::DATETIME_IMMUTABLE,
-            ],
-        );
+        try {
+            $this->connection->insert(
+                $this->tableName,
+                [
+                    'id' => $subscription->id(),
+                    'group_name' => $subscription->group(),
+                    'run_mode' => $subscription->runMode()->value,
+                    'status' => $subscription->status()->value,
+                    'position' => $subscription->position(),
+                    'error_message' => $subscriptionError?->errorMessage,
+                    'error_previous_status' => $subscriptionError?->previousStatus?->value,
+                    'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
+                    'retry_attempt' => $subscription->retryAttempt(),
+                    'last_saved_at' => $subscription->lastSavedAt(),
+                    'cleanup_tasks' => $subscription->cleanupTasks() !== null ? serialize($subscription->cleanupTasks()) : null,
+                ],
+                [
+                    'last_saved_at' => Types::DATETIME_IMMUTABLE,
+                ],
+            );
+        } catch (UniqueConstraintViolationException $e) {
+            throw new SubscriptionAlreadyExists($subscription->id(), $e);
+        }
     }
 
     public function update(Subscription $subscription): void
