@@ -25,6 +25,7 @@ use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ProfileCreated;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 use function json_decode;
 use function sprintf;
@@ -233,6 +234,50 @@ final class DoctrineDbalStoreTest extends TestCase
         $this->expectExceptionMessage('The lock with id [133742] could not be acquired with a timeout of 1');
         try {
             $this->store->save(...$messages);
+        } finally {
+            $connection->close();
+        }
+    }
+
+    public function testLockIsAcquiredAgainAfterTimeout(): void
+    {
+        if ($this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            $this->markTestSkipped('SQLite does not support locks');
+        }
+
+        if ($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+            $this->markTestSkipped('PostgreSQL does lock indefinitely');
+        }
+
+        $profileId = ProfileId::generate();
+
+        $message = Message::create(new ProfileCreated($profileId, 'test'))
+            ->withHeader(new AggregateHeader(
+                'profile',
+                $profileId->toString(),
+                1,
+                new DateTimeImmutable('2020-01-01 00:00:00'),
+            ));
+
+        $connection = DriverManager::getConnection($this->connection->getParams());
+
+        try {
+            self::assertSame(1, $connection->fetchOne('SELECT GET_LOCK("133742", 1)'));
+
+            $exception = null;
+
+            try {
+                $this->store->save($message);
+            } catch (Throwable $e) {
+                $exception = $e;
+            }
+
+            self::assertInstanceOf(LockCouldNotBeAcquired::class, $exception);
+
+            // the lock is still held by the other connection, so the second save must also wait for it
+            $this->expectException(LockCouldNotBeAcquired::class);
+
+            $this->store->save($message);
         } finally {
             $connection->close();
         }

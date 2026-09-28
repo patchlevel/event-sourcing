@@ -37,8 +37,10 @@ final class DbalCleanupTaskHandler implements CleanupTaskHandler
             }
 
             foreach ($schemaManager->introspectTableIndexesByUnquotedName($task->table) as $index) {
-                if (strtolower($index->getObjectName()->toString()) === strtolower($task->index)) {
-                    $schemaManager->dropIndex($task->index, $task->table);
+                $indexName = $index->getObjectName()->getIdentifier()->getValue();
+
+                if (strtolower($indexName) === strtolower($task->index)) {
+                    $schemaManager->dropIndex($indexName, $task->table);
                     break;
                 }
             }
