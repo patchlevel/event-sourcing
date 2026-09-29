@@ -324,11 +324,9 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $position = 0;
                 }
 
-                if ($position === 0) {
-                    return;
+                if ($position !== 0) {
+                    $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
                 }
-
-                $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
 
                 if (!$this->config['keep_index'] || !($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform)) {
                     return;
