@@ -485,8 +485,6 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
 
     private function lock(): void
     {
-        $this->hasLock = true;
-
         $platform = $this->connection->getDatabasePlatform();
 
         if ($platform instanceof PostgreSQLPlatform) {
@@ -496,6 +494,8 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                     $this->config['lock_id'],
                 ),
             );
+
+            $this->hasLock = true;
 
             return;
         }
@@ -523,10 +523,14 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
                 throw LockCouldNotBeAcquired::byError($this->config['lock_id']);
             }
 
+            $this->hasLock = true;
+
             return;
         }
 
         if ($platform instanceof SQLitePlatform) {
+            $this->hasLock = true;
+
             return; // sql locking is not needed because of file locking
         }
 

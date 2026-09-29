@@ -215,7 +215,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     break;
                 case EventIdCriterion::class:
                     $builder->andWhere('event_id = :event_id');
-                    $builder->setParameter('event_id', $criterion->eventId, ArrayParameterType::STRING);
+                    $builder->setParameter('event_id', $criterion->eventId);
                     break;
                 default:
                     throw new UnsupportedCriterion($criterion::class);
@@ -564,8 +564,6 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
     private function lock(): void
     {
-        $this->hasLock = true;
-
         $platform = $this->connection->getDatabasePlatform();
 
         if ($platform instanceof PostgreSQLPlatform) {
@@ -575,6 +573,8 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $this->config['lock_id'],
                 ),
             );
+
+            $this->hasLock = true;
 
             return;
         }
@@ -602,10 +602,14 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                 throw LockCouldNotBeAcquired::byError($this->config['lock_id']);
             }
 
+            $this->hasLock = true;
+
             return;
         }
 
         if ($platform instanceof SQLitePlatform) {
+            $this->hasLock = true;
+
             return; // sql locking is not needed because of file locking
         }
 
