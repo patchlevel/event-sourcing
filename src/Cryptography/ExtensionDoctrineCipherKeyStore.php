@@ -61,10 +61,15 @@ final class ExtensionDoctrineCipherKeyStore implements CipherKeyStore, DoctrineS
     public function currentKeyFor(string $subjectId): CipherKey
     {
         /** @var Row|false $result */
-        $result = $this->connection->fetchAssociative(
-            "SELECT * FROM {$this->tableName} WHERE subject_id = :subject_id",
-            ['subject_id' => $subjectId],
-        );
+        $result = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($this->tableName)
+            ->where('subject_id = :subject_id')
+            ->orderBy('created_at', 'DESC')
+            ->addOrderBy('id', 'DESC')
+            ->setMaxResults(1)
+            ->setParameter('subject_id', $subjectId)
+            ->fetchAssociative();
 
         if ($result === false) {
             throw CipherKeyNotExists::forSubjectId($subjectId);
