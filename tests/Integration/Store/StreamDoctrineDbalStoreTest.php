@@ -210,6 +210,50 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         );
     }
 
+    public function testSaveWithIndexExactBatchSize(): void
+    {
+        $profileId = ProfileId::generate();
+
+        $messages = [];
+
+        // 65535 max parameters / 9 columns = 7281 messages per batch
+        for ($i = 1; $i <= 7281; $i++) {
+            $messages[] = Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
+                ->withHeader(new PlayheadHeader($i))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+                ->withHeader(new IndexHeader($i));
+        }
+
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            clock: $this->clock,
+            config: ['keep_index' => true],
+        );
+
+        $store->save(...$messages);
+
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            clock: $this->clock,
+        );
+
+        $store->save(
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamNameHeader(sprintf('profile-%s', $profileId->toString())))
+                ->withHeader(new PlayheadHeader(7282))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-02 00:00:00'))),
+        );
+
+        /** @var list<array<string, string>> $result */
+        $result = $this->connection->fetchAllAssociative('SELECT * FROM event_store WHERE playhead = 7282');
+
+        self::assertCount(1, $result);
+        self::assertEquals(7282, $result[0]['id']);
+    }
+
     public function testSaveWithOnlyStreamName(): void
     {
         $messages = [
