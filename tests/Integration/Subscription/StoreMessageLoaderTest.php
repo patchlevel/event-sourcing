@@ -16,7 +16,9 @@ use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
-use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredGapResolverStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\GapDetection;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriberEventFilter;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
@@ -27,7 +29,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
 #[CoversNothing]
-final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
+final class StoreMessageLoaderTest extends TestCase
 {
     private Connection $connection;
 
@@ -71,12 +73,16 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 ->withHeader(new RecordedOnHeader($recordedOn)),
         );
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new ProfileProjection($this->connection)]),
-            new FrozenClock($recordedOn),
-            [0, 0],
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new ProfileProjection($this->connection)]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+                [0, 0],
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription('profile_1')]);
@@ -120,12 +126,16 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 ->withHeader(new IndexHeader(4)),
         );
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new ProfileProjection($this->connection)]),
-            new FrozenClock($recordedOn),
-            [0, 0],
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new ProfileProjection($this->connection)]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+                [0, 0],
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription('profile_1')]);
@@ -187,12 +197,16 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 ->withHeader(new IndexHeader(5)),
         );
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new ProfileProjection($this->connection)]),
-            new FrozenClock($recordedOn),
-            [0, 0],
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new ProfileProjection($this->connection)]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+                [0, 0],
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription('profile_1')]);

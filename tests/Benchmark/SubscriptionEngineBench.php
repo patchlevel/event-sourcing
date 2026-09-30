@@ -14,7 +14,8 @@ use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriberEventFilter;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
@@ -78,10 +79,12 @@ final class SubscriptionEngineBench
         );
 
         $this->subscriptionEngine = new ThrowOnErrorSubscriptionEngine(new DefaultSubscriptionEngine(
-            new EventFilteredStoreMessageLoader(
+            new StoreMessageLoader(
                 $this->store,
-                new AttributeEventMetadataFactory(),
-                $subscriberAccessorRepository,
+                new SubscriberEventFilter(
+                    new AttributeEventMetadataFactory(),
+                    $subscriberAccessorRepository,
+                ),
             ),
             $subscriptionStore,
             $subscriberAccessorRepository,

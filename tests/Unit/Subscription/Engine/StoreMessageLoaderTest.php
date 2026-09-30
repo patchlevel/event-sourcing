@@ -24,7 +24,10 @@ use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\Stream;
-use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredGapResolverStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\GapDetection;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageFilter;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriberEventFilter;
 use Patchlevel\EventSourcing\Subscription\Engine\UnexpectedError;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -36,14 +39,114 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use RuntimeException;
 
 use function iterator_to_array;
 
-#[CoversClass(EventFilteredGapResolverStoreMessageLoader::class)]
-final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
+#[CoversClass(StoreMessageLoader::class)]
+#[CoversClass(SubscriberEventFilter::class)]
+#[CoversClass(GapDetection::class)]
+final class StoreMessageLoaderTest extends TestCase
 {
+    public function testLoadWithoutFilterAndGapDetection(): void
+    {
+        $recordedOn = new DateTimeImmutable('2020-01-01 00:00:00');
+
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(new FromIndexCriterion(0)))
+            ->willReturn(new ArrayStream([
+                1 => Message::create(new ProfileVisited(ProfileId::fromString('1')))->withHeader(new RecordedOnHeader($recordedOn)),
+                3 => Message::create(new ProfileVisited(ProfileId::fromString('3')))->withHeader(new RecordedOnHeader($recordedOn)),
+            ]));
+        $store
+            ->expects($this->never())
+            ->method('count');
+
+        $loader = new StoreMessageLoader($store);
+
+        $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
+
+        $indexes = [];
+
+        foreach ($stream as $message) {
+            $indexes[] = $stream->index();
+        }
+
+        self::assertSame([1, 3], $indexes);
+    }
+
+    public function testLoadWithFilterWithoutGapDetection(): void
+    {
+        $recordedOn = new DateTimeImmutable('2020-01-01 00:00:00');
+
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(new FromIndexCriterion(0), new EventsCriterion(['profile_visited'])))
+            ->willReturn(new ArrayStream([
+                1 => Message::create(new ProfileVisited(ProfileId::fromString('1')))->withHeader(new RecordedOnHeader($recordedOn)),
+                3 => Message::create(new ProfileVisited(ProfileId::fromString('3')))->withHeader(new RecordedOnHeader($recordedOn)),
+            ]));
+        $store
+            ->expects($this->never())
+            ->method('count');
+
+        $loader = new StoreMessageLoader(
+            $store,
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+        );
+
+        $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
+
+        $indexes = [];
+
+        foreach ($stream as $message) {
+            $indexes[] = $stream->index();
+        }
+
+        self::assertSame([1, 3], $indexes);
+    }
+
+    public function testLoadWithEmptyFilterWithoutGapDetection(): void
+    {
+        $recordedOn = new DateTimeImmutable('2020-01-01 00:00:00');
+
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(new FromIndexCriterion(0)))
+            ->willReturn(new ArrayStream([
+                1 => Message::create(new ProfileVisited(ProfileId::fromString('1')))->withHeader(new RecordedOnHeader($recordedOn)),
+            ]));
+
+        $filter = $this->createMock(MessageFilter::class);
+        $filter
+            ->expects($this->once())
+            ->method('events')
+            ->with([new Subscription('custom')])
+            ->willReturn([]);
+
+        $loader = new StoreMessageLoader($store, $filter);
+
+        $stream = $loader->load(0, [new Subscription('custom')]);
+
+        $indexes = [];
+
+        foreach ($stream as $message) {
+            $indexes[] = $stream->index();
+        }
+
+        self::assertSame([1], $indexes);
+    }
+
     public function testNothingToLoad(): void
     {
         $recordedOn = new DateTimeImmutable('2020-01-01 00:00:00');
@@ -60,11 +163,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             ->expects($this->never())
             ->method('count');
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+            ),
         );
 
         $stream = $loader->load(5, [new Subscription(BatchingSubscriber::ID)]);
@@ -102,11 +209,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             ->with(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(5)))
             ->willReturn(4);
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -148,11 +259,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 default => throw new RuntimeException('Unexpected count'),
             });
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -198,11 +313,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 default => throw new RuntimeException('Unexpected count'),
             });
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -249,11 +368,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 default => throw new RuntimeException('Unexpected count'),
             });
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -305,12 +428,16 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 default => throw new RuntimeException('Unexpected count'),
             });
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn),
-            [0, 0],
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+                [0, 0],
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -348,11 +475,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             ->with(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(4)))
             ->willReturn(2);
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn->add(new DateInterval('PT10M'))),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn->add(new DateInterval('PT10M'))),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -396,11 +527,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             }
         };
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([$subscriber]),
-            new FrozenClock($recordedOn),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([$subscriber]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription('catch_all')]);
@@ -425,10 +560,13 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 5 => Message::create(new ProfileVisited(ProfileId::fromString('5'))),
             ]));
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(),
         );
 
         self::assertSame(5, $loader->lastIndex());
@@ -443,10 +581,13 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             ->with(null, 1, null, true)
             ->willReturn(new ArrayStream());
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(),
         );
 
         self::assertSame(0, $loader->lastIndex());
@@ -479,10 +620,13 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             }
         };
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([$subscriber]),
+            ),
+            new GapDetection(),
         );
 
         $this->expectException(UnexpectedError::class);
@@ -513,11 +657,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             ->with('custom')
             ->willReturn($this->createMock(SubscriberAccessor::class));
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            $subscriberRepository,
-            new FrozenClock($recordedOn),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                $subscriberRepository,
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription('custom')]);
@@ -569,11 +717,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             }
         };
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            $eventMetadataFactory,
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber(), $subscriber]),
-            new FrozenClock($recordedOn),
+            new SubscriberEventFilter(
+                $eventMetadataFactory,
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber(), $subscriber]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID), new Subscription('other')]);
@@ -611,11 +763,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             ->with(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(4)))
             ->willReturn(2);
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn->add(new DateInterval('PT5M'))),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn->add(new DateInterval('PT5M'))),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -653,11 +809,15 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             ->with(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(4)))
             ->willReturn(2);
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn->add(new DateInterval('PT5M'))),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn->add(new DateInterval('PT5M'))),
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -697,10 +857,13 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 default => throw new RuntimeException('Unexpected count'),
             });
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -742,12 +905,16 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 default => throw new RuntimeException('Unexpected count'),
             });
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn->add(new DateInterval('P1Y'))),
-            detectionWindow: null,
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn->add(new DateInterval('P1Y'))),
+                detectionWindow: null,
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
@@ -759,19 +926,6 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
         }
 
         self::assertSame([1, 4], $indexes);
-    }
-
-    public function testDefaultRetries(): void
-    {
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
-            $this->createMock(Store::class),
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([]),
-        );
-
-        $property = new ReflectionProperty(EventFilteredGapResolverStoreMessageLoader::class, 'retriesInMs');
-
-        self::assertSame([0, 5, 50, 500], $property->getValue($loader));
     }
 
     public function testStreamIsClosedBeforeRetry(): void
@@ -824,12 +978,16 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
             }
         };
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([$subscriber]),
-            new FrozenClock($recordedOn),
-            [0],
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([$subscriber]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+                [0],
+            ),
         );
 
         $stream = $loader->load(0, [new Subscription('catch_all')]);
@@ -883,12 +1041,16 @@ final class EventFilteredGapResolverStoreMessageLoaderTest extends TestCase
                 default => throw new RuntimeException('Unexpected count'),
             });
 
-        $loader = new EventFilteredGapResolverStoreMessageLoader(
+        $loader = new StoreMessageLoader(
             $store,
-            new AttributeEventMetadataFactory(),
-            new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
-            new FrozenClock($recordedOn),
-            [],
+            new SubscriberEventFilter(
+                new AttributeEventMetadataFactory(),
+                new MetadataSubscriberAccessorRepository([new BatchingSubscriber()]),
+            ),
+            new GapDetection(
+                new FrozenClock($recordedOn),
+                [],
+            ),
         );
 
         $result = $loader->load(0, [new Subscription(BatchingSubscriber::ID)]);
