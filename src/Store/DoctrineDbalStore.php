@@ -312,16 +312,34 @@ final class DoctrineDbalStore implements Store, SubscriptionStore, DoctrineSchem
     {
         if ($this->hasLock || !$this->config['locking']) {
             $this->connection->transactional($function);
-        } else {
-            $this->connection->transactional(function () use ($function): void {
-                $this->lock();
-                try {
-                    $function();
-                } finally {
-                    $this->unlock();
-                }
-            });
+
+            return;
         }
+
+        $platform = $this->connection->getDatabasePlatform();
+
+        if ($platform instanceof MariaDBPlatform || $platform instanceof MySQLPlatform) {
+            // GET_LOCK is bound to the session, not the transaction. It must be released after the commit,
+            // otherwise other writers can commit before this transaction is visible.
+            $this->lock();
+
+            try {
+                $this->connection->transactional($function);
+            } finally {
+                $this->unlock();
+            }
+
+            return;
+        }
+
+        $this->connection->transactional(function () use ($function): void {
+            $this->lock();
+            try {
+                $function();
+            } finally {
+                $this->unlock();
+            }
+        });
     }
 
     public function configureSchema(Schema $schema, Connection $connection): void
