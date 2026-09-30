@@ -522,7 +522,7 @@ final class DoctrineDbalStoreTest extends TestCase
         };
 
         $connection = $this->createMock(Connection::class);
-        $connection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $connection->expects($this->exactly(3))->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
         $connection->expects($this->atLeastOnce())->method('transactional')->willReturnCallback(
             static fn (Closure $closure): mixed => $closure(),
         );
@@ -554,7 +554,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
         $connection
@@ -598,7 +598,7 @@ final class DoctrineDbalStoreTest extends TestCase
         };
 
         $connection = $this->createMock(Connection::class);
-        $connection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new MariaDBPlatform());
+        $connection->expects($this->exactly(3))->method('getDatabasePlatform')->willReturn(new MariaDBPlatform());
         $connection
             ->expects($this->exactly(2))
             ->method('fetchOne')
@@ -636,7 +636,7 @@ final class DoctrineDbalStoreTest extends TestCase
         };
 
         $connection = $this->createMock(Connection::class);
-        $connection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+        $connection->expects($this->exactly(3))->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
         $connection->expects($this->once())->method('executeStatement')->with('SELECT pg_advisory_xact_lock(133742)');
 
         $connection->expects($this->atLeastOnce())->method('transactional')->willReturnCallback(
@@ -669,7 +669,7 @@ final class DoctrineDbalStoreTest extends TestCase
         };
 
         $connection = $this->createMock(Connection::class);
-        $connection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+        $connection->expects($this->exactly(3))->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
         $connection->expects($this->once())->method('executeStatement')->with('SELECT pg_advisory_xact_lock(133742)');
 
         $connection->expects($this->exactly(2))->method('transactional')->willReturnCallback(
@@ -704,7 +704,7 @@ final class DoctrineDbalStoreTest extends TestCase
         };
 
         $connection = $this->createMock(Connection::class);
-        $connection->expects($this->exactly(4))->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
+        $connection->expects($this->exactly(6))->method('getDatabasePlatform')->willReturn(new PostgreSQLPlatform());
         $connection->expects($this->exactly(2))->method('executeStatement')->with('SELECT pg_advisory_xact_lock(133742)');
 
         $connection->expects($this->exactly(2))->method('transactional')->willReturnCallback(
@@ -736,7 +736,7 @@ final class DoctrineDbalStoreTest extends TestCase
         };
 
         $connection = $this->createMock(Connection::class);
-        $connection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new MariaDBPlatform());
+        $connection->expects($this->exactly(3))->method('getDatabasePlatform')->willReturn(new MariaDBPlatform());
         $connection
             ->expects($this->exactly(2))
             ->method('fetchOne')
@@ -776,7 +776,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MariaDBPlatform());
 
@@ -821,7 +821,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MariaDBPlatform());
 
@@ -866,7 +866,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
 
@@ -877,9 +877,8 @@ final class DoctrineDbalStoreTest extends TestCase
             ->willReturn(0);
 
         $connection
-            ->expects($this->once())
-            ->method('transactional')
-            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+            ->expects($this->never())
+            ->method('transactional');
 
         $eventSerializer = $this->createMock(EventSerializer::class);
         $headersSerializer = $this->createMock(HeadersSerializer::class);
@@ -910,7 +909,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
 
@@ -921,9 +920,8 @@ final class DoctrineDbalStoreTest extends TestCase
             ->willReturn(null);
 
         $connection
-            ->expects($this->once())
-            ->method('transactional')
-            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+            ->expects($this->never())
+            ->method('transactional');
 
         $eventSerializer = $this->createMock(EventSerializer::class);
         $headersSerializer = $this->createMock(HeadersSerializer::class);
@@ -953,7 +951,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
 
@@ -998,7 +996,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
 
@@ -1051,7 +1049,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $headersSerializer->expects($this->once())->method('serialize')->with([])->willReturn('[]');
 
         $mockedConnection = $this->createMock(Connection::class);
-        $mockedConnection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $mockedConnection->expects($this->exactly(3))->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
         $mockedConnection->expects($this->once())->method('transactional')->willReturnCallback(
             static fn (Closure $closure): mixed => $closure(),
         );
@@ -1094,7 +1092,7 @@ final class DoctrineDbalStoreTest extends TestCase
             ->willReturn('[]');
 
         $mockedConnection = $this->createMock(Connection::class);
-        $mockedConnection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $mockedConnection->expects($this->exactly(3))->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
         $mockedConnection->expects($this->once())->method('transactional')->willReturnCallback(
             static fn (Closure $closure): mixed => $closure(),
         );
@@ -1158,7 +1156,7 @@ final class DoctrineDbalStoreTest extends TestCase
         $headersSerializer->expects($this->exactly(2))->method('serialize')->with([])->willReturn('[]');
 
         $mockedConnection = $this->createMock(Connection::class);
-        $mockedConnection->expects($this->exactly(2))->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $mockedConnection->expects($this->exactly(3))->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
         $mockedConnection->expects($this->once())->method('transactional')->willReturnCallback(
             static fn (Closure $closure): mixed => $closure(),
         );
@@ -1240,7 +1238,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -1325,7 +1323,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -1376,7 +1374,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -1849,7 +1847,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
@@ -1976,7 +1974,7 @@ final class DoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection

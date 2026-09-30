@@ -621,7 +621,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $connection
@@ -656,7 +656,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
 
@@ -700,7 +700,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MariaDBPlatform());
 
@@ -744,7 +744,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new PostgreSQLPlatform());
 
@@ -785,7 +785,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new PostgreSQLPlatform());
 
@@ -828,7 +828,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(4))
+            ->expects($this->exactly(6))
             ->method('getDatabasePlatform')
             ->willReturn(new PostgreSQLPlatform());
         $connection
@@ -867,7 +867,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MariaDBPlatform());
 
@@ -911,7 +911,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MariaDBPlatform());
 
@@ -956,7 +956,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MariaDBPlatform());
 
@@ -1001,7 +1001,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
 
@@ -1012,9 +1012,8 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->willReturn(0);
 
         $connection
-            ->expects($this->once())
-            ->method('transactional')
-            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+            ->expects($this->never())
+            ->method('transactional');
 
         $eventSerializer = $this->createMock(EventSerializer::class);
         $headersSerializer = $this->createMock(HeadersSerializer::class);
@@ -1045,7 +1044,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
 
@@ -1056,9 +1055,8 @@ final class StreamDoctrineDbalStoreTest extends TestCase
             ->willReturn(null);
 
         $connection
-            ->expects($this->once())
-            ->method('transactional')
-            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+            ->expects($this->never())
+            ->method('transactional');
 
         $eventSerializer = $this->createMock(EventSerializer::class);
         $headersSerializer = $this->createMock(HeadersSerializer::class);
@@ -1088,7 +1086,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
 
@@ -1133,7 +1131,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new MySQLPlatform());
 
@@ -1265,7 +1263,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         $mockedConnection = $this->createMock(Connection::class);
         $mockedConnection
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
         $mockedConnection
