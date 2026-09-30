@@ -913,6 +913,46 @@ $messageLoader = new GapResolverStoreMessageLoader(
     new DateInterval('PT5M'), // default: detection window when to retry (5 minutes)
 );
 ```
+#### Event Filtered Gap Resolver Store Message Loader
+
+The `EventFilteredGapResolverStoreMessageLoader` combines both loaders.
+It loads only the events the subscribers are interested in and still detects gaps in the stream.
+
+Because of the filter, the index jumps between the loaded messages.
+Before loading, the loader checks with one count query if the index range up to the last index has no holes.
+This is the common case, and then the filtered messages are loaded up to this index without any further checks.
+
+If there are holes, for example from rolled back transactions,
+the loader checks each skipped index range against the event store to distinguish filtered out events from real gaps.
+This only happens for messages inside the detection window, so rebuilding older events causes no extra queries.
+
+```php
+use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredGapResolverStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
+use Psr\Clock\ClockInterface;
+
+/**
+ * @var Store $store
+ * @var EventMetadataFactory $eventMetadataFactory
+ * @var SubscriberAccessorRepository $subscriberRepository
+ * @var ClockInterface $clock
+ */
+$messageLoader = new EventFilteredGapResolverStoreMessageLoader(
+    $store,
+    $eventMetadataFactory,
+    $subscriberRepository,
+    $clock,
+    [0, 5, 50, 500], // default: retries in milliseconds (0 means immediate)
+    new DateInterval('PT5M'), // default: detection window when to retry (5 minutes)
+);
+```
+:::note
+If one of the subscribers listens to all events, no filter is applied
+and the loader behaves like the `GapResolverStoreMessageLoader`.
+:::
+
 ### Subscription Store
 
 The Subscription Engine uses a subscription store to store the status of each subscription.
