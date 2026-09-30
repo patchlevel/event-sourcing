@@ -66,7 +66,7 @@ final class GapResolverStoreMessageLoader implements MessageLoader
             }
 
             $retry = 0;
-            $currentIndex++;
+            $currentIndex = $stream->index() + 1;
 
             yield $stream->index() => $message;
         }
