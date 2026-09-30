@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\Store;
 
+use Closure;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -281,6 +282,61 @@ final class DoctrineDbalStoreTest extends TestCase
         } finally {
             $connection->close();
         }
+    }
+
+    public function testSaveHoldsLockUntilCommit(): void
+    {
+        if ($this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            $this->markTestSkipped('SQLite does not support locks');
+        }
+
+        $probeConnection = DriverManager::getConnection($this->connection->getParams());
+        $lockQuery = $probeConnection->getDatabasePlatform() instanceof PostgreSQLPlatform
+            ? "SELECT COUNT(*) FROM pg_locks WHERE locktype = 'advisory' AND objid = 133742"
+            : 'SELECT IS_USED_LOCK("133742") IS NOT NULL';
+
+        $connection = new class ($this->connection->getParams(), $this->connection->getDriver()) extends Connection {
+            public Closure|null $beforeCommit = null;
+
+            public function commit(): void
+            {
+                if ($this->beforeCommit) {
+                    ($this->beforeCommit)();
+                }
+
+                parent::commit();
+            }
+        };
+
+        // Checks from a second session whether the lock is still held right before the commit.
+        $lockHeldOnCommit = null;
+        $connection->beforeCommit = static function () use ($probeConnection, $lockQuery, &$lockHeldOnCommit): void {
+            $lockHeldOnCommit = $probeConnection->fetchOne($lockQuery) > 0;
+        };
+
+        $store = new DoctrineDbalStore(
+            $connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $profileId = ProfileId::generate();
+
+        try {
+            $store->save(
+                Message::create(new ProfileCreated($profileId, 'test'))
+                    ->withHeader(new AggregateHeader(
+                        'profile',
+                        $profileId->toString(),
+                        1,
+                        new DateTimeImmutable('2020-01-01 00:00:00'),
+                    )),
+            );
+        } finally {
+            $connection->close();
+            $probeConnection->close();
+        }
+
+        self::assertTrue($lockHeldOnCommit);
     }
 
     public function testLoad(): void
