@@ -26,10 +26,10 @@ use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
-use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\GapDetection;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriberEventFilter;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -109,7 +109,7 @@ final class SubscriptionTest extends TestCase
         $subscriberRepository = new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]);
 
         $engine = new DefaultSubscriptionEngine(
-            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            new StoreMessageLoader($store, new SubscriberEventFilter(new AttributeEventMetadataFactory(), $subscriberRepository)),
             $subscriptionStore,
             $subscriberRepository,
         );
@@ -235,7 +235,7 @@ final class SubscriptionTest extends TestCase
         $subscriberRepository = new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]);
 
         $engine = new DefaultSubscriptionEngine(
-            new GapResolverStoreMessageLoader($store),
+            new StoreMessageLoader($store, gapDetection: new GapDetection()),
             $subscriptionStore,
             $subscriberRepository,
         );

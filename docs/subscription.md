@@ -845,16 +845,12 @@ In order for the subscription engine to be able to do its work, you have to asse
 ### Message Loader
 
 The subscription engine needs a message loader to load the messages.
-We provide three implementations by default.
-Which one has a better performance depends on the use case.
+The `StoreMessageLoader` loads the messages from the event store.
+It can be extended with a filter and a gap detection, which can also be combined.
 
 :::tip
-We recommend the `GapResolverStoreMessageLoader` as it handles gaps in the stream.
+We recommend enabling the [gap detection](#gap-detection) to not miss events from concurrent transactions.
 :::
-
-#### Store Message Loader
-
-The store message loader loads all the messages from the event store.
 
 ```php
 use Patchlevel\EventSourcing\Store\Store;
@@ -863,16 +859,17 @@ use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 /** @var Store $store */
 $messageLoader = new StoreMessageLoader($store);
 ```
-#### Event Filtered Store Message Loader
+#### Event Filter
 
-The event filtered store message loader loads only the messages that are relevant for the subscribers.
+With the `SubscriberEventFilter`, the loader loads only the messages that are relevant for the subscribers.
 It looks before loading the messages which subscribers are interested in the events.
 Then it loads with a filter only the relevant messages.
 
 ```php
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriberEventFilter;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 
 /**
@@ -880,13 +877,19 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepositor
  * @var EventMetadataFactory $eventMetadataFactory
  * @var SubscriberAccessorRepository $subscriberRepository
  */
-$messageLoader = new EventFilteredStoreMessageLoader(
+$messageLoader = new StoreMessageLoader(
     $store,
-    $eventMetadataFactory,
-    $subscriberRepository,
+    new SubscriberEventFilter(
+        $eventMetadataFactory,
+        $subscriberRepository,
+    ),
 );
 ```
-#### Gap Resolver Store Message Loader
+:::note
+If one of the subscribers listens to all events, no filter is applied.
+:::
+
+#### Gap Detection
 
 Relational databases can lead to so-called gaps in the stream.
 There's a [blog post](https://event-driven.io/en/ordering_in_postgres_outbox/) by Oskar Dudycz
@@ -895,24 +898,67 @@ that describes the problem very well.
 By default, we use a write lock for our event store
 to ensure that only one process can write at the same time to maintain order and completeness.
 However, there is still a small chance that the gap will occur.
-To detect and prevent these, we've introduced the `GapResolverStoreMessageLoader`.
+To detect and prevent these, you can configure a `GapDetection`.
 
 ```php
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\GapDetection;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
 use Psr\Clock\ClockInterface;
 
 /**
  * @var Store $store
  * @var ClockInterface $clock
  */
-$messageLoader = new GapResolverStoreMessageLoader(
+$messageLoader = new StoreMessageLoader(
     $store,
-    $clock,
-    [0, 5, 50, 500], // default: retries in milliseconds (0 means immediate)
-    new DateInterval('PT5M'), // default: detection window when to retry (5 minutes)
+    gapDetection: new GapDetection(
+        $clock,
+        [0, 5, 50, 500], // default: retries in milliseconds (0 means immediate)
+        new DateInterval('PT5M'), // default: detection window when to retry (5 minutes)
+    ),
 );
 ```
+#### Event Filter with Gap Detection
+
+Both can be combined.
+The loader then loads only the events the subscribers are interested in and still detects gaps in the stream.
+
+Because of the filter, the index jumps between the loaded messages.
+Before loading, the loader checks with one count query if the index range up to the last index has no holes.
+This is the common case, and then the filtered messages are loaded up to this index without any further checks.
+
+If there are holes, for example from rolled back transactions,
+the loader checks each skipped index range against the event store to distinguish filtered out events from real gaps.
+This only happens for messages inside the detection window, so rebuilding older events causes no extra queries.
+
+```php
+use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\GapDetection;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriberEventFilter;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
+
+/**
+ * @var Store $store
+ * @var EventMetadataFactory $eventMetadataFactory
+ * @var SubscriberAccessorRepository $subscriberRepository
+ */
+$messageLoader = new StoreMessageLoader(
+    $store,
+    new SubscriberEventFilter(
+        $eventMetadataFactory,
+        $subscriberRepository,
+    ),
+    new GapDetection(),
+);
+```
+:::note
+The `EventFilteredStoreMessageLoader` and `GapResolverStoreMessageLoader` are deprecated
+and will be removed in the next major version. Use the `StoreMessageLoader` with the options above instead.
+:::
+
 ### Subscription Store
 
 The Subscription Engine uses a subscription store to store the status of each subscription.
