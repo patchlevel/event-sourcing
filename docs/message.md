@@ -86,7 +86,7 @@ $message->header(EventIdHeader::class)->eventId; // 'a4a4a4a4-4a4a-...'
 ```
 :::warning
 The `PlayheadHeader` is only added if the stream is playhead based.
-Streams that are written without a playhead, for example custom streams,
+Streams that are written without a playhead, for example [custom streams](store.md#custom-streams),
 do not have this header. Use `hasHeader` before you access it.
 :::
 
