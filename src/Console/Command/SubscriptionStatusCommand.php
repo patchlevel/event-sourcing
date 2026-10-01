@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
@@ -41,9 +42,10 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
         $io = new OutputStyle($input, $output);
 
         $id = InputHelper::nullableString($input->getArgument('id'));
-        $subscriptions = $this->engine->subscriptions();
 
         if ($id === null) {
+            $subscriptions = $this->engine->subscriptions($this->subscriptionEngineCriteria($input));
+
             $io->table(
                 [
                     'id',
@@ -69,7 +71,10 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
             return 0;
         }
 
-        $subscription = $this->findSubscription($subscriptions, $id);
+        $subscription = $this->findSubscription(
+            $this->engine->subscriptions(new SubscriptionEngineCriteria([$id])),
+            $id,
+        );
 
         $io->horizontalTable(
             [
