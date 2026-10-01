@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription;
 use DateInterval;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Message\Message;
@@ -29,6 +30,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreate
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use Psr\Clock\ClockInterface;
 use RuntimeException;
 
 #[CoversNothing]
@@ -621,5 +623,256 @@ final class StoreMessageLoaderTest extends TestCase
         }
 
         self::assertSame([1, 4], $indexes);
+    }
+
+    public function testInFlightTransactionIsWaitedFor(): void
+    {
+        if ($this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            self::markTestSkipped('SQLite in memory databases cannot be shared between connections');
+        }
+
+        $recordedOn = new DateTimeImmutable('2020-01-01 00:00:00');
+
+        // without locking, a second writer does not wait for the first transaction to commit
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            config: ['locking' => false],
+        );
+
+        (new DoctrineSchemaDirector($this->connection, $store))->create();
+
+        $writerConnection = DriverManager::getConnection($this->connection->getParams());
+
+        $writerStore = new StreamDoctrineDbalStore(
+            $writerConnection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            config: ['locking' => false],
+        );
+
+        try {
+            // gets index 1, but is not visible to other connections until the commit
+            $writerConnection->beginTransaction();
+            $writerStore->save(
+                Message::create(new ProfileCreated(ProfileId::generate(), 'John'))
+                    ->withHeader(new StreamNameHeader('profile-1'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader($recordedOn)),
+            );
+
+            // gets index 2 and is committed immediately
+            $store->save(
+                Message::create(new ProfileCreated(ProfileId::generate(), 'Tom'))
+                    ->withHeader(new StreamNameHeader('profile-2'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader($recordedOn)),
+            );
+
+            $loader = new StoreMessageLoader(
+                $store,
+                new SubscriberEventFilter(
+                    new AttributeEventMetadataFactory(),
+                    new MetadataSubscriberAccessorRepository([new ProfileProjection($this->connection)]),
+                ),
+                new GapDetection(
+                    new class ($writerConnection, $recordedOn) implements ClockInterface {
+                        public function __construct(
+                            private readonly Connection $connection,
+                            private readonly DateTimeImmutable $now,
+                        ) {
+                        }
+
+                        public function now(): DateTimeImmutable
+                        {
+                            // the gap is detected, now the in-flight transaction commits before the retry
+                            if ($this->connection->isTransactionActive()) {
+                                $this->connection->commit();
+                            }
+
+                            return $this->now;
+                        }
+                    },
+                    [0, 0],
+                ),
+            );
+
+            $stream = $loader->load(0, [new Subscription('profile_1')]);
+
+            $indexes = [];
+
+            foreach ($stream as $message) {
+                $indexes[] = $stream->index();
+            }
+
+            self::assertSame([1, 2], $indexes);
+        } finally {
+            if ($writerConnection->isTransactionActive()) {
+                $writerConnection->commit();
+            }
+
+            $writerConnection->close();
+        }
+    }
+
+    public function testInFlightTransactionIsWaitedForWithoutFilter(): void
+    {
+        if ($this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            self::markTestSkipped('SQLite in memory databases cannot be shared between connections');
+        }
+
+        $recordedOn = new DateTimeImmutable('2020-01-01 00:00:00');
+
+        // without locking, a second writer does not wait for the first transaction to commit
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            config: ['locking' => false],
+        );
+
+        (new DoctrineSchemaDirector($this->connection, $store))->create();
+
+        $writerConnection = DriverManager::getConnection($this->connection->getParams());
+
+        $writerStore = new StreamDoctrineDbalStore(
+            $writerConnection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            config: ['locking' => false],
+        );
+
+        try {
+            // gets index 1, but is not visible to other connections until the commit
+            $writerConnection->beginTransaction();
+            $writerStore->save(
+                Message::create(new ProfileCreated(ProfileId::generate(), 'John'))
+                    ->withHeader(new StreamNameHeader('profile-1'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader($recordedOn)),
+            );
+
+            // gets index 2 and is committed immediately
+            $store->save(
+                Message::create(new ProfileCreated(ProfileId::generate(), 'Tom'))
+                    ->withHeader(new StreamNameHeader('profile-2'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader($recordedOn)),
+            );
+
+            $loader = new StoreMessageLoader(
+                $store,
+                null,
+                new GapDetection(
+                    new class ($writerConnection, $recordedOn) implements ClockInterface {
+                        public function __construct(
+                            private readonly Connection $connection,
+                            private readonly DateTimeImmutable $now,
+                        ) {
+                        }
+
+                        public function now(): DateTimeImmutable
+                        {
+                            // the gap is detected, now the in-flight transaction commits before the retry
+                            if ($this->connection->isTransactionActive()) {
+                                $this->connection->commit();
+                            }
+
+                            return $this->now;
+                        }
+                    },
+                    [0, 0],
+                ),
+            );
+
+            $stream = $loader->load(0, [new Subscription('profile_1')]);
+
+            $indexes = [];
+
+            foreach ($stream as $message) {
+                $indexes[] = $stream->index();
+            }
+
+            self::assertSame([1, 2], $indexes);
+        } finally {
+            if ($writerConnection->isTransactionActive()) {
+                $writerConnection->commit();
+            }
+
+            $writerConnection->close();
+        }
+    }
+
+    /**
+     * Documents the limit of the gap detection: a transaction that commits after all retries is skipped.
+     */
+    public function testInFlightTransactionLongerThanRetriesIsSkipped(): void
+    {
+        if ($this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            self::markTestSkipped('SQLite in memory databases cannot be shared between connections');
+        }
+
+        $recordedOn = new DateTimeImmutable('2020-01-01 00:00:00');
+
+        // without locking, a second writer does not wait for the first transaction to commit
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            config: ['locking' => false],
+        );
+
+        (new DoctrineSchemaDirector($this->connection, $store))->create();
+
+        $writerConnection = DriverManager::getConnection($this->connection->getParams());
+
+        $writerStore = new StreamDoctrineDbalStore(
+            $writerConnection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+            config: ['locking' => false],
+        );
+
+        try {
+            // gets index 1, but is not visible to other connections until the commit
+            $writerConnection->beginTransaction();
+            $writerStore->save(
+                Message::create(new ProfileCreated(ProfileId::generate(), 'John'))
+                    ->withHeader(new StreamNameHeader('profile-1'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader($recordedOn)),
+            );
+
+            // gets index 2 and is committed immediately
+            $store->save(
+                Message::create(new ProfileCreated(ProfileId::generate(), 'Tom'))
+                    ->withHeader(new StreamNameHeader('profile-2'))
+                    ->withHeader(new PlayheadHeader(1))
+                    ->withHeader(new RecordedOnHeader($recordedOn)),
+            );
+
+            $loader = new StoreMessageLoader(
+                $store,
+                new SubscriberEventFilter(
+                    new AttributeEventMetadataFactory(),
+                    new MetadataSubscriberAccessorRepository([new ProfileProjection($this->connection)]),
+                ),
+                new GapDetection(
+                    new FrozenClock($recordedOn),
+                    [0, 0],
+                ),
+            );
+
+            $stream = $loader->load(0, [new Subscription('profile_1')]);
+
+            $indexes = [];
+
+            foreach ($stream as $message) {
+                $indexes[] = $stream->index();
+            }
+
+            self::assertSame([2], $indexes);
+        } finally {
+            if ($writerConnection->isTransactionActive()) {
+                $writerConnection->commit();
+            }
+
+            $writerConnection->close();
+        }
     }
 }
