@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Header;
 use Patchlevel\EventSourcing\Metadata\ClassFinder;
 use ReflectionClass;
 
+use function array_key_exists;
 use function count;
 
 final class AttributeMessageHeaderRegistryFactory implements MessageHeaderRegistryFactory
@@ -17,7 +18,8 @@ final class AttributeMessageHeaderRegistryFactory implements MessageHeaderRegist
     {
         $classes = (new ClassFinder())->findClassNames($paths);
 
-        $result = [];
+        $names = [];
+        $aliases = [];
 
         foreach ($classes as $class) {
             $reflection = new ReflectionClass($class);
@@ -27,10 +29,26 @@ final class AttributeMessageHeaderRegistryFactory implements MessageHeaderRegist
                 continue;
             }
 
-            $aggregateName = $attributes[0]->newInstance()->name;
-            $result[$aggregateName] = $class;
+            $attribute = $attributes[0]->newInstance();
+            $names[$attribute->name] = $class;
+
+            foreach ($attribute->aliases as $alias) {
+                if (array_key_exists($alias, $aliases)) {
+                    throw new HeaderAlreadyInRegistry($alias);
+                }
+
+                $aliases[$alias] = $class;
+            }
         }
 
-        return MessageHeaderRegistry::createWithInternalHeaders($result);
+        $registry = MessageHeaderRegistry::createWithInternalHeaders($names);
+
+        foreach ($aliases as $alias => $class) {
+            if ($registry->hasHeaderName($alias)) {
+                throw new HeaderAlreadyInRegistry($alias);
+            }
+        }
+
+        return new MessageHeaderRegistry($registry->headerClasses() + $aliases);
     }
 }

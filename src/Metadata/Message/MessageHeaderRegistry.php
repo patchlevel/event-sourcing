@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Store\StreamStartHeader;
 
 use function array_flip;
 use function array_key_exists;
+use function array_reverse;
 
 final class MessageHeaderRegistry
 {
@@ -28,7 +29,7 @@ final class MessageHeaderRegistry
     public function __construct(array $headerNameToClassMap)
     {
         $this->nameToClassMap = $headerNameToClassMap;
-        $this->classToNameMap = array_flip($headerNameToClassMap);
+        $this->classToNameMap = array_flip(array_reverse($headerNameToClassMap));
     }
 
     /** @param class-string $headerClass */

@@ -7,7 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Fixture\Header;
 use Patchlevel\EventSourcing\Attribute\Header;
 
 /** @immutable */
-#[Header('foo')]
+#[Header('foo', aliases: ['legacyFoo'])]
 final class FooHeader
 {
     public function __construct(
