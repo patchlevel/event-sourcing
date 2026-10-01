@@ -15,6 +15,10 @@ use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
@@ -23,6 +27,7 @@ use Patchlevel\EventSourcing\Store\LockCouldNotBeAcquired;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\UniqueConstraintViolation;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ExternEvent;
 use Patchlevel\EventSourcing\Tests\Integration\Store\Events\ProfileCreated;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
@@ -370,6 +375,155 @@ final class DoctrineDbalStoreTest extends TestCase
             self::assertEquals($message->header(AggregateHeader::class)->aggregateName, $loadedMessage->header(AggregateHeader::class)->aggregateName);
             self::assertEquals($message->header(AggregateHeader::class)->playhead, $loadedMessage->header(AggregateHeader::class)->playhead);
             self::assertEquals($message->header(AggregateHeader::class)->recordedOn, $loadedMessage->header(AggregateHeader::class)->recordedOn);
+        } finally {
+            $stream?->close();
+        }
+    }
+
+    public function testCountWithIndexRangeAndEventCriteria(): void
+    {
+        $profileId = ProfileId::generate();
+        $externId = ProfileId::generate();
+
+        $this->store->save(
+            Message::create(new ProfileCreated($profileId, 'name-1'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    1,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ExternEvent('message-2'))
+                ->withHeader(new AggregateHeader(
+                    'extern',
+                    $externId->toString(),
+                    1,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'name-3'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    2,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ExternEvent('message-4'))
+                ->withHeader(new AggregateHeader(
+                    'extern',
+                    $externId->toString(),
+                    2,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'name-5'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    3,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+        );
+
+        // from index and to index are both exclusive
+        self::assertSame(5, $this->store->count(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(6))));
+        self::assertSame(3, $this->store->count(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(5))));
+        self::assertSame(1, $this->store->count(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(3))));
+        self::assertSame(0, $this->store->count(new Criteria(new FromIndexCriterion(2), new ToIndexCriterion(3))));
+        self::assertSame(0, $this->store->count(new Criteria(new FromIndexCriterion(3), new ToIndexCriterion(3))));
+        self::assertSame(0, $this->store->count(new Criteria(new FromIndexCriterion(5), new ToIndexCriterion(10))));
+
+        self::assertSame(3, $this->store->count(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(6), new EventsCriterion(['profile.created']))));
+        self::assertSame(1, $this->store->count(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(5), new EventsCriterion(['profile.created']))));
+        self::assertSame(0, $this->store->count(new Criteria(new FromIndexCriterion(2), new ToIndexCriterion(4), new EventsCriterion(['extern']))));
+        self::assertSame(3, $this->store->count(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(5), new EventsCriterion(['profile.created', 'extern']))));
+    }
+
+    public function testLoadWithIndexRangeAndEventCriteria(): void
+    {
+        $profileId = ProfileId::generate();
+        $externId = ProfileId::generate();
+
+        $this->store->save(
+            Message::create(new ProfileCreated($profileId, 'name-1'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    1,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ExternEvent('message-2'))
+                ->withHeader(new AggregateHeader(
+                    'extern',
+                    $externId->toString(),
+                    1,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'name-3'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    2,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ExternEvent('message-4'))
+                ->withHeader(new AggregateHeader(
+                    'extern',
+                    $externId->toString(),
+                    2,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+            Message::create(new ProfileCreated($profileId, 'name-5'))
+                ->withHeader(new AggregateHeader(
+                    'profile',
+                    $profileId->toString(),
+                    3,
+                    new DateTimeImmutable('2020-01-01 00:00:00'),
+                )),
+        );
+
+        $stream = null;
+
+        try {
+            $stream = $this->store->load(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(5), new EventsCriterion(['profile.created'])));
+
+            $indexes = [];
+
+            foreach ($stream as $message) {
+                $indexes[] = $stream->index();
+            }
+
+            self::assertSame([3], $indexes);
+        } finally {
+            $stream?->close();
+        }
+
+        $stream = null;
+
+        try {
+            $stream = $this->store->load(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(6), new EventsCriterion(['profile.created'])));
+
+            $indexes = [];
+
+            foreach ($stream as $message) {
+                $indexes[] = $stream->index();
+            }
+
+            self::assertSame([1, 3, 5], $indexes);
+        } finally {
+            $stream?->close();
+        }
+
+        $stream = null;
+
+        try {
+            $stream = $this->store->load(new Criteria(new FromIndexCriterion(2), new ToIndexCriterion(3), new EventsCriterion(['profile.created'])));
+
+            $indexes = [];
+
+            foreach ($stream as $message) {
+                $indexes[] = $stream->index();
+            }
+
+            self::assertSame([], $indexes);
         } finally {
             $stream?->close();
         }

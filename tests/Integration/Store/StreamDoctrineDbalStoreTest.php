@@ -711,6 +711,111 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         self::assertSame(1, $this->store->count(new Criteria(new StreamCriterion('foo'))));
     }
 
+    public function testCountWithIndexRangeAndEventCriteria(): void
+    {
+        $profileId = ProfileId::generate();
+        $streamName = sprintf('profile-%s', $profileId->toString());
+
+        $this->store->save(
+            Message::create(new ProfileCreated($profileId, 'name-1'))
+                ->withHeader(new StreamNameHeader($streamName))
+                ->withHeader(new PlayheadHeader(1)),
+            Message::create(new ExternEvent('message-2'))
+                ->withHeader(new StreamNameHeader('foo')),
+            Message::create(new ProfileCreated($profileId, 'name-3'))
+                ->withHeader(new StreamNameHeader($streamName))
+                ->withHeader(new PlayheadHeader(2)),
+            Message::create(new ExternEvent('message-4'))
+                ->withHeader(new StreamNameHeader('foo')),
+            Message::create(new ProfileCreated($profileId, 'name-5'))
+                ->withHeader(new StreamNameHeader($streamName))
+                ->withHeader(new PlayheadHeader(3)),
+        );
+
+        // from index and to index are both exclusive
+        self::assertSame(5, $this->store->count(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(6))));
+        self::assertSame(3, $this->store->count(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(5))));
+        self::assertSame(1, $this->store->count(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(3))));
+        self::assertSame(0, $this->store->count(new Criteria(new FromIndexCriterion(2), new ToIndexCriterion(3))));
+        self::assertSame(0, $this->store->count(new Criteria(new FromIndexCriterion(3), new ToIndexCriterion(3))));
+        self::assertSame(0, $this->store->count(new Criteria(new FromIndexCriterion(5), new ToIndexCriterion(10))));
+
+        self::assertSame(3, $this->store->count(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(6), new EventsCriterion(['profile.created']))));
+        self::assertSame(1, $this->store->count(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(5), new EventsCriterion(['profile.created']))));
+        self::assertSame(0, $this->store->count(new Criteria(new FromIndexCriterion(2), new ToIndexCriterion(4), new EventsCriterion(['extern']))));
+        self::assertSame(3, $this->store->count(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(5), new EventsCriterion(['profile.created', 'extern']))));
+    }
+
+    public function testLoadWithIndexRangeAndEventCriteria(): void
+    {
+        $profileId = ProfileId::generate();
+        $streamName = sprintf('profile-%s', $profileId->toString());
+
+        $this->store->save(
+            Message::create(new ProfileCreated($profileId, 'name-1'))
+                ->withHeader(new StreamNameHeader($streamName))
+                ->withHeader(new PlayheadHeader(1)),
+            Message::create(new ExternEvent('message-2'))
+                ->withHeader(new StreamNameHeader('foo')),
+            Message::create(new ProfileCreated($profileId, 'name-3'))
+                ->withHeader(new StreamNameHeader($streamName))
+                ->withHeader(new PlayheadHeader(2)),
+            Message::create(new ExternEvent('message-4'))
+                ->withHeader(new StreamNameHeader('foo')),
+            Message::create(new ProfileCreated($profileId, 'name-5'))
+                ->withHeader(new StreamNameHeader($streamName))
+                ->withHeader(new PlayheadHeader(3)),
+        );
+
+        $stream = null;
+
+        try {
+            $stream = $this->store->load(new Criteria(new FromIndexCriterion(1), new ToIndexCriterion(5), new EventsCriterion(['profile.created'])));
+
+            $indexes = [];
+
+            foreach ($stream as $message) {
+                $indexes[] = $stream->index();
+            }
+
+            self::assertSame([3], $indexes);
+        } finally {
+            $stream?->close();
+        }
+
+        $stream = null;
+
+        try {
+            $stream = $this->store->load(new Criteria(new FromIndexCriterion(0), new ToIndexCriterion(6), new EventsCriterion(['profile.created'])));
+
+            $indexes = [];
+
+            foreach ($stream as $message) {
+                $indexes[] = $stream->index();
+            }
+
+            self::assertSame([1, 3, 5], $indexes);
+        } finally {
+            $stream?->close();
+        }
+
+        $stream = null;
+
+        try {
+            $stream = $this->store->load(new Criteria(new FromIndexCriterion(2), new ToIndexCriterion(3), new EventsCriterion(['profile.created'])));
+
+            $indexes = [];
+
+            foreach ($stream as $message) {
+                $indexes[] = $stream->index();
+            }
+
+            self::assertSame([], $indexes);
+        } finally {
+            $stream?->close();
+        }
+    }
+
     public function testLoadWithLimitOffsetAndBackwards(): void
     {
         $profileId = ProfileId::generate();
