@@ -602,6 +602,87 @@ and replaced with the following headers:
 * `Patchlevel\EventSourcing\Store\Header\PlayheadHeader`
 * `Patchlevel\EventSourcing\Store\Header\RecordedOnHeader`
 
+### Header registration
+
+`Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistryFactory::create()` now expects a
+`Patchlevel\EventSourcing\Metadata\ClassLocator` instead of a list of paths.
+Only the located headers are registered, the library headers are no longer added implicitly.
+
+Before:
+
+```php
+use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
+
+$registry = (new AttributeMessageHeaderRegistryFactory())->create(['src/Header']);
+```
+After:
+
+```php
+use Patchlevel\EventSourcing\Attribute\Header;
+use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
+use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
+
+$registry = (new AttributeMessageHeaderRegistryFactory())->create(
+    new FilesystemClassLocator(['src/Header'], Header::class),
+);
+```
+`MessageHeaderRegistry::createWithInternalHeaders()` has been removed.
+Use the `AttributeMessageHeaderRegistryFactory` with an `InMemoryClassLocator` instead.
+
+Before:
+
+```php
+use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
+
+$registry = MessageHeaderRegistry::createWithInternalHeaders(['application' => ApplicationHeader::class]);
+```
+After:
+
+```php
+use Patchlevel\EventSourcing\Metadata\InMemoryClassLocator;
+use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
+
+$registry = (new AttributeMessageHeaderRegistryFactory())->create(
+    new InMemoryClassLocator([ApplicationHeader::class]),
+);
+```
+Every located class must have a `#[Header]` attribute, otherwise a `ClassIsNotAHeader` exception is thrown.
+Header names must be unique. If two located classes use the same name, a `HeaderAlreadyInRegistry` exception is thrown.
+
+`DefaultHeadersSerializer::createDefault()` no longer registers any header.
+The stores keep their own headers in separate columns, so they don't need them.
+If you serialize the store headers yourself, register them with the locator of the store:
+`Patchlevel\EventSourcing\Store\Header\StreamStoreHeaderLocator` or
+`Patchlevel\EventSourcing\Store\Header\TaggableStoreHeaderLocator`.
+
+### StreamStartHeader
+
+`Patchlevel\EventSourcing\Store\StreamStartHeader` has been moved to
+`Patchlevel\EventSourcing\Repository\MessageDecorator\StreamStartHeader`.
+The header name `newStreamStart` is unchanged, so stored messages stay readable.
+
+If you use the split stream feature, you need to register the header in the headers serializer of your store
+with the `SplitStreamHeaderLocator`.
+Keep it registered as long as your store contains messages with this header.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamHeaderLocator;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+
+/**
+ * @var Connection $connection
+ * @var EventSerializer $eventSerializer
+ */
+$store = new StreamDoctrineDbalStore(
+    $connection,
+    $eventSerializer,
+    DefaultHeadersSerializer::createFromLocator(new SplitStreamHeaderLocator()),
+);
+```
+
 ### AggregateToStreamHeaderTranslator
 
 `Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator` has been removed.

@@ -6,13 +6,13 @@ namespace Patchlevel\EventSourcing\Console;
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\StreamStartHeader;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
-use Patchlevel\EventSourcing\Store\StreamStartHeader;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 

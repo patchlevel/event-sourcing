@@ -58,6 +58,7 @@ final class LayerDependenciesTest
                 $this->layer('Message'),
                 $this->layer('Metadata\AggregateRoot'),
                 $this->layer('Metadata\Event'),
+                $this->layer('Repository'),
                 $this->layer('Schema'),
                 $this->layer('Serializer'),
                 $this->layer('Store'),
@@ -91,6 +92,8 @@ final class LayerDependenciesTest
             $this->layer('Message'),
             [
                 $this->layer('Aggregate'),
+                $this->layer('Attribute'),
+                $this->metadataLayer(),
                 $this->layer('Metadata\Message'),
                 $this->layer('Serializer'),
                 $this->layer('Store'),
@@ -131,10 +134,8 @@ final class LayerDependenciesTest
         return $this->layerCanOnlyDependOnAllowedLayers(
             $this->layer('Metadata\Message'),
             [
-                $this->layer('Aggregate'),
                 $this->layer('Attribute'),
                 $this->metadataLayer(),
-                $this->layer('Store'),
             ],
         );
     }
@@ -165,11 +166,13 @@ final class LayerDependenciesTest
             $this->layer('Repository'),
             [
                 $this->layer('Aggregate'),
+                $this->layer('Attribute'),
                 $this->layer('Clock'),
                 $this->layer('Message'),
                 $this->layer('Metadata\AggregateRoot'),
                 $this->layer('Metadata\Event'),
                 $this->layer('EventBus'),
+                $this->metadataLayer(),
                 $this->layer('Snapshot'),
                 $this->layer('Store'),
             ],
@@ -210,6 +213,7 @@ final class LayerDependenciesTest
         return $this->layerCanOnlyDependOnAllowedLayers(
             $this->layer('Store'),
             [
+                $this->layer('Attribute'),
                 $this->layer('Clock'),
                 $this->layer('Message'),
                 $this->metadataLayer(),

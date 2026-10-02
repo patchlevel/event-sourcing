@@ -48,7 +48,7 @@ $message->headers(); // [StreamNameHeader object, PlayheadHeader object, ...]
 ```
 ## Built-in headers
 
-The message object has some built-in headers which are used internally.
+The library ships some headers which are set by the stores and the repository.
 
 * `StreamNameHeader` - The name of the stream the message belongs to, in the format `[aggregateName]-[aggregateId]`.
 * `PlayheadHeader` - The position of the message within its stream.
@@ -57,7 +57,7 @@ The message object has some built-in headers which are used internally.
 * `IndexHeader` - The global position of the message in the store.
 * `TagsHeader` - The tags attached to the message (experimental).
 * `ArchivedHeader` - Flag if the message is archived.
-* `StreamStartHeader` - Flag if the message is the first message in a new stream.
+* `StreamStartHeader` - Flag if the message is the first message in a new stream, set by the [split stream](split-stream.md) feature.
 
 ```php
 use Patchlevel\EventSourcing\Message\Message;
@@ -122,6 +122,64 @@ use Patchlevel\EventSourcing\Message\Message;
 /** @var Message $message */
 $message->header(ApplicationHeader::class);
 ```
+### Register headers
+
+The `DefaultHeadersSerializer` needs to know your header classes to resolve the header names.
+The easiest way is to scan the directories where your headers are located.
+
+```php
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+
+$serializer = DefaultHeadersSerializer::createFromPaths(['src/Header']);
+```
+If you already know your header classes, or a library wants to provide its own headers,
+you can pass a `ClassLocator` instead. The `InMemoryClassLocator` takes a list of classes,
+the `ChainClassLocator` combines multiple locators.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Header;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Metadata\ChainClassLocator;
+use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
+use Patchlevel\EventSourcing\Metadata\InMemoryClassLocator;
+
+$serializer = DefaultHeadersSerializer::createFromLocator(
+    new ChainClassLocator([
+        new FilesystemClassLocator(['src/Header'], Header::class),
+        new InMemoryClassLocator([ApplicationHeader::class]),
+    ]),
+);
+```
+The header name is always taken from the `#[Header]` attribute.
+Only the located headers are registered, nothing is added implicitly.
+
+The stores keep their own headers like `StreamNameHeader` or `PlayheadHeader` in separate columns,
+so you don't need to register them for the store. If you serialize these headers yourself,
+you can use the locator of the store, e.g. `StreamStoreHeaderLocator` or `TaggableStoreHeaderLocator`.
+Features which add headers to the messages provide their own locator,
+like the `SplitStreamHeaderLocator` for the [split stream](split-stream.md) feature.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Header;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Metadata\ChainClassLocator;
+use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamHeaderLocator;
+use Patchlevel\EventSourcing\Store\Header\StreamStoreHeaderLocator;
+
+$serializer = DefaultHeadersSerializer::createFromLocator(
+    new ChainClassLocator([
+        new StreamStoreHeaderLocator(),
+        new SplitStreamHeaderLocator(),
+        new FilesystemClassLocator(['src/Header'], Header::class),
+    ]),
+);
+```
+:::warning
+Header names must be unique. If two located classes use the same name,
+a `HeaderAlreadyInRegistry` exception is thrown.
+:::
+
 ## Missing headers
 
 When a message is deserialized, every header name is resolved to its registered header class.

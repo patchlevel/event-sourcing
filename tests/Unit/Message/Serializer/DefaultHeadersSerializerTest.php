@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Message\Serializer;
 
-use DateTimeImmutable;
+use Patchlevel\EventSourcing\Attribute\Header;
 use Patchlevel\EventSourcing\Message\MissingHeaders;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Serializer\InvalidArgument;
+use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
+use Patchlevel\EventSourcing\Metadata\InMemoryClassLocator;
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
+use Patchlevel\EventSourcing\Metadata\Message\HeaderClassNotRegistered;
 use Patchlevel\EventSourcing\Metadata\Message\HeaderNameNotRegistered;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
-use Patchlevel\EventSourcing\Store\ArchivedHeader;
-use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
-use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\BazHeader;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use Patchlevel\Hydrator\CoreExtension;
 use Patchlevel\Hydrator\Extension\Upcast\CallbackUpcaster;
 use Patchlevel\Hydrator\Extension\Upcast\UpcastExtension;
@@ -33,36 +35,43 @@ final class DefaultHeadersSerializerTest extends TestCase
         ]);
 
         $content = $serializer->serialize([
-            new StreamNameHeader('profile-1'),
-            new PlayheadHeader(1),
-            new RecordedOnHeader(new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')),
-            new ArchivedHeader(),
+            new FooHeader('foo'),
+            new BazHeader('baz'),
         ]);
 
         self::assertEquals(
-            '{"streamName":{"streamName":"profile-1"},"playhead":{"playhead":1},"recordedOn":{"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":[]}',
+            '{"foo":{"data":"foo"},"baz":{"data":"baz"}}',
             $content,
         );
+    }
+
+    public function testSerializeNotRegisteredHeader(): void
+    {
+        $serializer = DefaultHeadersSerializer::createFromPaths([
+            __DIR__ . '/../../Fixture',
+        ]);
+
+        $this->expectException(HeaderClassNotRegistered::class);
+
+        $serializer->serialize([new StreamNameHeader('profile-1')]);
     }
 
     public function testDeserialize(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
         );
 
-        $deserializedMessage = $serializer->deserialize('{"streamName":{"streamName":"profile-1"},"playhead":{"playhead":1},"recordedOn":{"recordedOn":"2020-01-01T20:00:00+01:00"},"archived":[]}');
+        $deserializedMessage = $serializer->deserialize('{"foo":{"data":"foo"},"baz":{"data":"baz"}}');
 
         self::assertEquals(
             [
-                new StreamNameHeader('profile-1'),
-                new PlayheadHeader(1),
-                new RecordedOnHeader(new DateTimeImmutable('2020-01-01T20:00:00.000000+0100')),
-                new ArchivedHeader(),
+                new FooHeader('foo'),
+                new BazHeader('baz'),
             ],
             $deserializedMessage,
         );
@@ -71,19 +80,19 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testDeserializeUnknownHeadersAsMissingHeaders(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
             ['removed', 'alsoRemoved'],
         );
 
-        $deserializedMessage = $serializer->deserialize('{"streamName":{"streamName":"profile-1"},"removed":{"foo":"bar"},"alsoRemoved":{"baz":1}}');
+        $deserializedMessage = $serializer->deserialize('{"foo":{"data":"foo"},"removed":{"foo":"bar"},"alsoRemoved":{"baz":1}}');
 
         self::assertEquals(
             [
-                new StreamNameHeader('profile-1'),
+                new FooHeader('foo'),
                 new MissingHeaders([
                     'removed' => ['foo' => 'bar'],
                     'alsoRemoved' => ['baz' => 1],
@@ -96,9 +105,9 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testDeserializeUnknownHeaderNotConfiguredCrashes(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
             ['removed'],
@@ -106,25 +115,25 @@ final class DefaultHeadersSerializerTest extends TestCase
 
         $this->expectException(HeaderNameNotRegistered::class);
 
-        $serializer->deserialize('{"streamName":{"streamName":"profile-1"},"removed":{"foo":"bar"},"notListed":{"baz":1}}');
+        $serializer->deserialize('{"foo":{"data":"foo"},"removed":{"foo":"bar"},"notListed":{"baz":1}}');
     }
 
     public function testDeserializeWildcardHandlesAllUnknownHeaders(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
             ['*'],
         );
 
-        $deserializedMessage = $serializer->deserialize('{"streamName":{"streamName":"profile-1"},"removed":{"foo":"bar"},"alsoRemoved":{"baz":1}}');
+        $deserializedMessage = $serializer->deserialize('{"foo":{"data":"foo"},"removed":{"foo":"bar"},"alsoRemoved":{"baz":1}}');
 
         self::assertEquals(
             [
-                new StreamNameHeader('profile-1'),
+                new FooHeader('foo'),
                 new MissingHeaders([
                     'removed' => ['foo' => 'bar'],
                     'alsoRemoved' => ['baz' => 1],
@@ -137,15 +146,15 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testSerializeMissingHeadersRoundTrip(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
         );
 
         $content = $serializer->serialize([
-            new StreamNameHeader('profile-1'),
+            new FooHeader('foo'),
             new MissingHeaders([
                 'removed' => ['foo' => 'bar'],
                 'alsoRemoved' => ['baz' => 1],
@@ -153,7 +162,7 @@ final class DefaultHeadersSerializerTest extends TestCase
         ]);
 
         self::assertEquals(
-            '{"streamName":{"streamName":"profile-1"},"removed":{"foo":"bar"},"alsoRemoved":{"baz":1}}',
+            '{"foo":{"data":"foo"},"removed":{"foo":"bar"},"alsoRemoved":{"baz":1}}',
             $content,
         );
     }
@@ -161,9 +170,9 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testDeserializeWithInvalidHeaderPayload(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
         );
@@ -171,17 +180,69 @@ final class DefaultHeadersSerializerTest extends TestCase
         $this->expectException(InvalidArgument::class);
         $this->expectExceptionMessage('header payload must be an array');
 
-        $serializer->deserialize('{"streamName":"profile-1"}');
+        $serializer->deserialize('{"foo":"foo"}');
+    }
+
+    public function testCreateFromLocator(): void
+    {
+        $serializer = DefaultHeadersSerializer::createFromLocator(
+            new InMemoryClassLocator([FooHeader::class]),
+        );
+
+        $content = $serializer->serialize([new FooHeader('bar')]);
+
+        self::assertSame('{"foo":{"data":"bar"}}', $content);
+        self::assertEquals([new FooHeader('bar')], $serializer->deserialize($content));
+    }
+
+    public function testCreateFromLocatorWithGracefulMissingHeaders(): void
+    {
+        $serializer = DefaultHeadersSerializer::createFromLocator(
+            new InMemoryClassLocator([FooHeader::class]),
+            ['removed'],
+        );
+
+        self::assertEquals(
+            [
+                new FooHeader('bar'),
+                new MissingHeaders(['removed' => ['foo' => 'bar']]),
+            ],
+            $serializer->deserialize('{"foo":{"data":"bar"},"removed":{"foo":"bar"}}'),
+        );
+    }
+
+    public function testCreateFromLocatorWithCustomHydrator(): void
+    {
+        $hydrator = (new StackHydratorBuilder())
+            ->useExtension(new CoreExtension())
+            ->useExtension(new UpcastExtension([
+                CallbackUpcaster::forClass(
+                    FooHeader::class,
+                    static fn (array $data): array => ['data' => 'upcasted'],
+                ),
+            ]))
+            ->build();
+
+        $serializer = DefaultHeadersSerializer::createFromLocator(
+            new InMemoryClassLocator([FooHeader::class]),
+            hydrator: $hydrator,
+        );
+
+        self::assertEquals(
+            [new FooHeader('upcasted')],
+            $serializer->deserialize('{"foo":{"data":"bar"}}'),
+        );
     }
 
     public function testCreateDefault(): void
     {
         $serializer = DefaultHeadersSerializer::createDefault();
 
-        $content = $serializer->serialize([new StreamNameHeader('profile-1')]);
+        self::assertSame('[]', $serializer->serialize([]));
 
-        self::assertEquals('{"streamName":{"streamName":"profile-1"}}', $content);
-        self::assertEquals([new StreamNameHeader('profile-1')], $serializer->deserialize($content));
+        $this->expectException(HeaderNameNotRegistered::class);
+
+        $serializer->deserialize('{"foo":{"data":"bar"}}');
     }
 
     public function testDeserializeWithCustomHydrator(): void
@@ -190,11 +251,11 @@ final class DefaultHeadersSerializerTest extends TestCase
             ->useExtension(new CoreExtension())
             ->useExtension(new UpcastExtension([
                 CallbackUpcaster::forClass(
-                    StreamNameHeader::class,
+                    FooHeader::class,
                     static function (array $data): array {
                         self::assertIsString($data['id']);
 
-                        return ['streamName' => 'profile-' . $data['id']];
+                        return ['data' => 'foo-' . $data['id']];
                     },
                 ),
             ]))
@@ -206,28 +267,8 @@ final class DefaultHeadersSerializerTest extends TestCase
         );
 
         self::assertEquals(
-            [new StreamNameHeader('profile-1')],
-            $serializer->deserialize('{"streamName":{"id":"1"}}'),
-        );
-    }
-
-    public function testCreateDefaultWithCustomHydrator(): void
-    {
-        $hydrator = (new StackHydratorBuilder())
-            ->useExtension(new CoreExtension())
-            ->useExtension(new UpcastExtension([
-                CallbackUpcaster::forClass(
-                    PlayheadHeader::class,
-                    static fn (array $data): array => ['playhead' => 42],
-                ),
-            ]))
-            ->build();
-
-        $serializer = DefaultHeadersSerializer::createDefault($hydrator);
-
-        self::assertEquals(
-            [new PlayheadHeader(42)],
-            $serializer->deserialize('{"playhead":{"playhead":1}}'),
+            [new FooHeader('foo-1')],
+            $serializer->deserialize('{"foo":{"id":"1"}}'),
         );
     }
 }

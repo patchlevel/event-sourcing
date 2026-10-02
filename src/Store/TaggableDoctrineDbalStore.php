@@ -47,6 +47,7 @@ use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Store\Header\TaggableStoreHeaderLocator;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use PDO;
 use Pdo\Pgsql;
@@ -99,6 +100,9 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
 
     private readonly HeadersSerializer $headersSerializer;
 
+    /** @var list<class-string> */
+    private readonly array $columnHeaders;
+
     private readonly ClockInterface $clock;
 
     /** @var array{table_name: string, locking: bool, lock_id: int, lock_timeout: int, keep_index: bool, default_stream_name: string} */
@@ -127,6 +131,7 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
         array $config = [],
     ) {
         $this->headersSerializer = $headersSerializer ?? DefaultHeadersSerializer::createDefault();
+        $this->columnHeaders = (new TaggableStoreHeaderLocator())->locate();
         $this->clock = $clock ?? new SystemClock();
 
         $this->config = array_merge([
@@ -660,20 +665,10 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
     /** @return list<object> */
     private function getCustomHeaders(Message $message): array
     {
-        $filteredHeaders = [
-            IndexHeader::class,
-            StreamNameHeader::class,
-            EventIdHeader::class,
-            PlayheadHeader::class,
-            RecordedOnHeader::class,
-            ArchivedHeader::class,
-            TagsHeader::class,
-        ];
-
         return array_values(
             array_filter(
                 $message->headers(),
-                static fn (object $header) => !in_array($header::class, $filteredHeaders, true),
+                fn (object $header) => !in_array($header::class, $this->columnHeaders, true),
             ),
         );
     }
