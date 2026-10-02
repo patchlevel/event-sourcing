@@ -602,6 +602,55 @@ and replaced with the following headers:
 * `Patchlevel\EventSourcing\Store\Header\PlayheadHeader`
 * `Patchlevel\EventSourcing\Store\Header\RecordedOnHeader`
 
+### Header registration
+
+`Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistryFactory::create()` now expects a
+`Patchlevel\EventSourcing\Metadata\ClassLocator` instead of a list of paths.
+The internal headers are always registered by the `AttributeMessageHeaderRegistryFactory`.
+
+Before:
+
+```php
+use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
+
+$registry = (new AttributeMessageHeaderRegistryFactory())->create(['src/Header']);
+```
+After:
+
+```php
+use Patchlevel\EventSourcing\Attribute\Header;
+use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
+use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
+
+$registry = (new AttributeMessageHeaderRegistryFactory())->create(
+    new FilesystemClassLocator(['src/Header'], Header::class),
+);
+```
+`MessageHeaderRegistry::createWithInternalHeaders()` has been removed.
+Use the `AttributeMessageHeaderRegistryFactory` with an `InMemoryClassLocator` instead.
+
+Before:
+
+```php
+use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
+
+$registry = MessageHeaderRegistry::createWithInternalHeaders(['application' => ApplicationHeader::class]);
+```
+After:
+
+```php
+use Patchlevel\EventSourcing\Metadata\InMemoryClassLocator;
+use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
+
+$registry = (new AttributeMessageHeaderRegistryFactory())->create(
+    new InMemoryClassLocator([ApplicationHeader::class]),
+);
+```
+Every located class must have a `#[Header]` attribute, otherwise a `ClassIsNotAHeader` exception is thrown.
+Header names must be unique. If two classes use the same name, or a custom header uses the name of an
+internal header (`streamName`, `playhead`, `recordedOn`, `archived`, `newStreamStart`, `eventId`, `index`, `tags`),
+a `HeaderAlreadyInRegistry` exception is thrown. Previously the custom header silently replaced the internal one.
+
 ### AggregateToStreamHeaderTranslator
 
 `Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator` has been removed.

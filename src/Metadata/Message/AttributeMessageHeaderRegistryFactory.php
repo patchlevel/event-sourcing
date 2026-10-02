@@ -5,17 +5,18 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\Message;
 
 use Patchlevel\EventSourcing\Attribute\Header;
-use Patchlevel\EventSourcing\Metadata\ClassFinder;
+use Patchlevel\EventSourcing\Metadata\ChainClassLocator;
+use Patchlevel\EventSourcing\Metadata\ClassLocator;
 use ReflectionClass;
 
+use function array_key_exists;
 use function count;
 
 final class AttributeMessageHeaderRegistryFactory implements MessageHeaderRegistryFactory
 {
-    /** @param list<string> $paths */
-    public function create(array $paths): MessageHeaderRegistry
+    public function create(ClassLocator $locator): MessageHeaderRegistry
     {
-        $classes = (new ClassFinder())->findClassNames($paths);
+        $classes = (new ChainClassLocator([new InternalHeaderLocator(), $locator]))->locate();
 
         $result = [];
 
@@ -24,13 +25,18 @@ final class AttributeMessageHeaderRegistryFactory implements MessageHeaderRegist
             $attributes = $reflection->getAttributes(Header::class);
 
             if (count($attributes) === 0) {
-                continue;
+                throw new ClassIsNotAHeader($class);
             }
 
-            $aggregateName = $attributes[0]->newInstance()->name;
-            $result[$aggregateName] = $class;
+            $headerName = $attributes[0]->newInstance()->name;
+
+            if (array_key_exists($headerName, $result)) {
+                throw new HeaderAlreadyInRegistry($headerName, $result[$headerName], $class);
+            }
+
+            $result[$headerName] = $class;
         }
 
-        return MessageHeaderRegistry::createWithInternalHeaders($result);
+        return new MessageHeaderRegistry($result);
     }
 }

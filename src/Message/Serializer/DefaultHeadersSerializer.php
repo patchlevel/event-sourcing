@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Message\Serializer;
 
+use Patchlevel\EventSourcing\Attribute\Header;
 use Patchlevel\EventSourcing\Message\MissingHeaders;
+use Patchlevel\EventSourcing\Metadata\ClassLocator;
+use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
+use Patchlevel\EventSourcing\Metadata\InMemoryClassLocator;
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Message\HeaderNameNotRegistered;
 use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
@@ -99,8 +103,21 @@ final class DefaultHeadersSerializer implements HeadersSerializer
         array $gracefulMissingHeaders = [],
         Hydrator $hydrator = new StackHydrator(),
     ): static {
+        return self::createFromLocator(
+            new FilesystemClassLocator($paths, Header::class),
+            $gracefulMissingHeaders,
+            $hydrator,
+        );
+    }
+
+    /** @param list<string> $gracefulMissingHeaders */
+    public static function createFromLocator(
+        ClassLocator $locator,
+        array $gracefulMissingHeaders = [],
+        Hydrator $hydrator = new StackHydrator(),
+    ): static {
         return new self(
-            (new AttributeMessageHeaderRegistryFactory())->create($paths),
+            (new AttributeMessageHeaderRegistryFactory())->create($locator),
             $hydrator,
             new JsonEncoder(),
             $gracefulMissingHeaders,
@@ -109,11 +126,6 @@ final class DefaultHeadersSerializer implements HeadersSerializer
 
     public static function createDefault(Hydrator $hydrator = new StackHydrator()): static
     {
-        return new self(
-            MessageHeaderRegistry::createWithInternalHeaders(),
-            $hydrator,
-            new JsonEncoder(),
-            [],
-        );
+        return self::createFromLocator(new InMemoryClassLocator([]), [], $hydrator);
     }
 }

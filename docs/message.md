@@ -122,6 +122,43 @@ use Patchlevel\EventSourcing\Message\Message;
 /** @var Message $message */
 $message->header(ApplicationHeader::class);
 ```
+### Register headers
+
+The `DefaultHeadersSerializer` needs to know your header classes to resolve the header names.
+The easiest way is to scan the directories where your headers are located.
+
+```php
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+
+$serializer = DefaultHeadersSerializer::createFromPaths(['src/Header']);
+```
+If you already know your header classes, or a library wants to provide its own headers,
+you can pass a `ClassLocator` instead. The `InMemoryClassLocator` takes a list of classes,
+the `ChainClassLocator` combines multiple locators.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Header;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Metadata\ChainClassLocator;
+use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
+use Patchlevel\EventSourcing\Metadata\InMemoryClassLocator;
+
+$serializer = DefaultHeadersSerializer::createFromLocator(
+    new ChainClassLocator([
+        new FilesystemClassLocator(['src/Header'], Header::class),
+        new InMemoryClassLocator([ApplicationHeader::class]),
+    ]),
+);
+```
+The header name is always taken from the `#[Header]` attribute.
+The internal headers of the library are always registered, you don't need to locate them.
+
+:::warning
+Header names must be unique and must not collide with the names of the internal headers
+(`streamName`, `playhead`, `recordedOn`, `archived`, `newStreamStart`, `eventId`, `index`, `tags`).
+Otherwise a `HeaderAlreadyInRegistry` exception is thrown.
+:::
+
 ## Missing headers
 
 When a message is deserialized, every header name is resolved to its registered header class.

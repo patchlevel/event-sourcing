@@ -91,6 +91,8 @@ final class LayerDependenciesTest
             $this->layer('Message'),
             [
                 $this->layer('Aggregate'),
+                $this->layer('Attribute'),
+                $this->metadataLayer(),
                 $this->layer('Metadata\Message'),
                 $this->layer('Serializer'),
                 $this->layer('Store'),
@@ -131,7 +133,6 @@ final class LayerDependenciesTest
         return $this->layerCanOnlyDependOnAllowedLayers(
             $this->layer('Metadata\Message'),
             [
-                $this->layer('Aggregate'),
                 $this->layer('Attribute'),
                 $this->metadataLayer(),
                 $this->layer('Store'),
@@ -210,6 +211,7 @@ final class LayerDependenciesTest
         return $this->layerCanOnlyDependOnAllowedLayers(
             $this->layer('Store'),
             [
+                $this->layer('Attribute'),
                 $this->layer('Clock'),
                 $this->layer('Message'),
                 $this->metadataLayer(),

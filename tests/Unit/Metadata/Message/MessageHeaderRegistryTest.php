@@ -7,7 +7,6 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Message;
 use Patchlevel\EventSourcing\Metadata\Message\HeaderClassNotRegistered;
 use Patchlevel\EventSourcing\Metadata\Message\HeaderNameNotRegistered;
 use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\BazHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -70,20 +69,5 @@ final class MessageHeaderRegistryTest extends TestCase
 
         self::assertSame(['foo' => FooHeader::class], $registry->headerClasses());
         self::assertSame([FooHeader::class => 'foo'], $registry->headerNames());
-    }
-
-    public function testCreateWithInternalHeaders(): void
-    {
-        $registry = MessageHeaderRegistry::createWithInternalHeaders(['foo' => FooHeader::class]);
-
-        self::assertSame(FooHeader::class, $registry->headerClass('foo'));
-        self::assertSame(StreamNameHeader::class, $registry->headerClass('streamName'));
-        self::assertTrue($registry->hasHeaderName('playhead'));
-        self::assertTrue($registry->hasHeaderName('recordedOn'));
-        self::assertTrue($registry->hasHeaderName('archived'));
-        self::assertTrue($registry->hasHeaderName('newStreamStart'));
-        self::assertTrue($registry->hasHeaderName('eventId'));
-        self::assertTrue($registry->hasHeaderName('index'));
-        self::assertTrue($registry->hasHeaderName('tags'));
     }
 }

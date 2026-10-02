@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Message\Serializer;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Attribute\Header;
 use Patchlevel\EventSourcing\Message\MissingHeaders;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Serializer\InvalidArgument;
+use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
+use Patchlevel\EventSourcing\Metadata\InMemoryClassLocator;
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Message\HeaderNameNotRegistered;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
@@ -15,6 +18,7 @@ use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use Patchlevel\Hydrator\CoreExtension;
 use Patchlevel\Hydrator\Extension\Upcast\CallbackUpcaster;
 use Patchlevel\Hydrator\Extension\Upcast\UpcastExtension;
@@ -48,9 +52,9 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testDeserialize(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
         );
@@ -71,9 +75,9 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testDeserializeUnknownHeadersAsMissingHeaders(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
             ['removed', 'alsoRemoved'],
@@ -96,9 +100,9 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testDeserializeUnknownHeaderNotConfiguredCrashes(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
             ['removed'],
@@ -112,9 +116,9 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testDeserializeWildcardHandlesAllUnknownHeaders(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
             ['*'],
@@ -137,9 +141,9 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testSerializeMissingHeadersRoundTrip(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
         );
@@ -161,9 +165,9 @@ final class DefaultHeadersSerializerTest extends TestCase
     public function testDeserializeWithInvalidHeaderPayload(): void
     {
         $serializer = new DefaultHeadersSerializer(
-            (new AttributeMessageHeaderRegistryFactory())->create([
-                __DIR__ . '/../../Fixture',
-            ]),
+            (new AttributeMessageHeaderRegistryFactory())->create(
+                new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
+            ),
             new StackHydrator(),
             new JsonEncoder(),
         );
@@ -172,6 +176,27 @@ final class DefaultHeadersSerializerTest extends TestCase
         $this->expectExceptionMessage('header payload must be an array');
 
         $serializer->deserialize('{"streamName":"profile-1"}');
+    }
+
+    public function testCreateFromLocator(): void
+    {
+        $serializer = DefaultHeadersSerializer::createFromLocator(
+            new InMemoryClassLocator([FooHeader::class]),
+        );
+
+        $content = $serializer->serialize([
+            new StreamNameHeader('profile-1'),
+            new FooHeader('bar'),
+        ]);
+
+        self::assertSame('{"streamName":{"streamName":"profile-1"},"foo":{"data":"bar"}}', $content);
+        self::assertEquals(
+            [
+                new StreamNameHeader('profile-1'),
+                new FooHeader('bar'),
+            ],
+            $serializer->deserialize($content),
+        );
     }
 
     public function testCreateDefault(): void
