@@ -122,7 +122,6 @@ The table structure of the `StreamDoctrineDbalStore` looks like this:
 | event_name       | string   | The name of the event                            |
 | event_payload    | json     | The payload of the event                         |
 | recorded_on      | datetime | The date when the event was recorded             |
-| new_stream_start | bool     | If the event is the first event of the aggregate |
 | archived         | bool     | If the event is archived                         |
 | custom_headers   | json     | Custom headers for the event                     |
 

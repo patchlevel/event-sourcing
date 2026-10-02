@@ -49,45 +49,25 @@ $message->headers(); // [AggregateHeader object]
 ```
 ## Built-in headers
 
-The message object has some built-in headers which are used internally.
-Which of them you get depends on the [store](store.md) you use.
+The library ships with some built-in headers.
+Most of them are set by the [repository](repository.md) when an aggregate is saved,
+or by the [store](store.md) when a message is saved or loaded.
+Which of them you get depends on the store you use.
 
-These headers are set by every store:
+| Header              | Name             | StreamDoctrineDbalStore | DoctrineDbalStore |
+|---------------------|------------------|-------------------------|-------------------|
+| `StreamNameHeader`  | `streamName`     | yes                     | no                |
+| `PlayheadHeader`    | `playhead`       | yes                     | no                |
+| `RecordedOnHeader`  | `recordedOn`     | yes                     | no                |
+| `EventIdHeader`     | `eventId`        | yes                     | no                |
+| `AggregateHeader`   | `aggregate`      | no                      | yes               |
+| `IndexHeader`       | `index`          | yes                     | yes               |
+| `ArchivedHeader`    | `archived`       | yes                     | yes               |
+| `StreamStartHeader` | `newStreamStart` | yes                     | yes               |
 
-* `IndexHeader` - The global position of the message in the store.
-* `ArchivedHeader` - Flag if the message is archived.
-
-The `DoctrineDbalStore` is aggregate based and adds:
-
-* `AggregateHeader` - Contains the aggregate name, aggregate id, playhead and recorded on.
-* `StreamStartHeader` - Flag if the message is the first message in a new stream.
-
-The `StreamDoctrineDbalStore` is stream based and splits the same information into single headers:
-
-* `StreamNameHeader` - The name of the stream, for example `profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e`.
-* `PlayheadHeader` - The position of the message inside its stream.
-* `RecordedOnHeader` - The point in time when the message was saved.
-* `EventIdHeader` - The unique id of the event.
-
-```php
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
-use Patchlevel\EventSourcing\Store\Header\IndexHeader;
-use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
-use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
-
-/** @var Message $message */
-$message->header(IndexHeader::class)->index; // 42
-$message->header(StreamNameHeader::class)->streamName; // 'profile-e3e3e3e3-...'
-$message->header(PlayheadHeader::class)->playhead; // 2
-$message->header(RecordedOnHeader::class)->recordedOn; // DateTimeImmutable
-$message->header(EventIdHeader::class)->eventId; // 'a4a4a4a4-4a4a-...'
-```
 :::warning
-The `PlayheadHeader` is only added if the stream is playhead based.
-Streams that are written without a playhead, for example [custom streams](store.md#custom-streams),
-do not have this header. Use `hasHeader` before you access it.
+The names of the built-in headers are reserved.
+Don't use them for your [custom headers](#custom-headers).
 :::
 
 :::note
@@ -97,6 +77,142 @@ them with the `AggregateToStreamHeaderTranslator`, see the
 [store migration command](cli.md#store-migration-command).
 :::
 
+### StreamNameHeader
+
+The `StreamNameHeader` contains the name of the stream the message belongs to.
+For aggregates, the repository sets it to the stream name of the aggregate,
+for example `profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e`.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+
+/** @var Message $message */
+$message->header(StreamNameHeader::class)->streamName; // 'profile-e3e3e3e3-...'
+```
+This is the only header the `StreamDoctrineDbalStore` requires to save a message.
+If it is missing, a `MissingDataForStorage` exception is thrown.
+You can also set it yourself to save messages into your own [custom streams](store.md#custom-streams).
+
+### PlayheadHeader
+
+The `PlayheadHeader` contains the position of the message inside its stream, starting with `1`.
+The repository increments it for every event of the aggregate.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+
+/** @var Message $message */
+$message->header(PlayheadHeader::class)->playhead; // 2
+```
+The combination of stream name and playhead is unique in the store.
+This is how the store detects that two processes tried to write the same aggregate at the same time.
+
+:::warning
+The `PlayheadHeader` is only added if the stream is playhead based.
+Streams that are written without a playhead, for example [custom streams](store.md#custom-streams),
+do not have this header. Use `hasHeader` before you access it.
+:::
+
+### RecordedOnHeader
+
+The `RecordedOnHeader` contains the point in time when the event was recorded.
+The repository sets it with the [clock](clock.md).
+If it is missing when the message is saved, the store uses the current time of its clock.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+
+/** @var Message $message */
+$message->header(RecordedOnHeader::class)->recordedOn; // DateTimeImmutable
+```
+:::tip
+You can get the recorded on date directly as an argument in your [subscribers](subscription.md).
+:::
+
+### EventIdHeader
+
+The `EventIdHeader` contains a unique id of the event.
+If it is missing when the message is saved, the store generates a UUIDv7.
+The id is unique in the store, so saving the same event id twice fails with a `UniqueConstraintViolation`.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
+
+/** @var Message $message */
+$message->header(EventIdHeader::class)->eventId; // 'a4a4a4a4-4a4a-...'
+```
+:::tip
+You can load a message by its id with the `EventIdCriterion`, see [store](store.md#criteria-for-stream-stores).
+:::
+
+### AggregateHeader
+
+The `AggregateHeader` is used by the `DoctrineDbalStore` and contains the aggregate name,
+the aggregate id, the playhead and the recorded on date in one header.
+
+```php
+use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
+use Patchlevel\EventSourcing\Message\Message;
+
+/** @var Message $message */
+$header = $message->header(AggregateHeader::class);
+
+$header->aggregateName; // 'profile'
+$header->aggregateId; // 'e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'
+$header->playhead; // 2
+$header->recordedOn; // DateTimeImmutable
+$header->streamName(); // 'profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e'
+```
+:::note
+For new projects, we recommend the `StreamDoctrineDbalStore` with the stream based headers.
+:::
+
+### IndexHeader
+
+The `IndexHeader` contains the global position of the message in the store.
+It is set by the store when a message is loaded, so it is only available on messages that come from the store,
+for example in [subscriptions](subscription.md).
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
+
+/** @var Message $message */
+$message->header(IndexHeader::class)->index; // 42
+```
+By default, the index is ignored when a message is saved and the database assigns a new one.
+If you enable the `keep_index` option of the store, the index of the header is saved instead.
+
+### ArchivedHeader
+
+The `ArchivedHeader` has no data. It is a flag and only added if the message is archived.
+Messages are archived when a [split stream](split-stream.md) event is saved
+or if you [archive](store.md#archive) them in the store yourself.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\ArchivedHeader;
+
+/** @var Message $message */
+$message->hasHeader(ArchivedHeader::class); // true
+```
+### StreamStartHeader
+
+The `StreamStartHeader` has no data. It is a flag that marks the event that starts a new stream.
+It is added by the `SplitStreamDecorator` to events with the `#[SplitStream]` attribute.
+The repository then archives all previous events of the aggregate, see [split stream](split-stream.md).
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\StreamStartHeader;
+
+/** @var Message $message */
+$message->hasHeader(StreamStartHeader::class); // true
+```
 ## Custom headers
 
 You can also add custom headers to the message object. For example, you can add an application id.
