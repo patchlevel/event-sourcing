@@ -44,6 +44,7 @@ use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamStoreHeaderLocator;
 use PDO;
 use Pdo\Pgsql;
 use Psr\Clock\ClockInterface;
@@ -88,6 +89,9 @@ final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineS
 
     private readonly HeadersSerializer $headersSerializer;
 
+    /** @var list<class-string> */
+    private readonly array $columnHeaders;
+
     private readonly ClockInterface $clock;
 
     /** @var array{table_name: string, locking: bool, lock_id: int, lock_timeout: int, keep_index: bool} */
@@ -107,6 +111,7 @@ final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineS
         array $config = [],
     ) {
         $this->headersSerializer = $headersSerializer ?? DefaultHeadersSerializer::createDefault();
+        $this->columnHeaders = (new StreamStoreHeaderLocator())->locate();
         $this->clock = $clock ?? new SystemClock();
 
         $this->config = array_merge([
@@ -461,19 +466,10 @@ final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineS
     /** @return list<object> */
     private function getCustomHeaders(Message $message): array
     {
-        $filteredHeaders = [
-            IndexHeader::class,
-            StreamNameHeader::class,
-            EventIdHeader::class,
-            PlayheadHeader::class,
-            RecordedOnHeader::class,
-            ArchivedHeader::class,
-        ];
-
         return array_values(
             array_filter(
                 $message->headers(),
-                static fn (object $header) => !in_array($header::class, $filteredHeaders, true),
+                fn (object $header) => !in_array($header::class, $this->columnHeaders, true),
             ),
         );
     }

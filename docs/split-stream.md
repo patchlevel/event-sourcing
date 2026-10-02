@@ -44,6 +44,40 @@ $repositoryManager = new DefaultRepositoryManager(
 You can find out more about the [message decorator](message-decorator.md).
 :::
 
+The decorator marks the first message of a new stream with the `StreamStartHeader`.
+This header is stored with the message, so it must be registered in the headers serializer of your store.
+The `SplitStreamHeaderLocator` provides it.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Header;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Metadata\ChainClassLocator;
+use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamHeaderLocator;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+
+/**
+ * @var Connection $connection
+ * @var EventSerializer $eventSerializer
+ */
+$store = new StreamDoctrineDbalStore(
+    $connection,
+    $eventSerializer,
+    DefaultHeadersSerializer::createFromLocator(
+        new ChainClassLocator([
+            new SplitStreamHeaderLocator(),
+            new FilesystemClassLocator(['src/Header'], Header::class),
+        ]),
+    ),
+);
+```
+:::warning
+Keep the `SplitStreamHeaderLocator` registered as long as your store contains messages with this header,
+even if you remove the `SplitStreamDecorator` later. Otherwise these messages can no longer be loaded.
+:::
+
 :::tip
 You can use multiple decorators with the `ChainMessageDecorator`.
 :::

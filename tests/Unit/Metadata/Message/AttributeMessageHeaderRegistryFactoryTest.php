@@ -5,24 +5,19 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Message;
 
 use Patchlevel\EventSourcing\Attribute\Header;
+use Patchlevel\EventSourcing\Metadata\ChainClassLocator;
 use Patchlevel\EventSourcing\Metadata\FilesystemClassLocator;
 use Patchlevel\EventSourcing\Metadata\InMemoryClassLocator;
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Message\ClassIsNotAHeader;
 use Patchlevel\EventSourcing\Metadata\Message\HeaderAlreadyInRegistry;
-use Patchlevel\EventSourcing\Store\ArchivedHeader;
-use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
-use Patchlevel\EventSourcing\Store\Header\IndexHeader;
-use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
-use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
-use Patchlevel\EventSourcing\Store\Header\TagsHeader;
-use Patchlevel\EventSourcing\Store\StreamStartHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamStoreHeaderLocator;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\BazHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Metadata\Message\Fixture\DuplicateFooHeader;
-use Patchlevel\EventSourcing\Tests\Unit\Metadata\Message\Fixture\ReservedNameHeader;
+use Patchlevel\EventSourcing\Tests\Unit\Metadata\Message\Fixture\StreamNameCollisionHeader;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -35,38 +30,35 @@ final class AttributeMessageHeaderRegistryFactoryTest extends TestCase
             new FilesystemClassLocator([__DIR__ . '/../../Fixture'], Header::class),
         );
 
-        self::assertSame(FooHeader::class, $registry->headerClass('foo'));
-        self::assertSame(BazHeader::class, $registry->headerClass('baz'));
-        self::assertSame(StreamNameHeader::class, $registry->headerClass('streamName'));
-    }
-
-    public function testInternalHeadersAreAlwaysRegistered(): void
-    {
-        $registry = (new AttributeMessageHeaderRegistryFactory())->create(new InMemoryClassLocator([]));
-
         self::assertSame(
             [
-                'streamName' => StreamNameHeader::class,
-                'playhead' => PlayheadHeader::class,
-                'recordedOn' => RecordedOnHeader::class,
-                'archived' => ArchivedHeader::class,
-                'newStreamStart' => StreamStartHeader::class,
-                'eventId' => EventIdHeader::class,
-                'index' => IndexHeader::class,
-                'tags' => TagsHeader::class,
+                'baz' => BazHeader::class,
+                'foo' => FooHeader::class,
             ],
             $registry->headerClasses(),
         );
     }
 
+    public function testNoHeadersAreRegisteredImplicitly(): void
+    {
+        $registry = (new AttributeMessageHeaderRegistryFactory())->create(new InMemoryClassLocator([]));
+
+        self::assertSame([], $registry->headerClasses());
+    }
+
     public function testSameClassLocatedTwice(): void
     {
         $registry = (new AttributeMessageHeaderRegistryFactory())->create(
-            new InMemoryClassLocator([FooHeader::class, FooHeader::class, StreamNameHeader::class]),
+            new InMemoryClassLocator([FooHeader::class, StreamNameHeader::class, FooHeader::class]),
         );
 
-        self::assertSame('foo', $registry->headerName(FooHeader::class));
-        self::assertSame('streamName', $registry->headerName(StreamNameHeader::class));
+        self::assertSame(
+            [
+                'foo' => FooHeader::class,
+                'streamName' => StreamNameHeader::class,
+            ],
+            $registry->headerClasses(),
+        );
     }
 
     public function testClassIsNotAHeader(): void
@@ -88,15 +80,18 @@ final class AttributeMessageHeaderRegistryFactoryTest extends TestCase
         );
     }
 
-    public function testReservedHeaderName(): void
+    public function testDuplicateHeaderNameAcrossLocators(): void
     {
         $this->expectException(HeaderAlreadyInRegistry::class);
         $this->expectExceptionMessage(
-            'The header name "streamName" is already used by "' . StreamNameHeader::class . '" and cannot be used by "' . ReservedNameHeader::class . '".',
+            'The header name "streamName" is already used by "' . StreamNameHeader::class . '" and cannot be used by "' . StreamNameCollisionHeader::class . '".',
         );
 
         (new AttributeMessageHeaderRegistryFactory())->create(
-            new InMemoryClassLocator([ReservedNameHeader::class]),
+            new ChainClassLocator([
+                new StreamStoreHeaderLocator(),
+                new InMemoryClassLocator([StreamNameCollisionHeader::class]),
+            ]),
         );
     }
 }

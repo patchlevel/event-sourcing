@@ -606,7 +606,7 @@ and replaced with the following headers:
 
 `Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistryFactory::create()` now expects a
 `Patchlevel\EventSourcing\Metadata\ClassLocator` instead of a list of paths.
-The internal headers are always registered by the `AttributeMessageHeaderRegistryFactory`.
+Only the located headers are registered, the library headers are no longer added implicitly.
 
 Before:
 
@@ -647,9 +647,41 @@ $registry = (new AttributeMessageHeaderRegistryFactory())->create(
 );
 ```
 Every located class must have a `#[Header]` attribute, otherwise a `ClassIsNotAHeader` exception is thrown.
-Header names must be unique. If two classes use the same name, or a custom header uses the name of an
-internal header (`streamName`, `playhead`, `recordedOn`, `archived`, `newStreamStart`, `eventId`, `index`, `tags`),
-a `HeaderAlreadyInRegistry` exception is thrown. Previously the custom header silently replaced the internal one.
+Header names must be unique. If two located classes use the same name, a `HeaderAlreadyInRegistry` exception is thrown.
+
+`DefaultHeadersSerializer::createDefault()` no longer registers any header.
+The stores keep their own headers in separate columns, so they don't need them.
+If you serialize the store headers yourself, register them with the locator of the store:
+`Patchlevel\EventSourcing\Store\Header\StreamStoreHeaderLocator` or
+`Patchlevel\EventSourcing\Store\Header\TaggableStoreHeaderLocator`.
+
+### StreamStartHeader
+
+`Patchlevel\EventSourcing\Store\StreamStartHeader` has been moved to
+`Patchlevel\EventSourcing\Repository\MessageDecorator\StreamStartHeader`.
+The header name `newStreamStart` is unchanged, so stored messages stay readable.
+
+If you use the split stream feature, you need to register the header in the headers serializer of your store
+with the `SplitStreamHeaderLocator`.
+Keep it registered as long as your store contains messages with this header.
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
+use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamHeaderLocator;
+use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
+
+/**
+ * @var Connection $connection
+ * @var EventSerializer $eventSerializer
+ */
+$store = new StreamDoctrineDbalStore(
+    $connection,
+    $eventSerializer,
+    DefaultHeadersSerializer::createFromLocator(new SplitStreamHeaderLocator()),
+);
+```
 
 ### AggregateToStreamHeaderTranslator
 
