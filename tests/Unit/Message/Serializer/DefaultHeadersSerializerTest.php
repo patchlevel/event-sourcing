@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Metadata\Message\HeaderNameNotRegistered;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use Patchlevel\Hydrator\MetadataHydrator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -146,5 +147,21 @@ final class DefaultHeadersSerializerTest extends TestCase
             '{"streamName":{"streamName":"profile-1"},"removed":{"foo":"bar"},"alsoRemoved":{"baz":1}}',
             $content,
         );
+    }
+
+    public function testDeserializeAliasAndSerializeWithHeaderName(): void
+    {
+        $serializer = new DefaultHeadersSerializer(
+            (new AttributeMessageHeaderRegistryFactory())->create([
+                __DIR__ . '/../../Fixture',
+            ]),
+            new MetadataHydrator(),
+            new JsonEncoder(),
+        );
+
+        $headers = $serializer->deserialize('{"legacyFoo":{"data":"bar"}}');
+
+        self::assertEquals([new FooHeader('bar')], $headers);
+        self::assertSame('{"foo":{"data":"bar"}}', $serializer->serialize($headers));
     }
 }

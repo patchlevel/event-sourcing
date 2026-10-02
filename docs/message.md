@@ -139,6 +139,30 @@ use Patchlevel\EventSourcing\Message\Message;
 /** @var Message $message */
 $message->header(ApplicationHeader::class);
 ```
+### Alias
+
+You can also define aliases for headers.
+This can be useful when you want to rename a header but still need to read the messages with the old name.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Header;
+
+#[Header('app', aliases: ['application'])]
+class ApplicationHeader
+{
+    public function __construct(
+        private readonly string $id,
+    ) {
+    }
+}
+```
+When saving, the name will always be used. However, when loading, aliases will also be taken into account.
+
+:::note
+An alias must not be used as a header name or as an alias of another header.
+Otherwise a `HeaderAlreadyInRegistry` exception is thrown.
+:::
+
 ## Missing headers
 
 When a message is deserialized, every header name is resolved to its registered header class.
